@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,41 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// HOA Community Intelligence specific colors
+				hoa: {
+					blue: {
+						DEFAULT: '#1e3a8a', // Deep blue
+						50: '#f0f5ff',
+						100: '#e0eaff',
+						200: '#c1d4ff',
+						300: '#93b4ff',
+						400: '#608cff', 
+						500: '#3b6aff',
+						600: '#2952ff',
+						700: '#1e3ef3',
+						800: '#1934d9',
+						900: '#1731b0'
+					},
+					teal: {
+						DEFAULT: '#0d766d', // Deep teal
+						50: '#edfaf9',
+						100: '#d0f2ee',
+						200: '#a3e5de',
+						300: '#6dd1c8',
+						400: '#42b7ae',
+						500: '#299c94',
+						600: '#197f77',
+						700: '#146762',
+						800: '#135452',
+						900: '#124645'
+					},
+					accent: '#ff6b35', // Vibrant orange for accents
 				}
+			},
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+				display: ['Montserrat', 'sans-serif']
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +119,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-slow': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' },
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' },
+				},
+				'fade-in-up': {
+					'0%': { opacity: '0', transform: 'translateY(10px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' },
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-slow': 'pulse-slow 3s infinite ease-in-out',
+				'fade-in': 'fade-in 0.5s ease-out',
+				'fade-in-up': 'fade-in-up 0.5s ease-out'
 			}
 		}
 	},
