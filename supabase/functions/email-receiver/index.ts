@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { processMultipartFormData } from "./utils/request-parser.ts";
+import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { processEmail } from "./services/email-processor.ts";
 import { createLead } from "./services/lead-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
@@ -37,10 +37,12 @@ serve(async (req) => {
       }
     }
     
-    console.log("Received email webhook:", JSON.stringify(emailData, null, 2));
+    // Normalize the email data to handle different formats
+    const normalizedEmailData = normalizeEmailData(emailData);
+    console.log("Normalized email data:", JSON.stringify(normalizedEmailData, null, 2));
 
     // Process the email to extract lead information
-    const leadData = await processEmail(emailData);
+    const leadData = await processEmail(normalizedEmailData);
 
     // Insert lead into the database
     const lead = await createLead(leadData);

@@ -29,3 +29,23 @@ export async function processMultipartFormData(request: Request): Promise<any> {
   console.log("Processed form data:", result);
   return result;
 }
+
+// Function to extract the most important fields from different email webhook formats
+export function normalizeEmailData(data: any): any {
+  const normalizedData: Record<string, any> = {};
+  
+  // Handle different field names for common email properties
+  normalizedData.from = data.from || data.From || data.sender || data.Sender || "";
+  normalizedData.to = data.to || data.To || data.recipient || data.Recipient || "";
+  normalizedData.subject = data.subject || data.Subject || "";
+  normalizedData.html = data.html || data.Html || data.body || data.Body || "";
+  normalizedData.text = data.text || data.Text || data.plain || data.Plain || "";
+  
+  // Handle attachments
+  normalizedData.attachments = data.attachments || data.Attachments || [];
+  
+  // Add original data for reference
+  normalizedData.original = data;
+  
+  return normalizedData;
+}

@@ -47,3 +47,211 @@ export function isValidEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 }
+
+// Helper function to extract association information from email content
+export function extractAssociationInfo(content: string): { name?: string, type?: string, units?: number } {
+  const result: { name?: string, type?: string, units?: number } = {};
+  
+  // Look for association name patterns
+  const namePatterns = [
+    /Name of Association[:\s]*([^<>\n\r]+)/i,
+    /Association Name[:\s]*([^<>\n\r]+)/i,
+    /HOA Name[:\s]*([^<>\n\r]+)/i,
+    /Community Name[:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of namePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.name = match[1].trim();
+      break;
+    }
+  }
+  
+  // Look for association type patterns
+  const typePatterns = [
+    /HOA or Condo[:\s]*([^<>\n\r]+)/i,
+    /Association Type[:\s]*([^<>\n\r]+)/i,
+    /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
+  ];
+  
+  for (const pattern of typePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.type = match[1].trim();
+      break;
+    }
+  }
+  
+  // Look for number of units patterns
+  const unitsPatterns = [
+    /Number of Homes or Units[:\s]*(\d+)/i,
+    /Units[:\s]*(\d+)/i,
+    /Homes[:\s]*(\d+)/i,
+    /Properties[:\s]*(\d+)/i
+  ];
+  
+  for (const pattern of unitsPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1]) {
+      const units = parseInt(match[1], 10);
+      if (!isNaN(units)) {
+        result.units = units;
+        break;
+      }
+    }
+  }
+  
+  return result;
+}
+
+// Helper function to extract contact information from email content
+export function extractContactInfo(content: string, from: string = ""): { name?: string, email?: string, phone?: string } {
+  const result: { name?: string, email?: string, phone?: string } = {};
+  
+  // First try to extract name from the content
+  const namePatterns = [
+    /Name[:\s]*([^<>\n\r]+)/i,
+    /Contact[:\s]*([^<>\n\r]+)/i,
+    /Contact Person[:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of namePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.name = match[1].trim();
+      break;
+    }
+  }
+  
+  // If no name found in content, try to extract from 'from' field
+  if (!result.name && from) {
+    result.name = extractNameFromHeader(from);
+  }
+  
+  // Extract email from content
+  const emailPatterns = [
+    /Email[:\s]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+    /Contact Email[:\s]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i
+  ];
+  
+  for (const pattern of emailPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && isValidEmail(match[1])) {
+      result.email = match[1].trim();
+      break;
+    }
+  }
+  
+  // If no email found in content, try to extract from 'from' field
+  if (!result.email && from) {
+    const extractedEmail = extractEmailFromHeader(from);
+    if (isValidEmail(extractedEmail)) {
+      result.email = extractedEmail;
+    }
+  }
+  
+  // Extract phone from content
+  const phonePatterns = [
+    /Phone[:\s]*([\d\s\(\)\-\+\.]+)/i,
+    /Contact Phone[:\s]*([\d\s\(\)\-\+\.]+)/i,
+    /Tel[:\s]*([\d\s\(\)\-\+\.]+)/i,
+    /Telephone[:\s]*([\d\s\(\)\-\+\.]+)/i
+  ];
+  
+  for (const pattern of phonePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      // Clean up the phone number
+      result.phone = match[1].trim().replace(/\s+/g, ' ');
+      break;
+    }
+  }
+  
+  return result;
+}
+
+// Helper function to extract company information
+export function extractCompanyInfo(content: string, from: string = ""): { company?: string } {
+  const result: { company?: string } = {};
+  
+  // First try to extract company from content
+  const companyPatterns = [
+    /Company[:\s]*([^<>\n\r]+)/i,
+    /Organization[:\s]*([^<>\n\r]+)/i,
+    /Business[:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of companyPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.company = match[1].trim();
+      break;
+    }
+  }
+  
+  // If no company found, try to extract from association name or email domain
+  if (!result.company) {
+    // Try to extract from 'from' field domain
+    if (from) {
+      const email = extractEmailFromHeader(from);
+      if (email) {
+        const domainMatch = email.match(/@([^.]+)/);
+        if (domainMatch && domainMatch[1] && domainMatch[1] !== 'gmail' && 
+            domainMatch[1] !== 'yahoo' && domainMatch[1] !== 'hotmail' && 
+            domainMatch[1] !== 'outlook' && domainMatch[1] !== 'aol') {
+          result.company = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1);
+        }
+      }
+    }
+    
+    // If still no company, try to use association name
+    if (!result.company) {
+      const associationInfo = extractAssociationInfo(content);
+      if (associationInfo.name) {
+        result.company = associationInfo.name;
+      }
+    }
+  }
+  
+  return result;
+}
+
+// Helper function to extract additional information
+export function extractAdditionalInfo(content: string): { notes?: string, address?: string } {
+  const result: { notes?: string, address?: string } = {};
+  
+  // Extract address
+  const addressPatterns = [
+    /Address[:\s]*([^<>\n\r]+)/i,
+    /Property Address[:\s]*([^<>\n\r]+)/i,
+    /Location[:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of addressPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.address = match[1].trim();
+      break;
+    }
+  }
+  
+  // Extract additional information/notes
+  const notesPatterns = [
+    /Additional Information[:\s]*([^<>\n\r]+)/i,
+    /Notes[:\s]*([^<>\n\r]+)/i,
+    /Comments[:\s]*([^<>\n\r]+)/i,
+    /Requirements[:\s]*([^<>\n\r]+)/i,
+    /Additional Requirements[:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of notesPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.notes = match[1].trim();
+      break;
+    }
+  }
+  
+  return result;
+}
