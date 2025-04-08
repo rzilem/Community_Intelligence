@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy, RefreshCw } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AssociationSelector from '@/components/associations/AssociationSelector';
@@ -27,6 +28,7 @@ const DataImportExport: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
 
   const handleAssociationChange = (associationId: string) => {
+    console.log('Association changed to:', associationId);
     setSelectedAssociationId(associationId);
     // Reset the import state when the association changes
     resetImportState();
@@ -42,6 +44,7 @@ const DataImportExport: React.FC = () => {
   };
 
   const handleFileUpload = async (file: File, parsedData: any[], type: string) => {
+    console.log('File uploaded:', file.name, 'Type:', type, 'Rows:', parsedData.length);
     setImportFile(file);
     setImportData(parsedData);
     setImportType(type);
@@ -51,6 +54,7 @@ const DataImportExport: React.FC = () => {
     try {
       // Validate the data
       const results = await dataImportService.validateData(parsedData, type);
+      console.log('Validation results:', results);
       setValidationResults(results);
       
       // Show the mapping modal
@@ -64,6 +68,7 @@ const DataImportExport: React.FC = () => {
   };
 
   const handleMappingConfirm = async (mappings: Record<string, string>) => {
+    console.log('Mapping confirmed:', mappings);
     setShowMappingModal(false);
     setIsImporting(true);
     
@@ -77,6 +82,7 @@ const DataImportExport: React.FC = () => {
         userId: user?.id
       });
       
+      console.log('Import results:', results);
       setImportResults(results);
       
       // Show toast based on result

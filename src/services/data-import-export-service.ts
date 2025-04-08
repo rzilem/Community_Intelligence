@@ -173,7 +173,7 @@ export const dataImportService = {
       }
       
       return data?.mappings && typeof data.mappings === 'object' 
-        ? data.mappings as unknown as Record<string, string> 
+        ? (data.mappings as unknown as Record<string, string>)
         : null;
     } catch (error) {
       console.error('Error getting import mappings:', error);
@@ -466,24 +466,33 @@ export const dataImportService = {
       for (let i = 0; i < processedData.length; i += batchSize) {
         const batch = processedData.slice(i, i + batchSize);
         
-        // Use a simple string as the table name to avoid TypeScript errors
-        const { data: insertedData, error } = await supabase
-          .from(tableName as any)
-          .insert(batch as any)
-          .select('id');
-        
-        if (error) {
-          console.error(`Error importing batch to ${tableName}:`, error);
+        try {
+          // Use a simple string as the table name with type assertion to avoid TypeScript errors
+          const { data: insertedData, error } = await supabase
+            .from(tableName as any)
+            .insert(batch as any)
+            .select('id');
+          
+          if (error) {
+            console.error(`Error importing batch to ${tableName}:`, error);
+            failedImports += batch.length;
+            details.push({
+              status: 'error',
+              message: `Failed to import ${batch.length} records: ${error.message}`
+            });
+          } else if (insertedData) {
+            successfulImports += insertedData.length;
+            details.push({
+              status: 'success',
+              message: `Imported ${insertedData.length} records successfully`
+            });
+          }
+        } catch (e) {
+          console.error(`Error in batch import:`, e);
           failedImports += batch.length;
           details.push({
             status: 'error',
-            message: `Failed to import ${batch.length} records: ${error.message}`
-          });
-        } else {
-          successfulImports += insertedData.length;
-          details.push({
-            status: 'success',
-            message: `Imported ${insertedData.length} records successfully`
+            message: `Failed to import ${batch.length} records: ${e instanceof Error ? e.message : 'Unknown error'}`
           });
         }
         
@@ -525,7 +534,16 @@ export const dataImportService = {
       };
     } catch (error) {
       console.error('Error importing data:', error);
-      throw error;
+      return {
+        success: false,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: data.length,
+        details: [{ 
+          status: 'error', 
+          message: `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        }]
+      };
     }
   },
   
@@ -615,31 +633,35 @@ export const dataExportService = {
       switch (dataType) {
         case 'associations':
           tableName = 'associations';
-          query = query.from(tableName).select('*');
+          query = query.from(tableName as any).select('*');
           break;
         case 'owners':
           tableName = 'residents';
-          query = query.from(tableName).select('*').eq('resident_type', 'owner');
+          query = query.from(tableName as any).select('*').eq('resident_type', 'owner');
           break;
         case 'properties':
           tableName = 'properties';
-          query = query.from(tableName).select('*').eq('association_id', associationId);
+          query = query.from(tableName as any).select('*').eq('association_id', associationId);
           break;
         case 'financial':
           tableName = 'assessments';
-          query = query.from(tableName)
+          query = query.from(tableName as any)
             .select('*, properties:property_id(address, unit_number)')
             .eq('properties.association_id', associationId);
           break;
         case 'compliance':
           tableName = 'compliance_issues';
-          query = query.from(tableName).select('*').eq('association_id', associationId);
+          query = query.from(tableName as any).select('*').eq('association_id', associationId);
           break;
         case 'maintenance':
           tableName = 'maintenance_requests';
-          query = query.from(tableName)
+          query = query.from(tableName as any)
             .select('*, properties:property_id(address, unit_number, association_id)')
             .eq('properties.association_id', associationId);
+          break;
+        case 'vendors':
+          tableName = 'vendors';
+          query = query.from(tableName as any).select('*');
           break;
         default:
           throw new Error(`Unknown data type: ${dataType}`);

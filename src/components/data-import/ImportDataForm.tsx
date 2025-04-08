@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Upload, FileSpreadsheet, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,17 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
   const [importType, setImportType] = useState<string>('associations');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleBrowseButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -50,6 +57,11 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
+          if (!data) {
+            reject(new Error('Failed to read file content'));
+            return;
+          }
+
           const fileName = file.name.toLowerCase();
           
           if (fileName.endsWith('.csv')) {
@@ -86,11 +98,15 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
             reject(new Error('Unsupported file format'));
           }
         } catch (error) {
+          console.error('Error parsing file:', error);
           reject(error);
         }
       };
       
-      reader.onerror = (error) => reject(error);
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(error);
+      };
       
       if (file.name.endsWith('.csv')) {
         reader.readAsText(file);
@@ -106,6 +122,7 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
       setIsProcessing(true);
       
       try {
+        console.log('Parsing file:', selectedFile.name);
         // Parse the file to get the data
         const parsedData = await parseFile(selectedFile);
         
@@ -115,14 +132,21 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
           return;
         }
         
+        console.log('Parsed data:', parsedData.slice(0, 2)); // Log first two items for debugging
+        
         // Pass the file, parsed data, and type to the parent component
         onFileUpload(selectedFile, parsedData, importType);
       } catch (error) {
         console.error('Error parsing file:', error);
         toast.error(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setIsProcessing(false);
       }
-      
-      setIsProcessing(false);
+    } else {
+      if (!selectedFile) {
+        toast.error('Please select a file to import');
+      } else if (!associationId) {
+        toast.error('Please select an association');
+      }
     }
   };
 
@@ -224,18 +248,21 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
                     Supports CSV and Excel (.xlsx) files
                   </p>
                 </div>
-                <label className="cursor-pointer">
-                  <Button variant="outline" type="button">
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Browse Files
-                  </Button>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleFileChange}
-                  />
-                </label>
+                <Button 
+                  variant="outline" 
+                  type="button" 
+                  onClick={handleBrowseButtonClick}
+                >
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Browse Files
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".csv,.xlsx,.xls"
+                  onChange={handleFileChange}
+                />
               </div>
             </div>
             {selectedFile && (

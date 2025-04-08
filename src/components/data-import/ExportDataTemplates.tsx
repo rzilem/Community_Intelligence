@@ -1,199 +1,193 @@
 
-import React from 'react';
-import { Download, FileSpreadsheet, FileText, Calendar, Users, Building, CreditCard, AlertTriangle, Wrench } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { Download, FileSpreadsheet, Check } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { dataExportService } from '@/services/data-import-export-service';
 import { toast } from 'sonner';
-
-interface TemplateCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  onClick: () => void;
-}
-
-const TemplateCard: React.FC<TemplateCardProps> = ({ title, description, icon, onClick }) => (
-  <Card className="overflow-hidden">
-    <div className="flex flex-col h-full">
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div className="rounded-full bg-primary/10 p-2">{icon}</div>
-        </div>
-        <CardTitle className="text-lg">{title}</CardTitle>
-        <CardDescription className="line-clamp-2">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="mt-auto">
-        <Button variant="outline" className="w-full" onClick={onClick}>
-          <Download className="mr-2 h-4 w-4" /> Download Template
-        </Button>
-      </CardContent>
-    </div>
-  </Card>
-);
+import * as XLSX from 'xlsx';
 
 interface ExportDataTemplatesProps {
   associationId: string;
 }
 
 const ExportDataTemplates: React.FC<ExportDataTemplatesProps> = ({ associationId }) => {
-  const downloadTemplate = (templateType: string) => {
-    // In a real implementation, this would generate and download the template
-    // based on the templateType
+  const [exportType, setExportType] = useState<string>('');
+  const [exportFormat, setExportFormat] = useState<'csv' | 'xlsx'>('xlsx');
+  const [isExporting, setIsExporting] = useState(false);
+  const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false);
+  
+  const handleExport = async () => {
     if (!associationId) {
-      toast.error("Please select an association first");
+      toast.error('Please select an association first');
       return;
     }
     
-    toast.success(`${templateType} template downloaded successfully`);
-    console.log(`Downloading ${templateType} template for association ${associationId}`);
-  };
-
-  const downloadAssociationData = () => {
-    if (!associationId) {
-      toast.error("Please select an association first");
+    if (!exportType) {
+      toast.error('Please select a data type to export');
       return;
     }
-    toast.success("Association data export started. You'll be notified when it's ready.");
+    
+    setIsExporting(true);
+    
+    try {
+      const result = await dataExportService.exportData({
+        associationId,
+        dataType: exportType,
+        format: exportFormat,
+      });
+      
+      if (result.success && result.data) {
+        // Create and download the file
+        const worksheet = XLSX.utils.json_to_sheet(result.data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, exportType);
+        
+        if (exportFormat === 'csv') {
+          const csvContent = XLSX.utils.sheet_to_csv(worksheet);
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = result.fileName;
+          link.click();
+        } else {
+          XLSX.writeFile(workbook, result.fileName);
+        }
+        
+        toast.success(`Data exported successfully as ${exportFormat.toUpperCase()}`);
+      } else {
+        toast.error('Failed to export data');
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
+  const handleGetTemplate = async (templateType: string) => {
+    setIsGeneratingTemplate(true);
+    
+    try {
+      // Get template data
+      const template = dataImportService.getImportTemplate(templateType);
+      
+      // Convert template to file and download
+      const worksheet = XLSX.utils.json_to_sheet([template]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, templateType);
+      XLSX.writeFile(workbook, `${templateType}_template.xlsx`);
+      
+      toast.success(`${templateType} template downloaded successfully`);
+    } catch (error) {
+      console.error('Error generating template:', error);
+      toast.error('Failed to generate template');
+    } finally {
+      setIsGeneratingTemplate(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-xl font-semibold mb-1">Export Templates</h3>
-        <p className="text-muted-foreground mb-6">
-          Download template files in the required format for data imports
-        </p>
+    <Card>
+      <CardHeader>
+        <CardTitle>Export Options</CardTitle>
+        <CardDescription>
+          Export data from the system or download import templates
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="export" className="space-y-6">
+          <TabsList className="grid grid-cols-2 w-[400px]">
+            <TabsTrigger value="export">Export Data</TabsTrigger>
+            <TabsTrigger value="templates">Download Templates</TabsTrigger>
+          </TabsList>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <TemplateCard
-            title="Associations"
-            description="Template for importing HOA and community association data"
-            icon={<Building className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Associations')}
-          />
-          <TemplateCard
-            title="Owners & Residents"
-            description="Template for importing owner and resident information"
-            icon={<Users className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Owners')}
-          />
-          <TemplateCard
-            title="Properties"
-            description="Template for importing property details"
-            icon={<Building className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Properties')}
-          />
-          <TemplateCard
-            title="Financial Data"
-            description="Template for importing assessments, payments, and balances"
-            icon={<CreditCard className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Financial')}
-          />
-          <TemplateCard
-            title="Compliance Issues"
-            description="Template for importing violations and compliance issues"
-            icon={<AlertTriangle className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Compliance')}
-          />
-          <TemplateCard
-            title="Maintenance Requests"
-            description="Template for importing maintenance requests"
-            icon={<Wrench className="h-4 w-4 text-primary" />}
-            onClick={() => downloadTemplate('Maintenance')}
-          />
-        </div>
-      </div>
-
-      <div className="border-t pt-6 mt-8">
-        <h3 className="text-xl font-semibold mb-1">Export Association Data</h3>
-        <p className="text-muted-foreground mb-6">
-          Download your association data in CSV or Excel format
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Full Association Export</CardTitle>
-              <CardDescription>
-                Export all data related to the selected association
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col gap-2">
-                <Button 
-                  variant="outline"
-                  onClick={downloadAssociationData}
-                  disabled={!associationId}
-                  className="justify-start"
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" /> 
-                  Export to Excel (.xlsx)
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={downloadAssociationData}
-                  disabled={!associationId}
-                  className="justify-start"
-                >
-                  <FileText className="mr-2 h-4 w-4" /> 
-                  Export to CSV (.csv)
-                </Button>
+          <TabsContent value="export" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="exportType" className="text-sm font-medium">Data Type</label>
+                <Select onValueChange={setExportType}>
+                  <SelectTrigger id="exportType">
+                    <SelectValue placeholder="Select data to export" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="associations">Associations</SelectItem>
+                    <SelectItem value="owners">Owners/Residents</SelectItem>
+                    <SelectItem value="properties">Properties</SelectItem>
+                    <SelectItem value="financial">Financial Data</SelectItem>
+                    <SelectItem value="compliance">Compliance Issues</SelectItem>
+                    <SelectItem value="maintenance">Maintenance Requests</SelectItem>
+                    <SelectItem value="vendors">Vendors</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Custom Data Export</CardTitle>
-              <CardDescription>
-                Select specific data to export for the selected association
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm">
-                  Choose which data to include in your export:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    disabled={!associationId}
-                    onClick={() => downloadTemplate('Owners_Custom')}
-                  >
-                    <Users className="mr-2 h-3 w-3" /> Owners
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    disabled={!associationId}
-                    onClick={() => downloadTemplate('Properties_Custom')}
-                  >
-                    <Building className="mr-2 h-3 w-3" /> Properties
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    disabled={!associationId}
-                    onClick={() => downloadTemplate('Financial_Custom')}
-                  >
-                    <CreditCard className="mr-2 h-3 w-3" /> Financial
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    disabled={!associationId}
-                    onClick={() => downloadTemplate('Compliance_Custom')}
-                  >
-                    <AlertTriangle className="mr-2 h-3 w-3" /> Compliance
-                  </Button>
-                </div>
+              <div className="space-y-2">
+                <label htmlFor="exportFormat" className="text-sm font-medium">Export Format</label>
+                <Select 
+                  defaultValue={exportFormat} 
+                  onValueChange={(value) => setExportFormat(value as 'csv' | 'xlsx')}
+                >
+                  <SelectTrigger id="exportFormat">
+                    <SelectValue placeholder="Select export format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="xlsx">Excel (XLSX)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleExport} 
+                disabled={!exportType || !associationId || isExporting}
+              >
+                {isExporting ? (
+                  <>Processing...</>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" /> 
+                    Export Data
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="templates" className="space-y-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              Download templates to prepare your data for import. Fill in the template and upload it using the Import tab.
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {['associations', 'owners', 'properties', 'financial', 'compliance', 'maintenance', 'vendors'].map((type) => (
+                <Card key={type} className="overflow-hidden">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base capitalize">{type}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => handleGetTemplate(type)}
+                      disabled={isGeneratingTemplate}
+                    >
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Download Template
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 };
 
