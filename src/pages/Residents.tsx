@@ -29,7 +29,7 @@ const Residents = () => {
   );
 
   // Ensure residents is always an array
-  const residents = Array.isArray(residentsData) ? residentsData : [residentsData];
+  const residents = Array.isArray(residentsData) ? residentsData : [];
 
   const filteredResidents = residents.filter(resident => {
     if (!searchTerm) return true;
