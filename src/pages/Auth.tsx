@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import SupabaseDiagnostics from '@/components/auth/SupabaseDiagnostics';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -17,6 +18,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'login');
   const [supabaseStatus, setSupabaseStatus] = useState('Checking connection...');
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({
@@ -106,8 +108,17 @@ const Auth = () => {
           <p className="text-muted-foreground">HOA Management Platform</p>
           <div className="mt-2 p-2 bg-blue-50 text-sm rounded border border-blue-200">
             <p className="font-medium">Supabase Status: <span className={supabaseStatus.includes('error') ? 'text-red-500' : 'text-green-500'}>{supabaseStatus}</span></p>
+            <Button 
+              variant="link" 
+              className="text-xs p-0 h-6"
+              onClick={() => setShowDiagnostics(!showDiagnostics)}
+            >
+              {showDiagnostics ? 'Hide Diagnostics' : 'Show Diagnostics'}
+            </Button>
           </div>
         </div>
+        
+        {showDiagnostics && <SupabaseDiagnostics />}
         
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full grid-cols-2">

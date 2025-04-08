@@ -44,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Get the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'Session found' : 'No session', session);
       setSession(session);
       setUser(session?.user || null);
     });
@@ -86,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           
           if (data) {
-            // Cast to unknown first, then to Profile for type safety
+            // First cast to unknown, then to Profile for type safety
             const profileData = data as unknown as Profile;
             console.log('Profile data loaded:', profileData);
             setProfile(profileData);
