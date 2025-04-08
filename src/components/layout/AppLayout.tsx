@@ -7,6 +7,7 @@ import { Sidebar, SidebarContent, SidebarProvider, SidebarTrigger, SidebarMenu, 
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = React.useState(false);
+  const { signOut } = useAuth();
 
   const mainNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: Home },
@@ -28,6 +30,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { name: 'Reports', path: '/reports', icon: LineChart },
     { name: 'Communications', path: '/communications', icon: MessageSquare },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <SidebarProvider>
@@ -92,7 +98,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <button className="text-white/80 hover:bg-white/10 w-full">
+                  <button onClick={handleSignOut} className="text-white/80 hover:bg-white/10 w-full">
                     <LogOut size={20} />
                     <span>Sign Out</span>
                   </button>
@@ -105,11 +111,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Mobile header */}
           <header className="flex md:hidden items-center justify-between h-16 px-4 border-b bg-white">
-            <SidebarTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Menu size={20} />
-              </Button>
-            </SidebarTrigger>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8"
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              <Menu size={20} />
+              <span className="sr-only">Toggle Sidebar</span>
+            </Button>
             
             <div className="flex items-center">
               <h1 className="font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
