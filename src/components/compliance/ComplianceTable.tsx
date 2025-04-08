@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Compliance } from '@/types/app-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -50,7 +49,7 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
       case 'open':
         return <Badge variant="secondary">Open</Badge>;
       case 'in-progress':
-        return <Badge variant="warning" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">In Progress</Badge>;
+        return <Badge variant="warning">In Progress</Badge>;
       case 'escalated':
         return <Badge variant="destructive">Escalated</Badge>;
       case 'resolved':
