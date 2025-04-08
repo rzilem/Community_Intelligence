@@ -1,0 +1,54 @@
+
+import { useState, useEffect } from 'react';
+
+export interface ColumnDef {
+  id: string;
+  label: string;
+  accessorKey?: string;
+  defaultVisible?: boolean;
+}
+
+export const useTableColumns = <T extends Record<string, any>>(
+  defaultColumns: ColumnDef[],
+  storageKey: string
+) => {
+  const [columns, setColumns] = useState<ColumnDef[]>(() => {
+    // Try to load saved column preferences from localStorage
+    const savedColumns = localStorage.getItem(storageKey);
+    if (savedColumns) {
+      try {
+        return JSON.parse(savedColumns);
+      } catch (e) {
+        console.error('Failed to parse saved columns', e);
+      }
+    }
+    return defaultColumns;
+  });
+
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(() => {
+    // Set default visible columns
+    return columns
+      .filter(col => col.defaultVisible !== false)
+      .map(col => col.id);
+  });
+
+  // Save column visibility preferences to localStorage when they change
+  useEffect(() => {
+    const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
+    localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
+  }, [visibleColumnIds, columns, storageKey]);
+
+  const updateVisibleColumns = (columnIds: string[]) => {
+    // Ensure at least one column is visible
+    if (columnIds.length === 0) {
+      return;
+    }
+    setVisibleColumnIds(columnIds);
+  };
+
+  return {
+    columns,
+    visibleColumnIds,
+    updateVisibleColumns
+  };
+};

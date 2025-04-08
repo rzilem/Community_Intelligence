@@ -17,6 +17,8 @@ import { formatDistanceToNow } from 'date-fns';
 interface LeadsTableProps {
   leads: Lead[];
   isLoading?: boolean;
+  visibleColumnIds: string[];
+  columns: Array<{ id: string; label: string; accessorKey?: string }>;
 }
 
 const LeadStatusBadge = ({ status }: { status: Lead['status'] }) => {
@@ -36,7 +38,10 @@ const LeadStatusBadge = ({ status }: { status: Lead['status'] }) => {
   );
 };
 
-const LeadsTable = ({ leads, isLoading = false }: LeadsTableProps) => {
+const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: LeadsTableProps) => {
+  // Get only the columns that should be displayed
+  const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
+
   if (isLoading) {
     return (
       <div className="min-h-[300px] flex items-center justify-center">
@@ -53,31 +58,55 @@ const LeadsTable = ({ leads, isLoading = false }: LeadsTableProps) => {
     );
   }
 
+  // Helper function to render a cell based on column ID
+  const renderCell = (lead: Lead, columnId: string) => {
+    const column = columns.find(col => col.id === columnId);
+    
+    if (!column || !column.accessorKey) return null;
+    
+    const value = lead[column.accessorKey as keyof Lead];
+    
+    if (column.id === 'status' && value) {
+      return <LeadStatusBadge status={value as Lead['status']} />;
+    }
+    
+    if (column.id === 'created_at' && value) {
+      return formatDistanceToNow(new Date(value as string), { addSuffix: true });
+    }
+    
+    if (column.id === 'updated_at' && value) {
+      return formatDistanceToNow(new Date(value as string), { addSuffix: true });
+    }
+
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+
+    return value as React.ReactNode;
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
+            {visibleColumns.map((column) => (
+              <TableHead key={column.id}>{column.label}</TableHead>
+            ))}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {leads.map((lead) => (
             <TableRow key={lead.id}>
-              <TableCell className="font-medium">{lead.name}</TableCell>
-              <TableCell>{lead.email}</TableCell>
-              <TableCell>{lead.source}</TableCell>
-              <TableCell>
-                <LeadStatusBadge status={lead.status} />
-              </TableCell>
-              <TableCell>
-                {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-              </TableCell>
+              {visibleColumns.map((column) => (
+                <TableCell 
+                  key={`${lead.id}-${column.id}`}
+                  className={column.id === 'name' ? 'font-medium' : ''}
+                >
+                  {renderCell(lead, column.id)}
+                </TableCell>
+              ))}
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button variant="ghost" size="sm">

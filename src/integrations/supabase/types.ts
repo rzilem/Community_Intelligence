@@ -604,40 +604,79 @@ export type Database = {
       }
       leads: {
         Row: {
+          additional_requirements: string | null
+          address_line2: string | null
+          association_name: string | null
+          association_type: string | null
+          city: string | null
           company: string | null
           created_at: string
+          current_management: string | null
           email: string
+          first_name: string | null
           id: string
+          last_name: string | null
           name: string
           notes: string | null
+          number_of_units: number | null
           phone: string | null
           source: string
+          state: string | null
           status: string
+          street_address: string | null
           updated_at: string
+          uploaded_files: Json | null
+          zip: string | null
         }
         Insert: {
+          additional_requirements?: string | null
+          address_line2?: string | null
+          association_name?: string | null
+          association_type?: string | null
+          city?: string | null
           company?: string | null
           created_at?: string
+          current_management?: string | null
           email: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name: string
           notes?: string | null
+          number_of_units?: number | null
           phone?: string | null
           source?: string
+          state?: string | null
           status?: string
+          street_address?: string | null
           updated_at?: string
+          uploaded_files?: Json | null
+          zip?: string | null
         }
         Update: {
+          additional_requirements?: string | null
+          address_line2?: string | null
+          association_name?: string | null
+          association_type?: string | null
+          city?: string | null
           company?: string | null
           created_at?: string
+          current_management?: string | null
           email?: string
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           name?: string
           notes?: string | null
+          number_of_units?: number | null
           phone?: string | null
           source?: string
+          state?: string | null
           status?: string
+          street_address?: string | null
           updated_at?: string
+          uploaded_files?: Json | null
+          zip?: string | null
         }
         Relationships: []
       }
