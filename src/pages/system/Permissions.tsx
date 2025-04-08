@@ -17,8 +17,8 @@ const roles = [
 ];
 
 const Permissions = () => {
-  // Fix the query to properly join auth.users with profiles
-  const { data = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
+  // Query directly from profiles table
+  const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
     {
       select: 'id, email, created_at, first_name, last_name, role, profile_image_url',

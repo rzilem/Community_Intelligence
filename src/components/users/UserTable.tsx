@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserWithProfile } from '@/types/app-types';
+import { UserWithProfile } from '@/types/user-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
