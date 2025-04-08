@@ -10,8 +10,8 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  isLoading: boolean; // Added to match usage in components
-  userRole: string | null; // Added to match usage in components
+  isLoading: boolean; 
+  userRole: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: { first_name: string, last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -24,8 +24,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
-  isLoading: true, // Added default value
-  userRole: null, // Added default value
+  isLoading: true,
+  userRole: null,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null); // Added to track user role
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     // Get the initial session
@@ -81,11 +81,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error) throw error;
           
           if (data) {
-            // Fixed: Convert data to Profile and use strong typing
-            const profileData = data as Profile;
+            // Fixed: First cast to unknown, then to Profile for type safety
+            const profileData = data as unknown as Profile;
             setProfile(profileData);
             setIsAdmin(profileData.role === 'admin');
-            setUserRole(profileData.role); // Track user role
+            setUserRole(profileData.role);
           }
         } catch (error: any) {
           console.error('Error fetching profile:', error.message);
@@ -148,7 +148,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       profile,
       loading,
-      isLoading: loading, // Alias loading as isLoading for compatibility
+      isLoading: loading,
       signIn,
       signUp,
       signOut,
