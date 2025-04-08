@@ -54,7 +54,7 @@ export const createHOA = async (hoa: Partial<HOA>): Promise<HOA> => {
       name: hoa.name,
       address: hoa.address,
       contact_email: hoa.contact_email
-    })
+    } as any)
     .select()
     .single();
 
@@ -82,7 +82,7 @@ export const updateHOA = async (id: string, hoa: Partial<HOA>): Promise<HOA> => 
       name: hoa.name,
       address: hoa.address,
       contact_email: hoa.contact_email
-    })
+    } as any)
     .eq('id', id)
     .select()
     .single();

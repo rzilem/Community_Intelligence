@@ -13,7 +13,7 @@ const SupabaseDiagnostics: React.FC = () => {
       try {
         // Test basic connection with a simple query
         const { data, error } = await supabase
-          .from('profiles')
+          .from('profiles' as any)
           .select('count')
           .limit(1);
         
@@ -35,7 +35,7 @@ const SupabaseDiagnostics: React.FC = () => {
           // Check each table to see if we can access it
           for (const table of knownTables) {
             try {
-              // Type-safe approach using explicit table name constants
+              // Use type assertion for dynamic table names
               const { error: tableError } = await supabase
                 .from(table as any)
                 .select('count')

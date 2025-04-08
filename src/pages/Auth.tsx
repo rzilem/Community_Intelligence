@@ -33,7 +33,11 @@ const Auth = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        const { data, error } = await supabase
+          .from('profiles' as any)
+          .select('count')
+          .limit(1);
+          
         if (error) {
           console.error('Supabase connection error:', error);
           setSupabaseStatus(`Connection error: ${error.message}`);
