@@ -351,7 +351,7 @@ export const dataImportService = {
           totalProcessed: 0,
           successfulImports: 0,
           failedImports: 0,
-          details: [{ status: 'error' as const, message: 'Failed to create import job' }]
+          details: [{ status: 'error', message: 'Failed to create import job' }]
         };
       }
       
