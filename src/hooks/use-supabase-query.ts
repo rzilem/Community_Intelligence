@@ -3,10 +3,21 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Type for database tables that we know are valid
+type KnownTables = 
+  | 'associations'
+  | 'properties'
+  | 'residents'
+  | 'profiles'
+  | 'documents'
+  | 'calendar_events'
+  | 'bank_accounts'
+  | string; // Allow any string for flexibility, but with known ones for autocomplete
+
 // Hook for fetching data from Supabase
 export function useSupabaseQuery<T = any>(
   key: string | string[],
-  tableName: string,
+  tableName: KnownTables,
   options?: {
     select?: string;
     filter?: { column: string; value: any; operator?: string }[];
@@ -87,7 +98,7 @@ export function useSupabaseQuery<T = any>(
 
 // Hook for creating an item in Supabase
 export function useSupabaseCreate<T = any>(
-  tableName: string, 
+  tableName: KnownTables, 
   options?: { 
     onSuccess?: (data: T) => void;
     invalidateQueries?: string[] | string[][];
@@ -133,7 +144,7 @@ export function useSupabaseCreate<T = any>(
 
 // Hook for updating an item in Supabase
 export function useSupabaseUpdate<T = any>(
-  tableName: string, 
+  tableName: KnownTables, 
   options?: { 
     onSuccess?: (data: T) => void;
     invalidateQueries?: string[] | string[][];
@@ -180,7 +191,7 @@ export function useSupabaseUpdate<T = any>(
 
 // Hook for deleting an item from Supabase
 export function useSupabaseDelete(
-  tableName: string, 
+  tableName: KnownTables, 
   options?: { 
     onSuccess?: () => void;
     invalidateQueries?: string[] | string[][];

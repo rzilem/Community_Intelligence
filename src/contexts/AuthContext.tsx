@@ -1,10 +1,9 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Profile, UserSettings } from '@/types/app-types';
+import { Profile } from '@/types/app-types';
 
 // Define the auth context type 
 interface AuthContextType {
@@ -66,8 +65,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('*, resident:resident_id(*)')
+        .from('profiles')
+        .select('*')
         .eq('id', userId)
         .single();
 
@@ -77,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
         setUserRole(data.role);
       }
     } catch (error) {

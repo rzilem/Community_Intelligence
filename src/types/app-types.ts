@@ -1,4 +1,3 @@
-
 import type { Database } from '@/integrations/supabase/types';
 
 // Get strongly typed references to tables
@@ -11,9 +10,8 @@ export type Profile = {
   first_name?: string;
   last_name?: string;
   email?: string;
-  resident_id?: string;
-  hoa_id?: string;
-  resident?: Resident;
+  phone_number?: string;
+  profile_image_url?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -38,20 +36,30 @@ export type HOA = {
 
 export type Property = {
   id: string;
-  hoa_id: string;
-  type: string;
+  association_id: string;
+  property_type: string;
   address: string;
   unit_number?: string;
-  square_footage?: number;
-  owner_name?: string;
+  square_feet?: number;
+  city?: string;
+  state?: string;
+  zip?: string;
+  bedrooms?: number;
+  bathrooms?: number;
   created_at?: string;
   updated_at?: string;
 };
 
 export type Resident = {
   id: string;
-  name: string;
-  email: string;
+  user_id?: string;
+  property_id?: string;
+  resident_type: string;
+  is_primary?: boolean;
+  move_in_date?: string;
+  move_out_date?: string;
+  name?: string;
+  email?: string;
   phone?: string;
   emergency_contact?: string;
   created_at?: string;
@@ -93,7 +101,6 @@ export type Document = {
   uploaded_date?: string;
 };
 
-// Add other application-specific types below
 export type Assessment = {
   id: string;
   property_id: string;
@@ -130,9 +137,14 @@ export type Compliance = {
   updated_at?: string;
 };
 
-// Define application-specific types that extend or use Supabase types
 export interface UserWithProfile {
   id: string;
   email: string;
   profile: Profile | null;
 }
+
+export type ResidentWithProfile = Resident & {
+  user?: {
+    profile?: Profile;
+  };
+};

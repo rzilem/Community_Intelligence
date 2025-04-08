@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
@@ -101,13 +100,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   });
 
   useEffect(() => {
-    // If location changes, close the sidebar on mobile
     if (isMobile) {
       setIsSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
 
-  // Update sidebar state when mobile status changes
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
@@ -123,14 +120,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     await signOut();
   };
 
-  // Filter menu items based on user role
   const getFilteredNavItems = () => {
-    // Base items everyone can see
     const items: NavItemProps[] = [
       { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     ];
     
-    // Only show community management to admins and managers
     if (userRole === 'admin' || userRole === 'manager') {
       items.push({ 
         name: 'Community Management', 
@@ -146,7 +140,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // Only show accounting to admins, managers, and accountants
     if (['admin', 'manager', 'accountant'].includes(userRole || '')) {
       items.push({ 
         name: 'Accounting', 
@@ -166,7 +159,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // All roles can see communications
     items.push({ 
       name: 'Communications', 
       path: '/communications', 
@@ -177,7 +169,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       ]
     });
     
-    // Only admins and managers can see lead management
     if (['admin', 'manager'].includes(userRole || '')) {
       items.push({ 
         name: 'Lead Management', 
@@ -193,7 +184,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // Operations available to all staff
     if (['admin', 'manager', 'maintenance', 'accountant'].includes(userRole || '')) {
       items.push({ 
         name: 'Operations', 
@@ -210,7 +200,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // Records & Reports for staff
     if (['admin', 'manager', 'maintenance', 'accountant'].includes(userRole || '')) {
       items.push({ 
         name: 'Records & Reports', 
@@ -224,7 +213,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // Resale Management for admins and managers
     if (['admin', 'manager'].includes(userRole || '')) {
       items.push({ 
         name: 'Resale Management', 
@@ -241,7 +229,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       });
     }
     
-    // System settings for admins only
     if (userRole === 'admin') {
       items.push({ 
         name: 'System', 
