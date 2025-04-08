@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,12 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const { signIn, signUp, isLoading, session } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'login');
+  const [supabaseStatus, setSupabaseStatus] = useState('Checking connection...');
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({
@@ -23,6 +26,27 @@ const Auth = () => {
     password: '',
     confirmPassword: ''
   });
+
+  // Check Supabase connection
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        if (error) {
+          console.error('Supabase connection error:', error);
+          setSupabaseStatus(`Connection error: ${error.message}`);
+        } else {
+          console.log('Supabase connected successfully', data);
+          setSupabaseStatus('Connected to Supabase successfully');
+        }
+      } catch (err) {
+        console.error('Unexpected error checking Supabase:', err);
+        setSupabaseStatus(`Unexpected error: ${String(err)}`);
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -80,6 +104,9 @@ const Auth = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary">Community Intelligence</h1>
           <p className="text-muted-foreground">HOA Management Platform</p>
+          <div className="mt-2 p-2 bg-blue-50 text-sm rounded border border-blue-200">
+            <p className="font-medium">Supabase Status: <span className={supabaseStatus.includes('error') ? 'text-red-500' : 'text-green-500'}>{supabaseStatus}</span></p>
+          </div>
         </div>
         
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
