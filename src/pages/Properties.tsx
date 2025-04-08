@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Building, Search, Download, PlusCircle } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -27,6 +29,7 @@ interface Property {
   bathrooms: number;
   sqFt: number;
   association: string;
+  associationId: string; // Added associationId
   status: 'occupied' | 'vacant' | 'pending' | 'delinquent';
   ownerName?: string;
 }
@@ -43,6 +46,7 @@ const mockProperties: Property[] = [
     bathrooms: 3,
     sqFt: 2400,
     association: 'Oakridge Estates',
+    associationId: 'assoc-001',
     status: 'occupied',
     ownerName: 'Michael Thompson'
   },
@@ -57,6 +61,7 @@ const mockProperties: Property[] = [
     bathrooms: 2.5,
     sqFt: 1800,
     association: 'Oakridge Estates',
+    associationId: 'assoc-001',
     status: 'occupied',
     ownerName: 'Sarah Johnson'
   },
@@ -71,6 +76,7 @@ const mockProperties: Property[] = [
     bathrooms: 2,
     sqFt: 1200,
     association: 'Highland Towers',
+    associationId: 'assoc-002',
     status: 'vacant'
   },
   {
@@ -84,6 +90,7 @@ const mockProperties: Property[] = [
     bathrooms: 3.5,
     sqFt: 3200,
     association: 'Lakeside Community',
+    associationId: 'assoc-003',
     status: 'occupied',
     ownerName: 'David Wilson'
   },
@@ -98,6 +105,7 @@ const mockProperties: Property[] = [
     bathrooms: 2,
     sqFt: 1750,
     association: 'Lakeside Community',
+    associationId: 'assoc-003',
     status: 'delinquent',
     ownerName: 'Jennifer Miller'
   },
@@ -112,6 +120,7 @@ const mockProperties: Property[] = [
     bathrooms: 1,
     sqFt: 850,
     association: 'Highland Towers',
+    associationId: 'assoc-002',
     status: 'pending',
   },
 ];
@@ -135,6 +144,7 @@ const Properties = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const navigate = useNavigate();
 
   const filteredProperties = mockProperties.filter(property => {
     const matchesSearch = 
@@ -147,6 +157,10 @@ const Properties = () => {
     
     return matchesSearch && matchesAssociation && matchesStatus;
   });
+
+  const navigateToAssociation = (associationId: string) => {
+    navigate(`/system/associations/${associationId}`);
+  };
 
   return (
     <AppLayout>
@@ -241,7 +255,14 @@ const Properties = () => {
                         <TableCell>{property.address}</TableCell>
                         <TableCell className="capitalize">{property.type.replace('-', ' ')}</TableCell>
                         <TableCell>{property.sqFt} sq.ft.</TableCell>
-                        <TableCell>{property.association}</TableCell>
+                        <TableCell>
+                          <button 
+                            onClick={() => navigateToAssociation(property.associationId)}
+                            className="text-blue-600 hover:underline font-medium"
+                          >
+                            {property.association}
+                          </button>
+                        </TableCell>
                         <TableCell>{getStatusBadge(property.status)}</TableCell>
                         <TableCell>{property.ownerName || 'Not Assigned'}</TableCell>
                         <TableCell className="text-right">
