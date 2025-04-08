@@ -9,6 +9,7 @@ export const useFileParser = () => {
 
   const parseFile = async (file: File): Promise<any[]> => {
     setIsProcessing(true);
+    console.log('Starting to parse file:', file.name, 'Size:', file.size);
     
     try {
       return await new Promise<any[]>((resolve, reject) => {
@@ -18,29 +19,46 @@ export const useFileParser = () => {
           try {
             const data = e.target?.result;
             if (!data) {
+              console.error('Failed to read file content');
               reject(new Error('Failed to read file content'));
               return;
             }
 
             const fileName = file.name.toLowerCase();
+            console.log('File parsed successfully, processing as:', fileName.endsWith('.csv') ? 'CSV' : 'Excel');
             
             if (fileName.endsWith('.csv')) {
               // Parse CSV using the parseService
               if (typeof data === 'string') {
+                console.log('CSV data length:', data.length);
+                console.log('CSV sample:', data.slice(0, 100) + '...');
+                
                 const parsedData = parseService.parseCSV(data);
+                console.log('CSV parsing complete, rows:', parsedData.length);
+                if (parsedData.length === 0) {
+                  console.error('CSV parsing returned 0 rows');
+                }
                 resolve(parsedData);
               } else {
+                console.error('CSV data is not a string:', typeof data);
                 reject(new Error('CSV data is not a string'));
               }
             } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
               // Parse Excel
-              const workbook = XLSX.read(data, { type: 'binary' });
-              const sheetName = workbook.SheetNames[0];
-              const worksheet = workbook.Sheets[sheetName];
-              const parsedData = XLSX.utils.sheet_to_json(worksheet);
-              
-              resolve(parsedData);
+              try {
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const parsedData = XLSX.utils.sheet_to_json(worksheet);
+                
+                console.log('Excel parsing complete, rows:', parsedData.length);
+                resolve(parsedData);
+              } catch (excelError) {
+                console.error('Excel parsing error:', excelError);
+                reject(excelError);
+              }
             } else {
+              console.error('Unsupported file format:', fileName);
               reject(new Error('Unsupported file format'));
             }
           } catch (error) {

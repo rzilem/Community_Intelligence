@@ -3,10 +3,11 @@ import React from 'react';
 import ImportDataForm from './ImportDataForm';
 import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
-import { ValidationResult, ImportResult } from '@/types/import-types';
+import { ImportResult } from '@/types/import-types';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Upload } from 'lucide-react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
+import { toast } from 'sonner';
 
 interface ImportTabContentProps {
   associationId: string;
@@ -29,6 +30,20 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   onImportAnother,
   onAssociationChange,
 }) => {
+  const handleProceedWithImport = () => {
+    if (!associationId) {
+      toast.error("Please select an association before proceeding");
+      return;
+    }
+    
+    if (importFile) {
+      console.log('Proceeding with import:', importFile.name, 'Association:', associationId);
+      onFileUpload(importFile, [], importFile.name.split('.').pop() || '');
+    } else {
+      toast.error("No file selected");
+    }
+  };
+
   return (
     <div className="space-y-4">
       {!importFile && !importResults && (
@@ -75,7 +90,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
           </div>
           
           <Button 
-            onClick={() => onFileUpload(importFile, [], importFile.name.split('.').pop() || '')}
+            onClick={handleProceedWithImport}
             className="w-full md:w-auto"
             disabled={!associationId}
           >

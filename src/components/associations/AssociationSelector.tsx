@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,17 @@ export interface AssociationSelectorProps {
 export function AssociationSelector({ onAssociationChange, className }: AssociationSelectorProps) {
   const { userAssociations, currentAssociation, setCurrentAssociation } = useAuth();
   const [open, setOpen] = React.useState(false);
+
+  // Set the first association as default if available and none is selected
+  useEffect(() => {
+    if (userAssociations?.length > 0 && !currentAssociation) {
+      const firstAssociation = userAssociations[0].associations;
+      setCurrentAssociation(firstAssociation);
+      if (onAssociationChange) {
+        onAssociationChange(firstAssociation.id);
+      }
+    }
+  }, [userAssociations, currentAssociation, setCurrentAssociation, onAssociationChange]);
 
   if (!userAssociations || userAssociations.length === 0) {
     return (
@@ -33,6 +44,7 @@ export function AssociationSelector({ onAssociationChange, className }: Associat
       setCurrentAssociation(selected.associations);
       if (onAssociationChange) {
         onAssociationChange(associationId);
+        console.log('Association changed to:', associationId);
       }
     }
     setOpen(false);
@@ -61,7 +73,7 @@ export function AssociationSelector({ onAssociationChange, className }: Associat
                 <CommandItem
                   key={association.associations.id}
                   value={association.associations.id}
-                  onSelect={handleSelect}
+                  onSelect={() => handleSelect(association.associations.id)}
                 >
                   <Check
                     className={cn(

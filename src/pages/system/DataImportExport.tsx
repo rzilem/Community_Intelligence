@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileSpreadsheet } from 'lucide-react';
@@ -15,16 +15,24 @@ import { toast } from 'sonner';
 import { ValidationResult, ImportResult } from '@/types/import-types';
 
 const DataImportExport: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userAssociations, currentAssociation } = useAuth();
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [showMappingModal, setShowMappingModal] = useState(false);
   const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
   const [importResults, setImportResults] = useState<ImportResult | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importData, setImportData] = useState<any[]>([]);
-  const [importType, setImportType] = useState<string>('');
+  const [importType, setImportType] = useState<string>('associations');
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Set the current association as the selected association when available
+  useEffect(() => {
+    if (currentAssociation?.id && !selectedAssociationId) {
+      setSelectedAssociationId(currentAssociation.id);
+      console.log('Auto-selected association:', currentAssociation.id);
+    }
+  }, [currentAssociation, selectedAssociationId]);
 
   const handleAssociationChange = (associationId: string) => {
     console.log('Association changed to:', associationId);
@@ -41,35 +49,55 @@ const DataImportExport: React.FC = () => {
   };
 
   const handleFileUpload = async (file: File, parsedData: any[], type: string) => {
-    console.log('File uploaded:', file.name, 'Type:', type, 'Rows:', parsedData.length);
+    console.log('File uploaded:', file.name, 'Type:', type, 'Rows:', parsedData?.length || 'parsing needed');
     setImportFile(file);
-    setImportData(parsedData);
-    setImportType(type);
     
-    // Only proceed with validation if we have an association selected and data
+    // Only proceed with validation if we have an association selected
     if (!selectedAssociationId) {
       toast.warning('Please select an association before proceeding');
       return;
     }
     
-    if (parsedData.length === 0 && file) {
-      // If we don't have parsed data but have a file, we need to parse it first
+    // If we don't have parsed data but have a file, we need to parse it first
+    if ((!parsedData || parsedData.length === 0) && file) {
       setIsValidating(true);
+      console.log('Starting file parsing...');
+      
       try {
-        // We'll handle the file parsing later in a separate step
-        console.log('File needs to be parsed');
+        const { parseFile } = await import('@/components/data-import/useFileParser').then(
+          module => ({ parseFile: module.useFileParser().parseFile })
+        );
+        
+        const parsedResult = await parseFile(file);
+        console.log('File parsed successfully, rows:', parsedResult.length);
+        
+        if (parsedResult.length === 0) {
+          toast.error('The file appears to be empty or could not be parsed');
+          setIsValidating(false);
+          return;
+        }
+        
+        setImportData(parsedResult);
+        setImportType(type);
+        
+        // Continue with validation
+        const results = await validationService.validateData(parsedResult, type);
+        console.log('Validation results:', results);
+        setValidationResults(results);
+        setShowMappingModal(true);
       } catch (error) {
-        console.error('Error preparing file:', error);
-        toast.error('Failed to prepare the uploaded data');
+        console.error('Error parsing/validating file:', error);
+        toast.error(`Failed to process the file: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsValidating(false);
       }
-      return;
-    }
-    
+    } 
     // If we already have parsed data, proceed with validation
-    if (parsedData.length > 0) {
+    else if (parsedData && parsedData.length > 0) {
       setIsValidating(true);
+      setImportData(parsedData);
+      setImportType(type);
+      
       try {
         const results = await validationService.validateData(parsedData, type);
         console.log('Validation results:', results);
