@@ -33,7 +33,7 @@ const CompliancePage = () => {
   );
 
   // Ensure compliance is always an array
-  const complianceIssues = Array.isArray(complianceData) ? complianceData : [];
+  const complianceIssues = Array.isArray(complianceData) ? complianceData : [complianceData];
 
   const filteredCompliance = complianceIssues
     .filter(issue => {

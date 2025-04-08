@@ -31,7 +31,7 @@ const Properties = () => {
   );
 
   // Ensure properties is always an array
-  const properties = Array.isArray(propertiesData) ? propertiesData : [];
+  const properties = Array.isArray(propertiesData) ? propertiesData : [propertiesData];
 
   const filteredProperties = properties.filter(property => {
     if (!searchTerm) return true;
