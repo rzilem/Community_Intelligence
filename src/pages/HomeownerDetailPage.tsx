@@ -1,18 +1,17 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
-  User, Mail, Phone, Calendar, MapPin, Plus, Search, FileText
+  User, Mail, Phone, Calendar, MapPin, Plus, Search, FileText, Image, Home
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/date-utils';
 import { useParams } from 'react-router-dom';
+import { HomePropertyImage } from '@/components/homeowners/HomePropertyImage';
 
-// Mock data for demonstration purposes
 const mockHomeowner = {
   id: '101',
   name: 'Alice Johnson',
@@ -69,7 +68,6 @@ const HomeownerDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Summary');
   const [activeNotesTab, setActiveNotesTab] = useState('Manual Notes');
   
-  // In a real app, you would fetch homeowner data based on the id
   const homeowner = mockHomeowner;
 
   return (
@@ -163,6 +161,21 @@ const HomeownerDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Home className="h-5 w-5 mr-2" />
+              Property Image
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <HomePropertyImage 
+              address={`${homeowner.property} ${homeowner.unit}, Austin, TX`}
+              propertyId={homeowner.id}
+            />
+          </CardContent>
+        </Card>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-6 mb-8">
