@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,8 +56,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     'amenities',
     {
       select: '*',
-      filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : undefined,
-    }
+      filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : [],
+    },
+    !!currentAssociation
   );
 
   // Query for calendar events - fixed to pass table as first parameter
@@ -64,8 +66,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     'calendar_events',
     {
       select: '*',
-      filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : undefined,
-    }
+      filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : [],
+    },
+    !!currentAssociation
   );
 
   // Create event mutation
@@ -103,11 +106,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     }
 
     // Create start and end time Date objects
-    const startDate = new Date(date);
+    const startDate = new Date(newEvent.date);
     const [startHours, startMinutes] = newEvent.startTime.split(':');
     startDate.setHours(parseInt(startHours), parseInt(startMinutes));
 
-    const endDate = new Date(date);
+    const endDate = new Date(newEvent.date);
     const [endHours, endMinutes] = newEvent.endTime.split(':');
     endDate.setHours(parseInt(endHours), parseInt(endMinutes));
 
@@ -123,10 +126,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
       visibility: 'private' // Default visibility
     };
 
+    console.log("Creating event:", eventToSave);
+
     // Save to Supabase
     createEvent(eventToSave, {
       onSuccess: () => {
         setIsDialogOpen(false);
+        toast.success("Event booked successfully!");
         
         // Reset form
         setNewEvent({
@@ -139,6 +145,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
         });
       },
       onError: (error) => {
+        console.error("Event creation error:", error);
         toast.error(`Failed to create event: ${error.message}`);
       }
     });
