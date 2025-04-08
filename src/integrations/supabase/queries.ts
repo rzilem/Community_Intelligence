@@ -7,8 +7,10 @@ import { supabase } from './client';
  */
 export const checkTableAccess = async (tableName: string) => {
   try {
+    // Use 'any' as a type assertion to bypass TypeScript's strict checking
+    // This is needed because we're dynamically accessing tables by string name
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('count')
       .limit(1);
       

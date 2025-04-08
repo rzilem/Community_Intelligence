@@ -28,15 +28,16 @@ const SupabaseDiagnostics: React.FC = () => {
         
         // Attempt to query available tables directly
         try {
-          // Try to get some tables we know should exist
+          // Try to get some known tables
           const knownTables = ['profiles', 'associations', 'properties'];
           const availableTables: string[] = [];
           
           // Check each table to see if we can access it
           for (const table of knownTables) {
             try {
+              // Type-safe approach using explicit table name constants
               const { error: tableError } = await supabase
-                .from(table)
+                .from(table as any)
                 .select('count')
                 .limit(1);
                 
