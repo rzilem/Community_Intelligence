@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import FileUploader from './FileUploader';
 import DataTypeSelector from './DataTypeSelector';
 import { useFileParser } from './useFileParser';
+import { Upload } from 'lucide-react';
 
 interface ImportDataFormProps {
   onFileUpload: (file: File, parsedData: any[], type: string) => void;
@@ -73,7 +74,15 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
               type="submit"
               disabled={!selectedFile || !importType || !associationId || isProcessing}
             >
-              {isProcessing ? 'Processing...' : !associationId ? 'Select an Association' : 'Upload and Validate'}
+              {isProcessing ? 
+                'Processing...' : 
+                !associationId ? 
+                  'Select an Association' : 
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload and Validate
+                  </>
+              }
             </Button>
           </div>
         </CardContent>
