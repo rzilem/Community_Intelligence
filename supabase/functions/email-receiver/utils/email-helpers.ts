@@ -3,6 +3,7 @@
 export function extractEmailFromHeader(header: string): string {
   if (!header) return "";
   
+  // Try to extract email from < > format first
   const emailMatch = header.match(/<([^>]+)>/);
   if (emailMatch && emailMatch[1]) {
     return emailMatch[1].trim();
@@ -14,6 +15,7 @@ export function extractEmailFromHeader(header: string): string {
     return simpleEmailMatch[0];
   }
   
+  // If all else fails, return the header as is (might not be an email)
   return header.trim();
 }
 
@@ -21,11 +23,19 @@ export function extractEmailFromHeader(header: string): string {
 export function extractNameFromHeader(header: string): string {
   if (!header) return "";
   
+  // Try to extract name from "Name <email>" format
   const nameMatch = header.match(/^([^<]+)</);
   if (nameMatch && nameMatch[1]) {
     return nameMatch[1].trim();
   }
   
+  // If that fails, try to extract from "email (Name)" format
+  const parenthesesMatch = header.match(/\(([^)]+)\)/);
+  if (parenthesesMatch && parenthesesMatch[1]) {
+    return parenthesesMatch[1].trim();
+  }
+  
+  // If we really can't find a name, return empty string
   return "";
 }
 
@@ -33,7 +43,7 @@ export function extractNameFromHeader(header: string): string {
 export function isValidEmail(email: string): boolean {
   if (!email) return false;
   
-  // Basic email validation
+  // More comprehensive email validation
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 }
