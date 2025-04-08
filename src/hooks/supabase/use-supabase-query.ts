@@ -6,7 +6,7 @@ import { KnownTables, QueryOptions, showErrorToast } from './supabase-utils';
 export function useSupabaseQuery<T = any>(
   table: KnownTables, 
   options: QueryOptions<T> = {}, 
-  enabled: boolean = true
+  enabled: boolean | (() => boolean) = true
 ) {
   const { 
     select = '*', 
