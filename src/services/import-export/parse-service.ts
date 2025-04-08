@@ -4,7 +4,8 @@ export const parseService = {
     console.log('Parsing CSV content, length:', csvString.length);
     
     try {
-      const lines = csvString.trim().split('\n');
+      // Split by newline characters (handle different OS line endings)
+      const lines = csvString.trim().split(/\r?\n/);
       console.log('CSV contains', lines.length, 'lines');
       
       if (lines.length === 0) {
@@ -12,7 +13,8 @@ export const parseService = {
         return [];
       }
       
-      const headers = lines[0].split(',').map(h => h.trim());
+      // Parse headers - handle quoted fields
+      const headers = parseCSVLine(lines[0]);
       console.log('CSV headers:', headers);
       
       if (headers.length === 0 || (headers.length === 1 && headers[0] === '')) {
@@ -26,7 +28,7 @@ export const parseService = {
         const line = lines[i].trim();
         if (!line) continue; // Skip empty lines
         
-        const values = line.split(',').map(v => v.trim());
+        const values = parseCSVLine(line);
         const obj: Record<string, any> = {};
         
         headers.forEach((header, index) => {
@@ -47,3 +49,31 @@ export const parseService = {
     }
   }
 };
+
+// Helper function to properly parse CSV lines with quoted fields
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      // Handle quotes - toggle inQuotes state
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      // End of field
+      result.push(current.trim());
+      current = '';
+    } else {
+      // Add character to current field
+      current += char;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  
+  return result;
+}

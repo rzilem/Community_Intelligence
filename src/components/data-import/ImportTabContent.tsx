@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ImportDataForm from './ImportDataForm';
 import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
@@ -30,6 +30,13 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   onImportAnother,
   onAssociationChange,
 }) => {
+  // When the component mounts, check if we have a file but no association
+  useEffect(() => {
+    if (importFile && !associationId) {
+      toast.warning("Please select an association to proceed");
+    }
+  }, [importFile, associationId]);
+
   const handleProceedWithImport = () => {
     if (!associationId) {
       toast.error("Please select an association before proceeding");
@@ -82,16 +89,22 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
             </Button>
           </div>
           
-          <div className="w-full">
+          <div className="w-full p-4 border rounded-md bg-muted/10">
             <h3 className="text-sm font-medium mb-2">Select Association</h3>
             <AssociationSelector 
-              onAssociationChange={onAssociationChange} 
+              onAssociationChange={onAssociationChange}
+              className="w-full"
             />
+            {!associationId && (
+              <p className="text-xs text-amber-500 mt-2">
+                Please select an association to continue
+              </p>
+            )}
           </div>
           
           <Button 
             onClick={handleProceedWithImport}
-            className="w-full md:w-auto"
+            className="w-full"
             disabled={!associationId}
           >
             <Upload className="mr-2 h-4 w-4" />

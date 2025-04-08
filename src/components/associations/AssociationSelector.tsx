@@ -15,70 +15,84 @@ export interface AssociationSelectorProps {
 export function AssociationSelector({ onAssociationChange, className }: AssociationSelectorProps) {
   const { userAssociations, currentAssociation, setCurrentAssociation } = useAuth();
   const [open, setOpen] = React.useState(false);
+  const [selectedAssociation, setSelectedAssociation] = React.useState(currentAssociation);
 
   // Set the first association as default if available and none is selected
   useEffect(() => {
-    if (userAssociations?.length > 0 && !currentAssociation) {
-      const firstAssociation = userAssociations[0].associations;
-      setCurrentAssociation(firstAssociation);
-      if (onAssociationChange) {
-        onAssociationChange(firstAssociation.id);
+    if (userAssociations?.length > 0) {
+      if (!selectedAssociation) {
+        // No association selected yet, use current or first one
+        const assocToUse = currentAssociation || userAssociations[0].associations;
+        console.log('Setting initial association:', assocToUse.id, assocToUse.name);
+        setSelectedAssociation(assocToUse);
+        
+        if (onAssociationChange) {
+          onAssociationChange(assocToUse.id);
+        }
       }
     }
-  }, [userAssociations, currentAssociation, setCurrentAssociation, onAssociationChange]);
+  }, [userAssociations, currentAssociation, selectedAssociation, onAssociationChange, setCurrentAssociation]);
 
   if (!userAssociations || userAssociations.length === 0) {
+    console.log('No associations available');
     return (
       <div className={cn("flex items-center gap-2", className)}>
-        <span className="text-sm text-muted-foreground">No associations available</span>
+        <span className="text-sm text-amber-600 font-medium">
+          No associations available. Please create an association first.
+        </span>
       </div>
     );
   }
 
   const handleSelect = (associationId: string) => {
+    console.log('Association selected:', associationId);
     const selected = userAssociations.find(
       (assoc) => assoc.associations.id === associationId
     );
     
     if (selected) {
+      console.log('Setting selected association:', selected.associations.name);
+      setSelectedAssociation(selected.associations);
       setCurrentAssociation(selected.associations);
+      
       if (onAssociationChange) {
         onAssociationChange(associationId);
-        console.log('Association changed to:', associationId);
+        console.log('Association change handler called with:', associationId);
       }
     }
     setOpen(false);
   };
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[240px] justify-between"
+            className="w-full justify-between"
           >
-            {currentAssociation?.name || "Select an HOA"}
+            {selectedAssociation?.name || "Select an HOA"}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[240px] p-0">
-          <Command>
+        <PopoverContent className="w-full p-0">
+          <Command className="w-full">
             <CommandInput placeholder="Search HOA..." />
-            <CommandEmpty>No HOA found.</CommandEmpty>
+            <CommandEmpty className="py-3 text-center">No HOA found.</CommandEmpty>
             <CommandGroup>
               {userAssociations.map((association) => (
                 <CommandItem
                   key={association.associations.id}
                   value={association.associations.id}
                   onSelect={() => handleSelect(association.associations.id)}
+                  className="cursor-pointer"
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      currentAssociation?.id === association.associations.id
+                      selectedAssociation?.id === association.associations.id
                         ? "opacity-100"
                         : "opacity-0"
                     )}
@@ -90,9 +104,9 @@ export function AssociationSelector({ onAssociationChange, className }: Associat
           </Command>
         </PopoverContent>
       </Popover>
-      {currentAssociation && (
+      {selectedAssociation && (
         <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-          {userAssociations.find(a => a.associations.id === currentAssociation.id)?.role || 'member'}
+          {userAssociations.find(a => a.associations.id === selectedAssociation.id)?.role || 'member'}
         </span>
       )}
     </div>

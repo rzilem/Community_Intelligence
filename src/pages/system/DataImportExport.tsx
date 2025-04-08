@@ -6,10 +6,9 @@ import { FileSpreadsheet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Upload, Download } from 'lucide-react';
-import AssociationSelector from '@/components/associations/AssociationSelector';
+import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
-import ImportTabContent from '@/components/data-import/ImportTabContent';
 import { dataImportService, validationService } from '@/services/import-export';
 import { toast } from 'sonner';
 import { ValidationResult, ImportResult } from '@/types/import-types';
@@ -64,10 +63,10 @@ const DataImportExport: React.FC = () => {
       console.log('Starting file parsing...');
       
       try {
-        const { parseFile } = await import('@/components/data-import/useFileParser').then(
-          module => ({ parseFile: module.useFileParser().parseFile })
-        );
+        const { useFileParser } = await import('@/components/data-import/useFileParser');
+        const { parseFile } = useFileParser();
         
+        console.log('Parsing file:', file.name, 'Size:', file.size);
         const parsedResult = await parseFile(file);
         console.log('File parsed successfully, rows:', parsedResult.length);
         
@@ -81,9 +80,18 @@ const DataImportExport: React.FC = () => {
         setImportType(type);
         
         // Continue with validation
+        toast.info(`Validating ${parsedResult.length} rows of data...`);
         const results = await validationService.validateData(parsedResult, type);
         console.log('Validation results:', results);
+        
         setValidationResults(results);
+        
+        if (results.valid) {
+          toast.success(`File validated successfully with ${results.validRows} valid rows`);
+        } else {
+          toast.warning(`Found ${results.invalidRows} rows with issues out of ${results.totalRows} total rows`);
+        }
+        
         setShowMappingModal(true);
       } catch (error) {
         console.error('Error parsing/validating file:', error);
@@ -99,9 +107,18 @@ const DataImportExport: React.FC = () => {
       setImportType(type);
       
       try {
+        toast.info(`Validating ${parsedData.length} rows of data...`);
         const results = await validationService.validateData(parsedData, type);
         console.log('Validation results:', results);
+        
         setValidationResults(results);
+        
+        if (results.valid) {
+          toast.success(`File validated successfully with ${results.validRows} valid rows`);
+        } else {
+          toast.warning(`Found ${results.invalidRows} rows with issues out of ${results.totalRows} total rows`);
+        }
+        
         setShowMappingModal(true);
       } catch (error) {
         console.error('Error validating data:', error);
@@ -156,6 +173,7 @@ const DataImportExport: React.FC = () => {
     resetImportState();
   };
 
+  // Update the association selector component to fix styling and selection issues
   return (
     <PageTemplate 
       title="Data Import & Export" 

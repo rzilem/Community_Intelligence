@@ -9,7 +9,7 @@ export const useFileParser = () => {
 
   const parseFile = async (file: File): Promise<any[]> => {
     setIsProcessing(true);
-    console.log('Starting to parse file:', file.name, 'Size:', file.size);
+    console.log('Starting to parse file:', file.name, 'Size:', file.size, 'Type:', file.type);
     
     try {
       return await new Promise<any[]>((resolve, reject) => {
@@ -25,18 +25,21 @@ export const useFileParser = () => {
             }
 
             const fileName = file.name.toLowerCase();
-            console.log('File parsed successfully, processing as:', fileName.endsWith('.csv') ? 'CSV' : 'Excel');
+            console.log('File read successfully, processing as:', 
+              fileName.endsWith('.csv') ? 'CSV' : 'Excel');
             
             if (fileName.endsWith('.csv')) {
               // Parse CSV using the parseService
               if (typeof data === 'string') {
                 console.log('CSV data length:', data.length);
-                console.log('CSV sample:', data.slice(0, 100) + '...');
+                console.log('CSV first 100 chars:', data.slice(0, 100) + '...');
                 
                 const parsedData = parseService.parseCSV(data);
                 console.log('CSV parsing complete, rows:', parsedData.length);
                 if (parsedData.length === 0) {
                   console.error('CSV parsing returned 0 rows');
+                } else {
+                  console.log('First row sample:', JSON.stringify(parsedData[0]));
                 }
                 resolve(parsedData);
               } else {
@@ -46,12 +49,15 @@ export const useFileParser = () => {
             } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
               // Parse Excel
               try {
-                const workbook = XLSX.read(data, { type: 'binary' });
+                const workbook = XLSX.read(data, { type: data instanceof ArrayBuffer ? 'array' : 'binary' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const parsedData = XLSX.utils.sheet_to_json(worksheet);
                 
                 console.log('Excel parsing complete, rows:', parsedData.length);
+                if (parsedData.length > 0) {
+                  console.log('First row sample:', JSON.stringify(parsedData[0]));
+                }
                 resolve(parsedData);
               } catch (excelError) {
                 console.error('Excel parsing error:', excelError);
@@ -59,7 +65,7 @@ export const useFileParser = () => {
               }
             } else {
               console.error('Unsupported file format:', fileName);
-              reject(new Error('Unsupported file format'));
+              reject(new Error(`Unsupported file format: ${fileName}. Please use CSV or Excel files.`));
             }
           } catch (error) {
             console.error('Error parsing file:', error);
@@ -72,10 +78,12 @@ export const useFileParser = () => {
           reject(error);
         };
         
-        if (file.name.endsWith('.csv')) {
+        if (file.name.toLowerCase().endsWith('.csv')) {
           reader.readAsText(file);
+        } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+          reader.readAsArrayBuffer(file);
         } else {
-          reader.readAsBinaryString(file);
+          reject(new Error('Unsupported file format. Please use CSV or Excel files.'));
         }
       });
     } catch (error) {
