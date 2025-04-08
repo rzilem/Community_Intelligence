@@ -18,7 +18,7 @@ const Properties = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  const { data: propertiesResponse = [], isLoading, error } = useSupabaseQuery<Property[]>(
+  const { data = [], isLoading, error } = useSupabaseQuery<Property[]>(
     'properties',
     {
       select: '*',
@@ -30,8 +30,8 @@ const Properties = () => {
     !!currentAssociation
   );
 
-  // Ensure properties is always an array
-  const properties = Array.isArray(propertiesResponse) ? propertiesResponse : [propertiesResponse];
+  // Ensure properties is always an array (typed as Property[])
+  const properties = data as Property[];
 
   const filteredProperties = properties.filter(property => {
     if (!searchTerm) return true;

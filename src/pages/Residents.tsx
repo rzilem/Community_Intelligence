@@ -18,7 +18,7 @@ const Residents = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState<ResidentWithProfile | null>(null);
 
-  const { data: residentsResponse = [], isLoading, error } = useSupabaseQuery<ResidentWithProfile[]>(
+  const { data = [], isLoading, error } = useSupabaseQuery<ResidentWithProfile[]>(
     'residents',
     {
       select: '*, user:user_id(profile:profiles(*))',
@@ -28,8 +28,8 @@ const Residents = () => {
     !!currentAssociation
   );
 
-  // Ensure residents is always an array
-  const residents = Array.isArray(residentsResponse) ? residentsResponse : [residentsResponse];
+  // Ensure residents is always an array (typed as ResidentWithProfile[])
+  const residents = data as ResidentWithProfile[];
 
   const filteredResidents = residents.filter(resident => {
     if (!searchTerm) return true;

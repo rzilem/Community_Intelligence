@@ -79,7 +79,8 @@ export function useSupabaseQuery<T = any>(
         throw error;
       }
       
-      return data as T[];
+      // Return data as an array to ensure consistent typing
+      return (data || []) as T;
     },
     enabled,
     meta: {

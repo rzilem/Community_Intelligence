@@ -39,7 +39,7 @@ const Permissions = () => {
   const [loading, setLoading] = useState(false);
 
   // Fetch all users with their profiles
-  const { data: usersResponse = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
+  const { data = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
     'users', 
     {
       select: '*, profile:profiles(*)',
@@ -48,8 +48,8 @@ const Permissions = () => {
     }
   );
   
-  // Ensure users is always an array
-  const users = Array.isArray(usersResponse) ? usersResponse : [usersResponse];
+  // Ensure users is always an array (typed as UserWithProfile[])
+  const users = data as UserWithProfile[];
 
   const filteredUsers = users.filter(user => {
     if (!searchTerm) return true;

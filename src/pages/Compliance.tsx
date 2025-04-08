@@ -20,7 +20,7 @@ const CompliancePage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCompliance, setSelectedCompliance] = useState<Compliance | null>(null);
 
-  const { data: complianceResponse = [], isLoading, error } = useSupabaseQuery<Compliance[]>(
+  const { data = [], isLoading, error } = useSupabaseQuery<Compliance[]>(
     'compliance_issues',
     {
       select: '*',
@@ -32,8 +32,8 @@ const CompliancePage = () => {
     !!currentAssociation
   );
   
-  // Ensure complianceIssues is always an array
-  const complianceIssues = Array.isArray(complianceResponse) ? complianceResponse : [complianceResponse];
+  // Ensure complianceIssues is always an array (typed as Compliance[])
+  const complianceIssues = data as Compliance[];
 
   const filteredCompliance = complianceIssues
     .filter(issue => {
