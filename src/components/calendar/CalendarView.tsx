@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { useSupabaseCreate } from '@/hooks/supabase';
+import { useSupabaseDelete } from '@/hooks/supabase';
 import { CalendarEvent } from '@/types/app-types';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -78,6 +79,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     invalidateQueries: [['calendar_events']]
   });
 
+  // Delete event mutation
+  const { mutate: deleteEvent, isPending: isDeleting } = useSupabaseDelete('calendar_events', {
+    showSuccessToast: true,
+    invalidateQueries: [['calendar_events']]
+  });
+
   // Convert Supabase events to component events when data changes
   useEffect(() => {
     if (calendarEvents && calendarEvents.length > 0) {
@@ -91,6 +98,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
         amenityId: event.amenity_id || undefined
       }));
       setEvents(formattedEvents);
+    } else {
+      setEvents([]);
     }
   }, [calendarEvents]);
 
@@ -152,6 +161,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     });
   };
 
+  const handleDeleteEvent = (eventId: string) => {
+    if (isDeleting) return;
+
+    // Confirm before deleting
+    if (confirm("Are you sure you want to delete this event?")) {
+      deleteEvent(eventId, {
+        onSuccess: () => {
+          toast.success("Event deleted successfully");
+        },
+        onError: (error) => {
+          console.error("Event deletion error:", error);
+          toast.error(`Failed to delete event: ${error.message}`);
+        }
+      });
+    }
+  };
+
   const eventsForSelectedDate = events.filter(
     event => event.date.toDateString() === date.toDateString()
   );
@@ -208,6 +234,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
             events={eventsForSelectedDate}
             loading={eventsLoading}
             setIsDialogOpen={setIsDialogOpen}
+            onDeleteEvent={handleDeleteEvent}
           />
         </CardContent>
       </Card>

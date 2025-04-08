@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -16,9 +16,15 @@ interface EventListProps {
   events: Event[];
   loading: boolean;
   setIsDialogOpen: (isOpen: boolean) => void;
+  onDeleteEvent?: (eventId: string) => void;
 }
 
-export const EventList: React.FC<EventListProps> = ({ events, loading, setIsDialogOpen }) => {
+export const EventList: React.FC<EventListProps> = ({ 
+  events, 
+  loading, 
+  setIsDialogOpen,
+  onDeleteEvent 
+}) => {
   return (
     <>
       {loading ? (
@@ -33,7 +39,7 @@ export const EventList: React.FC<EventListProps> = ({ events, loading, setIsDial
             <div
               key={event.id}
               className={cn(
-                "p-3 rounded-md border flex justify-between items-center",
+                "p-3 rounded-md border flex justify-between items-center group relative",
                 event.type === 'amenity_booking' && "border-l-4 border-l-hoa-blue-500",
                 event.type === 'hoa_meeting' && "border-l-4 border-l-hoa-teal-500",
                 event.type === 'maintenance' && "border-l-4 border-l-yellow-500",
@@ -46,7 +52,7 @@ export const EventList: React.FC<EventListProps> = ({ events, loading, setIsDial
                   {event.startTime} - {event.endTime}
                 </p>
               </div>
-              <div>
+              <div className="flex items-center gap-2">
                 <span className={cn(
                   "text-xs px-2 py-1 rounded-full",
                   event.type === 'amenity_booking' && "bg-hoa-blue-100 text-hoa-blue-800",
@@ -59,6 +65,20 @@ export const EventList: React.FC<EventListProps> = ({ events, loading, setIsDial
                   {event.type === 'maintenance' && "Maintenance"}
                   {event.type === 'community_event' && "Community Event"}
                 </span>
+                {onDeleteEvent && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteEvent(event.id);
+                    }}
+                    aria-label="Delete event"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
               </div>
             </div>
           ))}
