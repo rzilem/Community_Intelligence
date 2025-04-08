@@ -278,6 +278,7 @@ export type Database = {
         Row: {
           amenity_id: string | null
           booked_by: string | null
+          color: string | null
           created_at: string
           end_time: string
           event_type: string
@@ -291,6 +292,7 @@ export type Database = {
         Insert: {
           amenity_id?: string | null
           booked_by?: string | null
+          color?: string | null
           created_at?: string
           end_time: string
           event_type: string
@@ -304,6 +306,7 @@ export type Database = {
         Update: {
           amenity_id?: string | null
           booked_by?: string | null
+          color?: string | null
           created_at?: string
           end_time?: string
           event_type?: string
