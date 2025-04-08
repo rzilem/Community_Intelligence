@@ -1,12 +1,12 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { PuzzlePiece } from 'lucide-react';
+import { Puzzle } from 'lucide-react';
 
 const Integrations = () => {
   return <PageTemplate 
     title="Integrations" 
-    icon={<PuzzlePiece className="h-8 w-8" />}
+    icon={<Puzzle className="h-8 w-8" />}
     description="Configure and manage third-party system integrations."
   />;
 };

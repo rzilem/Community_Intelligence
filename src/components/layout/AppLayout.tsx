@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
@@ -18,7 +17,6 @@ import {
   DollarSign,
   BarChart3,
   CreditCard,
-  FileInvoice,
   Receipt,
   Wallet,
   BookOpen,
@@ -44,7 +42,7 @@ import {
   FileCode,
   ListOrdered,
   Settings as SettingsIcon,
-  PuzzlePiece,
+  Puzzle,
   SlidersHorizontal,
   MailCheck,
   Download,
@@ -131,7 +129,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       submenu: [
         { name: 'Dashboard', path: '/accounting/dashboard', icon: BarChart },
         { name: 'Bank Accounts', path: '/accounting/bank-accounts', icon: Building },
-        { name: 'Invoice Queue', path: '/accounting/invoice-queue', icon: FileInvoice },
+        { name: 'Invoice Queue', path: '/accounting/invoice-queue', icon: Receipt },
         { name: 'Transactions', path: '/accounting/transactions', icon: Receipt },
         { name: 'Payments', path: '/accounting/payments', icon: Wallet },
         { name: 'Journal Entries', path: '/accounting/journal-entries', icon: BookOpen },
@@ -202,7 +200,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       path: '/system', 
       icon: SettingsIcon,
       submenu: [
-        { name: 'Integrations', path: '/system/integrations', icon: PuzzlePiece },
+        { name: 'Integrations', path: '/system/integrations', icon: Puzzle },
         { name: 'Settings', path: '/system/settings', icon: SlidersHorizontal },
         { name: 'Email Workflows', path: '/system/email-workflows', icon: MailCheck },
         { name: 'Data Import & Export', path: '/system/data', icon: Download },
@@ -243,14 +241,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* Sidebar */}
       <div
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
           isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"
         )}
       >
-        {/* Sidebar Header */}
         <div className="h-16 py-2.5 px-4 flex items-center justify-between border-b border-white/10">
           <div className="flex items-center gap-2">
             <h1 className="font-display font-bold text-lg text-white">Community<br />Intelligence</h1>
@@ -265,7 +261,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </Button>
         </div>
         
-        {/* Sidebar Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="py-2 px-2 space-y-1">
             {mainNavItems.map((item) => (
@@ -317,7 +312,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </div>
         </div>
         
-        {/* Sidebar Footer */}
         <div className="p-2 border-t border-white/10">
           <button
             onClick={handleSignOut}
@@ -329,14 +323,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         </div>
       </div>
 
-      {/* Main content */}
       <div 
         className={cn(
           "flex flex-col w-full transition-all duration-300 ease-in-out",
           !isMobile && isSidebarOpen ? "md:ml-64" : ""
         )}
       >
-        {/* Mobile header */}
         <header className="flex md:hidden items-center justify-between h-16 px-4 border-b bg-white">
           <Button 
             variant="ghost" 
@@ -357,7 +349,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           </Button>
         </header>
 
-        {/* Main content */}
         <main className="flex-1 overflow-auto">
           {children}
         </main>
