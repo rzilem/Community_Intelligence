@@ -34,16 +34,14 @@ export const LEAD_COLUMN_DEFINITIONS = [
   { id: 'name', label: 'Full Name', accessorKey: 'name', defaultVisible: true },
   { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
   { id: 'phone', label: 'Phone', accessorKey: 'phone', defaultVisible: true },
-  { id: 'company', label: 'Company', accessorKey: 'company', defaultVisible: false },
-  { id: 'source', label: 'Source', accessorKey: 'source', defaultVisible: true },
-  { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
-  { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
-  
-  // Additional fields
   { id: 'number_of_units', label: 'Units', accessorKey: 'number_of_units', defaultVisible: true },
   { id: 'street_address', label: 'Address', accessorKey: 'street_address', defaultVisible: true },
   { id: 'city', label: 'City', accessorKey: 'city', defaultVisible: true },
-  { id: 'state', label: 'State', accessorKey: 'state', defaultVisible: true },
+  { id: 'source', label: 'Source', accessorKey: 'source', defaultVisible: true },
+  { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
+  { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
+  { id: 'company', label: 'Company', accessorKey: 'company', defaultVisible: false },
+  { id: 'state', label: 'State', accessorKey: 'state', defaultVisible: false },
   
   // Other fields with defaultVisible set to false
   { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: false },

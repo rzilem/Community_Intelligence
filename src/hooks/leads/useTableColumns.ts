@@ -27,6 +27,15 @@ export const useTableColumns = <T extends Record<string, any>>(
   });
 
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(() => {
+    // Try to load saved visibility preferences from localStorage
+    const savedVisibility = localStorage.getItem(`${storageKey}-visibility`);
+    if (savedVisibility) {
+      try {
+        return JSON.parse(savedVisibility);
+      } catch (e) {
+        console.error('Failed to parse saved visibility', e);
+      }
+    }
     // Set default visible columns
     return columns
       .filter(col => col.defaultVisible !== false)
@@ -35,8 +44,8 @@ export const useTableColumns = <T extends Record<string, any>>(
 
   // Save column preferences to localStorage when they change
   useEffect(() => {
-    const columnsToSave = columns.filter(col => visibleColumnIds.includes(col.id));
-    localStorage.setItem(storageKey, JSON.stringify(columnsToSave));
+    localStorage.setItem(storageKey, JSON.stringify(columns));
+    localStorage.setItem(`${storageKey}-visibility`, JSON.stringify(visibleColumnIds));
   }, [visibleColumnIds, columns, storageKey]);
 
   const updateVisibleColumns = (columnIds: string[]) => {
@@ -55,10 +64,18 @@ export const useTableColumns = <T extends Record<string, any>>(
     setColumns(reorderedColumns);
   };
 
+  const resetToDefaults = () => {
+    setColumns(defaultColumns);
+    setVisibleColumnIds(defaultColumns
+      .filter(col => col.defaultVisible !== false)
+      .map(col => col.id));
+  };
+
   return {
     columns,
     visibleColumnIds,
     updateVisibleColumns,
-    reorderColumns
+    reorderColumns,
+    resetToDefaults
   };
 };

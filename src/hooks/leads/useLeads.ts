@@ -27,7 +27,8 @@ export const useLeads = () => {
     columns, 
     visibleColumnIds, 
     updateVisibleColumns,
-    reorderColumns 
+    reorderColumns,
+    resetToDefaults 
   } = useTableColumns(
     LEAD_COLUMN_DEFINITIONS,
     'leads-visible-columns'
@@ -138,7 +139,8 @@ export const useLeads = () => {
     columns,
     visibleColumnIds,
     updateVisibleColumns,
-    reorderColumns
+    reorderColumns,
+    resetToDefaults
   };
 };
 
@@ -151,6 +153,7 @@ function generateTestLead(): Lead {
   const associationTypes = ['Condominium', 'Single-family', 'Townhouse', 'Mixed-use'];
   const states = ['TX', 'CA', 'FL', 'NY', 'IL'];
   const currentManagements = ['Self-managed', 'Local company', 'National firm', 'None'];
+  const cities = ['Austin', 'San Francisco', 'Miami', 'New York', 'Chicago', 'Dallas', 'Seattle'];
 
   const randomName = names[Math.floor(Math.random() * names.length)];
   const nameParts = randomName.split(' ');
@@ -163,6 +166,7 @@ function generateTestLead(): Lead {
   const randomAssocType = associationTypes[Math.floor(Math.random() * associationTypes.length)];
   const randomState = states[Math.floor(Math.random() * states.length)];
   const randomManagement = currentManagements[Math.floor(Math.random() * currentManagements.length)];
+  const randomCity = cities[Math.floor(Math.random() * cities.length)];
   
   const email = `${firstName.toLowerCase()}@${randomCompany.toLowerCase().replace(/\s+/g, '')}${randomDomain}`;
   const units = Math.floor(20 + Math.random() * 400);
@@ -182,7 +186,7 @@ function generateTestLead(): Lead {
     association_type: randomAssocType,
     number_of_units: units,
     street_address: `${Math.floor(100 + Math.random() * 9900)} Main St`,
-    city: 'Springfield',
+    city: randomCity,
     state: randomState,
     zip: `${Math.floor(10000 + Math.random() * 90000)}`,
     current_management: randomManagement,

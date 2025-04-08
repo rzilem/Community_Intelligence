@@ -29,6 +29,11 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   const [localSelectedColumns, setLocalSelectedColumns] = useState<string[]>(selectedColumns);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
 
+  // Update local state when selectedColumns prop changes
+  React.useEffect(() => {
+    setLocalSelectedColumns(selectedColumns);
+  }, [selectedColumns]);
+
   const handleColumnToggle = (columnId: string) => {
     const updatedColumns = localSelectedColumns.includes(columnId)
       ? localSelectedColumns.filter(id => id !== columnId)
@@ -92,7 +97,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               </div>
               <Checkbox 
                 id={`column-${column.id}`}
-                checked={selectedColumns.includes(column.id)}
+                checked={localSelectedColumns.includes(column.id)}
                 onCheckedChange={() => handleColumnToggle(column.id)}
               />
               <label 

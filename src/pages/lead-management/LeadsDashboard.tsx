@@ -26,7 +26,8 @@ const LeadsDashboard = () => {
     columns,
     visibleColumnIds,
     updateVisibleColumns,
-    reorderColumns
+    reorderColumns,
+    resetToDefaults
   } = useLeads();
 
   const filteredLeads = leads.filter(lead => {
@@ -56,6 +57,10 @@ const LeadsDashboard = () => {
     
     return false;
   });
+
+  const handleResetColumns = () => {
+    resetToDefaults();
+  };
 
   return (
     <PageTemplate 
@@ -119,7 +124,17 @@ const LeadsDashboard = () => {
                     selectedColumns={visibleColumnIds}
                     onChange={updateVisibleColumns}
                     onReorder={reorderColumns}
+                    className="flex-shrink-0"
                   />
+                  
+                  <Button 
+                    variant="outline" 
+                    onClick={handleResetColumns}
+                    size="sm"
+                    className="flex-shrink-0"
+                  >
+                    Reset Columns
+                  </Button>
                 </div>
                 <Button className="flex-shrink-0">
                   <PlusCircle className="h-4 w-4 mr-2" />
