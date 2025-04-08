@@ -3,12 +3,12 @@ import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield } from 'lucide-react';
 
-const Compliance = () => {
+const Permissions = () => {
   return <PageTemplate 
-    title="Compliance" 
+    title="Permissions" 
     icon={<Shield className="h-8 w-8" />}
-    description="Track and manage HOA violations, inspections, and compliance issues."
+    description="Configure user roles and access permissions."
   />;
 };
 
-export default Compliance;
+export default Permissions;

@@ -3,12 +3,12 @@ import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { LineChart } from 'lucide-react';
 
-const Reports = () => {
+const Analytics = () => {
   return <PageTemplate 
-    title="Reports" 
+    title="Analytics" 
     icon={<LineChart className="h-8 w-8" />}
-    description="Generate and view reports across your community associations."
+    description="View detailed marketing and lead conversion analytics."
   />;
 };
 
-export default Reports;
+export default Analytics;

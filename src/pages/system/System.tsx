@@ -3,12 +3,12 @@ import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Settings } from 'lucide-react';
 
-const SettingsPage = () => {
+const System = () => {
   return <PageTemplate 
-    title="Settings" 
+    title="System" 
     icon={<Settings className="h-8 w-8" />}
-    description="Configure application settings and user preferences."
+    description="Manage system-wide settings and configurations."
   />;
 };
 
-export default SettingsPage;
+export default System;
