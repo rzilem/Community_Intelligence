@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,21 +50,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     amenityId: '1'
   });
 
-  // Query for amenities
-  const { data: amenities, isLoading: amenitiesLoading } = useSupabaseQuery<any[]>({
-    queryKey: ['amenities'],
-    table: 'amenities',
-    select: '*',
-    filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : undefined,
-  });
+  // Query for amenities - fixed to pass table as first parameter
+  const { data: amenities, isLoading: amenitiesLoading } = useSupabaseQuery<any[]>(
+    'amenities',
+    {
+      select: '*',
+      filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : undefined,
+    }
+  );
 
-  // Query for calendar events
-  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>({
-    queryKey: ['calendar_events'],
-    table: 'calendar_events',
-    select: '*',
-    filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : undefined,
-  });
+  // Query for calendar events - fixed to pass table as first parameter
+  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>(
+    'calendar_events',
+    {
+      select: '*',
+      filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : undefined,
+    }
+  );
 
   // Create event mutation
   const { mutate: createEvent, isPending: isCreating } = useSupabaseCreate('calendar_events', {

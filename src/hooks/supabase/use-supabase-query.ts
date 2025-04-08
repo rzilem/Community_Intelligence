@@ -88,3 +88,4 @@ export function useSupabaseQuery<T = any>(
     },
   });
 }
+
