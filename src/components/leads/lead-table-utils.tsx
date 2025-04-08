@@ -23,6 +23,10 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array
     return formatDistanceToNow(new Date(value as string), { addSuffix: true });
   }
 
+  if (column.id === 'number_of_units' && value !== undefined) {
+    return Number(value).toString();
+  }
+
   if (typeof value === 'object') {
     return JSON.stringify(value);
   }

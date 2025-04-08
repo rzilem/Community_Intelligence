@@ -1,4 +1,3 @@
-
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'converted' | 'lost';
 
 export interface Lead {
@@ -35,21 +34,23 @@ export const LEAD_COLUMN_DEFINITIONS = [
   { id: 'name', label: 'Full Name', accessorKey: 'name', defaultVisible: true },
   { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
   { id: 'phone', label: 'Phone', accessorKey: 'phone', defaultVisible: true },
-  { id: 'company', label: 'Company', accessorKey: 'company', defaultVisible: true },
+  { id: 'company', label: 'Company', accessorKey: 'company', defaultVisible: false },
   { id: 'source', label: 'Source', accessorKey: 'source', defaultVisible: true },
   { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
   { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
   
   // Additional fields
-  { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: true },
-  { id: 'current_management', label: 'Current Management', accessorKey: 'current_management', defaultVisible: true },
-  { id: 'number_of_units', label: 'Number of Units', accessorKey: 'number_of_units', defaultVisible: true },
+  { id: 'number_of_units', label: 'Units', accessorKey: 'number_of_units', defaultVisible: true },
+  { id: 'street_address', label: 'Address', accessorKey: 'street_address', defaultVisible: true },
+  { id: 'city', label: 'City', accessorKey: 'city', defaultVisible: true },
+  { id: 'state', label: 'State', accessorKey: 'state', defaultVisible: true },
+  
+  // Other fields with defaultVisible set to false
+  { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: false },
+  { id: 'current_management', label: 'Current Management', accessorKey: 'current_management', defaultVisible: false },
   { id: 'first_name', label: 'First Name', accessorKey: 'first_name', defaultVisible: false },
   { id: 'last_name', label: 'Last Name', accessorKey: 'last_name', defaultVisible: false },
-  { id: 'street_address', label: 'Street Address', accessorKey: 'street_address', defaultVisible: false },
   { id: 'address_line2', label: 'Address Line 2', accessorKey: 'address_line2', defaultVisible: false },
-  { id: 'city', label: 'City', accessorKey: 'city', defaultVisible: false },
-  { id: 'state', label: 'State', accessorKey: 'state', defaultVisible: false },
   { id: 'zip', label: 'ZIP', accessorKey: 'zip', defaultVisible: false },
   { id: 'additional_requirements', label: 'Additional Requirements', accessorKey: 'additional_requirements', defaultVisible: false },
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
