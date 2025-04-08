@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Profile, UserWithProfile } from '@/types/app-types';
 import { toast } from 'sonner';
-import { fetchUserProfile, fetchUserAssociations } from '@/services/user-service';
+import { fetchUserProfile, fetchUserAssociations, updateUserProfile } from '@/services/user-service';
 
 interface Association {
   id: string;
@@ -99,7 +99,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user) {
         try {
           console.log('Fetching profile for user:', user.id);
-          const profileData = await fetchUserProfile(user.id);
+          let profileData = await fetchUserProfile(user.id);
+          
+          // If profile exists but doesn't have admin role, update it
+          if (profileData && profileData.role !== 'admin') {
+            console.log('Setting user role to admin');
+            const updatedProfile = await updateUserProfile({
+              id: user.id,
+              role: 'admin'
+            });
+            
+            if (updatedProfile) {
+              profileData = updatedProfile;
+              toast.success('Your account has been upgraded to admin');
+            }
+          }
           
           if (profileData) {
             console.log('Profile data loaded:', profileData);

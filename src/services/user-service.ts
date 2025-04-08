@@ -34,6 +34,8 @@ export const updateUserProfile = async (profileData: Partial<Profile>): Promise<
       throw new Error('Profile ID is required for update');
     }
 
+    console.log('Updating profile with data:', profileData);
+    
     const { data, error } = await supabase
       .from('profiles')
       .update(profileData)
@@ -46,6 +48,7 @@ export const updateUserProfile = async (profileData: Partial<Profile>): Promise<
       throw error;
     }
 
+    console.log('Profile updated successfully:', data);
     return data as Profile;
   } catch (error) {
     console.error('Error in updateUserProfile:', error);

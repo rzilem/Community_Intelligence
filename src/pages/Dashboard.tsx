@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Helper function to render icon by name
 const getIconByName = (iconName: string) => {
@@ -29,8 +30,33 @@ const getIconByName = (iconName: string) => {
 };
 
 const Dashboard = () => {
-  const { currentAssociation } = useAuth();
+  const { currentAssociation, user } = useAuth();
   const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
+
+  useEffect(() => {
+    const ensureAdminAccess = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .update({ role: 'admin' })
+            .eq('id', user.id)
+            .select();
+
+          if (error) {
+            console.error('Error updating role:', error);
+          } else {
+            console.log('User role updated to admin:', data);
+            toast.success('Admin access granted successfully');
+          }
+        } catch (err) {
+          console.error('Error ensuring admin access:', err);
+        }
+      }
+    };
+
+    ensureAdminAccess();
+  }, [user]);
 
   return (
     <AppLayout>
