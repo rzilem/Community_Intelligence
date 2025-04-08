@@ -14,6 +14,7 @@ interface Event {
   endTime: string;
   type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
   amenityId?: string;
+  color?: string;
 }
 
 interface UseCalendarEventsProps {
@@ -30,13 +31,15 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     endTime: string;
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
+    color: string;
   }>({
     title: '',
     date: new Date(),
     startTime: '09:00',
     endTime: '10:00',
     type: 'amenity_booking',
-    amenityId: '1'
+    amenityId: '1',
+    color: '#3b6aff' // Default blue color
   });
 
   // Query for calendar events
@@ -71,13 +74,30 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
         startTime: format(new Date(event.start_time), 'HH:mm'),
         endTime: format(new Date(event.end_time), 'HH:mm'),
         type: event.event_type as any,
-        amenityId: event.amenity_id || undefined
+        amenityId: event.amenity_id || undefined,
+        color: event.color || getDefaultColorForType(event.event_type)
       }));
       setEvents(formattedEvents);
     } else {
       setEvents([]);
     }
   }, [calendarEvents]);
+
+  // Get default color based on event type
+  const getDefaultColorForType = (eventType: string): string => {
+    switch (eventType) {
+      case 'amenity_booking':
+        return '#3b6aff'; // blue
+      case 'hoa_meeting':
+        return '#0d766d'; // teal
+      case 'maintenance':
+        return '#f97316'; // orange
+      case 'community_event':
+        return '#8B5CF6'; // purple
+      default:
+        return '#3b6aff'; // default blue
+    }
+  };
 
   const handleCreateEvent = () => {
     if (!currentAssociation) {
@@ -103,7 +123,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
       end_time: endDate.toISOString(),
       amenity_id: newEvent.amenityId || null,
       booked_by: user?.id || null,
-      visibility: 'private' // Default visibility
+      visibility: 'private', // Default visibility
+      color: newEvent.color || getDefaultColorForType(newEvent.type)
     };
 
     console.log("Creating event:", eventToSave);
@@ -120,7 +141,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
           startTime: '09:00',
           endTime: '10:00',
           type: 'amenity_booking',
-          amenityId: '1'
+          amenityId: '1',
+          color: '#3b6aff' // Reset to default blue color
         });
         
         return true; // Return success status for dialog handling
@@ -166,6 +188,7 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     isDeleting,
     handleCreateEvent,
     handleDeleteEvent,
-    hasAssociation: !!currentAssociation
+    hasAssociation: !!currentAssociation,
+    getDefaultColorForType
   };
 };

@@ -10,6 +10,7 @@ interface Event {
   startTime: string;
   endTime: string;
   type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
+  color?: string;
 }
 
 interface EventListProps {
@@ -40,11 +41,23 @@ export const EventList: React.FC<EventListProps> = ({
               key={event.id}
               className={cn(
                 "p-3 rounded-md border flex justify-between items-center group relative",
-                event.type === 'amenity_booking' && "border-l-4 border-l-hoa-blue-500",
-                event.type === 'hoa_meeting' && "border-l-4 border-l-hoa-teal-500",
-                event.type === 'maintenance' && "border-l-4 border-l-yellow-500",
-                event.type === 'community_event' && "border-l-4 border-l-purple-500"
+                "border-l-4",
+                {
+                  "border-l-hoa-blue-500": event.color === '#3b6aff',
+                  "border-l-hoa-teal-500": event.color === '#0d766d',
+                  "border-l-purple-500": event.color === '#8B5CF6',
+                  "border-l-orange-500": event.color === '#f97316', 
+                  "border-l-red-500": event.color === '#EF4444',
+                  "border-l-green-500": event.color === '#10B981',
+                  "border-l-yellow-500": event.color === '#F59E0B',
+                  "border-l-pink-500": event.color === '#EC4899',
+                }
               )}
+              style={{
+                borderLeftColor: event.color && !['#3b6aff', '#0d766d', '#8B5CF6', '#f97316', '#EF4444', '#10B981', '#F59E0B', '#EC4899'].includes(event.color) 
+                  ? event.color 
+                  : undefined
+              }}
             >
               <div>
                 <h3 className="font-medium">{event.title}</h3>
@@ -55,10 +68,12 @@ export const EventList: React.FC<EventListProps> = ({
               <div className="flex items-center gap-2">
                 <span className={cn(
                   "text-xs px-2 py-1 rounded-full",
-                  event.type === 'amenity_booking' && "bg-hoa-blue-100 text-hoa-blue-800",
-                  event.type === 'hoa_meeting' && "bg-hoa-teal-100 text-hoa-teal-800",
-                  event.type === 'maintenance' && "bg-yellow-100 text-yellow-800",
-                  event.type === 'community_event' && "bg-purple-100 text-purple-800"
+                  {
+                    "bg-hoa-blue-100 text-hoa-blue-800": event.type === 'amenity_booking',
+                    "bg-hoa-teal-100 text-hoa-teal-800": event.type === 'hoa_meeting',
+                    "bg-yellow-100 text-yellow-800": event.type === 'maintenance',
+                    "bg-purple-100 text-purple-800": event.type === 'community_event'
+                  }
                 )}>
                   {event.type === 'amenity_booking' && "Amenity Booking"}
                   {event.type === 'hoa_meeting' && "HOA Meeting"}

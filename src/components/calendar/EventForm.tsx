@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from '@/lib/utils';
 
 interface Amenity {
   id: string;
@@ -19,6 +21,7 @@ interface EventFormProps {
     endTime: string;
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
+    color: string;
   };
   setNewEvent: React.Dispatch<React.SetStateAction<{
     title: string;
@@ -27,6 +30,7 @@ interface EventFormProps {
     endTime: string;
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
+    color: string;
   }>>;
   amenityOptions: Amenity[];
   handleCreateEvent: () => void;
@@ -42,6 +46,18 @@ export const EventForm: React.FC<EventFormProps> = ({
   isCreating,
   hasAssociation
 }) => {
+  // Color options for events
+  const colorOptions = [
+    { value: '#3b6aff', label: 'Blue', bgClass: 'bg-hoa-blue-500' },
+    { value: '#0d766d', label: 'Teal', bgClass: 'bg-hoa-teal-500' },
+    { value: '#8B5CF6', label: 'Purple', bgClass: 'bg-purple-500' },
+    { value: '#f97316', label: 'Orange', bgClass: 'bg-orange-500' },
+    { value: '#EF4444', label: 'Red', bgClass: 'bg-red-500' },
+    { value: '#10B981', label: 'Green', bgClass: 'bg-green-500' },
+    { value: '#F59E0B', label: 'Yellow', bgClass: 'bg-yellow-500' },
+    { value: '#EC4899', label: 'Pink', bgClass: 'bg-pink-500' }
+  ];
+
   return (
     <DialogContent className="sm:max-w-[425px]">
       <DialogHeader>
@@ -119,6 +135,40 @@ export const EventForm: React.FC<EventFormProps> = ({
               <SelectItem value="community_event">Community Event</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div className="grid grid-cols-4 items-start gap-4">
+          <Label className="text-right pt-2">
+            Color
+          </Label>
+          <div className="col-span-3">
+            <RadioGroup 
+              value={newEvent.color} 
+              onValueChange={(value) => setNewEvent({...newEvent, color: value})}
+              className="flex flex-wrap gap-2"
+            >
+              {colorOptions.map(option => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem 
+                    value={option.value} 
+                    id={`color-${option.value}`} 
+                    className="sr-only"
+                  />
+                  <Label 
+                    htmlFor={`color-${option.value}`} 
+                    className={cn(
+                      "w-8 h-8 rounded-full cursor-pointer border-2 flex items-center justify-center",
+                      option.bgClass,
+                      newEvent.color === option.value ? "border-gray-900 ring-2 ring-black" : "border-transparent"
+                    )}
+                  >
+                    {newEvent.color === option.value && (
+                      <div className="rounded-full w-2 h-2 bg-white" />
+                    )}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
         </div>
       </div>
       <DialogFooter>

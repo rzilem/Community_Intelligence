@@ -1,4 +1,3 @@
-
 import type { Database } from '@/integrations/supabase/types';
 
 // Get strongly typed references to tables
@@ -82,6 +81,7 @@ export type CalendarEvent = {
   end_time: string;
   booked_by?: string;
   visibility: string;
+  color?: string;
   created_at?: string;
   updated_at?: string;
 };
