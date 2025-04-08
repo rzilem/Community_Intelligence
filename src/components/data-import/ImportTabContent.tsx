@@ -6,6 +6,7 @@ import LoadingIndicator from './LoadingIndicator';
 import { ValidationResult, ImportResult } from '@/types/import-types';
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Upload } from 'lucide-react';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 interface ImportTabContentProps {
   associationId: string;
@@ -15,6 +16,7 @@ interface ImportTabContentProps {
   isImporting: boolean;
   onFileUpload: (file: File, parsedData: any[], type: string) => void;
   onImportAnother: () => void;
+  onAssociationChange: (associationId: string) => void;
 }
 
 const ImportTabContent: React.FC<ImportTabContentProps> = ({
@@ -25,6 +27,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   isImporting,
   onFileUpload,
   onImportAnother,
+  onAssociationChange,
 }) => {
   return (
     <div className="space-y-4">
@@ -32,6 +35,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
         <ImportDataForm 
           onFileUpload={onFileUpload}
           associationId={associationId}
+          onAssociationChange={onAssociationChange}
         />
       )}
 
@@ -62,12 +66,21 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
               Remove
             </Button>
           </div>
+          
+          <div className="w-full">
+            <h3 className="text-sm font-medium mb-2">Select Association</h3>
+            <AssociationSelector 
+              onAssociationChange={onAssociationChange} 
+            />
+          </div>
+          
           <Button 
             onClick={() => onFileUpload(importFile, [], importFile.name.split('.').pop() || '')}
             className="w-full md:w-auto"
+            disabled={!associationId}
           >
             <Upload className="mr-2 h-4 w-4" />
-            Proceed with Import
+            {associationId ? "Proceed with Import" : "Select an Association First"}
           </Button>
         </div>
       )}

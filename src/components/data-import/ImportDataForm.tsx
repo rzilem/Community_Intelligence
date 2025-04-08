@@ -7,13 +7,19 @@ import FileUploader from './FileUploader';
 import DataTypeSelector from './DataTypeSelector';
 import { useFileParser } from './useFileParser';
 import { Upload } from 'lucide-react';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 interface ImportDataFormProps {
   onFileUpload: (file: File, parsedData: any[], type: string) => void;
   associationId: string;
+  onAssociationChange: (associationId: string) => void;
 }
 
-const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associationId }) => {
+const ImportDataForm: React.FC<ImportDataFormProps> = ({ 
+  onFileUpload, 
+  associationId, 
+  onAssociationChange 
+}) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importType, setImportType] = useState<string>('associations');
   const { parseFile, isProcessing } = useFileParser();
@@ -59,6 +65,12 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="mb-4">
+            <AssociationSelector 
+              onAssociationChange={onAssociationChange} 
+            />
+          </div>
+        
           <DataTypeSelector 
             value={importType} 
             onChange={setImportType} 

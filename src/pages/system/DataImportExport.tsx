@@ -29,7 +29,6 @@ const DataImportExport: React.FC = () => {
   const handleAssociationChange = (associationId: string) => {
     console.log('Association changed to:', associationId);
     setSelectedAssociationId(associationId);
-    resetImportState();
   };
 
   const resetImportState = () => {
@@ -47,17 +46,41 @@ const DataImportExport: React.FC = () => {
     setImportData(parsedData);
     setImportType(type);
     
-    setIsValidating(true);
-    try {
-      const results = await validationService.validateData(parsedData, type);
-      console.log('Validation results:', results);
-      setValidationResults(results);
-      setShowMappingModal(true);
-    } catch (error) {
-      console.error('Error validating data:', error);
-      toast.error('Failed to validate the uploaded data');
-    } finally {
-      setIsValidating(false);
+    // Only proceed with validation if we have an association selected and data
+    if (!selectedAssociationId) {
+      toast.warning('Please select an association before proceeding');
+      return;
+    }
+    
+    if (parsedData.length === 0 && file) {
+      // If we don't have parsed data but have a file, we need to parse it first
+      setIsValidating(true);
+      try {
+        // We'll handle the file parsing later in a separate step
+        console.log('File needs to be parsed');
+      } catch (error) {
+        console.error('Error preparing file:', error);
+        toast.error('Failed to prepare the uploaded data');
+      } finally {
+        setIsValidating(false);
+      }
+      return;
+    }
+    
+    // If we already have parsed data, proceed with validation
+    if (parsedData.length > 0) {
+      setIsValidating(true);
+      try {
+        const results = await validationService.validateData(parsedData, type);
+        console.log('Validation results:', results);
+        setValidationResults(results);
+        setShowMappingModal(true);
+      } catch (error) {
+        console.error('Error validating data:', error);
+        toast.error('Failed to validate the uploaded data');
+      } finally {
+        setIsValidating(false);
+      }
     }
   };
 
@@ -120,10 +143,6 @@ const DataImportExport: React.FC = () => {
                 Import data from CSV or Excel files, or export data templates and reports
               </CardDescription>
             </div>
-            <AssociationSelector 
-              className="md:self-end" 
-              onAssociationChange={handleAssociationChange}
-            />
           </div>
         </CardHeader>
       </Card>
@@ -149,6 +168,7 @@ const DataImportExport: React.FC = () => {
             isImporting={isImporting}
             onFileUpload={handleFileUpload}
             onImportAnother={handleImportAnother}
+            onAssociationChange={handleAssociationChange}
           />
         </TabsContent>
 
