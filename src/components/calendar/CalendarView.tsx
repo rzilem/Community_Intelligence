@@ -49,7 +49,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
   ]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newEvent, setNewEvent] = useState({
+  const [newEvent, setNewEvent] = useState<{
+    title: string;
+    date: Date;
+    startTime: string;
+    endTime: string;
+    type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
+    amenityId: string;
+  }>({
     title: '',
     date: new Date(),
     startTime: '09:00',
@@ -66,7 +73,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
   
   const handleCreateEvent = () => {
     const eventId = Math.random().toString(36).substr(2, 9);
-    const createdEvent = {
+    const createdEvent: Event = {
       id: eventId,
       ...newEvent,
       date: date

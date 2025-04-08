@@ -3,9 +3,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ButtonProps } from '@radix-ui/react-slot';
+import { ButtonProps as RadixButtonProps } from '@/components/ui/button';
 
-interface TooltipButtonProps extends ButtonProps {
+interface TooltipButtonProps extends Omit<RadixButtonProps, 'asChild'> {
   children: React.ReactNode;
   tooltip: string;
   tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
