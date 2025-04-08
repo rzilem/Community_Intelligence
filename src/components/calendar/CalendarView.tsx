@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,12 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, addHours } from 'date-fns';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { useSupabaseCreate } from '@/hooks/supabase';
+import { CalendarEvent } from '@/types/app-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
   id: string;
@@ -27,27 +31,9 @@ interface CalendarViewProps {
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
+  const { currentAssociation, user } = useAuth();
   const [date, setDate] = useState<Date>(new Date());
-  const [events, setEvents] = useState<Event[]>([
-    {
-      id: '1',
-      title: 'Pool Booking',
-      date: new Date(),
-      startTime: '10:00',
-      endTime: '12:00',
-      type: 'amenity_booking',
-      amenityId: '1'
-    },
-    {
-      id: '2',
-      title: 'HOA Board Meeting',
-      date: new Date(),
-      startTime: '18:00',
-      endTime: '19:30',
-      type: 'hoa_meeting'
-    }
-  ]);
-
+  const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newEvent, setNewEvent] = useState<{
     title: string;
@@ -65,6 +51,44 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     amenityId: '1'
   });
 
+  // Query for amenities
+  const { data: amenities, isLoading: amenitiesLoading } = useSupabaseQuery<any[]>({
+    queryKey: ['amenities'],
+    table: 'amenities',
+    select: '*',
+    filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : undefined,
+  });
+
+  // Query for calendar events
+  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>({
+    queryKey: ['calendar_events'],
+    table: 'calendar_events',
+    select: '*',
+    filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : undefined,
+  });
+
+  // Create event mutation
+  const { mutate: createEvent, isPending: isCreating } = useSupabaseCreate('calendar_events', {
+    showSuccessToast: true,
+    invalidateQueries: [['calendar_events']]
+  });
+
+  // Convert Supabase events to component events when data changes
+  useEffect(() => {
+    if (calendarEvents && calendarEvents.length > 0) {
+      const formattedEvents: Event[] = calendarEvents.map(event => ({
+        id: event.id,
+        title: event.title,
+        date: new Date(event.start_time),
+        startTime: format(new Date(event.start_time), 'HH:mm'),
+        endTime: format(new Date(event.end_time), 'HH:mm'),
+        type: event.event_type as any,
+        amenityId: event.amenity_id || undefined
+      }));
+      setEvents(formattedEvents);
+    }
+  }, [calendarEvents]);
+
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);
@@ -72,25 +96,50 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
   };
   
   const handleCreateEvent = () => {
-    const eventId = Math.random().toString(36).substr(2, 9);
-    const createdEvent: Event = {
-      id: eventId,
-      ...newEvent,
-      date: date
+    if (!currentAssociation) {
+      toast.error("Please select an association first");
+      return;
+    }
+
+    // Create start and end time Date objects
+    const startDate = new Date(date);
+    const [startHours, startMinutes] = newEvent.startTime.split(':');
+    startDate.setHours(parseInt(startHours), parseInt(startMinutes));
+
+    const endDate = new Date(date);
+    const [endHours, endMinutes] = newEvent.endTime.split(':');
+    endDate.setHours(parseInt(endHours), parseInt(endMinutes));
+
+    // Create the event object to save to Supabase
+    const eventToSave = {
+      hoa_id: currentAssociation.id,
+      title: newEvent.title,
+      event_type: newEvent.type,
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
+      amenity_id: newEvent.amenityId || null,
+      booked_by: user?.id || null,
+      visibility: 'private' // Default visibility
     };
-    
-    setEvents([...events, createdEvent]);
-    toast.success("Event created successfully");
-    setIsDialogOpen(false);
-    
-    // Reset form
-    setNewEvent({
-      title: '',
-      date: new Date(),
-      startTime: '09:00',
-      endTime: '10:00',
-      type: 'amenity_booking',
-      amenityId: '1'
+
+    // Save to Supabase
+    createEvent(eventToSave, {
+      onSuccess: () => {
+        setIsDialogOpen(false);
+        
+        // Reset form
+        setNewEvent({
+          title: '',
+          date: new Date(),
+          startTime: '09:00',
+          endTime: '10:00',
+          type: 'amenity_booking',
+          amenityId: '1'
+        });
+      },
+      onError: (error) => {
+        toast.error(`Failed to create event: ${error.message}`);
+      }
     });
   };
 
@@ -98,12 +147,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     event => event.date.toDateString() === date.toDateString()
   );
 
-  const amenities = [
-    { id: '1', name: 'Swimming Pool' },
-    { id: '2', name: 'Tennis Court' },
-    { id: '3', name: 'Community Center' },
-    { id: '4', name: 'Gym' }
-  ];
+  const amenityOptions = amenitiesLoading 
+    ? [{ id: '1', name: 'Loading...' }]
+    : amenities && amenities.length > 0 
+      ? amenities 
+      : [
+          { id: '1', name: 'Swimming Pool' },
+          { id: '2', name: 'Tennis Court' },
+          { id: '3', name: 'Community Center' },
+          { id: '4', name: 'Gym' }
+        ];
 
   return (
     <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-4", className)}>
@@ -155,7 +208,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                         <SelectValue placeholder="Select an amenity" />
                       </SelectTrigger>
                       <SelectContent>
-                        {amenities.map((amenity) => (
+                        {amenityOptions.map((amenity) => (
                           <SelectItem key={amenity.id} value={amenity.id}>{amenity.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -196,10 +249,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                       className="col-span-3"
                     />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="event-type" className="text-right">
+                      Event Type
+                    </Label>
+                    <Select
+                      value={newEvent.type}
+                      onValueChange={(value: any) => setNewEvent({...newEvent, type: value})}
+                    >
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="amenity_booking">Amenity Booking</SelectItem>
+                        <SelectItem value="hoa_meeting">HOA Meeting</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                        <SelectItem value="community_event">Community Event</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={handleCreateEvent} disabled={!newEvent.title || !newEvent.startTime || !newEvent.endTime}>
-                    Book Now
+                  <Button 
+                    onClick={handleCreateEvent} 
+                    disabled={!newEvent.title || !newEvent.startTime || !newEvent.endTime || !currentAssociation || isCreating}
+                  >
+                    {isCreating ? 'Saving...' : 'Book Now'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -207,7 +282,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
           </div>
         </CardHeader>
         <CardContent>
-          {eventsForSelectedDate.length > 0 ? (
+          {eventsLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-3 rounded-md border animate-pulse bg-muted/50 h-16" />
+              ))}
+            </div>
+          ) : eventsForSelectedDate.length > 0 ? (
             <div className="space-y-4">
               {eventsForSelectedDate.map((event) => (
                 <div
