@@ -1,52 +1,64 @@
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { KnownTables, QueryOptions, showErrorToast, showSuccessToast } from './supabase-utils';
+import { KnownTables, showErrorToast, showSuccessToast } from './supabase-utils';
 
-/**
- * Hook for updating an item in Supabase
- * @param tableName The table to update
- * @param options Options for success handler and cache invalidation
- */
 export function useSupabaseUpdate<T = any>(
-  tableName: KnownTables, 
-  options?: Pick<QueryOptions<T>, 'onSuccess' | 'invalidateQueries'>
+  table: KnownTables,
+  options: {
+    onSuccess?: (data: T) => void;
+    showSuccessToast?: boolean;
+    showErrorToast?: boolean;
+    invalidateQueries?: string[] | string[][];
+    idField?: string;
+  } = {}
 ) {
   const queryClient = useQueryClient();
-  
+  const { 
+    onSuccess, 
+    showSuccessToast: shouldShowSuccessToast = true,
+    showErrorToast: shouldShowErrorToast = true,
+    invalidateQueries = [[table]],
+    idField = 'id'
+  } = options;
+
   return useMutation({
-    mutationFn: async ({ id, ...item }: Partial<T> & { id: string }) => {
-      // Use explicit type assertion to bypass TypeScript type checking
-      const { data, error } = await supabase
-        .from(tableName as any)
-        .update(item as any)
-        .eq('id', id)
-        .select();
-      
+    mutationFn: async ({ id, data }: { id: string; data: Partial<T> }): Promise<T> => {
+      const { data: result, error } = await supabase
+        .from(table as any)
+        .update(data as any)
+        .eq(idField, id)
+        .select()
+        .single();
+
       if (error) {
-        showErrorToast('updating', tableName, error);
+        if (shouldShowErrorToast) {
+          showErrorToast('updating', table, error);
+        }
         throw error;
       }
-      
-      return data[0] as T;
+
+      if (shouldShowSuccessToast) {
+        showSuccessToast('updated', table);
+      }
+
+      return result as T;
     },
     onSuccess: (data) => {
-      showSuccessToast('updated', tableName);
-      
-      if (options?.onSuccess) {
-        options.onSuccess(data);
-      }
-      
-      if (options?.invalidateQueries) {
-        const queries = Array.isArray(options.invalidateQueries[0])
-          ? options.invalidateQueries as string[][]
-          : [options.invalidateQueries] as string[][];
-          
-        queries.forEach(query => {
-          queryClient.invalidateQueries({ queryKey: query });
+      // Invalidate related queries
+      if (Array.isArray(invalidateQueries[0])) {
+        // Multiple query keys to invalidate
+        (invalidateQueries as string[][]).forEach(queryKey => {
+          queryClient.invalidateQueries({ queryKey });
         });
       } else {
-        queryClient.invalidateQueries({ queryKey: [tableName] });
+        // Single query key to invalidate
+        queryClient.invalidateQueries({ queryKey: invalidateQueries as string[] });
+      }
+
+      // Call custom onSuccess handler if provided
+      if (onSuccess) {
+        onSuccess(data);
       }
     }
   });

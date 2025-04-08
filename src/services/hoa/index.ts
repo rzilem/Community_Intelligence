@@ -3,3 +3,7 @@
 export * from './hoa-service';
 export * from './property-service';
 export * from './resident-service';
+export * from './amenity-service';
+export * from './assessment-service';
+export * from './compliance-service';
+export * from './maintenance-service';

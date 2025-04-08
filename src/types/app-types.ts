@@ -1,3 +1,4 @@
+
 import type { Database } from '@/integrations/supabase/types';
 
 // Get strongly typed references to tables
@@ -109,6 +110,18 @@ export type Assessment = {
   paid: boolean;
   payment_date?: string;
   late_fee?: number;
+  assessment_type_id?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AssessmentType = {
+  id: string;
+  association_id: string;
+  name: string;
+  description?: string;
+  is_recurring?: boolean;
+  recurrence_period?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -116,23 +129,72 @@ export type Assessment = {
 export type MaintenanceRequest = {
   id: string;
   property_id: string;
+  title: string;
   description: string;
   status: 'open' | 'in_progress' | 'closed';
   assigned_to?: string;
   priority: 'low' | 'medium' | 'high';
+  resolved_date?: string;
   created_at?: string;
   updated_at?: string;
 };
 
 export type Compliance = {
   id: string;
-  hoa_id: string;
+  association_id: string;
   property_id: string;
   resident_id?: string;
   violation_type: string;
   description?: string;
   status: 'open' | 'resolved' | 'escalated';
   fine_amount?: number;
+  due_date?: string;
+  resolved_date?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Amenity = {
+  id: string;
+  association_id: string;
+  name: string;
+  description?: string;
+  capacity?: number;
+  booking_fee?: number;
+  requires_approval?: boolean;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Announcement = {
+  id: string;
+  association_id: string;
+  title: string;
+  content: string;
+  author_id?: string;
+  is_published?: boolean;
+  publish_date?: string;
+  expiry_date?: string;
+  priority?: 'low' | 'normal' | 'high' | 'urgent';
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AssociationUser = {
+  id: string;
+  association_id: string;
+  user_id: string;
+  role: 'admin' | 'manager' | 'member';
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type Comment = {
+  id: string;
+  parent_type: string;
+  parent_id: string;
+  user_id: string;
+  content: string;
   created_at?: string;
   updated_at?: string;
 };

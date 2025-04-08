@@ -1,54 +1,60 @@
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { KnownTables, QueryOptions, showErrorToast, showSuccessToast } from './supabase-utils';
+import { KnownTables, showErrorToast, showSuccessToast } from './supabase-utils';
 
-/**
- * Hook for deleting an item from Supabase
- * @param tableName The table to delete from
- * @param options Options for success handler and cache invalidation
- */
 export function useSupabaseDelete(
-  tableName: KnownTables, 
-  options?: { 
+  table: KnownTables,
+  options: {
     onSuccess?: () => void;
+    showSuccessToast?: boolean;
+    showErrorToast?: boolean;
     invalidateQueries?: string[] | string[][];
-  }
+    idField?: string;
+  } = {}
 ) {
   const queryClient = useQueryClient();
-  
+  const { 
+    onSuccess, 
+    showSuccessToast: shouldShowSuccessToast = true,
+    showErrorToast: shouldShowErrorToast = true,
+    invalidateQueries = [[table]],
+    idField = 'id'
+  } = options;
+
   return useMutation({
-    mutationFn: async (id: string) => {
-      // Use explicit type assertion to bypass TypeScript type checking
+    mutationFn: async (id: string): Promise<void> => {
       const { error } = await supabase
-        .from(tableName as any)
+        .from(table as any)
         .delete()
-        .eq('id', id);
-      
+        .eq(idField, id);
+
       if (error) {
-        showErrorToast('deleting', tableName, error);
+        if (shouldShowErrorToast) {
+          showErrorToast('deleting', table, error);
+        }
         throw error;
       }
-      
-      return id;
-    },
-    onSuccess: (id) => {
-      showSuccessToast('deleted', tableName);
-      
-      if (options?.onSuccess) {
-        options.onSuccess();
+
+      if (shouldShowSuccessToast) {
+        showSuccessToast('deleted', table);
       }
-      
-      if (options?.invalidateQueries) {
-        const queries = Array.isArray(options.invalidateQueries[0])
-          ? options.invalidateQueries as string[][]
-          : [options.invalidateQueries] as string[][];
-          
-        queries.forEach(query => {
-          queryClient.invalidateQueries({ queryKey: query });
+    },
+    onSuccess: () => {
+      // Invalidate related queries
+      if (Array.isArray(invalidateQueries[0])) {
+        // Multiple query keys to invalidate
+        (invalidateQueries as string[][]).forEach(queryKey => {
+          queryClient.invalidateQueries({ queryKey });
         });
       } else {
-        queryClient.invalidateQueries({ queryKey: [tableName] });
+        // Single query key to invalidate
+        queryClient.invalidateQueries({ queryKey: invalidateQueries as string[] });
+      }
+      
+      // Call custom onSuccess handler if provided
+      if (onSuccess) {
+        onSuccess();
       }
     }
   });

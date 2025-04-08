@@ -1,86 +1,89 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { KnownTables, QueryOptions, showErrorToast } from './supabase-utils';
 
-/**
- * Hook for fetching data from Supabase
- * @param key Query key for React Query cache
- * @param tableName The table to query
- * @param options Query options for filtering, selecting, and ordering data
- */
 export function useSupabaseQuery<T = any>(
-  key: string | string[],
-  tableName: KnownTables,
-  options?: Pick<QueryOptions<T>, 'select' | 'filter' | 'limit' | 'order' | 'single'>
+  table: KnownTables, 
+  options: QueryOptions<T> = {}, 
+  enabled = true
 ) {
-  const queryKey = Array.isArray(key) ? key : [key];
-  
+  const { 
+    select = '*', 
+    filter = [], 
+    limit,
+    order,
+    single = false,
+    onSuccess,
+  } = options;
+
+  const queryKey = [table, select, filter, limit, order, single];
+
   return useQuery({
-    queryKey,
+    queryKey: queryKey,
     queryFn: async () => {
-      // Use explicit type assertion to bypass TypeScript type checking
-      let query = supabase.from(tableName as any).select(options?.select || '*');
-      
-      // Apply filters if provided
-      if (options?.filter && options.filter.length > 0) {
-        options.filter.forEach(filter => {
-          const operator = filter.operator || 'eq';
-          
-          switch (operator) {
-            case 'eq':
-              query = query.eq(filter.column, filter.value);
-              break;
-            case 'neq':
-              query = query.neq(filter.column, filter.value);
-              break;
-            case 'gt':
-              query = query.gt(filter.column, filter.value);
-              break;
-            case 'lt':
-              query = query.lt(filter.column, filter.value);
-              break;
-            case 'gte':
-              query = query.gte(filter.column, filter.value);
-              break;
-            case 'lte':
-              query = query.lte(filter.column, filter.value);
-              break;
-            case 'like':
-              query = query.like(filter.column, `%${filter.value}%`);
-              break;
-            case 'ilike':
-              query = query.ilike(filter.column, `%${filter.value}%`);
-              break;
-            case 'in':
-              query = query.in(filter.column, filter.value);
-              break;
-          }
-        });
+      let query = supabase
+        .from(table as any)
+        .select(select);
+
+      // Apply filters
+      filter.forEach(({ column, value, operator = 'eq' }) => {
+        if (operator === 'eq') {
+          query = query.eq(column, value);
+        } else if (operator === 'neq') {
+          query = query.neq(column, value);
+        } else if (operator === 'gt') {
+          query = query.gt(column, value);
+        } else if (operator === 'lt') {
+          query = query.lt(column, value);
+        } else if (operator === 'gte') {
+          query = query.gte(column, value);
+        } else if (operator === 'lte') {
+          query = query.lte(column, value);
+        } else if (operator === 'like') {
+          query = query.like(column, value);
+        } else if (operator === 'ilike') {
+          query = query.ilike(column, value);
+        } else if (operator === 'is') {
+          query = query.is(column, value);
+        }
+      });
+
+      // Apply limit
+      if (limit) {
+        query = query.limit(limit);
       }
-      
-      // Apply ordering if provided
-      if (options?.order) {
-        query = query.order(options.order.column, {
-          ascending: options.order.ascending !== false
-        });
+
+      // Apply ordering
+      if (order) {
+        query = query.order(order.column, { ascending: order.ascending ?? true });
       }
-      
-      // Apply limit if provided
-      if (options?.limit) {
-        query = query.limit(options.limit);
+
+      // Get single result if requested
+      if (single) {
+        const { data, error } = await query.single();
+        
+        if (error) {
+          showErrorToast('fetching', table, error);
+          throw error;
+        }
+        
+        return data as T;
       }
-      
-      const { data, error } = options?.single
-        ? await query.single()
-        : await query;
+
+      // Get multiple results
+      const { data, error } = await query;
       
       if (error) {
-        showErrorToast('fetching', tableName, error);
+        showErrorToast('fetching', table, error);
         throw error;
       }
       
-      return data as T;
-    }
+      return data as T[];
+    },
+    enabled,
+    meta: {
+      onSuccess
+    },
   });
 }

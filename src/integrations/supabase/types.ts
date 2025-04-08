@@ -9,6 +9,244 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          association_id: string
+          booking_fee: number | null
+          capacity: number | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          requires_approval: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          booking_fee?: number | null
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          requires_approval?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          booking_fee?: number | null
+          capacity?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          requires_approval?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amenities_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcements: {
+        Row: {
+          association_id: string
+          author_id: string | null
+          content: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          is_published: boolean | null
+          priority: string | null
+          publish_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          author_id?: string | null
+          content: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority?: string | null
+          publish_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          author_id?: string | null
+          content?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          is_published?: boolean | null
+          priority?: string | null
+          publish_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_types: {
+        Row: {
+          association_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_recurring: boolean | null
+          name: string
+          recurrence_period: string | null
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name: string
+          recurrence_period?: string | null
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          name?: string
+          recurrence_period?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_types_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessments: {
+        Row: {
+          amount: number
+          assessment_type_id: string | null
+          created_at: string
+          due_date: string
+          id: string
+          late_fee: number | null
+          paid: boolean | null
+          payment_date: string | null
+          property_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assessment_type_id?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          late_fee?: number | null
+          paid?: boolean | null
+          payment_date?: string | null
+          property_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assessment_type_id?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          late_fee?: number | null
+          paid?: boolean | null
+          payment_date?: string | null
+          property_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessments_assessment_type_id_fkey"
+            columns: ["assessment_type_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessments_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      association_users: {
+        Row: {
+          association_id: string
+          created_at: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "association_users_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "association_users_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       associations: {
         Row: {
           address: string | null
@@ -86,6 +324,111 @@ export type Database = {
           },
         ]
       }
+      comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          parent_id: string
+          parent_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          parent_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          parent_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_issues: {
+        Row: {
+          association_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          fine_amount: number | null
+          id: string
+          property_id: string
+          resident_id: string | null
+          resolved_date: string | null
+          status: string
+          updated_at: string
+          violation_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          property_id: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          property_id?: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_issues_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_issues_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_issues_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           association_id: string
@@ -144,6 +487,60 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_requests: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          property_id: string
+          resolved_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          property_id: string
+          resolved_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          property_id?: string
+          resolved_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_requests_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -301,7 +698,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_has_association_access: {
+        Args: { association_uuid: string; min_role?: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
