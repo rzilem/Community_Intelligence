@@ -470,7 +470,10 @@ export const dataImportService = {
         job_id: importJob.id,
         details: [
           { status: 'success', message: `${successfulImports} records imported successfully` },
-          ...(failedImports > 0 ? [{ status: 'error', message: `${failedImports} records failed to import` }] : [])
+          ...(failedImports > 0 ? [{ 
+            status: 'error', 
+            message: `${failedImports} records failed to import` 
+          }] : [])
         ]
       };
     } catch (error) {
