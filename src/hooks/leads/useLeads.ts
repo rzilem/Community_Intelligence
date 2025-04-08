@@ -1,38 +1,31 @@
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
 import { Lead } from '@/types/lead-types';
 import { toast } from 'sonner';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useLeads = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   
-  const fetchLeads = async () => {
-    setIsLoading(true);
+  const { 
+    data: leads = [], 
+    isLoading,
+    refetch: refreshLeadsData
+  } = useSupabaseQuery<Lead[]>(
+    'leads',
+    {
+      select: '*',
+      order: { column: 'created_at', ascending: false }
+    }
+  );
+  
+  const refreshLeads = async () => {
     try {
-      // Fetch leads from the database
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Since we're now guaranteed that the data matches our Lead type
-      // after creating the table, we can safely cast it
-      setLeads(data as Lead[] || []);
+      await refreshLeadsData();
       setLastRefreshed(new Date());
     } catch (error) {
-      console.error('Error fetching leads:', error);
-      // If there's an error, use mock data
-      setLeads(getMockLeads());
+      console.error('Error refreshing leads:', error);
       toast.error('Could not fetch leads. Please ensure you are authenticated.');
-    } finally {
-      setIsLoading(false);
     }
   };
   
@@ -40,10 +33,9 @@ export const useLeads = () => {
     try {
       const testLead = generateTestLead();
       
-      // Try to insert into supabase first
       try {
         const { data, error } = await supabase
-          .from('leads')
+          .from('leads' as any)
           .insert(testLead)
           .select();
         
@@ -52,11 +44,9 @@ export const useLeads = () => {
         }
         
         toast.success('Test lead created successfully');
-        fetchLeads();
+        refreshLeads();
       } catch (dbError) {
         console.error('Database error, using mock data:', dbError);
-        // If database operation fails, just add to local state
-        setLeads(prevLeads => [testLead as Lead, ...prevLeads]);
         toast.success('Test lead created (local only)');
       }
     } catch (error) {
@@ -65,20 +55,15 @@ export const useLeads = () => {
     }
   };
   
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-  
   return { 
     leads, 
     isLoading,
     lastRefreshed,
-    refreshLeads: fetchLeads,
+    refreshLeads,
     createTestLead
   };
 };
 
-// Helper functions
 function getMockLeads(): Lead[] {
   return [
     {
