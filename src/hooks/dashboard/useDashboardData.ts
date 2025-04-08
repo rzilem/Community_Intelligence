@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, FileText, AlertTriangle } from 'lucide-react';
 
