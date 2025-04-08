@@ -37,27 +37,38 @@ async function processEmail(emailData: any): Promise<{
   let htmlContent = "";
 
   try {
-    // Extract from name if present (format typically "Name <email@domain.com>")
-    if (emailData.from) {
-      const fromMatch = emailData.from.match(/^([^<]+)<([^>]+)>$/);
-      if (fromMatch) {
-        name = fromMatch[1].trim();
-        email = fromMatch[2].trim();
-      } else {
-        // If format is not "Name <email>", just use the whole string as email
-        email = emailData.from.trim();
-        // Try to guess a name from the email
-        const namePart = email.split('@')[0];
-        name = namePart.replace(/[.+]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-      }
+    // Try to extract email from various possible locations in the payload
+    if (emailData.envelope?.from) {
+      email = emailData.envelope.from;
+    } else if (emailData.envelope?.sender) {
+      email = emailData.envelope.sender;
+    } else if (emailData.headers?.from) {
+      email = extractEmailFromHeader(emailData.headers.from);
+    } else if (emailData.from) {
+      email = extractEmailFromHeader(emailData.from);
+    } else if (emailData.sender) {
+      email = emailData.sender;
+    } else if (emailData.reply_to) {
+      email = emailData.reply_to;
     }
 
-    // If we still don't have an email, try the sender/reply_to field
-    if (!email && emailData.sender) {
-      email = emailData.sender;
+    console.log("Extracted email address:", email);
+    
+    // Validate the email address
+    if (!isValidEmail(email)) {
+      console.warn(`Warning: Invalid or missing email address. Using fallback. Found: '${email}'`);
+      email = "unknown@example.com"; // Fallback email
     }
-    if (!email && emailData.reply_to) {
-      email = emailData.reply_to;
+
+    // Extract name from various possible fields
+    if (emailData.headers?.from) {
+      name = extractNameFromHeader(emailData.headers.from);
+    } else if (emailData.from) {
+      name = extractNameFromHeader(emailData.from);
+    } else {
+      // Try to guess a name from the email
+      const namePart = email.split('@')[0];
+      name = namePart.replace(/[.+]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
     }
 
     // Handle multipart content
@@ -119,11 +130,6 @@ async function processEmail(emailData: any): Promise<{
     console.error("Error processing email:", error);
   }
 
-  // Make sure we at least have a valid email
-  if (!email) {
-    throw new Error("Could not extract a valid email address from the data");
-  }
-
   // If name is still empty, use the first part of the email address
   if (!name) {
     name = email.split('@')[0].replace(/[.+]/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
@@ -136,6 +142,45 @@ async function processEmail(emailData: any): Promise<{
     phone,
     notes: notes.substring(0, 1000) // Limit notes to 1000 characters
   };
+}
+
+// Helper function to extract email from header format like "Name <email@domain.com>"
+function extractEmailFromHeader(header: string): string {
+  if (!header) return "";
+  
+  const emailMatch = header.match(/<([^>]+)>/);
+  if (emailMatch && emailMatch[1]) {
+    return emailMatch[1].trim();
+  }
+  
+  // If no <email> format found, try to extract something that looks like an email
+  const simpleEmailMatch = header.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (simpleEmailMatch) {
+    return simpleEmailMatch[0];
+  }
+  
+  return header.trim();
+}
+
+// Helper function to extract name from header format like "Name <email@domain.com>"
+function extractNameFromHeader(header: string): string {
+  if (!header) return "";
+  
+  const nameMatch = header.match(/^([^<]+)</);
+  if (nameMatch && nameMatch[1]) {
+    return nameMatch[1].trim();
+  }
+  
+  return "";
+}
+
+// Helper function to validate email format
+function isValidEmail(email: string): boolean {
+  if (!email) return false;
+  
+  // Basic email validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
 }
 
 // Process raw multipart form data using native FormData API
@@ -245,3 +290,4 @@ serve(async (req) => {
     );
   }
 });
+
