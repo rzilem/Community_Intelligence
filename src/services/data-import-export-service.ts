@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ImportJob, ImportMapping, ValidationResult, ImportResult } from '@/types/import-types';
+import { ImportJob, ImportMapping, ValidationResult, ImportResult, ImportJobTable, ImportMappingTable } from '@/types/import-types';
 import { toast } from 'sonner';
 
 export interface ImportOptions {
@@ -50,7 +50,7 @@ export const dataImportService = {
       const { associationId, importType, fileName, fileSize, userId } = options;
       
       const { data, error } = await supabase
-        .from('import_jobs')
+        .from('import_jobs' as ImportJobTable)
         .insert({
           association_id: associationId,
           import_type: importType,
@@ -99,8 +99,8 @@ export const dataImportService = {
       }
       
       const { error } = await supabase
-        .from('import_jobs')
-        .update(updateData)
+        .from('import_jobs' as ImportJobTable)
+        .update(updateData as any)
         .eq('id', jobId);
       
       if (error) {
@@ -124,7 +124,7 @@ export const dataImportService = {
     try {
       // First check if a mapping already exists
       const { data: existingMapping } = await supabase
-        .from('import_mappings')
+        .from('import_mappings' as ImportMappingTable)
         .select('*')
         .eq('association_id', associationId)
         .eq('import_type', importType)
@@ -133,19 +133,19 @@ export const dataImportService = {
       if (existingMapping) {
         // Update existing mapping
         await supabase
-          .from('import_mappings')
-          .update({ mappings })
+          .from('import_mappings' as ImportMappingTable)
+          .update({ mappings } as any)
           .eq('id', existingMapping.id);
       } else {
         // Create new mapping
         await supabase
-          .from('import_mappings')
+          .from('import_mappings' as ImportMappingTable)
           .insert({
             association_id: associationId,
             import_type: importType,
             mappings,
             created_by: userId
-          });
+          } as any);
       }
     } catch (error) {
       console.error('Error saving import mappings:', error);
@@ -161,7 +161,7 @@ export const dataImportService = {
   ): Promise<Record<string, string> | null> => {
     try {
       const { data, error } = await supabase
-        .from('import_mappings')
+        .from('import_mappings' as ImportMappingTable)
         .select('mappings')
         .eq('association_id', associationId)
         .eq('import_type', importType)
@@ -185,7 +185,7 @@ export const dataImportService = {
   getImportJob: async (jobId: string): Promise<ImportJob | null> => {
     try {
       const { data, error } = await supabase
-        .from('import_jobs')
+        .from('import_jobs' as ImportJobTable)
         .select('*')
         .eq('id', jobId)
         .single();
@@ -208,7 +208,7 @@ export const dataImportService = {
   getRecentImportJobs: async (associationId: string, limit = 5): Promise<ImportJob[]> => {
     try {
       const { data, error } = await supabase
-        .from('import_jobs')
+        .from('import_jobs' as ImportJobTable)
         .select('*')
         .eq('association_id', associationId)
         .order('created_at', { ascending: false })
@@ -366,7 +366,7 @@ export const dataImportService = {
           totalProcessed: 0,
           successfulImports: 0,
           failedImports: 0,
-          details: [{ status: 'error', message: 'Failed to create import job' }]
+          details: [{ status: 'error' as const, message: 'Failed to create import job' }]
         };
       }
       
@@ -427,12 +427,13 @@ export const dataImportService = {
       let failedImports = 0;
       const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
       
+      // Handle importing data in batches
       for (let i = 0; i < processedData.length; i += batchSize) {
         const batch = processedData.slice(i, i + batchSize);
         
-        // Use type casting to bypass TypeScript errors with dynamic table names
+        // Use a simple string as the table name to avoid TypeScript errors
         const { data: insertedData, error } = await supabase
-          .from(tableName as any)
+          .from(tableName)
           .insert(batch)
           .select('id');
         
@@ -469,7 +470,7 @@ export const dataImportService = {
       
       // Update final job status
       const finalStatus = failedImports === 0 ? 'completed' : 'failed';
-      await dataImportService.updateImportJobStatus(importJob.id, finalStatus, {
+      await dataImportService.updateImportJobStatus(importJob.id, finalStatus as ImportJob['status'], {
         processed: processedData.length,
         succeeded: successfulImports,
         failed: failedImports,
@@ -565,7 +566,7 @@ export const dataExportService = {
     try {
       // Determine which table to export based on dataType
       let tableName: string;
-      let query = supabase;
+      let query: any = supabase;
       
       switch (dataType) {
         case 'associations':
@@ -600,9 +601,7 @@ export const dataExportService = {
           throw new Error(`Unknown data type: ${dataType}`);
       }
       
-      // Apply any additional filters if needed
-      // This would be expanded based on the filters parameter in a real implementation
-      
+      // Execute the query
       const { data: exportData, error } = await query;
       
       if (error) {

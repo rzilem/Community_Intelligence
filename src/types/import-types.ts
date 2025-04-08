@@ -56,3 +56,7 @@ export type DataMappingConfig = {
   systemFields: { label: string; value: string }[];
   mappings: Record<string, string>;
 };
+
+// Add type assertions for Supabase operations
+export type ImportJobTable = 'import_jobs';
+export type ImportMappingTable = 'import_mappings';

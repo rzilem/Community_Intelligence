@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AssociationSelector from '@/components/associations/AssociationSelector';
