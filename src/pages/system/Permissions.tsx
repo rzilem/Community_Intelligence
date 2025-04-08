@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, UserCheck, Search, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -39,7 +39,7 @@ const Permissions = () => {
   const [loading, setLoading] = useState(false);
 
   // Fetch all users with their profiles
-  const { data: users = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
+  const { data: usersResponse = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
     'users', 
     {
       select: '*, profile:profiles(*)',
@@ -47,6 +47,9 @@ const Permissions = () => {
       order: { column: 'created_at', ascending: false },
     }
   );
+  
+  // Ensure users is always an array
+  const users = Array.isArray(usersResponse) ? usersResponse : [usersResponse];
 
   const filteredUsers = users.filter(user => {
     if (!searchTerm) return true;
