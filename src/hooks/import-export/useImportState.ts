@@ -1,0 +1,133 @@
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { ValidationResult, ImportResult } from '@/types/import-types';
+import { dataImportService, validationService } from '@/services/import-export';
+import { toast } from 'sonner';
+
+export function useImportState() {
+  const { user, currentAssociation } = useAuth();
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
+  const [showMappingModal, setShowMappingModal] = useState(false);
+  const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
+  const [importResults, setImportResults] = useState<ImportResult | null>(null);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importData, setImportData] = useState<any[]>([]);
+  const [importType, setImportType] = useState<string>('associations');
+  const [isValidating, setIsValidating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  
+  // Set the current association as the selected association when available
+  useEffect(() => {
+    if (currentAssociation?.id && !selectedAssociationId) {
+      setSelectedAssociationId(currentAssociation.id);
+      console.log('Auto-selected association:', currentAssociation.id);
+    }
+  }, [currentAssociation, selectedAssociationId]);
+
+  const handleAssociationChange = (associationId: string) => {
+    console.log('Association changed to:', associationId);
+    setSelectedAssociationId(associationId);
+  };
+
+  const resetImportState = () => {
+    setImportFile(null);
+    setImportData([]);
+    setImportType('');
+    setValidationResults(null);
+    setImportResults(null);
+    setShowMappingModal(false);
+  };
+
+  const validateData = async (parsedData: any[], type: string) => {
+    setIsValidating(true);
+    
+    try {
+      toast.info(`Validating ${parsedData.length} rows of data...`);
+      const results = await validationService.validateData(parsedData, type);
+      console.log('Validation results:', results);
+      
+      setValidationResults(results);
+      
+      if (results.valid) {
+        toast.success(`File validated successfully with ${results.validRows} valid rows`);
+      } else {
+        toast.warning(`Found ${results.invalidRows} rows with issues out of ${results.totalRows} total rows`);
+      }
+      
+      setShowMappingModal(true);
+      return results;
+    } catch (error) {
+      console.error('Error validating data:', error);
+      toast.error('Failed to validate the uploaded data');
+      throw error;
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const importDataWithMapping = async (mappings: Record<string, string>) => {
+    console.log('Mapping confirmed:', mappings);
+    setShowMappingModal(false);
+    setIsImporting(true);
+    
+    try {
+      const results = await dataImportService.importData({
+        associationId: selectedAssociationId,
+        dataType: importType,
+        data: importData,
+        mappings,
+        userId: user?.id
+      });
+      
+      console.log('Import results:', results);
+      setImportResults(results);
+      
+      if (results.success) {
+        toast.success(`Successfully imported ${results.successfulImports} records`);
+      } else {
+        toast.warning(`Imported with issues: ${results.successfulImports} successful, ${results.failedImports} failed`);
+      }
+      
+      return results;
+    } catch (error) {
+      console.error('Error importing data:', error);
+      toast.error('Failed to import data');
+      
+      const errorResults = {
+        success: false,
+        totalProcessed: importData.length,
+        successfulImports: 0,
+        failedImports: importData.length,
+        details: [
+          { status: 'error' as const, message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+        ]
+      };
+      
+      setImportResults(errorResults);
+      return errorResults;
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  return {
+    selectedAssociationId,
+    showMappingModal,
+    validationResults,
+    importResults,
+    importFile,
+    importData,
+    importType,
+    isValidating,
+    isImporting,
+    setShowMappingModal,
+    setImportFile,
+    setImportData,
+    setImportType,
+    handleAssociationChange,
+    resetImportState,
+    validateData,
+    importDataWithMapping
+  };
+}

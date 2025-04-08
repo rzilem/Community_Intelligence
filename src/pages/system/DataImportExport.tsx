@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileSpreadsheet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,171 +8,38 @@ import { Upload, Download } from 'lucide-react';
 import ImportTabContent from '@/components/data-import/ImportTabContent';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
-import { dataImportService, validationService } from '@/services/import-export';
-import { toast } from 'sonner';
-import { ValidationResult, ImportResult } from '@/types/import-types';
+import { useImportState } from '@/hooks/import-export/useImportState';
+import { useFileUploadHandler } from '@/hooks/import-export/useFileUploadHandler';
 
 const DataImportExport: React.FC = () => {
-  const { user, userAssociations, currentAssociation } = useAuth();
-  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
-  const [showMappingModal, setShowMappingModal] = useState(false);
-  const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
-  const [importResults, setImportResults] = useState<ImportResult | null>(null);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importData, setImportData] = useState<any[]>([]);
-  const [importType, setImportType] = useState<string>('associations');
-  const [isValidating, setIsValidating] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
+  const {
+    selectedAssociationId,
+    showMappingModal,
+    validationResults,
+    importResults,
+    importFile,
+    importData,
+    importType,
+    isValidating,
+    isImporting,
+    setShowMappingModal,
+    setImportFile,
+    setImportData,
+    setImportType,
+    handleAssociationChange,
+    resetImportState,
+    validateData,
+    importDataWithMapping
+  } = useImportState();
 
-  // Set the current association as the selected association when available
-  useEffect(() => {
-    if (currentAssociation?.id && !selectedAssociationId) {
-      setSelectedAssociationId(currentAssociation.id);
-      console.log('Auto-selected association:', currentAssociation.id);
-    }
-  }, [currentAssociation, selectedAssociationId]);
+  const { handleFileUpload } = useFileUploadHandler({
+    setImportFile,
+    setImportData,
+    setImportType,
+    validateData,
+    selectedAssociationId
+  });
 
-  const handleAssociationChange = (associationId: string) => {
-    console.log('Association changed to:', associationId);
-    setSelectedAssociationId(associationId);
-  };
-
-  const resetImportState = () => {
-    setImportFile(null);
-    setImportData([]);
-    setImportType('');
-    setValidationResults(null);
-    setImportResults(null);
-    setShowMappingModal(false);
-  };
-
-  const handleFileUpload = async (file: File, parsedData: any[], type: string) => {
-    console.log('File uploaded:', file.name, 'Type:', type, 'Rows:', parsedData?.length || 'parsing needed');
-    setImportFile(file);
-    
-    // Only proceed with validation if we have an association selected
-    if (!selectedAssociationId) {
-      toast.warning('Please select an association before proceeding');
-      return;
-    }
-    
-    // If we don't have parsed data but have a file, we need to parse it first
-    if ((!parsedData || parsedData.length === 0) && file) {
-      setIsValidating(true);
-      console.log('Starting file parsing...');
-      
-      try {
-        const { useFileParser } = await import('@/components/data-import/useFileParser');
-        const { parseFile } = useFileParser();
-        
-        console.log('Parsing file:', file.name, 'Size:', file.size);
-        const parsedResult = await parseFile(file);
-        console.log('File parsed successfully, rows:', parsedResult.length);
-        
-        if (parsedResult.length === 0) {
-          toast.error('The file appears to be empty or could not be parsed');
-          setIsValidating(false);
-          return;
-        }
-        
-        setImportData(parsedResult);
-        setImportType(type);
-        
-        // Continue with validation
-        toast.info(`Validating ${parsedResult.length} rows of data...`);
-        const results = await validationService.validateData(parsedResult, type);
-        console.log('Validation results:', results);
-        
-        setValidationResults(results);
-        
-        if (results.valid) {
-          toast.success(`File validated successfully with ${results.validRows} valid rows`);
-        } else {
-          toast.warning(`Found ${results.invalidRows} rows with issues out of ${results.totalRows} total rows`);
-        }
-        
-        setShowMappingModal(true);
-      } catch (error) {
-        console.error('Error parsing/validating file:', error);
-        toast.error(`Failed to process the file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      } finally {
-        setIsValidating(false);
-      }
-    } 
-    // If we already have parsed data, proceed with validation
-    else if (parsedData && parsedData.length > 0) {
-      setIsValidating(true);
-      setImportData(parsedData);
-      setImportType(type);
-      
-      try {
-        toast.info(`Validating ${parsedData.length} rows of data...`);
-        const results = await validationService.validateData(parsedData, type);
-        console.log('Validation results:', results);
-        
-        setValidationResults(results);
-        
-        if (results.valid) {
-          toast.success(`File validated successfully with ${results.validRows} valid rows`);
-        } else {
-          toast.warning(`Found ${results.invalidRows} rows with issues out of ${results.totalRows} total rows`);
-        }
-        
-        setShowMappingModal(true);
-      } catch (error) {
-        console.error('Error validating data:', error);
-        toast.error('Failed to validate the uploaded data');
-      } finally {
-        setIsValidating(false);
-      }
-    }
-  };
-
-  const handleMappingConfirm = async (mappings: Record<string, string>) => {
-    console.log('Mapping confirmed:', mappings);
-    setShowMappingModal(false);
-    setIsImporting(true);
-    
-    try {
-      const results = await dataImportService.importData({
-        associationId: selectedAssociationId,
-        dataType: importType,
-        data: importData,
-        mappings,
-        userId: user?.id
-      });
-      
-      console.log('Import results:', results);
-      setImportResults(results);
-      
-      if (results.success) {
-        toast.success(`Successfully imported ${results.successfulImports} records`);
-      } else {
-        toast.warning(`Imported with issues: ${results.successfulImports} successful, ${results.failedImports} failed`);
-      }
-    } catch (error) {
-      console.error('Error importing data:', error);
-      toast.error('Failed to import data');
-      
-      setImportResults({
-        success: false,
-        totalProcessed: importData.length,
-        successfulImports: 0,
-        failedImports: importData.length,
-        details: [
-          { status: 'error', message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
-        ]
-      });
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
-  const handleImportAnother = () => {
-    resetImportState();
-  };
-
-  // Update the association selector component to fix styling and selection issues
   return (
     <PageTemplate 
       title="Data Import & Export" 
@@ -213,7 +79,7 @@ const DataImportExport: React.FC = () => {
             isValidating={isValidating}
             isImporting={isImporting}
             onFileUpload={handleFileUpload}
-            onImportAnother={handleImportAnother}
+            onImportAnother={resetImportState}
             onAssociationChange={handleAssociationChange}
           />
         </TabsContent>
@@ -230,7 +96,7 @@ const DataImportExport: React.FC = () => {
           associationId={selectedAssociationId}
           validationResults={validationResults || undefined}
           onClose={() => setShowMappingModal(false)}
-          onConfirm={handleMappingConfirm}
+          onConfirm={importDataWithMapping}
         />
       )}
     </PageTemplate>
