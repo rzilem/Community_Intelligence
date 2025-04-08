@@ -123,7 +123,7 @@ const Residents = () => {
                   : "No residents found in this community."}
               </p>
               <Button onClick={handleAddResident}>
-                <Plus className="h-4 w-4 mr-2" /> Add Your First Property
+                <Plus className="h-4 w-4 mr-2" /> Add Your First Resident
               </Button>
             </div>
           )}
