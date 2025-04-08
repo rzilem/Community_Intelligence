@@ -1,18 +1,19 @@
 
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface PageTemplateProps {
   title: string;
   icon: React.ReactNode;
   description?: string;
+  children?: React.ReactNode;
 }
 
 const PageTemplate: React.FC<PageTemplateProps> = ({ 
   title, 
   icon, 
-  description = "This page is currently under development." 
+  description = "This page is currently under development.",
+  children
 }) => {
   return (
     <AppLayout>
@@ -24,14 +25,15 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome to {title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{description}</p>
-          </CardContent>
-        </Card>
+        {!children ? (
+          <div className="card">
+            <div className="card-content">
+              <p>{description}</p>
+            </div>
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </AppLayout>
   );
