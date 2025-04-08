@@ -109,13 +109,14 @@ export const ComplianceForm: React.FC<ComplianceFormProps> = ({
           <div className="col-span-3">
             <Select 
               defaultValue={defaultValues.status || 'open'} 
-              onValueChange={(value: 'open' | 'escalated' | 'resolved') => setValue('status', value)}
+              onValueChange={(value: 'open' | 'in-progress' | 'escalated' | 'resolved') => setValue('status', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="open">Open</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
                 <SelectItem value="escalated">Escalated</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>

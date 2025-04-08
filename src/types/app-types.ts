@@ -146,7 +146,7 @@ export type Compliance = {
   resident_id?: string;
   violation_type: string;
   description?: string;
-  status: 'open' | 'resolved' | 'escalated';
+  status: 'open' | 'in-progress' | 'resolved' | 'escalated';
   fine_amount?: number;
   due_date?: string;
   resolved_date?: string;

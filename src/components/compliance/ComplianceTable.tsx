@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-utils';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CheckCircle, Shield, MoreVertical } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Shield, Clock, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +31,7 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
 }) => {
   const updateIssue = useSupabaseUpdate<Compliance>('compliance_issues');
   
-  const handleStatusChange = async (issue: Compliance, newStatus: 'open' | 'resolved' | 'escalated') => {
+  const handleStatusChange = async (issue: Compliance, newStatus: 'open' | 'in-progress' | 'resolved' | 'escalated') => {
     try {
       await updateIssue.mutateAsync({ 
         id: issue.id, 
@@ -49,6 +49,8 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
     switch (status) {
       case 'open':
         return <Badge variant="secondary">Open</Badge>;
+      case 'in-progress':
+        return <Badge variant="warning" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">In Progress</Badge>;
       case 'escalated':
         return <Badge variant="destructive">Escalated</Badge>;
       case 'resolved':
@@ -129,6 +131,12 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
                       onClick={() => handleStatusChange(issue, 'open')}
                     >
                       <Shield className="mr-2 h-4 w-4" /> Mark as Open
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      disabled={issue.status === 'in-progress'}
+                      onClick={() => handleStatusChange(issue, 'in-progress')}
+                    >
+                      <Clock className="mr-2 h-4 w-4" /> Mark as In Progress
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       disabled={issue.status === 'escalated'}
