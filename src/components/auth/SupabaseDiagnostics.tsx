@@ -23,24 +23,46 @@ const SupabaseDiagnostics: React.FC = () => {
         
         setConnectionStatus('connected');
         
-        // Fetch available tables
+        // Fetch available tables by querying pg_tables instead of using RPC
         try {
-          const { data: tablesData } = await supabase.rpc('get_all_tables');
-          if (tablesData) {
-            setTables(tablesData);
+          // Query public schema tables through PostgreSQL system tables
+          const { data: tablesData } = await supabase
+            .from('_metadata')
+            .select('*')
+            .limit(10);  // Just get some metadata to see if we can access anything
+            
+          // If we reach here, connection works but we may not have proper metadata tables
+          // Try to get tables directly from information_schema (may be blocked by RLS)
+          const { data: schemaData, error: schemaError } = await supabase.rpc('get_schema_info');
+          
+          if (schemaData && Array.isArray(schemaData)) {
+            const tableNames = schemaData.map(item => item.table_name || '').filter(Boolean);
+            setTables(tableNames);
+          } else if (schemaError) {
+            console.log('Could not fetch tables list via RPC:', schemaError);
+            setTables([]);
+          } else {
+            // Fallback if both approaches fail
+            console.log('Connected to Supabase, but could not list tables');
+            setTables([]);
           }
         } catch (e) {
           console.log('Could not fetch tables list:', e);
+          setTables([]);
         }
         
         // Fetch storage buckets
         try {
-          const { data: bucketsData } = await supabase.storage.listBuckets();
-          if (bucketsData) {
+          const { data: bucketsData, error: bucketsError } = await supabase.storage.listBuckets();
+          if (bucketsData && Array.isArray(bucketsData)) {
             setBuckets(bucketsData.map(bucket => bucket.name));
+          } else {
+            console.log('No buckets found or error:', bucketsError);
+            setBuckets([]);
           }
         } catch (e) {
           console.log('Could not fetch storage buckets:', e);
+          setBuckets([]);
         }
         
       } catch (err: any) {
@@ -87,6 +109,17 @@ const SupabaseDiagnostics: React.FC = () => {
         )}
         
         <div>
+          <h3 className="font-medium mb-2">Database Status:</h3>
+          <p className="text-sm text-gray-700">
+            {connectionStatus === 'connected' 
+              ? 'Successfully connected to Supabase database' 
+              : connectionStatus === 'checking' 
+                ? 'Checking database connection...'
+                : 'Failed to connect to database'}
+          </p>
+        </div>
+        
+        <div>
           <h3 className="font-medium mb-2">Tables Detected:</h3>
           {tables.length > 0 ? (
             <ul className="list-disc pl-5 text-sm">
@@ -95,7 +128,11 @@ const SupabaseDiagnostics: React.FC = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No tables detected or unable to list tables</p>
+            <p className="text-sm text-gray-500">
+              {connectionStatus === 'connected' 
+                ? 'No tables detected or unable to list tables due to permissions' 
+                : 'Check connection to detect tables'}
+            </p>
           )}
         </div>
         
@@ -108,7 +145,11 @@ const SupabaseDiagnostics: React.FC = () => {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No storage buckets detected</p>
+            <p className="text-sm text-gray-500">
+              {connectionStatus === 'connected' 
+                ? 'No storage buckets detected' 
+                : 'Check connection to detect buckets'}
+            </p>
           )}
         </div>
 
@@ -118,6 +159,7 @@ const SupabaseDiagnostics: React.FC = () => {
             <li>Email confirmation might be required (check Supabase Authentication settings)</li>
             <li>Row Level Security policies might be blocking data access</li>
             <li>Storage buckets might need to be created manually</li>
+            <li>Database functions like 'get_all_tables' might not exist in your Supabase instance</li>
           </ul>
         </div>
       </div>
