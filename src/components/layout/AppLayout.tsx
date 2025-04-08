@@ -296,7 +296,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <div className="flex min-h-screen w-full bg-gray-50">
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-sidebar border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
           isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"
         )}
       >
@@ -358,7 +358,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <item.icon size={20} />
                     <span>{item.name}</span>
                     {item.name === 'Communications' && (
-                      <Badge className="ml-auto bg-hoa-accent text-white">3</Badge>
+                      <Badge className="ml-auto bg-sidebar-accent text-white">3</Badge>
                     )}
                   </Link>
                 )}

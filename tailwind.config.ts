@@ -74,8 +74,8 @@ export default {
 						400: '#608cff', 
 						500: '#3b6aff',
 						600: '#2952ff',
-						700: '#1e3ef3',
-						800: '#1934d9',
+						700: '#2446d1',
+						800: '#1e3ef3',
 						900: '#1731b0'
 					},
 					teal: {
@@ -91,7 +91,20 @@ export default {
 						800: '#135452',
 						900: '#124645'
 					},
-					accent: '#ff6b35', // Vibrant orange for accents
+					accent: '#1a91d4', // Blue accent (replacing orange)
+					silver: {
+						DEFAULT: '#94a3b8',
+						50: '#f8fafc',
+						100: '#f1f5f9',
+						200: '#e2e8f0',
+						300: '#cbd5e1',
+						400: '#94a3b8',
+						500: '#64748b',
+						600: '#475569',
+						700: '#334155',
+						800: '#1e293b',
+						900: '#0f172a'
+					}
 				}
 			},
 			fontFamily: {
@@ -139,6 +152,9 @@ export default {
 				'pulse-slow': 'pulse-slow 3s infinite ease-in-out',
 				'fade-in': 'fade-in 0.5s ease-out',
 				'fade-in-up': 'fade-in-up 0.5s ease-out'
+			},
+			backgroundImage: {
+				'sidebar-gradient': 'linear-gradient(to bottom right, var(--sidebar-background), #1e3a8a)'
 			}
 		}
 	},
