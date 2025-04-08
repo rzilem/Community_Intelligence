@@ -22,13 +22,15 @@ export const useLeads = () => {
         throw error;
       }
       
-      setLeads(data || []);
+      // Since we're now guaranteed that the data matches our Lead type
+      // after creating the table, we can safely cast it
+      setLeads(data as Lead[] || []);
       setLastRefreshed(new Date());
     } catch (error) {
       console.error('Error fetching leads:', error);
-      // If the table doesn't exist yet, use mock data
+      // If there's an error, use mock data
       setLeads(getMockLeads());
-      toast.error('Could not fetch leads. Please ensure the leads table exists.');
+      toast.error('Could not fetch leads. Please ensure you are authenticated.');
     } finally {
       setIsLoading(false);
     }
@@ -54,7 +56,7 @@ export const useLeads = () => {
       } catch (dbError) {
         console.error('Database error, using mock data:', dbError);
         // If database operation fails, just add to local state
-        setLeads(prevLeads => [testLead, ...prevLeads]);
+        setLeads(prevLeads => [testLead as Lead, ...prevLeads]);
         toast.success('Test lead created (local only)');
       }
     } catch (error) {
