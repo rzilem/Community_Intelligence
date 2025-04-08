@@ -2,21 +2,33 @@
 import React, { useState } from 'react';
 import ColumnMappingField from './ColumnMappingField';
 import { MappingOption } from './types/mapping-types';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
+import { useAIMappingSuggestions } from './hooks/useAIMappingSuggestions';
+import { toast } from 'sonner';
 
 interface ColumnMappingListProps {
   fileColumns: string[];
   systemFields: MappingOption[];
   mappings: Record<string, string>;
   onMappingChange: (column: string, field: string) => void;
+  previewData: any[];
 }
 
 const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   fileColumns,
   systemFields,
   mappings,
-  onMappingChange
+  onMappingChange,
+  previewData
 }) => {
   const [openState, setOpenState] = useState<Record<string, boolean>>({});
+  
+  const { 
+    suggestions, 
+    isGenerating, 
+    generateSuggestions 
+  } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
   const handleMappingChange = (column: string, field: string) => {
     onMappingChange(column, field);
@@ -32,10 +44,51 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
       [column]: isOpen
     }));
   };
+  
+  const handleAutoMapColumns = () => {
+    const newSuggestions = generateSuggestions();
+    
+    // Apply mapping suggestions that meet confidence threshold
+    const updatedMappings = { ...mappings };
+    let updateCount = 0;
+    
+    Object.entries(newSuggestions).forEach(([column, suggestion]) => {
+      if (suggestion.confidence >= 0.6 && !mappings[column]) {
+        updatedMappings[column] = suggestion.fieldValue;
+        updateCount++;
+      }
+    });
+    
+    // Update all mappings at once
+    if (updateCount > 0) {
+      Object.entries(updatedMappings).forEach(([column, field]) => {
+        if (field && !mappings[column]) {
+          onMappingChange(column, field);
+        }
+      });
+      
+      toast.success(`Auto-mapped ${updateCount} columns successfully`);
+    } else {
+      toast.info("No additional columns could be automatically mapped");
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-medium mb-2">Map File Columns to System Fields:</h3>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-medium">Map File Columns to System Fields:</h3>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleAutoMapColumns}
+          disabled={isGenerating}
+          className="flex items-center gap-1"
+        >
+          <Sparkles className="h-4 w-4" />
+          {isGenerating ? 'Analyzing...' : 'Auto-Map Columns'}
+        </Button>
+      </div>
+      
       {fileColumns.map(column => (
         <ColumnMappingField
           key={column}
@@ -45,6 +98,8 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
           onMappingChange={handleMappingChange}
           isOpen={!!openState[column]}
           setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
+          suggestion={suggestions[column]?.fieldValue}
+          confidence={suggestions[column]?.confidence || 0}
         />
       ))}
     </div>

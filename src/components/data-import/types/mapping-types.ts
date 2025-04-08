@@ -16,3 +16,14 @@ export interface ValidationSummary {
     issue: string;
   }>;
 }
+
+export interface MappingSuggestion {
+  fieldValue: string;
+  confidence: number;
+}
+
+export interface ColumnMapping {
+  columnName: string;
+  fieldName: string;
+  suggested?: MappingSuggestion;
+}

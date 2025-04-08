@@ -86,6 +86,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             systemFields={systemFields}
             mappings={mappings}
             onMappingChange={handleMappingChange}
+            previewData={previewData}
           />
         </div>
 
