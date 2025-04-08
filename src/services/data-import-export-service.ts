@@ -58,7 +58,7 @@ export const dataImportService = {
           file_name: fileName,
           file_size: fileSize,
           created_by: userId
-        })
+        } as any)
         .select('*')
         .single();
       
@@ -68,7 +68,7 @@ export const dataImportService = {
         throw error;
       }
       
-      return data as ImportJob;
+      return data as unknown as ImportJob;
     } catch (error) {
       console.error('Error creating import job:', error);
       return null;
@@ -134,7 +134,7 @@ export const dataImportService = {
         // Update existing mapping
         await supabase
           .from('import_mappings' as ImportMappingTable)
-          .update({ mappings } as any)
+          .update({ mappings: mappings as any })
           .eq('id', existingMapping.id);
       } else {
         // Create new mapping
@@ -143,7 +143,7 @@ export const dataImportService = {
           .insert({
             association_id: associationId,
             import_type: importType,
-            mappings,
+            mappings: mappings as any,
             created_by: userId
           } as any);
       }
@@ -172,7 +172,9 @@ export const dataImportService = {
         return null;
       }
       
-      return data?.mappings || null;
+      return data?.mappings && typeof data.mappings === 'object' 
+        ? data.mappings as unknown as Record<string, string> 
+        : null;
     } catch (error) {
       console.error('Error getting import mappings:', error);
       return null;
@@ -195,7 +197,7 @@ export const dataImportService = {
         return null;
       }
       
-      return data as ImportJob;
+      return data as unknown as ImportJob;
     } catch (error) {
       console.error('Error getting import job:', error);
       return null;
@@ -219,7 +221,7 @@ export const dataImportService = {
         return [];
       }
       
-      return data as ImportJob[];
+      return data as unknown as ImportJob[];
     } catch (error) {
       console.error('Error getting recent import jobs:', error);
       return [];
@@ -256,6 +258,9 @@ export const dataImportService = {
         case 'maintenance':
           requiredFields = ['title', 'description'];
           break;
+        case 'vendors':
+          requiredFields = ['name', 'category'];
+          break;
         default:
           requiredFields = [];
       }
@@ -291,6 +296,27 @@ export const dataImportService = {
           rowHasError = true;
         }
         
+        // Vendor-specific validations
+        if (dataType === 'vendors') {
+          if (row.phone && !/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im.test(row.phone)) {
+            issues.push({
+              row: rowIndex + 1,
+              field: 'phone',
+              issue: 'Phone number format is invalid'
+            });
+            warnings++;
+          }
+          
+          if (row.email && !/^\S+@\S+\.\S+$/.test(row.email)) {
+            issues.push({
+              row: rowIndex + 1,
+              field: 'email',
+              issue: 'Email format is invalid'
+            });
+            warnings++;
+          }
+        }
+        
         // Add other type-specific validations as needed
         
         if (rowHasError) {
@@ -302,7 +328,8 @@ export const dataImportService = {
       const fieldsToCheckDupes: Record<string, string[]> = {
         'properties': ['address', 'unit_number'],
         'owners': ['email'],
-        'maintenance': ['title']
+        'maintenance': ['title'],
+        'vendors': ['email', 'name']
       };
       
       if (fieldsToCheckDupes[dataType]) {
@@ -410,6 +437,14 @@ export const dataImportService = {
         case 'maintenance':
           tableName = 'maintenance_requests';
           break;
+        case 'vendors':
+          tableName = 'vendors';
+          processedData.forEach(row => {
+            // Set default values for vendors
+            row.status = row.status || 'active';
+            row.hasInsurance = row.hasInsurance === 'true' || row.hasInsurance === true || false;
+          });
+          break;
         default:
           tableName = dataType;
       }
@@ -433,8 +468,8 @@ export const dataImportService = {
         
         // Use a simple string as the table name to avoid TypeScript errors
         const { data: insertedData, error } = await supabase
-          .from(tableName)
-          .insert(batch)
+          .from(tableName as any)
+          .insert(batch as any)
           .select('id');
         
         if (error) {
@@ -547,6 +582,15 @@ export const dataImportService = {
         description: 'Description',
         priority: 'Priority (low/medium/high)',
         status: 'Status (open/in_progress/completed)'
+      },
+      vendors: {
+        name: 'Vendor Name',
+        contactPerson: 'Contact Person',
+        email: 'Email',
+        phone: 'Phone Number',
+        category: 'Service Category',
+        status: 'Status (active/inactive)',
+        hasInsurance: 'Has Insurance (true/false)'
       }
     };
     

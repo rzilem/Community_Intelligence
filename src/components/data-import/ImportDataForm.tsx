@@ -181,6 +181,24 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
                 <RadioGroupItem value="maintenance" id="maintenance" />
                 <Label htmlFor="maintenance" className="flex-1 cursor-pointer">Maintenance Requests</Label>
               </div>
+              <div className="flex items-center space-x-2 border rounded-md p-3 hover:bg-muted/50">
+                <RadioGroupItem value="vendors" id="vendors" />
+                <Label htmlFor="vendors" className="flex-1 cursor-pointer">
+                  Vendors
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="h-4 w-4 ml-2 text-muted-foreground inline" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          Import vendor data including contact information and service categories
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </Label>
+              </div>
             </RadioGroup>
           </div>
 
