@@ -87,7 +87,7 @@ export const useLeads = () => {
     }
   };
   
-  const deleteLead = async (id: string) => {
+  const deleteLead = async (id: string): Promise<void> => {
     try {
       console.log('Deleting lead:', id);
       const { error } = await supabase
@@ -101,14 +101,13 @@ export const useLeads = () => {
       }
       
       refreshLeads();
-      return true;
     } catch (error: any) {
       console.error('Error deleting lead:', error);
       throw error;
     }
   };
   
-  const updateLeadStatus = async (id: string, status: Lead['status']) => {
+  const updateLeadStatus = async (id: string, status: Lead['status']): Promise<void> => {
     try {
       console.log(`Updating lead ${id} status to ${status}`);
       const { error } = await supabase
@@ -122,7 +121,6 @@ export const useLeads = () => {
       }
       
       refreshLeads();
-      return true;
     } catch (error: any) {
       console.error('Error updating lead status:', error);
       throw error;
