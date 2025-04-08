@@ -53,7 +53,7 @@ const AuthContext = createContext<AuthContextType>({
   setCurrentAssociation: () => {},
 });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     loadUserData();
-  }, [user]);
+  }, [user, currentAssociation]);
 
   const signIn = async (email: string, password: string) => {
     try {
