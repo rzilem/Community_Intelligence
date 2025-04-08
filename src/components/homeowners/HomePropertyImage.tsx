@@ -16,8 +16,7 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // For demo purposes, use a placeholder image
-  const placeholderImage = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1000&q=80";
+  const placeholderImage = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80";
   
   useEffect(() => {
     if (activeTab === 'streetView') {
@@ -44,22 +43,22 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
   };
   
   return (
-    <div className="space-y-2">
+    <div className="w-[250px] space-y-2">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2">
-          <TabsTrigger value="streetView">Street View</TabsTrigger>
-          <TabsTrigger value="uploaded">Uploaded Image</TabsTrigger>
+          <TabsTrigger value="streetView" className="text-xs">Street View</TabsTrigger>
+          <TabsTrigger value="uploaded" className="text-xs">Uploaded</TabsTrigger>
         </TabsList>
         
         <TabsContent value="streetView" className="space-y-2">
-          <div className="relative h-40 bg-muted overflow-hidden rounded-md">
+          <div className="relative h-[250px] w-[250px] bg-muted overflow-hidden rounded-md">
             {isLoading ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
               </div>
             ) : error ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                <p className="text-red-500">{error}</p>
+                <p className="text-red-500 text-sm">{error}</p>
                 <Button variant="outline" size="sm" onClick={refreshStreetView} className="mt-2">
                   Try Again
                 </Button>
@@ -77,7 +76,7 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
             )}
           </div>
           <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+            <p className="text-xs text-muted-foreground truncate max-w-[150px]">
               {address}
             </p>
             <Button 
@@ -86,14 +85,13 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
               onClick={refreshStreetView}
               disabled={isLoading}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+              <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
         </TabsContent>
         
         <TabsContent value="uploaded" className="space-y-2">
-          <div className="h-40 bg-muted overflow-hidden rounded-md flex flex-col items-center justify-center">
+          <div className="h-[250px] w-[250px] bg-muted overflow-hidden rounded-md flex flex-col items-center justify-center">
             {customImage ? (
               <img 
                 src={customImage} 
@@ -103,7 +101,7 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
             ) : (
               <div className="flex flex-col items-center justify-center p-4 text-center">
                 <Image className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                <p className="text-xs text-muted-foreground mb-2">No custom image has been uploaded yet</p>
+                <p className="text-xs text-muted-foreground mb-2">No custom image uploaded</p>
                 <Button size="sm" onClick={handleUploadImage}>
                   <Upload className="h-4 w-4 mr-2" />
                   Upload
@@ -116,4 +114,3 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
     </div>
   );
 };
-

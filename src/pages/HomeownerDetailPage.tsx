@@ -160,22 +160,14 @@ const HomeownerDetailPage: React.FC = () => {
               </Card>
             </div>
           </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center">
-              <Home className="h-5 w-5 mr-2" />
-              Property Image
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
+          
+          <div className="ml-6">
             <HomePropertyImage 
               address={`${homeowner.property} ${homeowner.unit}, Austin, TX`}
               propertyId={homeowner.id}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-6 mb-8">
