@@ -4,8 +4,8 @@ export const parseService = {
     console.log('Parsing CSV content, length:', csvString.length);
     
     try {
-      // Split by newline characters (handle different OS line endings)
-      const lines = csvString.trim().split(/\r?\n/);
+      // Split by newline characters while respecting quoted values
+      const lines = parseCSVLines(csvString);
       console.log('CSV contains', lines.length, 'lines');
       
       if (lines.length === 0) {
@@ -14,7 +14,7 @@ export const parseService = {
       }
       
       // Parse headers - handle quoted fields
-      const headers = parseCSVLine(lines[0]);
+      const headers = parseCSVRow(lines[0]);
       console.log('CSV headers:', headers);
       
       if (headers.length === 0 || (headers.length === 1 && headers[0] === '')) {
@@ -28,7 +28,13 @@ export const parseService = {
         const line = lines[i].trim();
         if (!line) continue; // Skip empty lines
         
-        const values = parseCSVLine(line);
+        const values = parseCSVRow(line);
+        
+        // Skip if we parsed an empty row
+        if (values.length === 0 || (values.length === 1 && values[0] === '')) {
+          continue;
+        }
+        
         const obj: Record<string, any> = {};
         
         headers.forEach((header, index) => {
@@ -38,10 +44,19 @@ export const parseService = {
           }
         });
         
-        result.push(obj);
+        // Only add rows that have at least one non-empty value
+        if (Object.values(obj).some(val => val !== '')) {
+          result.push(obj);
+        }
       }
       
       console.log('Successfully parsed', result.length, 'rows of CSV data');
+      
+      // Log a sample of parsed data for debugging
+      if (result.length > 0) {
+        console.log('Sample row:', JSON.stringify(result[0]));
+      }
+      
       return result;
     } catch (error) {
       console.error('Error parsing CSV:', error);
@@ -50,30 +65,96 @@ export const parseService = {
   }
 };
 
-// Helper function to properly parse CSV lines with quoted fields
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
+// Split CSV into lines, respecting quoted fields that may contain newlines
+function parseCSVLines(csvString: string): string[] {
+  const lines: string[] = [];
+  let currentLine = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < csvString.length; i++) {
+    const char = csvString[i];
+    const nextChar = i < csvString.length - 1 ? csvString[i + 1] : '';
+    
+    // Handle quotes
+    if (char === '"') {
+      // Check for escaped quotes (double quotes)
+      if (nextChar === '"') {
+        currentLine += '"';
+        i++; // Skip the next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        currentLine += char;
+      }
+    }
+    // Handle newlines
+    else if ((char === '\n' || (char === '\r' && nextChar === '\n')) && !inQuotes) {
+      // End of line outside quotes
+      if (char === '\r' && nextChar === '\n') {
+        i++; // Skip the \n in \r\n
+      }
+      
+      lines.push(currentLine);
+      currentLine = '';
+    }
+    // Handle all other characters
+    else {
+      currentLine += char;
+    }
+  }
+  
+  // Add the last line if not empty
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
+// Parse a CSV row into fields, respecting quoted values
+function parseCSVRow(line: string): string[] {
+  const fields: string[] = [];
+  let currentField = '';
   let inQuotes = false;
   
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const nextChar = i < line.length - 1 ? line[i + 1] : '';
     
+    // Handle quotes
     if (char === '"') {
-      // Handle quotes - toggle inQuotes state
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      // End of field
-      result.push(current.trim());
-      current = '';
-    } else {
-      // Add character to current field
-      current += char;
+      // Check for escaped quotes (double quotes)
+      if (nextChar === '"') {
+        currentField += '"';
+        i++; // Skip the next quote
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+      }
+    }
+    // Handle field separators
+    else if (char === ',' && !inQuotes) {
+      fields.push(currentField);
+      currentField = '';
+    }
+    // Handle all other characters
+    else {
+      currentField += char;
     }
   }
   
   // Add the last field
-  result.push(current.trim());
+  fields.push(currentField);
   
-  return result;
+  // Clean fields - trim whitespace and remove surrounding quotes
+  return fields.map(field => {
+    let trimmed = field.trim();
+    
+    // Remove surrounding quotes if present
+    if (trimmed.startsWith('"') && trimmed.endsWith('"') && trimmed.length >= 2) {
+      trimmed = trimmed.substring(1, trimmed.length - 1);
+    }
+    
+    return trimmed;
+  });
 }

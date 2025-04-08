@@ -31,20 +31,21 @@ export const useFileParser = () => {
             if (fileName.endsWith('.csv')) {
               // Parse CSV using the parseService
               if (typeof data === 'string') {
-                console.log('CSV data length:', data.length);
-                console.log('CSV first 100 chars:', data.slice(0, 100) + '...');
+                console.log('CSV data loaded, length:', data.length);
+                console.log('CSV first 100 chars:', data.slice(0, 100).replace(/\n/g, '\\n') + '...');
                 
                 const parsedData = parseService.parseCSV(data);
                 console.log('CSV parsing complete, rows:', parsedData.length);
                 if (parsedData.length === 0) {
                   console.error('CSV parsing returned 0 rows');
+                  reject(new Error('No data could be parsed from the CSV file. Please check the file format.'));
                 } else {
                   console.log('First row sample:', JSON.stringify(parsedData[0]));
+                  resolve(parsedData);
                 }
-                resolve(parsedData);
               } else {
                 console.error('CSV data is not a string:', typeof data);
-                reject(new Error('CSV data is not a string'));
+                reject(new Error('CSV data is not in the expected format'));
               }
             } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
               // Parse Excel
@@ -55,13 +56,16 @@ export const useFileParser = () => {
                 const parsedData = XLSX.utils.sheet_to_json(worksheet);
                 
                 console.log('Excel parsing complete, rows:', parsedData.length);
-                if (parsedData.length > 0) {
+                if (parsedData.length === 0) {
+                  console.error('Excel parsing returned 0 rows');
+                  reject(new Error('No data could be parsed from the Excel file. Please check the file.'));
+                } else {
                   console.log('First row sample:', JSON.stringify(parsedData[0]));
+                  resolve(parsedData);
                 }
-                resolve(parsedData);
               } catch (excelError) {
                 console.error('Excel parsing error:', excelError);
-                reject(excelError);
+                reject(new Error(`Failed to parse Excel file: ${excelError instanceof Error ? excelError.message : 'Unknown error'}`));
               }
             } else {
               console.error('Unsupported file format:', fileName);
@@ -75,7 +79,7 @@ export const useFileParser = () => {
         
         reader.onerror = (error) => {
           console.error('FileReader error:', error);
-          reject(error);
+          reject(new Error('Error reading file. Please try again.'));
         };
         
         if (file.name.toLowerCase().endsWith('.csv')) {
