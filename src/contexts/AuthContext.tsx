@@ -10,8 +10,10 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isLoading: boolean; // Added to match usage in components
+  userRole: string | null; // Added to match usage in components
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: { first_name: string, last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isAuthenticated: boolean;
@@ -22,6 +24,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  isLoading: true, // Added default value
+  userRole: null, // Added default value
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
@@ -35,6 +39,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // Added to track user role
 
   useEffect(() => {
     // Get the initial session
@@ -53,6 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         setProfile(null);
         setIsAdmin(false);
+        setUserRole(null);
       }
     });
 
@@ -75,8 +81,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error) throw error;
           
           if (data) {
-            setProfile(data as Profile);
-            setIsAdmin(data.role === 'admin');
+            // Fixed: Convert data to Profile and use strong typing
+            const profileData = data as Profile;
+            setProfile(profileData);
+            setIsAdmin(profileData.role === 'admin');
+            setUserRole(profileData.role); // Track user role
           }
         } catch (error: any) {
           console.error('Error fetching profile:', error.message);
@@ -101,15 +110,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, userData: { first_name: string, last_name: string }) => {
     try {
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
           },
         },
       });
@@ -139,11 +148,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       user,
       profile,
       loading,
+      isLoading: loading, // Alias loading as isLoading for compatibility
       signIn,
       signUp,
       signOut,
       isAdmin,
       isAuthenticated,
+      userRole,
     }}>
       {children}
     </AuthContext.Provider>

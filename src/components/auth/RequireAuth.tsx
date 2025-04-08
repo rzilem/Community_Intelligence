@@ -13,12 +13,12 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   children, 
   allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'] 
 }) => {
-  const { user, isLoading, userRole } = useAuth();
+  const { user, loading, userRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    if (isLoading) return; // Still checking authentication
+    if (loading) return; // Still checking authentication
     
     // If not authenticated, redirect to login
     if (!user) {
@@ -35,9 +35,9 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       navigate('/dashboard');
       return;
     }
-  }, [user, isLoading, userRole, navigate, location, allowedRoles]);
+  }, [user, loading, userRole, navigate, location, allowedRoles]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -49,7 +49,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   }
 
   // If no authentication check is in progress and we have a user, render the children
-  if (!isLoading && user) {
+  if (!loading && user) {
     return <>{children}</>;
   }
 
