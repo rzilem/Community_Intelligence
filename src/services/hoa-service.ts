@@ -4,7 +4,7 @@ import { HOA, Property, Resident } from '@/types/app-types';
 
 export const fetchHOAs = async (): Promise<HOA[]> => {
   const { data, error } = await supabase
-    .from('associations')
+    .from('associations' as any)
     .select('*')
     .order('name');
 
@@ -24,7 +24,7 @@ export const fetchHOAs = async (): Promise<HOA[]> => {
 
 export const fetchHOAById = async (id: string): Promise<HOA> => {
   const { data, error } = await supabase
-    .from('associations')
+    .from('associations' as any)
     .select('*')
     .eq('id', id)
     .single();
@@ -45,7 +45,7 @@ export const fetchHOAById = async (id: string): Promise<HOA> => {
 
 export const createHOA = async (hoa: Partial<HOA>): Promise<HOA> => {
   const { data, error } = await supabase
-    .from('associations')
+    .from('associations' as any)
     .insert({
       name: hoa.name,
       address: hoa.address,
@@ -70,7 +70,7 @@ export const createHOA = async (hoa: Partial<HOA>): Promise<HOA> => {
 
 export const updateHOA = async (id: string, hoa: Partial<HOA>): Promise<HOA> => {
   const { data, error } = await supabase
-    .from('associations')
+    .from('associations' as any)
     .update({
       name: hoa.name,
       address: hoa.address,
@@ -96,7 +96,7 @@ export const updateHOA = async (id: string, hoa: Partial<HOA>): Promise<HOA> => 
 
 export const deleteHOA = async (id: string): Promise<void> => {
   const { error } = await supabase
-    .from('associations')
+    .from('associations' as any)
     .delete()
     .eq('id', id);
 
@@ -107,7 +107,7 @@ export const deleteHOA = async (id: string): Promise<void> => {
 
 export const fetchPropertiesByHOA = async (hoaId: string): Promise<Property[]> => {
   const { data, error } = await supabase
-    .from('properties')
+    .from('properties' as any)
     .select('*')
     .eq('association_id', hoaId)
     .order('address');
@@ -136,7 +136,7 @@ export const fetchPropertiesByHOA = async (hoaId: string): Promise<Property[]> =
 export const fetchResidentsByHOA = async (hoaId: string): Promise<Resident[]> => {
   // Fetch residents that are associated with properties in the given HOA
   const { data, error } = await supabase
-    .from('residents')
+    .from('residents' as any)
     .select(`
       *,
       property:property_id(
@@ -159,6 +159,8 @@ export const fetchResidentsByHOA = async (hoaId: string): Promise<Resident[]> =>
     is_primary: resident.is_primary,
     move_in_date: resident.move_in_date,
     move_out_date: resident.move_out_date,
+    name: resident.name || '',  // Add default values for required fields
+    email: resident.email || '', // Add default values for required fields
     created_at: resident.created_at,
     updated_at: resident.updated_at
   }));
@@ -166,7 +168,7 @@ export const fetchResidentsByHOA = async (hoaId: string): Promise<Resident[]> =>
 
 export const fetchResidentsByProperty = async (propertyId: string): Promise<Resident[]> => {
   const { data, error } = await supabase
-    .from('residents')
+    .from('residents' as any)
     .select('*')
     .eq('property_id', propertyId);
 
@@ -182,6 +184,8 @@ export const fetchResidentsByProperty = async (propertyId: string): Promise<Resi
     is_primary: resident.is_primary,
     move_in_date: resident.move_in_date,
     move_out_date: resident.move_out_date,
+    name: resident.name || '',  // Add default values for required fields
+    email: resident.email || '', // Add default values for required fields
     created_at: resident.created_at,
     updated_at: resident.updated_at
   }));

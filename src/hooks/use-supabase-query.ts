@@ -12,7 +12,7 @@ type KnownTables =
   | 'documents'
   | 'calendar_events'
   | 'bank_accounts'
-  | string; // Allow any string for flexibility, but with known ones for autocomplete
+  | string; // Allow any string but with known ones for autocomplete
 
 // Hook for fetching data from Supabase
 export function useSupabaseQuery<T = any>(
@@ -31,7 +31,8 @@ export function useSupabaseQuery<T = any>(
   return useQuery({
     queryKey,
     queryFn: async () => {
-      let query = supabase.from(tableName).select(options?.select || '*');
+      // Use 'as any' to bypass the TypeScript type checking for the tableName
+      let query = supabase.from(tableName as any).select(options?.select || '*');
       
       // Apply filters if provided
       if (options?.filter && options.filter.length > 0) {
@@ -108,8 +109,9 @@ export function useSupabaseCreate<T = any>(
   
   return useMutation({
     mutationFn: async (item: Partial<T>) => {
+      // Use 'as any' to bypass the TypeScript type checking for the tableName
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .insert(item)
         .select();
       
@@ -154,8 +156,9 @@ export function useSupabaseUpdate<T = any>(
   
   return useMutation({
     mutationFn: async ({ id, ...item }: Partial<T> & { id: string }) => {
+      // Use 'as any' to bypass the TypeScript type checking for the tableName
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .update(item)
         .eq('id', id)
         .select();
@@ -201,8 +204,9 @@ export function useSupabaseDelete(
   
   return useMutation({
     mutationFn: async (id: string) => {
+      // Use 'as any' to bypass the TypeScript type checking for the tableName
       const { error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .delete()
         .eq('id', id);
       
