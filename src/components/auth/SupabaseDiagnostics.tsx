@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,7 +10,7 @@ const SupabaseDiagnostics: React.FC = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Test basic connection with a simple query
+        // Test basic connection with a simple query using type assertion
         const { data, error } = await supabase
           .from('profiles' as any)
           .select('count')

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,7 +67,6 @@ const Auth = () => {
       await signIn(loginData.email, loginData.password);
       navigate('/dashboard');
     } catch (error) {
-      // Error is handled in the signIn function
       console.error('Login error:', error);
     }
   };
@@ -91,14 +89,12 @@ const Auth = () => {
         }
       );
     } catch (error) {
-      // Error is handled in the signUp function
       console.error('Signup error:', error);
     }
   };
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Update URL without navigating
     const newSearchParams = new URLSearchParams();
     newSearchParams.set('tab', value);
     window.history.replaceState({}, '', `${window.location.pathname}?${newSearchParams.toString()}`);

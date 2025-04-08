@@ -30,7 +30,7 @@ export function useSupabaseQuery<T = any>(
   return useQuery({
     queryKey,
     queryFn: async () => {
-      // Use explicit type assertion to bypass TypeScript type checking for the tableName
+      // Use explicit type assertion to bypass TypeScript type checking
       let query = supabase.from(tableName as any).select(options?.select || '*');
       
       // Apply filters if provided

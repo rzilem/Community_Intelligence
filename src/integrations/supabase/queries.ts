@@ -7,7 +7,7 @@ import { supabase } from './client';
  */
 export const checkTableAccess = async (tableName: string) => {
   try {
-    // Use explicit type assertion to bypass TypeScript's strict checking
+    // Use a type cast to bypass TypeScript's strict checking
     const { data, error } = await supabase
       .from(tableName as any)
       .select('count')

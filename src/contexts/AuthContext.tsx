@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user) {
         try {
           console.log('Fetching profile for user:', user.id);
+          // Using type assertion for Supabase query
           const { data, error } = await supabase
             .from('profiles' as any)
             .select('*')
