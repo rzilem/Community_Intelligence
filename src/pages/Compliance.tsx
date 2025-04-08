@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield, Plus, Search, Filter, Download } from 'lucide-react';
+import { Shield, Filter, Search, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { Compliance } from '@/types/app-types';
 import { useAuth } from '@/contexts/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ComplianceTable } from '@/components/compliance/ComplianceTable';
 import { ComplianceDialog } from '@/components/compliance/ComplianceDialog';
 import TooltipButton from '@/components/ui/tooltip-button';
@@ -16,11 +16,11 @@ import TooltipButton from '@/components/ui/tooltip-button';
 const CompliancePage = () => {
   const { currentAssociation } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<string>('open');
+  const [selectedTab, setSelectedTab] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedIssue, setSelectedIssue] = useState<Compliance | null>(null);
+  const [selectedCompliance, setSelectedCompliance] = useState<Compliance | null>(null);
 
-  const { data: complianceIssues = [], isLoading, error } = useSupabaseQuery<Compliance[]>(
+  const { data: complianceData = [], isLoading, error } = useSupabaseQuery<Compliance[]>(
     'compliance_issues',
     {
       select: '*',
@@ -32,50 +32,55 @@ const CompliancePage = () => {
     !!currentAssociation
   );
 
-  const filteredIssues = complianceIssues.filter(issue => {
-    // First filter by tab status
-    const matchesStatus = 
-      (activeTab === 'open' && issue.status === 'open') ||
-      (activeTab === 'escalated' && issue.status === 'escalated') ||
-      (activeTab === 'resolved' && issue.status === 'resolved') ||
-      (activeTab === 'all');
-      
-    if (!matchesStatus) return false;
-    
-    // Then apply search filter if needed
-    if (!searchTerm) return true;
-    
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      issue.violation_type.toLowerCase().includes(searchLower) || 
-      (issue.description && issue.description.toLowerCase().includes(searchLower)) ||
-      issue.property_id.includes(searchTerm)
-    );
-  });
+  // Ensure compliance is always an array
+  const complianceIssues = Array.isArray(complianceData) ? complianceData : [complianceData];
 
-  const handleAddIssue = () => {
-    setSelectedIssue(null);
+  const filteredCompliance = complianceIssues
+    .filter(issue => {
+      if (!searchTerm) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        issue.violation_type.toLowerCase().includes(searchLower) ||
+        (issue.description && issue.description.toLowerCase().includes(searchLower)) ||
+        issue.property_id.toLowerCase().includes(searchLower)
+      );
+    })
+    .filter(issue => {
+      if (selectedTab === 'all') return true;
+      if (selectedTab === 'open') return issue.status === 'open';
+      if (selectedTab === 'in-progress') return issue.status === 'in-progress';
+      if (selectedTab === 'resolved') return issue.status === 'resolved';
+      return true;
+    });
+
+  const openIssues = complianceIssues.filter(issue => issue.status === 'open');
+  const inProgressIssues = complianceIssues.filter(issue => issue.status === 'in-progress');
+  const resolvedIssues = complianceIssues.filter(issue => issue.status === 'resolved');
+  
+  const handleAddCompliance = () => {
+    setSelectedCompliance(null);
     setIsDialogOpen(true);
   };
 
-  const handleEditIssue = (issue: Compliance) => {
-    setSelectedIssue(issue);
+  const handleEditCompliance = (compliance: Compliance) => {
+    setSelectedCompliance(compliance);
     setIsDialogOpen(true);
   };
 
   return (
-    <PageTemplate 
-      title="Compliance" 
+    <PageTemplate
+      title="Compliance"
       icon={<Shield className="h-8 w-8" />}
-      description="Track and manage HOA violations, inspections, and compliance issues."
+      description="Track and manage community compliance issues and violations."
     >
-      <Card>
-        <CardContent className="p-6">
+      <Card className="mb-6">
+        <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search compliance issues..." 
+                placeholder="Search compliance issues..."
                 className="pl-8"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
@@ -91,79 +96,87 @@ const CompliancePage = () => {
               </TooltipButton>
               
               <TooltipButton
-                variant="outline"
-                size="sm" 
-                tooltip="Export compliance data"
-              >
-                <Download className="h-4 w-4 mr-2" /> Export
-              </TooltipButton>
-              
-              <TooltipButton
                 variant="default"
                 size="sm"
-                onClick={handleAddIssue}
-                tooltip="Report a new issue"
+                onClick={handleAddCompliance}
+                tooltip="Add a new compliance issue"
               >
-                <Plus className="h-4 w-4 mr-2" /> Report Issue
+                <Plus className="h-4 w-4 mr-2" /> Add Issue
               </TooltipButton>
             </div>
           </div>
           
-          <Tabs 
-            defaultValue="open" 
-            className="mt-6"
-            onValueChange={setActiveTab}
-          >
-            <TabsList className="mb-6">
-              <TabsTrigger value="open">Open</TabsTrigger>
-              <TabsTrigger value="escalated">Escalated</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved</TabsTrigger>
-              <TabsTrigger value="all">All Issues</TabsTrigger>
+          <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all">
+                All
+                <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
+                  {complianceIssues.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="open">
+                Open
+                <span className="ml-1.5 rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs">
+                  {openIssues.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="in-progress">
+                In Progress
+                <span className="ml-1.5 rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-xs">
+                  {inProgressIssues.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="resolved">
+                Resolved
+                <span className="ml-1.5 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs">
+                  {resolvedIssues.length}
+                </span>
+              </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="open">
-              <ComplianceTable 
-                issues={filteredIssues}
-                isLoading={isLoading} 
+            <TabsContent value="all">
+              <ComplianceTable
+                issues={filteredCompliance}
+                isLoading={isLoading}
                 error={error}
-                onEdit={handleEditIssue}
+                onEdit={handleEditCompliance}
               />
             </TabsContent>
             
-            <TabsContent value="escalated">
-              <ComplianceTable 
-                issues={filteredIssues}
-                isLoading={isLoading} 
+            <TabsContent value="open">
+              <ComplianceTable
+                issues={filteredCompliance}
+                isLoading={isLoading}
                 error={error}
-                onEdit={handleEditIssue}
+                onEdit={handleEditCompliance}
+              />
+            </TabsContent>
+            
+            <TabsContent value="in-progress">
+              <ComplianceTable
+                issues={filteredCompliance}
+                isLoading={isLoading}
+                error={error}
+                onEdit={handleEditCompliance}
               />
             </TabsContent>
             
             <TabsContent value="resolved">
-              <ComplianceTable 
-                issues={filteredIssues}
-                isLoading={isLoading} 
+              <ComplianceTable
+                issues={filteredCompliance}
+                isLoading={isLoading}
                 error={error}
-                onEdit={handleEditIssue}
-              />
-            </TabsContent>
-            
-            <TabsContent value="all">
-              <ComplianceTable 
-                issues={filteredIssues}
-                isLoading={isLoading} 
-                error={error}
-                onEdit={handleEditIssue}
+                onEdit={handleEditCompliance}
               />
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
       
-      <ComplianceDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-        issue={selectedIssue} 
+      <ComplianceDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        compliance={selectedCompliance}
       />
     </PageTemplate>
   );

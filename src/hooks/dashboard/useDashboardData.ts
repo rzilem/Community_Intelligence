@@ -47,11 +47,20 @@ export function useDashboardData(associationId?: string) {
       setLoading(true);
       
       try {
-        // Fetch association stats
-        const propertyCount = await fetchPropertyCount(associationId);
-        const residentCount = await fetchResidentCount(associationId);
-        const assessmentData = await fetchAssessmentData(associationId);
-        const complianceData = await fetchComplianceData(associationId);
+        // Fetch association stats using Promise.all for better performance
+        const statsPromises = [
+          fetchPropertyCount(associationId),
+          fetchResidentCount(associationId),
+          fetchAssessmentData(associationId),
+          fetchComplianceData(associationId),
+        ];
+        
+        const [
+          propertyCount, 
+          residentCount, 
+          assessmentData, 
+          complianceData
+        ] = await Promise.all(statsPromises);
         
         setStats({
           propertyCount,
