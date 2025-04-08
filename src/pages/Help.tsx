@@ -1,7 +1,6 @@
-
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { HelpCircle, BookOpen, FileQuestion, MessageSquareHelp, Phone } from 'lucide-react';
+import { HelpCircle, BookOpen, FileQuestion, MessageSquare, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -53,7 +52,7 @@ const Help = () => {
             
             <Card>
               <CardHeader>
-                <MessageSquareHelp className="h-8 w-8 mb-4 text-primary" />
+                <MessageSquare className="h-8 w-8 mb-4 text-primary" />
                 <CardTitle>API Documentation</CardTitle>
                 <CardDescription>For developers and integrators</CardDescription>
               </CardHeader>
@@ -187,7 +186,7 @@ const Help = () => {
                 </div>
                 
                 <div className="border rounded-md p-6">
-                  <MessageSquareHelp className="h-8 w-8 text-primary mb-4" />
+                  <MessageSquare className="h-8 w-8 text-primary mb-4" />
                   <h3 className="font-medium text-lg mb-2">Email Support</h3>
                   <p className="text-muted-foreground mb-4">
                     24/7 response, typically within 4 hours
