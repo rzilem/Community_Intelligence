@@ -47,19 +47,19 @@ export function useDashboardData(associationId?: string) {
         const [
           propertyCount, 
           residentCount, 
-          { assessmentAmount, collectionRate, collectionTrend }, 
-          { complianceCount, complianceDelta, complianceTrend }
+          assessmentData, 
+          complianceData
         ] = await Promise.all(statsPromises);
         
         setStats({
           propertyCount,
           residentCount,
-          assessmentAmount,
-          collectionRate,
-          collectionTrend,
-          complianceCount,
-          complianceDelta,
-          complianceTrend,
+          assessmentAmount: assessmentData.assessmentAmount,
+          collectionRate: assessmentData.collectionRate,
+          collectionTrend: assessmentData.collectionTrend,
+          complianceCount: complianceData.complianceCount,
+          complianceDelta: complianceData.complianceDelta,
+          complianceTrend: complianceData.complianceTrend,
           notificationCount: 12 // Placeholder for now
         });
         
@@ -86,7 +86,7 @@ async function fetchPropertyCount(associationId?: string): Promise<number> {
   
   const { count, error } = await query;
   if (error) throw error;
-  return count ||.0;
+  return count || 0;
 }
 
 async function fetchResidentCount(associationId?: string): Promise<number> {

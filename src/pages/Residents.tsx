@@ -37,7 +37,7 @@ const Residents = () => {
       (resident.email && resident.email.toLowerCase().includes(searchLower)) ||
       (resident.phone && resident.phone.toLowerCase().includes(searchLower))
     );
-  });
+  }) || [];
 
   const handleAddResident = () => {
     setSelectedResident(null);
@@ -105,7 +105,7 @@ const Residents = () => {
             <div className="text-center py-10">
               <p className="text-red-500">Error loading residents. Please try again later.</p>
             </div>
-          ) : filteredResidents && filteredResidents.length > 0 ? (
+          ) : filteredResidents.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredResidents.map(resident => (
                 <ResidentCard 

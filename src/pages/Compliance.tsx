@@ -51,7 +51,7 @@ const CompliancePage = () => {
       (issue.description && issue.description.toLowerCase().includes(searchLower)) ||
       issue.property_id.includes(searchTerm)
     );
-  });
+  }) || [];
 
   const handleAddIssue = () => {
     setSelectedIssue(null);
@@ -123,7 +123,7 @@ const CompliancePage = () => {
             
             <TabsContent value="open">
               <ComplianceTable 
-                issues={filteredIssues || []}
+                issues={filteredIssues}
                 isLoading={isLoading} 
                 error={error}
                 onEdit={handleEditIssue}
@@ -132,7 +132,7 @@ const CompliancePage = () => {
             
             <TabsContent value="escalated">
               <ComplianceTable 
-                issues={filteredIssues || []}
+                issues={filteredIssues}
                 isLoading={isLoading} 
                 error={error}
                 onEdit={handleEditIssue}
@@ -141,7 +141,7 @@ const CompliancePage = () => {
             
             <TabsContent value="resolved">
               <ComplianceTable 
-                issues={filteredIssues || []}
+                issues={filteredIssues}
                 isLoading={isLoading} 
                 error={error}
                 onEdit={handleEditIssue}
@@ -150,7 +150,7 @@ const CompliancePage = () => {
             
             <TabsContent value="all">
               <ComplianceTable 
-                issues={filteredIssues || []}
+                issues={filteredIssues}
                 isLoading={isLoading} 
                 error={error}
                 onEdit={handleEditIssue}

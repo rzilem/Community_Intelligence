@@ -39,7 +39,7 @@ const Properties = () => {
       (property.unit_number && property.unit_number.toLowerCase().includes(searchLower)) ||
       (property.city && property.city.toLowerCase().includes(searchLower))
     );
-  });
+  }) || [];
 
   const handleAddProperty = () => {
     setSelectedProperty(null);
@@ -107,7 +107,7 @@ const Properties = () => {
             <div className="text-center py-10">
               <p className="text-red-500">Error loading properties. Please try again later.</p>
             </div>
-          ) : filteredProperties && filteredProperties.length > 0 ? (
+          ) : filteredProperties.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProperties.map(property => (
                 <PropertyCard 

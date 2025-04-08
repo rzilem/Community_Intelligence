@@ -31,7 +31,7 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
 }) => {
   const updateIssue = useSupabaseUpdate<Compliance>('compliance_issues');
   
-  const handleStatusChange = async (issue: Compliance, newStatus: 'open' | 'escalated' | 'resolved') => {
+  const handleStatusChange = async (issue: Compliance, newStatus: 'open' | 'resolved' | 'escalated') => {
     try {
       await updateIssue.mutateAsync({ 
         id: issue.id, 
@@ -52,7 +52,7 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
       case 'escalated':
         return <Badge variant="destructive">Escalated</Badge>;
       case 'resolved':
-        return <Badge variant="success">Resolved</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Resolved</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }

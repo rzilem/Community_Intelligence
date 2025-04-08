@@ -10,6 +10,7 @@ interface TooltipButtonProps extends Omit<RadixButtonProps, 'asChild'> {
   tooltip: string;
   tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   className?: string;
+  asChild?: boolean;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
@@ -19,12 +20,13 @@ export const TooltipButton: React.FC<TooltipButtonProps> = ({
   tooltipSide = 'top',
   className,
   variant = "default",
+  asChild = false,
   ...props
 }) => {
   return (
     <Tooltip delayDuration={300}>
       <TooltipTrigger asChild>
-        <Button className={cn(className)} variant={variant} {...props}>
+        <Button className={cn(className)} variant={variant} asChild={asChild} {...props}>
           {children}
         </Button>
       </TooltipTrigger>
