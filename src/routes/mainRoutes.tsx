@@ -4,11 +4,13 @@ import { Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import Properties from '@/pages/Properties';
 import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
 
 export const mainRoutes = [
   {
     path: '/',
-    element: <Navigate to="/dashboard" />
+    element: <Index />
   },
   {
     path: '/dashboard',
@@ -25,6 +27,10 @@ export const mainRoutes = [
   {
     path: '/residents/:id',
     element: <Navigate to="/homeowners/:id" replace />
+  },
+  {
+    path: '/auth',
+    element: <Auth />
   },
   {
     path: '*',
