@@ -23,7 +23,12 @@ export const useLeads = () => {
   );
   
   // Set up customizable columns
-  const { columns, visibleColumnIds, updateVisibleColumns } = useTableColumns(
+  const { 
+    columns, 
+    visibleColumnIds, 
+    updateVisibleColumns,
+    reorderColumns 
+  } = useTableColumns(
     LEAD_COLUMN_DEFINITIONS,
     'leads-visible-columns'
   );
@@ -90,7 +95,8 @@ export const useLeads = () => {
     createTestLead,
     columns,
     visibleColumnIds,
-    updateVisibleColumns
+    updateVisibleColumns,
+    reorderColumns
   };
 };
 

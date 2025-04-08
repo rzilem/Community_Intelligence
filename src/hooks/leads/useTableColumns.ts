@@ -12,6 +12,7 @@ export const useTableColumns = <T extends Record<string, any>>(
   defaultColumns: ColumnDef[],
   storageKey: string
 ) => {
+  // Load columns and their order from localStorage
   const [columns, setColumns] = useState<ColumnDef[]>(() => {
     // Try to load saved column preferences from localStorage
     const savedColumns = localStorage.getItem(storageKey);
@@ -32,10 +33,10 @@ export const useTableColumns = <T extends Record<string, any>>(
       .map(col => col.id);
   });
 
-  // Save column visibility preferences to localStorage when they change
+  // Save column preferences to localStorage when they change
   useEffect(() => {
-    const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
-    localStorage.setItem(storageKey, JSON.stringify(visibleColumns));
+    const columnsToSave = columns.filter(col => visibleColumnIds.includes(col.id));
+    localStorage.setItem(storageKey, JSON.stringify(columnsToSave));
   }, [visibleColumnIds, columns, storageKey]);
 
   const updateVisibleColumns = (columnIds: string[]) => {
@@ -46,9 +47,18 @@ export const useTableColumns = <T extends Record<string, any>>(
     setVisibleColumnIds(columnIds);
   };
 
+  // New function to reorder columns
+  const reorderColumns = (sourceIndex: number, destinationIndex: number) => {
+    const reorderedColumns = [...columns];
+    const [removed] = reorderedColumns.splice(sourceIndex, 1);
+    reorderedColumns.splice(destinationIndex, 0, removed);
+    setColumns(reorderedColumns);
+  };
+
   return {
     columns,
     visibleColumnIds,
-    updateVisibleColumns
+    updateVisibleColumns,
+    reorderColumns
   };
 };

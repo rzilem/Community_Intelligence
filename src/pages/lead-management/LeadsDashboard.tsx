@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { BarChart, RefreshCw, Mail, Search, PlusCircle, Columns } from 'lucide-react';
+import { BarChart, RefreshCw, Mail, Search, PlusCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,8 @@ const LeadsDashboard = () => {
     createTestLead,
     columns,
     visibleColumnIds,
-    updateVisibleColumns 
+    updateVisibleColumns,
+    reorderColumns
   } = useLeads();
 
   const filteredLeads = leads.filter(lead => {
@@ -115,6 +116,7 @@ const LeadsDashboard = () => {
                     columns={columns.map(col => ({ id: col.id, label: col.label }))}
                     selectedColumns={visibleColumnIds}
                     onChange={updateVisibleColumns}
+                    onReorder={reorderColumns}
                   />
                 </div>
                 <Button className="flex-shrink-0">
