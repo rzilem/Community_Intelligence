@@ -6,9 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import HomeownerFilters from './HomeownerFilters';
-import HomeownerGrid from './HomeownerGrid';
 import HomeownerTable from './HomeownerTable';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { mockHomeowners } from './homeowner-data';
 
 const HomeownerListPage = () => {
@@ -66,32 +64,24 @@ const HomeownerListPage = () => {
             <CardDescription>Search and manage all homeowners across your community associations.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="list" className="w-full">
-              <HomeownerFilters 
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filterAssociation={filterAssociation}
-                setFilterAssociation={setFilterAssociation}
-                filterStatus={filterStatus}
-                setFilterStatus={setFilterStatus}
-                filterType={filterType}
-                setFilterType={setFilterType}
-                selectedColumns={selectedColumns}
-                setSelectedColumns={setSelectedColumns}
-                availableColumns={availableColumns}
-              />
-              
-              <TabsContent value="list">
-                <HomeownerTable 
-                  homeowners={filteredHomeowners} 
-                  selectedColumns={selectedColumns} 
-                />
-              </TabsContent>
-              
-              <TabsContent value="grid">
-                <HomeownerGrid homeowners={filteredHomeowners} />
-              </TabsContent>
-            </Tabs>
+            <HomeownerFilters 
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterAssociation={filterAssociation}
+              setFilterAssociation={setFilterAssociation}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              filterType={filterType}
+              setFilterType={setFilterType}
+              selectedColumns={selectedColumns}
+              setSelectedColumns={setSelectedColumns}
+              availableColumns={availableColumns}
+            />
+            
+            <HomeownerTable 
+              homeowners={filteredHomeowners} 
+              selectedColumns={selectedColumns} 
+            />
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">

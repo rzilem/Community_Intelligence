@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Search, Download, PlusCircle, Columns } from 'lucide-react';
+import { Download, PlusCircle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TooltipButton from '@/components/ui/tooltip-button';
 import ColumnSelector from '@/components/table/ColumnSelector';
 
@@ -18,7 +17,7 @@ interface HomeownerFiltersProps {
   setFilterType: (value: string) => void;
   selectedColumns: string[];
   setSelectedColumns: (columns: string[]) => void;
-  availableColumns: {id: string; label: string}[];
+  availableColumns: { id: string; label: string }[];
 }
 
 const HomeownerFilters: React.FC<HomeownerFiltersProps> = ({
@@ -46,20 +45,16 @@ const HomeownerFilters: React.FC<HomeownerFiltersProps> = ({
         />
       </div>
       <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Select value={filterAssociation} onValueChange={setFilterAssociation}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select Association" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Associations</SelectItem>
-              <SelectItem value="Oakwood Heights">Oakwood Heights</SelectItem>
+              <SelectItem value="Oakridge Estates">Oakridge Estates</SelectItem>
               <SelectItem value="Highland Towers">Highland Towers</SelectItem>
               <SelectItem value="Lakeside Community">Lakeside Community</SelectItem>
-              <SelectItem value="Sunset Gardens">Sunset Gardens</SelectItem>
-              <SelectItem value="Willow Creek Estates">Willow Creek Estates</SelectItem>
-              <SelectItem value="Pine Valley Community">Pine Valley Community</SelectItem>
-              <SelectItem value="Riverfront Towers">Riverfront Towers</SelectItem>
             </SelectContent>
           </Select>
           
@@ -71,40 +66,33 @@ const HomeownerFilters: React.FC<HomeownerFiltersProps> = ({
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending-approval">Pending</SelectItem>
+              <SelectItem value="delinquent">Delinquent</SelectItem>
             </SelectContent>
           </Select>
           
           <Select value={filterType} onValueChange={setFilterType}>
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Owner Type" />
+              <SelectValue placeholder="Homeowner Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="owner">Owner</SelectItem>
-              <SelectItem value="tenant">Tenant</SelectItem>
-              <SelectItem value="family-member">Family Member</SelectItem>
+              <SelectItem value="owner-occupant">Owner Occupant</SelectItem>
+              <SelectItem value="investor">Investor</SelectItem>
+              <SelectItem value="board-member">Board Member</SelectItem>
             </SelectContent>
           </Select>
           
-          <TabsList>
-            <TabsTrigger value="list">List</TabsTrigger>
-            <TabsTrigger value="grid">Grid</TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <div className="flex gap-2">
           <ColumnSelector 
             columns={availableColumns}
             selectedColumns={selectedColumns}
             onChange={setSelectedColumns}
-            className="hidden md:flex"
           />
-          
+        </div>
+        
+        <div className="flex gap-2">
           <TooltipButton tooltip="Export homeowners as CSV">
             <Download className="h-4 w-4 mr-2" /> Export
           </TooltipButton>
-          
           <TooltipButton variant="default" tooltip="Add a new homeowner">
             <PlusCircle className="h-4 w-4 mr-2" /> Add Homeowner
           </TooltipButton>

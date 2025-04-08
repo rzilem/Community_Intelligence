@@ -4,12 +4,9 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Users2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import TooltipButton from '@/components/ui/tooltip-button';
 import { useNavigate } from 'react-router-dom';
 import ResidentFilters from './ResidentFilters';
-import ResidentGrid from './ResidentGrid';
 import ResidentTable from './ResidentTable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { mockResidents } from './resident-data';
 
 const ResidentListPage = () => {
@@ -48,26 +45,18 @@ const ResidentListPage = () => {
             <CardDescription>View and manage all residents across your community associations.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="grid" className="w-full">
-              <ResidentFilters 
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filterAssociation={filterAssociation}
-                setFilterAssociation={setFilterAssociation}
-                filterStatus={filterStatus}
-                setFilterStatus={setFilterStatus}
-                filterType={filterType}
-                setFilterType={setFilterType}
-              />
-              
-              <TabsContent value="grid">
-                <ResidentGrid residents={filteredResidents} />
-              </TabsContent>
-              
-              <TabsContent value="list">
-                <ResidentTable residents={filteredResidents} />
-              </TabsContent>
-            </Tabs>
+            <ResidentFilters 
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterAssociation={filterAssociation}
+              setFilterAssociation={setFilterAssociation}
+              filterStatus={filterStatus}
+              setFilterStatus={setFilterStatus}
+              filterType={filterType}
+              setFilterType={setFilterType}
+            />
+            
+            <ResidentTable residents={filteredResidents} />
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">

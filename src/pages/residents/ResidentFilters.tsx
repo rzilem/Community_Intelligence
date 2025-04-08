@@ -3,7 +3,6 @@ import React from 'react';
 import { Search, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TooltipButton from '@/components/ui/tooltip-button';
 
 interface ResidentFiltersProps {
@@ -75,11 +74,6 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
               <SelectItem value="family-member">Family Member</SelectItem>
             </SelectContent>
           </Select>
-          
-          <TabsList>
-            <TabsTrigger value="grid">Grid</TabsTrigger>
-            <TabsTrigger value="list">List</TabsTrigger>
-          </TabsList>
         </div>
         
         <div className="flex gap-2">

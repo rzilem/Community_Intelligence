@@ -1,14 +1,20 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Building, Search, Filter, PlusCircle, Download, MapPin } from 'lucide-react';
+import { Building, Search, Download, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Property {
   id: string;
@@ -125,55 +131,6 @@ const getStatusBadge = (status: Property['status']) => {
   }
 };
 
-const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
-  return (
-    <Card className="shadow-sm card-hover">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{property.address}</CardTitle>
-            <CardDescription className="flex items-center mt-1">
-              <MapPin className="h-3 w-3 mr-1" /> 
-              {property.city}, {property.state} {property.zip}
-            </CardDescription>
-          </div>
-          {getStatusBadge(property.status)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-y-2 text-sm">
-          <div className="text-muted-foreground">Type:</div>
-          <div className="font-medium capitalize">{property.type.replace('-', ' ')}</div>
-          
-          <div className="text-muted-foreground">Size:</div>
-          <div className="font-medium">{property.sqFt} sq.ft.</div>
-          
-          <div className="text-muted-foreground">Bedrooms:</div>
-          <div className="font-medium">{property.bedrooms}</div>
-          
-          <div className="text-muted-foreground">Bathrooms:</div>
-          <div className="font-medium">{property.bathrooms}</div>
-          
-          <div className="text-muted-foreground">HOA:</div>
-          <div className="font-medium">{property.association}</div>
-          
-          <div className="text-muted-foreground">Owner:</div>
-          <div className="font-medium">{property.ownerName || 'Not Assigned'}</div>
-        </div>
-        
-        <div className="mt-4 flex justify-end gap-2">
-          <TooltipButton size="sm" variant="ghost" tooltip="View property details">
-            Details
-          </TooltipButton>
-          <TooltipButton size="sm" variant="outline" tooltip="Edit property information">
-            Edit
-          </TooltipButton>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 const Properties = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
@@ -207,125 +164,102 @@ const Properties = () => {
             <CardDescription>View and manage all properties across your community associations.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="grid" className="w-full">
-              <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
-                <div className="relative w-full md:w-72">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search properties..."
-                    className="pl-8"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                  <div className="flex items-center gap-2">
-                    <Select value={filterAssociation} onValueChange={setFilterAssociation}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Association" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Associations</SelectItem>
-                        <SelectItem value="Oakridge Estates">Oakridge Estates</SelectItem>
-                        <SelectItem value="Highland Towers">Highland Towers</SelectItem>
-                        <SelectItem value="Lakeside Community">Lakeside Community</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select value={filterStatus} onValueChange={setFilterStatus}>
-                      <SelectTrigger className="w-[160px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="vacant">Vacant</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="delinquent">Delinquent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <TabsList>
-                      <TabsTrigger value="grid">Grid</TabsTrigger>
-                      <TabsTrigger value="list">List</TabsTrigger>
-                    </TabsList>
-                  </div>
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
+              <div className="relative w-full md:w-72">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search properties..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                <div className="flex items-center gap-2">
+                  <Select value={filterAssociation} onValueChange={setFilterAssociation}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select Association" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Associations</SelectItem>
+                      <SelectItem value="Oakridge Estates">Oakridge Estates</SelectItem>
+                      <SelectItem value="Highland Towers">Highland Towers</SelectItem>
+                      <SelectItem value="Lakeside Community">Lakeside Community</SelectItem>
+                    </SelectContent>
+                  </Select>
                   
-                  <div className="flex gap-2">
-                    <TooltipButton tooltip="Export properties as CSV">
-                      <Download className="h-4 w-4 mr-2" /> Export
-                    </TooltipButton>
-                    <TooltipButton variant="default" tooltip="Add a new property">
-                      <PlusCircle className="h-4 w-4 mr-2" /> Add Property
-                    </TooltipButton>
-                  </div>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="occupied">Occupied</SelectItem>
+                      <SelectItem value="vacant">Vacant</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="delinquent">Delinquent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2">
+                  <TooltipButton tooltip="Export properties as CSV">
+                    <Download className="h-4 w-4 mr-2" /> Export
+                  </TooltipButton>
+                  <TooltipButton variant="default" tooltip="Add a new property">
+                    <PlusCircle className="h-4 w-4 mr-2" /> Add Property
+                  </TooltipButton>
                 </div>
               </div>
-              
-              <TabsContent value="grid">
-                {filteredProperties.length === 0 ? (
-                  <div className="text-center py-6 text-muted-foreground">
-                    No properties found matching your search.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredProperties.map(property => (
-                      <PropertyCard key={property.id} property={property} />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="list">
-                <div className="rounded-md border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="py-3 px-4 text-left font-medium">ID</th>
-                        <th className="py-3 px-4 text-left font-medium">Address</th>
-                        <th className="py-3 px-4 text-left font-medium">Type</th>
-                        <th className="py-3 px-4 text-left font-medium">Size</th>
-                        <th className="py-3 px-4 text-left font-medium">Association</th>
-                        <th className="py-3 px-4 text-left font-medium">Status</th>
-                        <th className="py-3 px-4 text-left font-medium">Owner</th>
-                        <th className="py-3 px-4 text-right font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProperties.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="py-6 text-center text-muted-foreground">
-                            No properties found matching your search.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredProperties.map(property => (
-                          <tr key={property.id} className="border-b hover:bg-muted/20">
-                            <td className="py-3 px-4 font-medium">{property.id}</td>
-                            <td className="py-3 px-4">{property.address}</td>
-                            <td className="py-3 px-4 capitalize">{property.type.replace('-', ' ')}</td>
-                            <td className="py-3 px-4">{property.sqFt} sq.ft.</td>
-                            <td className="py-3 px-4">{property.association}</td>
-                            <td className="py-3 px-4">{getStatusBadge(property.status)}</td>
-                            <td className="py-3 px-4">{property.ownerName || 'Not Assigned'}</td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex justify-end gap-2">
-                                <TooltipButton size="sm" variant="ghost" tooltip="View property details">
-                                  View
-                                </TooltipButton>
-                                <TooltipButton size="sm" variant="outline" tooltip="Edit property information">
-                                  Edit
-                                </TooltipButton>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </TabsContent>
-            </Tabs>
+            </div>
+            
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Size</TableHead>
+                    <TableHead>Association</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Owner</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredProperties.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="py-6 text-center text-muted-foreground">
+                        No properties found matching your search.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredProperties.map(property => (
+                      <TableRow key={property.id} className="hover:bg-muted/20">
+                        <TableCell className="font-medium">{property.id}</TableCell>
+                        <TableCell>{property.address}</TableCell>
+                        <TableCell className="capitalize">{property.type.replace('-', ' ')}</TableCell>
+                        <TableCell>{property.sqFt} sq.ft.</TableCell>
+                        <TableCell>{property.association}</TableCell>
+                        <TableCell>{getStatusBadge(property.status)}</TableCell>
+                        <TableCell>{property.ownerName || 'Not Assigned'}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <TooltipButton size="sm" variant="ghost" tooltip="View property details">
+                              View
+                            </TooltipButton>
+                            <TooltipButton size="sm" variant="outline" tooltip="Edit property information">
+                              Edit
+                            </TooltipButton>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
