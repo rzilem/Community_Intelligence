@@ -59,6 +59,17 @@ export const createAssociation = async (associationData: {
   contact_email?: string 
 }) => {
   try {
+    // First, get the current user's ID
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error('Error getting current user:', userError);
+      throw userError || new Error('No authenticated user found');
+    }
+    
+    const userId = userData.user.id;
+    
+    // Create the association
     const { data, error } = await supabase
       .from('associations')
       .insert(associationData)
@@ -75,7 +86,7 @@ export const createAssociation = async (associationData: {
       .from('association_users')
       .insert({
         association_id: data.id,
-        user_id: supabase.auth.getUser().then(({ data }) => data.user?.id),
+        user_id: userId,
         role: 'admin'
       });
 
