@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Lead } from '@/types/lead-types';
 import { toast } from 'sonner';
@@ -10,6 +11,7 @@ export const useLeads = () => {
   const { 
     data: leads = [], 
     isLoading,
+    error,
     refetch: refreshLeadsData
   } = useSupabaseQuery<Lead[]>(
     'leads',
@@ -19,10 +21,24 @@ export const useLeads = () => {
     }
   );
   
+  // Log information about the leads data for debugging
+  if (leads.length > 0) {
+    console.log('Leads data loaded:', leads);
+  } else if (!isLoading) {
+    console.log('No leads found in the database');
+  }
+  
+  // Log any errors from the query
+  if (error) {
+    console.error('Error fetching leads:', error);
+  }
+  
   const refreshLeads = async () => {
     try {
+      console.log('Refreshing leads data...');
       await refreshLeadsData();
       setLastRefreshed(new Date());
+      console.log('Leads refresh completed');
     } catch (error) {
       console.error('Error refreshing leads:', error);
       toast.error('Could not fetch leads. Please ensure you are authenticated.');
@@ -34,6 +50,7 @@ export const useLeads = () => {
       const testLead = generateTestLead();
       
       try {
+        console.log('Creating test lead:', testLead);
         const { data, error } = await supabase
           .from('leads' as any)
           .insert(testLead)
@@ -43,6 +60,7 @@ export const useLeads = () => {
           throw error;
         }
         
+        console.log('Test lead created successfully:', data);
         toast.success('Test lead created successfully');
         refreshLeads();
       } catch (dbError) {
