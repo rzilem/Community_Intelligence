@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { Compliance } from '@/types/app-types';
+import { Compliance } from '@/types/compliance-types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComplianceTable } from '@/components/compliance/ComplianceTable';
 import { ComplianceDialog } from '@/components/compliance/ComplianceDialog';

@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { Compliance, Property } from '@/types/app-types';
+import { Compliance } from '@/types/compliance-types';
+import { Property } from '@/types/property-types';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
 import { ComplianceForm } from './ComplianceForm';
 import { supabase } from '@/integrations/supabase/client';
