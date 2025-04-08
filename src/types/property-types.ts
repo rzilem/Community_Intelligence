@@ -18,6 +18,23 @@ export type Property = {
   updated_at?: string;
 };
 
+// Client-side Property type (to be used in the UI)
+export interface PropertyUI {
+  id: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  type: 'single-family' | 'townhouse' | 'condo' | 'apartment';
+  bedrooms: number;
+  bathrooms: number;
+  sqFt: number;
+  association: string;
+  associationId: string;
+  status: 'occupied' | 'vacant' | 'pending' | 'delinquent';
+  ownerName?: string;
+}
+
 export type Resident = {
   id: string;
   user_id?: string;
