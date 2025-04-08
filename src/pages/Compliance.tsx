@@ -32,8 +32,8 @@ const CompliancePage = () => {
     !!currentAssociation
   );
 
-  // Ensure compliance is always an array
-  const complianceIssues = Array.isArray(complianceData) ? complianceData : [complianceData];
+  // Ensure compliance issues is always an array
+  const complianceIssues = complianceData;
 
   const filteredCompliance = complianceIssues
     .filter(issue => {
