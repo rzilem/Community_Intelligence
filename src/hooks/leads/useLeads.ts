@@ -14,7 +14,7 @@ export const useLeads = () => {
     error,
     refetch: refreshLeadsData
   } = useSupabaseQuery<Lead[]>(
-    'leads',
+    'leads' as any, // Type assertion needed until database types are regenerated
     {
       select: '*',
       order: { column: 'created_at', ascending: false }
@@ -23,7 +23,8 @@ export const useLeads = () => {
   
   // Log information about the leads data for debugging
   if (leads.length > 0) {
-    console.log('Leads data loaded:', leads);
+    console.log('Leads data loaded:', leads.length, 'leads');
+    console.log('Sample lead:', leads[0]);
   } else if (!isLoading) {
     console.log('No leads found in the database');
   }
@@ -57,18 +58,19 @@ export const useLeads = () => {
           .select();
         
         if (error) {
+          console.error('Error inserting test lead:', error);
           throw error;
         }
         
         console.log('Test lead created successfully:', data);
         toast.success('Test lead created successfully');
         refreshLeads();
-      } catch (dbError) {
-        console.error('Database error, using mock data:', dbError);
-        toast.success('Test lead created (local only)');
+      } catch (dbError: any) {
+        console.error('Database error details:', dbError);
+        toast.error(`Error creating lead: ${dbError.message || 'Unknown error'}`);
       }
-    } catch (error) {
-      console.error('Error creating test lead:', error);
+    } catch (error: any) {
+      console.error('General error creating test lead:', error);
       toast.error('Failed to create test lead');
     }
   };
