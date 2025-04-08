@@ -18,7 +18,7 @@ const Properties = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  const { data: properties, isLoading, error } = useSupabaseQuery<Property[]>(
+  const { data: properties = [], isLoading, error } = useSupabaseQuery<Property[]>(
     'properties',
     {
       select: '*',
@@ -30,7 +30,7 @@ const Properties = () => {
     !!currentAssociation
   );
 
-  const filteredProperties = properties?.filter(property => {
+  const filteredProperties = properties.filter(property => {
     if (!searchTerm) return true;
     
     const searchLower = searchTerm.toLowerCase();
@@ -39,7 +39,7 @@ const Properties = () => {
       (property.unit_number && property.unit_number.toLowerCase().includes(searchLower)) ||
       (property.city && property.city.toLowerCase().includes(searchLower))
     );
-  }) || [];
+  });
 
   const handleAddProperty = () => {
     setSelectedProperty(null);

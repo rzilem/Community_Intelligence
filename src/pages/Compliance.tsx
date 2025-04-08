@@ -20,7 +20,7 @@ const CompliancePage = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Compliance | null>(null);
 
-  const { data: complianceIssues, isLoading, error } = useSupabaseQuery<Compliance[]>(
+  const { data: complianceIssues = [], isLoading, error } = useSupabaseQuery<Compliance[]>(
     'compliance_issues',
     {
       select: '*',
@@ -32,7 +32,7 @@ const CompliancePage = () => {
     !!currentAssociation
   );
 
-  const filteredIssues = complianceIssues?.filter(issue => {
+  const filteredIssues = complianceIssues.filter(issue => {
     // First filter by tab status
     const matchesStatus = 
       (activeTab === 'open' && issue.status === 'open') ||
@@ -51,7 +51,7 @@ const CompliancePage = () => {
       (issue.description && issue.description.toLowerCase().includes(searchLower)) ||
       issue.property_id.includes(searchTerm)
     );
-  }) || [];
+  });
 
   const handleAddIssue = () => {
     setSelectedIssue(null);

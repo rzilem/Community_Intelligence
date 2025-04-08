@@ -1,7 +1,6 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, FileText, AlertTriangle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface DashboardStats {
@@ -159,7 +158,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'Resident reported improper trash disposal at property #45',
       association: 'Oakridge Estates',
       timeAgo: '2 hours ago',
-      iconName: 'Shield', // Using string instead of JSX
+      iconName: 'Shield',
       type: 'compliance'
     },
     {
@@ -167,7 +166,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'New HOA bylaws document has been uploaded to the document repository',
       association: 'Sunset Gardens',
       timeAgo: '4 hours ago',
-      iconName: 'FileText', // Using string instead of JSX
+      iconName: 'FileText',
       type: 'document'
     },
     {
@@ -175,7 +174,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'Water leak in unit 23B requires immediate attention',
       association: 'Parkview Commons',
       timeAgo: '1 day ago',
-      iconName: 'AlertTriangle', // Using string instead of JSX
+      iconName: 'AlertTriangle',
       type: 'maintenance'
     }
   ];

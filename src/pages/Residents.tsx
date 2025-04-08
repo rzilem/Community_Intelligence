@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { Resident, ResidentWithProfile } from '@/types/app-types';
+import { ResidentWithProfile } from '@/types/app-types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResidentCard } from '@/components/residents/ResidentCard';
 import { ResidentDialog } from '@/components/residents/ResidentDialog';
@@ -18,7 +18,7 @@ const Residents = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState<ResidentWithProfile | null>(null);
 
-  const { data: residents, isLoading, error } = useSupabaseQuery<ResidentWithProfile[]>(
+  const { data: residents = [], isLoading, error } = useSupabaseQuery<ResidentWithProfile[]>(
     'residents',
     {
       select: '*, user:user_id(profile:profiles(*))',
@@ -28,7 +28,7 @@ const Residents = () => {
     !!currentAssociation
   );
 
-  const filteredResidents = residents?.filter(resident => {
+  const filteredResidents = residents.filter(resident => {
     if (!searchTerm) return true;
     
     const searchLower = searchTerm.toLowerCase();
@@ -37,7 +37,7 @@ const Residents = () => {
       (resident.email && resident.email.toLowerCase().includes(searchLower)) ||
       (resident.phone && resident.phone.toLowerCase().includes(searchLower))
     );
-  }) || [];
+  });
 
   const handleAddResident = () => {
     setSelectedResident(null);
