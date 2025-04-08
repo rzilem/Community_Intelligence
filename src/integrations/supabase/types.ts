@@ -614,6 +614,7 @@ export type Database = {
           current_management: string | null
           email: string
           first_name: string | null
+          html_content: string | null
           id: string
           last_name: string | null
           name: string
@@ -639,6 +640,7 @@ export type Database = {
           current_management?: string | null
           email: string
           first_name?: string | null
+          html_content?: string | null
           id?: string
           last_name?: string | null
           name: string
@@ -664,6 +666,7 @@ export type Database = {
           current_management?: string | null
           email?: string
           first_name?: string | null
+          html_content?: string | null
           id?: string
           last_name?: string | null
           name?: string
