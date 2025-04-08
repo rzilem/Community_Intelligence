@@ -11,7 +11,7 @@ import ImportDataForm from '@/components/data-import/ImportDataForm';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
 import ImportResultsTable from '@/components/data-import/ImportResultsTable';
-import { dataImportService } from '@/services/data-import-export-service';
+import { dataImportService, validationService } from '@/services/import-export';
 import { toast } from 'sonner';
 import { ValidationResult, ImportResult } from '@/types/import-types';
 
@@ -53,7 +53,7 @@ const DataImportExport: React.FC = () => {
     setIsValidating(true);
     try {
       // Validate the data
-      const results = await dataImportService.validateData(parsedData, type);
+      const results = await validationService.validateData(parsedData, type);
       console.log('Validation results:', results);
       setValidationResults(results);
       

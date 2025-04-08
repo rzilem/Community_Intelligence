@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Upload, FileSpreadsheet, Info } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +6,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import { parseService } from '@/services/import-export';
 import * as XLSX from 'xlsx';
 
 interface ImportDataFormProps {
@@ -65,27 +65,13 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
           const fileName = file.name.toLowerCase();
           
           if (fileName.endsWith('.csv')) {
-            // Parse CSV
-            const text = data as string;
-            const lines = text.split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
-            
-            const parsedData = lines.slice(1)
-              .filter(line => line.trim().length > 0) // Skip empty lines
-              .map(line => {
-                const values = line.split(',').map(v => v.trim());
-                const row: Record<string, any> = {};
-                
-                headers.forEach((header, index) => {
-                  if (index < values.length) {
-                    row[header] = values[index];
-                  }
-                });
-                
-                return row;
-              });
-            
-            resolve(parsedData);
+            // Parse CSV using the parseService
+            if (typeof data === 'string') {
+              const parsedData = parseService.parseCSV(data);
+              resolve(parsedData);
+            } else {
+              reject(new Error('CSV data is not a string'));
+            }
           } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
             // Parse Excel
             const workbook = XLSX.read(data, { type: 'binary' });
