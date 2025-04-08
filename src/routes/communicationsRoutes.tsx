@@ -1,17 +1,20 @@
 
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import Messaging from "@/pages/communications/Messaging";
-import Announcements from "@/pages/communications/Announcements";
+import Communications from "@/pages/Communications";
 
 // Communications Routes
 export const communicationsRoutes: RouteObject[] = [
   {
+    path: "/communications",
+    element: <RequireAuth><Communications /></RequireAuth>
+  },
+  {
     path: "/communications/messaging",
-    element: <RequireAuth><Messaging /></RequireAuth>
+    element: <RequireAuth><Communications /></RequireAuth>
   },
   {
     path: "/communications/announcements",
-    element: <RequireAuth><Announcements /></RequireAuth>
+    element: <RequireAuth><Communications /></RequireAuth>
   }
 ];
