@@ -1,14 +1,294 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield } from 'lucide-react';
+import { Shield, UserCheck, Search, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Label } from '@/components/ui/label';
+
+interface UserWithProfile {
+  id: string;
+  email: string;
+  created_at: string;
+  profile?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    role: string;
+    email: string | null;
+  };
+}
+
+const roles = [
+  { id: 'admin', name: 'Administrator' },
+  { id: 'manager', name: 'Manager' },
+  { id: 'resident', name: 'Resident' },
+  { id: 'maintenance', name: 'Maintenance' },
+  { id: 'accountant', name: 'Accountant' },
+  { id: 'user', name: 'Basic User' },
+];
 
 const Permissions = () => {
-  return <PageTemplate 
-    title="Permissions" 
-    icon={<Shield className="h-8 w-8" />}
-    description="Configure user roles and access permissions."
-  />;
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Fetch all users with their profiles
+  const { data: users = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
+    'users', 
+    {
+      select: '*, profile:profiles(*)',
+      filter: [],
+      order: { column: 'created_at', ascending: false },
+    }
+  );
+
+  const filteredUsers = users.filter(user => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const email = user.email?.toLowerCase() || '';
+    const firstName = user.profile?.first_name?.toLowerCase() || '';
+    const lastName = user.profile?.last_name?.toLowerCase() || '';
+    
+    return (
+      email.includes(searchLower) || 
+      firstName.includes(searchLower) || 
+      lastName.includes(searchLower)
+    );
+  });
+
+  const updateUserRole = async (userId: string, role: string) => {
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      toast.success('User role updated successfully');
+      refetch();
+    } catch (err: any) {
+      toast.error(`Error updating role: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <PageTemplate 
+      title="User Permissions" 
+      icon={<Shield className="h-8 w-8" />}
+      description="Manage user roles and permissions across the platform."
+    >
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>
+            Assign roles to control what users can access in the system.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by email or name..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-500">
+              Error loading users. Please try again.
+            </div>
+          ) : filteredUsers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Current Role</TableHead>
+                  <TableHead>Change Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{user.profile?.first_name} {user.profile?.last_name}</p>
+                        <p className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium 
+                          ${user.profile?.role === 'admin' ? 'bg-red-100 text-red-800' : ''}
+                          ${user.profile?.role === 'manager' ? 'bg-blue-100 text-blue-800' : ''}
+                          ${user.profile?.role === 'resident' ? 'bg-green-100 text-green-800' : ''}
+                          ${user.profile?.role === 'maintenance' ? 'bg-amber-100 text-amber-800' : ''}
+                          ${user.profile?.role === 'accountant' ? 'bg-purple-100 text-purple-800' : ''}
+                          ${user.profile?.role === 'user' ? 'bg-gray-100 text-gray-800' : ''}
+                        `}>
+                          {user.profile?.role || 'user'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        defaultValue={user.profile?.role || 'user'}
+                        onValueChange={(value) => updateUserRole(user.id, value)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.id}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 w-8 p-0"
+                        onClick={() => updateUserRole(user.id, 'admin')}
+                        title="Grant admin privileges"
+                      >
+                        <UserCheck className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">
+                {searchTerm ? "No users match your search." : "No users found."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Role Permissions</CardTitle>
+          <CardDescription>
+            Overview of what each role can access in the system.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Access Level</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Administrator</div>
+                </TableCell>
+                <TableCell>Full access to all features, including system settings</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                    <span>Unrestricted</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Manager</div>
+                </TableCell>
+                <TableCell>Access to most features except system configuration</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-blue-500 mr-2" />
+                    <span>High</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Resident</div>
+                </TableCell>
+                <TableCell>Access to community information and resident features</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
+                    <span>Medium</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Maintenance</div>
+                </TableCell>
+                <TableCell>Access to maintenance requests and schedules</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
+                    <span>Medium</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Accountant</div>
+                </TableCell>
+                <TableCell>Access to financial information and reports</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
+                    <span>Medium</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>
+                  <div className="font-medium">Basic User</div>
+                </TableCell>
+                <TableCell>Limited access to basic features only</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 text-gray-500 mr-2" />
+                    <span>Low</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </PageTemplate>
+  );
 };
 
 export default Permissions;
