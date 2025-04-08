@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ImportJob, ImportMapping, ValidationResult, ImportResult, ImportJobTable, ImportMappingTable } from '@/types/import-types';
 import { toast } from 'sonner';
@@ -18,7 +17,6 @@ export interface ExportOptions {
   filters?: Record<string, any>;
 }
 
-// Helper function to parse CSV string into array of objects
 const parseCSV = (csvString: string): any[] => {
   const lines = csvString.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
@@ -36,9 +34,6 @@ const parseCSV = (csvString: string): any[] => {
 };
 
 export const dataImportService = {
-  /**
-   * Creates a new import job in the database
-   */
   createImportJob: async (options: {
     associationId: string;
     importType: string;
@@ -75,9 +70,6 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Updates an import job's status and results
-   */
   updateImportJobStatus: async (
     jobId: string,
     status: ImportJob['status'],
@@ -112,9 +104,6 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Saves mapping configuration for future use
-   */
   saveImportMapping: async (
     associationId: string,
     importType: string,
@@ -122,7 +111,6 @@ export const dataImportService = {
     userId?: string
   ): Promise<void> => {
     try {
-      // First check if a mapping already exists
       const { data: existingMapping } = await supabase
         .from('import_mappings' as ImportMappingTable)
         .select('*')
@@ -131,13 +119,11 @@ export const dataImportService = {
         .maybeSingle();
       
       if (existingMapping) {
-        // Update existing mapping
         await supabase
           .from('import_mappings' as ImportMappingTable)
           .update({ mappings: mappings as any })
           .eq('id', existingMapping.id);
       } else {
-        // Create new mapping
         await supabase
           .from('import_mappings' as ImportMappingTable)
           .insert({
@@ -152,9 +138,6 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Gets previously saved mapping for an import type
-   */
   getImportMapping: async (
     associationId: string,
     importType: string
@@ -181,9 +164,6 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Gets import job details
-   */
   getImportJob: async (jobId: string): Promise<ImportJob | null> => {
     try {
       const { data, error } = await supabase
@@ -204,9 +184,6 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Gets recent import jobs for an association
-   */
   getRecentImportJobs: async (associationId: string, limit = 5): Promise<ImportJob[]> => {
     try {
       const { data, error } = await supabase
@@ -228,15 +205,8 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Validates data before import
-   * @param data The data to validate
-   * @param dataType The type of data being validated
-   * @returns Validation results
-   */
   validateData: async (data: any[], dataType: string): Promise<ValidationResult> => {
     try {
-      // Identify required fields for the data type
       let requiredFields: string[] = [];
       
       switch (dataType) {
@@ -270,11 +240,9 @@ export const dataImportService = {
       let warnings = 0;
       const issues: Array<{ row: number; field: string; issue: string }> = [];
       
-      // Validate each row
       data.forEach((row, rowIndex) => {
         let rowHasError = false;
         
-        // Check required fields
         for (const field of requiredFields) {
           if (!row[field] || row[field].toString().trim() === '') {
             issues.push({
@@ -286,7 +254,6 @@ export const dataImportService = {
           }
         }
         
-        // Check data types
         if (dataType === 'financial' && row.amount && isNaN(Number(row.amount))) {
           issues.push({
             row: rowIndex + 1,
@@ -296,7 +263,6 @@ export const dataImportService = {
           rowHasError = true;
         }
         
-        // Vendor-specific validations
         if (dataType === 'vendors') {
           if (row.phone && !/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im.test(row.phone)) {
             issues.push({
@@ -317,14 +283,11 @@ export const dataImportService = {
           }
         }
         
-        // Add other type-specific validations as needed
-        
         if (rowHasError) {
           invalidRows++;
         }
       });
       
-      // Check for potential duplicates as warnings
       const fieldsToCheckDupes: Record<string, string[]> = {
         'properties': ['address', 'unit_number'],
         'owners': ['email'],
@@ -370,15 +333,10 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Imports data to Supabase tables
-   * @param options Import options including data and mappings
-   */
   importData: async (options: ImportOptions): Promise<ImportResult> => {
     const { associationId, dataType, data, mappings, userId } = options;
     
     try {
-      // Create an import job to track progress
       const importJob = await dataImportService.createImportJob({
         associationId,
         importType: dataType,
@@ -397,10 +355,6 @@ export const dataImportService = {
         };
       }
       
-      // Update job status to validating
-      await dataImportService.updateImportJobStatus(importJob.id, 'validating');
-      
-      // Process the data with mappings
       const processedData = data.map(row => {
         const mappedRow: Record<string, any> = { association_id: associationId };
         
@@ -413,7 +367,6 @@ export const dataImportService = {
         return mappedRow;
       });
       
-      // Determine which table to insert into based on dataType
       let tableName: string;
       switch (dataType) {
         case 'associations':
@@ -440,7 +393,6 @@ export const dataImportService = {
         case 'vendors':
           tableName = 'vendors';
           processedData.forEach(row => {
-            // Set default values for vendors
             row.status = row.status || 'active';
             row.hasInsurance = row.hasInsurance === 'true' || row.hasInsurance === true || false;
           });
@@ -449,25 +401,17 @@ export const dataImportService = {
           tableName = dataType;
       }
       
-      // Update job status to processing
-      await dataImportService.updateImportJobStatus(importJob.id, 'processing', {
-        processed: 0,
-        succeeded: 0,
-        failed: 0
-      });
+      await dataImportService.updateImportJobStatus(importJob.id, 'validating');
       
-      // Insert data in batches for better performance and error handling
       const batchSize = 50;
       let successfulImports = 0;
       let failedImports = 0;
       const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
       
-      // Handle importing data in batches
       for (let i = 0; i < processedData.length; i += batchSize) {
         const batch = processedData.slice(i, i + batchSize);
         
         try {
-          // Use a simple string as the table name with type assertion to avoid TypeScript errors
           const { data: insertedData, error } = await supabase
             .from(tableName as any)
             .insert(batch as any)
@@ -496,7 +440,6 @@ export const dataImportService = {
           });
         }
         
-        // Update job progress
         await dataImportService.updateImportJobStatus(importJob.id, 'processing', {
           processed: i + batch.length,
           succeeded: successfulImports,
@@ -504,7 +447,6 @@ export const dataImportService = {
         });
       }
       
-      // Save the mappings for future use
       await dataImportService.saveImportMapping(
         associationId,
         dataType,
@@ -512,7 +454,6 @@ export const dataImportService = {
         userId
       );
       
-      // Update final job status
       const finalStatus = failedImports === 0 ? 'completed' : 'failed';
       await dataImportService.updateImportJobStatus(importJob.id, finalStatus as ImportJob['status'], {
         processed: processedData.length,
@@ -547,13 +488,7 @@ export const dataImportService = {
     }
   },
   
-  /**
-   * Gets a template for data import
-   * @param dataType The type of data to get a template for
-   * @returns Template data structure
-   */
   getImportTemplate: (dataType: string) => {
-    // In a real implementation, this would return the template structure for the data type
     const templates: Record<string, Record<string, string>> = {
       associations: {
         name: 'Association Name',
@@ -617,16 +552,10 @@ export const dataImportService = {
 };
 
 export const dataExportService = {
-  /**
-   * Exports data from Supabase tables
-   * @param options Export options
-   * @returns The exported data
-   */
   exportData: async (options: ExportOptions) => {
     const { associationId, dataType, format } = options;
     
     try {
-      // Determine which table to export based on dataType
       let tableName: string;
       let query: any = supabase;
       
@@ -667,16 +596,12 @@ export const dataExportService = {
           throw new Error(`Unknown data type: ${dataType}`);
       }
       
-      // Execute the query
       const { data: exportData, error } = await query;
       
       if (error) {
         console.error(`Error exporting ${dataType} data:`, error);
         throw error;
       }
-      
-      // In a real implementation, we would format the data according to the requested format
-      // For now, we'll just return the data as JSON
       
       return {
         success: true,
@@ -690,13 +615,7 @@ export const dataExportService = {
     }
   },
   
-  /**
-   * Gets an export template
-   * @param templateType The type of template to get
-   * @returns The template file data
-   */
   getExportTemplate: async (templateType: string) => {
-    // In a real implementation, this would generate and return a template file
     console.log(`Would generate template for ${templateType}`);
     
     return {

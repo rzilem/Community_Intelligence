@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { dataExportService } from '@/services/data-import-export-service';
+import { dataExportService, dataImportService } from '@/services/data-import-export-service';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
