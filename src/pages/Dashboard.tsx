@@ -10,8 +10,14 @@ import { Building, Calendar, DollarSign, MessageSquare, Plus, Shield, Users2 } f
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 
 const Dashboard = () => {
+  const { currentAssociation } = useAuth();
+  const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
+
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
@@ -19,21 +25,24 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-muted-foreground">
-              Welcome back! Here's what's happening across your communities today.
+              Welcome back! Here's what's happening{currentAssociation ? ` in ${currentAssociation.name}` : ' across your communities'} today.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <TooltipButton 
               variant="outline" 
               tooltip="Create a new HOA"
+              asChild
             >
-              <Plus className="h-4 w-4 mr-2" />
-              New HOA
+              <Link to="/system/associations">
+                <Plus className="h-4 w-4 mr-2" />
+                New HOA
+              </Link>
             </TooltipButton>
             <TooltipButton
               tooltip="View all notifications"
             >
-              View All <Badge>12</Badge>
+              View All <Badge>{stats?.notificationCount || 0}</Badge>
             </TooltipButton>
           </div>
         </div>
@@ -41,30 +50,33 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatCard 
             title="Total Properties" 
-            value={245} 
+            value={stats?.propertyCount || 0} 
             icon={Building}
-            description="Across 5 HOA communities"
-            trend={{ value: 12, isPositive: true }} 
+            description={currentAssociation ? `In ${currentAssociation.name}` : "Across all communities"}
+            loading={loading}
           />
           <StatCard 
             title="Active Residents" 
-            value={612} 
+            value={stats?.residentCount || 0} 
             icon={Users2}
-            description="87% engagement rate" 
+            description="Currently registered"
+            loading={loading}
           />
           <StatCard 
             title="Assessment Collection" 
-            value="$43,250" 
+            value={stats?.assessmentAmount ? `$${stats.assessmentAmount}` : "$0"} 
             icon={DollarSign}
-            description="92% collected this month"
-            trend={{ value: 3, isPositive: true }} 
+            description={stats?.collectionRate ? `${stats.collectionRate}% collected this month` : "No data available"}
+            trend={stats?.collectionTrend ? { value: stats.collectionTrend, isPositive: stats.collectionTrend > 0 } : undefined}
+            loading={loading}
           />
           <StatCard 
             title="Open Compliance Issues" 
-            value={18} 
+            value={stats?.complianceCount || 0} 
             icon={Shield}
-            description="Down from 27 last month"
-            trend={{ value: 33, isPositive: true }} 
+            description={stats?.complianceDelta ? `${stats.complianceDelta > 0 ? 'Up' : 'Down'} from last month` : "No previous data"}
+            trend={stats?.complianceTrend ? { value: Math.abs(stats.complianceTrend), isPositive: stats.complianceTrend < 0 } : undefined}
+            loading={loading}
           />
         </div>
 
@@ -86,24 +98,47 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-6">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="flex gap-4 items-start">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                        <Shield className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">New compliance issue reported</p>
-                        <div className="flex gap-2 text-sm">
-                          <span className="text-muted-foreground">Oakridge Estates</span>
-                          <span>•</span>
-                          <span className="text-muted-foreground">2 hours ago</span>
+                {loading ? (
+                  <div className="space-y-6">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex gap-4 items-start animate-pulse">
+                        <div className="h-10 w-10 rounded-full bg-muted"></div>
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-muted rounded w-3/4"></div>
+                          <div className="h-3 bg-muted rounded w-1/2"></div>
+                          <div className="h-3 bg-muted rounded w-5/6"></div>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">Resident reported improper trash disposal at property #45</p>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-6 text-muted-foreground">
+                    Unable to load activity data
+                  </div>
+                ) : recentActivity && recentActivity.length > 0 ? (
+                  <div className="space-y-6">
+                    {recentActivity.map((activity, i) => (
+                      <div key={i} className="flex gap-4 items-start">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          {activity.icon || <Shield className="h-5 w-5" />}
+                        </div>
+                        <div>
+                          <p className="font-medium">{activity.title}</p>
+                          <div className="flex gap-2 text-sm">
+                            <span className="text-muted-foreground">{activity.association}</span>
+                            <span>•</span>
+                            <span className="text-muted-foreground">{activity.timeAgo}</span>
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">{activity.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    No recent activity to display
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

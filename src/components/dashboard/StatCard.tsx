@@ -15,6 +15,7 @@ interface StatCardProps {
   };
   className?: string;
   valueClassName?: string;
+  loading?: boolean;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -25,6 +26,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   trend,
   className,
   valueClassName,
+  loading = false,
 }) => {
   return (
     <Card className={cn("overflow-hidden", className)}>
@@ -35,12 +37,21 @@ export const StatCard: React.FC<StatCardProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className={cn("text-2xl font-bold", valueClassName)}>{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
+        {loading ? (
+          <div className="animate-pulse">
+            <div className="h-6 bg-muted rounded w-1/2 mb-2"></div>
+            {description && <div className="h-3 bg-muted rounded w-3/4"></div>}
+          </div>
+        ) : (
+          <>
+            <div className={cn("text-2xl font-bold", valueClassName)}>{value}</div>
+            {description && (
+              <p className="text-xs text-muted-foreground">{description}</p>
+            )}
+          </>
         )}
       </CardContent>
-      {trend && (
+      {trend && !loading && (
         <CardFooter className="p-2 pt-0">
           <div
             className={cn(
