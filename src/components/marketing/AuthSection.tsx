@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +26,7 @@ export const AuthSection: React.FC = () => {
     
     try {
       await signIn(loginData.email, loginData.password);
+      navigate('/dashboard');
     } catch (error) {
       // Error is handled in the signIn function
       console.error('Login error:', error);

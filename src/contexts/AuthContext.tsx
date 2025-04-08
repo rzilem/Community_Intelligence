@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (user) {
         try {
           const { data, error } = await supabase
-            .from('profiles' as any)
+            .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error) throw error;
           
           if (data) {
-            // Fixed: First cast to unknown, then to Profile for type safety
+            // Cast to unknown first, then to Profile for type safety
             const profileData = data as unknown as Profile;
             setProfile(profileData);
             setIsAdmin(profileData.role === 'admin');

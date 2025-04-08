@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +36,7 @@ const Auth = () => {
     
     try {
       await signIn(loginData.email, loginData.password);
+      navigate('/dashboard');
     } catch (error) {
       // Error is handled in the signIn function
       console.error('Login error:', error);
