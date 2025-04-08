@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface PageTemplateProps {
   title: string;
   icon: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-const PageTemplate: React.FC<PageTemplateProps> = ({ title, icon }) => {
+const PageTemplate: React.FC<PageTemplateProps> = ({ title, icon, children }) => {
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
@@ -19,14 +20,18 @@ const PageTemplate: React.FC<PageTemplateProps> = ({ title, icon }) => {
           </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome to {title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>This page is currently under development.</p>
-          </CardContent>
-        </Card>
+        {children ? (
+          children
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Welcome to {title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>This page is currently under development.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );

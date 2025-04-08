@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import PageTemplate from './PageTemplate';
+import PageTemplate from '@/components/layout/PageTemplate';
 import MessagingPage from './communications/Messaging';
 import Announcements from './communications/Announcements';
 
