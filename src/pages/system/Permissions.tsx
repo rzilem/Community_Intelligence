@@ -17,16 +17,30 @@ const roles = [
 ];
 
 const Permissions = () => {
+  // Fix the query to properly join auth.users with profiles
   const { data = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
-    'users', 
+    'profiles', 
     {
-      select: '*, profile:profiles(*)',
+      select: 'id, email, created_at, first_name, last_name, role, profile_image_url',
       filter: [],
       order: { column: 'created_at', ascending: false },
     }
   );
   
-  const users = data as UserWithProfile[];
+  // Transform the profiles data to match the UserWithProfile structure
+  const users = data.map(profile => ({
+    id: profile.id,
+    email: profile.email || '',
+    created_at: profile.created_at,
+    profile: {
+      id: profile.id,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      role: profile.role,
+      email: profile.email,
+      profile_image_url: profile.profile_image_url
+    }
+  })) as UserWithProfile[];
 
   return (
     <PageTemplate 

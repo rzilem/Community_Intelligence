@@ -1,17 +1,9 @@
 
-import { User } from '@supabase/supabase-js';
-import { Profile } from './app-types';
+import { Profile } from './profile-types';
 
 export interface UserWithProfile {
   id: string;
   email: string;
   created_at: string;
-  profile?: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    role: string;
-    email: string | null;
-    profile_image_url: string | null;
-  };
+  profile: Profile;  // Changed from optional to required to match profile-types.ts
 }

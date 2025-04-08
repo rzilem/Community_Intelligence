@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { UserWithProfile } from '@/types/app-types';
+import { UserWithProfile } from '@/types/user-types';
 import { Search, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
