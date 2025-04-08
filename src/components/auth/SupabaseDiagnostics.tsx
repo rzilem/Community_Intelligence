@@ -11,8 +11,11 @@ const SupabaseDiagnostics: React.FC = () => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        // Test basic connection
-        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+        // Test basic connection with a simple query
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('count')
+          .limit(1);
         
         if (error) {
           console.error('Supabase connection error:', error);
@@ -23,27 +26,32 @@ const SupabaseDiagnostics: React.FC = () => {
         
         setConnectionStatus('connected');
         
-        // Fetch available tables by querying pg_tables instead of using RPC
+        // Attempt to query available tables directly
         try {
-          // Query public schema tables through PostgreSQL system tables
-          const { data: tablesData } = await supabase
-            .from('_metadata')
-            .select('*')
-            .limit(10);  // Just get some metadata to see if we can access anything
-            
-          // If we reach here, connection works but we may not have proper metadata tables
-          // Try to get tables directly from information_schema (may be blocked by RLS)
-          const { data: schemaData, error: schemaError } = await supabase.rpc('get_schema_info');
+          // Try to get some tables we know should exist
+          const knownTables = ['profiles', 'associations', 'properties'];
+          const availableTables: string[] = [];
           
-          if (schemaData && Array.isArray(schemaData)) {
-            const tableNames = schemaData.map(item => item.table_name || '').filter(Boolean);
-            setTables(tableNames);
-          } else if (schemaError) {
-            console.log('Could not fetch tables list via RPC:', schemaError);
-            setTables([]);
+          // Check each table to see if we can access it
+          for (const table of knownTables) {
+            try {
+              const { error: tableError } = await supabase
+                .from(table)
+                .select('count')
+                .limit(1);
+                
+              if (!tableError) {
+                availableTables.push(table);
+              }
+            } catch (e) {
+              console.log(`Could not access table ${table}:`, e);
+            }
+          }
+          
+          if (availableTables.length > 0) {
+            setTables(availableTables);
           } else {
-            // Fallback if both approaches fail
-            console.log('Connected to Supabase, but could not list tables');
+            console.log('No tables were accessible');
             setTables([]);
           }
         } catch (e) {
@@ -159,7 +167,7 @@ const SupabaseDiagnostics: React.FC = () => {
             <li>Email confirmation might be required (check Supabase Authentication settings)</li>
             <li>Row Level Security policies might be blocking data access</li>
             <li>Storage buckets might need to be created manually</li>
-            <li>Database functions like 'get_all_tables' might not exist in your Supabase instance</li>
+            <li>Make sure all tables have been created in your Supabase instance</li>
           </ul>
         </div>
       </div>

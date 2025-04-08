@@ -2,34 +2,38 @@
 import { supabase } from './client';
 
 /**
- * Get information about database schema and tables
- * This function wraps the get_schema_info RPC call or falls back to a direct query
+ * Simple function to check if a table exists and is accessible
+ * Does not use any schema introspection that might be blocked by permissions
  */
-export const getSchemaInfo = async () => {
+export const checkTableAccess = async (tableName: string) => {
   try {
-    // Try to use a custom RPC function if available
-    const { data, error } = await supabase.rpc('get_schema_info');
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('count')
+      .limit(1);
+      
+    return { accessible: !error, error };
+  } catch (err) {
+    console.error(`Error checking table '${tableName}':`, err);
+    return { accessible: false, error: err };
+  }
+};
+
+/**
+ * Get a list of accessible storage buckets
+ */
+export const getStorageBuckets = async () => {
+  try {
+    const { data, error } = await supabase.storage.listBuckets();
     
     if (error) {
-      console.error('Error using get_schema_info RPC:', error);
-      
-      // Fall back to directly querying information_schema (may be restricted by permissions)
-      const { data: fallbackData, error: fallbackError } = await supabase.from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .order('table_name');
-      
-      if (fallbackError) {
-        console.error('Error querying information_schema:', fallbackError);
-        return { data: null, error: fallbackError };
-      }
-      
-      return { data: fallbackData, error: null };
+      console.error('Error fetching storage buckets:', error);
+      return { data: [], error };
     }
     
     return { data, error: null };
   } catch (err) {
-    console.error('Unexpected error in getSchemaInfo:', err);
-    return { data: null, error: err };
+    console.error('Unexpected error fetching storage buckets:', err);
+    return { data: [], error: err };
   }
 };
