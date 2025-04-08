@@ -27,9 +27,11 @@ export interface Lead {
   zip?: string;
   uploaded_files?: any;
   additional_requirements?: string;
+  html_content?: string;
 }
 
 export const LEAD_COLUMN_DEFINITIONS = [
+  { id: 'association_name', label: 'Association Name', accessorKey: 'association_name', defaultVisible: true },
   { id: 'name', label: 'Full Name', accessorKey: 'name', defaultVisible: true },
   { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
   { id: 'phone', label: 'Phone', accessorKey: 'phone', defaultVisible: true },
@@ -38,11 +40,10 @@ export const LEAD_COLUMN_DEFINITIONS = [
   { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
   { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
   
-  // Additional fields with default not visible
-  { id: 'association_name', label: 'Association Name', accessorKey: 'association_name', defaultVisible: false },
-  { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: false },
-  { id: 'current_management', label: 'Current Management', accessorKey: 'current_management', defaultVisible: false },
-  { id: 'number_of_units', label: 'Number of Units', accessorKey: 'number_of_units', defaultVisible: false },
+  // Additional fields
+  { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: true },
+  { id: 'current_management', label: 'Current Management', accessorKey: 'current_management', defaultVisible: true },
+  { id: 'number_of_units', label: 'Number of Units', accessorKey: 'number_of_units', defaultVisible: true },
   { id: 'first_name', label: 'First Name', accessorKey: 'first_name', defaultVisible: false },
   { id: 'last_name', label: 'Last Name', accessorKey: 'last_name', defaultVisible: false },
   { id: 'street_address', label: 'Street Address', accessorKey: 'street_address', defaultVisible: false },

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import LeadDetailDialog from './LeadDetailDialog';
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -39,6 +40,9 @@ const LeadStatusBadge = ({ status }: { status: Lead['status'] }) => {
 };
 
 const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: LeadsTableProps) => {
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  
   // Get only the columns that should be displayed
   const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
 
@@ -85,44 +89,61 @@ const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: Lea
     return value as React.ReactNode;
   };
 
+  const handleViewLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    setDetailDialogOpen(true);
+  };
+
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {visibleColumns.map((column) => (
-              <TableHead key={column.id}>{column.label}</TableHead>
-            ))}
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {leads.map((lead) => (
-            <TableRow key={lead.id}>
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {visibleColumns.map((column) => (
-                <TableCell 
-                  key={`${lead.id}-${column.id}`}
-                  className={column.id === 'name' ? 'font-medium' : ''}
-                >
-                  {renderCell(lead, column.id)}
-                </TableCell>
+                <TableHead key={column.id}>{column.label}</TableHead>
               ))}
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm">
-                    <ExternalLink className="h-4 w-4 mr-1" />
-                    View
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {leads.map((lead) => (
+              <TableRow key={lead.id}>
+                {visibleColumns.map((column) => (
+                  <TableCell 
+                    key={`${lead.id}-${column.id}`}
+                    className={column.id === 'name' ? 'font-medium' : ''}
+                  >
+                    {renderCell(lead, column.id)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewLead(lead)}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <LeadDetailDialog 
+        lead={selectedLead}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+      />
+    </>
   );
 };
 
