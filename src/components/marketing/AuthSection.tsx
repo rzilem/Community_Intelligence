@@ -7,27 +7,29 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 export const AuthSection: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
+  const { signIn, signUp, isLoading } = useAuth();
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [signupData, setSignupData] = useState({ 
+    firstName: '', 
+    lastName: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Login successful!');
-      navigate('/dashboard');
+      await signIn(loginData.email, loginData.password);
     } catch (error) {
-      toast.error('Login failed. Please check your credentials.');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+      // Error is handled in the signIn function
+      console.error('Login error:', error);
     }
   };
 
@@ -39,18 +41,18 @@ export const AuthSection: React.FC = () => {
       return;
     }
     
-    setIsLoading(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Account created successfully!');
-      navigate('/dashboard');
+      await signUp(
+        signupData.email, 
+        signupData.password, 
+        { 
+          first_name: signupData.firstName, 
+          last_name: signupData.lastName 
+        }
+      );
     } catch (error) {
-      toast.error('Signup failed. Please try again later.');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+      // Error is handled in the signUp function
+      console.error('Signup error:', error);
     }
   };
 
@@ -103,7 +105,14 @@ export const AuthSection: React.FC = () => {
                   </CardContent>
                   <CardFooter>
                     <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? 'Logging in...' : 'Log In'}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Logging in...
+                        </>
+                      ) : (
+                        'Log In'
+                      )}
                     </Button>
                   </CardFooter>
                 </form>
@@ -120,16 +129,29 @@ export const AuthSection: React.FC = () => {
                 </CardHeader>
                 <form onSubmit={handleSignup}>
                   <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input 
-                        id="name" 
-                        type="text" 
-                        placeholder="John Doe"
-                        value={signupData.name}
-                        onChange={(e) => setSignupData({...signupData, name: e.target.value})}
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input 
+                          id="firstName" 
+                          type="text" 
+                          placeholder="John"
+                          value={signupData.firstName}
+                          onChange={(e) => setSignupData({...signupData, firstName: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input 
+                          id="lastName" 
+                          type="text" 
+                          placeholder="Doe"
+                          value={signupData.lastName}
+                          onChange={(e) => setSignupData({...signupData, lastName: e.target.value})}
+                          required
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
@@ -165,7 +187,14 @@ export const AuthSection: React.FC = () => {
                   </CardContent>
                   <CardFooter>
                     <Button className="w-full" type="submit" disabled={isLoading}>
-                      {isLoading ? 'Creating account...' : 'Create Account'}
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating account...
+                        </>
+                      ) : (
+                        'Create Account'
+                      )}
                     </Button>
                   </CardFooter>
                 </form>

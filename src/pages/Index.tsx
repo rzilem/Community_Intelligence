@@ -5,9 +5,18 @@ import { HeroSection } from '@/components/marketing/HeroSection';
 import { FeatureSection } from '@/components/marketing/FeatureSection';
 import { AuthSection } from '@/components/marketing/AuthSection';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, session } = useAuth();
+
+  // If user is already authenticated, redirect to dashboard
+  React.useEffect(() => {
+    if (user && session) {
+      navigate('/dashboard');
+    }
+  }, [user, session, navigate]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -24,8 +33,8 @@ const Index = () => {
               <a href="#features" className="text-gray-600 hover:text-hoa-blue">Features</a>
               <a href="#pricing" className="text-gray-600 hover:text-hoa-blue">Pricing</a>
               <a href="#contact" className="text-gray-600 hover:text-hoa-blue">Contact</a>
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>Log In</Button>
-              <Button onClick={() => navigate('/dashboard')}>Get Started</Button>
+              <Button variant="outline" onClick={() => navigate('/auth?tab=login')}>Log In</Button>
+              <Button onClick={() => navigate('/auth?tab=signup')}>Get Started</Button>
             </div>
             <div className="md:hidden">
               <Button variant="ghost">

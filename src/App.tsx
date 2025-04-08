@@ -3,9 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { RequireAuth } from "./components/auth/RequireAuth";
+
+// Pages
 import Index from "./pages/Index";
+import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
 import Residents from "./pages/Residents";
@@ -79,7 +83,14 @@ import WorkflowSchedule from "./pages/system/WorkflowSchedule";
 import Associations from "./pages/system/Associations";
 import Permissions from "./pages/system/Permissions";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -89,80 +100,304 @@ const App = () => (
           <Toaster />
           <Sonner />
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/auth" element={<Auth />} />
+            
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            } />
             
             {/* Original Pages */}
-            <Route path="/properties" element={<Properties />} />
-            <Route path="/residents" element={<Residents />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/accounting" element={<Accounting />} />
-            <Route path="/compliance" element={<Compliance />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/communications" element={<Communications />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/help" element={<Help />} />
+            <Route path="/properties" element={
+              <RequireAuth>
+                <Properties />
+              </RequireAuth>
+            } />
+            <Route path="/residents" element={
+              <RequireAuth>
+                <Residents />
+              </RequireAuth>
+            } />
+            <Route path="/calendar" element={
+              <RequireAuth>
+                <CalendarPage />
+              </RequireAuth>
+            } />
+            <Route path="/accounting" element={
+              <RequireAuth>
+                <Accounting />
+              </RequireAuth>
+            } />
+            <Route path="/compliance" element={
+              <RequireAuth>
+                <Compliance />
+              </RequireAuth>
+            } />
+            <Route path="/reports" element={
+              <RequireAuth>
+                <Reports />
+              </RequireAuth>
+            } />
+            <Route path="/communications" element={
+              <RequireAuth>
+                <Communications />
+              </RequireAuth>
+            } />
+            <Route path="/settings" element={
+              <RequireAuth>
+                <SettingsPage />
+              </RequireAuth>
+            } />
+            <Route path="/help" element={
+              <RequireAuth>
+                <Help />
+              </RequireAuth>
+            } />
             
             {/* Community Management Routes */}
-            <Route path="/community-management" element={<CommunityManagement />} />
-            <Route path="/bid-requests" element={<BidRequests />} />
+            <Route path="/community-management" element={
+              <RequireAuth>
+                <CommunityManagement />
+              </RequireAuth>
+            } />
+            <Route path="/bid-requests" element={
+              <RequireAuth>
+                <BidRequests />
+              </RequireAuth>
+            } />
             
             {/* Accounting Routes */}
-            <Route path="/accounting/dashboard" element={<AccountingDashboard />} />
-            <Route path="/accounting/bank-accounts" element={<BankAccounts />} />
-            <Route path="/accounting/invoice-queue" element={<InvoiceQueue />} />
-            <Route path="/accounting/transactions" element={<Transactions />} />
-            <Route path="/accounting/payments" element={<Payments />} />
-            <Route path="/accounting/journal-entries" element={<JournalEntries />} />
-            <Route path="/accounting/gl-accounts" element={<GLAccounts />} />
-            <Route path="/accounting/financial-reports" element={<FinancialReports />} />
-            <Route path="/accounting/budget-planning" element={<BudgetPlanning />} />
+            <Route path="/accounting/dashboard" element={
+              <RequireAuth>
+                <AccountingDashboard />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/bank-accounts" element={
+              <RequireAuth>
+                <BankAccounts />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/invoice-queue" element={
+              <RequireAuth>
+                <InvoiceQueue />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/transactions" element={
+              <RequireAuth>
+                <Transactions />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/payments" element={
+              <RequireAuth>
+                <Payments />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/journal-entries" element={
+              <RequireAuth>
+                <JournalEntries />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/gl-accounts" element={
+              <RequireAuth>
+                <GLAccounts />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/financial-reports" element={
+              <RequireAuth>
+                <FinancialReports />
+              </RequireAuth>
+            } />
+            <Route path="/accounting/budget-planning" element={
+              <RequireAuth>
+                <BudgetPlanning />
+              </RequireAuth>
+            } />
             
             {/* Communications Routes */}
-            <Route path="/communications/messaging" element={<Messaging />} />
-            <Route path="/communications/announcements" element={<Announcements />} />
+            <Route path="/communications/messaging" element={
+              <RequireAuth>
+                <Messaging />
+              </RequireAuth>
+            } />
+            <Route path="/communications/announcements" element={
+              <RequireAuth>
+                <Announcements />
+              </RequireAuth>
+            } />
             
             {/* Lead Management Routes */}
-            <Route path="/lead-management" element={<LeadManagement />} />
-            <Route path="/lead-management/dashboard" element={<LeadsDashboard />} />
-            <Route path="/lead-management/proposals" element={<Proposals />} />
-            <Route path="/lead-management/email-campaigns" element={<EmailCampaigns />} />
-            <Route path="/lead-management/analytics" element={<Analytics />} />
-            <Route path="/lead-management/onboarding" element={<OnboardingWizard />} />
+            <Route path="/lead-management" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <LeadManagement />
+              </RequireAuth>
+            } />
+            <Route path="/lead-management/dashboard" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <LeadsDashboard />
+              </RequireAuth>
+            } />
+            <Route path="/lead-management/proposals" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <Proposals />
+              </RequireAuth>
+            } />
+            <Route path="/lead-management/email-campaigns" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <EmailCampaigns />
+              </RequireAuth>
+            } />
+            <Route path="/lead-management/analytics" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <Analytics />
+              </RequireAuth>
+            } />
+            <Route path="/lead-management/onboarding" element={
+              <RequireAuth allowedRoles={['admin', 'manager']}>
+                <OnboardingWizard />
+              </RequireAuth>
+            } />
             
             {/* Operations Routes */}
-            <Route path="/operations" element={<Operations />} />
-            <Route path="/operations/dashboard" element={<OperationsDashboard />} />
-            <Route path="/operations/calendar" element={<OperationsCalendar />} />
-            <Route path="/operations/vendors" element={<Vendors />} />
-            <Route path="/operations/letter-templates" element={<LetterTemplates />} />
-            <Route path="/operations/workflows" element={<Workflows />} />
-            <Route path="/operations/print-queue" element={<PrintQueue />} />
+            <Route path="/operations" element={
+              <RequireAuth>
+                <Operations />
+              </RequireAuth>
+            } />
+            <Route path="/operations/dashboard" element={
+              <RequireAuth>
+                <OperationsDashboard />
+              </RequireAuth>
+            } />
+            <Route path="/operations/calendar" element={
+              <RequireAuth>
+                <OperationsCalendar />
+              </RequireAuth>
+            } />
+            <Route path="/operations/vendors" element={
+              <RequireAuth>
+                <Vendors />
+              </RequireAuth>
+            } />
+            <Route path="/operations/letter-templates" element={
+              <RequireAuth>
+                <LetterTemplates />
+              </RequireAuth>
+            } />
+            <Route path="/operations/workflows" element={
+              <RequireAuth>
+                <Workflows />
+              </RequireAuth>
+            } />
+            <Route path="/operations/print-queue" element={
+              <RequireAuth>
+                <PrintQueue />
+              </RequireAuth>
+            } />
             
             {/* Records & Reports Routes */}
-            <Route path="/records-reports" element={<RecordsReports />} />
-            <Route path="/records-reports/records" element={<Records />} />
-            <Route path="/records-reports/documents" element={<Documents />} />
-            <Route path="/records-reports/reports" element={<ReportsPage />} />
+            <Route path="/records-reports" element={
+              <RequireAuth>
+                <RecordsReports />
+              </RequireAuth>
+            } />
+            <Route path="/records-reports/records" element={
+              <RequireAuth>
+                <Records />
+              </RequireAuth>
+            } />
+            <Route path="/records-reports/documents" element={
+              <RequireAuth>
+                <Documents />
+              </RequireAuth>
+            } />
+            <Route path="/records-reports/reports" element={
+              <RequireAuth>
+                <ReportsPage />
+              </RequireAuth>
+            } />
             
             {/* Resale Management Routes */}
-            <Route path="/resale-management" element={<ResaleManagement />} />
-            <Route path="/resale-management/certificate" element={<ResaleCertificate />} />
-            <Route path="/resale-management/questionnaire" element={<CondoQuestionnaire />} />
-            <Route path="/resale-management/inspection" element={<PropertyInspection />} />
-            <Route path="/resale-management/statements" element={<AccountStatements />} />
-            <Route path="/resale-management/trec-forms" element={<TRECForms />} />
-            <Route path="/resale-management/order-queue" element={<OrderQueue />} />
+            <Route path="/resale-management" element={
+              <RequireAuth>
+                <ResaleManagement />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/certificate" element={
+              <RequireAuth>
+                <ResaleCertificate />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/questionnaire" element={
+              <RequireAuth>
+                <CondoQuestionnaire />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/inspection" element={
+              <RequireAuth>
+                <PropertyInspection />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/statements" element={
+              <RequireAuth>
+                <AccountStatements />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/trec-forms" element={
+              <RequireAuth>
+                <TRECForms />
+              </RequireAuth>
+            } />
+            <Route path="/resale-management/order-queue" element={
+              <RequireAuth>
+                <OrderQueue />
+              </RequireAuth>
+            } />
             
             {/* System Routes */}
-            <Route path="/system" element={<System />} />
-            <Route path="/system/integrations" element={<Integrations />} />
-            <Route path="/system/settings" element={<SystemSettings />} />
-            <Route path="/system/email-workflows" element={<EmailWorkflows />} />
-            <Route path="/system/data" element={<DataImportExport />} />
-            <Route path="/system/workflow-schedule" element={<WorkflowSchedule />} />
-            <Route path="/system/associations" element={<Associations />} />
-            <Route path="/system/permissions" element={<Permissions />} />
+            <Route path="/system" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <System />
+              </RequireAuth>
+            } />
+            <Route path="/system/integrations" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <Integrations />
+              </RequireAuth>
+            } />
+            <Route path="/system/settings" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <SystemSettings />
+              </RequireAuth>
+            } />
+            <Route path="/system/email-workflows" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <EmailWorkflows />
+              </RequireAuth>
+            } />
+            <Route path="/system/data" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <DataImportExport />
+              </RequireAuth>
+            } />
+            <Route path="/system/workflow-schedule" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <WorkflowSchedule />
+              </RequireAuth>
+            } />
+            <Route path="/system/associations" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <Associations />
+              </RequireAuth>
+            } />
+            <Route path="/system/permissions" element={
+              <RequireAuth allowedRoles={['admin']}>
+                <Permissions />
+              </RequireAuth>
+            } />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />
