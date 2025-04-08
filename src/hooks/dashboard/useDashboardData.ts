@@ -20,7 +20,7 @@ export interface ActivityItem {
   description: string;
   association: string;
   timeAgo: string;
-  iconName: 'Shield' | 'FileText' | 'AlertTriangle'; // Use string name instead of JSX
+  iconName: 'Shield' | 'FileText' | 'AlertTriangle';
   type: 'compliance' | 'document' | 'payment' | 'maintenance' | 'other';
 }
 
