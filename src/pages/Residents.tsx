@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users2, Search, Filter, PlusCircle, Download, Mail, Phone } from 'lucide-react';
@@ -10,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 
 interface Resident {
   id: string;
@@ -127,6 +127,7 @@ const getResidentTypeBadge = (type: Resident['type']) => {
 };
 
 const ResidentCard: React.FC<{ resident: Resident }> = ({ resident }) => {
+  const navigate = useNavigate();
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -135,8 +136,12 @@ const ResidentCard: React.FC<{ resident: Resident }> = ({ resident }) => {
       .toUpperCase();
   };
 
+  const handleViewResident = () => {
+    navigate(`/residents/${resident.id}`);
+  };
+
   return (
-    <Card className="shadow-sm card-hover">
+    <Card className="shadow-sm card-hover cursor-pointer" onClick={handleViewResident}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div className="flex items-center">
@@ -197,6 +202,7 @@ const Residents = () => {
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const navigate = useNavigate();
 
   const filteredResidents = mockResidents.filter(resident => {
     const matchesSearch = 
@@ -210,6 +216,10 @@ const Residents = () => {
     
     return matchesSearch && matchesAssociation && matchesStatus && matchesType;
   });
+
+  const handleViewResident = (id: string) => {
+    navigate(`/residents/${id}`);
+  };
 
   return (
     <AppLayout>
@@ -334,7 +344,10 @@ const Residents = () => {
                           <tr key={resident.id} className="border-b hover:bg-muted/20">
                             <td className="py-3 px-4 font-medium">{resident.id}</td>
                             <td className="py-3 px-4">
-                              <div className="flex items-center">
+                              <div 
+                                className="flex items-center cursor-pointer hover:text-primary"
+                                onClick={() => handleViewResident(resident.id)}
+                              >
                                 <Avatar className="h-6 w-6 mr-2">
                                   <AvatarImage src={resident.avatarUrl} />
                                   <AvatarFallback>
@@ -351,7 +364,12 @@ const Residents = () => {
                             <td className="py-3 px-4">{getStatusBadge(resident.status)}</td>
                             <td className="py-3 px-4 text-right">
                               <div className="flex justify-end gap-2">
-                                <TooltipButton size="sm" variant="ghost" tooltip="View resident details">
+                                <TooltipButton 
+                                  size="sm" 
+                                  variant="ghost" 
+                                  tooltip="View resident details"
+                                  onClick={() => handleViewResident(resident.id)}
+                                >
                                   View
                                 </TooltipButton>
                                 <TooltipButton size="sm" variant="outline" tooltip="Edit resident information">
