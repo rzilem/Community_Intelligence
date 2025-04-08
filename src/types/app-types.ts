@@ -16,3 +16,4 @@ export * from './calendar-types';
 export * from './communication-types';
 export * from './document-types';
 export * from './vendor-types';
+export * from './import-types';

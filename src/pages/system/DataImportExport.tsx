@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,67 +10,102 @@ import ImportDataForm from '@/components/data-import/ImportDataForm';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
 import ImportResultsTable from '@/components/data-import/ImportResultsTable';
+import { dataImportService } from '@/services/data-import-export-service';
+import { toast } from 'sonner';
+import { ValidationResult, ImportResult } from '@/types/import-types';
 
 const DataImportExport: React.FC = () => {
+  const { user } = useAuth();
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [showMappingModal, setShowMappingModal] = useState(false);
-  const [validationResults, setValidationResults] = useState<any>(null);
-  const [importResults, setImportResults] = useState<any>(null);
+  const [validationResults, setValidationResults] = useState<ValidationResult | null>(null);
+  const [importResults, setImportResults] = useState<ImportResult | null>(null);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importData, setImportData] = useState<any[]>([]);
   const [importType, setImportType] = useState<string>('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
+    // Reset the import state when the association changes
+    resetImportState();
   };
 
-  const handleFileUpload = (file: File, type: string) => {
-    setImportFile(file);
-    setImportType(type);
-    // Simulate validation process
-    setTimeout(() => {
-      // This would be replaced with actual validation logic
-      setValidationResults({
-        valid: true,
-        totalRows: 150,
-        validRows: 147,
-        invalidRows: 3,
-        warnings: 5,
-        issues: [
-          { row: 5, field: 'email', issue: 'Invalid email format' },
-          { row: 28, field: 'phone', issue: 'Invalid phone number' },
-          { row: 103, field: 'zipCode', issue: 'Missing zip code' }
-        ]
-      });
-      setShowMappingModal(true);
-    }, 1000);
-  };
-
-  const handleMappingConfirm = (mappings: Record<string, string>) => {
-    setShowMappingModal(false);
-    // In a real implementation, we would process the file with the mappings
-    // and then save to Supabase
-    console.log('Processing with mappings:', mappings);
-    
-    // Simulate import process
-    setTimeout(() => {
-      setImportResults({
-        success: true,
-        totalProcessed: 150,
-        successfulImports: 147,
-        failedImports: 3,
-        details: [
-          { status: 'success', message: '147 records imported successfully' },
-          { status: 'error', message: '3 records failed validation' }
-        ]
-      });
-    }, 1500);
-  };
-
-  const handleImportAnother = () => {
+  const resetImportState = () => {
     setImportFile(null);
+    setImportData([]);
     setImportType('');
     setValidationResults(null);
     setImportResults(null);
+    setShowMappingModal(false);
+  };
+
+  const handleFileUpload = async (file: File, parsedData: any[], type: string) => {
+    setImportFile(file);
+    setImportData(parsedData);
+    setImportType(type);
+    
+    // Start validation process
+    setIsValidating(true);
+    try {
+      // Validate the data
+      const results = await dataImportService.validateData(parsedData, type);
+      setValidationResults(results);
+      
+      // Show the mapping modal
+      setShowMappingModal(true);
+    } catch (error) {
+      console.error('Error validating data:', error);
+      toast.error('Failed to validate the uploaded data');
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleMappingConfirm = async (mappings: Record<string, string>) => {
+    setShowMappingModal(false);
+    setIsImporting(true);
+    
+    try {
+      // Import the data with the mappings
+      const results = await dataImportService.importData({
+        associationId: selectedAssociationId,
+        dataType: importType,
+        data: importData,
+        mappings,
+        userId: user?.id
+      });
+      
+      setImportResults(results);
+      
+      // Show toast based on result
+      if (results.success) {
+        toast.success(`Successfully imported ${results.successfulImports} records`);
+      } else {
+        toast.warning(`Imported with issues: ${results.successfulImports} successful, ${results.failedImports} failed`);
+      }
+    } catch (error) {
+      console.error('Error importing data:', error);
+      toast.error('Failed to import data');
+      
+      // Set import results with error
+      setImportResults({
+        success: false,
+        totalProcessed: importData.length,
+        successfulImports: 0,
+        failedImports: importData.length,
+        details: [
+          { status: 'error', message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
+        ]
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleImportAnother = () => {
+    resetImportState();
   };
 
   return (
@@ -115,48 +151,28 @@ const DataImportExport: React.FC = () => {
             />
           )}
 
-          {validationResults && !importResults && (
+          {isValidating && (
             <Card>
-              <CardHeader>
-                <CardTitle>Validation Results</CardTitle>
-                <CardDescription>
-                  Review validation results before proceeding with the import
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span>
-                      <strong>{validationResults.validRows}</strong> valid rows
-                    </span>
+              <CardContent className="py-6">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="animate-spin">
+                    <RefreshCw className="h-8 w-8 text-primary" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-500" />
-                    <span>
-                      <strong>{validationResults.warnings}</strong> warnings
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-destructive" />
-                    <span>
-                      <strong>{validationResults.invalidRows}</strong> invalid rows
-                    </span>
-                  </div>
+                  <p>Validating your data, please wait...</p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
 
-                {validationResults.issues.length > 0 && (
-                  <div className="border rounded-md p-4 bg-muted/50 mb-4">
-                    <h3 className="font-medium mb-2">Issues Found:</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {validationResults.issues.map((issue: any, index: number) => (
-                        <li key={index}>
-                          Row {issue.row}: {issue.issue} in field "{issue.field}"
-                        </li>
-                      ))}
-                    </ul>
+          {isImporting && (
+            <Card>
+              <CardContent className="py-6">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="animate-spin">
+                    <RefreshCw className="h-8 w-8 text-primary" />
                   </div>
-                )}
+                  <p>Importing your data, please wait...</p>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -165,6 +181,7 @@ const DataImportExport: React.FC = () => {
             <ImportResultsTable 
               results={importResults}
               onImportAnother={handleImportAnother}
+              associationId={selectedAssociationId}
             />
           )}
         </TabsContent>
@@ -177,6 +194,9 @@ const DataImportExport: React.FC = () => {
       {showMappingModal && (
         <ImportDataMappingModal
           importType={importType}
+          fileData={importData}
+          associationId={selectedAssociationId}
+          validationResults={validationResults || undefined}
           onClose={() => setShowMappingModal(false)}
           onConfirm={handleMappingConfirm}
         />

@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 interface ImportDataFormProps {
-  onFileUpload: (file: File, type: string) => void;
+  onFileUpload: (file: File, parsedData: any[], type: string) => void;
   associationId: string;
 }
 
@@ -16,6 +18,7 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importType, setImportType] = useState<string>('associations');
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,10 +44,85 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const parseFile = async (file: File): Promise<any[]> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          const fileName = file.name.toLowerCase();
+          
+          if (fileName.endsWith('.csv')) {
+            // Parse CSV
+            const text = data as string;
+            const lines = text.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            const parsedData = lines.slice(1)
+              .filter(line => line.trim().length > 0) // Skip empty lines
+              .map(line => {
+                const values = line.split(',').map(v => v.trim());
+                const row: Record<string, any> = {};
+                
+                headers.forEach((header, index) => {
+                  if (index < values.length) {
+                    row[header] = values[index];
+                  }
+                });
+                
+                return row;
+              });
+            
+            resolve(parsedData);
+          } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            // Parse Excel
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const parsedData = XLSX.utils.sheet_to_json(worksheet);
+            
+            resolve(parsedData);
+          } else {
+            reject(new Error('Unsupported file format'));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = (error) => reject(error);
+      
+      if (file.name.endsWith('.csv')) {
+        reader.readAsText(file);
+      } else {
+        reader.readAsBinaryString(file);
+      }
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFile && importType) {
-      onFileUpload(selectedFile, importType);
+    if (selectedFile && importType && associationId) {
+      setIsProcessing(true);
+      
+      try {
+        // Parse the file to get the data
+        const parsedData = await parseFile(selectedFile);
+        
+        if (parsedData.length === 0) {
+          toast.error('The file appears to be empty or could not be parsed');
+          setIsProcessing(false);
+          return;
+        }
+        
+        // Pass the file, parsed data, and type to the parent component
+        onFileUpload(selectedFile, parsedData, importType);
+      } catch (error) {
+        console.error('Error parsing file:', error);
+        toast.error(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
+      setIsProcessing(false);
     }
   };
 
@@ -129,7 +207,7 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
                   </p>
                 </div>
                 <label className="cursor-pointer">
-                  <Button variant="outline" type="button" onClick={() => {}}>
+                  <Button variant="outline" type="button">
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
                     Browse Files
                   </Button>
@@ -166,9 +244,9 @@ const ImportDataForm: React.FC<ImportDataFormProps> = ({ onFileUpload, associati
           <div className="flex justify-end">
             <Button
               type="submit"
-              disabled={!selectedFile || !importType || !associationId}
+              disabled={!selectedFile || !importType || !associationId || isProcessing}
             >
-              {!associationId ? 'Select an Association' : 'Upload and Validate'}
+              {isProcessing ? 'Processing...' : !associationId ? 'Select an Association' : 'Upload and Validate'}
             </Button>
           </div>
         </CardContent>

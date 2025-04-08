@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { dataImportService } from '@/services/data-import-export-service';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 interface MappingOption {
   label: string;
@@ -14,25 +17,48 @@ interface MappingOption {
 
 interface ImportDataMappingModalProps {
   importType: string;
+  fileData: any[];
+  associationId: string;
   onClose: () => void;
   onConfirm: (mappings: Record<string, string>) => void;
+  validationResults?: {
+    valid: boolean;
+    totalRows: number;
+    validRows: number;
+    invalidRows: number;
+    warnings: number;
+    issues: Array<{
+      row: number;
+      field: string;
+      issue: string;
+    }>;
+  };
 }
 
 const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   importType,
+  fileData,
+  associationId,
   onClose,
-  onConfirm
+  onConfirm,
+  validationResults
 }) => {
   const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [systemFields, setSystemFields] = useState<MappingOption[]>([]);
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const [open, setOpen] = useState<Record<string, boolean>>({});
-
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  
   useEffect(() => {
-    // Simulate loading file columns
-    // In a real implementation, these would come from parsing the uploaded file
-    setFileColumns(['Column A', 'First Name', 'Last Name', 'Email Address', 'Phone #', 'Unit', 'Balance']);
-
+    // Extract columns from the file data
+    if (fileData.length > 0) {
+      const columns = Object.keys(fileData[0]);
+      setFileColumns(columns);
+      
+      // Set preview data (first 3 rows)
+      setPreviewData(fileData.slice(0, 3));
+    }
+    
     // Load appropriate system fields based on importType
     switch (importType) {
       case 'associations':
@@ -50,7 +76,8 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           { value: 'phone', label: 'Phone Number' },
           { value: 'property_id', label: 'Property ID' },
           { value: 'move_in_date', label: 'Move-in Date' },
-          { value: 'is_primary', label: 'Is Primary Owner' }
+          { value: 'is_primary', label: 'Is Primary Owner' },
+          { value: 'emergency_contact', label: 'Emergency Contact' }
         ]);
         break;
       case 'properties':
@@ -62,12 +89,14 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           { value: 'zip', label: 'Zip Code' },
           { value: 'square_feet', label: 'Square Footage' },
           { value: 'bedrooms', label: 'Bedrooms' },
-          { value: 'bathrooms', label: 'Bathrooms' }
+          { value: 'bathrooms', label: 'Bathrooms' },
+          { value: 'property_type', label: 'Property Type' }
         ]);
         break;
       case 'financial':
         setSystemFields([
           { value: 'property_id', label: 'Property ID' },
+          { value: 'assessment_type_id', label: 'Assessment Type ID' },
           { value: 'amount', label: 'Amount' },
           { value: 'due_date', label: 'Due Date' },
           { value: 'paid', label: 'Paid Status' },
@@ -75,39 +104,68 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           { value: 'late_fee', label: 'Late Fee Amount' }
         ]);
         break;
+      case 'compliance':
+        setSystemFields([
+          { value: 'property_id', label: 'Property ID' },
+          { value: 'resident_id', label: 'Resident ID' },
+          { value: 'violation_type', label: 'Violation Type' },
+          { value: 'description', label: 'Description' },
+          { value: 'status', label: 'Status' },
+          { value: 'due_date', label: 'Due Date' },
+          { value: 'fine_amount', label: 'Fine Amount' },
+          { value: 'resolved_date', label: 'Resolved Date' }
+        ]);
+        break;
+      case 'maintenance':
+        setSystemFields([
+          { value: 'property_id', label: 'Property ID' },
+          { value: 'title', label: 'Title' },
+          { value: 'description', label: 'Description' },
+          { value: 'priority', label: 'Priority' },
+          { value: 'status', label: 'Status' },
+          { value: 'assigned_to', label: 'Assigned To' },
+          { value: 'resolved_date', label: 'Resolved Date' }
+        ]);
+        break;
       default:
         setSystemFields([]);
     }
-
-    // Auto-map columns that have similar names to system fields
-    const autoMapColumns = () => {
-      const initialMappings: Record<string, string> = {};
-      fileColumns.forEach(column => {
-        const lowerColumn = column.toLowerCase();
-        
-        // Try to find a match
-        const match = systemFields.find(field => 
-          lowerColumn.includes(field.value) || 
-          field.label.toLowerCase().includes(lowerColumn) ||
-          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
-          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')
-        );
-        
-        if (match) {
-          initialMappings[column] = match.value;
-        }
-      });
-      
-      setMappings(initialMappings);
+    
+    // Load saved mappings if available
+    const loadSavedMappings = async () => {
+      const savedMappings = await dataImportService.getImportMapping(associationId, importType);
+      if (savedMappings) {
+        setMappings(savedMappings);
+      } else {
+        // Auto-map columns that have similar names to system fields
+        autoMapColumns();
+      }
     };
-
-    // Auto-map after a short delay to ensure systemFields is set
-    const timer = setTimeout(() => {
-      autoMapColumns();
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [importType]);
+    
+    loadSavedMappings();
+  }, [importType, fileData, associationId]);
+  
+  // Auto-map columns that have similar names to system fields
+  const autoMapColumns = () => {
+    const initialMappings: Record<string, string> = {};
+    fileColumns.forEach(column => {
+      const lowerColumn = column.toLowerCase();
+      
+      // Try to find a match
+      const match = systemFields.find(field => 
+        lowerColumn.includes(field.value) || 
+        field.label.toLowerCase().includes(lowerColumn) ||
+        lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
+        lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')
+      );
+      
+      if (match) {
+        initialMappings[column] = match.value;
+      }
+    });
+    
+    setMappings(initialMappings);
+  };
 
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
@@ -132,7 +190,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle>Map Import Columns</DialogTitle>
           <DialogDescription>
@@ -141,8 +199,77 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           </DialogDescription>
         </DialogHeader>
         
+        {validationResults && (
+          <div className="bg-muted/30 p-4 rounded-md mb-4">
+            <h3 className="font-medium mb-2">Validation Results:</h3>
+            <div className="flex flex-wrap gap-3 mb-3">
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                {validationResults.validRows} valid rows
+              </Badge>
+              {validationResults.warnings > 0 && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                  {validationResults.warnings} warnings
+                </Badge>
+              )}
+              {validationResults.invalidRows > 0 && (
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                  {validationResults.invalidRows} invalid rows
+                </Badge>
+              )}
+            </div>
+            
+            {validationResults.issues.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-1">Issues found:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  {validationResults.issues.slice(0, 5).map((issue, i) => (
+                    <li key={i}>
+                      Row {issue.row}: {issue.issue} in field "{issue.field}"
+                    </li>
+                  ))}
+                  {validationResults.issues.length > 5 && (
+                    <li>...and {validationResults.issues.length - 5} more issues</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className="py-4 max-h-[60vh] overflow-y-auto">
+          {/* Data Preview */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-2">Data Preview:</h3>
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {fileColumns.map(column => (
+                      <TableHead key={column} className="whitespace-nowrap">{column}</TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {previewData.map((row, index) => (
+                    <TableRow key={index}>
+                      {fileColumns.map(column => (
+                        <TableCell key={`${index}-${column}`} className="truncate max-w-[200px]">
+                          {row[column] || ''}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Showing first {previewData.length} of {fileData.length} rows
+            </p>
+          </div>
+          
+          {/* Column Mappings */}
           <div className="space-y-4">
+            <h3 className="text-sm font-medium mb-2">Map File Columns to System Fields:</h3>
             {fileColumns.map(column => (
               <div key={column} className="grid grid-cols-5 items-center gap-4">
                 <div className="col-span-2">

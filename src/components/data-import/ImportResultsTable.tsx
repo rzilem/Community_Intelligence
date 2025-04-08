@@ -1,26 +1,20 @@
 
 import React from 'react';
-import { CheckCircle, AlertCircle, RefreshCw, Download } from 'lucide-react';
+import { CheckCircle, AlertCircle, RefreshCw, Download, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Link } from 'react-router-dom';
+import { ImportResult } from '@/types/import-types';
 
 interface ImportResultsTableProps {
-  results: {
-    success: boolean;
-    totalProcessed: number;
-    successfulImports: number;
-    failedImports: number;
-    details: Array<{
-      status: 'success' | 'error' | 'warning';
-      message: string;
-    }>;
-  };
+  results: ImportResult;
   onImportAnother: () => void;
+  associationId: string;
 }
 
-const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImportAnother }) => {
+const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImportAnother, associationId }) => {
   return (
     <Card>
       <CardHeader>
@@ -83,13 +77,22 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
             </Table>
           </div>
 
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button variant="outline" onClick={onImportAnother}>
               <RefreshCw className="h-4 w-4 mr-2" /> Import Another File
             </Button>
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" /> Download Results Report
-            </Button>
+            <div className="flex gap-2">
+              {results.job_id && (
+                <Button variant="outline" asChild>
+                  <Link to={`/system/import-jobs/${results.job_id}`}>
+                    <ExternalLink className="h-4 w-4 mr-2" /> View Job Details
+                  </Link>
+                </Button>
+              )}
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" /> Download Results Report
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

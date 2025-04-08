@@ -494,6 +494,114 @@ export type Database = {
           },
         ]
       }
+      import_jobs: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          error_details: Json | null
+          file_name: string
+          file_size: number
+          id: string
+          import_type: string
+          rows_failed: number | null
+          rows_processed: number | null
+          rows_succeeded: number | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          error_details?: Json | null
+          file_name: string
+          file_size: number
+          id?: string
+          import_type: string
+          rows_failed?: number | null
+          rows_processed?: number | null
+          rows_succeeded?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          error_details?: Json | null
+          file_name?: string
+          file_size?: number
+          id?: string
+          import_type?: string
+          rows_failed?: number | null
+          rows_processed?: number | null
+          rows_succeeded?: number | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_jobs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_mappings: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          import_type: string
+          mappings: Json
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          import_type: string
+          mappings: Json
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          import_type?: string
+          mappings?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_mappings_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "import_mappings_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_requests: {
         Row: {
           assigned_to: string | null
