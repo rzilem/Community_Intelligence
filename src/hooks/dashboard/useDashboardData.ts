@@ -108,11 +108,13 @@ async function fetchResidentCount(associationId?: string): Promise<number> {
   return count || 0;
 }
 
-async function fetchAssessmentData(associationId?: string): Promise<{
+interface AssessmentDataReturn {
   assessmentAmount: number;
   collectionRate: number;
   collectionTrend: number;
-}> {
+}
+
+async function fetchAssessmentData(associationId?: string): Promise<AssessmentDataReturn> {
   // This would normally join through properties to get association-specific data
   // For now, return placeholder data
   return {
@@ -122,11 +124,13 @@ async function fetchAssessmentData(associationId?: string): Promise<{
   };
 }
 
-async function fetchComplianceData(associationId?: string): Promise<{
+interface ComplianceDataReturn {
   complianceCount: number;
   complianceDelta: number;
   complianceTrend: number;
-}> {
+}
+
+async function fetchComplianceData(associationId?: string): Promise<ComplianceDataReturn> {
   let query = supabase
     .from('compliance_issues')
     .select('*', { count: 'exact' })
