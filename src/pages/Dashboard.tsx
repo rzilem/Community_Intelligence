@@ -6,13 +6,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { Building, Calendar, DollarSign, MessageSquare, Plus, Shield, Users2 } from 'lucide-react';
+import { Building, Calendar, DollarSign, MessageSquare, Plus, Shield, Users2, FileText, AlertTriangle } from 'lucide-react';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
+
+// Helper function to render icon by name
+const getIconByName = (iconName: string) => {
+  switch (iconName) {
+    case 'Shield':
+      return <Shield className="h-5 w-5" />;
+    case 'FileText':
+      return <FileText className="h-5 w-5" />;
+    case 'AlertTriangle':
+      return <AlertTriangle className="h-5 w-5" />;
+    default:
+      return <Shield className="h-5 w-5" />;
+  }
+};
 
 const Dashboard = () => {
   const { currentAssociation } = useAuth();
@@ -120,7 +134,7 @@ const Dashboard = () => {
                     {recentActivity.map((activity, i) => (
                       <div key={i} className="flex gap-4 items-start">
                         <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                          {activity.icon || <Shield className="h-5 w-5" />}
+                          {getIconByName(activity.iconName)}
                         </div>
                         <div>
                           <p className="font-medium">{activity.title}</p>

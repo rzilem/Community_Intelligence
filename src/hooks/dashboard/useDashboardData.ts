@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, FileText, AlertTriangle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export interface DashboardStats {
   propertyCount: number;
@@ -20,7 +21,7 @@ export interface ActivityItem {
   description: string;
   association: string;
   timeAgo: string;
-  icon?: React.ReactNode;
+  iconName: 'Shield' | 'FileText' | 'AlertTriangle'; // Use string name instead of JSX
   type: 'compliance' | 'document' | 'payment' | 'maintenance' | 'other';
 }
 
@@ -85,7 +86,7 @@ async function fetchPropertyCount(associationId?: string): Promise<number> {
   
   const { count, error } = await query;
   if (error) throw error;
-  return count || 0;
+  return count ||.0;
 }
 
 async function fetchResidentCount(associationId?: string): Promise<number> {
@@ -158,7 +159,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'Resident reported improper trash disposal at property #45',
       association: 'Oakridge Estates',
       timeAgo: '2 hours ago',
-      icon: <Shield className="h-5 w-5" />,
+      iconName: 'Shield', // Using string instead of JSX
       type: 'compliance'
     },
     {
@@ -166,7 +167,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'New HOA bylaws document has been uploaded to the document repository',
       association: 'Sunset Gardens',
       timeAgo: '4 hours ago',
-      icon: <FileText className="h-5 w-5" />,
+      iconName: 'FileText', // Using string instead of JSX
       type: 'document'
     },
     {
@@ -174,7 +175,7 @@ async function fetchRecentActivity(associationId?: string): Promise<ActivityItem
       description: 'Water leak in unit 23B requires immediate attention',
       association: 'Parkview Commons',
       timeAgo: '1 day ago',
-      icon: <AlertTriangle className="h-5 w-5" />,
+      iconName: 'AlertTriangle', // Using string instead of JSX
       type: 'maintenance'
     }
   ];
