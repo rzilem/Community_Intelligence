@@ -145,7 +145,7 @@ const CompliancePage = () => {
             
             <TabsContent value="open">
               <ComplianceTable
-                issues={filteredCompliance}
+                issues={filteredCompliance.filter(issue => issue.status === 'open')}
                 isLoading={isLoading}
                 error={error}
                 onEdit={handleEditCompliance}
@@ -154,7 +154,7 @@ const CompliancePage = () => {
             
             <TabsContent value="in-progress">
               <ComplianceTable
-                issues={filteredCompliance}
+                issues={filteredCompliance.filter(issue => issue.status === 'in-progress')}
                 isLoading={isLoading}
                 error={error}
                 onEdit={handleEditCompliance}
@@ -163,7 +163,7 @@ const CompliancePage = () => {
             
             <TabsContent value="resolved">
               <ComplianceTable
-                issues={filteredCompliance}
+                issues={filteredCompliance.filter(issue => issue.status === 'resolved')}
                 isLoading={isLoading}
                 error={error}
                 onEdit={handleEditCompliance}
@@ -176,7 +176,7 @@ const CompliancePage = () => {
       <ComplianceDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        compliance={selectedCompliance}
+        issue={selectedCompliance}
       />
     </PageTemplate>
   );
