@@ -7,13 +7,15 @@ import { toast } from 'sonner';
 interface RequireAuthProps {
   children: React.ReactNode;
   allowedRoles?: string[];
+  requireAssociation?: boolean;
 }
 
 export const RequireAuth: React.FC<RequireAuthProps> = ({ 
   children, 
-  allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'] 
+  allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'],
+  requireAssociation = false
 }) => {
-  const { user, loading, userRole } = useAuth();
+  const { user, loading, userRole, currentAssociation, userAssociations } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,7 +37,15 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       navigate('/dashboard');
       return;
     }
-  }, [user, loading, userRole, navigate, location, allowedRoles]);
+
+    // Check if the user needs to have an associated HOA to access this page
+    if (requireAssociation && (!userAssociations || userAssociations.length === 0)) {
+      toast.error('You need to be associated with an HOA to access this page');
+      navigate('/dashboard');
+      return;
+    }
+
+  }, [user, loading, userRole, navigate, location, allowedRoles, requireAssociation, userAssociations, currentAssociation]);
 
   if (loading) {
     return (

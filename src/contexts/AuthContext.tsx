@@ -4,6 +4,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { Profile, UserWithProfile } from '@/types/app-types';
 import { toast } from 'sonner';
+import { fetchUserProfile, fetchUserAssociations } from '@/services/user-service';
+
+interface Association {
+  id: string;
+  name: string;
+  address?: string;
+  contact_email?: string;
+}
+
+interface UserAssociation {
+  id: string;
+  role: string;
+  associations: Association;
+}
 
 interface AuthContextType {
   session: Session | null;
@@ -12,11 +26,14 @@ interface AuthContextType {
   loading: boolean;
   isLoading: boolean; 
   userRole: string | null;
+  userAssociations: UserAssociation[];
+  currentAssociation: Association | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: { first_name: string, last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
   isAuthenticated: boolean;
+  setCurrentAssociation: (association: Association | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -26,11 +43,14 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isLoading: true,
   userRole: null,
+  userAssociations: [],
+  currentAssociation: null,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
   isAdmin: false,
   isAuthenticated: false,
+  setCurrentAssociation: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -40,6 +60,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userAssociations, setUserAssociations] = useState<UserAssociation[]>([]);
+  const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
 
   useEffect(() => {
     // Get the initial session
@@ -61,6 +83,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setProfile(null);
         setIsAdmin(false);
         setUserRole(null);
+        setUserAssociations([]);
+        setCurrentAssociation(null);
       }
     });
 
@@ -71,29 +95,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Fetch user profile when user changes
   useEffect(() => {
-    const fetchProfile = async () => {
+    const loadUserData = async () => {
       if (user) {
         try {
           console.log('Fetching profile for user:', user.id);
-          // Using type assertion for Supabase query
-          const { data, error } = await supabase
-            .from('profiles' as any)
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching profile:', error.message);
-            throw error;
-          }
+          const profileData = await fetchUserProfile(user.id);
           
-          if (data) {
-            // First cast to unknown, then to Profile for type safety
-            const profileData = data as unknown as Profile;
+          if (profileData) {
             console.log('Profile data loaded:', profileData);
             setProfile(profileData);
             setIsAdmin(profileData.role === 'admin');
             setUserRole(profileData.role);
+            
+            // Fetch the user's associations
+            const associations = await fetchUserAssociations(user.id);
+            console.log('User associations loaded:', associations);
+            setUserAssociations(associations);
+            
+            // Set current association to the first one if none is selected
+            if (associations?.length > 0 && !currentAssociation) {
+              setCurrentAssociation(associations[0].associations);
+            }
           } else {
             console.log('No profile found for user:', user.id);
           }
@@ -107,7 +129,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    fetchProfile();
+    loadUserData();
   }, [user]);
 
   const signIn = async (email: string, password: string) => {
@@ -171,6 +193,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isAdmin,
       isAuthenticated,
       userRole,
+      userAssociations,
+      currentAssociation,
+      setCurrentAssociation,
     }}>
       {children}
     </AuthContext.Provider>
