@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { ResidentWithProfile } from '@/types/app-types';
 import { Building, Mail, Phone, ChevronRight, Edit, Calendar } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { formatDate } from '@/lib/date-utils';
@@ -14,6 +14,7 @@ interface ResidentCardProps {
 }
 
 export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) => {
+  const navigate = useNavigate();
   const displayName = resident.name || 
     (resident.user?.profile && `${resident.user.profile.first_name || ''} ${resident.user.profile.last_name || ''}`.trim()) ||
     'Unknown Resident';
@@ -29,8 +30,12 @@ export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) 
   const phone = resident.phone || resident.user?.profile?.phone_number || '';
   const profileImage = resident.user?.profile?.profile_image_url || '';
 
+  const handleCardClick = () => {
+    navigate(`/residents/${resident.id}`);
+  };
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
@@ -49,7 +54,10 @@ export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) 
           <TooltipButton
             size="icon"
             variant="ghost"
-            onClick={onEdit}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             tooltip="Edit resident"
           >
             <Edit className="h-4 w-4" />
@@ -93,12 +101,14 @@ export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) 
         <Link 
           to={`/residents/${resident.id}/communications`}
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
+          onClick={(e) => e.stopPropagation()}
         >
           Message
         </Link>
         <Link 
           to={`/residents/${resident.id}`}
           className="text-xs flex items-center text-primary hover:underline"
+          onClick={(e) => e.stopPropagation()}
         >
           Details <ChevronRight className="h-3 w-3 ml-1" />
         </Link>

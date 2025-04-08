@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Properties from "./pages/Properties";
 import Residents from "./pages/Residents";
+import ResidentProfile from "./pages/ResidentProfile";
 import CalendarPage from "./pages/CalendarPage";
 import Accounting from "./pages/Accounting";
 import Compliance from "./pages/Compliance";
@@ -120,6 +120,11 @@ const App = () => (
             <Route path="/residents" element={
               <RequireAuth>
                 <Residents />
+              </RequireAuth>
+            } />
+            <Route path="/residents/:id" element={
+              <RequireAuth>
+                <ResidentProfile />
               </RequireAuth>
             } />
             <Route path="/calendar" element={
