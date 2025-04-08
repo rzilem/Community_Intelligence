@@ -33,7 +33,7 @@ interface EventFormProps {
     color: string;
   }>>;
   amenityOptions: Amenity[];
-  handleCreateEvent: () => void;
+  handleCreateEvent: () => boolean;
   isCreating: boolean;
   hasAssociation: boolean;
 }
@@ -173,6 +173,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       </div>
       <DialogFooter>
         <Button 
+          type="button"
           onClick={handleCreateEvent} 
           disabled={!newEvent.title || !newEvent.startTime || !newEvent.endTime || !hasAssociation || isCreating}
         >

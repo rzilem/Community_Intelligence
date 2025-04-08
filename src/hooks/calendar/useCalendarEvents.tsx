@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useSupabaseQuery, useSupabaseCreate, useSupabaseDelete } from '@/hooks/supabase';
-import { CalendarEvent } from '@/types/app-types';
+import { CalendarEvent } from '@/types/calendar-types';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
@@ -43,7 +43,7 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
   });
 
   // Query for calendar events
-  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>(
+  const { data: calendarEvents, isLoading: eventsLoading, refetch } = useSupabaseQuery<CalendarEvent[]>(
     'calendar_events',
     {
       select: '*',
@@ -99,10 +99,15 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     }
   };
 
-  const handleCreateEvent = () => {
+  const handleCreateEvent = (): boolean => {
     if (!currentAssociation) {
       toast.error("Please select an association first");
-      return;
+      return false;
+    }
+
+    if (!newEvent.title) {
+      toast.error("Please enter a title for the event");
+      return false;
     }
 
     // Create start and end time Date objects
@@ -113,6 +118,11 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     const endDate = new Date(newEvent.date);
     const [endHours, endMinutes] = newEvent.endTime.split(':');
     endDate.setHours(parseInt(endHours), parseInt(endMinutes));
+
+    if (endDate <= startDate) {
+      toast.error("End time must be after start time");
+      return false;
+    }
 
     // Create the event object to save to Supabase
     const eventToSave = {
@@ -145,7 +155,9 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
           color: '#3b6aff' // Reset to default blue color
         });
         
-        return true; // Return success status for dialog handling
+        // Refetch events to update the UI
+        refetch();
+        return true;
       },
       onError: (error) => {
         console.error("Event creation error:", error);
@@ -165,6 +177,7 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
       deleteEvent(eventId, {
         onSuccess: () => {
           toast.success("Event deleted successfully");
+          refetch();
         },
         onError: (error) => {
           console.error("Event deletion error:", error);

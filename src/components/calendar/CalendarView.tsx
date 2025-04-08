@@ -47,6 +47,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     if (success) {
       setIsDialogOpen(false);
     }
+    return true;
   };
 
   return (
@@ -83,7 +84,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={newEvent}
+                newEvent={{...newEvent, date}}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}
