@@ -1,8 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
-import { MultipartReader } from "https://deno.land/std@0.190.0/mime/multipart.ts";
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -140,7 +138,7 @@ async function processEmail(emailData: any): Promise<{
   };
 }
 
-// Process raw multipart form data
+// Process raw multipart form data using native FormData API
 async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type");
   if (!contentType || !contentType.includes("multipart/form-data")) {
