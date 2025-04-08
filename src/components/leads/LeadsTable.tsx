@@ -10,16 +10,28 @@ import {
 } from '@/components/ui/table';
 import { Lead } from '@/types/lead-types';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, ExternalLink, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import LeadDetailDialog from './LeadDetailDialog';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading?: boolean;
   visibleColumnIds: string[];
   columns: Array<{ id: string; label: string; accessorKey?: string }>;
+  onDeleteLead?: (id: string) => Promise<void>;
+  onUpdateLeadStatus?: (id: string, status: Lead['status']) => Promise<void>;
 }
 
 const LeadStatusBadge = ({ status }: { status: Lead['status'] }) => {
@@ -39,13 +51,28 @@ const LeadStatusBadge = ({ status }: { status: Lead['status'] }) => {
   );
 };
 
-const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: LeadsTableProps) => {
+const LeadsTable = ({ 
+  leads, 
+  isLoading = false, 
+  visibleColumnIds, 
+  columns,
+  onDeleteLead,
+  onUpdateLeadStatus
+}: LeadsTableProps) => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const leadsPerPage = 10;
   
   // Get only the columns that should be displayed
   const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
 
+  // Calculate pagination
+  const indexOfLastLead = currentPage * leadsPerPage;
+  const indexOfFirstLead = indexOfLastLead - leadsPerPage;
+  const currentLeads = leads.slice(indexOfFirstLead, indexOfLastLead);
+  const totalPages = Math.ceil(leads.length / leadsPerPage);
+  
   if (isLoading) {
     return (
       <div className="min-h-[300px] flex items-center justify-center">
@@ -93,6 +120,50 @@ const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: Lea
     setSelectedLead(lead);
     setDetailDialogOpen(true);
   };
+  
+  const handleDeleteLead = async (lead: Lead) => {
+    if (!onDeleteLead) {
+      toast.error("Delete functionality is not implemented yet");
+      return;
+    }
+    
+    try {
+      await onDeleteLead(lead.id);
+      toast.success(`Lead "${lead.name}" deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      toast.error("Failed to delete lead");
+    }
+  };
+  
+  const handleUpdateStatus = async (lead: Lead, status: Lead['status']) => {
+    if (!onUpdateLeadStatus) {
+      toast.error("Status update functionality is not implemented yet");
+      return;
+    }
+    
+    try {
+      await onUpdateLeadStatus(lead.id, status);
+      toast.success(`Lead status updated to ${status}`);
+    } catch (error) {
+      console.error("Error updating lead status:", error);
+      toast.error("Failed to update lead status");
+    }
+  };
+  
+  const getNextStatus = (currentStatus: Lead['status']): Lead['status'] => {
+    const statusOrder: Lead['status'][] = ['new', 'contacted', 'qualified', 'proposal', 'converted', 'lost'];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const nextIndex = (currentIndex + 1) % statusOrder.length;
+    return statusOrder[nextIndex];
+  };
+  
+  const getPreviousStatus = (currentStatus: Lead['status']): Lead['status'] => {
+    const statusOrder: Lead['status'][] = ['new', 'contacted', 'qualified', 'proposal', 'converted', 'lost'];
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    const previousIndex = currentIndex === 0 ? statusOrder.length - 1 : currentIndex - 1;
+    return statusOrder[previousIndex];
+  };
 
   return (
     <>
@@ -107,7 +178,7 @@ const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: Lea
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
+            {currentLeads.map((lead) => (
               <TableRow key={lead.id}>
                 {visibleColumns.map((column) => (
                   <TableCell 
@@ -127,9 +198,37 @@ const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: Lea
                       <ExternalLink className="h-4 w-4 mr-1" />
                       View
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdateStatus(lead, getNextStatus(lead.status))}
+                          className="flex items-center gap-2"
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                          Move to {getNextStatus(lead.status)}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleUpdateStatus(lead, getPreviousStatus(lead.status))}
+                          className="flex items-center gap-2"
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                          Move to {getPreviousStatus(lead.status)}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDeleteLead(lead)}
+                          className="flex items-center gap-2 text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </TableCell>
               </TableRow>
@@ -137,6 +236,47 @@ const LeadsTable = ({ leads, isLoading = false, visibleColumnIds, columns }: Lea
           </TableBody>
         </Table>
       </div>
+      
+      {totalPages > 1 && (
+        <div className="mt-4 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let pageNumber = i + 1;
+                if (totalPages > 5 && currentPage > 3) {
+                  pageNumber = currentPage - 3 + i;
+                  if (pageNumber > totalPages) pageNumber = totalPages - (5 - i - 1);
+                }
+                
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink 
+                      isActive={currentPage === pageNumber}
+                      onClick={() => setCurrentPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <LeadDetailDialog 
         lead={selectedLead}

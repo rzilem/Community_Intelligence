@@ -21,6 +21,8 @@ const LeadsDashboard = () => {
     lastRefreshed, 
     refreshLeads, 
     createTestLead,
+    deleteLead,
+    updateLeadStatus,
     columns,
     visibleColumnIds,
     updateVisibleColumns,
@@ -132,6 +134,8 @@ const LeadsDashboard = () => {
                   isLoading={isLoading}
                   columns={columns}
                   visibleColumnIds={visibleColumnIds}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
                 />
               </TabsContent>
               

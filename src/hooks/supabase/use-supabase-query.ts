@@ -6,7 +6,7 @@ import { KnownTables, QueryOptions, showErrorToast } from './supabase-utils';
 export function useSupabaseQuery<T = any>(
   table: KnownTables, 
   options: QueryOptions<T> = {}, 
-  enabled = true
+  enabled: boolean = true
 ) {
   const { 
     select = '*', 
@@ -82,10 +82,9 @@ export function useSupabaseQuery<T = any>(
       // Return data as an array to ensure consistent typing
       return (data || []) as T;
     },
-    enabled,
+    enabled: enabled,
     meta: {
       onSuccess
     },
   });
 }
-

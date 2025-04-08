@@ -87,12 +87,56 @@ export const useLeads = () => {
     }
   };
   
+  const deleteLead = async (id: string) => {
+    try {
+      console.log('Deleting lead:', id);
+      const { error } = await supabase
+        .from('leads' as any)
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error('Error deleting lead:', error);
+        throw error;
+      }
+      
+      refreshLeads();
+      return true;
+    } catch (error: any) {
+      console.error('Error deleting lead:', error);
+      throw error;
+    }
+  };
+  
+  const updateLeadStatus = async (id: string, status: Lead['status']) => {
+    try {
+      console.log(`Updating lead ${id} status to ${status}`);
+      const { error } = await supabase
+        .from('leads' as any)
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating lead status:', error);
+        throw error;
+      }
+      
+      refreshLeads();
+      return true;
+    } catch (error: any) {
+      console.error('Error updating lead status:', error);
+      throw error;
+    }
+  };
+  
   return { 
     leads, 
     isLoading,
     lastRefreshed,
     refreshLeads,
     createTestLead,
+    deleteLead,
+    updateLeadStatus,
     columns,
     visibleColumnIds,
     updateVisibleColumns,
