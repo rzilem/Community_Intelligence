@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, UserCheck, Search, CheckCircle, UserPlus } from 'lucide-react';
@@ -26,6 +25,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 
 interface UserWithProfile {
   id: string;
@@ -37,6 +37,7 @@ interface UserWithProfile {
     last_name: string | null;
     role: string;
     email: string | null;
+    profile_image_url: string | null;
   };
 }
 
@@ -49,7 +50,6 @@ const roles = [
   { id: 'user', name: 'Basic User' },
 ];
 
-// Form validation schema for new user creation
 const newUserSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   firstName: z.string().min(2, { message: 'First name must be at least 2 characters' }),
@@ -65,7 +65,6 @@ const Permissions = () => {
   const [loading, setLoading] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Fetch all users with their profiles
   const { data = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
     'users', 
     {
@@ -75,7 +74,6 @@ const Permissions = () => {
     }
   );
   
-  // Ensure users is always an array (typed as UserWithProfile[])
   const users = data as UserWithProfile[];
 
   const filteredUsers = users.filter(user => {
@@ -113,7 +111,10 @@ const Permissions = () => {
     }
   };
 
-  // Form for new user creation
+  const handleProfileImageUpdated = (userId: string, newUrl: string) => {
+    refetch();
+  };
+
   const newUserForm = useForm<NewUserFormValues>({
     resolver: zodResolver(newUserSchema),
     defaultValues: {
@@ -129,7 +130,6 @@ const Permissions = () => {
     try {
       setLoading(true);
       
-      // Sign up the new user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -143,7 +143,6 @@ const Permissions = () => {
       
       if (error) throw error;
       
-      // If the profile was created but doesn't have the correct role, update it
       if (data.user && formData.role !== 'user') {
         const { error: updateError } = await supabase
           .from('profiles')
@@ -223,9 +222,19 @@ const Permissions = () => {
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{user.profile?.first_name} {user.profile?.last_name}</p>
-                        <p className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
+                      <div className="flex items-center gap-3">
+                        <ProfileImageUpload
+                          userId={user.id}
+                          imageUrl={user.profile?.profile_image_url}
+                          firstName={user.profile?.first_name}
+                          lastName={user.profile?.last_name}
+                          onImageUpdated={(newUrl) => handleProfileImageUpdated(user.id, newUrl)}
+                          size="sm"
+                        />
+                        <div>
+                          <p className="font-medium">{user.profile?.first_name} {user.profile?.last_name}</p>
+                          <p className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -379,7 +388,6 @@ const Permissions = () => {
         </CardContent>
       </Card>
 
-      {/* Create User Dialog */}
       <AlertDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

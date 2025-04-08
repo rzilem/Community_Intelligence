@@ -6,6 +6,7 @@ import Properties from '@/pages/Properties';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
+import Permissions from '@/pages/system/Permissions';
 
 export const mainRoutes = [
   {
@@ -27,6 +28,10 @@ export const mainRoutes = [
   {
     path: '/residents/:id',
     element: <Navigate to="/homeowners/:id" replace />
+  },
+  {
+    path: '/system/permissions',
+    element: <Permissions />
   },
   {
     path: '/auth',

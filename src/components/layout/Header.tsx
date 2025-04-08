@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from 'react-router-dom';
+import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 
 interface HeaderProps {
   isMobile: boolean;
@@ -48,6 +49,12 @@ const Header: React.FC<HeaderProps> = ({
     return 'U';
   };
 
+  // Handle profile image update
+  const handleProfileImageUpdated = (newUrl: string) => {
+    // The image will be updated automatically since the Header component
+    // will re-render with the new profile data from context
+  };
+
   return (
     <header className="flex items-center justify-between h-16 px-4 border-b bg-white">
       {isMobile && (
@@ -78,10 +85,20 @@ const Header: React.FC<HeaderProps> = ({
                 size="sm" 
                 className="gap-2 font-normal"
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.profile_image_url || undefined} />
-                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                </Avatar>
+                {user && profile ? (
+                  <ProfileImageUpload
+                    userId={user.id}
+                    imageUrl={profile?.profile_image_url}
+                    firstName={profile?.first_name}
+                    lastName={profile?.last_name}
+                    onImageUpdated={handleProfileImageUpdated}
+                    size="sm"
+                  />
+                ) : (
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                )}
                 <span className="hidden md:inline-block">
                   {profile?.first_name ? 
                     `${profile.first_name} ${profile.last_name || ''}` : 
