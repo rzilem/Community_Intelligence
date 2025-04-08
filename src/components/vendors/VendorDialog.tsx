@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { VendorFormData } from "@/types/vendor-types";
+import { VendorFormData, VENDOR_CATEGORIES } from "@/types/vendor-types";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface VendorDialogProps {
   open: boolean;
@@ -92,11 +93,23 @@ const VendorDialog: React.FC<VendorDialogProps> = ({
           
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Input
-              id="category"
+            <Select
               value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-            />
+              onValueChange={(value) => handleChange("category", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <ScrollArea className="h-72">
+                  {VENDOR_CATEGORIES.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </ScrollArea>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
