@@ -1,16 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Download, Upload, FileSpreadsheet, CheckCircle, AlertCircle, Copy } from 'lucide-react';
-import { RefreshCw } from 'lucide-react';
+import { FileSpreadsheet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload, Download } from 'lucide-react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import ImportDataForm from '@/components/data-import/ImportDataForm';
 import ExportDataTemplates from '@/components/data-import/ExportDataTemplates';
 import ImportDataMappingModal from '@/components/data-import/ImportDataMappingModal';
-import ImportResultsTable from '@/components/data-import/ImportResultsTable';
+import ImportTabContent from '@/components/data-import/ImportTabContent';
 import { dataImportService, validationService } from '@/services/import-export';
 import { toast } from 'sonner';
 import { ValidationResult, ImportResult } from '@/types/import-types';
@@ -30,7 +29,6 @@ const DataImportExport: React.FC = () => {
   const handleAssociationChange = (associationId: string) => {
     console.log('Association changed to:', associationId);
     setSelectedAssociationId(associationId);
-    // Reset the import state when the association changes
     resetImportState();
   };
 
@@ -49,15 +47,11 @@ const DataImportExport: React.FC = () => {
     setImportData(parsedData);
     setImportType(type);
     
-    // Start validation process
     setIsValidating(true);
     try {
-      // Validate the data
       const results = await validationService.validateData(parsedData, type);
       console.log('Validation results:', results);
       setValidationResults(results);
-      
-      // Show the mapping modal
       setShowMappingModal(true);
     } catch (error) {
       console.error('Error validating data:', error);
@@ -73,7 +67,6 @@ const DataImportExport: React.FC = () => {
     setIsImporting(true);
     
     try {
-      // Import the data with the mappings
       const results = await dataImportService.importData({
         associationId: selectedAssociationId,
         dataType: importType,
@@ -85,7 +78,6 @@ const DataImportExport: React.FC = () => {
       console.log('Import results:', results);
       setImportResults(results);
       
-      // Show toast based on result
       if (results.success) {
         toast.success(`Successfully imported ${results.successfulImports} records`);
       } else {
@@ -95,7 +87,6 @@ const DataImportExport: React.FC = () => {
       console.error('Error importing data:', error);
       toast.error('Failed to import data');
       
-      // Set import results with error
       setImportResults({
         success: false,
         totalProcessed: importData.length,
@@ -149,47 +140,16 @@ const DataImportExport: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="import" className="space-y-4">
-          {!importFile && !importResults && (
-            <ImportDataForm 
-              onFileUpload={handleFileUpload}
-              associationId={selectedAssociationId}
-            />
-          )}
-
-          {isValidating && (
-            <Card>
-              <CardContent className="py-6">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="animate-spin">
-                    <RefreshCw className="h-8 w-8 text-primary" />
-                  </div>
-                  <p>Validating your data, please wait...</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {isImporting && (
-            <Card>
-              <CardContent className="py-6">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="animate-spin">
-                    <RefreshCw className="h-8 w-8 text-primary" />
-                  </div>
-                  <p>Importing your data, please wait...</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {importResults && (
-            <ImportResultsTable 
-              results={importResults}
-              onImportAnother={handleImportAnother}
-              associationId={selectedAssociationId}
-            />
-          )}
+        <TabsContent value="import">
+          <ImportTabContent
+            associationId={selectedAssociationId}
+            importFile={importFile}
+            importResults={importResults}
+            isValidating={isValidating}
+            isImporting={isImporting}
+            onFileUpload={handleFileUpload}
+            onImportAnother={handleImportAnother}
+          />
         </TabsContent>
 
         <TabsContent value="export">
