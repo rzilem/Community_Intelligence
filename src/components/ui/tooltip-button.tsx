@@ -2,14 +2,15 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ButtonProps } from '@radix-ui/react-button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ButtonProps } from '@radix-ui/react-slot';
 
 interface TooltipButtonProps extends ButtonProps {
   children: React.ReactNode;
   tooltip: string;
   tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   className?: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 export const TooltipButton: React.FC<TooltipButtonProps> = ({
@@ -17,21 +18,20 @@ export const TooltipButton: React.FC<TooltipButtonProps> = ({
   tooltip,
   tooltipSide = 'top',
   className,
+  variant = "default",
   ...props
 }) => {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <Button className={cn(className)} {...props}>
-            {children}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side={tooltipSide}>
-          <p>{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>
+        <Button className={cn(className)} variant={variant} {...props}>
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide}>
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 

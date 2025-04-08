@@ -30,7 +30,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <SidebarProvider defaultCollapsed={isMobile}>
+    <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <Sidebar className="hidden md:flex border-r">
           <SidebarHeader className="h-16 py-2.5 px-4 flex items-center justify-between">
