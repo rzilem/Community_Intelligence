@@ -24,6 +24,18 @@ export interface ActivityItem {
   type: 'compliance' | 'document' | 'payment' | 'maintenance' | 'other';
 }
 
+export interface AssessmentDataReturn {
+  assessmentAmount: number;
+  collectionRate: number;
+  collectionTrend: number;
+}
+
+export interface ComplianceDataReturn {
+  complianceCount: number;
+  complianceDelta: number;
+  complianceTrend: number;
+}
+
 export function useDashboardData(associationId?: string) {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
@@ -108,12 +120,6 @@ async function fetchResidentCount(associationId?: string): Promise<number> {
   return count || 0;
 }
 
-interface AssessmentDataReturn {
-  assessmentAmount: number;
-  collectionRate: number;
-  collectionTrend: number;
-}
-
 async function fetchAssessmentData(associationId?: string): Promise<AssessmentDataReturn> {
   // This would normally join through properties to get association-specific data
   // For now, return placeholder data
@@ -122,12 +128,6 @@ async function fetchAssessmentData(associationId?: string): Promise<AssessmentDa
     collectionRate: 92,
     collectionTrend: 3
   };
-}
-
-interface ComplianceDataReturn {
-  complianceCount: number;
-  complianceDelta: number;
-  complianceTrend: number;
 }
 
 async function fetchComplianceData(associationId?: string): Promise<ComplianceDataReturn> {
