@@ -88,15 +88,31 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const { user, profile, signOut, userRole } = useAuth();
   
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    'community-management': false,
-    'accounting': false,
-    'communications': false,
-    'lead-management': false,
-    'operations': false,
-    'records-reports': false,
-    'resale-management': false,
-    'system': false,
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const initialState = {
+      'community-management': false,
+      'accounting': false,
+      'communications': false,
+      'lead-management': false,
+      'operations': false,
+      'records-reports': false,
+      'resale-management': false,
+      'system': false,
+    };
+    
+    if (location.pathname.startsWith('/properties') || 
+        location.pathname.startsWith('/homeowners') || 
+        location.pathname.startsWith('/compliance') || 
+        location.pathname.startsWith('/communications') || 
+        location.pathname.startsWith('/bid-requests')) {
+      initialState['community-management'] = true;
+    }
+    
+    if (location.pathname.startsWith('/accounting')) {
+      initialState['accounting'] = true;
+    }
+    
+    return initialState;
   });
 
   useEffect(() => {
@@ -108,6 +124,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
+  
+  useEffect(() => {
+    setOpenSections(prev => {
+      const newState = {...prev};
+      
+      if (location.pathname.startsWith('/properties') || 
+          location.pathname.startsWith('/homeowners') || 
+          location.pathname.startsWith('/compliance') || 
+          location.pathname.startsWith('/communications') || 
+          location.pathname.startsWith('/bid-requests')) {
+        newState['community-management'] = true;
+      }
+      
+      if (location.pathname.startsWith('/accounting')) {
+        newState['accounting'] = true;
+      }
+      
+      return newState;
+    });
+  }, [location.pathname]);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev => ({
