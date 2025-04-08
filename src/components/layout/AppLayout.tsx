@@ -132,7 +132,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         icon: Building,
         submenu: [
           { name: 'Properties', path: '/properties', icon: Building },
-          { name: 'Residents', path: '/residents', icon: Users2 },
+          { name: 'Homeowners', path: '/homeowners', icon: Users2 },
           { name: 'Compliance', path: '/compliance', icon: Shield },
           { name: 'Communications', path: '/communications', icon: MessageSquare },
           { name: 'Bid Requests', path: '/bid-requests', icon: ClipboardList },
