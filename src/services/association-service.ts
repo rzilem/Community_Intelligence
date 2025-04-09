@@ -92,13 +92,24 @@ export const createAssociation = async (associationData: {
       throw createError;
     }
 
-    // Now that we have the association, assign the current user as admin
+    // Get the current user session to get the user ID
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user.id;
+    
+    if (!userId) {
+      console.error('No user ID found in session when creating association');
+      toast.warning('Association created but failed to assign admin role: No authenticated user');
+      return newAssociation;
+    }
+
+    // Now that we have the association and user ID, assign the current user as admin
     const { error: assignError } = await supabase
       .from('association_users')
-      .insert([{
+      .insert({
         association_id: newAssociation.id,
+        user_id: userId,
         role: 'admin'
-      }]);
+      });
     
     if (assignError) {
       console.error('Association created but failed to assign admin role:', assignError);
