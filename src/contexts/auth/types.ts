@@ -7,6 +7,12 @@ export interface Association {
   name: string;
   address?: string;
   contact_email?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  phone?: string;
+  is_archived?: boolean;
 }
 
 export interface UserAssociation {
