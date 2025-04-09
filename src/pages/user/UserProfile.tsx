@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -15,12 +14,12 @@ const UserProfile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
-  const [imageVersion, setImageVersion] = useState(Date.now()); // Add a version to force re-render
+  const [imageVersion, setImageVersion] = useState(Date.now());
 
   const handleProfileImageUpdated = async (newUrl: string) => {
     toast.success('Profile image updated successfully');
     await refreshProfile();
-    setImageVersion(Date.now()); // Update the version to force a re-render
+    setImageVersion(Date.now());
   };
 
   const handleProfileUpdated = async () => {
@@ -60,6 +59,13 @@ const UserProfile = () => {
                       />
                       <p className="text-sm text-muted-foreground">
                         Click on the avatar to upload a new image
+                      </p>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Recommended size: 400x400 pixels
+                        <br />
+                        Max file size: 5MB
+                        <br />
+                        Supported formats: JPG, PNG, WebP
                       </p>
                     </div>
                     
