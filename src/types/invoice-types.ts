@@ -14,3 +14,11 @@ export interface Invoice {
   created_at: string;
   updated_at: string;
 }
+
+export interface InvoiceFilterOptions {
+  status?: 'pending' | 'approved' | 'rejected' | 'paid';
+  vendor?: string;
+  association_id?: string;
+  startDate?: string;
+  endDate?: string;
+}
