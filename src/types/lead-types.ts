@@ -34,11 +34,11 @@ export interface Lead {
 import { LeadColumn } from '@/hooks/leads/useTableColumns';
 
 export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
-  { id: 'name', label: 'Full Name', accessorKey: 'name', defaultVisible: true },
-  { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
+  { id: 'name', label: 'Name', accessorKey: 'name', defaultVisible: true },
   { id: 'association_name', label: 'Association Name', accessorKey: 'association_name', defaultVisible: true },
   { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: true },
   { id: 'number_of_units', label: 'Units', accessorKey: 'number_of_units', defaultVisible: true },
+  { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
   { id: 'street_address', label: 'Address', accessorKey: 'street_address', defaultVisible: true },
   { id: 'city', label: 'City', accessorKey: 'city', defaultVisible: true },
   { id: 'phone', label: 'Phone', accessorKey: 'phone', defaultVisible: true },

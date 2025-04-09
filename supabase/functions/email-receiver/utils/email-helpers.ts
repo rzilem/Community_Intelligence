@@ -22,13 +22,16 @@ export {
   extractAdditionalInfo
 };
 
-// Combined helper that extracts all location data in one function
-export function extractAdditionalInfo(content: string): { notes?: string, address?: string, city?: string, state?: string, zip?: string } {
+// Combined helper that extracts all information in one function
+export function extractAllInfo(content: string): { 
+  locationInfo: LocationInfo, 
+  additionalInfo: AdditionalInfo 
+} {
   const locationInfo = extractLocationInfo(content);
   const additionalInfo = extractAdditionalInfo(content);
   
   return {
-    ...locationInfo,
-    ...additionalInfo
+    locationInfo,
+    additionalInfo
   };
 }

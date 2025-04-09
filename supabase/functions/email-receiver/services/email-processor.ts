@@ -54,6 +54,7 @@ export async function processEmail(emailData: any) {
     const contactInfo = extractContactInfo(content, from);
     console.log("Contact info extracted:", contactInfo);
     
+    // Prioritize setting the name field directly from extracted contact info
     if (contactInfo.name) {
       lead.name = contactInfo.name;
       // If we have a full name, try to parse first and last name
