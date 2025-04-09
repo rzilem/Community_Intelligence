@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -25,9 +26,11 @@ export const useAssociations = () => {
     queryFn: fetchAllAssociations,
     retry: 3,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
-    onError: (error: Error) => {
-      console.error('Error fetching associations:', error);
-      toast.error('Failed to load associations. Please try refreshing.');
+    meta: {
+      onError: (error: Error) => {
+        console.error('Error fetching associations:', error);
+        toast.error('Failed to load associations. Please try refreshing.');
+      }
     }
   });
   

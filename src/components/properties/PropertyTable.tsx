@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Property } from '@/pages/Properties';
+import { PropertyUI } from '@/types/property-types';
 import { Badge } from '@/components/ui/badge';
 import TooltipButton from '@/components/ui/tooltip-button';
 import {
@@ -14,10 +13,10 @@ import {
 } from "@/components/ui/table";
 
 interface PropertyTableProps {
-  properties: Property[];
+  properties: PropertyUI[];
 }
 
-const getStatusBadge = (status: Property['status']) => {
+const getStatusBadge = (status: PropertyUI['status']) => {
   switch (status) {
     case 'occupied':
       return <Badge className="bg-green-500">Occupied</Badge>;

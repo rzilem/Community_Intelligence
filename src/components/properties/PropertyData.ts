@@ -1,7 +1,7 @@
 
-import { Property } from '@/pages/Properties';
+import { PropertyUI } from '@/types/property-types';
 
-export const mockProperties: Property[] = [
+export const mockProperties: PropertyUI[] = [
   {
     id: 'PROP-101',
     address: '123 Oak Lane',
