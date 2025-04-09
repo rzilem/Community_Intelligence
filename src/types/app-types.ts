@@ -8,6 +8,7 @@ export type Tables = Database['public']['Tables'];
 export * from './profile-types';
 export * from './association-types';
 export * from './property-types';
+export * from './resident-types'; // Add this new export
 export * from './assessment-types';
 export * from './maintenance-types';
 export * from './compliance-types';
