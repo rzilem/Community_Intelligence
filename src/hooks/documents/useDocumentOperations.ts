@@ -54,8 +54,8 @@ export function useDocumentOperations() {
           uploaded_by: user.id,
           is_public: false,
           is_archived: false,
-          // Fix for the TypeScript error - using 'now()' for uploaded_at in the database
-          uploaded_at: new Date().toISOString()
+          // Using uploaded_date as it's defined in the database schema
+          uploaded_date: new Date().toISOString()
         })
         .select()
         .single();
@@ -66,7 +66,14 @@ export function useDocumentOperations() {
         throw new Error(`Error creating document record: ${docError.message}`);
       }
       
-      return docData as Document;
+      // Map the database fields to match our Document type
+      const document: Document = {
+        ...docData,
+        // Map uploaded_date to uploaded_at to satisfy the Document interface
+        uploaded_at: docData.uploaded_date
+      } as Document;
+      
+      return document;
     },
     
     onSuccess: () => {
@@ -138,15 +145,16 @@ export function useDocumentOperations() {
     }) => {
       if (!user) throw new Error('User not authenticated');
       
-      // Fix the TypeScript error - use the specific table name string
-      const { data, error } = await supabase
-        .from('document_categories')
+      // Use a type cast to bypass TypeScript's strict checking
+      // This is necessary because document_categories isn't in the TypeScript definitions yet
+      const { data, error } = await (supabase
+        .from('document_categories' as any)
         .insert({
           name,
           association_id: associationId
         })
         .select()
-        .single();
+        .single());
         
       if (error) {
         throw new Error(`Error creating category: ${error.message}`);
