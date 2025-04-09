@@ -52,6 +52,23 @@ export function isValidEmail(email: string): boolean {
 export function extractAssociationInfo(content: string): { name?: string, type?: string, units?: number } {
   const result: { name?: string, type?: string, units?: number } = {};
   
+  // Look for association type - prioritize this pattern first
+  const condoPatterns = [
+    /Condo Association/i,
+    /I am requesting a proposal for a\s*([\w\s]+)/i,
+  ];
+  
+  for (const pattern of condoPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.type = match[1].trim();
+      break;
+    } else if (match && content.includes("Condo")) {
+      result.type = "Condo";
+      break;
+    }
+  }
+  
   // Look for association name patterns
   const namePatterns = [
     /Name of Association[:\s]*([^<>\n\r]+)/i,
@@ -68,36 +85,40 @@ export function extractAssociationInfo(content: string): { name?: string, type?:
     }
   }
   
-  // Look for association type patterns - improved to be more specific
-  const typePatterns = [
-    /Association Type[:\s]*([^<>\n\r,.]+)/i,
-    /Type of Association[:\s]*([^<>\n\r,.]+)/i,
-    /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
-    /The property is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
-    /It is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
-  ];
-  
-  for (const pattern of typePatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.type = match[1].trim();
-      break;
+  // If type still not found, try general association type patterns
+  if (!result.type) {
+    const typePatterns = [
+      /Association Type[:\s]*([^<>\n\r,.]+)/i,
+      /Type of Association[:\s]*([^<>\n\r,.]+)/i,
+      /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
+      /The property is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
+      /It is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
+    ];
+    
+    for (const pattern of typePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.type = match[1].trim();
+        break;
+      }
     }
   }
   
   // Look for number of units patterns
   const unitsPatterns = [
-    /Number of Homes or Units[:\s]*(\d+)/i,
-    /Units[:\s]*(\d+)/i,
-    /Homes[:\s]*(\d+)/i,
-    /Properties[:\s]*(\d+)/i,
-    /Total Units[:\s]*(\d+)/i
+    /Number of Homes or Units[:\s]*([0-9,]+)/i,
+    /Units[:\s]*([0-9,]+)/i,
+    /Homes[:\s]*([0-9,]+)/i,
+    /Properties[:\s]*([0-9,]+)/i,
+    /Total Units[:\s]*([0-9,]+)/i
   ];
   
   for (const pattern of unitsPatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
-      const units = parseInt(match[1], 10);
+      // Remove commas from numbers like "1,525"
+      const cleanNumber = match[1].replace(/,/g, '');
+      const units = parseInt(cleanNumber, 10);
       if (!isNaN(units)) {
         result.units = units;
         break;
@@ -112,7 +133,7 @@ export function extractAssociationInfo(content: string): { name?: string, type?:
 export function extractContactInfo(content: string, from: string = ""): { name?: string, email?: string, phone?: string } {
   const result: { name?: string, email?: string, phone?: string } = {};
   
-  // First try to extract name from the content
+  // First try to extract name from the content - specific pattern for "Name" field
   const namePatterns = [
     /Name[:\s]*([^<>\n\r]+)/i,
     /Contact[:\s]*([^<>\n\r]+)/i,
@@ -135,7 +156,8 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
   // Extract email from content
   const emailPatterns = [
     /Email[:\s]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-    /Contact Email[:\s]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i
+    /Contact Email[:\s]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+    /[^a-zA-Z0-9]([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})[^a-zA-Z0-9]/i
   ];
   
   for (const pattern of emailPatterns) {
@@ -166,7 +188,7 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
     const match = content.match(pattern);
     if (match && match[1] && match[1].trim()) {
       // Clean up the phone number
-      result.phone = match[1].trim().replace(/\s+/g, ' ');
+      result.phone = match[1].trim().replace(/\s+/g, '');
       break;
     }
   }
@@ -178,7 +200,22 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
 export function extractCompanyInfo(content: string, from: string = ""): { company?: string } {
   const result: { company?: string } = {};
   
-  // First try to extract company from content
+  // Look for "currently using" or similar patterns
+  const currentlyUsingPatterns = [
+    /We are currently[\.:\s]*([^<>\n\r]+)/i,
+    /Currently managed by[\.:\s]*([^<>\n\r]+)/i,
+    /Current Management[\.:\s]*([^<>\n\r]+)/i
+  ];
+  
+  for (const pattern of currentlyUsingPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.company = match[1].trim();
+      return result;
+    }
+  }
+  
+  // If not found, try other company patterns
   const companyPatterns = [
     /Company[:\s]*([^<>\n\r]+)/i,
     /Organization[:\s]*([^<>\n\r]+)/i,
@@ -193,9 +230,8 @@ export function extractCompanyInfo(content: string, from: string = ""): { compan
     }
   }
   
-  // If no company found, try to extract from association name or email domain
+  // If no company found, try to extract from 'from' field domain
   if (!result.company) {
-    // Try to extract from 'from' field domain
     if (from) {
       const email = extractEmailFromHeader(from);
       if (email) {
@@ -207,14 +243,6 @@ export function extractCompanyInfo(content: string, from: string = ""): { compan
         }
       }
     }
-    
-    // If still no company, try to use association name
-    if (!result.company) {
-      const associationInfo = extractAssociationInfo(content);
-      if (associationInfo.name) {
-        result.company = associationInfo.name;
-      }
-    }
   }
   
   return result;
@@ -224,10 +252,10 @@ export function extractCompanyInfo(content: string, from: string = ""): { compan
 export function extractAdditionalInfo(content: string): { notes?: string, address?: string, city?: string, state?: string, zip?: string } {
   const result: { notes?: string, address?: string, city?: string, state?: string, zip?: string } = {};
   
-  // Extract address
+  // Extract address with improved pattern detection
   const addressPatterns = [
-    /Address[:\s]*([^<>\n\r]+)/i,
     /Property Address[:\s]*([^<>\n\r]+)/i,
+    /Address[:\s]*([^<>\n\r]+)/i,
     /Location[:\s]*([^<>\n\r]+)/i
   ];
   
@@ -239,54 +267,66 @@ export function extractAdditionalInfo(content: string): { notes?: string, addres
     }
   }
   
-  // Extract city
-  const cityPatterns = [
-    /City[:\s]*([^<>\n\r,.]+)/i,
-    /Location[:\s].*?City[:\s]*([^<>\n\r,.]+)/i,
-    /In ([A-Za-z\s]+),\s*[A-Z]{2}/i, // Match "In Boulder, CO" pattern
-  ];
+  // Extract city with improved pattern
+  // Look for city, state, zip pattern like "Austin, TX 78724"
+  const cityStateZipPattern = /([A-Za-z\s]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)/i;
+  const cityStateZipMatch = content.match(cityStateZipPattern);
   
-  for (const pattern of cityPatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.city = match[1].trim();
-      break;
+  if (cityStateZipMatch) {
+    result.city = cityStateZipMatch[1].trim();
+    result.state = cityStateZipMatch[2].trim();
+    result.zip = cityStateZipMatch[3].trim();
+  } else {
+    // Try to match individual components if the full pattern doesn't match
+    const cityPatterns = [
+      /City[:\s]*([^<>\n\r,.]+)/i,
+      /Location[:\s].*?City[:\s]*([^<>\n\r,.]+)/i
+    ];
+    
+    for (const pattern of cityPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.city = match[1].trim();
+        break;
+      }
     }
-  }
-  
-  // Extract state
-  const statePatterns = [
-    /State[:\s]*([^<>\n\r,.]+)/i,
-    /Location[:\s].*?State[:\s]*([^<>\n\r,.]+)/i,
-    /in\s+[A-Za-z\s]+,\s*([A-Z]{2})/i, // Match "in Boulder, CO" pattern
-  ];
-  
-  for (const pattern of statePatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.state = match[1].trim();
-      break;
+    
+    // Extract state
+    const statePatterns = [
+      /State[:\s]*([^<>\n\r,.]+)/i,
+      /Location[:\s].*?State[:\s]*([^<>\n\r,.]+)/i,
+      /,\s*([A-Z]{2})\s*\d{5}/i // Match state in "City, ST 12345" format
+    ];
+    
+    for (const pattern of statePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.state = match[1].trim();
+        break;
+      }
     }
-  }
-  
-  // Extract ZIP code
-  const zipPatterns = [
-    /ZIP[:\s]*(\d{5}(-\d{4})?)/i,
-    /Postal Code[:\s]*(\d{5}(-\d{4})?)/i,
-    /Zip Code[:\s]*(\d{5}(-\d{4})?)/i
-  ];
-  
-  for (const pattern of zipPatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.zip = match[1].trim();
-      break;
+    
+    // Extract ZIP code
+    const zipPatterns = [
+      /ZIP[:\s]*(\d{5}(?:-\d{4})?)/i,
+      /Postal Code[:\s]*(\d{5}(?:-\d{4})?)/i,
+      /Zip Code[:\s]*(\d{5}(?:-\d{4})?)/i,
+      /[A-Z]{2}\s*(\d{5}(?:-\d{4})?)/i // Match ZIP in "ST 12345" format
+    ];
+    
+    for (const pattern of zipPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.zip = match[1].trim();
+        break;
+      }
     }
   }
   
   // Extract additional information/notes
   const notesPatterns = [
     /Additional Information[:\s]*([^<>\n\r]+)/i,
+    /Additional Information or requirements[:\s]*([^<>\n\r]+)/i,
     /Notes[:\s]*([^<>\n\r]+)/i,
     /Comments[:\s]*([^<>\n\r]+)/i,
     /Requirements[:\s]*([^<>\n\r]+)/i,

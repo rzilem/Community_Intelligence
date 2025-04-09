@@ -45,41 +45,50 @@ export async function processEmail(emailData: any) {
       }
     }
     
-    // Extract content from HTML
+    // Extract content from HTML or fallback to text content or subject
     const content = parsedText || rawTextContent || subject;
+    console.log("Extracted content:", content);
     
-    // Extract association information
-    const associationInfo = extractAssociationInfo(content);
-    if (associationInfo.name) lead.association_name = associationInfo.name;
-    if (associationInfo.type) lead.association_type = associationInfo.type;
-    if (associationInfo.units) lead.number_of_units = associationInfo.units;
-    
-    // Extract contact information
+    // Extract contact information (name, email, phone)
     const contactInfo = extractContactInfo(content, from);
-    if (contactInfo.name) lead.name = contactInfo.name;
-    if (contactInfo.email) lead.email = contactInfo.email;
-    if (contactInfo.phone) lead.phone = contactInfo.phone;
+    console.log("Contact info extracted:", contactInfo);
     
-    // If we have a full name, try to parse first and last name
-    if (lead.name) {
-      const nameParts = lead.name.split(' ');
+    if (contactInfo.name) {
+      lead.name = contactInfo.name;
+      // If we have a full name, try to parse first and last name
+      const nameParts = contactInfo.name.split(' ');
       if (nameParts.length > 0) lead.first_name = nameParts[0];
       if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
     }
     
-    // Extract company information
-    const companyInfo = extractCompanyInfo(content, from);
-    if (companyInfo.company) lead.company = companyInfo.company;
+    if (contactInfo.email) lead.email = contactInfo.email;
+    if (contactInfo.phone) lead.phone = contactInfo.phone;
     
-    // Extract additional information
+    // Extract association information
+    const associationInfo = extractAssociationInfo(content);
+    console.log("Association info extracted:", associationInfo);
+    
+    if (associationInfo.name) lead.association_name = associationInfo.name;
+    if (associationInfo.type) lead.association_type = associationInfo.type;
+    if (associationInfo.units) lead.number_of_units = associationInfo.units;
+    
+    // Extract company information (current management)
+    const companyInfo = extractCompanyInfo(content, from);
+    console.log("Company info extracted:", companyInfo);
+    
+    if (companyInfo.company) lead.current_management = companyInfo.company;
+    
+    // Extract additional information (notes, address, city, state, zip)
     const additionalInfo = extractAdditionalInfo(content);
+    console.log("Additional info extracted:", additionalInfo);
+    
     if (additionalInfo.notes) lead.additional_requirements = additionalInfo.notes;
     if (additionalInfo.address) lead.street_address = additionalInfo.address;
-    
-    // Extract address components
     if (additionalInfo.city) lead.city = additionalInfo.city;
     if (additionalInfo.state) lead.state = additionalInfo.state;
     if (additionalInfo.zip) lead.zip = additionalInfo.zip;
+    
+    // Fallbacks for required fields
     
     // Fallback for email if not found
     if (!lead.email && from) {
@@ -107,19 +116,13 @@ export async function processEmail(emailData: any) {
       }
     }
     
-    // Notes fields
-    if (!lead.notes) {
-      lead.notes = `Email received with subject: ${subject}`;
+    // Add subject to notes
+    if (subject) {
+      lead.notes = `Subject: ${subject}`;
+      
       if (content) {
         lead.notes += `\n\nContent: ${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`;
       }
-    }
-    
-    // Add subject to notes
-    if (subject) {
-      lead.notes = lead.notes ? 
-        `Subject: ${subject}\n\n${lead.notes}` : 
-        `Subject: ${subject}`;
     }
     
     console.log("Extracted lead data:", lead);
