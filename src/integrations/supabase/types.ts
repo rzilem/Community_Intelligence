@@ -250,27 +250,66 @@ export type Database = {
       associations: {
         Row: {
           address: string | null
+          city: string | null
           contact_email: string | null
+          country: string | null
           created_at: string
+          description: string | null
+          fire_inspection_due: string | null
+          founded_date: string | null
           id: string
+          insurance_expiration: string | null
+          is_archived: boolean | null
           name: string
+          phone: string | null
+          property_type: string | null
+          state: string | null
+          total_units: number | null
           updated_at: string
+          website: string | null
+          zip: string | null
         }
         Insert: {
           address?: string | null
+          city?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          fire_inspection_due?: string | null
+          founded_date?: string | null
           id?: string
+          insurance_expiration?: string | null
+          is_archived?: boolean | null
           name: string
+          phone?: string | null
+          property_type?: string | null
+          state?: string | null
+          total_units?: number | null
           updated_at?: string
+          website?: string | null
+          zip?: string | null
         }
         Update: {
           address?: string | null
+          city?: string | null
           contact_email?: string | null
+          country?: string | null
           created_at?: string
+          description?: string | null
+          fire_inspection_due?: string | null
+          founded_date?: string | null
           id?: string
+          insurance_expiration?: string | null
+          is_archived?: boolean | null
           name?: string
+          phone?: string | null
+          property_type?: string | null
+          state?: string | null
+          total_units?: number | null
           updated_at?: string
+          website?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
