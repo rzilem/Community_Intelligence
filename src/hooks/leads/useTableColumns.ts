@@ -37,13 +37,13 @@ export const useTableColumns = <T extends Record<string, any>>(
       } catch (e) {
         console.error('Failed to parse saved visibility', e);
         // If parsing fails, reset to default visible columns
-        return columns
+        return defaultColumns
           .filter(col => col.defaultVisible !== false)
           .map(col => col.id);
       }
     }
     // Set default visible columns
-    return columns
+    return defaultColumns
       .filter(col => col.defaultVisible !== false)
       .map(col => col.id);
   });
@@ -79,6 +79,12 @@ export const useTableColumns = <T extends Record<string, any>>(
     setVisibleColumnIds(defaultColumns
       .filter(col => col.defaultVisible !== false)
       .map(col => col.id));
+      
+    console.log('Reset to defaults - Using column IDs:', 
+      defaultColumns
+        .filter(col => col.defaultVisible !== false)
+        .map(col => col.id)
+    );
   };
 
   return {

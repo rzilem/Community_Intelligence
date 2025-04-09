@@ -38,9 +38,6 @@ const LeadsTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const leadsPerPage = 10;
   
-  console.log("LeadsTable: visible column IDs:", visibleColumnIds);
-  console.log("LeadsTable: all columns:", columns);
-  
   // Get only the columns that should be displayed
   const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
   console.log("LeadsTable: filtered visible columns:", visibleColumns);
@@ -100,9 +97,6 @@ const LeadsTable = ({
             {currentLeads.map((lead) => (
               <TableRow key={lead.id}>
                 {visibleColumns.map((column) => {
-                  // Debug logging for each cell
-                  console.log(`Rendering cell for lead ${lead.id}, column ${column.id}, accessorKey ${column.accessorKey}`);
-                  
                   return (
                     <TableCell 
                       key={`${lead.id}-${column.id}`}
