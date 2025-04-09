@@ -1493,6 +1493,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_user_association_role: {
+        Args: { association_uuid: string }
+        Returns: string
+      }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean

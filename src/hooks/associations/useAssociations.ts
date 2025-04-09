@@ -51,13 +51,12 @@ export const useAssociations = () => {
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
-        // Invalidate and refetch
-        queryClient.invalidateQueries({ queryKey: ['associations'] });
-        
-        // Manually update the cache to immediately show the new association
-        queryClient.setQueryData(['associations'], (oldData: Association[] = []) => {
-          return [...oldData, newAssociation];
-        });
+        toast.success(`Association "${newAssociation.name}" created successfully`);
+        // Force refetch to ensure we get the latest data including the association_users relation
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['associations'] });
+          setRetryCount(prev => prev + 1);
+        }, 500);
       }
     },
     onError: (error: Error) => {

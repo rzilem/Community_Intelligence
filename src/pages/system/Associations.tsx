@@ -30,6 +30,11 @@ const Associations = () => {
     manuallyRefresh 
   } = useAssociations();
   
+  // Add debug logging for associations
+  useEffect(() => {
+    console.log('Current associations:', associations);
+  }, [associations]);
+  
   const handleSaveAssociation = async (formData: AssociationFormData) => {
     if (!formData.name) {
       toast.error('Association name is required');
@@ -37,6 +42,7 @@ const Associations = () => {
     }
     
     try {
+      console.log('Creating association with data:', formData);
       const associationData = {
         name: formData.name,
         address: formData.address,
@@ -49,13 +55,10 @@ const Associations = () => {
         total_units: formData.units > 0 ? formData.units : undefined
       };
       
-      createAssociation(associationData, {
-        onSuccess: () => {
-          setIsDialogOpen(false);
-          // Force immediate refresh
-          setTimeout(() => manuallyRefresh(), 500);
-        }
-      });
+      createAssociation(associationData);
+      setIsDialogOpen(false);
+      // Force immediate refresh
+      setTimeout(manuallyRefresh, 1000);
     } catch (error) {
       console.error('Error saving association:', error);
     }
