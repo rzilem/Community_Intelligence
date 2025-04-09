@@ -16,7 +16,7 @@ export const useProposalTemplates = () => {
     queryKey: ['proposalTemplates'],
     queryFn: async (): Promise<ProposalTemplate[]> => {
       const { data, error } = await supabase
-        .from('proposal_templates' as any)
+        .from('proposal_templates')
         .select('*')
         .order('name');
         
@@ -24,7 +24,7 @@ export const useProposalTemplates = () => {
         throw new Error(error.message);
       }
       
-      return data.map((template: any) => ({
+      return (data || []).map((template: any) => ({
         id: template.id,
         name: template.name,
         description: template.description || '',
@@ -40,7 +40,7 @@ export const useProposalTemplates = () => {
   const createMutation = useMutation({
     mutationFn: async (template: Partial<ProposalTemplate>) => {
       const { data, error } = await supabase
-        .from('proposal_templates' as any)
+        .from('proposal_templates')
         .insert({
           name: template.name || 'New Template',
           description: template.description,
@@ -52,7 +52,7 @@ export const useProposalTemplates = () => {
         .single();
         
       if (error) throw new Error(error.message);
-      return data;
+      return data as ProposalTemplate;
     },
     onSuccess: () => {
       toast.success('Template created successfully');
@@ -68,7 +68,7 @@ export const useProposalTemplates = () => {
       if (!template.id) throw new Error('Template ID is required');
       
       const { data, error } = await supabase
-        .from('proposal_templates' as any)
+        .from('proposal_templates')
         .update({
           name: template.name,
           description: template.description,
@@ -81,7 +81,7 @@ export const useProposalTemplates = () => {
         .single();
         
       if (error) throw new Error(error.message);
-      return data;
+      return data as ProposalTemplate;
     },
     onSuccess: () => {
       toast.success('Template updated successfully');
@@ -95,7 +95,7 @@ export const useProposalTemplates = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('proposal_templates' as any)
+        .from('proposal_templates')
         .delete()
         .eq('id', id);
         

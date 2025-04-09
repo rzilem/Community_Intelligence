@@ -19,13 +19,13 @@ export const useProposals = (leadId?: string) => {
     queryKey,
     queryFn: async (): Promise<Proposal[]> => {
       try {
-        let query = supabase.from('proposals' as any);
+        let query = supabase.from('proposals');
         
         if (leadId) {
-          query = query.eq('lead_id', leadId) as any;
+          query = query.eq('lead_id', leadId);
         }
         
-        const { data, error } = await (query as any)
+        const { data, error } = await query
           .select('*')
           .order('created_at', { ascending: false });
         
@@ -35,9 +35,9 @@ export const useProposals = (leadId?: string) => {
         
         // Fetch attachments for each proposal
         const proposalsWithAttachments = await Promise.all(
-          data.map(async (proposal: any) => {
+          (data || []).map(async (proposal: any) => {
             const { data: attachments, error: attachmentsError } = await supabase
-              .from('proposal_attachments' as any)
+              .from('proposal_attachments')
               .select('*')
               .eq('proposal_id', proposal.id);
               
@@ -48,11 +48,11 @@ export const useProposals = (leadId?: string) => {
             return {
               ...proposal,
               attachments: attachments || []
-            };
+            } as Proposal;
           })
         );
         
-        return proposalsWithAttachments as Proposal[];
+        return proposalsWithAttachments;
       } catch (err) {
         console.error("Error in useProposals:", err);
         throw err;
@@ -64,7 +64,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async (proposalData: Partial<Proposal>) => {
       // 1. Insert the proposal
       const { data: proposal, error } = await supabase
-        .from('proposals' as any)
+        .from('proposals')
         .insert({
           lead_id: proposalData.lead_id,
           template_id: proposalData.template_id,
@@ -90,7 +90,7 @@ export const useProposals = (leadId?: string) => {
         }));
         
         const { error: attachmentError } = await supabase
-          .from('proposal_attachments' as any)
+          .from('proposal_attachments')
           .insert(attachmentsToInsert);
           
         if (attachmentError) {
@@ -114,7 +114,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async ({ id, data }: { id: string, data: Partial<Proposal> }) => {
       // 1. Update the proposal
       const { data: updatedProposal, error } = await supabase
-        .from('proposals' as any)
+        .from('proposals')
         .update({
           lead_id: data.lead_id,
           template_id: data.template_id,
@@ -136,7 +136,7 @@ export const useProposals = (leadId?: string) => {
       if (data.attachments) {
         // First, delete existing attachments
         const { error: deleteError } = await supabase
-          .from('proposal_attachments' as any)
+          .from('proposal_attachments')
           .delete()
           .eq('proposal_id', id);
           
@@ -156,7 +156,7 @@ export const useProposals = (leadId?: string) => {
           }));
           
           const { error: attachmentError } = await supabase
-            .from('proposal_attachments' as any)
+            .from('proposal_attachments')
             .insert(attachmentsToInsert);
             
           if (attachmentError) {
@@ -180,7 +180,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async (id: string) => {
       // Delete proposal (attachments will be cascade deleted due to FK constraint)
       const { error } = await supabase
-        .from('proposals' as any)
+        .from('proposals')
         .delete()
         .eq('id', id);
         
@@ -228,7 +228,7 @@ export const useProposals = (leadId?: string) => {
     // 3. If proposalId is provided, create an attachment record
     if (proposalId) {
       const { data, error } = await supabase
-        .from('proposal_attachments' as any)
+        .from('proposal_attachments')
         .insert({
           proposal_id: proposalId,
           name: attachmentData.name,
@@ -242,7 +242,7 @@ export const useProposals = (leadId?: string) => {
         
       if (error) {
         console.error('Error creating attachment record:', error);
-      } else {
+      } else if (data) {
         // Use the DB-generated ID
         attachmentData.id = data.id;
       }
@@ -254,7 +254,7 @@ export const useProposals = (leadId?: string) => {
   const getProposal = useCallback(async (id: string): Promise<Proposal | null> => {
     try {
       const { data: proposal, error } = await supabase
-        .from('proposals' as any)
+        .from('proposals')
         .select('*')
         .eq('id', id)
         .single();
@@ -266,7 +266,7 @@ export const useProposals = (leadId?: string) => {
       
       // Get attachments
       const { data: attachments, error: attachmentsError } = await supabase
-        .from('proposal_attachments' as any)
+        .from('proposal_attachments')
         .select('*')
         .eq('proposal_id', id);
         

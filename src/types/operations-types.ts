@@ -36,7 +36,7 @@ export interface PrintSetting {
   preview_before_print: boolean;
 }
 
-// Add missing types for Operations Dashboard
+// Operations Dashboard Types
 export interface OperationsDashboardFilters {
   timeRange: string;
   portfolio: string;

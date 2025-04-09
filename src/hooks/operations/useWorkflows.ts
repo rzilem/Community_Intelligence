@@ -20,9 +20,9 @@ export const useWorkflows = () => {
     queryKey: ['workflowTemplates'],
     queryFn: async (): Promise<Workflow[]> => {
       try {
-        // Use type assertion to bypass TypeScript's strict checking
+        // Type assertion for Supabase queries
         const { data, error } = await supabase
-          .from('workflow_templates' as any)
+          .from('workflow_templates')
           .select('*')
           .eq('is_template', true);
           
@@ -31,7 +31,7 @@ export const useWorkflows = () => {
         }
         
         // Map the database results to our Workflow type
-        return data.map((template: any) => ({
+        return (data || []).map((template: any) => ({
           id: template.id,
           name: template.name || '',
           description: template.description || '',
@@ -58,9 +58,9 @@ export const useWorkflows = () => {
     queryKey: ['activeWorkflows'],
     queryFn: async (): Promise<Workflow[]> => {
       try {
-        // Use type assertion to bypass TypeScript's strict checking
+        // Type assertion for Supabase queries
         const { data, error } = await supabase
-          .from('workflows' as any)
+          .from('workflows')
           .select('*')
           .eq('status', 'active');
           
@@ -69,7 +69,7 @@ export const useWorkflows = () => {
         }
         
         // Map the database results to our Workflow type
-        return data.map((workflow: any) => ({
+        return (data || []).map((workflow: any) => ({
           id: workflow.id,
           name: workflow.name || '',
           description: workflow.description || '',
@@ -94,7 +94,7 @@ export const useWorkflows = () => {
       try {
         // Get the template
         const { data: template, error: templateError } = await supabase
-          .from('workflow_templates' as any)
+          .from('workflow_templates')
           .select('*')
           .eq('id', templateId)
           .single();
@@ -103,7 +103,7 @@ export const useWorkflows = () => {
         
         // Create a new workflow from the template
         const { data, error } = await supabase
-          .from('workflows' as any)
+          .from('workflows')
           .insert({
             name: template.name,
             description: template.description,
@@ -135,7 +135,7 @@ export const useWorkflows = () => {
   const createTemplateMutation = useMutation({
     mutationFn: async (workflowData: Partial<Workflow>) => {
       const { data, error } = await supabase
-        .from('workflow_templates' as any)
+        .from('workflow_templates')
         .insert({
           name: workflowData.name || 'New Template',
           description: workflowData.description || '',
