@@ -99,14 +99,19 @@ const LeadsTable = ({
           <TableBody>
             {currentLeads.map((lead) => (
               <TableRow key={lead.id}>
-                {visibleColumns.map((column) => (
-                  <TableCell 
-                    key={`${lead.id}-${column.id}`}
-                    className={column.id === 'name' ? 'font-medium' : ''}
-                  >
-                    {renderLeadTableCell(lead, column.id, columns)}
-                  </TableCell>
-                ))}
+                {visibleColumns.map((column) => {
+                  // Debug logging for each cell
+                  console.log(`Rendering cell for lead ${lead.id}, column ${column.id}, accessorKey ${column.accessorKey}`);
+                  
+                  return (
+                    <TableCell 
+                      key={`${lead.id}-${column.id}`}
+                      className={column.id === 'name' ? 'font-medium' : ''}
+                    >
+                      {renderLeadTableCell(lead, column.id, columns)}
+                    </TableCell>
+                  );
+                })}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button 
