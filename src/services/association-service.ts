@@ -97,12 +97,15 @@ export const createAssociation = async (associationData: {
     
     console.log('Assigning user as admin for association:', newAssociation.id);
     
-    // Use custom RPC to avoid potential RLS issues
-    const { error: roleError } = await supabase.rpc('assign_user_to_association', {
-      p_association_id: newAssociation.id,
-      p_user_id: user.id,
-      p_role: 'admin'
-    });
+    // Use type assertion to fix the TypeScript error
+    const { error: roleError } = await supabase.rpc(
+      'assign_user_to_association' as any, 
+      {
+        p_association_id: newAssociation.id,
+        p_user_id: user.id,
+        p_role: 'admin'
+      }
+    );
 
     if (roleError) {
       console.error('Error setting user as association admin:', roleError);
