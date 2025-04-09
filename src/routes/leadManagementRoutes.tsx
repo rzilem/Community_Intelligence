@@ -7,6 +7,8 @@ import Proposals from "@/pages/lead-management/Proposals";
 import EmailCampaigns from "@/pages/lead-management/EmailCampaigns";
 import Analytics from "@/pages/lead-management/Analytics";
 import OnboardingWizard from "@/pages/lead-management/OnboardingWizard";
+import Templates from "@/pages/lead-management/Templates";
+import LeadDetailPage from "@/components/leads/LeadDetailPage";
 
 // Lead Management Routes
 export const leadManagementRoutes: RouteObject[] = [
@@ -33,5 +35,17 @@ export const leadManagementRoutes: RouteObject[] = [
   {
     path: "/lead-management/onboarding",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><OnboardingWizard /></RequireAuth>
+  },
+  {
+    path: "/lead-management/onboarding/:projectId",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><OnboardingWizard /></RequireAuth>
+  },
+  {
+    path: "/lead-management/templates",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><Templates /></RequireAuth>
+  },
+  {
+    path: "/lead-management/leads/:leadId",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadDetailPage /></RequireAuth>
   }
 ];

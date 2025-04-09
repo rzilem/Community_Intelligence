@@ -1,25 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { BarChart, RefreshCw, Mail, Search, PlusCircle } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { User, Filter, Plus, RefreshCw, Settings, Download, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TabsContent, Tabs } from '@/components/ui/tabs';
-import { format } from 'date-fns';
-import LeadsDashboardTabNav from '@/components/leads/LeadsDashboardTabNav';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LeadsTable from '@/components/leads/LeadsTable';
 import { useLeads } from '@/hooks/leads/useLeads';
-import ColumnSelector from '@/components/table/ColumnSelector';
-import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const LeadsDashboard = () => {
-  const [activeTab, setActiveTab] = useState('active-leads');
-  const [searchTerm, setSearchTerm] = useState('');
   const { 
     leads, 
     isLoading, 
-    lastRefreshed, 
     refreshLeads, 
     createTestLead,
     deleteLead,
@@ -28,161 +27,273 @@ const LeadsDashboard = () => {
     visibleColumnIds,
     updateVisibleColumns,
     reorderColumns,
-    resetToDefaults
+    resetToDefaults,
+    lastRefreshed
   } = useLeads();
 
-  // Force a reset of columns when the component mounts to ensure we get default columns
-  useEffect(() => {
-    // Reset columns to default on first load
-    resetToDefaults();
-  }, []);
-
+  const [activeTab, setActiveTab] = useState('all');
+  
+  // Filter leads based on active tab
   const filteredLeads = leads.filter(lead => {
-    if (!searchTerm.trim()) return true;
-    
-    const searchTermLower = searchTerm.toLowerCase();
-    
-    // Basic fields to search
-    if (
-      (lead.name && lead.name.toLowerCase().includes(searchTermLower)) ||
-      (lead.email && lead.email.toLowerCase().includes(searchTermLower)) ||
-      (lead.company && lead.company.toLowerCase().includes(searchTermLower))
-    ) {
-      return true;
-    }
-    
-    // Additional fields to search
-    if (
-      (lead.first_name && lead.first_name.toLowerCase().includes(searchTermLower)) ||
-      (lead.last_name && lead.last_name.toLowerCase().includes(searchTermLower)) ||
-      (lead.association_name && lead.association_name.toLowerCase().includes(searchTermLower)) ||
-      (lead.street_address && lead.street_address.toLowerCase().includes(searchTermLower)) ||
-      (lead.city && lead.city.toLowerCase().includes(searchTermLower)) ||
-      (lead.state && lead.state.toLowerCase().includes(searchTermLower)) ||
-      (lead.zip && lead.zip.toLowerCase().includes(searchTermLower))
-    ) {
-      return true;
-    }
-    
-    return false;
+    if (activeTab === 'all') return true;
+    if (activeTab === 'new') return lead.status === 'new';
+    if (activeTab === 'contacted') return lead.status === 'contacted';
+    if (activeTab === 'qualified') return lead.status === 'qualified';
+    if (activeTab === 'proposal') return lead.status === 'proposal';
+    if (activeTab === 'converted') return lead.status === 'converted';
+    if (activeTab === 'lost') return lead.status === 'lost';
+    return true;
   });
-
-  const handleResetColumns = () => {
-    resetToDefaults();
-    toast.success("Columns reset to default");
+  
+  // Count leads by status
+  const leadCounts = {
+    all: leads.length,
+    new: leads.filter(lead => lead.status === 'new').length,
+    contacted: leads.filter(lead => lead.status === 'contacted').length,
+    qualified: leads.filter(lead => lead.status === 'qualified').length,
+    proposal: leads.filter(lead => lead.status === 'proposal').length,
+    converted: leads.filter(lead => lead.status === 'converted').length,
+    lost: leads.filter(lead => lead.status === 'lost').length
   };
 
   return (
     <PageTemplate 
-      title="Leads Dashboard" 
-      icon={<BarChart className="h-8 w-8" />}
-      description="Overview of lead generation and conversion metrics."
+      title="Lead Management" 
+      icon={<User className="h-8 w-8" />}
+      description="Track and manage potential association clients."
     >
       <div className="space-y-6">
-        {/* Header with controls */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Last refreshed: {format(lastRefreshed, 'MM/dd/yyyy h:mm:ss a')}
-            </p>
-          </div>
-          <div className="flex gap-2">
+        {/* Quick stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">New Leads</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leadCounts.new}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Qualified Leads</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leadCounts.qualified}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Proposals Sent</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leadCounts.proposal}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Converted</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leadCounts.converted}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Actions bar */}
+        <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-wrap gap-2">
             <Button 
-              variant="outline" 
+              variant="outline"
+              size="sm"
+              onClick={refreshLeads}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+            
+            <Button
+              size="sm"
+              variant="outline"
               onClick={createTestLead}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Test Lead
+            </Button>
+            
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+            
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex items-center gap-2"
             >
               <Mail className="h-4 w-4" />
-              Create Test Email Lead
+              Email Campaign
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={refreshLeads}
-              className="flex items-center gap-1"
-              disabled={isLoading}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+          </div>
+
+          <div className="flex gap-2 self-end sm:self-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {columns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    checked={visibleColumnIds.includes(column.id)}
+                    onCheckedChange={(checked) => {
+                      const updatedColumns = checked
+                        ? [...visibleColumnIds, column.id]
+                        : visibleColumnIds.filter((id) => id !== column.id);
+                      updateVisibleColumns(updatedColumns);
+                    }}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
+                ))}
+                <DropdownMenuCheckboxItem
+                  className="border-t mt-2"
+                  onCheckedChange={() => resetToDefaults()}
+                >
+                  Reset to defaults
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button size="sm" variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              View Options
             </Button>
           </div>
         </div>
 
+        {/* Tabs and Table */}
         <Card>
-          <CardContent className="p-6">
-            <Tabs defaultValue="active-leads" value={activeTab}>
-              {/* Tab Navigation */}
-              <LeadsDashboardTabNav 
-                activeTab={activeTab} 
-                onChange={setActiveTab} 
-              />
-
-              {/* Search & Actions */}
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center my-4 gap-3">
-                <div className="flex flex-wrap gap-3 items-center">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search leads..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 w-64"
-                    />
-                  </div>
-                  
-                  <ColumnSelector 
-                    columns={columns.map(col => ({ id: col.id, label: col.label }))}
-                    selectedColumns={visibleColumnIds}
-                    onChange={updateVisibleColumns}
-                    onReorder={reorderColumns}
-                    className="flex-shrink-0"
-                  />
-                  
-                  <Button 
-                    variant="outline" 
-                    onClick={handleResetColumns}
-                    size="sm"
-                    className="flex-shrink-0"
-                  >
-                    Reset Columns
-                  </Button>
-                </div>
-                <Button className="flex-shrink-0">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Create Proposal
-                </Button>
-              </div>
-
-              {/* Tab Contents */}
-              <TabsContent value="active-leads">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+            <div className="flex items-center justify-between px-4 pt-4">
+              <TabsList>
+                <TabsTrigger value="all" className="flex gap-2 items-center">
+                  All
+                  <Badge variant="outline">{leadCounts.all}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="new" className="flex gap-2 items-center">
+                  New
+                  <Badge variant="outline">{leadCounts.new}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="contacted" className="flex gap-2 items-center">
+                  Contacted
+                  <Badge variant="outline">{leadCounts.contacted}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="qualified" className="flex gap-2 items-center">
+                  Qualified
+                  <Badge variant="outline">{leadCounts.qualified}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="proposal" className="flex gap-2 items-center">
+                  Proposal
+                  <Badge variant="outline">{leadCounts.proposal}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="converted" className="flex gap-2 items-center">
+                  Converted
+                  <Badge variant="outline">{leadCounts.converted}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="lost" className="flex gap-2 items-center">
+                  Lost
+                  <Badge variant="outline">{leadCounts.lost}</Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <CardContent className="pt-4 pb-0">
+              <TabsContent value="all">
                 <LeadsTable 
                   leads={filteredLeads} 
                   isLoading={isLoading}
-                  columns={columns}
                   visibleColumnIds={visibleColumnIds}
+                  columns={columns}
                   onDeleteLead={deleteLead}
                   onUpdateLeadStatus={updateLeadStatus}
                 />
               </TabsContent>
-              
-              <TabsContent value="proposal-templates">
-                <div className="min-h-[300px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Proposal templates will appear here</p>
-                </div>
+              <TabsContent value="new">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
               </TabsContent>
-              
-              <TabsContent value="follow-up-emails">
-                <div className="min-h-[300px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Follow-up email templates will appear here</p>
-                </div>
+              <TabsContent value="contacted">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
               </TabsContent>
-              
-              <TabsContent value="analytics">
-                <div className="min-h-[300px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Lead analytics will appear here</p>
-                </div>
+              <TabsContent value="qualified">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
               </TabsContent>
-            </Tabs>
-          </CardContent>
+              <TabsContent value="proposal">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="converted">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="lost">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground py-2 px-4 border-t">
+              Last updated: {lastRefreshed.toLocaleTimeString()}
+            </CardFooter>
+          </Tabs>
         </Card>
       </div>
     </PageTemplate>

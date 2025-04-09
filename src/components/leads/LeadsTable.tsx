@@ -11,6 +11,7 @@ import {
 import { Lead } from '@/types/lead-types';
 import { ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link, useNavigate } from 'react-router-dom';
 import LeadDetailDialog from './LeadDetailDialog';
 import LeadActionsMenu from './LeadActionsMenu';
 import LeadTablePagination from './LeadTablePagination';
@@ -36,6 +37,7 @@ const LeadsTable = ({
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
   const leadsPerPage = 10;
   
   // Get only the columns that should be displayed
@@ -65,8 +67,8 @@ const LeadsTable = ({
   }
 
   const handleViewLead = (lead: Lead) => {
-    setSelectedLead(lead);
-    setDetailDialogOpen(true);
+    // Navigate to the lead detail page instead of showing a dialog
+    navigate(`/lead-management/leads/${lead.id}`);
   };
   
   const handleDeleteLead = async (lead: Lead) => {
@@ -134,12 +136,6 @@ const LeadsTable = ({
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
-      />
-
-      <LeadDetailDialog 
-        lead={selectedLead}
-        open={detailDialogOpen}
-        onOpenChange={setDetailDialogOpen}
       />
     </>
   );
