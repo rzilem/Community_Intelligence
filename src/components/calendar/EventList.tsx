@@ -2,11 +2,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, MapPin } from 'lucide-react';
 
 interface Event {
   id: string;
   title: string;
+  description?: string;
+  location?: string;
   startTime: string;
   endTime: string;
   type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
@@ -40,7 +42,7 @@ export const EventList: React.FC<EventListProps> = ({
             <div
               key={event.id}
               className={cn(
-                "p-3 rounded-md border flex justify-between items-center group relative",
+                "p-3 rounded-md border flex flex-col justify-between group relative",
                 "border-l-4",
                 {
                   "border-l-hoa-blue-500": event.color === '#3b6aff',
@@ -59,28 +61,44 @@ export const EventList: React.FC<EventListProps> = ({
                   : undefined
               }}
             >
-              <div>
-                <h3 className="font-medium">{event.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {event.startTime} - {event.endTime}
-                </p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-medium">{event.title}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {event.startTime} - {event.endTime}
+                  </p>
+                  {event.description && (
+                    <p className="text-sm mt-1 text-muted-foreground line-clamp-2">
+                      {event.description}
+                    </p>
+                  )}
+                  {event.location && (
+                    <p className="text-sm mt-1 flex items-center text-muted-foreground">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      {event.location}
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full",
+                    {
+                      "bg-hoa-blue-100 text-hoa-blue-800": event.type === 'amenity_booking',
+                      "bg-hoa-teal-100 text-hoa-teal-800": event.type === 'hoa_meeting',
+                      "bg-yellow-100 text-yellow-800": event.type === 'maintenance',
+                      "bg-purple-100 text-purple-800": event.type === 'community_event'
+                    }
+                  )}>
+                    {event.type === 'amenity_booking' && "Amenity Booking"}
+                    {event.type === 'hoa_meeting' && "HOA Meeting"}
+                    {event.type === 'maintenance' && "Maintenance"}
+                    {event.type === 'community_event' && "Community Event"}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={cn(
-                  "text-xs px-2 py-1 rounded-full",
-                  {
-                    "bg-hoa-blue-100 text-hoa-blue-800": event.type === 'amenity_booking',
-                    "bg-hoa-teal-100 text-hoa-teal-800": event.type === 'hoa_meeting',
-                    "bg-yellow-100 text-yellow-800": event.type === 'maintenance',
-                    "bg-purple-100 text-purple-800": event.type === 'community_event'
-                  }
-                )}>
-                  {event.type === 'amenity_booking' && "Amenity Booking"}
-                  {event.type === 'hoa_meeting' && "HOA Meeting"}
-                  {event.type === 'maintenance' && "Maintenance"}
-                  {event.type === 'community_event' && "Community Event"}
-                </span>
-                {onDeleteEvent && (
+              
+              {onDeleteEvent && (
+                <div className="flex justify-end mt-2">
                   <Button 
                     variant="ghost" 
                     size="icon"
@@ -93,8 +111,8 @@ export const EventList: React.FC<EventListProps> = ({
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

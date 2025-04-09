@@ -3,6 +3,7 @@ import React from 'react';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -22,6 +23,8 @@ interface EventFormProps {
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
     color: string;
+    description?: string;
+    location?: string;
   };
   setNewEvent: React.Dispatch<React.SetStateAction<{
     title: string;
@@ -31,6 +34,8 @@ interface EventFormProps {
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
     color: string;
+    description?: string;
+    location?: string;
   }>>;
   amenityOptions: Amenity[];
   handleCreateEvent: () => boolean;
@@ -91,6 +96,30 @@ export const EventForm: React.FC<EventFormProps> = ({
             value={newEvent.title}
             onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
             className="col-span-3"
+          />
+        </div>
+        <div className="grid grid-cols-4 items-start gap-4">
+          <Label htmlFor="description" className="text-right pt-2">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            value={newEvent.description || ''}
+            onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+            className="col-span-3 min-h-24"
+            placeholder="Event description (optional)"
+          />
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="location" className="text-right">
+            Location
+          </Label>
+          <Input
+            id="location"
+            value={newEvent.location || ''}
+            onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
+            className="col-span-3"
+            placeholder="Location (optional)"
           />
         </div>
         <div className="grid grid-cols-4 items-center gap-4">

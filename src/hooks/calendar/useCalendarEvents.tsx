@@ -12,6 +12,8 @@ interface Event {
   date: Date;
   startTime: string;
   endTime: string;
+  description?: string;
+  location?: string;
   type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
   amenityId?: string;
   color?: string;
@@ -29,6 +31,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     date: Date;
     startTime: string;
     endTime: string;
+    description?: string;
+    location?: string;
     type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
     amenityId: string;
     color: string;
@@ -37,6 +41,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     date: new Date(),
     startTime: '09:00',
     endTime: '10:00',
+    description: '',
+    location: '',
     type: 'amenity_booking',
     amenityId: '1',
     color: '#3b6aff' // Default blue color
@@ -70,6 +76,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
       const formattedEvents: Event[] = calendarEvents.map(event => ({
         id: event.id,
         title: event.title,
+        description: event.description,
+        location: event.location,
         date: new Date(event.start_time),
         startTime: format(new Date(event.start_time), 'HH:mm'),
         endTime: format(new Date(event.end_time), 'HH:mm'),
@@ -128,6 +136,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
     const eventToSave = {
       hoa_id: currentAssociation.id,
       title: newEvent.title,
+      description: newEvent.description || null,
+      location: newEvent.location || null,
       event_type: newEvent.type,
       start_time: startDate.toISOString(),
       end_time: endDate.toISOString(),
@@ -150,6 +160,8 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
           date: new Date(),
           startTime: '09:00',
           endTime: '10:00',
+          description: '',
+          location: '',
           type: 'amenity_booking',
           amenityId: '1',
           color: '#3b6aff' // Reset to default blue color
