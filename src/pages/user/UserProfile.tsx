@@ -15,21 +15,16 @@ const UserProfile = () => {
   const { user, profile, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("info");
+  const [imageVersion, setImageVersion] = useState(Date.now()); // Add a version to force re-render
 
-  const handleProfileImageUpdated = (newUrl: string) => {
+  const handleProfileImageUpdated = async (newUrl: string) => {
     toast.success('Profile image updated successfully');
-    refreshProfile();
+    await refreshProfile();
+    setImageVersion(Date.now()); // Update the version to force a re-render
   };
 
-  const handleProfileUpdated = () => {
-    refreshProfile();
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    // Validation is handled within the ProfileImageUpload component
+  const handleProfileUpdated = async () => {
+    await refreshProfile();
   };
 
   return (
@@ -57,7 +52,7 @@ const UserProfile = () => {
                     <div className="flex flex-col items-center gap-3">
                       <ProfileImageUpload
                         userId={user?.id || ''}
-                        imageUrl={profile?.profile_image_url || ''}
+                        imageUrl={`${profile?.profile_image_url}?v=${imageVersion}`} 
                         firstName={profile?.first_name || ''}
                         lastName={profile?.last_name || ''}
                         onImageUpdated={handleProfileImageUpdated}

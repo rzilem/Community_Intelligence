@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
-import { supabase } from '@/integrations/supabase/client';
+import { updateProfileImage } from '@/services/user-service';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileImageUploadProps {
   userId: string;
@@ -24,6 +25,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   size = 'md'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const { refreshProfile } = useAuth();
   
   // Determine avatar size based on prop
   const avatarSize = {
@@ -63,33 +65,20 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     try {
       setIsUploading(true);
       
-      // Create file path using user ID to enforce ownership
-      const filePath = `${userId}/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      // Use the service function to handle the upload
+      const result = await updateProfileImage(userId, file);
       
-      // Upload image to Supabase storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile_images')
-        .upload(filePath, file);
+      if (result.error) {
+        throw new Error(result.error);
+      }
       
-      if (uploadError) throw uploadError;
-      
-      // Get the public URL of the uploaded image
-      const { data: publicUrlData } = supabase.storage
-        .from('profile_images')
-        .getPublicUrl(uploadData.path);
-      
-      const imageUrl = publicUrlData.publicUrl;
-      
-      // Update the user's profile with the new image URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_image_url: imageUrl })
-        .eq('id', userId);
-      
-      if (updateError) throw updateError;
-      
-      toast.success('Profile image uploaded successfully');
-      onImageUpdated(imageUrl);
+      if (result.url) {
+        toast.success('Profile image uploaded successfully');
+        onImageUpdated(result.url);
+        
+        // Refresh the profile in the auth context to update the image across the app
+        await refreshProfile();
+      }
       
     } catch (error: any) {
       toast.error(`Error uploading image: ${error.message}`);
@@ -101,7 +90,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   return (
     <div className="relative inline-block group">
       <Avatar className={`${avatarSize} relative ${isUploading ? 'opacity-50' : ''}`}>
-        <AvatarImage src={imageUrl || undefined} alt="Profile" />
+        <AvatarImage src={imageUrl || undefined} alt="Profile" key={imageUrl || 'profile'} />
         <AvatarFallback>{getUserInitials()}</AvatarFallback>
         
         {isUploading && (

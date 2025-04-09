@@ -15,7 +15,6 @@ const profileFormSchema = z.object({
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address').optional().or(z.literal('')),
   phone_number: z.string().optional(),
-  job_title: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -33,7 +32,6 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileUpd
       last_name: profile?.last_name || '',
       email: profile?.email || '',
       phone_number: profile?.phone_number || '',
-      job_title: profile?.job_title || '',
     },
   });
   
@@ -115,20 +113,6 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileUpd
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
                 <Input type="tel" placeholder="Enter your phone number" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="job_title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Job Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your job title" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
