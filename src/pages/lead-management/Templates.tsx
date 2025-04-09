@@ -4,6 +4,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { Briefcase } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import OnboardingTemplates from '@/components/onboarding/OnboardingTemplates';
+import ProposalTemplateManager from '@/components/proposals/ProposalTemplateManager';
 
 const Templates = () => {
   return (
@@ -24,9 +25,7 @@ const Templates = () => {
         </TabsContent>
         
         <TabsContent value="proposals">
-          <div className="border rounded-md p-20 flex items-center justify-center">
-            <p className="text-muted-foreground">Proposal templates management coming soon...</p>
-          </div>
+          <ProposalTemplateManager />
         </TabsContent>
         
         <TabsContent value="emails">

@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import ProposalList from '@/components/proposals/ProposalList';
 import ProposalForm from '@/components/proposals/ProposalForm';
 import ProposalViewer from '@/components/proposals/ProposalViewer';
@@ -64,9 +65,18 @@ const Proposals = () => {
       icon={<FileText className="h-8 w-8" />}
       description="Create and manage business proposals for potential clients."
       actions={
-        <Button onClick={handleCreateProposal}>
-          <Plus className="mr-2 h-4 w-4" /> Create Proposal
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline"
+            as={Link}
+            to="/lead-management/templates"
+          >
+            <Settings className="mr-2 h-4 w-4" /> Manage Templates
+          </Button>
+          <Button onClick={handleCreateProposal}>
+            <Plus className="mr-2 h-4 w-4" /> Create Proposal
+          </Button>
+        </div>
       }
     >
       <div className="space-y-6">
