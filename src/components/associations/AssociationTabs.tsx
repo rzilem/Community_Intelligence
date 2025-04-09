@@ -1,8 +1,9 @@
 
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AssociationTable from '@/components/associations/AssociationTable';
-import { Alert, AlertCircle, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Association } from '@/types/association-types';
 
 interface AssociationTabsProps {
