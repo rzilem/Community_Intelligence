@@ -2,7 +2,6 @@
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarView } from '@/components/calendar/CalendarView';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
@@ -13,6 +12,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
+import CalendarTab from '@/components/dashboard/CalendarTab';
 
 const Dashboard = () => {
   const { currentAssociation, user } = useAuth();
@@ -46,7 +46,7 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="calendar" className="space-y-4">
-            <CalendarView />
+            <CalendarTab />
           </TabsContent>
           
           <TabsContent value="activity">
