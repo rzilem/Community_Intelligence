@@ -50,26 +50,32 @@ export async function processEmail(emailData: any) {
     const content = parsedText || rawTextContent || subject;
     console.log("Extracted content:", content);
     
-    // Extract contact information (name, email, phone)
-    const contactInfo = extractContactInfo(content, from);
-    console.log("Contact info extracted:", contactInfo);
-    
-    // Set name with highest priority from extracted info
-    if (contactInfo.name) {
-      lead.name = contactInfo.name;
-      // If we have a full name, try to parse first and last name
-      const nameParts = contactInfo.name.split(' ');
-      if (nameParts.length > 0) lead.first_name = nameParts[0];
-      if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
-    } else if (from) {
-      // Try to extract from 'from' field directly as fallback
+    // HIGHER PRIORITY: Try to extract name from 'from' field first
+    if (from) {
       const nameFromHeader = extractNameFromHeader(from);
       if (nameFromHeader) {
         lead.name = nameFromHeader;
+        console.log("Name extracted from From header:", nameFromHeader);
+        
+        // If we have a full name, try to parse first and last name
         const nameParts = nameFromHeader.split(' ');
         if (nameParts.length > 0) lead.first_name = nameParts[0];
         if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
       }
+    }
+    
+    // Extract contact information from content (name, email, phone)
+    const contactInfo = extractContactInfo(content, from);
+    console.log("Contact info extracted:", contactInfo);
+    
+    // LOWER PRIORITY: If no name found in header, try using the one from content
+    if (!lead.name && contactInfo.name) {
+      lead.name = contactInfo.name;
+      
+      // If we have a full name, try to parse first and last name
+      const nameParts = contactInfo.name.split(' ');
+      if (nameParts.length > 0) lead.first_name = nameParts[0];
+      if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
     }
     
     // Set other contact info
@@ -123,10 +129,7 @@ export async function processEmail(emailData: any) {
     
     // Fallback for name if not found
     if (!lead.name) {
-      if (from) {
-        lead.name = extractNameFromHeader(from);
-      }
-      if (!lead.name && lead.email) {
+      if (lead.email) {
         // Use email username as name fallback
         const emailUsername = lead.email.split('@')[0];
         lead.name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);

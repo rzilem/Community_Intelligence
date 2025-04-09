@@ -27,6 +27,11 @@ export function extractEmailFromHeader(header: string): string {
 export function extractNameFromHeader(header: string): string {
   if (!header) return "";
   
+  // Enhanced pattern to handle "From:" prefix that might be part of the header
+  if (header.toLowerCase().startsWith("from:")) {
+    header = header.substring(5).trim();
+  }
+  
   // Try to extract name from "Name <email>" format
   const nameMatch = header.match(/^([^<]+)</);
   if (nameMatch && nameMatch[1]) {
@@ -37,6 +42,11 @@ export function extractNameFromHeader(header: string): string {
   const parenthesesMatch = header.match(/\(([^)]+)\)/);
   if (parenthesesMatch && parenthesesMatch[1]) {
     return parenthesesMatch[1].trim();
+  }
+  
+  // If no clear name pattern is found, check if it's just a name without email
+  if (!header.includes('@') && !header.includes('<') && !header.includes('>')) {
+    return header.trim();
   }
   
   // If we really can't find a name, return empty string
