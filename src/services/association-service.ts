@@ -9,7 +9,7 @@ import { Association } from '@/types/association-types';
 export const fetchAllAssociations = async () => {
   console.log('Fetching all associations...');
   try {
-    // Use the security definer function to avoid RLS recursion
+    // Use a direct query instead of an RPC function to avoid RLS issues
     const { data, error } = await supabase
       .from('associations')
       .select('*')
@@ -70,52 +70,40 @@ export const createAssociation = async (associationData: {
   try {
     console.log('Creating association with data:', associationData);
     
-    // Use the security definer function that handles both association creation
-    // and user assignment in one atomic operation
-    const { data: associationId, error } = await supabase.rpc(
-      'create_association_with_admin',
-      {
-        p_name: associationData.name,
-        p_address: associationData.address,
-        p_contact_email: associationData.contact_email,
-        p_city: associationData.city,
-        p_state: associationData.state,
-        p_zip: associationData.zip,
-        p_phone: associationData.phone,
-        p_property_type: associationData.property_type,
-        p_total_units: associationData.total_units
-      }
-    );
-
-    if (error) {
-      console.error('Error creating association:', error);
-      throw error;
-    }
-
-    if (!associationId) {
-      throw new Error('Association was created but no ID was returned');
-    }
-
-    console.log('Association created successfully with ID:', associationId);
-    
-    // Fetch the newly created association to return complete data
-    const { data: newAssociation, error: fetchError } = await supabase
+    // First try to create the association normally
+    const { data: newAssociation, error: createError } = await supabase
       .from('associations')
-      .select('*')
-      .eq('id', associationId)
-      .single();
-      
-    if (fetchError) {
-      console.error('Error fetching new association:', fetchError);
-      // We don't throw here since the association was created successfully
-      toast.warning('Association created but failed to retrieve details');
-      
-      // Return partial data with at least the ID and name
-      return { 
-        id: associationId,
+      .insert([{
         name: associationData.name,
-        ...associationData 
-      };
+        address: associationData.address,
+        contact_email: associationData.contact_email,
+        city: associationData.city,
+        state: associationData.state,
+        zip: associationData.zip,
+        phone: associationData.phone,
+        property_type: associationData.property_type,
+        total_units: associationData.total_units
+      }])
+      .select()
+      .single();
+    
+    if (createError) {
+      console.error('Error creating association:', createError);
+      throw createError;
+    }
+
+    // Now that we have the association, assign the current user as admin
+    const { error: assignError } = await supabase
+      .from('association_users')
+      .insert([{
+        association_id: newAssociation.id,
+        role: 'admin'
+      }]);
+    
+    if (assignError) {
+      console.error('Association created but failed to assign admin role:', assignError);
+      // Don't throw here, we still created the association
+      toast.warning('Association created but failed to assign admin role');
     }
 
     toast.success(`Association "${newAssociation.name}" created successfully`);
