@@ -78,15 +78,25 @@ export async function processEmail(emailData: any) {
     
     // Final fallback for name if not found
     if (!lead.name || lead.name.length < 2) {
-      if (lead.email && lead.email !== "no-email@example.com") {
-        // Use email username as name fallback
-        const emailUsername = lead.email.split('@')[0];
-        lead.name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
-        console.log("Using email username as name fallback:", lead.name);
+      if (lead.association_name) {
+        // Try using association name contact person
+        lead.name = `Contact for ${lead.association_name}`;
+        console.log("Using association name as fallback for contact name");
+      } else if (lead.email && lead.email !== "no-email@example.com") {
+        // Create a generic name instead of using email username
+        lead.name = "Lead Contact";
+        console.log("Using generic name as fallback");
       } else {
         lead.name = "Unknown Contact";
         console.log("Using 'Unknown Contact' as name fallback");
       }
+    }
+    
+    // Make sure we have first_name and last_name fields
+    if (!lead.first_name && !lead.last_name && lead.name && lead.name !== "Unknown Contact") {
+      const nameParts = lead.name.split(' ');
+      if (nameParts.length > 0) lead.first_name = nameParts[0];
+      if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
     }
     
     // Add subject to notes
@@ -95,6 +105,15 @@ export async function processEmail(emailData: any) {
       
       if (content) {
         lead.notes += `\n\nContent: ${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`;
+      }
+    }
+    
+    // Ensure we extract city from the address if not set
+    if (!lead.city && lead.street_address) {
+      // Use the location-extractors to get just the city
+      const cityMatch = lead.street_address.match(/(?:,\s*|\s+)([A-Za-z\s.]+?)(?:,\s*|\s+)(?:[A-Z]{2}|[A-Za-z\s]+)\s+\d{5}/);
+      if (cityMatch && cityMatch[1]) {
+        lead.city = cityMatch[1].trim();
       }
     }
     

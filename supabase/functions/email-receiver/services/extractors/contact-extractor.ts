@@ -96,5 +96,17 @@ export function extractContactInformation(content: string, from: string) {
   
   if (companyInfo.company) lead.current_management = companyInfo.company;
   
+  // Ensure we don't use email username as real name
+  if (lead.name && lead.email) {
+    const emailUsername = lead.email.split('@')[0];
+    // Check if name is just the email username
+    if (lead.name.toLowerCase() === emailUsername.toLowerCase()) {
+      // Clear the name since it's just the email username
+      lead.name = "";
+      lead.first_name = "";
+      lead.last_name = "";
+    }
+  }
+  
   return lead;
 }

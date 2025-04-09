@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Lead } from '@/types/lead-types';
 import { formatDistanceToNow } from 'date-fns';
@@ -12,6 +11,12 @@ const formatName = (name: string): string => {
   
   // Remove "of Association" if present
   const cleanName = name.replace(/of\s+Association/i, '').trim();
+  
+  // Don't use email usernames as names
+  if (cleanName.includes('@') || /^[a-zA-Z0-9._%+-]+$/.test(cleanName)) {
+    // This looks like an email username, not a real name
+    return '';
+  }
   
   // Split into words and capitalize each word
   return cleanName
@@ -36,7 +41,7 @@ const extractCity = (address: string | undefined): string => {
   const commonTexasCities = [
     'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi',
     'Plano', 'Laredo', 'Lubbock', 'Garland', 'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville',
-    'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock'
+    'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock', 'DrDripping Springs'
   ];
   
   for (const city of commonTexasCities) {
@@ -71,11 +76,30 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
   
   // Special formatting for specific columns
   if (columnId === 'name' && value) {
+    // Try to use first_name and last_name if available
+    if (lead.first_name || lead.last_name) {
+      const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
+      if (fullName.trim()) {
+        return fullName;
+      }
+    }
     return formatName(value as string);
   }
   
-  if (columnId === 'city' && lead.street_address) {
-    return extractCity(lead.street_address);
+  if (columnId === 'city') {
+    // Only show the city name, not the full address
+    if (lead.city) {
+      // If we already have a city field, use it directly
+      return lead.city;
+    }
+    
+    // Otherwise extract from street_address
+    if (lead.street_address) {
+      const city = extractCity(lead.street_address);
+      // Clean the city name (remove street components)
+      return city.replace(/\d+|Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Circle|Cir|Boulevard|Blvd|Highway|Hwy|Way|Place|Pl|Terrace|Ter|Parkway|Pkwy|Alley|Aly|Creek|Loop|Prairie|Clover/gi, '').replace(/\s+/g, ' ').trim();
+    }
+    return '';
   }
   
   if (columnId === 'street_address' && value) {

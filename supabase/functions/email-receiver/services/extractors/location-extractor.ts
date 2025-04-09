@@ -17,5 +17,14 @@ export function extractLocationInformation(content: string) {
   if (locationInfo.state) lead.state = locationInfo.state;
   if (locationInfo.zip) lead.zip = locationInfo.zip;
   
+  // Clean up city data to make sure it's just the city name
+  if (lead.city) {
+    // Remove any street numbers or common street name components
+    lead.city = lead.city
+      .replace(/\d+|Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Circle|Cir|Boulevard|Blvd|Highway|Hwy|Way|Place|Pl|Terrace|Ter|Parkway|Pkwy|Alley|Aly|Creek|Loop/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  
   return lead;
 }
