@@ -2,16 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Network } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 import { useAssociations } from '@/hooks/associations';
 import AssociationTable from '@/components/associations/AssociationTable';
 import AssociationStats from '@/components/associations/AssociationStats';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Association } from '@/types/association-types';
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +23,10 @@ const Associations = () => {
     manuallyRefresh 
   } = useAssociations();
   
-  const filteredAssociations = associations.filter(
+  // Ensure associations is treated as an array
+  const associationsArray = Array.isArray(associations) ? associations : [];
+  
+  const filteredAssociations = associationsArray.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -113,7 +116,7 @@ const Associations = () => {
           </CardContent>
         </Card>
         
-        <AssociationStats associations={associations} isLoading={isLoading} />
+        <AssociationStats associations={associationsArray} isLoading={isLoading} />
       </div>
     </AppLayout>
   );

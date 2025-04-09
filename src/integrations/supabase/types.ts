@@ -1489,6 +1489,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_user_to_association: {
+        Args: { p_association_id: string; p_user_id: string; p_role?: string }
+        Returns: undefined
+      }
       get_next_tracking_number: {
         Args: Record<PropertyKey, never>
         Returns: number
@@ -1496,6 +1500,30 @@ export type Database = {
       get_user_association_role: {
         Args: { association_uuid: string }
         Returns: string
+      }
+      get_user_associations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string | null
+          city: string | null
+          contact_email: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          fire_inspection_due: string | null
+          founded_date: string | null
+          id: string
+          insurance_expiration: string | null
+          is_archived: boolean | null
+          name: string
+          phone: string | null
+          property_type: string | null
+          state: string | null
+          total_units: number | null
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }[]
       }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }

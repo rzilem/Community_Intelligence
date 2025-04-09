@@ -31,15 +31,22 @@ export const useAssociations = () => {
           // If data is empty, try to check if we can retrieve data through RPC as a fallback
           try {
             console.log('Trying fallback method to fetch associations...');
-            const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_associations');
+            // Type assertion to handle RPC call
+            const { data: rpcData, error: rpcError } = await supabase.rpc(
+              'get_user_associations' as any
+            );
             
             if (rpcError) {
               console.error('Fallback RPC error:', rpcError);
               return data; // Return original empty array if RPC also fails
             }
             
-            console.log('Fallback method successful, retrieved:', rpcData?.length || 0, 'associations');
-            return rpcData || [];
+            if (Array.isArray(rpcData)) {
+              console.log('Fallback method successful, retrieved:', rpcData.length || 0, 'associations');
+              return rpcData || [];
+            }
+            
+            return data; // Return original data if RPC result is not an array
           } catch (rpcEx) {
             console.error('Exception in fallback method:', rpcEx);
             return data; // Return original empty array on any exception
@@ -57,7 +64,7 @@ export const useAssociations = () => {
   
   // Auto-retry if we get back an empty list but there should be data
   useEffect(() => {
-    if (!isLoading && associations.length === 0 && retryCount < 3 && !error) {
+    if (!isLoading && Array.isArray(associations) && associations.length === 0 && retryCount < 3 && !error) {
       const timer = setTimeout(() => {
         console.log(`Auto-retrying association fetch (attempt ${retryCount + 1})...`);
         setRetryCount(prev => prev + 1);

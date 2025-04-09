@@ -16,6 +16,7 @@ import AssociationStats from '@/components/associations/AssociationStats';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
+import { Association } from '@/types/association-types';
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,7 +87,10 @@ const Associations = () => {
     }
   };
   
-  const filteredAssociations = associations.filter(
+  // Ensure associations is treated as an array
+  const associationsArray = Array.isArray(associations) ? associations : [];
+  
+  const filteredAssociations = associationsArray.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -193,7 +197,7 @@ const Associations = () => {
         </CardContent>
       </Card>
       
-      <AssociationStats associations={associations} isLoading={isLoading} />
+      <AssociationStats associations={associationsArray} isLoading={isLoading} />
     </PageTemplate>
   );
 };
