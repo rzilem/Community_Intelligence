@@ -6,12 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { EnhancedAIQueryDemo } from './EnhancedAIQueryDemo';
 
 interface AiQueryInputProps {
   onQuery?: (query: string) => Promise<void>;
   placeholder?: string;
   className?: string;
   compact?: boolean;
+  useDemo?: boolean;
 }
 
 export const AiQueryInput: React.FC<AiQueryInputProps> = ({
@@ -19,7 +21,21 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
   placeholder = "Ask Community Intelligence anything...",
   className,
   compact = false,
+  useDemo = false,
 }) => {
+  // If demo mode is requested, use the enhanced demo component
+  if (useDemo) {
+    return (
+      <EnhancedAIQueryDemo
+        onQuery={onQuery}
+        placeholder={placeholder}
+        className={className}
+        compact={compact}
+      />
+    );
+  }
+
+  // Original implementation for non-demo use
   const [query, setQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 

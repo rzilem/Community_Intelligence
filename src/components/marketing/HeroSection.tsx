@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { AiQueryInput } from '@/components/ai/AiQueryInput';
+import { EnhancedAIQueryDemo } from '@/components/ai/EnhancedAIQueryDemo';
 import { useNavigate } from 'react-router-dom';
 
 export const HeroSection: React.FC = () => {
@@ -37,14 +37,15 @@ export const HeroSection: React.FC = () => {
               variant="outline" 
               size="lg" 
               className="border-white text-white hover:bg-white/10"
+              onClick={() => navigate('/auth?tab=signup')}
             >
               Request Demo
             </Button>
           </div>
           
-          <div className="w-full max-w-2xl bg-white/10 backdrop-blur-sm rounded-xl p-1 border border-white/20">
-            <AiQueryInput 
-              placeholder="Ask our AI about Community Intelligence..." 
+          <div className="w-full max-w-2xl">
+            <EnhancedAIQueryDemo 
+              placeholder="Try asking about reports, maintenance, or finances..." 
               compact={true}
             />
           </div>
