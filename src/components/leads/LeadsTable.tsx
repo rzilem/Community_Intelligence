@@ -38,8 +38,12 @@ const LeadsTable = ({
   const [currentPage, setCurrentPage] = useState(1);
   const leadsPerPage = 10;
   
+  console.log("LeadsTable: visible column IDs:", visibleColumnIds);
+  console.log("LeadsTable: all columns:", columns);
+  
   // Get only the columns that should be displayed
   const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
+  console.log("LeadsTable: filtered visible columns:", visibleColumns);
 
   // Calculate pagination
   const indexOfLastLead = currentPage * leadsPerPage;
@@ -82,7 +86,7 @@ const LeadsTable = ({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

@@ -21,6 +21,8 @@ export const useTableColumns = <T extends Record<string, any>>(
         return JSON.parse(savedColumns);
       } catch (e) {
         console.error('Failed to parse saved columns', e);
+        // If parsing fails, reset to default columns
+        return defaultColumns;
       }
     }
     return defaultColumns;
@@ -34,6 +36,10 @@ export const useTableColumns = <T extends Record<string, any>>(
         return JSON.parse(savedVisibility);
       } catch (e) {
         console.error('Failed to parse saved visibility', e);
+        // If parsing fails, reset to default visible columns
+        return columns
+          .filter(col => col.defaultVisible !== false)
+          .map(col => col.id);
       }
     }
     // Set default visible columns
@@ -56,7 +62,7 @@ export const useTableColumns = <T extends Record<string, any>>(
     setVisibleColumnIds(columnIds);
   };
 
-  // New function to reorder columns
+  // Function to reorder columns
   const reorderColumns = (sourceIndex: number, destinationIndex: number) => {
     const reorderedColumns = [...columns];
     const [removed] = reorderedColumns.splice(sourceIndex, 1);
@@ -65,6 +71,10 @@ export const useTableColumns = <T extends Record<string, any>>(
   };
 
   const resetToDefaults = () => {
+    // Clear saved preferences and reset to defaults
+    localStorage.removeItem(storageKey);
+    localStorage.removeItem(`${storageKey}-visibility`);
+    
     setColumns(defaultColumns);
     setVisibleColumnIds(defaultColumns
       .filter(col => col.defaultVisible !== false)

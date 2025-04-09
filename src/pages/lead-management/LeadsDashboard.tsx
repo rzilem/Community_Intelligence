@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BarChart, RefreshCw, Mail, Search, PlusCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import LeadsDashboardTabNav from '@/components/leads/LeadsDashboardTabNav';
 import LeadsTable from '@/components/leads/LeadsTable';
 import { useLeads } from '@/hooks/leads/useLeads';
 import ColumnSelector from '@/components/table/ColumnSelector';
+import { toast } from 'sonner';
 
 const LeadsDashboard = () => {
   const [activeTab, setActiveTab] = useState('active-leads');
@@ -30,7 +31,15 @@ const LeadsDashboard = () => {
     resetToDefaults
   } = useLeads();
 
+  // Force a reset of columns when the component mounts to ensure we get default columns
+  useEffect(() => {
+    // Reset columns to default on first load
+    resetToDefaults();
+  }, []);
+
   const filteredLeads = leads.filter(lead => {
+    if (!searchTerm.trim()) return true;
+    
     const searchTermLower = searchTerm.toLowerCase();
     
     // Basic fields to search
@@ -60,6 +69,7 @@ const LeadsDashboard = () => {
 
   const handleResetColumns = () => {
     resetToDefaults();
+    toast.success("Columns reset to default");
   };
 
   return (

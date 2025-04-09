@@ -11,6 +11,7 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array
   
   const value = lead[column.accessorKey as keyof Lead];
   
+  // Special formatting for specific columns
   if (column.id === 'status' && value) {
     return <LeadStatusBadge status={value as Lead['status']} />;
   }
@@ -27,9 +28,16 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array
     return Number(value).toString();
   }
 
-  if (typeof value === 'object') {
+  // Handle array or object values by converting to string
+  if (typeof value === 'object' && value !== null) {
     return JSON.stringify(value);
   }
 
+  // If value is null or undefined, show a placeholder
+  if (value === null || value === undefined) {
+    return <span className="text-gray-400">—</span>;
+  }
+
+  // Return value as string or React node
   return value as React.ReactNode;
 };

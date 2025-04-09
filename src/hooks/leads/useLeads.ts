@@ -22,7 +22,7 @@ export const useLeads = () => {
     }
   );
   
-  // Set up customizable columns
+  // Set up customizable columns with default definitions
   const { 
     columns, 
     visibleColumnIds, 
@@ -53,6 +53,8 @@ export const useLeads = () => {
       await refreshLeadsData();
       setLastRefreshed(new Date());
       console.log('Leads refresh completed');
+      // Force reset columns to ensure they're showing correctly
+      resetToDefaults();
     } catch (error) {
       console.error('Error refreshing leads:', error);
       toast.error('Could not fetch leads. Please ensure you are authenticated.');
