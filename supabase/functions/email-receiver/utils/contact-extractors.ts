@@ -27,26 +27,43 @@ export function extractEmailFromHeader(header: string): string {
 export function extractNameFromHeader(header: string): string {
   if (!header) return "";
   
+  // Clean the header
+  let cleanedHeader = header.trim();
+  
   // Enhanced pattern to handle "From:" prefix that might be part of the header
-  if (header.toLowerCase().startsWith("from:")) {
-    header = header.substring(5).trim();
+  if (cleanedHeader.toLowerCase().startsWith("from:")) {
+    cleanedHeader = cleanedHeader.substring(5).trim();
   }
   
-  // Try to extract name from "Name <email>" format
-  const nameMatch = header.match(/^([^<]+)</);
+  // Handle Mark Stein <markstein@example.com> format
+  const nameMatch = cleanedHeader.match(/^([^<]+)</);
   if (nameMatch && nameMatch[1]) {
-    return nameMatch[1].trim();
+    const name = nameMatch[1].trim();
+    if (name && !name.includes("@")) {
+      return name;
+    }
   }
   
-  // If that fails, try to extract from "email (Name)" format
-  const parenthesesMatch = header.match(/\(([^)]+)\)/);
+  // Handle email@example.com (Mark Stein) format
+  const parenthesesMatch = cleanedHeader.match(/\(([^)]+)\)/);
   if (parenthesesMatch && parenthesesMatch[1]) {
     return parenthesesMatch[1].trim();
   }
   
-  // If no clear name pattern is found, check if it's just a name without email
-  if (!header.includes('@') && !header.includes('<') && !header.includes('>')) {
-    return header.trim();
+  // Handle just Mark Stein format (no email)
+  if (!cleanedHeader.includes('@') && !cleanedHeader.includes('<') && !cleanedHeader.includes('>')) {
+    return cleanedHeader.trim();
+  }
+  
+  // If we have a raw email address with no name
+  if (cleanedHeader.includes('@')) {
+    // See if we can extract a domain name that might be useful
+    const domainMatch = cleanedHeader.match(/@([^.]+)\./);
+    if (domainMatch && domainMatch[1] && 
+        !['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'example'].includes(domainMatch[1].toLowerCase())) {
+      // Don't return generic domains as names
+      return ""; 
+    }
   }
   
   // If we really can't find a name, return empty string
@@ -72,14 +89,19 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
     /Name[:\s]*([^<>\n\r,\.]+)/i,
     /From[:\s]*([^<>\n\r,\.]+)/i,
     /Contact[:\s]*([^<>\n\r,\.]+)/i,
-    /Contact Person[:\s]*([^<>\n\r,\.]+)/i
+    /Contact Person[:\s]*([^<>\n\r,\.]+)/i,
+    /Submitted by[:\s]*([^<>\n\r,\.]+)/i
   ];
   
   for (const pattern of namePatterns) {
     const match = content.match(pattern);
     if (match && match[1] && match[1].trim()) {
-      result.name = match[1].trim();
-      break;
+      const name = match[1].trim();
+      // Skip patterns like "Name of Association"
+      if (!name.toLowerCase().includes("of association")) {
+        result.name = name;
+        break;
+      }
     }
   }
   
@@ -119,7 +141,9 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
     /Phone[:\s]*([\d\s\(\)\-\+\.]+)/i,
     /Contact Phone[:\s]*([\d\s\(\)\-\+\.]+)/i,
     /Tel[:\s]*([\d\s\(\)\-\+\.]+)/i,
-    /Telephone[:\s]*([\d\s\(\)\-\+\.]+)/i
+    /Telephone[:\s]*([\d\s\(\)\-\+\.]+)/i,
+    /Mobile[:\s]*([\d\s\(\)\-\+\.]+)/i,
+    /Cell[:\s]*([\d\s\(\)\-\+\.]+)/i
   ];
   
   for (const pattern of phonePatterns) {

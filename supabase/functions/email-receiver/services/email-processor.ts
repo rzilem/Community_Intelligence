@@ -29,6 +29,8 @@ export async function processEmail(emailData: any) {
     const rawHtmlContent = emailData.html || emailData.Html || emailData.body || emailData.Body || "";
     const rawTextContent = emailData.text || emailData.Text || emailData.plain || emailData.Plain || "";
     
+    console.log("From header:", from);
+    
     // Save the original HTML content
     lead.html_content = rawHtmlContent;
     
@@ -48,38 +50,84 @@ export async function processEmail(emailData: any) {
     
     // Extract content from HTML or fallback to text content or subject
     const content = parsedText || rawTextContent || subject;
-    console.log("Extracted content:", content);
     
-    // HIGHER PRIORITY: Try to extract name from 'from' field first
+    // Debug the content being processed
+    console.log("Processing content excerpt:", content.substring(0, 200));
+    
+    // HIGHEST PRIORITY: Extract name directly from From field
     if (from) {
-      const nameFromHeader = extractNameFromHeader(from);
+      let nameFromHeader = extractNameFromHeader(from);
+      console.log("Initial name extracted from header:", nameFromHeader);
+      
+      // Clean up common patterns in extracted names
       if (nameFromHeader) {
-        lead.name = nameFromHeader;
-        console.log("Name extracted from From header:", nameFromHeader);
+        // Remove "Name of Association" pattern
+        if (nameFromHeader.toLowerCase().includes("of association")) {
+          nameFromHeader = nameFromHeader.replace(/\s*of\s*association\s*/i, "").trim();
+        }
         
-        // If we have a full name, try to parse first and last name
-        const nameParts = nameFromHeader.split(' ');
+        // Check if we still have a valid name
+        if (nameFromHeader && nameFromHeader.length > 1) {
+          lead.name = nameFromHeader;
+          console.log("Using cleaned name from header:", nameFromHeader);
+          
+          // Parse first and last name
+          const nameParts = nameFromHeader.split(' ');
+          if (nameParts.length > 0) lead.first_name = nameParts[0];
+          if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
+        }
+      }
+    }
+    
+    // MEDIUM PRIORITY: Look for explicit name patterns in content if no name from header
+    if (!lead.name || lead.name.length < 2) {
+      // Try to find explicit name patterns in the content
+      const namePatterns = [
+        /[Nn]ame:\s*([^,\n<]+)/,
+        /[Ff]rom:\s*([^,\n<]+)/,
+        /[Cc]ontact:\s*([^,\n<]+)/,
+        /[Cc]ontact\s+[Nn]ame:\s*([^,\n<]+)/
+      ];
+      
+      for (const pattern of namePatterns) {
+        const match = content.match(pattern);
+        if (match && match[1] && match[1].trim()) {
+          const contentName = match[1].trim();
+          // Skip if it's "of Association" or similar
+          if (!contentName.toLowerCase().includes("of association") && contentName.length > 1) {
+            lead.name = contentName;
+            console.log("Name found in content pattern:", contentName);
+            
+            // Parse first and last name
+            const nameParts = contentName.split(' ');
+            if (nameParts.length > 0) lead.first_name = nameParts[0];
+            if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
+            break;
+          }
+        }
+      }
+    }
+    
+    // Extract contact information from content
+    const contactInfo = extractContactInfo(content, from);
+    console.log("Contact info extracted:", contactInfo);
+    
+    // LOW PRIORITY: If still no name, use name from contact info
+    if ((!lead.name || lead.name.length < 2) && contactInfo.name) {
+      const contactName = contactInfo.name;
+      if (!contactName.toLowerCase().includes("of association") && contactName.length > 1) {
+        lead.name = contactName;
+        console.log("Using name from contact info:", contactName);
+        
+        // Parse first and last name
+        const nameParts = contactName.split(' ');
         if (nameParts.length > 0) lead.first_name = nameParts[0];
         if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
       }
     }
     
-    // Extract contact information from content (name, email, phone)
-    const contactInfo = extractContactInfo(content, from);
-    console.log("Contact info extracted:", contactInfo);
-    
-    // LOWER PRIORITY: If no name found in header, try using the one from content
-    if (!lead.name && contactInfo.name) {
-      lead.name = contactInfo.name;
-      
-      // If we have a full name, try to parse first and last name
-      const nameParts = contactInfo.name.split(' ');
-      if (nameParts.length > 0) lead.first_name = nameParts[0];
-      if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
-    }
-    
     // Set other contact info
-    if (contactInfo.email) lead.email = contactInfo.email;
+    if (contactInfo.email && isValidEmail(contactInfo.email)) lead.email = contactInfo.email;
     if (contactInfo.phone) lead.phone = contactInfo.phone;
     
     // Extract association information
@@ -127,12 +175,16 @@ export async function processEmail(emailData: any) {
       console.warn("No valid email found, using placeholder");
     }
     
-    // Fallback for name if not found
-    if (!lead.name) {
-      if (lead.email) {
+    // Final fallback for name if not found
+    if (!lead.name || lead.name.length < 2) {
+      if (lead.email && lead.email !== "no-email@example.com") {
         // Use email username as name fallback
         const emailUsername = lead.email.split('@')[0];
         lead.name = emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1);
+        console.log("Using email username as name fallback:", lead.name);
+      } else {
+        lead.name = "Unknown Contact";
+        console.log("Using 'Unknown Contact' as name fallback");
       }
     }
     
