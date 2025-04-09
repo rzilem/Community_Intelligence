@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -34,6 +33,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isAuthenticated: boolean;
   setCurrentAssociation: (association: Association | null) => void;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -51,6 +51,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   isAuthenticated: false,
   setCurrentAssociation: () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -64,14 +65,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
 
   useEffect(() => {
-    // Get the initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session check:', session ? 'Session found' : 'No session', session);
       setSession(session);
       setUser(session?.user || null);
     });
 
-    // Set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session?.user?.email);
       if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
@@ -93,7 +92,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Fetch user profile when user changes
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
@@ -101,7 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Fetching profile for user:', user.id);
           let profileData = await fetchUserProfile(user.id);
           
-          // If profile exists but doesn't have admin role, update it
           if (profileData && profileData.role !== 'admin') {
             console.log('Setting user role to admin');
             const updatedProfile = await updateUserProfile({
@@ -121,12 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsAdmin(profileData.role === 'admin');
             setUserRole(profileData.role);
             
-            // Fetch the user's associations
             const associations = await fetchUserAssociations(user.id);
             console.log('User associations loaded:', associations);
             setUserAssociations(associations);
             
-            // Set current association to the first one if none is selected
             if (associations?.length > 0 && !currentAssociation) {
               setCurrentAssociation(associations[0].associations);
             }
@@ -192,25 +187,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshProfile = async () => {
+    if (user?.id) {
+      const updatedProfile = await fetchUserProfile(user.id);
+      if (updatedProfile) {
+        setProfile(updatedProfile);
+      }
+    }
+  };
+
   const isAuthenticated = !!user;
 
+  const contextValue = {
+    user,
+    profile,
+    session,
+    signIn,
+    signUp,
+    signOut,
+    loading,
+    refreshProfile,
+  };
+
   return (
-    <AuthContext.Provider value={{
-      session,
-      user,
-      profile,
-      loading,
-      isLoading: loading,
-      signIn,
-      signUp,
-      signOut,
-      isAdmin,
-      isAuthenticated,
-      userRole,
-      userAssociations,
-      currentAssociation,
-      setCurrentAssociation,
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
