@@ -9,22 +9,28 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array
   
   if (!column || !column.accessorKey) return null;
   
-  const value = lead[column.accessorKey as keyof Lead];
+  const accessorKey = column.accessorKey;
+  
+  // Make sure we're using the correct property from the lead object
+  // that matches the column's accessorKey
+  const value = lead[accessorKey as keyof Lead];
+  
+  console.log(`Rendering column ${columnId} with accessorKey ${accessorKey}, value:`, value);
   
   // Special formatting for specific columns
-  if (column.id === 'status' && value) {
+  if (columnId === 'status' && value) {
     return <LeadStatusBadge status={value as Lead['status']} />;
   }
   
-  if (column.id === 'created_at' && value) {
+  if (columnId === 'created_at' && value) {
     return formatDistanceToNow(new Date(value as string), { addSuffix: true });
   }
   
-  if (column.id === 'updated_at' && value) {
+  if (columnId === 'updated_at' && value) {
     return formatDistanceToNow(new Date(value as string), { addSuffix: true });
   }
 
-  if (column.id === 'number_of_units' && value !== undefined) {
+  if (columnId === 'number_of_units' && value !== undefined) {
     return Number(value).toString();
   }
 
