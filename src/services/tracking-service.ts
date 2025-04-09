@@ -9,7 +9,7 @@ export async function getCommunicationLogs(): Promise<CommunicationLog[]> {
   const { data, error } = await supabase
     .from('communications_log')
     .select('*')
-    .order('received_at', { ascending: false });
+    .order('received_at', { ascending: false }) as { data: CommunicationLog[] | null, error: any };
   
   if (error) {
     console.error("Error fetching communication logs:", error);
@@ -27,7 +27,7 @@ export async function getCommunicationByTrackingNumber(trackingNumber: string): 
     .from('communications_log')
     .select('*')
     .eq('tracking_number', trackingNumber)
-    .single();
+    .single() as { data: CommunicationLog | null, error: any };
   
   if (error) {
     if (error.code === 'PGRST116') {
@@ -67,14 +67,14 @@ export async function updateCommunicationStatus(
     .update(updateData)
     .eq('id', id)
     .select()
-    .single();
+    .single() as { data: CommunicationLog | null, error: any };
   
   if (error) {
     console.error(`Error updating communication status for ID ${id}:`, error);
     throw error;
   }
   
-  return data;
+  return data as CommunicationLog;
 }
 
 /**
@@ -89,7 +89,7 @@ export async function findByTrackingNumber(trackingNumber: string): Promise<{
     .from('communications_log')
     .select('*')
     .eq('tracking_number', trackingNumber)
-    .single();
+    .single() as { data: CommunicationLog | null, error: any };
   
   if (logError) {
     if (logError.code === 'PGRST116') {

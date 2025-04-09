@@ -24,9 +24,31 @@ export type Comment = {
   updated_at?: string;
 };
 
+// Tracking system related types
 export interface TrackingSystemItem {
   id: string;
   tracking_number: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface TrackableItem {
+  id: string;
+  tracking_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CommunicationType = 'invoice' | 'lead' | 'email' | 'message' | 'workflow';
+
+export interface CommunicationLogEntry {
+  id: string;
+  tracking_number: string;
+  communication_type: CommunicationType;
+  metadata: Record<string, any>;
+  received_at: string;
+  processed_at?: string;
+  status: 'received' | 'processing' | 'completed' | 'failed';
+  created_at?: string;
+  updated_at?: string;
 }

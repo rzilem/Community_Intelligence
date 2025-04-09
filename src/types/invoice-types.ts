@@ -43,4 +43,6 @@ export interface CommunicationLog {
   received_at: string;
   processed_at?: string;
   status: 'received' | 'processing' | 'completed' | 'failed';
+  created_at?: string;
+  updated_at?: string;
 }
