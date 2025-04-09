@@ -1,15 +1,12 @@
 
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
 import { 
-  extractEmailFromHeader, 
-  extractNameFromHeader,
-  isValidEmail,
-  extractAssociationInfo,
-  extractContactInfo,
-  extractCompanyInfo,
-  extractLocationInfo,
-  extractAdditionalInfo
-} from "../utils/email-helpers.ts";
+  extractContactInformation,
+  extractAssociationInformation,
+  extractLocationInformation,
+  extractAdditionalInformation
+} from "./extractors/index.ts";
+import { extractEmailFromHeader, isValidEmail } from "../utils/email-helpers.ts";
 
 export async function processEmail(emailData: any) {
   console.log("Processing email data");
@@ -54,110 +51,14 @@ export async function processEmail(emailData: any) {
     // Debug the content being processed
     console.log("Processing content excerpt:", content.substring(0, 200));
     
-    // HIGHEST PRIORITY: Extract name directly from From field
-    if (from) {
-      let nameFromHeader = extractNameFromHeader(from);
-      console.log("Initial name extracted from header:", nameFromHeader);
-      
-      // Clean up common patterns in extracted names
-      if (nameFromHeader) {
-        // Remove "Name of Association" pattern
-        if (nameFromHeader.toLowerCase().includes("of association")) {
-          nameFromHeader = nameFromHeader.replace(/\s*of\s*association\s*/i, "").trim();
-        }
-        
-        // Check if we still have a valid name
-        if (nameFromHeader && nameFromHeader.length > 1) {
-          lead.name = nameFromHeader;
-          console.log("Using cleaned name from header:", nameFromHeader);
-          
-          // Parse first and last name
-          const nameParts = nameFromHeader.split(' ');
-          if (nameParts.length > 0) lead.first_name = nameParts[0];
-          if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
-        }
-      }
-    }
+    // Extract all information using specialized extractors
+    const contactInfo = extractContactInformation(content, from);
+    const associationInfo = extractAssociationInformation(content);
+    const locationInfo = extractLocationInformation(content);
+    const additionalInfo = extractAdditionalInformation(content);
     
-    // MEDIUM PRIORITY: Look for explicit name patterns in content if no name from header
-    if (!lead.name || lead.name.length < 2) {
-      // Try to find explicit name patterns in the content
-      const namePatterns = [
-        /[Nn]ame:\s*([^,\n<]+)/,
-        /[Ff]rom:\s*([^,\n<]+)/,
-        /[Cc]ontact:\s*([^,\n<]+)/,
-        /[Cc]ontact\s+[Nn]ame:\s*([^,\n<]+)/
-      ];
-      
-      for (const pattern of namePatterns) {
-        const match = content.match(pattern);
-        if (match && match[1] && match[1].trim()) {
-          const contentName = match[1].trim();
-          // Skip if it's "of Association" or similar
-          if (!contentName.toLowerCase().includes("of association") && contentName.length > 1) {
-            lead.name = contentName;
-            console.log("Name found in content pattern:", contentName);
-            
-            // Parse first and last name
-            const nameParts = contentName.split(' ');
-            if (nameParts.length > 0) lead.first_name = nameParts[0];
-            if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
-            break;
-          }
-        }
-      }
-    }
-    
-    // Extract contact information from content
-    const contactInfo = extractContactInfo(content, from);
-    console.log("Contact info extracted:", contactInfo);
-    
-    // LOW PRIORITY: If still no name, use name from contact info
-    if ((!lead.name || lead.name.length < 2) && contactInfo.name) {
-      const contactName = contactInfo.name;
-      if (!contactName.toLowerCase().includes("of association") && contactName.length > 1) {
-        lead.name = contactName;
-        console.log("Using name from contact info:", contactName);
-        
-        // Parse first and last name
-        const nameParts = contactName.split(' ');
-        if (nameParts.length > 0) lead.first_name = nameParts[0];
-        if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
-      }
-    }
-    
-    // Set other contact info
-    if (contactInfo.email && isValidEmail(contactInfo.email)) lead.email = contactInfo.email;
-    if (contactInfo.phone) lead.phone = contactInfo.phone;
-    
-    // Extract association information
-    const associationInfo = extractAssociationInfo(content);
-    console.log("Association info extracted:", associationInfo);
-    
-    if (associationInfo.name) lead.association_name = associationInfo.name;
-    if (associationInfo.type) lead.association_type = associationInfo.type;
-    if (associationInfo.units) lead.number_of_units = associationInfo.units;
-    
-    // Extract company information (current management)
-    const companyInfo = extractCompanyInfo(content, from);
-    console.log("Company info extracted:", companyInfo);
-    
-    if (companyInfo.company) lead.current_management = companyInfo.company;
-    
-    // Extract location information (address, city, state, zip)
-    const locationInfo = extractLocationInfo(content);
-    console.log("Location info extracted:", locationInfo);
-    
-    if (locationInfo.address) lead.street_address = locationInfo.address;
-    if (locationInfo.city) lead.city = locationInfo.city;
-    if (locationInfo.state) lead.state = locationInfo.state;
-    if (locationInfo.zip) lead.zip = locationInfo.zip;
-    
-    // Extract additional information/notes
-    const additionalInfo = extractAdditionalInfo(content);
-    console.log("Additional info extracted:", additionalInfo);
-    
-    if (additionalInfo.notes) lead.additional_requirements = additionalInfo.notes;
+    // Merge all extracted information into the lead object
+    Object.assign(lead, contactInfo, associationInfo, locationInfo, additionalInfo);
     
     // Fallbacks for required fields
     
