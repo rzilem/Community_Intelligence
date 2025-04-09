@@ -1,6 +1,7 @@
 
 export interface Invoice {
   id: string;
+  tracking_number?: string;
   invoice_number: string;
   vendor: string;
   amount: number;
@@ -33,3 +34,13 @@ export interface InvoiceDocument {
 }
 
 export type InvoiceSource = 'email' | 'document' | 'manual';
+
+export interface CommunicationLog {
+  id: string;
+  tracking_number: string;
+  communication_type: 'invoice' | 'lead' | 'email' | 'message' | 'workflow';
+  metadata: Record<string, any>;
+  received_at: string;
+  processed_at?: string;
+  status: 'received' | 'processing' | 'completed' | 'failed';
+}

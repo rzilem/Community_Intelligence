@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { getNextTrackingNumber, registerCommunication } from "./tracking-service.ts";
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -19,21 +20,31 @@ export async function createInvoice(invoiceData: any) {
     throw error;
   }
   
-  // Log the invoice data being saved
-  console.log("Creating invoice with data:", {
-    invoice_number: invoiceData.invoice_number,
-    vendor: invoiceData.vendor,
-    amount: invoiceData.amount,
-    due_date: invoiceData.due_date,
-    status: invoiceData.status,
-    source_document: invoiceData.source_document || 'None'
-  });
-  
   try {
+    // Generate a tracking number for this invoice
+    const trackingNumber = await getNextTrackingNumber();
+    
+    // Add tracking number to invoice data
+    const invoiceWithTracking = {
+      ...invoiceData,
+      tracking_number: trackingNumber
+    };
+    
+    // Log the invoice data being saved
+    console.log("Creating invoice with data:", {
+      tracking_number: trackingNumber,
+      invoice_number: invoiceData.invoice_number,
+      vendor: invoiceData.vendor,
+      amount: invoiceData.amount,
+      due_date: invoiceData.due_date,
+      status: invoiceData.status,
+      source_document: invoiceData.source_document || 'None'
+    });
+    
     // Insert the invoice into the database
     const { data, error } = await supabase
       .from("invoices")
-      .insert(invoiceData)
+      .insert(invoiceWithTracking)
       .select()
       .single();
     
@@ -42,7 +53,15 @@ export async function createInvoice(invoiceData: any) {
       throw new Error(`Database error: ${error.message}`);
     }
     
-    console.log("Invoice created successfully with ID:", data.id);
+    // Register this communication in the log
+    await registerCommunication(trackingNumber, 'invoice', {
+      invoice_id: data.id,
+      vendor: data.vendor,
+      amount: data.amount,
+      invoice_number: data.invoice_number
+    });
+    
+    console.log(`Invoice created successfully with ID: ${data.id} and tracking number: ${trackingNumber}`);
     return data;
   } catch (error) {
     console.error("Error in createInvoice:", error);

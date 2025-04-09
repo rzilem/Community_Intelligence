@@ -1,5 +1,6 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getNextTrackingNumber, registerCommunication } from "../../invoice-receiver/services/tracking-service.ts";
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -13,36 +14,40 @@ const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 // Insert a new lead into the database
 export async function createLead(leadData: any) {
-  const { data: lead, error } = await supabase
-    .from('leads')
-    .insert({
-      name: leadData.name,
-      email: leadData.email,
-      company: leadData.company,
-      phone: leadData.phone,
-      source: 'Email',
-      status: 'new',
-      notes: leadData.notes,
-      html_content: leadData.html_content,
-      association_name: leadData.association_name,
-      association_type: leadData.association_type,
-      current_management: leadData.current_management,
-      number_of_units: leadData.number_of_units,
-      first_name: leadData.first_name,
-      last_name: leadData.last_name,
-      street_address: leadData.street_address,
-      city: leadData.city,
-      state: leadData.state,
-      zip: leadData.zip,
-      additional_requirements: leadData.additional_requirements
-    })
-    .select()
-    .single();
+  try {
+    // Generate a tracking number for this lead
+    const trackingNumber = await getNextTrackingNumber();
+    
+    // Add tracking number to lead data
+    const leadWithTracking = {
+      ...leadData,
+      tracking_number: trackingNumber
+    };
+    
+    const { data: lead, error } = await supabase
+      .from('leads')
+      .insert(leadWithTracking)
+      .select()
+      .single();
 
-  if (error) {
-    console.error("Error inserting lead into database:", error);
+    if (error) {
+      console.error("Error inserting lead into database:", error);
+      throw error;
+    }
+
+    // Register this communication in the log
+    await registerCommunication(trackingNumber, 'lead', {
+      lead_id: lead.id,
+      name: lead.name,
+      email: lead.email,
+      company: lead.company,
+      association_name: lead.association_name
+    });
+
+    console.log(`Lead created successfully with tracking number: ${trackingNumber}`);
+    return lead;
+  } catch (error) {
+    console.error("Error in createLead:", error);
     throw error;
   }
-
-  return lead;
 }
