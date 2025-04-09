@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -81,32 +82,42 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   };
 
   return (
-    <div className="relative inline-block group">
-      <Avatar className={`${avatarSize} relative ${isUploading ? 'opacity-50' : ''}`}>
-        <AvatarImage src={imageUrl || undefined} alt="Profile" key={imageUrl || 'profile'} />
-        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+    <div className="flex flex-col items-center">
+      <div className="relative inline-block group">
+        <Avatar className={`${avatarSize} relative ${isUploading ? 'opacity-50' : ''}`}>
+          <AvatarImage src={imageUrl || undefined} alt="Profile" key={imageUrl || 'profile'} />
+          <AvatarFallback>{getUserInitials()}</AvatarFallback>
+          
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            </div>
+          )}
+        </Avatar>
         
-        {isUploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-            <Loader2 className="h-5 w-5 animate-spin text-white" />
-          </div>
-        )}
-      </Avatar>
+        <label 
+          htmlFor={`profile-upload-${userId}`} 
+          className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer bg-black/0 group-hover:bg-black/30 transition-all"
+        >
+          <Camera className="h-5 w-5 text-transparent group-hover:text-white transition-all" />
+        </label>
+        
+        <input
+          id={`profile-upload-${userId}`}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="sr-only"
+        />
+      </div>
       
-      <label 
-        htmlFor={`profile-upload-${userId}`} 
-        className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer bg-black/0 group-hover:bg-black/30 transition-all"
-      >
-        <Camera className="h-5 w-5 text-transparent group-hover:text-white transition-all" />
-      </label>
-      
-      <input
-        id={`profile-upload-${userId}`}
-        type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        className="sr-only"
-      />
+      <p className="mt-2 text-xs text-muted-foreground text-center">
+        Recommended size: 400x400 pixels
+        <br />
+        Max file size: 5MB
+        <br />
+        Supported formats: JPG, PNG, WebP
+      </p>
     </div>
   );
 };
