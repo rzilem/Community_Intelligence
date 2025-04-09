@@ -96,9 +96,10 @@ const Documents = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState<boolean>(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
+  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
 
   // Filtered documents based on selected category and search term
-  const filteredDocuments = mockDocuments.filter(doc => {
+  const filteredDocuments = documents.filter(doc => {
     const matchesCategory = selectedCategory ? doc.category === selectedCategory : true;
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          (doc.description || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -117,8 +118,34 @@ const Documents = () => {
     console.log('Description:', formData.get('description'));
     
     // In a real app, we would upload the file to storage and create a database record
-    toast.success('Document uploaded successfully');
-    setIsUploadDialogOpen(false);
+    // For now, we'll create a mock document and add it to our list
+    const file = formData.get('file') as File;
+    const category = formData.get('category') as string;
+    const description = formData.get('description') as string;
+    
+    if (file) {
+      const newDoc: Document = {
+        id: `new-${Date.now()}`, // Generate a temporary ID
+        association_id: selectedAssociationId || '1',
+        name: file.name,
+        url: `/documents/temp/${file.name}`,
+        file_type: file.name.split('.').pop() || 'unknown',
+        file_size: file.size,
+        description: description || undefined,
+        category: category || 'general',
+        uploaded_at: new Date().toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      };
+      
+      // Add the new document to our list
+      setDocuments(prevDocs => [newDoc, ...prevDocs]);
+      
+      toast.success('Document uploaded successfully');
+      setIsUploadDialogOpen(false);
+    }
   };
 
   const handleViewDocument = (doc: Document) => {
@@ -135,7 +162,8 @@ const Documents = () => {
 
   const handleDeleteDocument = (doc: Document) => {
     console.log('Deleting document:', doc);
-    // In a real app, we would delete the document from storage and database
+    // Remove the document from our list
+    setDocuments(prevDocs => prevDocs.filter(d => d.id !== doc.id));
     toast.success(`${doc.name} has been deleted`);
   };
 
