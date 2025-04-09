@@ -1501,6 +1501,10 @@ export type Database = {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean
       }
+      user_is_associated_with_association: {
+        Args: { association_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

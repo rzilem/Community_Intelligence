@@ -66,8 +66,10 @@ export const createAssociation = async (associationData: {
   total_units?: number
 }) => {
   try {
+    console.log('Creating association with data:', associationData);
+    
     // First, create the association
-    const { data, error } = await supabase
+    const { data: newAssociation, error } = await supabase
       .from('associations')
       .insert(associationData)
       .select()
@@ -75,37 +77,35 @@ export const createAssociation = async (associationData: {
 
     if (error) {
       console.error('Error creating association:', error);
-      toast.error(`Failed to create association: ${error.message}`);
       throw error;
     }
 
     // After creating the association, assign the current user as an admin
-    if (data) {
-      try {
+    if (newAssociation) {
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      
+      if (currentUser) {
+        console.log('Assigning user as admin for association:', newAssociation.id);
+        
         const { error: roleError } = await supabase
           .from('association_users')
           .insert({
-            association_id: data.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id,
+            association_id: newAssociation.id,
+            user_id: currentUser.id,
             role: 'admin'
           });
 
         if (roleError) {
           console.error('Error setting user as association admin:', roleError);
           toast.warning('Created association but failed to set you as admin');
-        } else {
-          toast.success('Association created successfully');
         }
-      } catch (roleAssignError) {
-        console.error('Exception assigning role:', roleAssignError);
-        toast.warning('Created association but encountered an error setting permissions');
       }
     }
 
-    return data;
+    return newAssociation;
   } catch (error) {
     console.error('Error in createAssociation:', error);
-    return null;
+    throw error; // Re-throw the error so it can be handled by the mutation
   }
 };
 

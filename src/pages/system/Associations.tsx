@@ -55,12 +55,13 @@ const Associations = () => {
         total_units: formData.units > 0 ? formData.units : undefined
       };
       
-      createAssociation(associationData);
+      await createAssociation(associationData);
       setIsDialogOpen(false);
       // Force immediate refresh
       setTimeout(manuallyRefresh, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving association:', error);
+      toast.error(`Failed to create association: ${error.message}`);
     }
   };
   
