@@ -4,7 +4,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { UserCircle, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';

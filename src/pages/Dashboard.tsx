@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,7 @@ import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';

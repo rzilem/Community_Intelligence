@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
 import { updateProfileImage } from '@/services/user-service';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 
 interface ProfileImageUploadProps {
   userId: string;
@@ -27,14 +26,12 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const { refreshProfile } = useAuth();
   
-  // Determine avatar size based on prop
   const avatarSize = {
     'sm': 'h-10 w-10',
     'md': 'h-16 w-16',
     'lg': 'h-24 w-24'
   }[size];
   
-  // Get user initials for the avatar fallback
   const getUserInitials = (): string => {
     if (firstName && lastName) {
       return `${firstName[0]}${lastName[0]}`.toUpperCase();
@@ -50,13 +47,11 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     
     if (!file) return;
     
-    // Validate file is an image
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload an image file');
       return;
     }
     
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
       return;
@@ -65,7 +60,6 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     try {
       setIsUploading(true);
       
-      // Use the service function to handle the upload
       const result = await updateProfileImage(userId, file);
       
       if (result.error) {
@@ -76,7 +70,6 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         toast.success('Profile image uploaded successfully');
         onImageUpdated(result.url);
         
-        // Refresh the profile in the auth context to update the image across the app
         await refreshProfile();
       }
       
