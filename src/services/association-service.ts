@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
@@ -52,9 +51,7 @@ export const fetchAssociationById = async (id: string) => {
 };
 
 /**
- * Creates a new association with two separate operations:
- * 1. Create the association
- * 2. Link the current user as an admin in a separate transaction
+ * Creates a new association with improved error handling
  */
 export const createAssociation = async (associationData: { 
   name: string, 
@@ -97,15 +94,14 @@ export const createAssociation = async (associationData: {
     
     console.log('Assigning user as admin for association:', newAssociation.id);
     
-    // Use type assertion to fix the TypeScript error
-    const { error: roleError } = await supabase.rpc(
-      'assign_user_to_association' as any, 
-      {
-        p_association_id: newAssociation.id,
-        p_user_id: user.id,
-        p_role: 'admin'
-      }
-    );
+    // Insert directly into association_users table
+    const { error: roleError } = await supabase
+      .from('association_users')
+      .insert({
+        association_id: newAssociation.id,
+        user_id: user.id,
+        role: 'admin'
+      });
 
     if (roleError) {
       console.error('Error setting user as association admin:', roleError);

@@ -1493,6 +1493,10 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
+      check_user_association: {
+        Args: { association_uuid: string }
+        Returns: boolean
+      }
       get_next_tracking_number: {
         Args: Record<PropertyKey, never>
         Returns: number

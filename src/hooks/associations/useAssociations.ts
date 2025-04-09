@@ -31,22 +31,35 @@ export const useAssociations = () => {
           // If data is empty, try to check if we can retrieve data through RPC as a fallback
           try {
             console.log('Trying fallback method to fetch associations...');
-            // Type assertion to handle RPC call
-            const { data: rpcData, error: rpcError } = await supabase.rpc(
-              'get_user_associations' as any
-            );
+            const { data: userAssociations, error: rpcError } = await supabase
+              .from('association_users')
+              .select('association_id')
+              .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
             
             if (rpcError) {
-              console.error('Fallback RPC error:', rpcError);
-              return data; // Return original empty array if RPC also fails
+              console.error('Fallback query error:', rpcError);
+              return data; // Return original empty array if query also fails
             }
             
-            if (Array.isArray(rpcData)) {
-              console.log('Fallback method successful, retrieved:', rpcData.length || 0, 'associations');
-              return rpcData || [];
+            if (Array.isArray(userAssociations) && userAssociations.length > 0) {
+              console.log('Found user associations:', userAssociations);
+              const associationIds = userAssociations.map(ua => ua.association_id);
+              
+              const { data: associationsData, error: associationsError } = await supabase
+                .from('associations')
+                .select('*')
+                .in('id', associationIds);
+              
+              if (associationsError) {
+                console.error('Error fetching associations by IDs:', associationsError);
+                return data;
+              }
+              
+              console.log('Fallback method successful, retrieved:', associationsData?.length || 0, 'associations');
+              return associationsData || [];
             }
             
-            return data; // Return original data if RPC result is not an array
+            return data; // Return original data if no user associations found
           } catch (rpcEx) {
             console.error('Exception in fallback method:', rpcEx);
             return data; // Return original empty array on any exception
