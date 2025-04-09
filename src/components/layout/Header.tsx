@@ -112,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({
                 {profile?.role && <Badge className="ml-2">{profile.role}</Badge>}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <DropdownMenuItem onClick={() => navigate('/user/profile')}>
                 <UserCircle className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>

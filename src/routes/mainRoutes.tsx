@@ -7,6 +7,7 @@ import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Permissions from '@/pages/system/Permissions';
+import UserProfile from '@/pages/user/UserProfile';
 
 export const mainRoutes = [
   {
@@ -32,6 +33,10 @@ export const mainRoutes = [
   {
     path: '/system/permissions',
     element: <Permissions />
+  },
+  {
+    path: '/user/profile',
+    element: <UserProfile />
   },
   {
     path: '/auth',
