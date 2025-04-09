@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { User } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import LeadStatCards from '@/components/leads/LeadStatCards';
 import LeadActionButtons from '@/components/leads/LeadActionButtons';
 import LeadColumnSelector from '@/components/leads/LeadColumnSelector';
 import LeadStatusTabs from '@/components/leads/LeadStatusTabs';
+import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
 
 const LeadsDashboard = () => {
   const { 
@@ -26,8 +27,14 @@ const LeadsDashboard = () => {
     resetToDefaults,
     lastRefreshed
   } = useLeads();
-
+  
+  const { markAllAsRead } = useLeadNotifications();
   const [activeTab, setActiveTab] = useState('all');
+  
+  // Mark notifications as read when visiting this page
+  useEffect(() => {
+    markAllAsRead();
+  }, []);
   
   // Filter leads based on active tab
   const filteredLeads = leads.filter(lead => {
@@ -71,8 +78,9 @@ const LeadsDashboard = () => {
 
           <LeadColumnSelector
             columns={columns}
-            selectedColumns={visibleColumnIds}
+            selectedColumns={visibleColumnIds || []}
             onChange={updateVisibleColumns}
+            onReorder={reorderColumns}
             resetToDefaults={resetToDefaults}
           />
         </div>

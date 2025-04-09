@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Bell, LogOut, Menu, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from 'react-router-dom';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
+import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface HeaderProps {
   isMobile: boolean;
@@ -31,6 +32,7 @@ const Header: React.FC<HeaderProps> = ({
   handleSignOut
 }) => {
   const navigate = useNavigate();
+  const { unreadLeadsCount, markAllAsRead } = useLeadNotifications();
 
   const getUserInitials = (): string => {
     if (!profile) return 'U';
@@ -55,6 +57,11 @@ const Header: React.FC<HeaderProps> = ({
     // will re-render with the new profile data from context
   };
 
+  const handleNotificationsClick = () => {
+    navigate('/lead-management/leads');
+    markAllAsRead();
+  };
+
   return (
     <header className="flex items-center justify-between h-16 px-4 border-b bg-white">
       {isMobile && (
@@ -73,10 +80,30 @@ const Header: React.FC<HeaderProps> = ({
         <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
         
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-            <Bell size={20} />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 relative" onClick={handleNotificationsClick}>
+                <Bell size={20} />
+                {unreadLeadsCount > 0 && (
+                  <span className="absolute top-0 right-0 h-3 w-3 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold">
+                    {unreadLeadsCount > 9 ? '9+' : unreadLeadsCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="space-y-2">
+                <h4 className="font-semibold">Notifications</h4>
+                {unreadLeadsCount > 0 ? (
+                  <div className="text-sm">
+                    {unreadLeadsCount} new lead{unreadLeadsCount > 1 ? 's' : ''} received
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">No new notifications</div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
