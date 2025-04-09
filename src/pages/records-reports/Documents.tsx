@@ -1,31 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { File, Plus, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { File } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import DocumentCategories from '@/components/documents/DocumentCategories';
-import DocumentTable from '@/components/documents/DocumentTable';
-import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog';
-import CategoryDialog from '@/components/documents/CategoryDialog';
-import DocumentsLoading from '@/components/documents/DocumentsLoading';
 import { Document, DocumentTab } from '@/types/document-types';
-import AssociationSelector from '@/components/associations/AssociationSelector';
+import DocumentsLoading from '@/components/documents/DocumentsLoading';
 import { useDocumentCategories } from '@/hooks/documents/useDocumentCategories';
 import { useDocuments } from '@/hooks/documents/useDocuments';
 import { useDocumentOperations } from '@/hooks/documents/useDocumentOperations';
-import { useAuth } from '@/contexts/auth';
+import DocumentFilters from '@/components/documents/DocumentFilters';
+import DocumentHeader from '@/components/documents/DocumentHeader';
+import DocumentContent from '@/components/documents/DocumentContent';
+import DocumentDialogs from '@/components/documents/DocumentDialogs';
 
 const Documents = () => {
+  // State
   const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState<boolean>(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState<boolean>(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
-  const { user } = useAuth();
 
   // Fetch categories for selected association
   const { 
@@ -64,6 +59,7 @@ const Documents = () => {
     setSelectedCategory(null);
   }, [selectedAssociationId]);
 
+  // Handlers
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
   };
@@ -130,23 +126,14 @@ const Documents = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Left sidebar with association selector and categories */}
         <div className="md:col-span-1">
-          <Card>
-            <CardContent className="p-6">
-              <AssociationSelector
-                onAssociationChange={handleAssociationChange}
-              />
-              
-              <div className="mt-6">
-                <DocumentCategories
-                  categories={categories}
-                  selectedCategory={selectedCategory}
-                  onSelectCategory={setSelectedCategory}
-                  onCreateCategory={() => setIsCategoryDialogOpen(true)}
-                  isLoading={categoriesLoading}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <DocumentFilters
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            onCreateCategory={() => setIsCategoryDialogOpen(true)}
+            categoriesLoading={categoriesLoading}
+            onAssociationChange={handleAssociationChange}
+          />
         </div>
 
         {/* Main content area with tabs, search, and document table */}
@@ -157,43 +144,22 @@ const Documents = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-col space-y-4">
-                  {/* Tabs */}
-                  <Tabs defaultValue="documents" onValueChange={(value) => setActiveTab(value as DocumentTab)}>
-                    <TabsList>
-                      <TabsTrigger value="documents">Documents</TabsTrigger>
-                      <TabsTrigger value="templates">HTML Templates</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <DocumentHeader
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    onUploadClick={() => setIsUploadDialogOpen(true)}
+                    isUploadDisabled={!selectedAssociationId}
+                  />
 
-                  {/* Search and upload */}
-                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                    <Input
-                      placeholder="Search documents..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="sm:max-w-sm"
-                    />
-                    <Button 
-                      onClick={() => setIsUploadDialogOpen(true)}
-                      disabled={!selectedAssociationId}
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Upload
-                    </Button>
-                  </div>
-
-                  {/* Document table */}
-                  {documentsLoading ? (
-                    <div className="py-12 flex justify-center">
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    </div>
-                  ) : (
-                    <DocumentTable
-                      documents={filteredDocuments}
-                      onView={handleViewDocument}
-                      onDownload={handleDownloadDocument}
-                      onDelete={handleDeleteDocument}
-                    />
-                  )}
+                  <DocumentContent
+                    isLoading={documentsLoading}
+                    documents={filteredDocuments}
+                    onViewDocument={handleViewDocument}
+                    onDownloadDocument={handleDownloadDocument}
+                    onDeleteDocument={handleDeleteDocument}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -201,20 +167,15 @@ const Documents = () => {
         </div>
       </div>
 
-      {/* Upload dialog */}
-      <DocumentUploadDialog
-        isOpen={isUploadDialogOpen}
-        onClose={() => setIsUploadDialogOpen(false)}
+      <DocumentDialogs
+        isUploadDialogOpen={isUploadDialogOpen}
+        isCategoryDialogOpen={isCategoryDialogOpen}
+        onCloseUploadDialog={() => setIsUploadDialogOpen(false)}
+        onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
         onUpload={handleUpload}
+        onCreateCategory={handleCreateCategory}
         categories={categories}
         isUploading={uploadDocument.isPending}
-      />
-
-      {/* Category dialog */}
-      <CategoryDialog
-        isOpen={isCategoryDialogOpen}
-        onClose={() => setIsCategoryDialogOpen(false)}
-        onSubmit={handleCreateCategory}
       />
     </PageTemplate>
   );

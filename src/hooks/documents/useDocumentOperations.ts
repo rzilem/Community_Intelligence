@@ -53,7 +53,9 @@ export function useDocumentOperations() {
           association_id: associationId,
           uploaded_by: user.id,
           is_public: false,
-          is_archived: false
+          is_archived: false,
+          // Fix for the TypeScript error - using 'now()' for uploaded_at in the database
+          uploaded_at: new Date().toISOString()
         })
         .select()
         .single();
@@ -136,6 +138,7 @@ export function useDocumentOperations() {
     }) => {
       if (!user) throw new Error('User not authenticated');
       
+      // Fix the TypeScript error - use the specific table name string
       const { data, error } = await supabase
         .from('document_categories')
         .insert({
