@@ -32,3 +32,16 @@ export interface OperationsDashboardFilters {
   portfolio: string;
   office: string;
 }
+
+export interface WorkflowSchedule {
+  id: string;
+  name: string;
+  scheduleDate: string;
+  scheduledTime: string;
+  timezone: string;
+  lastRun: string;
+  nextRun: string;
+  endRun: string;
+  status: 'active' | 'paused' | 'error' | 'completed';
+  type: 'payment' | 'file' | 'report' | 'sync' | 'maintenance' | 'notification';
+}
