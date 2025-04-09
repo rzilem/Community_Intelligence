@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Eye, CheckSquare, X } from 'lucide-react';
+import { Eye, CheckSquare, X, FileText } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Source</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -47,6 +48,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-28" /></TableCell>
               </TableRow>
@@ -66,6 +68,18 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                 <TableCell onClick={() => onViewInvoice(invoice.id)}>{invoice.due_date}</TableCell>
                 <TableCell onClick={() => onViewInvoice(invoice.id)}>
                   <InvoiceStatusBadge status={invoice.status} />
+                </TableCell>
+                <TableCell onClick={() => onViewInvoice(invoice.id)}>
+                  {invoice.source_document ? (
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 mr-1 text-blue-500" />
+                      <span className="text-xs text-gray-600">{invoice.source_document.length > 15 
+                        ? `${invoice.source_document.substring(0, 12)}...` 
+                        : invoice.source_document}</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-500">Email</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -105,7 +119,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-4 text-gray-500">
+              <TableCell colSpan={9} className="text-center py-4 text-gray-500">
                 No invoices found that match your filters.
               </TableCell>
             </TableRow>

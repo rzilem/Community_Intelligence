@@ -3,6 +3,12 @@ import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts
 import { extractVendorInformation } from "./extractors/vendor-extractor.ts";
 import { extractInvoiceDetails } from "./extractors/invoice-details-extractor.ts";
 import { extractAssociationInformation } from "./extractors/association-extractor.ts";
+import { 
+  extractTextFromPdf, 
+  extractTextFromDocx, 
+  extractTextFromDoc, 
+  getDocumentType 
+} from "../utils/document-parser.ts";
 
 export async function processInvoiceEmail(emailData: any) {
   console.log("Processing invoice email data");
@@ -24,9 +30,50 @@ export async function processInvoiceEmail(emailData: any) {
     // Save the original HTML content
     invoice.html_content = rawHtmlContent;
     
-    // Parse HTML content
-    let parsedText = rawTextContent;
-    if (rawHtmlContent) {
+    // Check if we have any attachments to process
+    let documentContent = "";
+    let processedAttachment = null;
+    
+    if (emailData.attachments && emailData.attachments.length > 0) {
+      console.log(`Found ${emailData.attachments.length} attachments to process`);
+      
+      // Look for PDF or Word documents in the attachments
+      for (const attachment of emailData.attachments) {
+        console.log(`Processing attachment: ${attachment.filename}, type: ${attachment.contentType}`);
+        
+        const documentType = getDocumentType(attachment.filename);
+        
+        if (documentType !== "unknown") {
+          console.log(`Found document attachment: ${attachment.filename}, type: ${documentType}`);
+          
+          // Extract text based on document type
+          let extractedText = "";
+          
+          switch (documentType) {
+            case "pdf":
+              extractedText = await extractTextFromPdf(attachment.content);
+              break;
+            case "docx":
+              extractedText = await extractTextFromDocx(attachment.content);
+              break;
+            case "doc":
+              extractedText = await extractTextFromDoc(attachment.content);
+              break;
+          }
+          
+          if (extractedText && extractedText.length > 0) {
+            console.log(`Successfully extracted text from ${attachment.filename}, length: ${extractedText.length}`);
+            documentContent = extractedText;
+            processedAttachment = attachment;
+            break; // Use the first successful document extraction
+          }
+        }
+      }
+    }
+    
+    // Parse HTML content if no document content was extracted
+    let parsedText = documentContent || rawTextContent;
+    if (!documentContent && rawHtmlContent) {
       try {
         const parser = new DOMParser();
         const doc = parser.parseFromString(rawHtmlContent, "text/html");
@@ -38,8 +85,8 @@ export async function processInvoiceEmail(emailData: any) {
       }
     }
     
-    // Extract content from HTML or fallback to text content or subject
-    const content = parsedText || rawTextContent || subject;
+    // Extract content from document, HTML, or fallback to text content or subject
+    const content = documentContent || parsedText || rawTextContent || subject;
     
     // Debug the content being processed
     console.log("Processing content excerpt:", content.substring(0, 200));
@@ -51,6 +98,18 @@ export async function processInvoiceEmail(emailData: any) {
     
     // Merge all extracted information into the invoice object
     Object.assign(invoice, vendorInfo, invoiceDetails, associationInfo);
+
+    // If we processed an attachment, add the filename to the description
+    if (processedAttachment) {
+      invoice.source_document = processedAttachment.filename;
+      
+      // Add document info to description
+      if (invoice.description) {
+        invoice.description += `\n\nExtracted from document: ${processedAttachment.filename}`;
+      } else {
+        invoice.description = `Extracted from document: ${processedAttachment.filename}`;
+      }
+    }
 
     // Default values for required fields
     if (!invoice.invoice_number) {
@@ -70,10 +129,14 @@ export async function processInvoiceEmail(emailData: any) {
     
     // Add subject and excerpt to description
     if (subject) {
-      invoice.description = `Subject: ${subject}\n\n`;
-      
-      if (content) {
-        invoice.description += `Content: ${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`;
+      if (invoice.description) {
+        invoice.description = `Subject: ${subject}\n\n${invoice.description}`;
+      } else {
+        invoice.description = `Subject: ${subject}\n\n`;
+        
+        if (content) {
+          invoice.description += `Content: ${content.substring(0, 500)}${content.length > 500 ? '...' : ''}`;
+        }
       }
     }
     

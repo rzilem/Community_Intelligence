@@ -11,6 +11,7 @@ export interface Invoice {
   association_name?: string;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
+  source_document?: string;
   created_at: string;
   updated_at: string;
 }
