@@ -41,6 +41,11 @@ const Associations = () => {
       return;
     }
     
+    if (!user) {
+      toast.error('You must be logged in to create an association');
+      return;
+    }
+    
     try {
       console.log('Creating association with data:', formData);
       const associationData = {
@@ -56,9 +61,13 @@ const Associations = () => {
       };
       
       await createAssociation(associationData);
+      toast.success(`Association "${formData.name}" created successfully`);
       setIsDialogOpen(false);
+      
       // Force immediate refresh
-      setTimeout(manuallyRefresh, 1000);
+      setTimeout(() => {
+        manuallyRefresh();
+      }, 1000);
     } catch (error: any) {
       console.error('Error saving association:', error);
       toast.error(`Failed to create association: ${error.message}`);

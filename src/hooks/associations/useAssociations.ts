@@ -29,7 +29,6 @@ export const useAssociations = () => {
     meta: {
       onError: (error: Error) => {
         console.error('Error fetching associations:', error);
-        toast.error('Failed to load associations. Please try refreshing.');
       }
     }
   });
@@ -51,16 +50,10 @@ export const useAssociations = () => {
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
-        toast.success(`Association "${newAssociation.name}" created successfully`);
-        // Force refetch to ensure we get the latest data including the association_users relation
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['associations'] });
-          setRetryCount(prev => prev + 1);
-        }, 500);
+        // Force refetch to ensure we get the latest data
+        queryClient.invalidateQueries({ queryKey: ['associations'] });
+        setRetryCount(prev => prev + 1);
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to create association: ${error.message}`);
     }
   });
   
@@ -107,7 +100,8 @@ export const useAssociations = () => {
   };
   
   const manuallyRefresh = () => {
-    toast.info('Refreshing associations...');
+    console.log('Manually refreshing associations...');
+    queryClient.invalidateQueries({ queryKey: ['associations'] });
     setRetryCount(prev => prev + 1);
   };
   

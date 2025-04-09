@@ -52,7 +52,9 @@ export const fetchAssociationById = async (id: string) => {
 };
 
 /**
- * Creates a new association
+ * Creates a new association with two separate operations:
+ * 1. Create the association
+ * 2. Link the current user as an admin in a separate transaction
  */
 export const createAssociation = async (associationData: { 
   name: string, 
@@ -68,7 +70,7 @@ export const createAssociation = async (associationData: {
   try {
     console.log('Creating association with data:', associationData);
     
-    // First, create the association
+    // First, insert the new association
     const { data: newAssociation, error } = await supabase
       .from('associations')
       .insert(associationData)
@@ -80,32 +82,41 @@ export const createAssociation = async (associationData: {
       throw error;
     }
 
-    // After creating the association, assign the current user as an admin
-    if (newAssociation) {
-      const currentUser = (await supabase.auth.getUser()).data.user;
-      
-      if (currentUser) {
-        console.log('Assigning user as admin for association:', newAssociation.id);
-        
-        const { error: roleError } = await supabase
-          .from('association_users')
-          .insert({
-            association_id: newAssociation.id,
-            user_id: currentUser.id,
-            role: 'admin'
-          });
+    if (!newAssociation) {
+      throw new Error('Association was created but no data was returned');
+    }
 
-        if (roleError) {
-          console.error('Error setting user as association admin:', roleError);
-          toast.warning('Created association but failed to set you as admin');
-        }
-      }
+    console.log('Association created successfully:', newAssociation);
+
+    // Then, in a separate transaction, assign the current user as an admin
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('No authenticated user found');
+    }
+    
+    console.log('Assigning user as admin for association:', newAssociation.id);
+    
+    const { error: roleError } = await supabase
+      .from('association_users')
+      .insert({
+        association_id: newAssociation.id,
+        user_id: user.id,
+        role: 'admin'
+      });
+
+    if (roleError) {
+      console.error('Error setting user as association admin:', roleError);
+      // We don't throw here, we just warn the user
+      toast.warning('Created association but failed to set you as admin');
+    } else {
+      console.log('User successfully assigned as admin');
     }
 
     return newAssociation;
   } catch (error) {
     console.error('Error in createAssociation:', error);
-    throw error; // Re-throw the error so it can be handled by the mutation
+    throw error; // Re-throw the error so it can be handled by the caller
   }
 };
 
