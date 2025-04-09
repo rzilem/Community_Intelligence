@@ -198,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAuthenticated = !!user;
 
-  const contextValue = {
+  const contextValue: AuthContextType = {
     user,
     profile,
     session,
@@ -206,6 +206,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     loading,
+    isLoading: loading,
+    userRole,
+    userAssociations,
+    currentAssociation,
+    isAdmin,
+    isAuthenticated,
+    setCurrentAssociation,
     refreshProfile,
   };
 
