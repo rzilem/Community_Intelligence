@@ -7,10 +7,15 @@ type LeadColumn = {
   label: string;
   accessorKey?: keyof Lead;
   width?: number;
+  defaultVisible?: boolean;
 };
 
-export const useTableColumns = () => {
-  const defaultColumns: LeadColumn[] = [
+export const useTableColumns = (
+  columnDefinitions: LeadColumn[] = [], 
+  localStorageKey?: string
+) => {
+  // If no column definitions are provided, use these default columns
+  const defaultColumns: LeadColumn[] = columnDefinitions.length > 0 ? columnDefinitions : [
     { id: 'name', label: 'Name', accessorKey: 'name' },
     { id: 'email', label: 'Email', accessorKey: 'email' },
     { id: 'association_name', label: 'Association', accessorKey: 'association_name' },
@@ -22,15 +27,25 @@ export const useTableColumns = () => {
     { id: 'source', label: 'Source', accessorKey: 'source' },
     { id: 'created_at', label: 'Created', accessorKey: 'created_at' }
   ];
+  
+  // Get default visible columns from the definitions or use a default set
+  const defaultVisibleIds = columnDefinitions.length > 0 
+    ? columnDefinitions
+        .filter(col => col.defaultVisible !== false)
+        .map(col => col.id)
+    : [
+        'name', 'association_name', 'association_type', 'number_of_units', 
+        'city', 'status', 'source', 'created_at'
+      ];
 
   const [columns] = useState<LeadColumn[]>(defaultColumns);
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([
-    'name', 'association_name', 'association_type', 'number_of_units', 
-    'city', 'status', 'source', 'created_at'
-  ]);
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(defaultVisibleIds);
 
   const updateVisibleColumns = (columnIds: string[]) => {
     setVisibleColumnIds(columnIds);
+    if (localStorageKey) {
+      localStorage.setItem(localStorageKey, JSON.stringify(columnIds));
+    }
   };
 
   const reorderColumns = (startIndex: number, endIndex: number) => {
@@ -38,13 +53,16 @@ export const useTableColumns = () => {
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
     setVisibleColumnIds(result);
+    if (localStorageKey) {
+      localStorage.setItem(localStorageKey, JSON.stringify(result));
+    }
   };
 
   const resetToDefaults = () => {
-    setVisibleColumnIds([
-      'name', 'association_name', 'association_type', 'number_of_units', 
-      'city', 'status', 'source', 'created_at'
-    ]);
+    setVisibleColumnIds(defaultVisibleIds);
+    if (localStorageKey) {
+      localStorage.removeItem(localStorageKey);
+    }
   };
 
   return {
