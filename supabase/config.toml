@@ -63,3 +63,8 @@ port = 54321
 [functions.email-receiver]
 # This makes the function work without requiring authentication
 verify_jwt = false
+
+# Configure invoice receiver function - making it public
+[functions.invoice-receiver]
+# Disable JWT verification to make the function publicly accessible
+verify_jwt = false
