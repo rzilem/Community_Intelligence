@@ -1497,6 +1497,44 @@ export type Database = {
         Args: { association_uuid: string }
         Returns: boolean
       }
+      create_association_with_admin: {
+        Args: {
+          p_name: string
+          p_address?: string
+          p_contact_email?: string
+          p_city?: string
+          p_state?: string
+          p_zip?: string
+          p_phone?: string
+          p_property_type?: string
+          p_total_units?: number
+        }
+        Returns: string
+      }
+      get_associations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          address: string | null
+          city: string | null
+          contact_email: string | null
+          country: string | null
+          created_at: string
+          description: string | null
+          fire_inspection_due: string | null
+          founded_date: string | null
+          id: string
+          insurance_expiration: string | null
+          is_archived: boolean | null
+          name: string
+          phone: string | null
+          property_type: string | null
+          state: string | null
+          total_units: number | null
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }[]
+      }
       get_next_tracking_number: {
         Args: Record<PropertyKey, never>
         Returns: number

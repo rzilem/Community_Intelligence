@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -27,16 +26,7 @@ export const useAssociations = () => {
     queryFn: async () => {
       try {
         console.log('Fetching associations, attempt:', retryCount + 1);
-        const data = await fetchAllAssociations();
-        
-        // If the main query returns data, just return it
-        if (data && data.length > 0) {
-          return data;
-        }
-        
-        // If data is empty, try the fallback method
-        console.log('Main query returned no data, trying fallback...');
-        return await fetchAssociationsViaUserMemberships();
+        return await fetchAllAssociations();
       } catch (error) {
         console.error('Error in associations query:', error);
         
@@ -120,7 +110,8 @@ export const useAssociations = () => {
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
-        toast.success(`Association "${newAssociation.name}" created successfully`);
+        // No need for a toast here as the service already shows one
+        
         // Force refetch to ensure we get the latest data
         queryClient.invalidateQueries({ queryKey: ['associations'] });
         setRetryCount(prev => prev + 1);
