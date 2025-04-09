@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
@@ -10,7 +11,9 @@ export const fetchAllAssociations = async () => {
   try {
     // Use the security definer function to avoid RLS recursion
     const { data, error } = await supabase
-      .rpc('get_associations');
+      .from('associations')
+      .select('*')
+      .order('name');
 
     if (error) {
       console.error('Error fetching associations:', error);
