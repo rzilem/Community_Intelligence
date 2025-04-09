@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus, Settings } from 'lucide-react';
@@ -66,13 +65,11 @@ const Proposals = () => {
       description="Create and manage business proposals for potential clients."
       actions={
         <div className="flex space-x-2">
-          <Button 
-            variant="outline"
-            as={Link}
-            to="/lead-management/templates"
-          >
-            <Settings className="mr-2 h-4 w-4" /> Manage Templates
-          </Button>
+          <Link to="/lead-management/templates">
+            <Button variant="outline">
+              <Settings className="mr-2 h-4 w-4" /> Manage Templates
+            </Button>
+          </Link>
           <Button onClick={handleCreateProposal}>
             <Plus className="mr-2 h-4 w-4" /> Create Proposal
           </Button>
