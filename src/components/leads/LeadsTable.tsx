@@ -1,28 +1,14 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lead } from '@/types/lead-types';
 import { renderLeadTableCell } from './lead-table-utils';
 import { LeadColumn } from '@/hooks/leads/useTableColumns';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Eye, Pencil, Trash2, CheckCircle } from 'lucide-react';
 import LeadTablePagination from './LeadTablePagination';
 import LeadDetailDialog from './LeadDetailDialog';
-
 interface LeadsTableProps {
   leads: Lead[];
   isLoading?: boolean;
@@ -31,7 +17,6 @@ interface LeadsTableProps {
   onDeleteLead: (id: string) => void;
   onUpdateLeadStatus: (id: string, status: Lead['status']) => void;
 }
-
 const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   isLoading,
@@ -43,51 +28,38 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   const navigate = useNavigate();
   const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
-
   const handleViewDetails = (lead: Lead) => {
     setSelectedLead(lead);
     setIsDetailOpen(true);
   };
-
   const handleEditLead = (lead: Lead) => {
     navigate(`/lead-management/leads/${lead.id}`);
   };
-
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading leads...</div>;
   }
-
-  return (
-    <div className="rounded-md border">
+  return <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             {visibleColumnIds.map(columnId => {
-              const column = columns.find(col => col.id === columnId);
-              return (
-                <TableHead key={columnId} className="whitespace-nowrap">
+            const column = columns.find(col => col.id === columnId);
+            return <TableHead key={columnId} className="">
                   {column?.label}
-                </TableHead>
-              );
-            })}
+                </TableHead>;
+          })}
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {leads.length === 0 ? (
-            <TableRow>
+          {leads.length === 0 ? <TableRow>
               <TableCell colSpan={visibleColumnIds.length + 1} className="text-center py-8 text-muted-foreground">
                 No leads found.
               </TableCell>
-            </TableRow>
-          ) : (
-            leads.map(lead => (
-              <TableRow key={lead.id}>
-                {visibleColumnIds.map(columnId => (
-                  <TableCell key={`${lead.id}-${columnId}`}>
+            </TableRow> : leads.map(lead => <TableRow key={lead.id}>
+                {visibleColumnIds.map(columnId => <TableCell key={`${lead.id}-${columnId}`}>
                     {renderLeadTableCell(lead, columnId, columns)}
-                  </TableCell>
-                ))}
+                  </TableCell>)}
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -108,38 +80,21 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                         <CheckCircle className="mr-2 h-4 w-4" />
                         Mark as Qualified
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="text-destructive"
-                        onClick={() => onDeleteLead(lead.id)}
-                      >
+                      <DropdownMenuItem className="text-destructive" onClick={() => onDeleteLead(lead.id)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Lead
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-              </TableRow>
-            ))
-          )}
+              </TableRow>)}
         </TableBody>
       </Table>
-      {leads.length > 0 && (
-        <div className="border-t p-2 flex justify-center">
-          <LeadTablePagination 
-            totalPages={5} 
-            currentPage={1} 
-            onPageChange={() => {}} 
-          />
-        </div>
-      )}
+      {leads.length > 0 && <div className="border-t p-2 flex justify-center">
+          <LeadTablePagination totalPages={5} currentPage={1} onPageChange={() => {}} />
+        </div>}
       
-      <LeadDetailDialog 
-        lead={selectedLead} 
-        open={isDetailOpen} 
-        onOpenChange={setIsDetailOpen} 
-      />
-    </div>
-  );
+      <LeadDetailDialog lead={selectedLead} open={isDetailOpen} onOpenChange={setIsDetailOpen} />
+    </div>;
 };
-
 export default LeadsTable;
