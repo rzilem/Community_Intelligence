@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -15,7 +14,7 @@ export const useAssociations = () => {
   const queryClient = useQueryClient();
   const [retryCount, setRetryCount] = useState(0);
   
-  // Get all associations
+  // Get all associations with better error handling
   const { 
     data: associations = [], 
     isLoading, 
@@ -24,14 +23,17 @@ export const useAssociations = () => {
   } = useQuery({
     queryKey: ['associations', retryCount],
     queryFn: fetchAllAssociations,
-    // Add retry logic
-    retry: 2,
+    retry: 3,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
+    onError: (error: Error) => {
+      console.error('Error fetching associations:', error);
+      toast.error('Failed to load associations. Please try refreshing.');
+    }
   });
   
   // Auto-retry if we get back an empty list but there should be data
   useEffect(() => {
-    if (!isLoading && associations.length === 0 && retryCount < 3) {
+    if (!isLoading && associations.length === 0 && retryCount < 3 && !error) {
       const timer = setTimeout(() => {
         console.log(`Auto-retrying association fetch (attempt ${retryCount + 1})...`);
         setRetryCount(prev => prev + 1);
@@ -39,7 +41,7 @@ export const useAssociations = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [associations, isLoading, retryCount]);
+  }, [associations, isLoading, retryCount, error]);
   
   // Create a new association
   const createMutation = useMutation({
@@ -103,6 +105,7 @@ export const useAssociations = () => {
   };
   
   const manuallyRefresh = () => {
+    toast.info('Refreshing associations...');
     setRetryCount(prev => prev + 1);
   };
   

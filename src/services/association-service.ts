@@ -1,16 +1,16 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
 
 /**
- * Fetches all available associations
+ * Fetches all available associations with improved error handling
  */
 export const fetchAllAssociations = async () => {
+  console.log('Fetching all associations...');
   try {
     let data;
     
-    // Try to fetch associations directly
+    // Attempt to fetch with primary method
     try {
       const { data: associations, error } = await supabase
         .from('associations')
@@ -18,10 +18,11 @@ export const fetchAllAssociations = async () => {
         .order('name');
 
       if (error) {
-        console.error('Error fetching associations:', error);
+        console.error('Error in primary fetch method:', error);
         throw error;
       }
       
+      console.log(`Primary fetch successful, got ${associations?.length || 0} associations`);
       data = associations;
     } catch (primaryError) {
       console.error('Primary fetch method failed:', primaryError);
@@ -43,16 +44,14 @@ export const fetchAllAssociations = async () => {
         console.log('Fallback fetch succeeded with', data?.length || 0, 'records');
       } catch (fallbackFetchError) {
         console.error('All fetch methods failed:', fallbackFetchError);
-        toast.error('Error loading associations. Please try refreshing the page.');
-        return [];
+        throw new Error('Unable to fetch associations after multiple attempts');
       }
     }
 
     return data || [];
   } catch (error) {
     console.error('Error in fetchAllAssociations:', error);
-    toast.error('Failed to load associations. Please try again later.');
-    return [];
+    throw error;
   }
 };
 

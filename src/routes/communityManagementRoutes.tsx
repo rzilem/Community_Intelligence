@@ -2,7 +2,7 @@
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import CommunityManagement from "@/pages/community-management/CommunityManagement";
-import Properties from "@/pages/Properties";
+import Associations from "@/pages/Associations";
 import BidRequests from "@/pages/community-management/BidRequests";
 import CompliancePage from "@/pages/Compliance";
 import ResidentListPage from "@/pages/residents/ResidentListPage";
@@ -17,7 +17,11 @@ export const communityManagementRoutes: RouteObject[] = [
   },
   {
     path: "/properties",
-    element: <RequireAuth><Properties /></RequireAuth>
+    element: <RequireAuth><Associations /></RequireAuth>
+  },
+  {
+    path: "/associations",
+    element: <RequireAuth><Associations /></RequireAuth>
   },
   {
     path: "/homeowners",

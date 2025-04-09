@@ -56,7 +56,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       path: '/community-management', 
       icon: Building,
       submenu: [
-        { name: 'Properties', path: '/properties', icon: Building },
+        { name: 'Associations', path: '/associations', icon: Network },
         { name: 'Homeowners', path: '/homeowners', icon: Users2 },
         { name: 'Compliance', path: '/compliance', icon: Shield },
         { name: 'Communications', path: '/communications', icon: MessageSquare },

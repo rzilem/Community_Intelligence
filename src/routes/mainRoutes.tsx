@@ -2,7 +2,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
-import Properties from '@/pages/Properties';
 import NotFound from '@/pages/NotFound';
 import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
@@ -20,7 +19,7 @@ export const mainRoutes = [
   },
   {
     path: '/properties',
-    element: <Properties />
+    element: <Navigate to="/associations" />
   },
   {
     path: '/residents',
