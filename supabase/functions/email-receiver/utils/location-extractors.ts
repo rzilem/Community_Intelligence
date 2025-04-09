@@ -3,6 +3,8 @@
  * Helper functions for extracting location information from email content
  */
 
+import { extractCityFromAddress, cleanStreetAddress } from './address-extractors.ts';
+
 export interface LocationInfo {
   address?: string;
   city?: string;
@@ -10,83 +12,52 @@ export interface LocationInfo {
   zip?: string;
 }
 
-// Helper function to extract address information
+// Helper function to extract location information
 export function extractLocationInfo(content: string): LocationInfo {
   const result: LocationInfo = {};
   
-  // Extract street address
-  extractAddress(content, result);
-  
-  // Try to extract city, state, zip as a pattern first
-  const extracted = extractCityStateZipPattern(content);
-  if (extracted) {
-    Object.assign(result, extracted);
-  } else {
-    // If pattern matching fails, try individual extractions
-    extractCity(content, result);
-    extractState(content, result);
-    extractZip(content, result);
-  }
-  
-  return result;
-}
-
-// Extract the street address
-function extractAddress(content: string, result: LocationInfo): void {
+  // Extract full address using pattern matching
   const addressPatterns = [
-    /Property Address[:\s]*([^<>\n\r]+)/i,
-    /Address[:\s]*([^<>\n\r]+)/i,
-    /Location[:\s]*([^<>\n\r]+)/i
+    /[Aa]ddress[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/,
+    /[Ll]ocation[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/,
+    /[Pp]roperty\s*[Aa]ddress[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/
   ];
   
   for (const pattern of addressPatterns) {
     const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.address = match[1].trim();
+    if (match && match[1]) {
+      const rawAddress = match[1].trim();
+      result.address = cleanStreetAddress(rawAddress);
+      
+      // Try to extract city from address if we found one
+      if (result.address) {
+        result.city = extractCityFromAddress(rawAddress);
+      }
       break;
     }
   }
-}
-
-// Try to extract city, state, zip as a unified pattern
-function extractCityStateZipPattern(content: string): LocationInfo | null {
-  // Look for city, state, zip pattern like "Austin, TX 78724"
-  const cityStateZipPattern = /([A-Za-z\s]+),\s*([A-Z]{2})\s*(\d{5}(?:-\d{4})?)/i;
-  const cityStateZipMatch = content.match(cityStateZipPattern);
   
-  if (cityStateZipMatch) {
-    return {
-      city: cityStateZipMatch[1].trim(),
-      state: cityStateZipMatch[2].trim(),
-      zip: cityStateZipMatch[3].trim()
-    };
-  }
-  
-  return null;
-}
-
-// Extract city information
-function extractCity(content: string, result: LocationInfo): void {
-  const cityPatterns = [
-    /City[:\s]*([^<>\n\r,.]+)/i,
-    /Location[:\s].*?City[:\s]*([^<>\n\r,.]+)/i
-  ];
-  
-  for (const pattern of cityPatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.city = match[1].trim();
-      break;
+  // Extract city specifically if not extracted from address
+  if (!result.city) {
+    const cityPatterns = [
+      /[Cc]ity[:\s]*([^,\n<]+)/,
+      /[Ll]ocation[:\s]*([^,\n<]+)/,
+      /[Tt]own[:\s]*([^,\n<]+)/
+    ];
+    
+    for (const pattern of cityPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.city = match[1].trim();
+        break;
+      }
     }
   }
-}
-
-// Extract state information
-function extractState(content: string, result: LocationInfo): void {
+  
+  // Extract state
   const statePatterns = [
-    /State[:\s]*([^<>\n\r,.]+)/i,
-    /Location[:\s].*?State[:\s]*([^<>\n\r,.]+)/i,
-    /,\s*([A-Z]{2})\s*\d{5}/i // Match state in "City, ST 12345" format
+    /[Ss]tate[:\s]*([^,\n<]+)/,
+    /([A-Z]{2})(?:\s+\d{5})/
   ];
   
   for (const pattern of statePatterns) {
@@ -96,22 +67,34 @@ function extractState(content: string, result: LocationInfo): void {
       break;
     }
   }
-}
-
-// Extract zip code
-function extractZip(content: string, result: LocationInfo): void {
+  
+  // Default state to TX if not found and city is in Texas
+  if (!result.state && result.city) {
+    const texasCities = [
+      'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi',
+      'Plano', 'Laredo', 'Lubbock', 'Garland', 'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville',
+      'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock'
+    ];
+    
+    if (texasCities.some(city => result.city && result.city.includes(city))) {
+      result.state = "TX";
+    }
+  }
+  
+  // Extract zip code
   const zipPatterns = [
-    /ZIP[:\s]*(\d{5}(?:-\d{4})?)/i,
-    /Postal Code[:\s]*(\d{5}(?:-\d{4})?)/i,
-    /Zip Code[:\s]*(\d{5}(?:-\d{4})?)/i,
-    /[A-Z]{2}\s*(\d{5}(?:-\d{4})?)/i // Match ZIP in "ST 12345" format
+    /[Zz]ip[:\s]*(\d{5}(?:-\d{4})?)/,
+    /[Zz]ip\s*[Cc]ode[:\s]*(\d{5}(?:-\d{4})?)/,
+    /(\d{5}(?:-\d{4})?)(?:\s|$)/
   ];
   
   for (const pattern of zipPatterns) {
     const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.zip = match[1].trim();
+    if (match && match[1]) {
+      result.zip = match[1];
       break;
     }
   }
+  
+  return result;
 }

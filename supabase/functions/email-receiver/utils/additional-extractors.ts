@@ -7,25 +7,17 @@ export interface AdditionalInfo {
   notes?: string;
 }
 
-// Helper function to extract additional information/notes
+// Helper function to extract additional information
 export function extractAdditionalInfo(content: string): AdditionalInfo {
   const result: AdditionalInfo = {};
   
-  // Extract notes/additional requirements
-  extractNotes(content, result);
-  
-  return result;
-}
-
-// Extract notes and requirements
-function extractNotes(content: string, result: AdditionalInfo): void {
+  // Extract notes or additional requirements
   const notesPatterns = [
-    /Additional Information[:\s]*([^<>\n\r]+)/i,
-    /Additional Information or requirements[:\s]*([^<>\n\r]+)/i,
-    /Notes[:\s]*([^<>\n\r]+)/i,
-    /Comments[:\s]*([^<>\n\r]+)/i,
-    /Requirements[:\s]*([^<>\n\r]+)/i,
-    /Additional Requirements[:\s]*([^<>\n\r]+)/i
+    /[Nn]ote(?:s)?[:\s]*([^<\n]{10,})/,
+    /[Aa]dditional\s*(?:[Ii]nfo|[Ii]nformation|[Rr]equirements)[:\s]*([^<\n]{10,})/,
+    /[Cc]omments[:\s]*([^<\n]{10,})/,
+    /[Rr]equirements[:\s]*([^<\n]{10,})/,
+    /[Ss]pecial\s*[Ii]nstructions[:\s]*([^<\n]{10,})/
   ];
   
   for (const pattern of notesPatterns) {
@@ -35,4 +27,6 @@ function extractNotes(content: string, result: AdditionalInfo): void {
       break;
     }
   }
+  
+  return result;
 }

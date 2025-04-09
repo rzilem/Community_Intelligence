@@ -1,6 +1,11 @@
 
-import { extractContactInfo, extractCompanyInfo } from "../../utils/contact-extractors.ts";
-import { extractEmailFromHeader, extractNameFromHeader, isValidEmail } from "../../utils/email-helpers.ts";
+import { 
+  extractContactInfo, 
+  extractCompanyInfo, 
+  isValidEmail,
+  extractNameFromHeader,
+  extractEmailFromHeader 
+} from "../../utils/contact-extractors.ts";
 
 /**
  * Extract and process all contact-related information from the email

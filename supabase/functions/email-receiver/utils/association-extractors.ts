@@ -9,74 +9,23 @@ export interface AssociationInfo {
   units?: number;
 }
 
-// Association type constants
-export const ASSOCIATION_TYPES = {
-  HOA: 'HOA',
-  CONDO: 'Condo'
-};
+// Common association types to match in text
+export const ASSOCIATION_TYPES = [
+  "condo", "condominium", "townhome", "townhouse", "single family", 
+  "hoa", "homeowners", "commercial", "community", "residential", 
+  "apartment", "co-op", "cooperative"
+];
 
-// Helper function to extract association information from email content
+// Helper function to extract association information
 export function extractAssociationInfo(content: string): AssociationInfo {
   const result: AssociationInfo = {};
   
-  // Extract association type with simplified approach
-  extractAssociationType(content, result);
-  
   // Extract association name
-  extractAssociationName(content, result);
-  
-  // Extract number of units
-  extractUnitCount(content, result);
-  
-  return result;
-}
-
-// Extract the association type (HOA or Condo)
-function extractAssociationType(content: string, result: AssociationInfo): void {
-  // First check for specific type mentions
-  if (/HOA/i.test(content)) {
-    result.type = ASSOCIATION_TYPES.HOA;
-    return;
-  }
-  
-  if (/Condo Association|Condominium/i.test(content)) {
-    result.type = ASSOCIATION_TYPES.CONDO;
-    return;
-  }
-  
-  // If type still not found, try more general patterns
-  const typePatterns = [
-    /Association Type[:\s]*([^<>\n\r,.]+)/i,
-    /Type of Association[:\s]*([^<>\n\r,.]+)/i,
-    /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
-    /The property is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
-    /It is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
-  ];
-  
-  for (const pattern of typePatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      const type = match[1].trim().toLowerCase();
-      
-      // Determine if HOA or Condo based on the matched text
-      if (type.includes('hoa') || type.includes('home') || type.includes('single-family')) {
-        result.type = ASSOCIATION_TYPES.HOA;
-      } else if (type.includes('condo') || type.includes('townhome') || type.includes('town')) {
-        result.type = ASSOCIATION_TYPES.CONDO;
-      }
-      
-      if (result.type) return;
-    }
-  }
-}
-
-// Extract the association name
-function extractAssociationName(content: string, result: AssociationInfo): void {
   const namePatterns = [
-    /Name of Association[:\s]*([^<>\n\r]+)/i,
-    /Association Name[:\s]*([^<>\n\r]+)/i,
-    /HOA Name[:\s]*([^<>\n\r]+)/i,
-    /Community Name[:\s]*([^<>\n\r]+)/i
+    /[Aa]ssociation\s*[Nn]ame[:\s]*([^,\n<]+)/,
+    /[Nn]ame\s*of\s*[Aa]ssociation[:\s]*([^,\n<]+)/,
+    /[Cc]ommunity\s*[Nn]ame[:\s]*([^,\n<]+)/,
+    /[Hh][Oo][Aa]\s*[Nn]ame[:\s]*([^,\n<]+)/
   ];
   
   for (const pattern of namePatterns) {
@@ -86,28 +35,56 @@ function extractAssociationName(content: string, result: AssociationInfo): void 
       break;
     }
   }
-}
-
-// Extract the number of units
-function extractUnitCount(content: string, result: AssociationInfo): void {
+  
+  // Extract association type
+  const typePatterns = [
+    /[Aa]ssociation\s*[Tt]ype[:\s]*([^,\n<]+)/,
+    /[Tt]ype\s*of\s*[Aa]ssociation[:\s]*([^,\n<]+)/,
+    /[Pp]roperty\s*[Tt]ype[:\s]*([^,\n<]+)/
+  ];
+  
+  for (const pattern of typePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.type = match[1].trim().toLowerCase();
+      break;
+    }
+  }
+  
+  // If no explicit type pattern found, try to infer from context
+  if (!result.type) {
+    const contentLower = content.toLowerCase();
+    for (const type of ASSOCIATION_TYPES) {
+      if (contentLower.includes(type)) {
+        result.type = type;
+        break;
+      }
+    }
+  }
+  
+  // Extract number of units
   const unitsPatterns = [
-    /Number of Homes or Units[:\s]*([0-9,]+)/i,
-    /Units[:\s]*([0-9,]+)/i,
-    /Homes[:\s]*([0-9,]+)/i,
-    /Properties[:\s]*([0-9,]+)/i,
-    /Total Units[:\s]*([0-9,]+)/i
+    /(\d+)\s*units/i,
+    /(\d+)\s*homes/i,
+    /(\d+)\s*properties/i,
+    /(\d+)\s*condos/i,
+    /(\d+)\s*townhomes/i,
+    /(\d+)\s*townhouses/i,
+    /(\d+)\s*residences/i,
+    /number\s*of\s*units[:\s]*(\d+)/i,
+    /unit\s*count[:\s]*(\d+)/i,
+    /units[:\s]*(\d+)/i
   ];
   
   for (const pattern of unitsPatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
-      // Remove commas from numbers like "1,525"
-      const cleanNumber = match[1].replace(/,/g, '');
-      const units = parseInt(cleanNumber, 10);
-      if (!isNaN(units)) {
-        result.units = units;
+      result.units = parseInt(match[1], 10);
+      if (!isNaN(result.units)) {
         break;
       }
     }
   }
+  
+  return result;
 }

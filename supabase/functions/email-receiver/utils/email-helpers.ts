@@ -4,12 +4,16 @@
  */
 
 // Import all specialized extractors
-import { extractEmailFromHeader, extractNameFromHeader, isValidEmail, extractContactInfo, extractCompanyInfo } from './contact-extractors.ts';
+import { extractEmailFromHeader, isValidEmail } from './email-extractors.ts';
+import { extractNameFromHeader } from './name-extractors.ts';
+import { extractContactInfo } from './contact-info-extractors.ts';
+import { extractCompanyInfo } from './company-extractors.ts';
 import { extractAssociationInfo, AssociationInfo, ASSOCIATION_TYPES } from './association-extractors.ts';
 import { extractLocationInfo, LocationInfo } from './location-extractors.ts';
 import { extractAdditionalInfo, AdditionalInfo } from './additional-extractors.ts';
+import { extractCityFromAddress, cleanStreetAddress } from './address-extractors.ts';
 
-// Re-export all the utility functions for backward compatibility
+// Re-export all the utility functions
 export {
   extractEmailFromHeader,
   extractNameFromHeader,
@@ -19,7 +23,9 @@ export {
   extractAssociationInfo,
   ASSOCIATION_TYPES,
   extractLocationInfo,
-  extractAdditionalInfo
+  extractAdditionalInfo,
+  extractCityFromAddress,
+  cleanStreetAddress
 };
 
 // Combined helper that extracts all information in one function
