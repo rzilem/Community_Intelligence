@@ -65,7 +65,7 @@ const Associations = () => {
         phone: formData.phone,
         contact_email: formData.email,
         property_type: formData.type,
-        total_units: formData.units > 0 ? formData.units : undefined
+        total_units: formData.units ? Number(formData.units) : undefined
       };
       
       await createAssociation(associationData);

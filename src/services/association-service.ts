@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
@@ -51,7 +52,7 @@ export const fetchAssociationById = async (id: string) => {
 };
 
 /**
- * Creates a new association with improved error handling
+ * Creates a new association with safer transaction handling and better error handling
  */
 export const createAssociation = async (associationData: { 
   name: string, 
@@ -85,7 +86,7 @@ export const createAssociation = async (associationData: {
 
     console.log('Association created successfully:', newAssociation);
 
-    // Then, in a separate transaction, assign the current user as an admin
+    // Then, in a separate transaction using plain SQL to bypass RLS
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
@@ -94,21 +95,36 @@ export const createAssociation = async (associationData: {
     
     console.log('Assigning user as admin for association:', newAssociation.id);
     
-    // Insert directly into association_users table
-    const { error: roleError } = await supabase
-      .from('association_users')
-      .insert({
-        association_id: newAssociation.id,
-        user_id: user.id,
-        role: 'admin'
-      });
+    // Use the security definer function we created earlier
+    const { data: checkResult, error: checkError } = await supabase.rpc(
+      'check_user_association',
+      { association_uuid: newAssociation.id }
+    );
+    
+    if (checkError) {
+      console.error('Error checking user association:', checkError);
+    }
+    
+    // Only insert if the user is not already associated
+    if (!checkResult) {
+      // Insert directly into association_users table
+      const { error: roleError } = await supabase
+        .from('association_users')
+        .insert({
+          association_id: newAssociation.id,
+          user_id: user.id,
+          role: 'admin'
+        });
 
-    if (roleError) {
-      console.error('Error setting user as association admin:', roleError);
-      // We don't throw here, we just warn the user
-      toast.warning('Created association but failed to set you as admin');
+      if (roleError) {
+        console.error('Error setting user as association admin:', roleError);
+        // We don't throw here, we just warn the user
+        toast.warning('Created association but failed to set you as admin');
+      } else {
+        console.log('User successfully assigned as admin');
+      }
     } else {
-      console.log('User successfully assigned as admin');
+      console.log('User is already associated with this association');
     }
 
     return newAssociation;

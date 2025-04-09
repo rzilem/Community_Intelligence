@@ -16,7 +16,7 @@ export const useAssociations = () => {
   const queryClient = useQueryClient();
   const [retryCount, setRetryCount] = useState(0);
   
-  // Get all associations with better error handling
+  // Get all associations with better error handling and fallback mechanisms
   const { 
     data: associations = [], 
     isLoading, 
@@ -26,54 +26,82 @@ export const useAssociations = () => {
     queryKey: ['associations', retryCount],
     queryFn: async () => {
       try {
+        console.log('Fetching associations, attempt:', retryCount + 1);
         const data = await fetchAllAssociations();
-        if (data.length === 0) {
-          // If data is empty, try to check if we can retrieve data through RPC as a fallback
-          try {
-            console.log('Trying fallback method to fetch associations...');
-            const { data: userAssociations, error: rpcError } = await supabase
-              .from('association_users')
-              .select('association_id')
-              .eq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
-            
-            if (rpcError) {
-              console.error('Fallback query error:', rpcError);
-              return data; // Return original empty array if query also fails
-            }
-            
-            if (Array.isArray(userAssociations) && userAssociations.length > 0) {
-              console.log('Found user associations:', userAssociations);
-              const associationIds = userAssociations.map(ua => ua.association_id);
-              
-              const { data: associationsData, error: associationsError } = await supabase
-                .from('associations')
-                .select('*')
-                .in('id', associationIds);
-              
-              if (associationsError) {
-                console.error('Error fetching associations by IDs:', associationsError);
-                return data;
-              }
-              
-              console.log('Fallback method successful, retrieved:', associationsData?.length || 0, 'associations');
-              return associationsData || [];
-            }
-            
-            return data; // Return original data if no user associations found
-          } catch (rpcEx) {
-            console.error('Exception in fallback method:', rpcEx);
-            return data; // Return original empty array on any exception
-          }
+        
+        // If the main query returns data, just return it
+        if (data && data.length > 0) {
+          return data;
         }
-        return data;
+        
+        // If data is empty, try the fallback method
+        console.log('Main query returned no data, trying fallback...');
+        return await fetchAssociationsViaUserMemberships();
       } catch (error) {
         console.error('Error in associations query:', error);
-        throw error;
+        
+        // On error, try the fallback method
+        console.log('Error in main query, trying fallback...');
+        try {
+          return await fetchAssociationsViaUserMemberships();
+        } catch (fallbackError) {
+          console.error('Fallback method also failed:', fallbackError);
+          throw error; // Re-throw the original error if fallback also fails
+        }
       }
     },
     retry: 3,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
   });
+  
+  // Helper function to fetch associations via user memberships
+  const fetchAssociationsViaUserMemberships = async () => {
+    try {
+      console.log('Trying to fetch associations via user memberships...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.log('No authenticated user found');
+        return [];
+      }
+      
+      // First get the association IDs the user is a member of
+      const { data: userAssociations, error: membershipError } = await supabase
+        .from('association_users')
+        .select('association_id')
+        .eq('user_id', user.id);
+      
+      if (membershipError) {
+        console.error('Error fetching user association memberships:', membershipError);
+        return [];
+      }
+      
+      if (!userAssociations || userAssociations.length === 0) {
+        console.log('User is not a member of any associations');
+        return [];
+      }
+      
+      console.log(`User is a member of ${userAssociations.length} associations`);
+      const associationIds = userAssociations.map(ua => ua.association_id);
+      
+      // Then fetch the actual associations by those IDs
+      const { data: associationsData, error: associationsError } = await supabase
+        .from('associations')
+        .select('*')
+        .in('id', associationIds);
+      
+      if (associationsError) {
+        console.error('Error fetching associations by IDs:', associationsError);
+        return [];
+      }
+      
+      console.log(`Successfully fetched ${associationsData?.length || 0} associations via memberships`);
+      return associationsData || [];
+    } catch (error) {
+      console.error('Error in fetchAssociationsViaUserMemberships:', error);
+      return [];
+    }
+  };
   
   // Auto-retry if we get back an empty list but there should be data
   useEffect(() => {
