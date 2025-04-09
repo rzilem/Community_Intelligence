@@ -1084,6 +1084,140 @@ export type Database = {
           },
         ]
       }
+      proposal_attachments: {
+        Row: {
+          content_type: string
+          created_at: string
+          id: string
+          name: string
+          proposal_id: string | null
+          size: number | null
+          type: string
+          url: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string
+          id?: string
+          name: string
+          proposal_id?: string | null
+          size?: number | null
+          type: string
+          url: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string
+          id?: string
+          name?: string
+          proposal_id?: string | null
+          size?: number | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_attachments_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposal_templates: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          description: string | null
+          folder_id: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          description?: string | null
+          folder_id?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          description?: string | null
+          folder_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          amount: number
+          content: string
+          created_at: string
+          id: string
+          lead_id: string
+          name: string
+          responded_date: string | null
+          sent_date: string | null
+          status: string
+          template_id: string | null
+          updated_at: string
+          viewed_date: string | null
+        }
+        Insert: {
+          amount?: number
+          content: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          name: string
+          responded_date?: string | null
+          sent_date?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          viewed_date?: string | null
+        }
+        Update: {
+          amount?: number
+          content?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          name?: string
+          responded_date?: string | null
+          sent_date?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string
+          viewed_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "proposal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residents: {
         Row: {
           created_at: string
@@ -1139,6 +1273,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_popular: boolean | null
+          is_template: boolean
+          name: string
+          status: string
+          steps: Json
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_popular?: boolean | null
+          is_template?: boolean
+          name: string
+          status: string
+          steps: Json
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_popular?: boolean | null
+          is_template?: boolean
+          name?: string
+          status?: string
+          steps?: Json
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workflows: {
+        Row: {
+          association_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_template: boolean
+          name: string
+          status: string
+          steps: Json
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          name: string
+          status: string
+          steps: Json
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          name?: string
+          status?: string
+          steps?: Json
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

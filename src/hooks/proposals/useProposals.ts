@@ -18,13 +18,15 @@ export const useProposals = (leadId?: string) => {
   } = useQuery({
     queryKey,
     queryFn: async (): Promise<Proposal[]> => {
-      let query = supabase.from('proposals').select('*');
+      let query = supabase.from('proposals');
       
       if (leadId) {
         query = query.eq('lead_id', leadId);
       }
       
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query
+        .select('*')
+        .order('created_at', { ascending: false });
       
       if (error) {
         throw new Error(error.message);
@@ -49,7 +51,7 @@ export const useProposals = (leadId?: string) => {
         })
       );
       
-      return proposalsWithAttachments;
+      return proposalsWithAttachments as Proposal[];
     }
   });
 
@@ -92,7 +94,7 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      return proposal;
+      return proposal as Proposal;
     },
     onSuccess: () => {
       toast.success('Proposal created successfully');
@@ -158,7 +160,7 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      return updatedProposal;
+      return updatedProposal as Proposal;
     },
     onSuccess: () => {
       toast.success('Proposal updated successfully');
@@ -267,9 +269,9 @@ export const useProposals = (leadId?: string) => {
     }
     
     return {
-      ...proposal,
+      ...(proposal as Proposal),
       attachments: attachments || []
-    } as Proposal;
+    };
   }, []);
 
   return {

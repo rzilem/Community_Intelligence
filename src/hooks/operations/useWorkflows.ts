@@ -164,7 +164,8 @@ export const useWorkflows = () => {
           id: 'step-1',
           name: 'First Step',
           description: 'The first step in the custom workflow',
-          order: 0
+          order: 0,
+          isComplete: false
         }
       ]
     });
