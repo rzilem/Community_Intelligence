@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { ResidentWithProfile } from '@/types/app-types';
@@ -31,7 +30,7 @@ export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) 
   const profileImage = resident.user?.profile?.profile_image_url || '';
 
   const handleCardClick = () => {
-    navigate(`/residents/${resident.id}`);
+    navigate(`/homeowners/${resident.id}`);
   };
 
   return (
@@ -99,14 +98,14 @@ export const ResidentCard: React.FC<ResidentCardProps> = ({ resident, onEdit }) 
       </CardContent>
       <CardFooter className="px-4 py-2 border-t flex justify-between">
         <Link 
-          to={`/residents/${resident.id}/communications`}
+          to={`/homeowners/${resident.id}/communications`}
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
           onClick={(e) => e.stopPropagation()}
         >
           Message
         </Link>
         <Link 
-          to={`/residents/${resident.id}`}
+          to={`/homeowners/${resident.id}`}
           className="text-xs flex items-center text-primary hover:underline"
           onClick={(e) => e.stopPropagation()}
         >

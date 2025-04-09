@@ -14,7 +14,7 @@ const ResidentTable: React.FC<ResidentTableProps> = ({ residents }) => {
   const navigate = useNavigate();
 
   const handleViewResident = (id: string) => {
-    navigate(`/residents/${id}`);
+    navigate(`/homeowners/${id}`);
   };
 
   if (residents.length === 0) {

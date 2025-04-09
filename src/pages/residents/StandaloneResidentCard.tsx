@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Resident } from './resident-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,7 @@ const StandaloneResidentCard: React.FC<ResidentCardProps> = ({ resident }) => {
   };
 
   const handleViewResident = () => {
-    navigate(`/residents/${resident.id}`);
+    navigate(`/homeowners/${resident.id}`);
   };
 
   return (
