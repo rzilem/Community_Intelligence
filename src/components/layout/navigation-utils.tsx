@@ -163,7 +163,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Integrations', path: '/system/integrations', icon: Puzzle },
         { name: 'Settings', path: '/system/settings', icon: SlidersHorizontal },
         { name: 'Email Workflows', path: '/system/email-workflows', icon: MailCheck },
-        { name: 'Data Import & Export', path: '/system/data', icon: Download },
+        { name: 'Data Import & Export', path: '/system/import-export', icon: Download },
         { name: 'Workflow Schedule', path: '/system/workflow-schedule', icon: Clock },
         { name: 'Associations', path: '/system/associations', icon: Network },
         { name: 'Permissions', path: '/system/permissions', icon: Shield },

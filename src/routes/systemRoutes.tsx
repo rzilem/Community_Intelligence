@@ -34,6 +34,10 @@ export const systemRoutes: RouteObject[] = [
     element: <RequireAuth><DataImportExport /></RequireAuth>
   },
   {
+    path: "/system/data",
+    element: <RequireAuth><DataImportExport /></RequireAuth>
+  },
+  {
     path: "/system/associations",
     element: <RequireAuth><Associations /></RequireAuth>
   },

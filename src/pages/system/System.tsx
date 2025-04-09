@@ -54,7 +54,7 @@ const System = () => {
       title: 'Data Import & Export',
       icon: <Download className="h-5 w-5" />,
       description: 'Import and export data in various formats (CSV, Excel, JSON).',
-      link: '/system/data'
+      link: '/system/import-export'
     },
     {
       title: 'Workflow Schedule',
