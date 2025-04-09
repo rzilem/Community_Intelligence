@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
@@ -52,7 +51,9 @@ export const fetchAssociationById = async (id: string) => {
 };
 
 /**
- * Creates a new association with safer transaction handling and better error handling
+ * Creates a new association with a two-step process to avoid RLS recursion
+ * 1. First create the association
+ * 2. Then use an RPC function to add the user role separately
  */
 export const createAssociation = async (associationData: { 
   name: string, 
@@ -85,46 +86,32 @@ export const createAssociation = async (associationData: {
     }
 
     console.log('Association created successfully:', newAssociation);
+    
+    // Wait a moment to ensure the transaction is completed
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Then, in a separate transaction using plain SQL to bypass RLS
+    // Then use the RPC function to assign the user as admin
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
-      throw new Error('No authenticated user found');
-    }
-    
-    console.log('Assigning user as admin for association:', newAssociation.id);
-    
-    // Use the security definer function we created earlier
-    const { data: checkResult, error: checkError } = await supabase.rpc(
-      'check_user_association',
-      { association_uuid: newAssociation.id }
-    );
-    
-    if (checkError) {
-      console.error('Error checking user association:', checkError);
-    }
-    
-    // Only insert if the user is not already associated
-    if (!checkResult) {
-      // Insert directly into association_users table
-      const { error: roleError } = await supabase
-        .from('association_users')
-        .insert({
-          association_id: newAssociation.id,
-          user_id: user.id,
-          role: 'admin'
-        });
+    if (user) {
+      console.log('Assigning user as admin for association:', newAssociation.id);
+      
+      // Use assign_user_to_association RPC function
+      const { error: roleError } = await supabase.rpc(
+        'assign_user_to_association',
+        { 
+          p_association_id: newAssociation.id, 
+          p_user_id: user.id, 
+          p_role: 'admin' 
+        }
+      );
 
       if (roleError) {
         console.error('Error setting user as association admin:', roleError);
-        // We don't throw here, we just warn the user
         toast.warning('Created association but failed to set you as admin');
       } else {
         console.log('User successfully assigned as admin');
       }
-    } else {
-      console.log('User is already associated with this association');
     }
 
     return newAssociation;
