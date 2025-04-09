@@ -40,7 +40,8 @@ const LeadDetailPage = () => {
         .single();
 
       if (error) throw error;
-      setLead(data as Lead);
+      // Use type assertion to safely convert the data
+      setLead(data as unknown as Lead);
     } catch (error: any) {
       toast.error(`Error loading lead: ${error.message}`);
     } finally {

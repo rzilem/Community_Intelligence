@@ -7,13 +7,15 @@ interface PageTemplateProps {
   icon: React.ReactNode;
   description?: string;
   children?: React.ReactNode;
+  actions?: React.ReactNode; // Add support for actions prop
 }
 
 const PageTemplate: React.FC<PageTemplateProps> = ({ 
   title, 
   icon, 
   description = "This page is currently under development.",
-  children
+  children,
+  actions // Include actions in the destructuring
 }) => {
   return (
     <AppLayout>
@@ -23,7 +25,16 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
             {icon}
             <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           </div>
+          {actions && (
+            <div className="flex items-center">
+              {actions}
+            </div>
+          )}
         </div>
+        
+        {description && (
+          <p className="text-muted-foreground">{description}</p>
+        )}
 
         {!children ? (
           <div className="card">

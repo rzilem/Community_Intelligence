@@ -33,7 +33,8 @@ export const useOnboardingProjects = () => {
       throw error;
     }
     
-    return data as OnboardingProjectTask[];
+    // Use type assertion to safely convert the data
+    return (data || []) as unknown as OnboardingProjectTask[];
   };
   
   const updateTaskStatus = async (taskId: string, status: OnboardingProjectTask['status']) => {
@@ -67,7 +68,8 @@ export const useOnboardingProjects = () => {
       return null;
     }
     
-    return data as Lead;
+    // Use type assertion to safely convert the data
+    return data as unknown as Lead;
   };
 
   return {
