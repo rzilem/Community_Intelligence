@@ -7,6 +7,7 @@ import {
   extractAssociationInfo,
   extractContactInfo,
   extractCompanyInfo,
+  extractLocationInfo,
   extractAdditionalInfo
 } from "../utils/email-helpers.ts";
 
@@ -78,15 +79,20 @@ export async function processEmail(emailData: any) {
     
     if (companyInfo.company) lead.current_management = companyInfo.company;
     
-    // Extract additional information (notes, address, city, state, zip)
+    // Extract location information (address, city, state, zip)
+    const locationInfo = extractLocationInfo(content);
+    console.log("Location info extracted:", locationInfo);
+    
+    if (locationInfo.address) lead.street_address = locationInfo.address;
+    if (locationInfo.city) lead.city = locationInfo.city;
+    if (locationInfo.state) lead.state = locationInfo.state;
+    if (locationInfo.zip) lead.zip = locationInfo.zip;
+    
+    // Extract additional information/notes
     const additionalInfo = extractAdditionalInfo(content);
     console.log("Additional info extracted:", additionalInfo);
     
     if (additionalInfo.notes) lead.additional_requirements = additionalInfo.notes;
-    if (additionalInfo.address) lead.street_address = additionalInfo.address;
-    if (additionalInfo.city) lead.city = additionalInfo.city;
-    if (additionalInfo.state) lead.state = additionalInfo.state;
-    if (additionalInfo.zip) lead.zip = additionalInfo.zip;
     
     // Fallbacks for required fields
     
