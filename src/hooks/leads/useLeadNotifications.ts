@@ -16,7 +16,9 @@ export const useLeadNotifications = () => {
     {
       select: '*',
       order: { column: 'created_at', ascending: false },
-      filter: (query) => query.gt('created_at', lastCheckedTimestamp)
+      filter: [
+        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
+      ]
     }
   );
 
