@@ -6,49 +6,48 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import EmailCampaignList from '@/components/emails/EmailCampaignList';
 import EmailCampaignForm from '@/components/emails/EmailCampaignForm';
+import EmailTemplateList from '@/components/emails/EmailTemplateList';
+import EmailTemplateForm from '@/components/emails/EmailTemplateForm';
 import { useEmailCampaigns } from '@/hooks/emails/useEmailCampaigns';
-import { EmailCampaign } from '@/types/email-types';
+import { useEmailTemplates } from '@/hooks/emails/useEmailTemplates';
+import { EmailCampaign, EmailTemplate } from '@/types/email-types';
 import { toast } from 'sonner';
-import { Card, CardContent } from '@/components/ui/card';
 
 const EmailCampaigns = () => {
   const [activeTab, setActiveTab] = useState('campaigns');
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isCampaignFormOpen, setIsCampaignFormOpen] = useState(false);
+  const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState<EmailCampaign | null>(null);
+  const [currentTemplate, setCurrentTemplate] = useState<EmailTemplate | null>(null);
   
   const { createCampaign, updateCampaign } = useEmailCampaigns();
+  const { createTemplate, updateTemplate } = useEmailTemplates();
 
+  // Campaign handlers
   const handleCreateCampaign = () => {
     setCurrentCampaign(null);
-    setIsFormOpen(true);
+    setIsCampaignFormOpen(true);
   };
 
   const handleEditCampaign = (campaign: EmailCampaign) => {
     setCurrentCampaign(campaign);
-    setIsFormOpen(true);
+    setIsCampaignFormOpen(true);
   };
 
   const handleViewCampaign = (campaign: EmailCampaign) => {
     toast.info('Campaign analytics coming soon!');
   };
 
-  const handleDeleteCampaign = (campaignId: string) => {
-    // Delete is handled in the EmailCampaignList component
-  };
-
   const handleSendCampaign = (campaign: EmailCampaign) => {
     toast.success(`Campaign '${campaign.name}' will be sent to ${campaign.recipient_count} recipients.`);
-    // In a real implementation, this would update the campaign status and send emails
   };
 
   const handlePauseCampaign = (campaign: EmailCampaign) => {
     toast.success(`Campaign '${campaign.name}' has been paused.`);
-    // In a real implementation, this would update the campaign status
   };
 
   const handleSaveCampaign = async (data: Partial<EmailCampaign>, selectedLeadIds: string[]) => {
     try {
-      // In a real implementation, we'd save the campaign and then associate leads
       const campaignData = {
         ...data,
         recipient_count: selectedLeadIds.length,
@@ -57,11 +56,9 @@ const EmailCampaigns = () => {
       };
 
       if (data.id) {
-        // Update existing campaign
         await updateCampaign({ id: data.id, data: campaignData });
         toast.success('Campaign updated successfully');
       } else {
-        // Create new campaign
         await createCampaign(campaignData);
         toast.success('Campaign created successfully');
       }
@@ -71,16 +68,63 @@ const EmailCampaigns = () => {
     }
   };
 
+  // Template handlers
+  const handleCreateTemplate = () => {
+    setCurrentTemplate(null);
+    setIsTemplateFormOpen(true);
+  };
+
+  const handleEditTemplate = (template: EmailTemplate) => {
+    setCurrentTemplate(template);
+    setIsTemplateFormOpen(true);
+  };
+
+  const handleDuplicateTemplate = (template: EmailTemplate) => {
+    const duplicatedTemplate = { 
+      ...template,
+      id: undefined, 
+      name: `${template.name} (Copy)` 
+    };
+    setCurrentTemplate(duplicatedTemplate as EmailTemplate);
+    setIsTemplateFormOpen(true);
+  };
+
+  const handleSaveTemplate = async (data: Partial<EmailTemplate>) => {
+    try {
+      if (data.id) {
+        await updateTemplate({ id: data.id, data });
+      } else {
+        await createTemplate(data);
+      }
+    } catch (error) {
+      console.error('Error saving template:', error);
+      toast.error('Failed to save template');
+    }
+  };
+
+  const renderActionButton = () => {
+    if (activeTab === 'campaigns') {
+      return (
+        <Button onClick={handleCreateCampaign}>
+          <Plus className="mr-2 h-4 w-4" /> Create Campaign
+        </Button>
+      );
+    } else if (activeTab === 'templates') {
+      return (
+        <Button onClick={handleCreateTemplate}>
+          <Plus className="mr-2 h-4 w-4" /> Create Template
+        </Button>
+      );
+    }
+    return null;
+  };
+
   return (
     <PageTemplate 
       title="Email Campaigns" 
       icon={<Mail className="h-8 w-8" />}
       description="Create and manage email campaigns to leads and clients."
-      actions={
-        <Button onClick={handleCreateCampaign}>
-          <Plus className="mr-2 h-4 w-4" /> Create Campaign
-        </Button>
-      }
+      actions={renderActionButton()}
     >
       <Tabs defaultValue="campaigns" className="space-y-6" onValueChange={setActiveTab}>
         <TabsList>
@@ -93,39 +137,42 @@ const EmailCampaigns = () => {
           <EmailCampaignList 
             onEdit={handleEditCampaign}
             onView={handleViewCampaign}
-            onDelete={handleDeleteCampaign}
+            onDelete={() => {}}
             onSend={handleSendCampaign}
             onPause={handlePauseCampaign}
           />
         </TabsContent>
         
-        <TabsContent value="templates">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">Email template management coming soon...</p>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="templates" className="space-y-6">
+          <EmailTemplateList
+            onEdit={handleEditTemplate}
+            onDuplicate={handleDuplicateTemplate}
+            onDelete={() => {}}
+          />
         </TabsContent>
         
         <TabsContent value="analytics">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-10">
-                <p className="text-muted-foreground">Email campaign analytics coming soon...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="text-center py-10 border rounded-lg">
+            <p className="text-muted-foreground">Email campaign analytics coming soon...</p>
+          </div>
         </TabsContent>
       </Tabs>
       
-      {isFormOpen && (
+      {isCampaignFormOpen && (
         <EmailCampaignForm 
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
+          isOpen={isCampaignFormOpen}
+          onClose={() => setIsCampaignFormOpen(false)}
           onSave={handleSaveCampaign}
           campaign={currentCampaign || undefined}
+        />
+      )}
+
+      {isTemplateFormOpen && (
+        <EmailTemplateForm
+          isOpen={isTemplateFormOpen}
+          onClose={() => setIsTemplateFormOpen(false)}
+          onSave={handleSaveTemplate}
+          template={currentTemplate || undefined}
         />
       )}
     </PageTemplate>
