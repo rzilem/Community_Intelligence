@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Network, Search, Plus, PencilLine, Trash2, Building, Users, CreditCard, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,10 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Link } from 'react-router-dom';
-import { createAssociation, fetchAllAssociations } from '@/services/association-service';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
 import { useAuth } from '@/contexts/auth';
+import { useAssociations } from '@/hooks/associations';
 
 interface AssociationFormData {
   name: string;
@@ -177,26 +176,14 @@ const AssociationForm: React.FC<AssociationFormProps> = ({ onClose, onSave, isSu
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [associations, setAssociations] = useState<Association[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   
-  useEffect(() => {
-    const loadAssociations = async () => {
-      try {
-        const data = await fetchAllAssociations();
-        setAssociations(data);
-      } catch (error) {
-        console.error('Error loading associations:', error);
-        toast.error('Failed to load associations');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadAssociations();
-  }, []);
+  const { 
+    associations, 
+    isLoading, 
+    createAssociation,
+    isCreating 
+  } = useAssociations();
   
   const handleSaveAssociation = async (formData: AssociationFormData) => {
     if (!formData.name) {
@@ -204,27 +191,26 @@ const Associations = () => {
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
       const associationData = {
         name: formData.name,
         address: formData.address,
-        contact_email: formData.email
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zipCode,
+        phone: formData.phone,
+        contact_email: formData.email,
+        property_type: formData.type,
+        total_units: formData.units > 0 ? formData.units : undefined
       };
       
-      const newAssociation = await createAssociation(associationData);
-      
-      if (newAssociation) {
-        toast.success('Association created successfully');
-        setAssociations(prevAssociations => [...prevAssociations, newAssociation]);
-        setIsDialogOpen(false);
-      }
+      createAssociation(associationData, {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+        }
+      });
     } catch (error) {
-      console.error('Error creating association:', error);
-      toast.error('Failed to create association');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error saving association:', error);
     }
   };
   
@@ -270,7 +256,7 @@ const Associations = () => {
                 <AssociationForm 
                   onClose={() => setIsDialogOpen(false)} 
                   onSave={handleSaveAssociation}
-                  isSubmitting={isSubmitting}
+                  isSubmitting={isCreating}
                 />
               </DialogContent>
             </Dialog>
