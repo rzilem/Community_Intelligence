@@ -58,9 +58,11 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
   
   // First try to extract name from the content - specific pattern for "Name" field
   const namePatterns = [
-    /Name[:\s]*([^<>\n\r]+)/i,
-    /Contact[:\s]*([^<>\n\r]+)/i,
-    /Contact Person[:\s]*([^<>\n\r]+)/i
+    /Contact\s*Name[:\s]*([^<>\n\r,\.]+)/i,
+    /Name[:\s]*([^<>\n\r,\.]+)/i,
+    /From[:\s]*([^<>\n\r,\.]+)/i,
+    /Contact[:\s]*([^<>\n\r,\.]+)/i,
+    /Contact Person[:\s]*([^<>\n\r,\.]+)/i
   ];
   
   for (const pattern of namePatterns) {
@@ -73,7 +75,10 @@ export function extractContactInfo(content: string, from: string = ""): { name?:
   
   // If no name found in content, try to extract from 'from' field
   if (!result.name && from) {
-    result.name = extractNameFromHeader(from);
+    const nameFromHeader = extractNameFromHeader(from);
+    if (nameFromHeader) {
+      result.name = nameFromHeader;
+    }
   }
   
   // Extract email from content

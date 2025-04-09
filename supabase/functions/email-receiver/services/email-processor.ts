@@ -54,15 +54,25 @@ export async function processEmail(emailData: any) {
     const contactInfo = extractContactInfo(content, from);
     console.log("Contact info extracted:", contactInfo);
     
-    // Prioritize setting the name field directly from extracted contact info
+    // Set name with highest priority from extracted info
     if (contactInfo.name) {
       lead.name = contactInfo.name;
       // If we have a full name, try to parse first and last name
       const nameParts = contactInfo.name.split(' ');
       if (nameParts.length > 0) lead.first_name = nameParts[0];
       if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
+    } else if (from) {
+      // Try to extract from 'from' field directly as fallback
+      const nameFromHeader = extractNameFromHeader(from);
+      if (nameFromHeader) {
+        lead.name = nameFromHeader;
+        const nameParts = nameFromHeader.split(' ');
+        if (nameParts.length > 0) lead.first_name = nameParts[0];
+        if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
+      }
     }
     
+    // Set other contact info
     if (contactInfo.email) lead.email = contactInfo.email;
     if (contactInfo.phone) lead.phone = contactInfo.phone;
     
