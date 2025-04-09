@@ -23,3 +23,10 @@ export type Comment = {
   created_at?: string;
   updated_at?: string;
 };
+
+export interface TrackingSystemItem {
+  id: string;
+  tracking_number: string;
+  created_at: string;
+  updated_at: string;
+}

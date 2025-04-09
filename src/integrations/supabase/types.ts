@@ -365,6 +365,42 @@ export type Database = {
           },
         ]
       }
+      communications_log: {
+        Row: {
+          communication_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          processed_at: string | null
+          received_at: string
+          status: string
+          tracking_number: string
+          updated_at: string
+        }
+        Insert: {
+          communication_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          tracking_number: string
+          updated_at?: string
+        }
+        Update: {
+          communication_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          tracking_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       compliance_issues: {
         Row: {
           association_id: string
@@ -615,6 +651,7 @@ export type Database = {
           invoice_date: string | null
           invoice_number: string
           status: string
+          tracking_number: string | null
           updated_at: string
           vendor: string
         }
@@ -630,6 +667,7 @@ export type Database = {
           invoice_date?: string | null
           invoice_number: string
           status?: string
+          tracking_number?: string | null
           updated_at?: string
           vendor: string
         }
@@ -645,6 +683,7 @@ export type Database = {
           invoice_date?: string | null
           invoice_number?: string
           status?: string
+          tracking_number?: string | null
           updated_at?: string
           vendor?: string
         }
@@ -673,6 +712,7 @@ export type Database = {
           state: string | null
           status: string
           street_address: string | null
+          tracking_number: string | null
           updated_at: string
           uploaded_files: Json | null
           zip: string | null
@@ -699,6 +739,7 @@ export type Database = {
           state?: string | null
           status?: string
           street_address?: string | null
+          tracking_number?: string | null
           updated_at?: string
           uploaded_files?: Json | null
           zip?: string | null
@@ -725,6 +766,7 @@ export type Database = {
           state?: string | null
           status?: string
           street_address?: string | null
+          tracking_number?: string | null
           updated_at?: string
           uploaded_files?: Json | null
           zip?: string | null
@@ -1408,6 +1450,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_next_tracking_number: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean
