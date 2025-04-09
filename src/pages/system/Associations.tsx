@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Network, Search, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Network, Search, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import { useAssociations } from '@/hooks/associations';
 import AssociationForm, { AssociationFormData } from '@/components/associations/AssociationForm';
 import AssociationTable from '@/components/associations/AssociationTable';
 import AssociationStats from '@/components/associations/AssociationStats';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,8 +24,10 @@ const Associations = () => {
   const { 
     associations, 
     isLoading, 
+    error,
     createAssociation,
-    isCreating 
+    isCreating,
+    manuallyRefresh 
   } = useAssociations();
   
   const handleSaveAssociation = async (formData: AssociationFormData) => {
@@ -48,6 +52,8 @@ const Associations = () => {
       createAssociation(associationData, {
         onSuccess: () => {
           setIsDialogOpen(false);
+          // Force immediate refresh
+          setTimeout(() => manuallyRefresh(), 500);
         }
       });
     } catch (error) {
@@ -81,27 +87,49 @@ const Associations = () => {
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" /> Add Association
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Add New Association</DialogTitle>
-                  <DialogDescription>
-                    Create a new community association or organization to manage.
-                  </DialogDescription>
-                </DialogHeader>
-                <AssociationForm 
-                  onClose={() => setIsDialogOpen(false)} 
-                  onSave={handleSaveAssociation}
-                  isSubmitting={isCreating}
-                />
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={manuallyRefresh}
+                disabled={isLoading}
+                title="Refresh association list"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" /> Add Association
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Association</DialogTitle>
+                    <DialogDescription>
+                      Create a new community association or organization to manage.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <AssociationForm 
+                    onClose={() => setIsDialogOpen(false)} 
+                    onSave={handleSaveAssociation}
+                    isSubmitting={isCreating}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
+          
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                There was a problem loading associations. Please try refreshing.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <Tabs defaultValue="all">
             <TabsList className="grid w-full grid-cols-3">

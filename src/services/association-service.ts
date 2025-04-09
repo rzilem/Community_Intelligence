@@ -1,25 +1,57 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Association } from '@/types/association-types';
 
 /**
  * Fetches all available associations
  */
 export const fetchAllAssociations = async () => {
   try {
-    const { data, error } = await supabase
-      .from('associations')
-      .select('*')
-      .order('name');
+    let data;
+    
+    // Try to fetch associations directly
+    try {
+      const { data: associations, error } = await supabase
+        .from('associations')
+        .select('*')
+        .order('name');
 
-    if (error) {
-      console.error('Error fetching associations:', error);
-      throw error;
+      if (error) {
+        console.error('Error fetching associations:', error);
+        throw error;
+      }
+      
+      data = associations;
+    } catch (primaryError) {
+      console.error('Primary fetch method failed:', primaryError);
+      
+      // Fallback method - try fetching with simpler query
+      try {
+        console.log('Attempting fallback fetch method...');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('associations')
+          .select('id, name, address, contact_email, city, state, property_type, is_archived')
+          .order('name');
+        
+        if (fallbackError) {
+          console.error('Fallback fetch also failed:', fallbackError);
+          throw fallbackError;
+        }
+        
+        data = fallbackData;
+        console.log('Fallback fetch succeeded with', data?.length || 0, 'records');
+      } catch (fallbackFetchError) {
+        console.error('All fetch methods failed:', fallbackFetchError);
+        toast.error('Error loading associations. Please try refreshing the page.');
+        return [];
+      }
     }
 
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error in fetchAllAssociations:', error);
+    toast.error('Failed to load associations. Please try again later.');
     return [];
   }
 };
@@ -85,22 +117,29 @@ export const createAssociation = async (associationData: {
 
     if (error) {
       console.error('Error creating association:', error);
+      toast.error(`Failed to create association: ${error.message}`);
       throw error;
     }
 
     // If creation was successful, also add the current user as an admin
-    const { error: roleError } = await supabase
-      .from('association_users')
-      .insert({
-        association_id: data.id,
-        user_id: userId,
-        role: 'admin'
-      });
+    try {
+      const { error: roleError } = await supabase
+        .from('association_users')
+        .insert({
+          association_id: data.id,
+          user_id: userId,
+          role: 'admin'
+        });
 
-    if (roleError) {
-      console.error('Error setting user as association admin:', roleError);
-      // We don't throw here to avoid blocking the association creation
-      toast.error('Created association but failed to set you as admin');
+      if (roleError) {
+        console.error('Error setting user as association admin:', roleError);
+        toast.warning('Created association but failed to set you as admin');
+      } else {
+        toast.success('Association created successfully and you were set as admin');
+      }
+    } catch (roleAssignError) {
+      console.error('Exception assigning role:', roleAssignError);
+      toast.warning('Created association but encountered an error setting permissions');
     }
 
     return data;

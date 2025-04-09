@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { 
@@ -13,20 +13,46 @@ import { Association } from '@/types/association-types';
 
 export const useAssociations = () => {
   const queryClient = useQueryClient();
+  const [retryCount, setRetryCount] = useState(0);
   
   // Get all associations
-  const { data: associations = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['associations'],
-    queryFn: fetchAllAssociations
+  const { 
+    data: associations = [], 
+    isLoading, 
+    error, 
+    refetch
+  } = useQuery({
+    queryKey: ['associations', retryCount],
+    queryFn: fetchAllAssociations,
+    // Add retry logic
+    retry: 2,
+    retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
   });
+  
+  // Auto-retry if we get back an empty list but there should be data
+  useEffect(() => {
+    if (!isLoading && associations.length === 0 && retryCount < 3) {
+      const timer = setTimeout(() => {
+        console.log(`Auto-retrying association fetch (attempt ${retryCount + 1})...`);
+        setRetryCount(prev => prev + 1);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [associations, isLoading, retryCount]);
   
   // Create a new association
   const createMutation = useMutation({
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
-        toast.success('Association created successfully');
+        // Invalidate and refetch
         queryClient.invalidateQueries({ queryKey: ['associations'] });
+        
+        // Manually update the cache to immediately show the new association
+        queryClient.setQueryData(['associations'], (oldData: Association[] = []) => {
+          return [...oldData, newAssociation];
+        });
       }
     },
     onError: (error: Error) => {
@@ -76,11 +102,16 @@ export const useAssociations = () => {
     });
   };
   
+  const manuallyRefresh = () => {
+    setRetryCount(prev => prev + 1);
+  };
+  
   return {
     associations,
     isLoading,
     error,
     refetch,
+    manuallyRefresh,
     createAssociation: createMutation.mutate,
     isCreating: createMutation.isPending,
     updateAssociation: updateMutation.mutate,
