@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { ResidentWithProfile, Property } from '@/types/app-types';
+import { ResidentWithProfile, Property, ResidentType } from '@/types/app-types'; // Updated to import ResidentType
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -57,6 +57,14 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     
     fetchProperties();
   }, [currentAssociation]);
+  
+  // Helper function to safely cast string to ResidentType
+  const toResidentType = (value: string): ResidentType => {
+    const validTypes: ResidentType[] = ['owner', 'tenant', 'family', 'other'];
+    return validTypes.includes(value as ResidentType) 
+      ? (value as ResidentType) 
+      : 'other';
+  };
   
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -119,7 +127,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <div className="col-span-3">
             <Select 
               defaultValue={defaultValues.resident_type || 'owner'} 
-              onValueChange={(value) => setValue('resident_type', value)}
+              onValueChange={(value) => setValue('resident_type', toResidentType(value))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select resident type" />
