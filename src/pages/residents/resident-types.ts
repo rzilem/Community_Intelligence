@@ -9,6 +9,7 @@ export interface Resident {
   propertyAddress: string;
   association: string;
   moveInDate: string;
+  moveOutDate?: string; // Adding this property
   status: 'active' | 'inactive' | 'pending-approval';
   avatarUrl?: string;
 }

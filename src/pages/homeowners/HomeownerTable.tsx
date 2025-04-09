@@ -89,10 +89,10 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
                 <TableCell className="font-medium">{homeowner.name}</TableCell>
               )}
               {selectedColumns.includes('unit') && (
-                <TableCell>{homeowner.unit}</TableCell>
+                <TableCell>{homeowner.unitNumber || homeowner.unit || '-'}</TableCell>
               )}
               {selectedColumns.includes('property') && (
-                <TableCell>{homeowner.property}</TableCell>
+                <TableCell>{homeowner.property || homeowner.propertyId}</TableCell>
               )}
               {selectedColumns.includes('email') && (
                 <TableCell>{homeowner.email}</TableCell>
@@ -100,10 +100,10 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
               {selectedColumns.includes('status') && (
                 <TableCell>
                   <Badge 
-                    variant={homeowner.status === 'Active' ? 'default' : 'outline'} 
-                    className={homeowner.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                    variant={homeowner.status === 'active' ? 'default' : 'outline'} 
+                    className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
                   >
-                    {homeowner.status}
+                    {homeowner.status.charAt(0).toUpperCase() + homeowner.status.slice(1)}
                   </Badge>
                 </TableCell>
               )}
@@ -122,7 +122,11 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
                 </TableCell>
               )}
               {selectedColumns.includes('lastPayment') && (
-                <TableCell>{homeowner.lastPayment ? formatDate(homeowner.lastPayment) : '-'}</TableCell>
+                <TableCell>
+                  {homeowner.lastPayment ? 
+                    formatDate(homeowner.lastPayment.date) : 
+                    '-'}
+                </TableCell>
               )}
               {selectedColumns.includes('aclStartDate') && (
                 <TableCell>{homeowner.aclStartDate ? formatDate(homeowner.aclStartDate) : '-'}</TableCell>

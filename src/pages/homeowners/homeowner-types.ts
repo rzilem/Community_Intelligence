@@ -16,4 +16,6 @@ export interface Homeowner {
   lastPayment?: { amount: number; date: string };
   aclStartDate?: string;
   unitNumber?: string;
+  property?: string; // Adding this for backward compatibility
+  unit?: string; // Adding this for backward compatibility
 }

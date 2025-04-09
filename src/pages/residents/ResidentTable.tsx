@@ -81,10 +81,10 @@ const ResidentTable: React.FC<ResidentTableProps> = ({ residents }) => {
               <TableCell>{formatDate(resident.moveInDate)}</TableCell>
               <TableCell>
                 <Badge 
-                  variant={resident.status === 'Active' ? 'default' : 'outline'} 
-                  className={resident.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                  variant={resident.status === 'active' ? 'default' : 'outline'} 
+                  className={resident.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
                 >
-                  {resident.status}
+                  {resident.status.charAt(0).toUpperCase() + resident.status.slice(1)}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">

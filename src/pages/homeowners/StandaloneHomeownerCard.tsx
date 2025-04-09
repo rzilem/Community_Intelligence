@@ -24,7 +24,7 @@ const StandaloneHomeownerCard: React.FC<StandaloneHomeownerCardProps> = ({ homeo
           <div>
             <h3 className="font-semibold text-lg">{homeowner.name}</h3>
             <p className="text-sm text-muted-foreground">
-              {homeowner.type || 'Owner'}{homeowner.property ? ` • ${homeowner.property}` : ''}
+              {homeowner.type || 'Owner'}{homeowner.property || homeowner.propertyId ? ` • ${homeowner.property || homeowner.propertyId}` : ''}
             </p>
           </div>
           
