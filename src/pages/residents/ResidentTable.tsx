@@ -1,10 +1,18 @@
 
 import React from 'react';
 import { Resident } from './resident-types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Link, useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/date-utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import TooltipButton from '@/components/ui/tooltip-button';
-import { useNavigate } from 'react-router-dom';
-import { getStatusBadge, getResidentTypeBadge } from './resident-utils';
 
 interface ResidentTableProps {
   residents: Resident[];
@@ -12,96 +20,96 @@ interface ResidentTableProps {
 
 const ResidentTable: React.FC<ResidentTableProps> = ({ residents }) => {
   const navigate = useNavigate();
-
-  const handleViewResident = (id: string) => {
-    navigate(`/homeowners/${id}`);
+  
+  // Function to handle row click
+  const handleResidentClick = (id: string) => {
+    navigate(`/residents/${id}`);
   };
 
   if (residents.length === 0) {
     return (
       <div className="rounded-md border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="py-3 px-4 text-left font-medium">ID</th>
-              <th className="py-3 px-4 text-left font-medium">Name</th>
-              <th className="py-3 px-4 text-left font-medium">Type</th>
-              <th className="py-3 px-4 text-left font-medium">Email</th>
-              <th className="py-3 px-4 text-left font-medium">Property</th>
-              <th className="py-3 px-4 text-left font-medium">Association</th>
-              <th className="py-3 px-4 text-left font-medium">Status</th>
-              <th className="py-3 px-4 text-right font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colSpan={8} className="py-6 text-center text-muted-foreground">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Property</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Move-In Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
                 No residents found matching your search.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
       </div>
     );
   }
 
   return (
     <div className="rounded-md border">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50">
-            <th className="py-3 px-4 text-left font-medium">ID</th>
-            <th className="py-3 px-4 text-left font-medium">Name</th>
-            <th className="py-3 px-4 text-left font-medium">Type</th>
-            <th className="py-3 px-4 text-left font-medium">Email</th>
-            <th className="py-3 px-4 text-left font-medium">Property</th>
-            <th className="py-3 px-4 text-left font-medium">Association</th>
-            <th className="py-3 px-4 text-left font-medium">Status</th>
-            <th className="py-3 px-4 text-right font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Property</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Move-In Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {residents.map(resident => (
-            <tr key={resident.id} className="border-b hover:bg-muted/20">
-              <td className="py-3 px-4 font-medium">{resident.id}</td>
-              <td className="py-3 px-4">
-                <div 
-                  className="flex items-center cursor-pointer hover:text-primary"
-                  onClick={() => handleViewResident(resident.id)}
+            <TableRow 
+              key={resident.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleResidentClick(resident.id)}
+            >
+              <TableCell className="font-medium">{resident.name}</TableCell>
+              <TableCell>{resident.email}</TableCell>
+              <TableCell>{resident.propertyAddress}</TableCell>
+              <TableCell>{resident.type}</TableCell>
+              <TableCell>{formatDate(resident.moveInDate)}</TableCell>
+              <TableCell>
+                <Badge 
+                  variant={resident.status === 'Active' ? 'default' : 'outline'} 
+                  className={resident.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
                 >
-                  <Avatar className="h-6 w-6 mr-2">
-                    <AvatarImage src={resident.avatarUrl} />
-                    <AvatarFallback>
-                      {resident.name.split(' ').map(part => part[0]).join('').toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {resident.name}
-                </div>
-              </td>
-              <td className="py-3 px-4">{getResidentTypeBadge(resident.type)}</td>
-              <td className="py-3 px-4">{resident.email}</td>
-              <td className="py-3 px-4">{resident.propertyAddress}</td>
-              <td className="py-3 px-4">{resident.association}</td>
-              <td className="py-3 px-4">{getStatusBadge(resident.status)}</td>
-              <td className="py-3 px-4 text-right">
-                <div className="flex justify-end gap-2">
-                  <TooltipButton 
-                    size="sm" 
-                    variant="ghost" 
-                    tooltip="View resident details"
-                    onClick={() => handleViewResident(resident.id)}
+                  {resident.status}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+                  <TooltipButton
+                    size="sm"
+                    variant="ghost"
+                    tooltip="View details"
+                    onClick={() => navigate(`/residents/${resident.id}`)}
                   >
                     View
                   </TooltipButton>
-                  <TooltipButton size="sm" variant="outline" tooltip="Edit resident information">
+                  <TooltipButton
+                    size="sm"
+                    variant="ghost"
+                    tooltip="Edit resident"
+                  >
                     Edit
                   </TooltipButton>
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 };

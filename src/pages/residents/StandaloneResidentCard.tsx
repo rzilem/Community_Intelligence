@@ -1,84 +1,75 @@
-import React from 'react';
-import { Resident } from './resident-types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Mail, Phone } from 'lucide-react';
-import TooltipButton from '@/components/ui/tooltip-button';
-import { useNavigate } from 'react-router-dom';
-import { getStatusBadge, getResidentTypeBadge } from './resident-utils';
 
-interface ResidentCardProps {
+import React from 'react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Building, Mail, Phone, Calendar, ChevronRight, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Resident } from './resident-types';
+import { formatDate } from '@/lib/date-utils';
+
+interface StandaloneResidentCardProps {
   resident: Resident;
 }
 
-const StandaloneResidentCard: React.FC<ResidentCardProps> = ({ resident }) => {
+const StandaloneResidentCard: React.FC<StandaloneResidentCardProps> = ({ resident }) => {
   const navigate = useNavigate();
   
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-
-  const handleViewResident = () => {
-    navigate(`/homeowners/${resident.id}`);
+  const handleClick = () => {
+    navigate(`/residents/${resident.id}`);
   };
 
   return (
-    <Card className="shadow-sm card-hover cursor-pointer" onClick={handleViewResident}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center">
-            <Avatar className="h-10 w-10 mr-3">
-              <AvatarImage src={resident.avatarUrl} />
-              <AvatarFallback>{getInitials(resident.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <CardTitle className="text-lg">{resident.name}</CardTitle>
-              <CardDescription className="flex items-center mt-1">
-                {resident.propertyAddress}
-              </CardDescription>
-            </div>
-          </div>
-          {getStatusBadge(resident.status)}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-y-2 text-sm">
-          <div className="text-muted-foreground">Type:</div>
-          <div className="font-medium">{getResidentTypeBadge(resident.type)}</div>
-          
-          <div className="text-muted-foreground">Email:</div>
-          <div className="font-medium flex items-center">
-            <Mail className="h-3 w-3 mr-1" /> <span className="truncate">{resident.email}</span>
+    <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={handleClick}>
+      <CardContent className="p-4">
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold text-lg">{resident.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              {resident.type || 'Resident'}{resident.association ? ` • ${resident.association}` : ''}
+            </p>
           </div>
           
-          <div className="text-muted-foreground">Phone:</div>
-          <div className="font-medium flex items-center">
-            <Phone className="h-3 w-3 mr-1" /> {resident.phone}
+          <div className="space-y-2">
+            {resident.email && (
+              <div className="flex items-center text-sm">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                <span className="text-muted-foreground">{resident.email}</span>
+              </div>
+            )}
+            
+            {resident.phone && (
+              <div className="flex items-center text-sm">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                <span className="text-muted-foreground">{resident.phone}</span>
+              </div>
+            )}
+            
+            {resident.propertyAddress && (
+              <div className="flex items-center text-sm">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                <span className="text-muted-foreground">{resident.propertyAddress}</span>
+              </div>
+            )}
+            
+            {resident.moveInDate && (
+              <div className="flex items-center text-sm">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground mr-2" />
+                <span className="text-muted-foreground">
+                  Move in: {formatDate(resident.moveInDate)}
+                  {resident.moveOutDate ? ` to ${formatDate(resident.moveOutDate)}` : ''}
+                </span>
+              </div>
+            )}
           </div>
-          
-          <div className="text-muted-foreground">HOA:</div>
-          <div className="font-medium">{resident.association}</div>
-          
-          <div className="text-muted-foreground">Move-in Date:</div>
-          <div className="font-medium">{new Date(resident.moveInDate).toLocaleDateString()}</div>
-          
-          <div className="text-muted-foreground">Property ID:</div>
-          <div className="font-medium">{resident.propertyId}</div>
-        </div>
-        
-        <div className="mt-4 flex justify-end gap-2">
-          <TooltipButton size="sm" variant="ghost" tooltip="View resident details">
-            Details
-          </TooltipButton>
-          <TooltipButton size="sm" variant="outline" tooltip="Edit resident information">
-            Edit
-          </TooltipButton>
         </div>
       </CardContent>
+      <CardFooter className="px-4 py-2 border-t flex justify-between">
+        <span className="text-xs text-muted-foreground">
+          {resident.status || 'Active'}
+        </span>
+        <div className="text-xs flex items-center text-primary">
+          View details <ChevronRight className="h-3 w-3 ml-1" />
+        </div>
+      </CardFooter>
     </Card>
   );
 };

@@ -7,6 +7,7 @@ import BidRequests from "@/pages/community-management/BidRequests";
 import CompliancePage from "@/pages/Compliance";
 import ResidentListPage from "@/pages/residents/ResidentListPage";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
+import ResidentDetailPage from "@/pages/ResidentDetailPage";
 
 // Community Management Routes
 export const communityManagementRoutes: RouteObject[] = [
@@ -27,8 +28,12 @@ export const communityManagementRoutes: RouteObject[] = [
     element: <RequireAuth><HomeownerDetailPage /></RequireAuth>
   },
   {
+    path: "/residents",
+    element: <RequireAuth><ResidentListPage /></RequireAuth>
+  },
+  {
     path: "/residents/:id",
-    element: <RequireAuth><HomeownerDetailPage /></RequireAuth>
+    element: <RequireAuth><ResidentDetailPage /></RequireAuth>
   },
   {
     path: "/compliance",

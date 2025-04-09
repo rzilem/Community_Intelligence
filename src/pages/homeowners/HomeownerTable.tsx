@@ -1,19 +1,18 @@
 
 import React from 'react';
 import { Homeowner } from './homeowner-types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Link, useNavigate } from 'react-router-dom';
+import { formatDate } from '@/lib/date-utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import TooltipButton from '@/components/ui/tooltip-button';
-import { useNavigate } from 'react-router-dom';
-import { getStatusBadge } from './homeowner-utils';
-import { formatCurrency, formatDate, formatPaymentInfo } from './homeowner-utils';
 
 interface HomeownerTableProps {
   homeowners: Homeowner[];
@@ -22,85 +21,10 @@ interface HomeownerTableProps {
 
 const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedColumns }) => {
   const navigate = useNavigate();
-
-  const handleViewHomeowner = (id: string) => {
+  
+  // Function to handle row click
+  const handleHomeownerClick = (id: string) => {
     navigate(`/homeowners/${id}`);
-  };
-
-  const getColumnValue = (homeowner: Homeowner, column: string) => {
-    switch (column) {
-      case 'name':
-        return (
-          <div 
-            className="flex items-center cursor-pointer hover:text-primary"
-            onClick={() => handleViewHomeowner(homeowner.id)}
-          >
-            <Avatar className="h-6 w-6 mr-2">
-              <AvatarImage src={homeowner.avatarUrl} />
-              <AvatarFallback>
-                {homeowner.name.split(' ').map(part => part[0]).join('').toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {homeowner.name}
-          </div>
-        );
-      case 'unit':
-        return homeowner.unitNumber || '-';
-      case 'property':
-        return homeowner.association || '-';
-      case 'email':
-        return homeowner.email || '-';
-      case 'status':
-        return getStatusBadge(homeowner.status);
-      case 'moveInDate':
-        return formatDate(homeowner.moveInDate);
-      case 'moveOutDate':
-        return homeowner.moveOutDate ? formatDate(homeowner.moveOutDate) : '-';
-      case 'propertyAddress':
-        return homeowner.propertyAddress || '-';
-      case 'balance':
-        return formatCurrency(homeowner.balance);
-      case 'lastPayment':
-        return formatPaymentInfo(homeowner.lastPayment?.amount, homeowner.lastPayment?.date);
-      case 'aclStartDate':
-        return homeowner.aclStartDate ? formatDate(homeowner.aclStartDate) : '-';
-      case 'actions':
-        return (
-          <div className="flex justify-end gap-2">
-            <TooltipButton 
-              size="sm" 
-              variant="ghost" 
-              tooltip="View homeowner details"
-              onClick={() => handleViewHomeowner(homeowner.id)}
-            >
-              View
-            </TooltipButton>
-            <TooltipButton size="sm" variant="outline" tooltip="Edit homeowner information">
-              Edit
-            </TooltipButton>
-          </div>
-        );
-      default:
-        return '-';
-    }
-  };
-
-  const getColumnLabel = (column: string) => {
-    switch (column) {
-      case 'name': return 'Name';
-      case 'unit': return 'Unit';
-      case 'property': return 'Property';
-      case 'email': return 'Email';
-      case 'status': return 'Status';
-      case 'moveInDate': return 'Move-In Date';
-      case 'moveOutDate': return 'Move-Out Date';
-      case 'propertyAddress': return 'Property Address';
-      case 'balance': return 'Balance';
-      case 'lastPayment': return 'Last Payment';
-      case 'aclStartDate': return 'ACL Start Date';
-      case 'actions': return 'Actions';
-      default: return column;
-    }
   };
 
   if (homeowners.length === 0) {
@@ -109,14 +33,23 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
         <Table>
           <TableHeader>
             <TableRow>
-              {selectedColumns.map(column => (
-                <TableHead key={column}>{getColumnLabel(column)}</TableHead>
-              ))}
+              {selectedColumns.includes('name') && <TableHead>Name</TableHead>}
+              {selectedColumns.includes('unit') && <TableHead>Unit</TableHead>}
+              {selectedColumns.includes('property') && <TableHead>Property</TableHead>}
+              {selectedColumns.includes('email') && <TableHead>Email</TableHead>}
+              {selectedColumns.includes('status') && <TableHead>Status</TableHead>}
+              {selectedColumns.includes('moveInDate') && <TableHead>Move-In Date</TableHead>}
+              {selectedColumns.includes('moveOutDate') && <TableHead>Move-Out Date</TableHead>}
+              {selectedColumns.includes('propertyAddress') && <TableHead>Property Address</TableHead>}
+              {selectedColumns.includes('balance') && <TableHead>Balance</TableHead>}
+              {selectedColumns.includes('lastPayment') && <TableHead>Last Payment</TableHead>}
+              {selectedColumns.includes('aclStartDate') && <TableHead>ACL Start Date</TableHead>}
+              {selectedColumns.includes('actions') && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={selectedColumns.length} className="py-6 text-center text-muted-foreground">
+              <TableCell colSpan={selectedColumns.length} className="text-center h-24 text-muted-foreground">
                 No homeowners found matching your search.
               </TableCell>
             </TableRow>
@@ -131,19 +64,90 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
       <Table>
         <TableHeader>
           <TableRow>
-            {selectedColumns.map(column => (
-              <TableHead key={column}>{getColumnLabel(column)}</TableHead>
-            ))}
+            {selectedColumns.includes('name') && <TableHead>Name</TableHead>}
+            {selectedColumns.includes('unit') && <TableHead>Unit</TableHead>}
+            {selectedColumns.includes('property') && <TableHead>Property</TableHead>}
+            {selectedColumns.includes('email') && <TableHead>Email</TableHead>}
+            {selectedColumns.includes('status') && <TableHead>Status</TableHead>}
+            {selectedColumns.includes('moveInDate') && <TableHead>Move-In Date</TableHead>}
+            {selectedColumns.includes('moveOutDate') && <TableHead>Move-Out Date</TableHead>}
+            {selectedColumns.includes('propertyAddress') && <TableHead>Property Address</TableHead>}
+            {selectedColumns.includes('balance') && <TableHead>Balance</TableHead>}
+            {selectedColumns.includes('lastPayment') && <TableHead>Last Payment</TableHead>}
+            {selectedColumns.includes('aclStartDate') && <TableHead>ACL Start Date</TableHead>}
+            {selectedColumns.includes('actions') && <TableHead className="text-right">Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {homeowners.map(homeowner => (
-            <TableRow key={homeowner.id} className="hover:bg-muted/20">
-              {selectedColumns.map(column => (
-                <TableCell key={`${homeowner.id}-${column}`}>
-                  {getColumnValue(homeowner, column)}
+            <TableRow 
+              key={homeowner.id} 
+              className="cursor-pointer hover:bg-muted/50"
+              onClick={() => handleHomeownerClick(homeowner.id)}
+            >
+              {selectedColumns.includes('name') && (
+                <TableCell className="font-medium">{homeowner.name}</TableCell>
+              )}
+              {selectedColumns.includes('unit') && (
+                <TableCell>{homeowner.unit}</TableCell>
+              )}
+              {selectedColumns.includes('property') && (
+                <TableCell>{homeowner.property}</TableCell>
+              )}
+              {selectedColumns.includes('email') && (
+                <TableCell>{homeowner.email}</TableCell>
+              )}
+              {selectedColumns.includes('status') && (
+                <TableCell>
+                  <Badge 
+                    variant={homeowner.status === 'Active' ? 'default' : 'outline'} 
+                    className={homeowner.status === 'Inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                  >
+                    {homeowner.status}
+                  </Badge>
                 </TableCell>
-              ))}
+              )}
+              {selectedColumns.includes('moveInDate') && (
+                <TableCell>{formatDate(homeowner.moveInDate)}</TableCell>
+              )}
+              {selectedColumns.includes('moveOutDate') && (
+                <TableCell>{homeowner.moveOutDate ? formatDate(homeowner.moveOutDate) : '-'}</TableCell>
+              )}
+              {selectedColumns.includes('propertyAddress') && (
+                <TableCell>{homeowner.propertyAddress}</TableCell>
+              )}
+              {selectedColumns.includes('balance') && (
+                <TableCell className={homeowner.balance > 0 ? 'text-red-600 font-medium' : ''}>
+                  ${homeowner.balance.toFixed(2)}
+                </TableCell>
+              )}
+              {selectedColumns.includes('lastPayment') && (
+                <TableCell>{homeowner.lastPayment ? formatDate(homeowner.lastPayment) : '-'}</TableCell>
+              )}
+              {selectedColumns.includes('aclStartDate') && (
+                <TableCell>{homeowner.aclStartDate ? formatDate(homeowner.aclStartDate) : '-'}</TableCell>
+              )}
+              {selectedColumns.includes('actions') && (
+                <TableCell className="text-right">
+                  <div className="flex justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+                    <TooltipButton
+                      size="sm"
+                      variant="ghost"
+                      tooltip="View details"
+                      onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                    >
+                      View
+                    </TooltipButton>
+                    <TooltipButton
+                      size="sm"
+                      variant="ghost"
+                      tooltip="Edit homeowner"
+                    >
+                      Edit
+                    </TooltipButton>
+                  </div>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
