@@ -1,4 +1,3 @@
-
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'converted' | 'lost';
 
 export interface Lead {
@@ -39,11 +38,11 @@ export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
   { id: 'association_type', label: 'Association Type', accessorKey: 'association_type', defaultVisible: true },
   { id: 'number_of_units', label: 'Units', accessorKey: 'number_of_units', defaultVisible: true },
   { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: true },
-  { id: 'street_address', label: 'Address', accessorKey: 'street_address', defaultVisible: true },
   { id: 'city', label: 'City', accessorKey: 'city', defaultVisible: true },
   { id: 'phone', label: 'Phone', accessorKey: 'phone', defaultVisible: true },
-  { id: 'source', label: 'Source', accessorKey: 'source', defaultVisible: true },
+  { id: 'street_address', label: 'Address', accessorKey: 'street_address', defaultVisible: true },
   { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
+  { id: 'source', label: 'Source', accessorKey: 'source', defaultVisible: true },
   { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
   { id: 'company', label: 'Company', accessorKey: 'company', defaultVisible: false },
   { id: 'state', label: 'State', accessorKey: 'state', defaultVisible: false },
