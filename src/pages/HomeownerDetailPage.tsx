@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
@@ -11,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { formatDate } from '@/lib/date-utils';
 import { useParams } from 'react-router-dom';
 import { HomePropertyImage } from '@/components/homeowners/HomePropertyImage';
+import ProfileImageUpload from '@/components/users/ProfileImageUpload';
+import { toast } from 'sonner';
 
 const mockHomeowner = {
   id: '101',
@@ -29,6 +32,7 @@ const mockHomeowner = {
     email: '2023-06-02'
   },
   status: 'Active',
+  avatarUrl: '',
   notes: [
     {
       type: 'system',
@@ -67,45 +71,66 @@ const HomeownerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('Summary');
   const [activeNotesTab, setActiveNotesTab] = useState('Manual Notes');
+  const [homeowner, setHomeowner] = useState(mockHomeowner);
   
-  const homeowner = mockHomeowner;
+  // Function to handle profile image updates
+  const handleProfileImageUpdated = (newUrl: string) => {
+    setHomeowner(prev => ({
+      ...prev,
+      avatarUrl: newUrl
+    }));
+    toast.success('Profile image updated successfully');
+  };
 
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-start">
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold">{homeowner.name}</h1>
-              <Badge className="bg-green-100 text-green-800 border border-green-200 rounded-full px-3 py-1 ml-4">
-                {homeowner.status}
-              </Badge>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {homeowner.tags.map(tag => (
-                <Badge 
-                  key={tag} 
-                  variant="outline" 
-                  className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(tag)}`}
-                >
-                  <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
-                  {tag}
-                </Badge>
-              ))}
-              {homeowner.violations.map(violation => (
-                <Badge 
-                  key={violation} 
-                  variant="outline" 
-                  className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(violation)}`}
-                >
-                  <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
-                  {violation}
-                </Badge>
-              ))}
-              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-sm h-7">
-                <Plus className="h-4 w-4" /> Add Tag
-              </Button>
+            <div className="flex items-center gap-4">
+              <ProfileImageUpload
+                userId={id || homeowner.id}
+                imageUrl={homeowner.avatarUrl}
+                firstName={homeowner.name.split(' ')[0]}
+                lastName={homeowner.name.split(' ')[1] || ''}
+                onImageUpdated={handleProfileImageUpdated}
+                size="lg"
+              />
+              
+              <div>
+                <div className="flex items-center justify-between">
+                  <h1 className="text-3xl font-bold">{homeowner.name}</h1>
+                  <Badge className="bg-green-100 text-green-800 border border-green-200 rounded-full px-3 py-1 ml-4">
+                    {homeowner.status}
+                  </Badge>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {homeowner.tags.map(tag => (
+                    <Badge 
+                      key={tag} 
+                      variant="outline" 
+                      className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(tag)}`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
+                      {tag}
+                    </Badge>
+                  ))}
+                  {homeowner.violations.map(violation => (
+                    <Badge 
+                      key={violation} 
+                      variant="outline" 
+                      className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(violation)}`}
+                    >
+                      <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
+                      {violation}
+                    </Badge>
+                  ))}
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1 text-sm h-7">
+                    <Plus className="h-4 w-4" /> Add Tag
+                  </Button>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
