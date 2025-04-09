@@ -22,4 +22,14 @@ export interface InvoiceFilterOptions {
   association_id?: string;
   startDate?: string;
   endDate?: string;
+  source?: 'email' | 'document' | 'all';
 }
+
+export interface InvoiceDocument {
+  name: string;
+  type: string;
+  size: number;
+  content: string;
+}
+
+export type InvoiceSource = 'email' | 'document' | 'manual';
