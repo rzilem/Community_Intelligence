@@ -76,6 +76,11 @@ export async function processEmail(emailData: any) {
     if (additionalInfo.notes) lead.additional_requirements = additionalInfo.notes;
     if (additionalInfo.address) lead.street_address = additionalInfo.address;
     
+    // Extract address components
+    if (additionalInfo.city) lead.city = additionalInfo.city;
+    if (additionalInfo.state) lead.state = additionalInfo.state;
+    if (additionalInfo.zip) lead.zip = additionalInfo.zip;
+    
     // Fallback for email if not found
     if (!lead.email && from) {
       const extractedEmail = extractEmailFromHeader(from);

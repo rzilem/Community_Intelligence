@@ -1,90 +1,50 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Lead } from '@/types/lead-types';
 
-export interface ColumnDef {
+type LeadColumn = {
   id: string;
   label: string;
-  accessorKey?: string;
-  defaultVisible?: boolean;
-}
+  accessorKey?: keyof Lead;
+  width?: number;
+};
 
-export const useTableColumns = <T extends Record<string, any>>(
-  defaultColumns: ColumnDef[],
-  storageKey: string
-) => {
-  // Load columns and their order from localStorage
-  const [columns, setColumns] = useState<ColumnDef[]>(() => {
-    // Try to load saved column preferences from localStorage
-    const savedColumns = localStorage.getItem(storageKey);
-    if (savedColumns) {
-      try {
-        return JSON.parse(savedColumns);
-      } catch (e) {
-        console.error('Failed to parse saved columns', e);
-        // If parsing fails, reset to default columns
-        return defaultColumns;
-      }
-    }
-    return defaultColumns;
-  });
+export const useTableColumns = () => {
+  const defaultColumns: LeadColumn[] = [
+    { id: 'name', label: 'Name', accessorKey: 'name' },
+    { id: 'email', label: 'Email', accessorKey: 'email' },
+    { id: 'association_name', label: 'Association', accessorKey: 'association_name' },
+    { id: 'association_type', label: 'Association Type', accessorKey: 'association_type' },
+    { id: 'number_of_units', label: 'Units', accessorKey: 'number_of_units' },
+    { id: 'city', label: 'City', accessorKey: 'city' },
+    { id: 'state', label: 'State', accessorKey: 'state' },
+    { id: 'status', label: 'Status', accessorKey: 'status' },
+    { id: 'source', label: 'Source', accessorKey: 'source' },
+    { id: 'created_at', label: 'Created', accessorKey: 'created_at' }
+  ];
 
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(() => {
-    // Try to load saved visibility preferences from localStorage
-    const savedVisibility = localStorage.getItem(`${storageKey}-visibility`);
-    if (savedVisibility) {
-      try {
-        return JSON.parse(savedVisibility);
-      } catch (e) {
-        console.error('Failed to parse saved visibility', e);
-        // If parsing fails, reset to default visible columns
-        return defaultColumns
-          .filter(col => col.defaultVisible !== false)
-          .map(col => col.id);
-      }
-    }
-    // Set default visible columns
-    return defaultColumns
-      .filter(col => col.defaultVisible !== false)
-      .map(col => col.id);
-  });
-
-  // Save column preferences to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(columns));
-    localStorage.setItem(`${storageKey}-visibility`, JSON.stringify(visibleColumnIds));
-  }, [visibleColumnIds, columns, storageKey]);
+  const [columns] = useState<LeadColumn[]>(defaultColumns);
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([
+    'name', 'association_name', 'association_type', 'number_of_units', 
+    'city', 'status', 'source', 'created_at'
+  ]);
 
   const updateVisibleColumns = (columnIds: string[]) => {
-    // Ensure at least one column is visible
-    if (columnIds.length === 0) {
-      return;
-    }
     setVisibleColumnIds(columnIds);
   };
 
-  // Function to reorder columns
-  const reorderColumns = (sourceIndex: number, destinationIndex: number) => {
-    const reorderedColumns = [...columns];
-    const [removed] = reorderedColumns.splice(sourceIndex, 1);
-    reorderedColumns.splice(destinationIndex, 0, removed);
-    setColumns(reorderedColumns);
+  const reorderColumns = (startIndex: number, endIndex: number) => {
+    const result = Array.from(visibleColumnIds);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    setVisibleColumnIds(result);
   };
 
   const resetToDefaults = () => {
-    // Clear saved preferences and reset to defaults
-    localStorage.removeItem(storageKey);
-    localStorage.removeItem(`${storageKey}-visibility`);
-    
-    setColumns(defaultColumns);
-    setVisibleColumnIds(defaultColumns
-      .filter(col => col.defaultVisible !== false)
-      .map(col => col.id));
-      
-    console.log('Reset to defaults - Using column IDs:', 
-      defaultColumns
-        .filter(col => col.defaultVisible !== false)
-        .map(col => col.id)
-    );
+    setVisibleColumnIds([
+      'name', 'association_name', 'association_type', 'number_of_units', 
+      'city', 'status', 'source', 'created_at'
+    ]);
   };
 
   return {
@@ -92,6 +52,6 @@ export const useTableColumns = <T extends Record<string, any>>(
     visibleColumnIds,
     updateVisibleColumns,
     reorderColumns,
-    resetToDefaults
+    resetToDefaults,
   };
 };

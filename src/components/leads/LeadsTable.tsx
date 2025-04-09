@@ -1,143 +1,143 @@
 
-import React, { useState } from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Lead } from '@/types/lead-types';
-import { ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
-import LeadDetailDialog from './LeadDetailDialog';
-import LeadActionsMenu from './LeadActionsMenu';
-import LeadTablePagination from './LeadTablePagination';
 import { renderLeadTableCell } from './lead-table-utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { MoreHorizontal, Eye, Pencil, Trash2, CheckCircle } from 'lucide-react';
+import LeadTablePagination from './LeadTablePagination';
+import LeadDetailDialog from './LeadDetailDialog';
 
 interface LeadsTableProps {
   leads: Lead[];
   isLoading?: boolean;
-  visibleColumnIds: string[];
   columns: Array<{ id: string; label: string; accessorKey?: string }>;
-  onDeleteLead?: (id: string) => Promise<void>;
-  onUpdateLeadStatus?: (id: string, status: Lead['status']) => Promise<void>;
+  visibleColumnIds: string[];
+  onDeleteLead: (id: string) => void;
+  onUpdateLeadStatus: (id: string, status: Lead['status']) => void;
 }
 
-const LeadsTable = ({ 
-  leads, 
-  isLoading = false, 
-  visibleColumnIds, 
+const LeadsTable: React.FC<LeadsTableProps> = ({
+  leads,
+  isLoading,
   columns,
+  visibleColumnIds,
   onDeleteLead,
   onUpdateLeadStatus
-}: LeadsTableProps) => {
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+}) => {
   const navigate = useNavigate();
-  const leadsPerPage = 10;
-  
-  // Get only the columns that should be displayed
-  const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
-  console.log("LeadsTable: filtered visible columns:", visibleColumns);
+  const [selectedLead, setSelectedLead] = React.useState<Lead | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false);
 
-  // Calculate pagination
-  const indexOfLastLead = currentPage * leadsPerPage;
-  const indexOfFirstLead = indexOfLastLead - leadsPerPage;
-  const currentLeads = leads.slice(indexOfFirstLead, indexOfLastLead);
-  const totalPages = Math.ceil(leads.length / leadsPerPage);
-  
-  if (isLoading) {
-    return (
-      <div className="min-h-[300px] flex items-center justify-center">
-        <p className="text-muted-foreground">Loading leads...</p>
-      </div>
-    );
-  }
+  const handleViewDetails = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsDetailOpen(true);
+  };
 
-  if (leads.length === 0) {
-    return (
-      <div className="min-h-[300px] flex items-center justify-center">
-        <p className="text-muted-foreground">No leads found. Create a test lead or wait for incoming emails.</p>
-      </div>
-    );
-  }
-
-  const handleViewLead = (lead: Lead) => {
-    // Navigate to the lead detail page instead of showing a dialog
+  const handleEditLead = (lead: Lead) => {
     navigate(`/lead-management/leads/${lead.id}`);
   };
-  
-  const handleDeleteLead = async (lead: Lead) => {
-    if (onDeleteLead) {
-      await onDeleteLead(lead.id);
-    }
-  };
-  
-  const handleUpdateStatus = async (lead: Lead, status: Lead['status']) => {
-    if (onUpdateLeadStatus) {
-      await onUpdateLeadStatus(lead.id, status);
-    }
-  };
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8">Loading leads...</div>;
+  }
 
   return (
-    <>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {visibleColumnIds.map(columnId => {
+              const column = columns.find(col => col.id === columnId);
+              return (
+                <TableHead key={columnId} className="whitespace-nowrap">
+                  {column?.label}
+                </TableHead>
+              );
+            })}
+            <TableHead className="w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leads.length === 0 ? (
             <TableRow>
-              {visibleColumns.map((column) => (
-                <TableHead key={column.id}>{column.label}</TableHead>
-              ))}
-              <TableHead className="text-right">Actions</TableHead>
+              <TableCell colSpan={visibleColumnIds.length + 1} className="text-center py-8 text-muted-foreground">
+                No leads found.
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentLeads.map((lead) => (
+          ) : (
+            leads.map(lead => (
               <TableRow key={lead.id}>
-                {visibleColumns.map((column) => {
-                  return (
-                    <TableCell 
-                      key={`${lead.id}-${column.id}`}
-                      className={column.id === 'name' ? 'font-medium' : ''}
-                    >
-                      {renderLeadTableCell(lead, column.id, columns)}
-                    </TableCell>
-                  );
-                })}
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleViewLead(lead)}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                    
-                    <LeadActionsMenu 
-                      lead={lead}
-                      onDelete={handleDeleteLead}
-                      onUpdateStatus={handleUpdateStatus}
-                    />
-                  </div>
+                {visibleColumnIds.map(columnId => (
+                  <TableCell key={`${lead.id}-${columnId}`}>
+                    {renderLeadTableCell(lead, columnId, columns)}
+                  </TableCell>
+                ))}
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleViewDetails(lead)}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditLead(lead)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onUpdateLeadStatus(lead.id, 'qualified')}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Mark as Qualified
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive"
+                        onClick={() => onDeleteLead(lead.id)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Lead
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            ))
+          )}
+        </TableBody>
+      </Table>
+      {leads.length > 0 && (
+        <div className="border-t p-2 flex justify-center">
+          <LeadTablePagination 
+            totalPages={5} 
+            currentPage={1} 
+            onPageChange={() => {}} 
+          />
+        </div>
+      )}
       
-      <LeadTablePagination 
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
+      <LeadDetailDialog 
+        lead={selectedLead} 
+        open={isDetailOpen} 
+        onOpenChange={setIsDetailOpen} 
       />
-    </>
+    </div>
   );
 };
 

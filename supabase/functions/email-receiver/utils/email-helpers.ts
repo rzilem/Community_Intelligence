@@ -68,11 +68,13 @@ export function extractAssociationInfo(content: string): { name?: string, type?:
     }
   }
   
-  // Look for association type patterns
+  // Look for association type patterns - improved to be more specific
   const typePatterns = [
-    /HOA or Condo[:\s]*([^<>\n\r]+)/i,
-    /Association Type[:\s]*([^<>\n\r]+)/i,
-    /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
+    /Association Type[:\s]*([^<>\n\r,.]+)/i,
+    /Type of Association[:\s]*([^<>\n\r,.]+)/i,
+    /Type[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
+    /The property is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i,
+    /It is a[:\s]*(HOA|Condo|Condominium|Townhome|Single-Family)/i
   ];
   
   for (const pattern of typePatterns) {
@@ -88,7 +90,8 @@ export function extractAssociationInfo(content: string): { name?: string, type?:
     /Number of Homes or Units[:\s]*(\d+)/i,
     /Units[:\s]*(\d+)/i,
     /Homes[:\s]*(\d+)/i,
-    /Properties[:\s]*(\d+)/i
+    /Properties[:\s]*(\d+)/i,
+    /Total Units[:\s]*(\d+)/i
   ];
   
   for (const pattern of unitsPatterns) {
@@ -218,8 +221,8 @@ export function extractCompanyInfo(content: string, from: string = ""): { compan
 }
 
 // Helper function to extract additional information
-export function extractAdditionalInfo(content: string): { notes?: string, address?: string } {
-  const result: { notes?: string, address?: string } = {};
+export function extractAdditionalInfo(content: string): { notes?: string, address?: string, city?: string, state?: string, zip?: string } {
+  const result: { notes?: string, address?: string, city?: string, state?: string, zip?: string } = {};
   
   // Extract address
   const addressPatterns = [
@@ -232,6 +235,51 @@ export function extractAdditionalInfo(content: string): { notes?: string, addres
     const match = content.match(pattern);
     if (match && match[1] && match[1].trim()) {
       result.address = match[1].trim();
+      break;
+    }
+  }
+  
+  // Extract city
+  const cityPatterns = [
+    /City[:\s]*([^<>\n\r,.]+)/i,
+    /Location[:\s].*?City[:\s]*([^<>\n\r,.]+)/i,
+    /In ([A-Za-z\s]+),\s*[A-Z]{2}/i, // Match "In Boulder, CO" pattern
+  ];
+  
+  for (const pattern of cityPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.city = match[1].trim();
+      break;
+    }
+  }
+  
+  // Extract state
+  const statePatterns = [
+    /State[:\s]*([^<>\n\r,.]+)/i,
+    /Location[:\s].*?State[:\s]*([^<>\n\r,.]+)/i,
+    /in\s+[A-Za-z\s]+,\s*([A-Z]{2})/i, // Match "in Boulder, CO" pattern
+  ];
+  
+  for (const pattern of statePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.state = match[1].trim();
+      break;
+    }
+  }
+  
+  // Extract ZIP code
+  const zipPatterns = [
+    /ZIP[:\s]*(\d{5}(-\d{4})?)/i,
+    /Postal Code[:\s]*(\d{5}(-\d{4})?)/i,
+    /Zip Code[:\s]*(\d{5}(-\d{4})?)/i
+  ];
+  
+  for (const pattern of zipPatterns) {
+    const match = content.match(pattern);
+    if (match && match[1] && match[1].trim()) {
+      result.zip = match[1].trim();
       break;
     }
   }

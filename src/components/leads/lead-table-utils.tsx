@@ -11,8 +11,7 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array
   
   const accessorKey = column.accessorKey;
   
-  // Make sure we're using the correct property from the lead object
-  // that matches the column's accessorKey
+  // Get the value from the lead object using the accessorKey
   const value = lead[accessorKey as keyof Lead];
   
   console.log(`Rendering column ${columnId} with accessorKey ${accessorKey}, value:`, value);
