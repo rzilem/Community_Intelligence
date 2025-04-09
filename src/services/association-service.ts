@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 /**
  * Fetches all available associations
@@ -56,7 +57,13 @@ export const fetchAssociationById = async (id: string) => {
 export const createAssociation = async (associationData: { 
   name: string, 
   address?: string, 
-  contact_email?: string 
+  contact_email?: string,
+  city?: string,
+  state?: string,
+  zip?: string,
+  phone?: string,
+  property_type?: string,
+  total_units?: number
 }) => {
   try {
     // First, get the current user's ID
@@ -93,6 +100,7 @@ export const createAssociation = async (associationData: {
     if (roleError) {
       console.error('Error setting user as association admin:', roleError);
       // We don't throw here to avoid blocking the association creation
+      toast.error('Created association but failed to set you as admin');
     }
 
     return data;
@@ -108,7 +116,16 @@ export const createAssociation = async (associationData: {
 export const updateAssociation = async (id: string, associationData: {
   name?: string,
   address?: string,
-  contact_email?: string
+  contact_email?: string,
+  city?: string,
+  state?: string,
+  zip?: string,
+  phone?: string,
+  website?: string,
+  property_type?: string,
+  total_units?: number,
+  description?: string,
+  is_archived?: boolean
 }) => {
   try {
     const { data, error } = await supabase

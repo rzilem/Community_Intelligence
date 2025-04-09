@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Network, Search, Plus, PencilLine, Trash2, Building, Users, CreditCard, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,68 +11,77 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Link } from 'react-router-dom';
+import { createAssociation, fetchAllAssociations } from '@/services/association-service';
+import { toast } from 'sonner';
+import { Association } from '@/types/association-types';
+import { useAuth } from '@/contexts/auth';
 
-// Mock data for associations
-const mockAssociations = [
-  {
-    id: '1',
-    name: 'Lakeside Community HOA',
-    type: 'HOA',
-    units: 156,
-    city: 'Austin',
-    state: 'TX',
-    status: 'active'
-  },
-  {
-    id: '2',
-    name: 'Mountain View Condominiums',
-    type: 'Condo',
-    units: 78,
-    city: 'Denver',
-    state: 'CO',
-    status: 'active'
-  },
-  {
-    id: '3',
-    name: 'Oceanfront Villas',
-    type: 'HOA',
-    units: 92,
-    city: 'Miami',
-    state: 'FL',
-    status: 'active'
-  },
-  {
-    id: '4',
-    name: 'Sunset Apartments',
-    type: 'Apartment',
-    units: 210,
-    city: 'San Diego',
-    state: 'CA',
-    status: 'inactive'
-  },
-  {
-    id: '5',
-    name: 'Downtown Business Center',
-    type: 'Commercial',
-    units: 45,
-    city: 'Chicago',
-    state: 'IL',
-    status: 'active'
-  },
-];
+interface AssociationFormData {
+  name: string;
+  type: string;
+  units: number;
+  city: string;
+  state: string;
+  address: string;
+  zipCode: string;
+  phone: string;
+  email: string;
+}
 
-const AssociationForm = ({ onClose }: { onClose: () => void }) => {
+interface AssociationFormProps {
+  onClose: () => void;
+  onSave: (data: AssociationFormData) => void;
+  isSubmitting: boolean;
+}
+
+const AssociationForm: React.FC<AssociationFormProps> = ({ onClose, onSave, isSubmitting }) => {
+  const [formData, setFormData] = useState<AssociationFormData>({
+    name: '',
+    type: 'HOA',
+    units: 0,
+    city: '',
+    state: '',
+    address: '',
+    zipCode: '',
+    phone: '',
+    email: ''
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, type: e.target.value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium mb-1">Association Name</label>
-          <Input id="name" placeholder="Enter association name" />
+          <Input 
+            id="name" 
+            placeholder="Enter association name" 
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div>
           <label htmlFor="type" className="block text-sm font-medium mb-1">Type</label>
-          <select id="type" className="w-full p-2 border rounded-md">
-            <option>Select type...</option>
+          <select 
+            id="type" 
+            className="w-full p-2 border rounded-md"
+            value={formData.type}
+            onChange={handleSelectChange}
+          >
             <option value="HOA">Homeowners Association</option>
             <option value="Condo">Condominium</option>
             <option value="Apartment">Apartment Complex</option>
@@ -85,59 +94,147 @@ const AssociationForm = ({ onClose }: { onClose: () => void }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label htmlFor="units" className="block text-sm font-medium mb-1">Total Units</label>
-          <Input id="units" type="number" placeholder="0" />
+          <Input 
+            id="units" 
+            type="number" 
+            placeholder="0" 
+            value={formData.units || ''}
+            onChange={handleChange}
+          />
         </div>
         <div>
           <label htmlFor="city" className="block text-sm font-medium mb-1">City</label>
-          <Input id="city" placeholder="Enter city" />
+          <Input 
+            id="city" 
+            placeholder="Enter city" 
+            value={formData.city}
+            onChange={handleChange}
+          />
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium mb-1">State</label>
-          <Input id="state" placeholder="Enter state" />
+          <Input 
+            id="state" 
+            placeholder="Enter state" 
+            value={formData.state}
+            onChange={handleChange}
+          />
         </div>
       </div>
       
       <div>
         <label htmlFor="address" className="block text-sm font-medium mb-1">Address</label>
-        <Input id="address" placeholder="Enter street address" />
+        <Input 
+          id="address" 
+          placeholder="Enter street address" 
+          value={formData.address}
+          onChange={handleChange}
+        />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium mb-1">ZIP Code</label>
-          <Input id="zipCode" placeholder="Enter ZIP code" />
+          <Input 
+            id="zipCode" 
+            placeholder="Enter ZIP code" 
+            value={formData.zipCode}
+            onChange={handleChange}
+          />
         </div>
         <div>
           <label htmlFor="phone" className="block text-sm font-medium mb-1">Phone</label>
-          <Input id="phone" placeholder="Enter phone number" />
+          <Input 
+            id="phone" 
+            placeholder="Enter phone number" 
+            value={formData.phone}
+            onChange={handleChange}
+          />
         </div>
       </div>
       
       <div>
         <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
-        <Input id="email" type="email" placeholder="Enter contact email" />
+        <Input 
+          id="email" 
+          type="email" 
+          placeholder="Enter contact email" 
+          value={formData.email}
+          onChange={handleChange}
+        />
       </div>
       
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>Cancel</Button>
-        <Button>Save Association</Button>
+        <Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Saving...' : 'Save Association'}
+        </Button>
       </DialogFooter>
-    </div>
+    </form>
   );
 };
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   
-  const filteredAssociations = mockAssociations.filter(
+  useEffect(() => {
+    const loadAssociations = async () => {
+      try {
+        const data = await fetchAllAssociations();
+        setAssociations(data);
+      } catch (error) {
+        console.error('Error loading associations:', error);
+        toast.error('Failed to load associations');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadAssociations();
+  }, []);
+  
+  const handleSaveAssociation = async (formData: AssociationFormData) => {
+    if (!formData.name) {
+      toast.error('Association name is required');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const associationData = {
+        name: formData.name,
+        address: formData.address,
+        contact_email: formData.email
+      };
+      
+      const newAssociation = await createAssociation(associationData);
+      
+      if (newAssociation) {
+        toast.success('Association created successfully');
+        setAssociations(prevAssociations => [...prevAssociations, newAssociation]);
+        setIsDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error creating association:', error);
+      toast.error('Failed to create association');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const filteredAssociations = associations.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                   association.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                   association.state.toLowerCase().includes(searchTerm.toLowerCase())
+                   (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const activeAssociations = filteredAssociations.filter(a => a.status === 'active');
-  const inactiveAssociations = filteredAssociations.filter(a => a.status === 'inactive');
+  const activeAssociations = filteredAssociations.filter(a => !a.is_archived);
+  const inactiveAssociations = filteredAssociations.filter(a => a.is_archived);
   
   return (
     <PageTemplate 
@@ -170,7 +267,11 @@ const Associations = () => {
                     Create a new community association or organization to manage.
                   </DialogDescription>
                 </DialogHeader>
-                <AssociationForm onClose={() => setIsDialogOpen(false)} />
+                <AssociationForm 
+                  onClose={() => setIsDialogOpen(false)} 
+                  onSave={handleSaveAssociation}
+                  isSubmitting={isSubmitting}
+                />
               </DialogContent>
             </Dialog>
           </div>
@@ -198,15 +299,15 @@ const Associations = () => {
             </TabsList>
             
             <TabsContent value="all">
-              <AssociationTable associations={filteredAssociations} />
+              <AssociationTable associations={filteredAssociations} isLoading={isLoading} />
             </TabsContent>
             
             <TabsContent value="active">
-              <AssociationTable associations={activeAssociations} />
+              <AssociationTable associations={activeAssociations} isLoading={isLoading} />
             </TabsContent>
             
             <TabsContent value="inactive">
-              <AssociationTable associations={inactiveAssociations} />
+              <AssociationTable associations={inactiveAssociations} isLoading={isLoading} />
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -222,22 +323,28 @@ const Associations = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Homeowners Association</span>
-                <Badge variant="outline">3</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Condominium</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Apartment Complex</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Commercial</span>
-                <Badge variant="outline">1</Badge>
-              </div>
+              {isLoading ? (
+                <div className="py-4 text-center text-muted-foreground">Loading statistics...</div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span>Homeowners Association</span>
+                    <Badge variant="outline">{associations.filter(a => a.property_type === 'HOA').length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Condominium</span>
+                    <Badge variant="outline">{associations.filter(a => a.property_type === 'Condo').length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Apartment Complex</span>
+                    <Badge variant="outline">{associations.filter(a => a.property_type === 'Apartment').length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Commercial</span>
+                    <Badge variant="outline">{associations.filter(a => a.property_type === 'Commercial').length}</Badge>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -251,18 +358,24 @@ const Associations = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Total Properties</span>
-                <Badge variant="outline">581</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Total Residents</span>
-                <Badge variant="outline">2,345</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Average Properties per HOA</span>
-                <Badge variant="outline">116</Badge>
-              </div>
+              {isLoading ? (
+                <div className="py-4 text-center text-muted-foreground">Loading statistics...</div>
+              ) : (
+                <>
+                  <div className="flex justify-between items-center">
+                    <span>Total Associations</span>
+                    <Badge variant="outline">{associations.length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Active Associations</span>
+                    <Badge variant="outline">{associations.filter(a => !a.is_archived).length}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Inactive Associations</span>
+                    <Badge variant="outline">{associations.filter(a => a.is_archived).length}</Badge>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -276,26 +389,26 @@ const Associations = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Texas</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Colorado</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Florida</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>California</span>
-                <Badge variant="outline">1</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Illinois</span>
-                <Badge variant="outline">1</Badge>
-              </div>
+              {isLoading ? (
+                <div className="py-4 text-center text-muted-foreground">Loading statistics...</div>
+              ) : (
+                associations.length > 0 ? (
+                  Object.entries(
+                    associations.reduce((acc, association) => {
+                      const state = association.state || 'Unknown';
+                      acc[state] = (acc[state] || 0) + 1;
+                      return acc;
+                    }, {} as Record<string, number>)
+                  ).map(([state, count]) => (
+                    <div key={state} className="flex justify-between items-center">
+                      <span>{state}</span>
+                      <Badge variant="outline">{count}</Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-4 text-center text-muted-foreground">No location data available</div>
+                )
+              )}
             </div>
           </CardContent>
         </Card>
@@ -304,7 +417,20 @@ const Associations = () => {
   );
 };
 
-const AssociationTable = ({ associations }: { associations: any[] }) => {
+interface AssociationTableProps {
+  associations: Association[];
+  isLoading: boolean;
+}
+
+const AssociationTable = ({ associations, isLoading }: AssociationTableProps) => {
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-8">
+        <div className="text-center text-muted-foreground">Loading associations...</div>
+      </div>
+    );
+  }
+  
   return (
     <div className="rounded-md border">
       <Table>
@@ -312,8 +438,8 @@ const AssociationTable = ({ associations }: { associations: any[] }) => {
           <TableRow>
             <TableHead>Association Name</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Units</TableHead>
             <TableHead>Location</TableHead>
+            <TableHead>Contact</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
@@ -333,11 +459,15 @@ const AssociationTable = ({ associations }: { associations: any[] }) => {
                     {association.name}
                   </Link>
                 </TableCell>
-                <TableCell>{association.type}</TableCell>
-                <TableCell>{association.units}</TableCell>
-                <TableCell>{association.city}, {association.state}</TableCell>
+                <TableCell>{association.property_type || 'HOA'}</TableCell>
                 <TableCell>
-                  {association.status === 'active' ? (
+                  {association.city && association.state 
+                    ? `${association.city}, ${association.state}`
+                    : association.address || 'No location data'}
+                </TableCell>
+                <TableCell>{association.contact_email || 'No contact info'}</TableCell>
+                <TableCell>
+                  {!association.is_archived ? (
                     <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Active</Badge>
                   ) : (
                     <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-50">Inactive</Badge>

@@ -23,6 +23,7 @@ export type Association = {
   property_type?: string;
   insurance_expiration?: string;
   fire_inspection_due?: string;
+  is_archived?: boolean;
 };
 
 export type HOA = Association;
