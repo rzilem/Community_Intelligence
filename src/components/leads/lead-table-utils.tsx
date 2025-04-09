@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Lead } from '@/types/lead-types';
 import { formatDistanceToNow } from 'date-fns';
@@ -6,27 +7,40 @@ import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import { ExternalLink } from 'lucide-react';
 
 // Format a name properly (First Last)
-const formatName = (name: string): string => {
-  if (!name) return '';
-  
-  // Remove "of Association" if present
-  const cleanName = name.replace(/of\s+Association/i, '').trim();
-  
-  // Don't use email usernames as names
-  if (cleanName.includes('@') || /^[a-zA-Z0-9._%+-]+$/.test(cleanName)) {
-    // This looks like an email username, not a real name
-    return '';
+const formatName = (lead: Lead): string => {
+  // Check if first_name and last_name are available
+  if (lead.first_name || lead.last_name) {
+    return [lead.first_name, lead.last_name].filter(Boolean).join(' ');
   }
   
-  // Split into words and capitalize each word
-  return cleanName
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+  // Fall back to the name field
+  if (lead.name && lead.name !== "Lead Contact" && lead.name !== "Unknown Contact") {
+    // Remove "of Association" if present
+    const cleanName = lead.name.replace(/of\s+Association/i, '').trim();
+    
+    // Don't use email usernames as names
+    if (cleanName.includes('@') || /^[a-zA-Z0-9._%+-]+$/.test(cleanName)) {
+      // This looks like an email username, not a real name
+      return '';
+    }
+    
+    // Split into words and capitalize each word
+    return cleanName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+  
+  return '';
 };
 
-// Extract just the city from an address string
-const extractCity = (address: string | undefined): string => {
+// Extract and clean city name
+const extractCity = (cityField: string | undefined, address: string | undefined): string => {
+  // If we have a city field directly, clean and use it
+  if (cityField) {
+    return cleanCityName(cityField);
+  }
+  
   if (!address) return '';
   
   // Try to extract city with common patterns
@@ -34,14 +48,16 @@ const extractCity = (address: string | undefined): string => {
   const match = address.match(cityPattern);
   
   if (match && match[1]) {
-    return match[1].trim();
+    return cleanCityName(match[1].trim());
   }
   
   // Look for common Texas cities
   const commonTexasCities = [
-    'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi',
-    'Plano', 'Laredo', 'Lubbock', 'Garland', 'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville',
-    'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock', 'DrDripping Springs'
+    'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 
+    'Arlington', 'Corpus Christi', 'Plano', 'Laredo', 'Lubbock', 'Garland', 
+    'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville', 'McKinney', 'Frisco', 
+    'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock', 
+    'Dripping Springs', 'Colorado Springs'
   ];
   
   for (const city of commonTexasCities) {
@@ -51,6 +67,26 @@ const extractCity = (address: string | undefined): string => {
   }
   
   return '';
+};
+
+// Helper function to clean up city names by removing street-related words and prefixes
+const cleanCityName = (city: string): string => {
+  if (!city) return '';
+  
+  // Remove any numeric prefixes (like "pug", "rippy", etc.)
+  const cleanedCity = city
+    .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '')
+    // Remove street-related words
+    .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy|St(?=[A-Z])|[\d\s]+[A-Z][a-z]*(?=\s)/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Handle special case for "Colorado StAustin" -> "Austin"
+  if (cleanedCity.includes('StAustin')) {
+    return 'Austin';
+  }
+  
+  return cleanedCity;
 };
 
 // Create a Google Maps link from an address
@@ -75,31 +111,13 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
   const value = lead[accessorKey as keyof Lead];
   
   // Special formatting for specific columns
-  if (columnId === 'name' && value) {
-    // Try to use first_name and last_name if available
-    if (lead.first_name || lead.last_name) {
-      const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
-      if (fullName.trim()) {
-        return fullName;
-      }
-    }
-    return formatName(value as string);
+  if (columnId === 'name') {
+    return formatName(lead);
   }
   
   if (columnId === 'city') {
-    // Only show the city name, not the full address
-    if (lead.city) {
-      // If we already have a city field, use it directly
-      return lead.city;
-    }
-    
-    // Otherwise extract from street_address
-    if (lead.street_address) {
-      const city = extractCity(lead.street_address);
-      // Clean the city name (remove street components)
-      return city.replace(/\d+|Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Circle|Cir|Boulevard|Blvd|Highway|Hwy|Way|Place|Pl|Terrace|Ter|Parkway|Pkwy|Alley|Aly|Creek|Loop|Prairie|Clover/gi, '').replace(/\s+/g, ' ').trim();
-    }
-    return '';
+    // Extract and clean the city name
+    return extractCity(lead.city, lead.street_address);
   }
   
   if (columnId === 'street_address' && value) {

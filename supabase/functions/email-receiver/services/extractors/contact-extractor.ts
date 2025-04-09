@@ -26,6 +26,13 @@ export function extractContactInformation(content: string, from: string) {
         nameFromHeader = nameFromHeader.replace(/\s*of\s*association\s*/i, "").trim();
       }
       
+      // Don't use email username as real name
+      const emailMatch = from.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch && nameFromHeader.toLowerCase() === emailMatch[0].split('@')[0].toLowerCase()) {
+        console.log("Name matches email username, not using as real name");
+        nameFromHeader = "";
+      }
+      
       // Check if we still have a valid name
       if (nameFromHeader && nameFromHeader.length > 1) {
         lead.name = nameFromHeader;
@@ -46,7 +53,8 @@ export function extractContactInformation(content: string, from: string) {
       /[Nn]ame:\s*([^,\n<]+)/,
       /[Ff]rom:\s*([^,\n<]+)/,
       /[Cc]ontact:\s*([^,\n<]+)/,
-      /[Cc]ontact\s+[Nn]ame:\s*([^,\n<]+)/
+      /[Cc]ontact\s+[Nn]ame:\s*([^,\n<]+)/,
+      /[Ss]ubmitted\s+[Bb]y:\s*([^,\n<]+)/
     ];
     
     for (const pattern of namePatterns) {
@@ -102,6 +110,7 @@ export function extractContactInformation(content: string, from: string) {
     // Check if name is just the email username
     if (lead.name.toLowerCase() === emailUsername.toLowerCase()) {
       // Clear the name since it's just the email username
+      console.log("Name matches email username, removing:", lead.name);
       lead.name = "";
       lead.first_name = "";
       lead.last_name = "";

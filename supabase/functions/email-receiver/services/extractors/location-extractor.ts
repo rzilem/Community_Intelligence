@@ -21,9 +21,15 @@ export function extractLocationInformation(content: string) {
   if (lead.city) {
     // Remove any street numbers or common street name components
     lead.city = lead.city
-      .replace(/\d+|Street|St|Avenue|Ave|Road|Rd|Lane|Ln|Drive|Dr|Court|Ct|Circle|Cir|Boulevard|Blvd|Highway|Hwy|Way|Place|Pl|Terrace|Ter|Parkway|Pkwy|Alley|Aly|Creek|Loop/gi, '')
+      .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '') // Remove prefixes like "pug rippy"
+      .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
+      
+    // Special case for "StAustin"
+    if (lead.city.includes('StAustin')) {
+      lead.city = 'Austin';
+    }
   }
   
   return lead;

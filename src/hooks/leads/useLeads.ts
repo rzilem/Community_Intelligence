@@ -53,8 +53,6 @@ export const useLeads = () => {
       await refreshLeadsData();
       setLastRefreshed(new Date());
       console.log('Leads refresh completed');
-      // Force reset columns to ensure they're showing correctly
-      resetToDefaults();
     } catch (error) {
       console.error('Error refreshing leads:', error);
       toast.error('Could not fetch leads. Please ensure you are authenticated.');

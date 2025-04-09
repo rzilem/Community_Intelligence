@@ -76,6 +76,28 @@ export async function processEmail(emailData: any) {
       console.warn("No valid email found, using placeholder");
     }
     
+    // Try to extract name from email
+    if ((!lead.name || lead.name.length < 2) && lead.email && lead.email !== "no-email@example.com") {
+      // Try to extract name parts from email (like first.last@domain.com)
+      const emailName = lead.email.split('@')[0];
+      const possibleNameParts = emailName.split(/[._-]/);
+      
+      if (possibleNameParts.length >= 2) {
+        // Only use if it looks like a real name (not just username)
+        const firstName = possibleNameParts[0].charAt(0).toUpperCase() + possibleNameParts[0].slice(1);
+        const lastName = possibleNameParts[1].charAt(0).toUpperCase() + possibleNameParts[1].slice(1);
+        
+        if (!lead.first_name) lead.first_name = firstName;
+        if (!lead.last_name) lead.last_name = lastName;
+        
+        // Don't override name if we already have one
+        if (!lead.name || lead.name.length < 2) {
+          lead.name = `${firstName} ${lastName}`;
+          console.log("Created name from email parts:", lead.name);
+        }
+      }
+    }
+    
     // Final fallback for name if not found
     if (!lead.name || lead.name.length < 2) {
       if (lead.association_name) {
@@ -93,11 +115,15 @@ export async function processEmail(emailData: any) {
     }
     
     // Make sure we have first_name and last_name fields
-    if (!lead.first_name && !lead.last_name && lead.name && lead.name !== "Unknown Contact") {
+    if ((!lead.first_name || !lead.last_name) && lead.name && lead.name !== "Unknown Contact" && lead.name !== "Lead Contact") {
       const nameParts = lead.name.split(' ');
-      if (nameParts.length > 0) lead.first_name = nameParts[0];
-      if (nameParts.length > 1) lead.last_name = nameParts.slice(1).join(' ');
+      if (nameParts.length > 0 && !lead.first_name) lead.first_name = nameParts[0];
+      if (nameParts.length > 1 && !lead.last_name) lead.last_name = nameParts.slice(1).join(' ');
     }
+    
+    // If we still don't have first and last name, set defaults
+    if (!lead.first_name) lead.first_name = "Lead";
+    if (!lead.last_name) lead.last_name = "Contact";
     
     // Add subject to notes
     if (subject) {
@@ -113,8 +139,17 @@ export async function processEmail(emailData: any) {
       // Use the location-extractors to get just the city
       const cityMatch = lead.street_address.match(/(?:,\s*|\s+)([A-Za-z\s.]+?)(?:,\s*|\s+)(?:[A-Z]{2}|[A-Za-z\s]+)\s+\d{5}/);
       if (cityMatch && cityMatch[1]) {
-        lead.city = cityMatch[1].trim();
+        lead.city = cityMatch[1]
+          .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '') // Remove prefixes
+          .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
       }
+    }
+    
+    // For special case like "Colorado StAustin"
+    if (lead.city && lead.city.includes('StAustin')) {
+      lead.city = 'Austin';
     }
     
     console.log("Extracted lead data:", lead);

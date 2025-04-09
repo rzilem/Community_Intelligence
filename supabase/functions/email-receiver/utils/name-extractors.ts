@@ -20,6 +20,11 @@ export function extractNameFromHeader(header: string): string {
   if (nameMatch && nameMatch[1]) {
     const name = nameMatch[1].trim();
     if (name && !name.includes("@")) {
+      // Don't return the name if it looks like it's just the email username
+      const emailMatch = cleanedHeader.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      if (emailMatch && name.toLowerCase() === emailMatch[0].split('@')[0].toLowerCase()) {
+        return "";
+      }
       return name;
     }
   }
@@ -40,7 +45,7 @@ export function extractNameFromHeader(header: string): string {
     // See if we can extract a domain name that might be useful
     const domainMatch = cleanedHeader.match(/@([^.]+)\./);
     if (domainMatch && domainMatch[1] && 
-        !['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'example'].includes(domainMatch[1].toLowerCase())) {
+        !['gmail', 'yahoo', 'hotmail', 'outlook', 'aol', 'example', 'icloud'].includes(domainMatch[1].toLowerCase())) {
       // Don't return generic domains as names
       return ""; 
     }
