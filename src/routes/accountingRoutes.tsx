@@ -4,6 +4,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import AccountingDashboard from "@/pages/accounting/AccountingDashboard";
 import BankAccounts from "@/pages/accounting/BankAccounts";
 import InvoiceQueue from "@/pages/accounting/InvoiceQueue";
+import InvoiceDetail from "@/pages/accounting/InvoiceDetail";
 import Transactions from "@/pages/accounting/Transactions";
 import Payments from "@/pages/accounting/Payments";
 import JournalEntries from "@/pages/accounting/JournalEntries";
@@ -24,6 +25,10 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/invoice-queue",
     element: <RequireAuth><InvoiceQueue /></RequireAuth>
+  },
+  {
+    path: "/accounting/invoice-queue/:id",
+    element: <RequireAuth><InvoiceDetail /></RequireAuth>
   },
   {
     path: "/accounting/transactions",
