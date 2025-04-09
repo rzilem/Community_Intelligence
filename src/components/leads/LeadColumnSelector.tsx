@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter, Settings } from 'lucide-react';
+import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface LeadColumnSelectorProps {
-  columns: Array<{ id: string; label: string }>;
+  columns: LeadColumn[];
   visibleColumnIds: string[];
   updateVisibleColumns: (columnIds: string[]) => void;
   resetToDefaults: () => void;

@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import { Lead } from '@/types/lead-types';
 
-type LeadColumn = {
+export type LeadColumn = {
   id: string;
   label: string;
-  accessorKey?: keyof Lead;
+  accessorKey?: keyof Lead | string; // Updated to accept both keyof Lead and string
   width?: number;
   defaultVisible?: boolean;
 };

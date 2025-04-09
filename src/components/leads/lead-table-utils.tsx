@@ -3,8 +3,9 @@ import React from 'react';
 import { Lead } from '@/types/lead-types';
 import { formatDistanceToNow } from 'date-fns';
 import LeadStatusBadge from './LeadStatusBadge';
+import { LeadColumn } from '@/hooks/leads/useTableColumns';
 
-export const renderLeadTableCell = (lead: Lead, columnId: string, columns: Array<{ id: string; label: string; accessorKey?: string }>) => {
+export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadColumn[]) => {
   const column = columns.find(col => col.id === columnId);
   
   if (!column || !column.accessorKey) return null;

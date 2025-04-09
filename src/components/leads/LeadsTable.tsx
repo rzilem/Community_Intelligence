@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lead } from '@/types/lead-types';
 import { renderLeadTableCell } from './lead-table-utils';
+import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import {
   Table,
   TableBody,
@@ -25,7 +26,7 @@ import LeadDetailDialog from './LeadDetailDialog';
 interface LeadsTableProps {
   leads: Lead[];
   isLoading?: boolean;
-  columns: Array<{ id: string; label: string; accessorKey?: string }>;
+  columns: LeadColumn[];
   visibleColumnIds: string[];
   onDeleteLead: (id: string) => void;
   onUpdateLeadStatus: (id: string, status: Lead['status']) => void;
