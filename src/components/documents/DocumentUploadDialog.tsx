@@ -1,19 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 import { DocumentCategory } from '@/types/document-types';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onUpload: (formData: FormData) => void;
+  onUpload: (file: File, category: string, description: string) => void;
   categories: DocumentCategory[];
+  isUploading?: boolean;
 }
 
 const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
@@ -21,10 +22,11 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   onClose,
   onUpload,
   categories,
+  isUploading = false
 }) => {
-  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [category, setCategory] = React.useState<string>('');
-  const [description, setDescription] = React.useState<string>('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [category, setCategory] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,13 +39,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
     e.preventDefault();
     if (!selectedFile) return;
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('category', category);
-    formData.append('description', description);
-
-    onUpload(formData);
-    resetForm();
+    onUpload(selectedFile, category, description);
   };
 
   const resetForm = () => {
@@ -55,8 +51,14 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
     }
   };
 
+  React.useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !isUploading && !open && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
@@ -72,6 +74,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                 type="file"
                 onChange={handleFileChange}
                 required
+                disabled={isUploading}
               />
             </div>
             {selectedFile && (
@@ -82,13 +85,13 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Label htmlFor="category">Category (Optional)</Label>
+            <Select value={category} onValueChange={setCategory} disabled={isUploading}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="">None</SelectItem>
                 {categories.map(cat => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
@@ -106,15 +109,24 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description for this document"
               rows={3}
+              disabled={isUploading}
             />
           </div>
           
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isUploading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!selectedFile}>
-              <Upload className="mr-2 h-4 w-4" /> Upload
+            <Button type="submit" disabled={!selectedFile || isUploading}>
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" /> Upload
+                </>
+              )}
             </Button>
           </div>
         </form>

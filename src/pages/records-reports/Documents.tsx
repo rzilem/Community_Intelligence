@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { File, Plus } from 'lucide-react';
+import { File, Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -9,169 +9,117 @@ import { Card, CardContent } from '@/components/ui/card';
 import DocumentCategories from '@/components/documents/DocumentCategories';
 import DocumentTable from '@/components/documents/DocumentTable';
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog';
-import { Document, DocumentCategory, DocumentTab } from '@/types/document-types';
+import CategoryDialog from '@/components/documents/CategoryDialog';
+import DocumentsLoading from '@/components/documents/DocumentsLoading';
+import { Document, DocumentTab } from '@/types/document-types';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { toast } from 'sonner';
-
-// Mock data for document categories
-const mockCategories: DocumentCategory[] = [
-  { id: 'financial', name: 'Financial', association_id: '1' },
-  { id: 'legal', name: 'Legal', association_id: '1' },
-  { id: 'meeting', name: 'Meeting', association_id: '1' },
-  { id: 'maintenance', name: 'Maintenance', association_id: '1' },
-  { id: 'communication', name: 'Communication', association_id: '1' },
-  { id: 'templates', name: 'Templates', association_id: '1' }
-];
-
-// Mock data for documents
-const mockDocuments: Document[] = [
-  {
-    id: '1',
-    association_id: '1',
-    name: 'Condo Management Certificate - Lot 1 (070324).pdf',
-    url: '/documents/1',
-    file_type: 'pdf',
-    file_size: 134860, // 134.86 KB
-    category: 'general',
-    uploaded_at: '4/2/2025'
-  },
-  {
-    id: '2',
-    association_id: '1',
-    name: 'Trio at Menchaca Mgmt Cert.pdf',
-    url: '/documents/2',
-    file_type: 'pdf',
-    file_size: 111710, // 111.71 KB
-    description: 'asdfasdf',
-    category: 'general',
-    uploaded_at: '4/1/2025'
-  },
-  {
-    id: '3',
-    association_id: '1',
-    name: '4th Notice.docx',
-    url: '/documents/3',
-    file_type: 'docx',
-    file_size: 68830, // 68.83 KB
-    description: 'Ph yeah',
-    category: 'general',
-    uploaded_at: '4/1/2025'
-  },
-  {
-    id: '4',
-    association_id: '1',
-    name: 'IMG_1156.jpg',
-    url: '/documents/4',
-    file_type: 'jpg',
-    file_size: 2500000, // 2.5 MB
-    category: 'general',
-    uploaded_at: '4/1/2025'
-  },
-  {
-    id: '5',
-    association_id: '1',
-    name: 'Slider Test - PS Property Management.pdf',
-    url: '/documents/5',
-    file_type: 'pdf',
-    file_size: 3560000, // 3.56 MB
-    category: 'governing',
-    uploaded_at: '3/30/2025'
-  },
-  {
-    id: '6',
-    association_id: '1',
-    name: 'rime below.png',
-    url: '/documents/6',
-    file_type: 'png',
-    file_size: 28590, // 28.59 KB
-    description: 'test',
-    category: 'maintenance',
-    uploaded_at: '3/30/2025'
-  }
-];
+import { useDocumentCategories } from '@/hooks/documents/useDocumentCategories';
+import { useDocuments } from '@/hooks/documents/useDocuments';
+import { useDocumentOperations } from '@/hooks/documents/useDocumentOperations';
+import { useAuth } from '@/contexts/auth';
 
 const Documents = () => {
   const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState<boolean>(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState<boolean>(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const { user } = useAuth();
 
-  // Filtered documents based on selected category and search term
-  const filteredDocuments = documents.filter(doc => {
-    const matchesCategory = selectedCategory ? doc.category === selectedCategory : true;
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         (doc.description || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+  // Fetch categories for selected association
+  const { 
+    categories, 
+    isLoading: categoriesLoading,
+    refetch: refetchCategories
+  } = useDocumentCategories(selectedAssociationId);
+
+  // Fetch documents for selected association and category
+  const { 
+    documents, 
+    isLoading: documentsLoading,
+    refetch: refetchDocuments
+  } = useDocuments({
+    associationId: selectedAssociationId,
+    category: selectedCategory,
+    enabled: !!selectedAssociationId
   });
 
+  // Document operations
+  const { 
+    uploadDocument, 
+    deleteDocument,
+    createCategory
+  } = useDocumentOperations();
+
+  // Filtered documents based on search term
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                       (doc.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  // Reset selected category when association changes
+  useEffect(() => {
+    setSelectedCategory(null);
+  }, [selectedAssociationId]);
+
   const handleAssociationChange = (associationId: string) => {
-    console.log('Association changed:', associationId);
     setSelectedAssociationId(associationId);
-    // In a real app, we would fetch documents for this association
   };
 
-  const handleUpload = (formData: FormData) => {
-    console.log('Uploading file:', formData.get('file'));
-    console.log('Category:', formData.get('category'));
-    console.log('Description:', formData.get('description'));
+  const handleUpload = (file: File, category: string, description: string) => {
+    if (!selectedAssociationId) return;
     
-    // In a real app, we would upload the file to storage and create a database record
-    // For now, we'll create a mock document and add it to our list
-    const file = formData.get('file') as File;
-    const category = formData.get('category') as string;
-    const description = formData.get('description') as string;
+    uploadDocument.mutate({
+      file,
+      category: category || undefined,
+      description: description || undefined,
+      associationId: selectedAssociationId
+    }, {
+      onSuccess: () => {
+        setIsUploadDialogOpen(false);
+        refetchDocuments();
+      }
+    });
+  };
+
+  const handleCreateCategory = (name: string) => {
+    if (!selectedAssociationId) return;
     
-    if (file) {
-      const newDoc: Document = {
-        id: `new-${Date.now()}`, // Generate a temporary ID
-        association_id: selectedAssociationId || '1',
-        name: file.name,
-        url: `/documents/temp/${file.name}`,
-        file_type: file.name.split('.').pop() || 'unknown',
-        file_size: file.size,
-        description: description || undefined,
-        category: category || 'general',
-        uploaded_at: new Date().toLocaleDateString('en-US', {
-          month: 'numeric',
-          day: 'numeric',
-          year: 'numeric'
-        })
-      };
-      
-      // Add the new document to our list
-      setDocuments(prevDocs => [newDoc, ...prevDocs]);
-      
-      toast.success('Document uploaded successfully');
-      setIsUploadDialogOpen(false);
-    }
+    createCategory.mutate({
+      name,
+      associationId: selectedAssociationId
+    }, {
+      onSuccess: () => {
+        setIsCategoryDialogOpen(false);
+        refetchCategories();
+      }
+    });
   };
 
   const handleViewDocument = (doc: Document) => {
-    console.log('Viewing document:', doc);
-    // In a real app, we would open the document in a new tab or modal
     window.open(doc.url, '_blank');
   };
 
   const handleDownloadDocument = (doc: Document) => {
-    console.log('Downloading document:', doc);
-    // In a real app, we would initiate a download
-    toast.success(`Downloading ${doc.name}`);
+    const link = document.createElement('a');
+    link.href = doc.url;
+    link.setAttribute('download', doc.name);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleDeleteDocument = (doc: Document) => {
-    console.log('Deleting document:', doc);
-    // Remove the document from our list
-    setDocuments(prevDocs => prevDocs.filter(d => d.id !== doc.id));
-    toast.success(`${doc.name} has been deleted`);
+    deleteDocument.mutate(doc, {
+      onSuccess: () => {
+        refetchDocuments();
+      }
+    });
   };
 
-  const handleCreateCategory = () => {
-    console.log('Creating new category');
-    // In a real app, we would show a dialog to create a new category
-    toast.success('This feature is coming soon!');
-  };
+  const isLoading = documentsLoading || categoriesLoading;
 
   return (
     <PageTemplate
@@ -190,10 +138,11 @@ const Documents = () => {
               
               <div className="mt-6">
                 <DocumentCategories
-                  categories={mockCategories}
+                  categories={categories}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
-                  onCreateCategory={handleCreateCategory}
+                  onCreateCategory={() => setIsCategoryDialogOpen(true)}
+                  isLoading={categoriesLoading}
                 />
               </div>
             </CardContent>
@@ -202,40 +151,53 @@ const Documents = () => {
 
         {/* Main content area with tabs, search, and document table */}
         <div className="md:col-span-3">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col space-y-4">
-                {/* Tabs */}
-                <Tabs defaultValue="documents" onValueChange={(value) => setActiveTab(value as DocumentTab)}>
-                  <TabsList>
-                    <TabsTrigger value="documents">Documents</TabsTrigger>
-                    <TabsTrigger value="templates">HTML Templates</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+          {isLoading && !selectedAssociationId ? (
+            <DocumentsLoading />
+          ) : (
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-col space-y-4">
+                  {/* Tabs */}
+                  <Tabs defaultValue="documents" onValueChange={(value) => setActiveTab(value as DocumentTab)}>
+                    <TabsList>
+                      <TabsTrigger value="documents">Documents</TabsTrigger>
+                      <TabsTrigger value="templates">HTML Templates</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
 
-                {/* Search and upload */}
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-                  <Input
-                    placeholder="Search documents..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="sm:max-w-sm"
-                  />
-                  <Button onClick={() => setIsUploadDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" /> Upload
-                  </Button>
+                  {/* Search and upload */}
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <Input
+                      placeholder="Search documents..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="sm:max-w-sm"
+                    />
+                    <Button 
+                      onClick={() => setIsUploadDialogOpen(true)}
+                      disabled={!selectedAssociationId}
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Upload
+                    </Button>
+                  </div>
+
+                  {/* Document table */}
+                  {documentsLoading ? (
+                    <div className="py-12 flex justify-center">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <DocumentTable
+                      documents={filteredDocuments}
+                      onView={handleViewDocument}
+                      onDownload={handleDownloadDocument}
+                      onDelete={handleDeleteDocument}
+                    />
+                  )}
                 </div>
-
-                {/* Document table */}
-                <DocumentTable
-                  documents={filteredDocuments}
-                  onView={handleViewDocument}
-                  onDownload={handleDownloadDocument}
-                  onDelete={handleDeleteDocument}
-                />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -244,7 +206,15 @@ const Documents = () => {
         isOpen={isUploadDialogOpen}
         onClose={() => setIsUploadDialogOpen(false)}
         onUpload={handleUpload}
-        categories={mockCategories}
+        categories={categories}
+        isUploading={uploadDocument.isPending}
+      />
+
+      {/* Category dialog */}
+      <CategoryDialog
+        isOpen={isCategoryDialogOpen}
+        onClose={() => setIsCategoryDialogOpen(false)}
+        onSubmit={handleCreateCategory}
       />
     </PageTemplate>
   );

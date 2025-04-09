@@ -27,3 +27,16 @@ export type DocumentCategory = {
 
 // For the tab interface
 export type DocumentTab = 'documents' | 'templates';
+
+// Hook params type for categories
+export type UseCategoriesParams = {
+  associationId?: string;
+  enabled?: boolean;
+};
+
+// Hook params type for documents
+export type UseDocumentsParams = {
+  associationId?: string;
+  category?: string | null;
+  enabled?: boolean;
+};
