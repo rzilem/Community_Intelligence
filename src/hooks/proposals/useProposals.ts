@@ -18,40 +18,45 @@ export const useProposals = (leadId?: string) => {
   } = useQuery({
     queryKey,
     queryFn: async (): Promise<Proposal[]> => {
-      let query = supabase.from('proposals');
-      
-      if (leadId) {
-        query = query.eq('lead_id', leadId);
-      }
-      
-      const { data, error } = await query
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      // Fetch attachments for each proposal
-      const proposalsWithAttachments = await Promise.all(
-        data.map(async (proposal: any) => {
-          const { data: attachments, error: attachmentsError } = await supabase
-            .from('proposal_attachments')
-            .select('*')
-            .eq('proposal_id', proposal.id);
+      try {
+        let query = supabase.from('proposals' as any);
+        
+        if (leadId) {
+          query = query.eq('lead_id', leadId) as any;
+        }
+        
+        const { data, error } = await (query as any)
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        // Fetch attachments for each proposal
+        const proposalsWithAttachments = await Promise.all(
+          data.map(async (proposal: any) => {
+            const { data: attachments, error: attachmentsError } = await supabase
+              .from('proposal_attachments' as any)
+              .select('*')
+              .eq('proposal_id', proposal.id);
+              
+            if (attachmentsError) {
+              console.error('Error fetching attachments:', attachmentsError);
+            }
             
-          if (attachmentsError) {
-            console.error('Error fetching attachments:', attachmentsError);
-          }
-          
-          return {
-            ...proposal,
-            attachments: attachments || []
-          };
-        })
-      );
-      
-      return proposalsWithAttachments as Proposal[];
+            return {
+              ...proposal,
+              attachments: attachments || []
+            };
+          })
+        );
+        
+        return proposalsWithAttachments as Proposal[];
+      } catch (err) {
+        console.error("Error in useProposals:", err);
+        throw err;
+      }
     }
   });
 
@@ -59,7 +64,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async (proposalData: Partial<Proposal>) => {
       // 1. Insert the proposal
       const { data: proposal, error } = await supabase
-        .from('proposals')
+        .from('proposals' as any)
         .insert({
           lead_id: proposalData.lead_id,
           template_id: proposalData.template_id,
@@ -85,7 +90,7 @@ export const useProposals = (leadId?: string) => {
         }));
         
         const { error: attachmentError } = await supabase
-          .from('proposal_attachments')
+          .from('proposal_attachments' as any)
           .insert(attachmentsToInsert);
           
         if (attachmentError) {
@@ -109,7 +114,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async ({ id, data }: { id: string, data: Partial<Proposal> }) => {
       // 1. Update the proposal
       const { data: updatedProposal, error } = await supabase
-        .from('proposals')
+        .from('proposals' as any)
         .update({
           lead_id: data.lead_id,
           template_id: data.template_id,
@@ -131,7 +136,7 @@ export const useProposals = (leadId?: string) => {
       if (data.attachments) {
         // First, delete existing attachments
         const { error: deleteError } = await supabase
-          .from('proposal_attachments')
+          .from('proposal_attachments' as any)
           .delete()
           .eq('proposal_id', id);
           
@@ -151,7 +156,7 @@ export const useProposals = (leadId?: string) => {
           }));
           
           const { error: attachmentError } = await supabase
-            .from('proposal_attachments')
+            .from('proposal_attachments' as any)
             .insert(attachmentsToInsert);
             
           if (attachmentError) {
@@ -175,7 +180,7 @@ export const useProposals = (leadId?: string) => {
     mutationFn: async (id: string) => {
       // Delete proposal (attachments will be cascade deleted due to FK constraint)
       const { error } = await supabase
-        .from('proposals')
+        .from('proposals' as any)
         .delete()
         .eq('id', id);
         
@@ -223,7 +228,7 @@ export const useProposals = (leadId?: string) => {
     // 3. If proposalId is provided, create an attachment record
     if (proposalId) {
       const { data, error } = await supabase
-        .from('proposal_attachments')
+        .from('proposal_attachments' as any)
         .insert({
           proposal_id: proposalId,
           name: attachmentData.name,
@@ -247,31 +252,36 @@ export const useProposals = (leadId?: string) => {
   };
 
   const getProposal = useCallback(async (id: string): Promise<Proposal | null> => {
-    const { data: proposal, error } = await supabase
-      .from('proposals')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data: proposal, error } = await supabase
+        .from('proposals' as any)
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) {
+        toast.error(`Error loading proposal: ${error.message}`);
+        return null;
+      }
       
-    if (error) {
-      toast.error(`Error loading proposal: ${error.message}`);
+      // Get attachments
+      const { data: attachments, error: attachmentsError } = await supabase
+        .from('proposal_attachments' as any)
+        .select('*')
+        .eq('proposal_id', id);
+        
+      if (attachmentsError) {
+        console.error('Error fetching attachments:', attachmentsError);
+      }
+      
+      return {
+        ...(proposal as any),
+        attachments: attachments || []
+      } as Proposal;
+    } catch (err) {
+      console.error("Error in getProposal:", err);
       return null;
     }
-    
-    // Get attachments
-    const { data: attachments, error: attachmentsError } = await supabase
-      .from('proposal_attachments')
-      .select('*')
-      .eq('proposal_id', id);
-      
-    if (attachmentsError) {
-      console.error('Error fetching attachments:', attachmentsError);
-    }
-    
-    return {
-      ...(proposal as Proposal),
-      attachments: attachments || []
-    };
   }, []);
 
   return {

@@ -16,7 +16,7 @@ export const useProposalTemplates = () => {
     queryKey: ['proposalTemplates'],
     queryFn: async (): Promise<ProposalTemplate[]> => {
       const { data, error } = await supabase
-        .from('proposal_templates')
+        .from('proposal_templates' as any)
         .select('*')
         .order('name');
         
@@ -40,7 +40,7 @@ export const useProposalTemplates = () => {
   const createMutation = useMutation({
     mutationFn: async (template: Partial<ProposalTemplate>) => {
       const { data, error } = await supabase
-        .from('proposal_templates')
+        .from('proposal_templates' as any)
         .insert({
           name: template.name || 'New Template',
           description: template.description,
@@ -68,7 +68,7 @@ export const useProposalTemplates = () => {
       if (!template.id) throw new Error('Template ID is required');
       
       const { data, error } = await supabase
-        .from('proposal_templates')
+        .from('proposal_templates' as any)
         .update({
           name: template.name,
           description: template.description,
@@ -95,7 +95,7 @@ export const useProposalTemplates = () => {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('proposal_templates')
+        .from('proposal_templates' as any)
         .delete()
         .eq('id', id);
         

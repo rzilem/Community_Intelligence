@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { WorkflowSchedule } from '@/types/operations-types';
+import { WorkflowSchedule, WorkflowScheduleType, WorkflowScheduleStatus } from '@/types/operations-types';
 
 // Demo data for workflow schedules
 const demoSchedules: WorkflowSchedule[] = [
@@ -79,12 +79,12 @@ export const useWorkflowSchedule = () => {
 
   const filterByType = (type: string) => {
     if (type === 'all') return schedules;
-    return schedules.filter(schedule => schedule.type === type);
+    return schedules.filter(schedule => schedule.type === type as WorkflowScheduleType);
   };
 
   const filterByStatus = (status: string) => {
     if (status === 'all') return schedules;
-    return schedules.filter(schedule => schedule.status === status);
+    return schedules.filter(schedule => schedule.status === status as WorkflowScheduleStatus);
   };
 
   return {
