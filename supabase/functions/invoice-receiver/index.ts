@@ -1,9 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { processMultipartFormData, normalizeEmailData } from "../email-receiver/utils/request-parser.ts";
 import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
-import { corsHeaders } from "../email-receiver/utils/cors-headers.ts";
+import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
+import { corsHeaders } from "./utils/cors-headers.ts";
 
 // Handle the incoming webhook request
 serve(async (req) => {

@@ -22,3 +22,4 @@ export * from './onboarding-types';
 export * from './proposal-types';
 export * from './email-types';
 export * from './analytics-types';
+export * from './invoice-types';

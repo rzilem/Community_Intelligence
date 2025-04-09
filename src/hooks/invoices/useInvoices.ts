@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { useToast } from '@/components/ui/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from './useInvoiceNotifications';
 
 // Column configuration type
@@ -33,14 +34,22 @@ export const useInvoices = () => {
     { id: 'description', label: 'Description', accessorKey: 'description', sortable: false },
   ];
 
-  // Fetch invoices using useSupabaseQuery
-  const { data: invoices = [], isLoading, refetch } = useSupabaseQuery<Invoice[]>(
-    'invoices',
-    {
-      select: '*',
-      order: { column: 'created_at', ascending: false }
-    }
-  );
+  // Fetch invoices using react-query directly
+  const { data: invoices = [], isLoading, refetch } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data as Invoice[];
+    },
+  });
 
   // Update visible columns in local storage
   useEffect(() => {
@@ -88,8 +97,6 @@ export const useInvoices = () => {
   // Function to update invoice status
   const updateInvoiceStatus = async (id: string, status: string) => {
     try {
-      // Create Supabase client for mutations
-      const { supabase } = await import('@/integrations/supabase/client');
       const { error } = await supabase
         .from('invoices')
         .update({ status })
@@ -118,8 +125,6 @@ export const useInvoices = () => {
   // Function to delete invoice
   const deleteInvoice = async (id: string) => {
     try {
-      // Create Supabase client for mutations
-      const { supabase } = await import('@/integrations/supabase/client');
       const { error } = await supabase
         .from('invoices')
         .delete()
