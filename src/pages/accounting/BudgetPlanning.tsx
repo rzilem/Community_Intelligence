@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PiggyBank, Plus, CalendarPlus, ChartBar, FileText, Settings } from 'lucide-react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import BudgetTable from '@/components/budgeting/BudgetTable';
+import BudgetTable, { Budget } from '@/components/budgeting/BudgetTable';
 import BudgetDialog from '@/components/budgeting/BudgetDialog';
 
 const BudgetPlanning = () => {
@@ -15,18 +15,18 @@ const BudgetPlanning = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [selectedBudget, setSelectedBudget] = useState<any>(undefined);
+  const [selectedBudget, setSelectedBudget] = useState<Budget | undefined>(undefined);
   
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => (currentYear - 2 + i).toString());
   
-  // Mock budgets data
-  const [budgets, setBudgets] = useState([
+  // Mock budgets data with status values that match the Budget interface
+  const [budgets, setBudgets] = useState<Budget[]>([
     {
       id: '1',
       name: 'Annual Operating Budget',
       year: '2025',
-      status: 'draft',
+      status: 'draft', // Using literal 'draft' instead of string type
       totalRevenue: 250000,
       totalExpenses: 225000,
       createdBy: 'John Smith',
@@ -37,7 +37,7 @@ const BudgetPlanning = () => {
       id: '2',
       name: 'Reserve Fund Budget',
       year: '2025',
-      status: 'approved',
+      status: 'approved', // Using literal 'approved' instead of string type
       totalRevenue: 100000,
       totalExpenses: 75000,
       createdBy: 'Jane Doe',
@@ -48,7 +48,7 @@ const BudgetPlanning = () => {
       id: '3',
       name: 'Capital Improvement Budget',
       year: '2024',
-      status: 'final',
+      status: 'final', // Using literal 'final' instead of string type
       totalRevenue: 150000,
       totalExpenses: 145000,
       createdBy: 'John Smith',
@@ -59,7 +59,7 @@ const BudgetPlanning = () => {
       id: '4',
       name: 'Special Assessment Budget',
       year: '2024',
-      status: 'draft',
+      status: 'draft', // Using literal 'draft' instead of string type
       totalRevenue: 75000,
       totalExpenses: 70000,
       createdBy: 'Jane Doe', 
@@ -87,11 +87,11 @@ const BudgetPlanning = () => {
   const handleCreateBudget = (data: any) => {
     console.log('Creating budget:', data);
     
-    const newBudget = {
+    const newBudget: Budget = {
       id: Date.now().toString(),
       name: data.name,
       year: data.year,
-      status: 'draft',
+      status: 'draft', // Using literal 'draft' instead of string type
       totalRevenue: parseFloat(data.estimatedRevenue) || 0,
       totalExpenses: parseFloat(data.estimatedExpenses) || 0,
       createdBy: 'Current User', // Would come from authentication context in a real app
@@ -103,7 +103,7 @@ const BudgetPlanning = () => {
     setIsDialogOpen(false);
   };
 
-  const handleEditBudget = (budget: any) => {
+  const handleEditBudget = (budget: Budget) => {
     setSelectedBudget(budget);
     setIsDialogOpen(true);
   };
@@ -111,7 +111,7 @@ const BudgetPlanning = () => {
   const handleUpdateBudget = (data: any) => {
     if (!selectedBudget) return;
     
-    const updatedBudget = {
+    const updatedBudget: Budget = {
       ...selectedBudget,
       name: data.name,
       year: data.year,
@@ -128,7 +128,7 @@ const BudgetPlanning = () => {
     setIsDialogOpen(false);
   };
 
-  const handleViewDetails = (budget: any) => {
+  const handleViewDetails = (budget: Budget) => {
     console.log('Viewing budget details:', budget);
     // In a real implementation, we would navigate to a detailed view
   };
