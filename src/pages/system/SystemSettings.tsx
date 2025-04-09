@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { SlidersHorizontal, Save, Palette, Bell, Shield, Database } from 'lucide-react';
@@ -9,19 +8,19 @@ import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
 import SystemPreferencesTab from '@/components/settings/SystemPreferencesTab';
-import { 
+import type { 
   AppearanceSettings, 
   NotificationSettings, 
   SecuritySettings, 
   SystemPreferences, 
-  SystemSettings 
+  SystemSettings as SystemSettingsType 
 } from '@/types/settings-types';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
   
   // Default settings
-  const [settings, setSettings] = useState<SystemSettings>({
+  const [settings, setSettings] = useState<SystemSettingsType>({
     appearance: {
       theme: 'system',
       colorScheme: 'default',
