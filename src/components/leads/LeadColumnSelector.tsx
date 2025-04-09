@@ -11,6 +11,7 @@ interface LeadColumnSelectorProps {
   selectedColumns: string[];
   onChange: (selectedColumns: string[]) => void;
   onReorder?: (sourceIndex: number, destinationIndex: number) => void;
+  resetToDefaults?: () => void;
   className?: string;
 }
 
@@ -19,15 +20,16 @@ const LeadColumnSelector: React.FC<LeadColumnSelectorProps> = ({
   selectedColumns,
   onChange,
   onReorder,
+  resetToDefaults,
   className
 }) => {
   const [open, setOpen] = React.useState(false);
-  const [localSelectedColumns, setLocalSelectedColumns] = React.useState<string[]>(selectedColumns);
+  const [localSelectedColumns, setLocalSelectedColumns] = React.useState<string[]>(selectedColumns || []);
   const [draggedItem, setDraggedItem] = React.useState<number | null>(null);
 
   // Update local state when selectedColumns prop changes
   React.useEffect(() => {
-    setLocalSelectedColumns(selectedColumns);
+    setLocalSelectedColumns(selectedColumns || []);
   }, [selectedColumns]);
 
   const handleColumnToggle = (columnId: string) => {
@@ -107,6 +109,18 @@ const LeadColumnSelector: React.FC<LeadColumnSelectorProps> = ({
             </div>
           ))}
         </div>
+        {resetToDefaults && (
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full" 
+              onClick={resetToDefaults}
+            >
+              Reset to Defaults
+            </Button>
+          </div>
+        )}
         <div className="text-xs text-muted-foreground mt-4">
           At least one column must be selected
         </div>

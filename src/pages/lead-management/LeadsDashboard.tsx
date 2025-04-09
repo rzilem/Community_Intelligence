@@ -71,8 +71,8 @@ const LeadsDashboard = () => {
 
           <LeadColumnSelector
             columns={columns}
-            visibleColumnIds={visibleColumnIds}
-            updateVisibleColumns={updateVisibleColumns}
+            selectedColumns={visibleColumnIds}
+            onChange={updateVisibleColumns}
             resetToDefaults={resetToDefaults}
           />
         </div>
