@@ -19,14 +19,13 @@ export const useProposals = (leadId?: string) => {
     queryKey,
     queryFn: async (): Promise<Proposal[]> => {
       try {
-        let query = supabase.from('proposals');
+        let query = supabase.from('proposals').select('*');
         
         if (leadId) {
           query = query.eq('lead_id', leadId);
         }
         
         const { data, error } = await query
-          .select('*')
           .order('created_at', { ascending: false });
         
         if (error) {
@@ -78,10 +77,18 @@ export const useProposals = (leadId?: string) => {
         
       if (error) throw new Error(error.message);
       
+      // Type assertion to ensure we have the required ID
+      const createdProposal = proposal as any;
+      const proposalId = createdProposal.id;
+      
+      if (!proposalId) {
+        throw new Error('Failed to retrieve ID from created proposal');
+      }
+      
       // 2. If attachments exist, insert them
-      if (proposalData.attachments && proposalData.attachments.length > 0 && proposal.id) {
+      if (proposalData.attachments && proposalData.attachments.length > 0) {
         const attachmentsToInsert = proposalData.attachments.map(attachment => ({
-          proposal_id: proposal.id,
+          proposal_id: proposalId,
           name: attachment.name,
           type: attachment.type,
           url: attachment.url,
@@ -99,7 +106,11 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      return proposal as Proposal;
+      // Return a properly typed Proposal object
+      return {
+        ...createdProposal,
+        attachments: proposalData.attachments || []
+      } as Proposal;
     },
     onSuccess: () => {
       toast.success('Proposal created successfully');
@@ -131,6 +142,9 @@ export const useProposals = (leadId?: string) => {
         .single();
         
       if (error) throw new Error(error.message);
+      
+      // Type assertion
+      const proposal = updatedProposal as any;
       
       // 2. If attachments exist, handle them
       if (data.attachments) {
@@ -165,7 +179,11 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      return updatedProposal as Proposal;
+      // Return a properly typed Proposal object
+      return {
+        ...proposal,
+        attachments: data.attachments || []
+      } as Proposal;
     },
     onSuccess: () => {
       toast.success('Proposal updated successfully');

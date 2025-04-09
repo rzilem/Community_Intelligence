@@ -39,6 +39,11 @@ export const useProposalTemplates = () => {
 
   const createMutation = useMutation({
     mutationFn: async (template: Partial<ProposalTemplate>) => {
+      // Convert attachments to a format compatible with JSON storage
+      const attachmentsToInsert = template.attachments ? 
+        JSON.parse(JSON.stringify(template.attachments)) : 
+        [];
+        
       const { data, error } = await supabase
         .from('proposal_templates')
         .insert({
@@ -46,13 +51,25 @@ export const useProposalTemplates = () => {
           description: template.description,
           content: template.content || '<p>Enter your proposal content here</p>',
           folder_id: template.folder_id,
-          attachments: template.attachments
+          attachments: attachmentsToInsert
         })
         .select()
         .single();
         
       if (error) throw new Error(error.message);
-      return data as ProposalTemplate;
+      
+      // Parse the response and ensure proper typing
+      const resultData = data as any;
+      return {
+        id: resultData.id,
+        name: resultData.name,
+        description: resultData.description || '',
+        content: resultData.content,
+        folder_id: resultData.folder_id,
+        attachments: resultData.attachments || [],
+        created_at: resultData.created_at,
+        updated_at: resultData.updated_at
+      } as ProposalTemplate;
     },
     onSuccess: () => {
       toast.success('Template created successfully');
@@ -67,6 +84,11 @@ export const useProposalTemplates = () => {
     mutationFn: async (template: Partial<ProposalTemplate>) => {
       if (!template.id) throw new Error('Template ID is required');
       
+      // Convert attachments to a format compatible with JSON storage
+      const attachmentsToUpdate = template.attachments ? 
+        JSON.parse(JSON.stringify(template.attachments)) : 
+        undefined;
+        
       const { data, error } = await supabase
         .from('proposal_templates')
         .update({
@@ -74,14 +96,26 @@ export const useProposalTemplates = () => {
           description: template.description,
           content: template.content,
           folder_id: template.folder_id,
-          attachments: template.attachments
+          attachments: attachmentsToUpdate
         })
         .eq('id', template.id)
         .select()
         .single();
         
       if (error) throw new Error(error.message);
-      return data as ProposalTemplate;
+      
+      // Parse the response and ensure proper typing
+      const resultData = data as any;
+      return {
+        id: resultData.id,
+        name: resultData.name,
+        description: resultData.description || '',
+        content: resultData.content,
+        folder_id: resultData.folder_id,
+        attachments: resultData.attachments || [],
+        created_at: resultData.created_at,
+        updated_at: resultData.updated_at
+      } as ProposalTemplate;
     },
     onSuccess: () => {
       toast.success('Template updated successfully');

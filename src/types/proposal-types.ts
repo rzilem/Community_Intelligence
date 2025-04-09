@@ -42,6 +42,7 @@ export interface ProposalAttachment {
   size?: number;
   content_type: string;
   created_at: string;
+  [key: string]: any; // Add index signature to make compatible with JSON
 }
 
 export interface ProposalSection {

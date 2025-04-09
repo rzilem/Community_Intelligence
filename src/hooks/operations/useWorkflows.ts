@@ -20,7 +20,6 @@ export const useWorkflows = () => {
     queryKey: ['workflowTemplates'],
     queryFn: async (): Promise<Workflow[]> => {
       try {
-        // Type assertion for Supabase queries
         const { data, error } = await supabase
           .from('workflow_templates')
           .select('*')
@@ -58,7 +57,6 @@ export const useWorkflows = () => {
     queryKey: ['activeWorkflows'],
     queryFn: async (): Promise<Workflow[]> => {
       try {
-        // Type assertion for Supabase queries
         const { data, error } = await supabase
           .from('workflows')
           .select('*')
@@ -134,6 +132,11 @@ export const useWorkflows = () => {
 
   const createTemplateMutation = useMutation({
     mutationFn: async (workflowData: Partial<Workflow>) => {
+      // Convert steps to a format compatible with JSON storage
+      const stepsToInsert = workflowData.steps ? 
+        JSON.parse(JSON.stringify(workflowData.steps)) : 
+        [];
+        
       const { data, error } = await supabase
         .from('workflow_templates')
         .insert({
@@ -141,7 +144,7 @@ export const useWorkflows = () => {
           description: workflowData.description || '',
           type: workflowData.type || 'Governance',
           status: 'template',
-          steps: workflowData.steps || [],
+          steps: stepsToInsert,
           is_template: true,
           is_popular: false
         })

@@ -15,6 +15,7 @@ export interface WorkflowStep {
   description: string;
   order: number;
   isComplete?: boolean;
+  [key: string]: any; // Add index signature to make compatible with JSON
 }
 
 export interface Workflow {
