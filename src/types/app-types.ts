@@ -17,3 +17,8 @@ export * from './communication-types';
 export * from './document-types';
 export * from './vendor-types';
 export * from './import-types';
+export * from './lead-types';
+export * from './onboarding-types';
+export * from './proposal-types';
+export * from './email-types';
+export * from './analytics-types';
