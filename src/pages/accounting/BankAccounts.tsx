@@ -58,6 +58,7 @@ const BankAccounts: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [accountTypeFilter, setAccountTypeFilter] = useState<string>('all');
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(mockBankAccounts);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
 
   const filteredAccounts = bankAccounts.filter(account => {
     const matchesSearch = 
@@ -70,8 +71,15 @@ const BankAccounts: React.FC = () => {
     return matchesSearch && matchesType;
   });
 
+  const handleAssociationChange = (associationId: string) => {
+    console.log('Association changed to:', associationId);
+    setSelectedAssociationId(associationId);
+    // In a real implementation, we would fetch bank accounts for this association
+    // For now, we'll just use the mock data
+  };
+
   const handleAddAccount = (data: Partial<BankAccount>) => {
-    // In a real implementation, we'd call an API
+    // In a real implementation, we'd call an API with the selected association ID
     const newAccount: BankAccount = {
       id: Date.now().toString(),
       name: data.name || '',
@@ -99,7 +107,10 @@ const BankAccounts: React.FC = () => {
               <CardTitle>Financial Accounts</CardTitle>
               <CardDescription>Manage bank and investment accounts for your associations</CardDescription>
             </div>
-            <AssociationSelector className="md:self-end" />
+            <AssociationSelector 
+              className="md:self-end" 
+              onAssociationChange={handleAssociationChange} 
+            />
           </div>
         </CardHeader>
         <CardContent>
