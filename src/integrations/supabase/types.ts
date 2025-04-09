@@ -602,6 +602,54 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          association_id: string | null
+          association_name: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          html_content: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string
+          status: string
+          updated_at: string
+          vendor: string
+        }
+        Insert: {
+          amount: number
+          association_id?: string | null
+          association_name?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          html_content?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number: string
+          status?: string
+          updated_at?: string
+          vendor: string
+        }
+        Update: {
+          amount?: number
+          association_id?: string | null
+          association_name?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          html_content?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string
+          status?: string
+          updated_at?: string
+          vendor?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           additional_requirements: string | null

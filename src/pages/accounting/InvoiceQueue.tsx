@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt, Plus, FileDown, FileUp, History, Filter, Search, Eye, CheckSquare, X } from 'lucide-react';
@@ -12,102 +12,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { useInvoices } from '@/hooks/invoices/useInvoices';
+import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
+import { Skeleton } from '@/components/ui/skeleton';
 
-interface Invoice {
-  id: string;
-  vendor: string;
-  amount: number;
-  dueDate: string;
-  status: 'pending' | 'approved' | 'rejected' | 'paid';
-  hoaName: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-}
-
-const mockInvoices: Invoice[] = [
-  { 
-    id: 'INV-001', 
-    vendor: 'Landscaping Services Inc.', 
-    amount: 1250.00, 
-    dueDate: '2025-04-15', 
-    status: 'pending',
-    hoaName: 'Oakridge Estates',
-    invoiceNumber: 'LS-9876',
-    invoiceDate: '2025-04-01'
-  },
-  { 
-    id: 'INV-002', 
-    vendor: 'Pool Maintenance Co.', 
-    amount: 850.00, 
-    dueDate: '2025-04-18', 
-    status: 'pending',
-    hoaName: 'Lakeside Community',
-    invoiceNumber: 'PM-5432',
-    invoiceDate: '2025-04-02'
-  },
-  { 
-    id: 'INV-003', 
-    vendor: 'Security Systems Ltd.', 
-    amount: 2100.00, 
-    dueDate: '2025-04-22', 
-    status: 'approved',
-    hoaName: 'Highland Towers',
-    invoiceNumber: 'SS-7890',
-    invoiceDate: '2025-04-03'
-  },
-  { 
-    id: 'INV-004', 
-    vendor: 'Professional Cleaning', 
-    amount: 650.00, 
-    dueDate: '2025-04-25', 
-    status: 'rejected',
-    hoaName: 'Oakridge Estates',
-    invoiceNumber: 'PC-3456',
-    invoiceDate: '2025-03-28'
-  },
-  { 
-    id: 'INV-005', 
-    vendor: 'Electrical Repairs', 
-    amount: 1800.00, 
-    dueDate: '2025-04-30', 
-    status: 'pending',
-    hoaName: 'Highland Towers',
-    invoiceNumber: 'ER-1234',
-    invoiceDate: '2025-04-05'
-  },
-  { 
-    id: 'INV-006', 
-    vendor: 'Prime Pool Service', 
-    amount: 750.00, 
-    dueDate: '2025-05-05', 
-    status: 'pending',
-    hoaName: 'Oakridge Estates',
-    invoiceNumber: 'PS-12345',
-    invoiceDate: '2025-04-08'
-  },
-  { 
-    id: 'INV-007', 
-    vendor: 'Green Thumb Landscaping', 
-    amount: 1100.00, 
-    dueDate: '2025-05-10', 
-    status: 'approved',
-    hoaName: 'Lakeside Community',
-    invoiceNumber: 'GTL-567',
-    invoiceDate: '2025-04-10'
-  },
-  { 
-    id: 'INV-008', 
-    vendor: 'Elevator Maintenance Inc.', 
-    amount: 950.00, 
-    dueDate: '2025-05-15', 
-    status: 'paid',
-    hoaName: 'Highland Towers',
-    invoiceNumber: 'EMI-890',
-    invoiceDate: '2025-04-07'
-  },
-];
-
-const getStatusBadge = (status: Invoice['status']) => {
+const getStatusBadge = (status: string) => {
   switch (status) {
     case 'approved':
       return <Badge className="bg-green-500">Approved</Badge>;
@@ -123,11 +32,25 @@ const getStatusBadge = (status: Invoice['status']) => {
 const InvoiceQueue = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { markAllAsRead } = useInvoiceNotifications();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [invoices, setInvoices] = useState(mockInvoices);
+  const [activeTab, setActiveTab] = useState('all-invoices');
+  
+  const {
+    invoices,
+    isLoading,
+    refreshInvoices,
+    updateInvoiceStatus,
+    deleteInvoice,
+    lastRefreshed
+  } = useInvoices();
 
-  // Filter invoices based on search term and status filter
+  // Mark notifications as read when visiting this page
+  useEffect(() => {
+    markAllAsRead();
+  }, []);
+
+  // Filter invoices based on search term and active tab
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = searchTerm === '' || 
       Object.values(invoice).some(value => 
@@ -135,7 +58,9 @@ const InvoiceQueue = () => {
         value.toLowerCase().includes(searchTerm.toLowerCase())
       );
       
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
+    const matchesStatus = 
+      activeTab === 'all-invoices' || 
+      activeTab === invoice.status;
     
     return matchesSearch && matchesStatus;
   });
@@ -149,29 +74,11 @@ const InvoiceQueue = () => {
   };
 
   const handleApproveInvoice = (id: string) => {
-    setInvoices(prevInvoices => 
-      prevInvoices.map(invoice => 
-        invoice.id === id ? { ...invoice, status: 'approved' } : invoice
-      )
-    );
-    
-    toast({
-      title: "Invoice approved",
-      description: `Invoice ${id} has been approved for payment.`,
-    });
+    updateInvoiceStatus(id, 'approved');
   };
 
   const handleRejectInvoice = (id: string) => {
-    setInvoices(prevInvoices => 
-      prevInvoices.map(invoice => 
-        invoice.id === id ? { ...invoice, status: 'rejected' } : invoice
-      )
-    );
-    
-    toast({
-      title: "Invoice rejected",
-      description: `Invoice ${id} has been rejected.`,
-    });
+    updateInvoiceStatus(id, 'rejected');
   };
 
   return (
@@ -182,7 +89,7 @@ const InvoiceQueue = () => {
     >
       <div className="mt-6 space-y-4">
         <Card className="p-6">
-          <Tabs defaultValue="all-invoices">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -198,6 +105,9 @@ const InvoiceQueue = () => {
                   </TooltipButton>
                   <TooltipButton variant="outline" tooltip="Import invoices from a CSV">
                     <FileUp className="h-4 w-4 mr-1" /> Import
+                  </TooltipButton>
+                  <TooltipButton variant="outline" tooltip="Refresh invoice list" onClick={refreshInvoices}>
+                    <History className="h-4 w-4 mr-1" /> Refresh
                   </TooltipButton>
                 </div>
                 <div className="flex gap-2">
@@ -227,19 +137,19 @@ const InvoiceQueue = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setStatusFilter('all')}>
+                    <DropdownMenuItem onClick={() => setActiveTab('all-invoices')}>
                       All Statuses
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter('pending')}>
+                    <DropdownMenuItem onClick={() => setActiveTab('pending')}>
                       Pending Only
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter('approved')}>
+                    <DropdownMenuItem onClick={() => setActiveTab('approved')}>
                       Approved Only
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter('rejected')}>
+                    <DropdownMenuItem onClick={() => setActiveTab('rejected')}>
                       Rejected Only
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setStatusFilter('paid')}>
+                    <DropdownMenuItem onClick={() => setActiveTab('paid')}>
                       Paid Only
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -261,19 +171,32 @@ const InvoiceQueue = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredInvoices.length > 0 ? (
+                    {isLoading ? (
+                      Array(5).fill(0).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                          <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : filteredInvoices.length > 0 ? (
                       filteredInvoices.map((invoice) => (
                         <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
                           <TableCell className="font-medium" onClick={() => handleViewInvoice(invoice.id)}>
-                            {invoice.invoiceNumber}
+                            {invoice.invoice_number}
                           </TableCell>
                           <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.vendor}</TableCell>
-                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.hoaName}</TableCell>
-                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.invoiceDate}</TableCell>
+                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.association_name || 'N/A'}</TableCell>
+                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.invoice_date}</TableCell>
                           <TableCell className="text-right" onClick={() => handleViewInvoice(invoice.id)}>
-                            ${invoice.amount.toFixed(2)}
+                            ${Number(invoice.amount).toFixed(2)}
                           </TableCell>
-                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.dueDate}</TableCell>
+                          <TableCell onClick={() => handleViewInvoice(invoice.id)}>{invoice.due_date}</TableCell>
                           <TableCell onClick={() => handleViewInvoice(invoice.id)}>
                             {getStatusBadge(invoice.status)}
                           </TableCell>
@@ -325,34 +248,45 @@ const InvoiceQueue = () => {
               </div>
             </TabsContent>
             
-            {/* Additional tabs will use the same filter but with preset status */}
+            {/* These tabs will automatically filter by status */}
             <TabsContent value="pending" className="mt-4">
-              {/* Similar content with status filter preset to "pending" */}
-              <div className="text-center py-4 text-gray-500">
-                This tab will show only pending invoices.
+              <div className="mt-4 rounded-md border">
+                <Table>
+                  {/* Same table structure as above */}
+                  {/* Content filtered to show only pending invoices */}
+                </Table>
               </div>
             </TabsContent>
             <TabsContent value="approved" className="mt-4">
-              <div className="text-center py-4 text-gray-500">
-                This tab will show only approved invoices.
+              <div className="mt-4 rounded-md border">
+                <Table>
+                  {/* Same table structure as above */}
+                  {/* Content filtered to show only approved invoices */}
+                </Table>
               </div>
             </TabsContent>
             <TabsContent value="rejected" className="mt-4">
-              <div className="text-center py-4 text-gray-500">
-                This tab will show only rejected invoices.
+              <div className="mt-4 rounded-md border">
+                <Table>
+                  {/* Same table structure as above */}
+                  {/* Content filtered to show only rejected invoices */}
+                </Table>
               </div>
             </TabsContent>
             <TabsContent value="paid" className="mt-4">
-              <div className="text-center py-4 text-gray-500">
-                This tab will show only paid invoices.
+              <div className="mt-4 rounded-md border">
+                <Table>
+                  {/* Same table structure as above */}
+                  {/* Content filtered to show only paid invoices */}
+                </Table>
               </div>
             </TabsContent>
           </Tabs>
         </Card>
         
         <div className="flex justify-between items-center text-sm text-gray-500">
-          <div>Showing {filteredInvoices.length} of {mockInvoices.length} invoices</div>
-          <div>Last updated: {new Date().toLocaleString()}</div>
+          <div>Showing {filteredInvoices.length} of {invoices.length} invoices</div>
+          <div>Last updated: {lastRefreshed.toLocaleString()}</div>
         </div>
       </div>
     </PageTemplate>
