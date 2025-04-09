@@ -9,7 +9,7 @@ import { Association } from '@/types/association-types';
 export const fetchAllAssociations = async () => {
   console.log('Fetching all associations...');
   try {
-    // Use simpler query first which is less likely to have issues
+    // Don't use any joins that might trigger RLS recursion
     const { data, error } = await supabase
       .from('associations')
       .select('*')
@@ -97,13 +97,12 @@ export const createAssociation = async (associationData: {
     
     console.log('Assigning user as admin for association:', newAssociation.id);
     
-    const { error: roleError } = await supabase
-      .from('association_users')
-      .insert({
-        association_id: newAssociation.id,
-        user_id: user.id,
-        role: 'admin'
-      });
+    // Use RPC to avoid potential RLS issues
+    const { error: roleError } = await supabase.rpc('assign_user_to_association', {
+      p_association_id: newAssociation.id,
+      p_user_id: user.id,
+      p_role: 'admin'
+    });
 
     if (roleError) {
       console.error('Error setting user as association admin:', roleError);

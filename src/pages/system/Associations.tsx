@@ -15,6 +15,7 @@ import AssociationTable from '@/components/associations/AssociationTable';
 import AssociationStats from '@/components/associations/AssociationStats';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +35,18 @@ const Associations = () => {
   useEffect(() => {
     console.log('Current associations:', associations);
   }, [associations]);
+  
+  // Check for authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        toast.error('You must be logged in to view associations');
+      }
+    };
+    
+    checkAuth();
+  }, []);
   
   const handleSaveAssociation = async (formData: AssociationFormData) => {
     if (!formData.name) {
@@ -61,7 +74,6 @@ const Associations = () => {
       };
       
       await createAssociation(associationData);
-      toast.success(`Association "${formData.name}" created successfully`);
       setIsDialogOpen(false);
       
       // Force immediate refresh

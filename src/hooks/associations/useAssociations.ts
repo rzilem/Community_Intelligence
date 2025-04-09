@@ -10,6 +10,7 @@ import {
   deleteAssociation 
 } from '@/services/association-service';
 import { Association } from '@/types/association-types';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useAssociations = () => {
   const queryClient = useQueryClient();
@@ -23,14 +24,35 @@ export const useAssociations = () => {
     refetch
   } = useQuery({
     queryKey: ['associations', retryCount],
-    queryFn: fetchAllAssociations,
+    queryFn: async () => {
+      try {
+        const data = await fetchAllAssociations();
+        if (data.length === 0) {
+          // If data is empty, try to check if we can retrieve data through RPC as a fallback
+          try {
+            console.log('Trying fallback method to fetch associations...');
+            const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_associations');
+            
+            if (rpcError) {
+              console.error('Fallback RPC error:', rpcError);
+              return data; // Return original empty array if RPC also fails
+            }
+            
+            console.log('Fallback method successful, retrieved:', rpcData?.length || 0, 'associations');
+            return rpcData || [];
+          } catch (rpcEx) {
+            console.error('Exception in fallback method:', rpcEx);
+            return data; // Return original empty array on any exception
+          }
+        }
+        return data;
+      } catch (error) {
+        console.error('Error in associations query:', error);
+        throw error;
+      }
+    },
     retry: 3,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
-    meta: {
-      onError: (error: Error) => {
-        console.error('Error fetching associations:', error);
-      }
-    }
   });
   
   // Auto-retry if we get back an empty list but there should be data
@@ -50,10 +72,20 @@ export const useAssociations = () => {
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
+        toast.success(`Association "${newAssociation.name}" created successfully`);
         // Force refetch to ensure we get the latest data
         queryClient.invalidateQueries({ queryKey: ['associations'] });
         setRetryCount(prev => prev + 1);
+        
+        // Also add it directly to the cache to ensure UI updates immediately
+        queryClient.setQueryData(['associations', retryCount], (oldData: Association[] | undefined) => {
+          const existingData = oldData || [];
+          return [...existingData, newAssociation];
+        });
       }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create association: ${error.message}`);
     }
   });
   
