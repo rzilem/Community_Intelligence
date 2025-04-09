@@ -1,4 +1,3 @@
-
 // Helper function to extract email from header format like "Name <email@domain.com>"
 export function extractEmailFromHeader(header: string): string {
   if (!header) return "";
@@ -52,19 +51,17 @@ export function isValidEmail(email: string): boolean {
 export function extractAssociationInfo(content: string): { name?: string, type?: string, units?: number } {
   const result: { name?: string, type?: string, units?: number } = {};
   
-  // Look for association type - prioritize this pattern first
-  const condoPatterns = [
+  // Simplified association type patterns
+  const associationTypePatterns = [
     /Condo Association/i,
-    /I am requesting a proposal for a\s*([\w\s]+)/i,
+    /HOA/i
   ];
   
-  for (const pattern of condoPatterns) {
+  // Look for specific association types first
+  for (const pattern of associationTypePatterns) {
     const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.type = match[1].trim();
-      break;
-    } else if (match && content.includes("Condo")) {
-      result.type = "Condo";
+    if (match) {
+      result.type = match[0].trim() === 'HOA' ? 'HOA' : 'Condo';
       break;
     }
   }
