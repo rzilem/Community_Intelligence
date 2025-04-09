@@ -1,17 +1,19 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Workflow as WorkflowIcon, Plus } from 'lucide-react';
+import { Workflow as WorkflowIcon, Plus, Loader2 } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import WorkflowTabs from '@/components/operations/WorkflowTabs';
 import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
+import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
   const { 
     workflowTemplates, 
+    activeWorkflows,
     loading, 
     useWorkflowTemplate, 
     createCustomTemplate 
@@ -37,36 +39,58 @@ const Workflows = () => {
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Predefined Workflow Templates</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {workflowTemplates.map((workflow) => (
-                  <WorkflowTemplateCard
-                    key={workflow.id}
-                    workflow={workflow}
-                    onUseTemplate={useWorkflowTemplate}
-                  />
-                ))}
-              </div>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {workflowTemplates.map((workflow) => (
+                    <WorkflowTemplateCard
+                      key={workflow.id}
+                      workflow={workflow}
+                      onUseTemplate={useWorkflowTemplate}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="active" className="mt-0">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Active Workflows</h2>
-              <p>This feature is coming soon. Please check back later.</p>
+              
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : activeWorkflows.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeWorkflows.map((workflow) => (
+                    <ActiveWorkflowCard
+                      key={workflow.id}
+                      workflow={workflow}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No active workflows. Use a template to create a workflow.</p>
+              )}
             </div>
           </TabsContent>
           
           <TabsContent value="custom" className="mt-0">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Custom Workflows</h2>
-              <p>This feature is coming soon. Please check back later.</p>
+              <p className="text-muted-foreground">This feature is coming soon. Please check back later.</p>
             </div>
           </TabsContent>
           
           <TabsContent value="builder" className="mt-0">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Workflow Builder</h2>
-              <p>This feature is coming soon. Please check back later.</p>
+              <p className="text-muted-foreground">This feature is coming soon. Please check back later.</p>
             </div>
           </TabsContent>
         </Tabs>

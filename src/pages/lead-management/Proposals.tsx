@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus, Settings } from 'lucide-react';
@@ -15,7 +16,14 @@ const Proposals = () => {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
   
-  const { createProposal, updateProposal } = useProposals();
+  const { 
+    proposals, 
+    isLoading, 
+    createProposal, 
+    updateProposal, 
+    deleteProposal,
+    refreshProposals 
+  } = useProposals();
 
   const handleCreateProposal = () => {
     setCurrentProposal(null);
@@ -32,29 +40,49 @@ const Proposals = () => {
     setIsViewerOpen(true);
   };
 
-  const handleDeleteProposal = (proposalId: string) => {
-    // Delete is handled in the ProposalList component
+  const handleDeleteProposal = async (proposalId: string) => {
+    try {
+      await deleteProposal(proposalId);
+      toast.success('Proposal deleted successfully');
+    } catch (error: any) {
+      toast.error(`Error deleting proposal: ${error.message}`);
+    }
   };
 
-  const handleSendProposal = (proposal: Proposal) => {
-    toast.success(`Proposal '${proposal.name}' will be sent to the client.`);
-    // In a real implementation, this would update the proposal status and send an email
+  const handleSendProposal = async (proposal: Proposal) => {
+    try {
+      await updateProposal({
+        id: proposal.id,
+        data: {
+          ...proposal,
+          status: 'sent',
+          sent_date: new Date().toISOString()
+        }
+      });
+      toast.success(`Proposal '${proposal.name}' has been sent to the client.`);
+      setIsViewerOpen(false);
+      refreshProposals();
+    } catch (error: any) {
+      toast.error(`Error sending proposal: ${error.message}`);
+    }
   };
 
   const handleSaveProposal = async (data: Partial<Proposal>) => {
     try {
       if (data.id) {
         // Update existing proposal
-        await updateProposal({ id: data.id, data });
-        toast.success('Proposal updated successfully');
+        await updateProposal({
+          id: data.id,
+          data
+        });
       } else {
         // Create new proposal
         await createProposal(data);
-        toast.success('Proposal created successfully');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving proposal:', error);
-      toast.error('Failed to save proposal');
+      toast.error(`Failed to save proposal: ${error.message}`);
+      throw error;
     }
   };
 
@@ -78,6 +106,8 @@ const Proposals = () => {
     >
       <div className="space-y-6">
         <ProposalList 
+          proposals={proposals}
+          isLoading={isLoading}
           onEdit={handleEditProposal}
           onView={handleViewProposal}
           onDelete={handleDeleteProposal}

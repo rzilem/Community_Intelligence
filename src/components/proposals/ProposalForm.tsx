@@ -81,38 +81,12 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    
-    // For demo purposes, we'll create fake attachments
-    const newAttachments: ProposalAttachment[] = Array.from(files).map((file, index) => {
-      const fileType = file.type.startsWith('image/')
-        ? 'image'
-        : file.type.startsWith('video/')
-        ? 'video'
-        : file.type === 'application/pdf'
-        ? 'pdf'
-        : file.type.includes('document')
-        ? 'document'
-        : 'other';
-      
-      return {
-        id: `temp-${Date.now()}-${index}`,
-        name: file.name,
-        type: fileType,
-        url: URL.createObjectURL(file),
-        size: file.size,
-        content_type: file.type,
-        created_at: new Date().toISOString()
-      };
-    });
-    
-    setAttachments([...attachments, ...newAttachments]);
+  const handleAttachmentUpload = (attachment: ProposalAttachment) => {
+    setAttachments(prev => [...prev, attachment]);
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments(attachments.filter(att => att.id !== id));
+  const handleAttachmentRemove = (id: string) => {
+    setAttachments(prev => prev.filter(att => att.id !== id));
   };
 
   return (
@@ -144,8 +118,9 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
               <TabsContent value="attachments" className="mt-0">
                 <ProposalAttachments 
                   attachments={attachments}
-                  onAttachmentUpload={handleFileUpload}
-                  onAttachmentRemove={removeAttachment}
+                  onAttachmentUpload={handleAttachmentUpload}
+                  onAttachmentRemove={handleAttachmentRemove}
+                  proposalId={proposal?.id}
                 />
               </TabsContent>
               

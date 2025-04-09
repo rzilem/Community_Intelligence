@@ -1,6 +1,5 @@
 
-import React, { useState } from 'react';
-import { useProposals } from '@/hooks/proposals/useProposals';
+import React from 'react';
 import { Proposal } from '@/types/proposal-types';
 import { 
   Table, 
@@ -26,6 +25,8 @@ import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProposalListProps {
+  proposals: Proposal[];
+  isLoading: boolean;
   leadId?: string;
   onEdit: (proposal: Proposal) => void;
   onView: (proposal: Proposal) => void;
@@ -34,14 +35,13 @@ interface ProposalListProps {
 }
 
 const ProposalList: React.FC<ProposalListProps> = ({
-  leadId,
+  proposals,
+  isLoading,
   onEdit,
   onView,
   onDelete,
   onSend
 }) => {
-  const { proposals, isLoading, deleteProposal } = useProposals(leadId);
-
   const getStatusBadge = (status: Proposal['status']) => {
     const statusStyles = {
       draft: 'bg-gray-200 text-gray-800',
@@ -52,14 +52,6 @@ const ProposalList: React.FC<ProposalListProps> = ({
     };
 
     return <Badge className={statusStyles[status]}>{status}</Badge>;
-  };
-
-  const handleDelete = async (proposalId: string) => {
-    try {
-      await deleteProposal(proposalId);
-    } catch (error) {
-      console.error('Error deleting proposal:', error);
-    }
   };
 
   if (isLoading) {
@@ -122,7 +114,7 @@ const ProposalList: React.FC<ProposalListProps> = ({
                     )}
                     <DropdownMenuItem 
                       className="text-red-600" 
-                      onClick={() => handleDelete(proposal.id)}
+                      onClick={() => onDelete(proposal.id)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" /> Delete
                     </DropdownMenuItem>

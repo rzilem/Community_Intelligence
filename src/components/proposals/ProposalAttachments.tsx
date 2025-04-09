@@ -1,35 +1,74 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Image, Video, File, X } from 'lucide-react';
+import { Upload, FileText, Image, Video, File, X, Loader2 } from 'lucide-react';
 import { ProposalAttachment } from '@/types/proposal-types';
+import { useProposals } from '@/hooks/proposals/useProposals';
+import { toast } from 'sonner';
 
 interface ProposalAttachmentsProps {
   attachments: ProposalAttachment[];
-  onAttachmentUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onAttachmentUpload: (attachment: ProposalAttachment) => void;
   onAttachmentRemove: (id: string) => void;
+  proposalId?: string;
 }
 
 const ProposalAttachments: React.FC<ProposalAttachmentsProps> = ({
   attachments,
   onAttachmentUpload,
-  onAttachmentRemove
+  onAttachmentRemove,
+  proposalId
 }) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const { uploadAttachment } = useProposals();
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    
+    try {
+      // Process each file
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          const attachment = await uploadAttachment(file, proposalId);
+          onAttachmentUpload(attachment);
+        } catch (error: any) {
+          toast.error(`Error uploading ${file.name}: ${error.message}`);
+        }
+      }
+    } finally {
+      setIsUploading(false);
+      // Clear the input
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6">
         <Upload className="h-8 w-8 text-gray-400" />
         <p className="mt-2 text-sm text-gray-600">Drag and drop files here, or</p>
         <label htmlFor="file-upload" className="mt-2">
-          <Button variant="outline" type="button" className="relative">
-            Browse files
+          <Button variant="outline" type="button" className="relative" disabled={isUploading}>
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              'Browse files'
+            )}
             <input 
               id="file-upload" 
               type="file" 
               multiple 
               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov" 
               className="sr-only"
-              onChange={onAttachmentUpload}
+              onChange={handleFileUpload}
+              disabled={isUploading}
             />
           </Button>
         </label>
@@ -61,6 +100,7 @@ const ProposalAttachments: React.FC<ProposalAttachmentsProps> = ({
                   size="sm"
                   onClick={() => onAttachmentRemove(attachment.id)}
                   type="button"
+                  disabled={isUploading}
                 >
                   <X className="h-4 w-4 text-gray-500" />
                 </Button>

@@ -1,125 +1,185 @@
 
 import { useState } from 'react';
-import { Workflow } from '@/types/workflow-types';
+import { Workflow, WorkflowType } from '@/types/workflow-types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useWorkflows = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   
-  // Mock data for workflow templates
-  const workflowTemplates: Workflow[] = [
-    {
-      id: '1',
-      name: 'Delinquency Collection Process',
-      description: 'Automate the collection of delinquent payments with notifications, late fees, and escalation steps',
-      type: 'Financial',
-      status: 'template',
-      isTemplate: true,
-      isPopular: true,
-      steps: Array.from({ length: 8 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
+  // Fetch workflow templates from Supabase
+  const { 
+    data: workflowTemplates = [],
+    isLoading,
+    error: fetchError,
+    refetch
+  } = useQuery({
+    queryKey: ['workflowTemplates'],
+    queryFn: async (): Promise<Workflow[]> => {
+      const { data, error } = await supabase
+        .from('workflow_templates')
+        .select('*')
+        .eq('is_template', true);
+        
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // Map the database results to our Workflow type
+      return data.map((template: any) => ({
+        id: template.id,
+        name: template.name,
+        description: template.description || '',
+        type: template.type as WorkflowType,
+        status: template.status,
+        steps: template.steps || [],
+        isTemplate: template.is_template,
+        isPopular: template.is_popular || false
+      }));
+    }
+  });
+
+  // Fetch active workflows from Supabase
+  const { 
+    data: activeWorkflows = [],
+    isLoading: activeLoading,
+    error: activeError,
+    refetch: refetchActive
+  } = useQuery({
+    queryKey: ['activeWorkflows'],
+    queryFn: async (): Promise<Workflow[]> => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('*')
+        .eq('status', 'active');
+        
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // Map the database results to our Workflow type
+      return data.map((workflow: any) => ({
+        id: workflow.id,
+        name: workflow.name,
+        description: workflow.description || '',
+        type: workflow.type as WorkflowType,
+        status: workflow.status,
+        steps: workflow.steps || [],
+        isTemplate: workflow.is_template,
+        isPopular: false
+      }));
+    }
+  });
+
+  // Use template mutation
+  const useTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setLoading(true);
+      
+      try {
+        // Get the template
+        const { data: template, error: templateError } = await supabase
+          .from('workflow_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+          
+        if (templateError) throw new Error(templateError.message);
+        
+        // Create a new workflow from the template
+        const { data, error } = await supabase
+          .from('workflows')
+          .insert({
+            name: template.name,
+            description: template.description,
+            type: template.type,
+            status: 'active',
+            steps: template.steps,
+            is_template: false,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          })
+          .select()
+          .single();
+          
+        if (error) throw new Error(error.message);
+        
+        return data;
+      } finally {
+        setLoading(false);
+      }
     },
-    {
-      id: '2',
-      name: 'Compliance Violation Workflow',
-      description: 'Standardized process for handling CC&R violations with notices, hearings, and enforcement actions',
-      type: 'Compliance',
-      status: 'template',
-      isTemplate: true,
-      steps: Array.from({ length: 6 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
+    onSuccess: () => {
+      toast.success('Workflow created from template');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
     },
-    {
-      id: '3',
-      name: 'Maintenance Request Handling',
-      description: 'Track maintenance requests from submission to completion with vendor assignments and status updates',
-      type: 'Maintenance',
-      status: 'template',
-      isTemplate: true,
-      steps: Array.from({ length: 5 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
+    onError: (error) => {
+      toast.error(`Error creating workflow: ${error.message}`);
+    }
+  });
+
+  const createTemplateMutation = useMutation({
+    mutationFn: async (workflowData: Partial<Workflow>) => {
+      const { data, error } = await supabase
+        .from('workflow_templates')
+        .insert({
+          name: workflowData.name || 'New Template',
+          description: workflowData.description || '',
+          type: workflowData.type || 'Governance',
+          status: 'template',
+          steps: workflowData.steps || [],
+          is_template: true,
+          is_popular: false
+        })
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
     },
-    {
-      id: '4',
-      name: 'New Resident Onboarding',
-      description: 'Welcome new residents with community information, access credentials, and orientation materials',
-      type: 'Resident Management',
-      status: 'template',
-      isTemplate: true,
-      steps: Array.from({ length: 4 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
+    onSuccess: () => {
+      toast.success('Custom template created successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
     },
-    {
-      id: '5',
-      name: 'Board Meeting Coordination',
-      description: 'Schedule meetings, distribute agendas, send reminders, and follow up with minutes',
-      type: 'Governance',
-      status: 'template',
-      isTemplate: true,
-      steps: Array.from({ length: 7 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
-    },
-    {
-      id: '6',
-      name: 'Architectural Review Process',
-      description: 'Manage the submission and approval process for architectural modifications',
-      type: 'Compliance',
-      status: 'template',
-      isTemplate: true,
-      steps: Array.from({ length: 5 }).map((_, i) => ({
-        id: `step-${i}`,
-        name: `Step ${i+1}`,
-        description: `Description for step ${i+1}`,
-        order: i
-      }))
-    },
-  ];
+    onError: (error) => {
+      toast.error(`Error creating template: ${error.message}`);
+    }
+  });
 
   const useWorkflowTemplate = (workflowId: string) => {
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const workflow = workflowTemplates.find(w => w.id === workflowId);
-      if (workflow) {
-        toast.success(`Template "${workflow.name}" has been selected for use`);
-      } else {
-        toast.error('Workflow template not found');
-      }
-      setLoading(false);
-    }, 500);
+    useTemplateMutation.mutate(workflowId);
   };
 
   const createCustomTemplate = () => {
-    toast.info('Creating custom template. This feature is coming soon!');
+    // Open dialog to create custom template
+    // For now, just create a simple template
+    createTemplateMutation.mutate({
+      name: 'Custom Workflow',
+      description: 'A custom workflow template',
+      type: 'Governance',
+      steps: [
+        {
+          id: 'step-1',
+          name: 'First Step',
+          description: 'The first step in the custom workflow',
+          order: 0
+        }
+      ]
+    });
   };
 
   return {
     workflowTemplates,
-    loading,
-    error,
+    activeWorkflows,
+    loading: isLoading || activeLoading || loading,
+    error: fetchError || activeError || error,
     useWorkflowTemplate,
-    createCustomTemplate
+    createCustomTemplate,
+    refreshWorkflows: () => {
+      refetch();
+      refetchActive();
+    }
   };
 };
