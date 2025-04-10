@@ -80,21 +80,25 @@ export const updateUserPassword = async (
 };
 
 /**
- * Fetches user settings using a generic query approach
+ * Fetches user settings with a direct table query instead of RPC
  */
 export const fetchUserSettings = async (userId: string): Promise<UserSettings | null> => {
   try {
-    // Use a raw query approach to bypass TypeScript checking for table names
+    console.log('Fetching settings for user ID:', userId);
+    
     const { data, error } = await supabase
-      .rpc('get_user_settings', { user_id_param: userId })
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
       .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    if (error) {
       console.error('Error fetching user settings:', error);
       throw error;
     }
     
-    return data as UserSettings || null;
+    console.log('User settings data:', data);
+    return data as UserSettings;
   } catch (error) {
     console.error('Error in fetchUserSettings:', error);
     return null;
@@ -102,42 +106,59 @@ export const fetchUserSettings = async (userId: string): Promise<UserSettings | 
 };
 
 /**
- * Updates user preferences using a generic approach
+ * Updates user preferences with direct table operations instead of RPC
  */
 export const updateUserPreferences = async (
   userId: string,
   preferences: { theme?: string; notifications_enabled?: boolean }
 ): Promise<{ success: boolean; error: string | null }> => {
   try {
+    console.log('Updating preferences for user ID:', userId, 'with data:', preferences);
+    
     // Check if user settings exist
-    const { data: existingSettings } = await supabase
-      .rpc('check_user_settings_exist', { user_id_param: userId });
+    const { data: existingSettings, error: checkError } = await supabase
+      .from('user_settings')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (checkError) {
+      console.error('Error checking user settings:', checkError);
+      throw checkError;
+    }
+    
+    let result;
     
     if (existingSettings) {
       // Update existing settings
-      const { error } = await supabase
-        .rpc('update_user_settings', { 
-          user_id_param: userId,
-          theme_param: preferences.theme,
-          notifications_param: preferences.notifications_enabled
-        });
-        
-      if (error) throw error;
+      result = await supabase
+        .from('user_settings')
+        .update({
+          theme: preferences.theme,
+          notifications_enabled: preferences.notifications_enabled,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
     } else {
       // Create new settings
-      const { error } = await supabase
-        .rpc('create_user_settings', { 
-          user_id_param: userId,
-          theme_param: preferences.theme,
-          notifications_param: preferences.notifications_enabled
+      result = await supabase
+        .from('user_settings')
+        .insert({
+          user_id: userId,
+          theme: preferences.theme || 'system',
+          notifications_enabled: preferences.notifications_enabled !== false
         });
-        
-      if (error) throw error;
     }
     
+    if (result.error) {
+      console.error('Error updating user preferences:', result.error);
+      throw result.error;
+    }
+    
+    console.log('User preferences updated successfully');
     return { success: true, error: null };
   } catch (error: any) {
-    console.error('Error updating user preferences:', error);
+    console.error('Error in updateUserPreferences:', error);
     return { success: false, error: error.message };
   }
 };
