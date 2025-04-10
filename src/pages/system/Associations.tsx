@@ -23,6 +23,10 @@ const Associations = () => {
     error,
     createAssociation,
     isCreating,
+    updateAssociation,
+    isUpdating,
+    deleteAssociation,
+    isDeleting,
     manuallyRefresh 
   } = useAssociations();
   
@@ -80,6 +84,28 @@ const Associations = () => {
     }
   };
   
+  const handleEditAssociation = async (id: string, data: Partial<Association>) => {
+    try {
+      await updateAssociation({ id, data });
+      toast.success('Association updated successfully');
+      manuallyRefresh();
+    } catch (error: any) {
+      console.error('Error updating association:', error);
+      toast.error(`Failed to update association: ${error.message}`);
+    }
+  };
+  
+  const handleDeleteAssociation = async (id: string) => {
+    try {
+      await deleteAssociation(id);
+      toast.success('Association deleted successfully');
+      manuallyRefresh();
+    } catch (error: any) {
+      console.error('Error deleting association:', error);
+      toast.error(`Failed to delete association: ${error.message}`);
+    }
+  };
+  
   // Ensure associations is treated as an array
   const associationsArray = Array.isArray(associations) ? associations : [];
   
@@ -114,6 +140,8 @@ const Associations = () => {
             activeAssociations={activeAssociations}
             inactiveAssociations={inactiveAssociations}
             isLoading={isLoading}
+            onEdit={handleEditAssociation}
+            onDelete={handleDeleteAssociation}
           />
         </CardContent>
       </Card>

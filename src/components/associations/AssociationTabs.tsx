@@ -1,17 +1,19 @@
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import AssociationTable from '@/components/associations/AssociationTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertCircle } from 'lucide-react';
+import AssociationTable from './AssociationTable';
 import { Association } from '@/types/association-types';
 
 interface AssociationTabsProps {
-  error: Error | null;
+  error: any;
   filteredAssociations: Association[];
   activeAssociations: Association[];
   inactiveAssociations: Association[];
   isLoading: boolean;
+  onEdit?: (id: string, data: Partial<Association>) => void;
+  onDelete?: (id: string) => void;
 }
 
 const AssociationTabs: React.FC<AssociationTabsProps> = ({
@@ -19,7 +21,9 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
   filteredAssociations,
   activeAssociations,
   inactiveAssociations,
-  isLoading
+  isLoading,
+  onEdit,
+  onDelete
 }) => {
   return (
     <>
@@ -56,15 +60,30 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
         </TabsList>
         
         <TabsContent value="all">
-          <AssociationTable associations={filteredAssociations} isLoading={isLoading} />
+          <AssociationTable 
+            associations={filteredAssociations} 
+            isLoading={isLoading}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         </TabsContent>
         
         <TabsContent value="active">
-          <AssociationTable associations={activeAssociations} isLoading={isLoading} />
+          <AssociationTable 
+            associations={activeAssociations} 
+            isLoading={isLoading}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         </TabsContent>
         
         <TabsContent value="inactive">
-          <AssociationTable associations={inactiveAssociations} isLoading={isLoading} />
+          <AssociationTable 
+            associations={inactiveAssociations} 
+            isLoading={isLoading}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
         </TabsContent>
       </Tabs>
     </>
