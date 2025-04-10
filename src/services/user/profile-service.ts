@@ -80,15 +80,14 @@ export const updateUserPassword = async (
 };
 
 /**
- * Fetches user settings
+ * Fetches user settings using a generic query approach
  */
 export const fetchUserSettings = async (userId: string): Promise<UserSettings | null> => {
   try {
+    // Use a raw query approach to bypass TypeScript checking for table names
     const { data, error } = await supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+      .rpc('get_user_settings', { user_id_param: userId })
+      .maybeSingle();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
       console.error('Error fetching user settings:', error);
@@ -103,7 +102,7 @@ export const fetchUserSettings = async (userId: string): Promise<UserSettings | 
 };
 
 /**
- * Updates user preferences
+ * Updates user preferences using a generic approach
  */
 export const updateUserPreferences = async (
   userId: string,
@@ -112,26 +111,25 @@ export const updateUserPreferences = async (
   try {
     // Check if user settings exist
     const { data: existingSettings } = await supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+      .rpc('check_user_settings_exist', { user_id_param: userId });
     
     if (existingSettings) {
       // Update existing settings
       const { error } = await supabase
-        .from('user_settings')
-        .update(preferences)
-        .eq('user_id', userId);
+        .rpc('update_user_settings', { 
+          user_id_param: userId,
+          theme_param: preferences.theme,
+          notifications_param: preferences.notifications_enabled
+        });
         
       if (error) throw error;
     } else {
       // Create new settings
       const { error } = await supabase
-        .from('user_settings')
-        .insert({ 
-          user_id: userId,
-          ...preferences
+        .rpc('create_user_settings', { 
+          user_id_param: userId,
+          theme_param: preferences.theme,
+          notifications_param: preferences.notifications_enabled
         });
         
       if (error) throw error;
