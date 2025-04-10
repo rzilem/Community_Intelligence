@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
 import RolePermissionsCard from '@/components/users/RolePermissionsCard';
+import { toast } from 'sonner';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -42,6 +43,18 @@ const Permissions = () => {
     }
   })) as UserWithProfile[];
 
+  useEffect(() => {
+    if (error) {
+      console.error('Error fetching users:', error);
+      toast.error('Error loading users. Please try again.');
+    }
+  }, [error]);
+
+  const handleRefresh = () => {
+    console.log('Refreshing user list...');
+    refetch();
+  };
+
   return (
     <PageTemplate 
       title="User Permissions" 
@@ -53,7 +66,7 @@ const Permissions = () => {
         isLoading={isLoading} 
         error={error} 
         roles={roles}
-        onRefresh={refetch} 
+        onRefresh={handleRefresh} 
       />
       <RolePermissionsCard />
     </PageTemplate>

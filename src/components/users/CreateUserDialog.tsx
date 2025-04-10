@@ -39,6 +39,7 @@ type NewUserFormValues = z.infer<typeof newUserSchema>;
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onOpenChange, onUserCreated, roles }) => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const newUserForm = useForm<NewUserFormValues>({
     resolver: zodResolver(newUserSchema),
@@ -54,6 +55,14 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onOpenChang
   const createUser = async (formData: NewUserFormValues) => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('Creating user with data:', { 
+        email: formData.email, 
+        firstName: formData.firstName, 
+        lastName: formData.lastName,
+        role: formData.role 
+      });
       
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -68,24 +77,42 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onOpenChang
       
       if (error) throw error;
       
-      if (data.user && formData.role !== 'user') {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ role: formData.role })
-          .eq('id', data.user.id);
-          
-        if (updateError) {
-          console.error('Error updating role:', updateError);
-          toast.error(`User created, but role could not be set: ${updateError.message}`);
+      if (data.user) {
+        console.log('User created successfully:', data.user.id);
+        
+        if (formData.role !== 'user') {
+          console.log('Setting user role to:', formData.role);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              role: formData.role,
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              email: formData.email
+            })
+            .eq('id', data.user.id);
+            
+          if (updateError) {
+            console.error('Error updating role:', updateError);
+            toast.error(`User created, but role could not be set: ${updateError.message}`);
+          }
         }
+        
+        toast.success(`User created successfully. Confirmation email sent to ${formData.email}`);
+        onOpenChange(false);
+        newUserForm.reset();
+        
+        // Force a refresh of the user list
+        setTimeout(() => {
+          onUserCreated();
+        }, 500);
+      } else {
+        toast.error('User could not be created. No user ID returned.');
       }
       
-      toast.success('User created successfully');
-      onOpenChange(false);
-      newUserForm.reset();
-      onUserCreated();
-      
     } catch (err: any) {
+      console.error('Error creating user:', err);
+      setError(err.message || 'An unknown error occurred');
       toast.error(`Error creating user: ${err.message}`);
     } finally {
       setLoading(false);
@@ -101,6 +128,13 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ isOpen, onOpenChang
             Create a new user account. The user will receive an email confirmation.
           </AlertDialogDescription>
         </AlertDialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded mb-4">
+            {error}
+          </div>
+        )}
+        
         <Form {...newUserForm}>
           <form onSubmit={newUserForm.handleSubmit(createUser)} className="space-y-4">
             <FormField
