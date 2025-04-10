@@ -5,15 +5,14 @@ import { Association } from '@/types/association-types';
 
 /**
  * Fetches all available associations with improved error handling
+ * Uses security definer function to avoid RLS issues
  */
 export const fetchAllAssociations = async () => {
   console.log('Fetching all associations...');
   try {
-    // Use a direct query instead of an RPC function to avoid RLS issues
+    // Use the security definer function to get associations
     const { data, error } = await supabase
-      .from('associations')
-      .select('*')
-      .order('name');
+      .rpc('get_user_associations');
 
     if (error) {
       console.error('Error fetching associations:', error);
@@ -70,7 +69,7 @@ export const createAssociation = async (associationData: {
   try {
     console.log('Creating association with data:', associationData);
     
-    // Call the new security definer function that handles both creating the association
+    // Call the updated security definer function that handles both creating the association
     // and assigning the current user as admin in one operation
     const { data, error } = await supabase
       .rpc('create_association_with_admin', {
@@ -87,6 +86,7 @@ export const createAssociation = async (associationData: {
     
     if (error) {
       console.error('Error creating association:', error);
+      toast.error(`Failed to create association: ${error.message}`);
       throw error;
     }
 

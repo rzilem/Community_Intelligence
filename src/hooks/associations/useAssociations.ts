@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -16,7 +15,7 @@ export const useAssociations = () => {
   const queryClient = useQueryClient();
   const [retryCount, setRetryCount] = useState(0);
   
-  // Get all associations with better error handling and fallback mechanisms
+  // Get all associations using the security definer function
   const { 
     data: associations = [], 
     isLoading, 
@@ -56,38 +55,16 @@ export const useAssociations = () => {
         return [];
       }
       
-      // First get the association IDs the user is a member of
-      const { data: userAssociations, error: membershipError } = await supabase
-        .from('association_users')
-        .select('association_id')
-        .eq('user_id', user.id);
+      // Call our security definer RPC function
+      const { data, error } = await supabase.rpc('get_user_associations');
       
-      if (membershipError) {
-        console.error('Error fetching user association memberships:', membershipError);
+      if (error) {
+        console.error('Error fetching user associations:', error);
         return [];
       }
       
-      if (!userAssociations || userAssociations.length === 0) {
-        console.log('User is not a member of any associations');
-        return [];
-      }
-      
-      console.log(`User is a member of ${userAssociations.length} associations`);
-      const associationIds = userAssociations.map(ua => ua.association_id);
-      
-      // Then fetch the actual associations by those IDs
-      const { data: associationsData, error: associationsError } = await supabase
-        .from('associations')
-        .select('*')
-        .in('id', associationIds);
-      
-      if (associationsError) {
-        console.error('Error fetching associations by IDs:', associationsError);
-        return [];
-      }
-      
-      console.log(`Successfully fetched ${associationsData?.length || 0} associations via memberships`);
-      return associationsData || [];
+      console.log(`Successfully fetched ${data?.length || 0} associations via memberships`);
+      return data || [];
     } catch (error) {
       console.error('Error in fetchAssociationsViaUserMemberships:', error);
       return [];
@@ -111,8 +88,6 @@ export const useAssociations = () => {
     mutationFn: createAssociation,
     onSuccess: (newAssociation) => {
       if (newAssociation) {
-        // No need for a toast here as the service already shows one
-        
         // Force refetch to ensure we get the latest data
         queryClient.invalidateQueries({ queryKey: ['associations'] });
         setRetryCount(prev => prev + 1);
@@ -124,7 +99,7 @@ export const useAssociations = () => {
         });
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
       toast.error(`Failed to create association: ${error.message}`);
     }
   });
