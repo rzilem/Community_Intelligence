@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/profile-types';
+import { Profile, UserSettings } from '@/types/profile-types';
 
 /**
  * Fetches the profile for the specified user ID
@@ -76,6 +76,29 @@ export const updateUserPassword = async (
     return { success: true, error: null };
   } catch (error: any) {
     return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Fetches user settings
+ */
+export const fetchUserSettings = async (userId: string): Promise<UserSettings | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      console.error('Error fetching user settings:', error);
+      throw error;
+    }
+    
+    return data as UserSettings || null;
+  } catch (error) {
+    console.error('Error in fetchUserSettings:', error);
+    return null;
   }
 };
 

@@ -7,9 +7,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } fr
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { updateUserPreferences } from '@/services/user/profile-service';
+import { updateUserPreferences, fetchUserSettings } from '@/services/user/profile-service';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { UserSettings } from '@/types/profile-types';
 
 const preferencesFormSchema = z.object({
   theme: z.string(),
@@ -38,21 +38,12 @@ const UserPreferencesForm: React.FC<UserPreferencesFormProps> = ({ userId }) => 
     const loadPreferences = async () => {
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+        const settings = await fetchUserSettings(userId);
           
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-          console.error('Error loading preferences:', error);
-          return;
-        }
-        
-        if (data) {
+        if (settings) {
           form.reset({
-            theme: data.theme || 'system',
-            notifications_enabled: data.notifications_enabled !== false, // default to true
+            theme: settings.theme || 'system',
+            notifications_enabled: settings.notifications_enabled !== false, // default to true
           });
         }
       } catch (error) {

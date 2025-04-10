@@ -10,8 +10,8 @@ export type Profile = {
   email?: string;
   phone_number?: string;
   profile_image_url?: string;
-  job_title?: string; // Added missing field
-  phone?: string; // Added missing field
+  job_title?: string; 
+  phone?: string; 
   created_at?: string;
   updated_at?: string;
 };
