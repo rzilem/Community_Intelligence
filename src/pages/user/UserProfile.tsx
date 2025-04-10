@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { UserCircle, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserCircle, Loader2, Settings, Lock, Bell } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import UserProfileForm from '@/components/users/UserProfileForm';
+import UserSecurityForm from '@/components/users/UserSecurityForm';
+import UserPreferencesForm from '@/components/users/UserPreferencesForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const UserProfile = () => {
@@ -26,6 +28,24 @@ const UserProfile = () => {
     await refreshProfile();
   };
 
+  if (!user) {
+    return (
+      <AppLayout>
+        <PageTemplate 
+          title="User Profile" 
+          icon={<UserCircle className="h-8 w-8" />}
+          description="Manage your account settings and preferences"
+        >
+          <Card>
+            <CardContent className="flex items-center justify-center p-8">
+              <p className="text-muted-foreground">Please login to view your profile</p>
+            </CardContent>
+          </Card>
+        </PageTemplate>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <PageTemplate 
@@ -36,21 +56,33 @@ const UserProfile = () => {
         <div className="space-y-6">
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-6">
-              <TabsTrigger value="info">Personal Information</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
-              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              <TabsTrigger value="info" className="flex items-center gap-2">
+                <UserCircle className="h-4 w-4" />
+                Personal Information
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger value="preferences" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Preferences
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="info">
               <Card>
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
+                  <CardDescription>
+                    Update your personal details and profile picture
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex flex-col sm:flex-row gap-8">
                     <div className="flex flex-col items-center gap-3">
                       <ProfileImageUpload
-                        userId={user?.id || ''}
+                        userId={user.id}
                         imageUrl={`${profile?.profile_image_url}?v=${imageVersion}`} 
                         firstName={profile?.first_name || ''}
                         lastName={profile?.last_name || ''}
@@ -90,23 +122,22 @@ const UserProfile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Security Settings</CardTitle>
+                  <CardDescription>
+                    Update your password and security preferences
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="font-medium mb-2">Password</h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Update your password to keep your account secure
-                      </p>
-                      <Button variant="outline">Change Password</Button>
-                    </div>
+                  <div className="space-y-6">
+                    <UserSecurityForm userId={user.id} />
                     
-                    <div className="pt-4 border-t">
+                    <div className="pt-6 border-t">
                       <h3 className="font-medium mb-2">Two-Factor Authentication</h3>
                       <p className="text-sm text-muted-foreground mb-4">
                         Add an additional layer of security to your account
                       </p>
-                      <Button variant="outline">Set Up 2FA</Button>
+                      <p className="text-sm text-muted-foreground italic">
+                        Two-factor authentication will be available in a future update.
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -117,13 +148,12 @@ const UserProfile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>User Preferences</CardTitle>
+                  <CardDescription>
+                    Customize your experience with Community Intelligence
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <p className="text-muted-foreground">
-                      Notification and display preferences will be added here in a future update.
-                    </p>
-                  </div>
+                  <UserPreferencesForm userId={user.id} />
                 </CardContent>
               </Card>
             </TabsContent>

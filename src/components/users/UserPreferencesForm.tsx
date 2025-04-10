@@ -1,0 +1,153 @@
+
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { updateUserPreferences } from '@/services/user/profile-service';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+const preferencesFormSchema = z.object({
+  theme: z.string(),
+  notifications_enabled: z.boolean().default(true),
+});
+
+type PreferencesFormValues = z.infer<typeof preferencesFormSchema>;
+
+interface UserPreferencesFormProps {
+  userId: string;
+}
+
+const UserPreferencesForm: React.FC<UserPreferencesFormProps> = ({ userId }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const form = useForm<PreferencesFormValues>({
+    resolver: zodResolver(preferencesFormSchema),
+    defaultValues: {
+      theme: 'system',
+      notifications_enabled: true,
+    },
+  });
+  
+  // Load user preferences
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error('Error loading preferences:', error);
+          return;
+        }
+        
+        if (data) {
+          form.reset({
+            theme: data.theme || 'system',
+            notifications_enabled: data.notifications_enabled !== false, // default to true
+          });
+        }
+      } catch (error) {
+        console.error('Error loading preferences:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (userId) {
+      loadPreferences();
+    }
+  }, [userId, form]);
+  
+  const { isSubmitting } = form.formState;
+  
+  const handleSubmit = async (values: PreferencesFormValues) => {
+    try {
+      const result = await updateUserPreferences(userId, values);
+      
+      if (result.success) {
+        toast.success('Preferences updated successfully');
+      } else {
+        toast.error(`Failed to update preferences: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error('Error updating preferences:', error);
+      toast.error(`An error occurred: ${error.message}`);
+    }
+  };
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8">Loading preferences...</div>;
+  }
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="theme"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Theme Preference</FormLabel>
+              <Select 
+                onValueChange={field.onChange} 
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select theme" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="system">System Default</SelectItem>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choose your preferred theme for the application
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="notifications_enabled"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Email Notifications</FormLabel>
+                <FormDescription>
+                  Receive email notifications about important updates and activities
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Preferences'}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+};
+
+export default UserPreferencesForm;
