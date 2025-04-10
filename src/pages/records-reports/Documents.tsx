@@ -27,7 +27,10 @@ const Documents = () => {
     categories, 
     isLoading: categoriesLoading,
     refetch: refetchCategories
-  } = useDocumentCategories(selectedAssociationId);
+  } = useDocumentCategories({
+    associationId: selectedAssociationId,
+    enabled: !!selectedAssociationId
+  });
 
   // Fetch documents for selected association and category
   const { 
@@ -127,7 +130,7 @@ const Documents = () => {
         {/* Left sidebar with association selector and categories */}
         <div className="md:col-span-1">
           <DocumentFilters
-            categories={categories}
+            categories={categories || []}
             selectedCategory={selectedCategory}
             onSelectCategory={setSelectedCategory}
             onCreateCategory={() => setIsCategoryDialogOpen(true)}
@@ -174,7 +177,7 @@ const Documents = () => {
         onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
         onUpload={handleUpload}
         onCreateCategory={handleCreateCategory}
-        categories={categories}
+        categories={categories || []}
         isUploading={uploadDocument.isPending}
       />
     </PageTemplate>

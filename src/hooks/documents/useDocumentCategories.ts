@@ -1,10 +1,10 @@
 
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { DocumentCategory } from '@/types/document-types';
+import { DocumentCategory, UseCategoriesParams } from '@/types/document-types';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-export function useDocumentCategories(associationId?: string) {
+export function useDocumentCategories({ associationId, enabled = true }: UseCategoriesParams = {}) {
   const {
     data: categories,
     isLoading,
@@ -17,7 +17,7 @@ export function useDocumentCategories(associationId?: string) {
       filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
       order: { column: 'name', ascending: true }
     },
-    !!associationId
+    enabled && !!associationId
   );
 
   useEffect(() => {
