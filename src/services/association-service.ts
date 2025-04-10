@@ -70,51 +70,36 @@ export const createAssociation = async (associationData: {
   try {
     console.log('Creating association with data:', associationData);
     
-    // First try to create the association normally
-    const { data: newAssociation, error: createError } = await supabase
-      .from('associations')
-      .insert([{
-        name: associationData.name,
-        address: associationData.address,
-        contact_email: associationData.contact_email,
-        city: associationData.city,
-        state: associationData.state,
-        zip: associationData.zip,
-        phone: associationData.phone,
-        property_type: associationData.property_type,
-        total_units: associationData.total_units
-      }])
-      .select()
-      .single();
-    
-    if (createError) {
-      console.error('Error creating association:', createError);
-      throw createError;
-    }
-
-    // Get the current user session to get the user ID
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData.session?.user.id;
-    
-    if (!userId) {
-      console.error('No user ID found in session when creating association');
-      toast.warning('Association created but failed to assign admin role: No authenticated user');
-      return newAssociation;
-    }
-
-    // Now that we have the association and user ID, assign the current user as admin
-    const { error: assignError } = await supabase
-      .from('association_users')
-      .insert({
-        association_id: newAssociation.id,
-        user_id: userId,
-        role: 'admin'
+    // Call the new security definer function that handles both creating the association
+    // and assigning the current user as admin in one operation
+    const { data, error } = await supabase
+      .rpc('create_association_with_admin', {
+        p_name: associationData.name,
+        p_address: associationData.address,
+        p_contact_email: associationData.contact_email,
+        p_city: associationData.city,
+        p_state: associationData.state,
+        p_zip: associationData.zip,
+        p_phone: associationData.phone,
+        p_property_type: associationData.property_type,
+        p_total_units: associationData.total_units
       });
     
-    if (assignError) {
-      console.error('Association created but failed to assign admin role:', assignError);
-      // Don't throw here, we still created the association
-      toast.warning('Association created but failed to assign admin role');
+    if (error) {
+      console.error('Error creating association:', error);
+      throw error;
+    }
+
+    // Get the newly created association
+    const { data: newAssociation, error: fetchError } = await supabase
+      .from('associations')
+      .select('*')
+      .eq('id', data)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching newly created association:', fetchError);
+      throw fetchError;
     }
 
     toast.success(`Association "${newAssociation.name}" created successfully`);
