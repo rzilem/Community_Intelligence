@@ -1575,6 +1575,10 @@ export type Database = {
         Args: { association_uuid: string }
         Returns: boolean
       }
+      user_is_association_admin: {
+        Args: { association_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
