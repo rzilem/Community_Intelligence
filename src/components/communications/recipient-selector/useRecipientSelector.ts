@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { communicationService } from '@/services/communication-service';
 import { RecipientGroup } from '@/types/communication-types';
@@ -46,7 +47,7 @@ export const useRecipientSelector = (
           const assocIds = associationId ? [associationId] : associationsData.map(assoc => assoc.id);
           
           // Fetch recipient groups for the selected association(s)
-          let groupsData: RecipientGroup[] = [];
+          let groupsData: any[] = [];
           
           if (associationId) {
             groupsData = await communicationService.getRecipientGroups(associationId);
@@ -54,10 +55,16 @@ export const useRecipientSelector = (
             groupsData = await communicationService.getRecipientGroupsForAssociations(assocIds);
           }
           
-          setRecipientGroups(groupsData);
+          // Ensure group_type is 'system' or 'custom'
+          const typedRecipientGroups: RecipientGroup[] = groupsData.map(group => ({
+            ...group,
+            group_type: group.group_type === 'system' ? 'system' : 'custom'
+          }));
+          
+          setRecipientGroups(typedRecipientGroups);
           
           // Identify common groups (owners and residents)
-          const commonGroupsData = groupsData.filter(group => 
+          const commonGroupsData = typedRecipientGroups.filter(group => 
             COMMON_GROUP_TYPES.some(type => 
               group.name.toLowerCase().includes(type)
             )

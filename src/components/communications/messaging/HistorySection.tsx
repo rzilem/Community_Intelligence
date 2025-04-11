@@ -1,0 +1,45 @@
+
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import MessageHistoryTable, { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
+import HistorySearch from './HistorySearch';
+
+interface HistorySectionProps {
+  messages: MessageHistoryItem[];
+  searchHistory: string;
+  onSearchChange: (value: string) => void;
+  onViewMessage: (id: string) => void;
+  onResendMessage: (id: string) => void;
+}
+
+const HistorySection: React.FC<HistorySectionProps> = ({
+  messages,
+  searchHistory,
+  onSearchChange,
+  onViewMessage,
+  onResendMessage
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Message History</h2>
+        <HistorySearch 
+          searchValue={searchHistory} 
+          onSearchChange={onSearchChange} 
+        />
+      </div>
+      
+      <Card>
+        <CardContent className="p-6">
+          <MessageHistoryTable 
+            messages={messages} 
+            onViewMessage={onViewMessage}
+            onResend={onResendMessage}
+          />
+        </CardContent>
+      </Card>
+    </>
+  );
+};
+
+export default HistorySection;
