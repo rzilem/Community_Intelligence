@@ -1,46 +1,46 @@
 
-import { 
-  useAssociationsList, 
-  useAssociationById
-} from './useAssociationQueries';
-import { useAssociationMutations } from './useAssociationMutations';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Main hook that combines queries and mutations for associations
- */
+export interface Association {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  contact_email?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useAssociations = () => {
-  const { 
-    associations, 
-    isLoading, 
-    error, 
-    refetch, 
-    manuallyRefresh,
-    retryCount
-  } = useAssociationsList();
-  
-  const {
-    createAssociation,
-    isCreating,
-    updateAssociation,
-    isUpdating,
-    deleteAssociation,
-    isDeleting
-  } = useAssociationMutations(retryCount);
-  
-  return {
-    associations,
-    isLoading,
-    error,
-    refetch,
-    manuallyRefresh,
-    createAssociation,
-    isCreating,
-    updateAssociation,
-    isUpdating,
-    deleteAssociation,
-    isDeleting,
-    getAssociationById: useAssociationById
-  };
-};
+  const [associations, setAssociations] = useState<Association[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-export default useAssociations;
+  const fetchAssociations = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Using the provided function to get user's associations
+      const { data, error } = await supabase
+        .rpc('get_user_associations');
+
+      if (error) throw error;
+      
+      setAssociations(data || []);
+    } catch (error: any) {
+      console.error('Error fetching associations:', error);
+      setError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssociations();
+  }, []);
+
+  return { associations, isLoading, error, fetchAssociations };
+};
