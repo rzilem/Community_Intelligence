@@ -9,15 +9,33 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 
 interface AssociationSelectorProps {
+  /**
+   * Callback function when association selection changes
+   */
   onAssociationChange: (id: string) => void;
+  
+  /**
+   * Optional initial association ID to pre-select
+   */
   initialAssociationId?: string;
-  className?: string;  // Added optional className prop
+  
+  /**
+   * Optional CSS class name for custom styling
+   */
+  className?: string;
+  
+  /**
+   * Optional label to display above the selector
+   * Set to false to hide the label completely
+   */
+  label?: React.ReactNode | false;
 }
 
 const AssociationSelector: React.FC<AssociationSelectorProps> = ({ 
   onAssociationChange,
   initialAssociationId,
-  className  // Added to destructured props
+  className,
+  label = "Select Association" // Default label that can be overridden
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>(initialAssociationId);
@@ -41,7 +59,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
 
   // Set initial association when data loads
   useEffect(() => {
-    if (associations.length > 0 && !selectedAssociationId) {
+    if (associations && associations.length > 0 && !selectedAssociationId) {
       const firstAssociationId = associations[0].id;
       setSelectedAssociationId(firstAssociationId);
       onAssociationChange(firstAssociationId);
@@ -58,8 +76,8 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>  // Added cn utility to merge classNames
-      <h3 className="font-medium mb-1">Select Association</h3>
+    <div className={cn("space-y-2", className)}>
+      {label !== false && <h3 className="font-medium mb-1">{label}</h3>}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
