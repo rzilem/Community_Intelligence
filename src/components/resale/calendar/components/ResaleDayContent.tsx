@@ -3,6 +3,7 @@ import React from 'react';
 import ResaleEventList from '../ResaleEventList';
 
 interface ResaleDayContentProps {
+  date: Date; // Added the date property to fix the type error
   events: any[];
   eventsLoading: boolean;
   setIsDialogOpen: (isOpen: boolean) => void;
@@ -11,6 +12,7 @@ interface ResaleDayContentProps {
 }
 
 const ResaleDayContent: React.FC<ResaleDayContentProps> = ({
+  date, // Add date parameter here
   events,
   eventsLoading,
   setIsDialogOpen,
