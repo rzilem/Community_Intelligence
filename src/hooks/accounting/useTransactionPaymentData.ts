@@ -1,9 +1,10 @@
 
+import { useState, useEffect } from 'react';
 import { Transaction, Payment } from '@/types/transaction-payment-types';
 
-export const useTransactionPaymentData = () => {
+export const useTransactionPaymentData = (associationId?: string) => {
   // Mock data for transactions
-  const mockTransactions: Transaction[] = [
+  const allTransactions: Transaction[] = [
     {
       id: '1',
       date: '2025-04-05',
@@ -12,7 +13,8 @@ export const useTransactionPaymentData = () => {
       amount: 250.00,
       type: 'income',
       category: 'Assessments',
-      glAccount: '1001-00'
+      glAccount: '1001-00',
+      associationId: 'assoc-1'
     },
     {
       id: '2',
@@ -22,7 +24,8 @@ export const useTransactionPaymentData = () => {
       amount: 175.50,
       type: 'expense',
       category: 'Maintenance',
-      glAccount: '5001-00'
+      glAccount: '5001-00',
+      associationId: 'assoc-1'
     },
     {
       id: '3',
@@ -32,7 +35,8 @@ export const useTransactionPaymentData = () => {
       amount: 100.00,
       type: 'income',
       category: 'Fines',
-      glAccount: '3001-00'
+      glAccount: '3001-00',
+      associationId: 'assoc-2'
     },
     {
       id: '4',
@@ -42,7 +46,8 @@ export const useTransactionPaymentData = () => {
       amount: 520.75,
       type: 'expense',
       category: 'Landscaping',
-      glAccount: '5010-00'
+      glAccount: '5010-00',
+      associationId: 'assoc-2'
     },
     {
       id: '5',
@@ -52,7 +57,8 @@ export const useTransactionPaymentData = () => {
       amount: 25.00,
       type: 'income',
       category: 'Late Fees',
-      glAccount: '3002-00'
+      glAccount: '3002-00',
+      associationId: 'assoc-3'
     },
     {
       id: '6',
@@ -62,7 +68,8 @@ export const useTransactionPaymentData = () => {
       amount: 1250.00,
       type: 'expense',
       category: 'Insurance',
-      glAccount: '5050-00'
+      glAccount: '5050-00',
+      associationId: 'assoc-3'
     },
     {
       id: '7',
@@ -72,12 +79,13 @@ export const useTransactionPaymentData = () => {
       amount: 500.00,
       type: 'income',
       category: 'Special Assessments',
-      glAccount: '1002-00'
+      glAccount: '1002-00',
+      associationId: 'assoc-1'
     }
   ];
 
   // Mock data for payments
-  const mockPayments: Payment[] = [
+  const allPayments: Payment[] = [
     {
       id: 'PAY-1001',
       vendor: 'Sunset Landscaping LLC',
@@ -86,7 +94,8 @@ export const useTransactionPaymentData = () => {
       status: 'scheduled',
       method: 'ach',
       associationName: 'Oakridge Estates',
-      category: 'Landscaping'
+      category: 'Landscaping',
+      associationId: 'assoc-1'
     },
     {
       id: 'PAY-1002',
@@ -96,7 +105,8 @@ export const useTransactionPaymentData = () => {
       status: 'processed',
       method: 'check',
       associationName: 'Lakeside Community',
-      category: 'Pool Maintenance'
+      category: 'Pool Maintenance',
+      associationId: 'assoc-2'
     },
     {
       id: 'PAY-1003',
@@ -106,7 +116,8 @@ export const useTransactionPaymentData = () => {
       status: 'processed',
       method: 'credit',
       associationName: 'Highland Towers',
-      category: 'Security'
+      category: 'Security',
+      associationId: 'assoc-3'
     },
     {
       id: 'PAY-1004',
@@ -116,7 +127,8 @@ export const useTransactionPaymentData = () => {
       status: 'processed',
       method: 'ach',
       associationName: 'Oakridge Estates',
-      category: 'Cleaning'
+      category: 'Cleaning',
+      associationId: 'assoc-1'
     },
     {
       id: 'PAY-1005',
@@ -126,7 +138,8 @@ export const useTransactionPaymentData = () => {
       status: 'processed',
       method: 'check',
       associationName: 'Highland Towers',
-      category: 'Repairs'
+      category: 'Repairs',
+      associationId: 'assoc-3'
     },
     {
       id: 'PAY-1006',
@@ -136,7 +149,8 @@ export const useTransactionPaymentData = () => {
       status: 'scheduled',
       method: 'ach',
       associationName: 'Riverside Gardens',
-      category: 'Utilities'
+      category: 'Utilities',
+      associationId: 'assoc-2'
     },
     {
       id: 'PAY-1007',
@@ -146,12 +160,27 @@ export const useTransactionPaymentData = () => {
       status: 'pending',
       method: 'wire',
       associationName: 'Pine Valley HOA',
-      category: 'Insurance'
+      category: 'Insurance',
+      associationId: 'assoc-4'
     }
   ];
 
+  const [transactions, setTransactions] = useState<Transaction[]>(allTransactions);
+  const [payments, setPayments] = useState<Payment[]>(allPayments);
+
+  useEffect(() => {
+    // Filter transactions and payments by associationId if provided
+    if (associationId && associationId.length > 0) {
+      setTransactions(allTransactions.filter(transaction => transaction.associationId === associationId));
+      setPayments(allPayments.filter(payment => payment.associationId === associationId));
+    } else {
+      setTransactions(allTransactions);
+      setPayments(allPayments);
+    }
+  }, [associationId]);
+
   return {
-    transactions: mockTransactions,
-    payments: mockPayments
+    transactions,
+    payments
   };
 };

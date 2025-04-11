@@ -8,6 +8,7 @@ export interface Transaction {
   type: 'income' | 'expense';
   category: string;
   glAccount: string;
+  associationId?: string;
 }
 
 export interface Payment {
@@ -19,6 +20,7 @@ export interface Payment {
   method: 'check' | 'ach' | 'credit' | 'wire';
   associationName: string;
   category: string;
+  associationId?: string;
 }
 
 export interface TransactionTableProps {
