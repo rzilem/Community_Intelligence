@@ -11,6 +11,7 @@ import { mockResidents } from './resident-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AddOwnerForm from './AddOwnerForm';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { toast } from 'sonner';
 
 const ResidentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,8 +33,10 @@ const ResidentListPage = () => {
   });
   
   const handleAddSuccess = (newOwner) => {
-    setResidents([...residents, newOwner]);
+    // Add the new owner to the residents list
+    setResidents(prev => [newOwner, ...prev]);
     setIsAddDialogOpen(false);
+    toast.success('Owner added successfully');
   };
 
   return <AppLayout>

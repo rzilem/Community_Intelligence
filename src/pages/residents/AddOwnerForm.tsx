@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useSupabaseCreate } from '@/hooks/supabase';
+import { createResident } from '@/services/hoa/resident-service';
 
 // Form schema with validation
 const formSchema = z.object({
@@ -38,12 +38,6 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Use the useSupabaseCreate hook for better error handling
-  const createResident = useSupabaseCreate('residents', {
-    showSuccessToast: true,
-    showErrorToast: true
-  });
-
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -67,7 +61,8 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
     const fetchAssociations = async () => {
       try {
         const { data, error } = await supabase
-          .rpc('get_user_associations');
+          .from('associations')
+          .select('*');
 
         if (error) throw error;
         setAssociations(data || []);
@@ -121,11 +116,11 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
-      // Create the resident using the hook which handles RLS better
-      const newResident = await createResident.mutateAsync({
+      // Create the resident directly using the resident service
+      const newResident = await createResident({
         name: data.name,
         email: data.email,
-        phone: data.phone,
+        phone: data.phone || null,
         property_id: data.property_id,
         resident_type: data.resident_type,
         is_primary: data.is_primary,
@@ -152,7 +147,6 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
           propertyId: data.property_id
         };
 
-        toast.success('Owner added successfully');
         onSuccess(newOwnerForUI);
       }
     } catch (error: any) {
