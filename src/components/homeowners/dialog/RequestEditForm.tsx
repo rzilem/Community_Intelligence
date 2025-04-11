@@ -10,6 +10,7 @@ import { HomeownerRequest } from '@/types/homeowner-request-types';
 import RequestBasicFields from './fields/RequestBasicFields';
 import RequestDescriptionField from './fields/RequestDescriptionField';
 import RequestAssignedToField from './fields/RequestAssignedToField';
+import RequestAssignmentFields from './fields/RequestAssignmentFields';
 
 interface RequestEditFormProps {
   request: HomeownerRequest | null;
@@ -25,6 +26,9 @@ const formSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
   assignedTo: z.string().optional(),
+  associationId: z.string().uuid().optional().nullable(),
+  propertyId: z.string().uuid().optional().nullable(),
+  residentId: z.string().uuid().optional().nullable(),
 });
 
 const RequestEditForm: React.FC<RequestEditFormProps> = ({ 
@@ -42,6 +46,9 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       priority: 'medium',
       type: 'general',
       assignedTo: '',
+      associationId: '',
+      propertyId: '',
+      residentId: '',
     },
   });
 
@@ -54,15 +61,22 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         priority: request.priority as any,
         type: request.type as any,
         assignedTo: request.assignedTo || '',
+        associationId: request.associationId || '',
+        propertyId: request.propertyId || '',
+        residentId: request.residentId || '',
       });
     }
   }, [request, form]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <RequestBasicFields form={form} />
-        <RequestAssignedToField form={form} />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4">
+          <RequestBasicFields form={form} />
+          <RequestAssignedToField form={form} />
+        </div>
+        
+        <RequestAssignmentFields form={form} />
         <RequestDescriptionField form={form} />
         
         <DialogFooter>

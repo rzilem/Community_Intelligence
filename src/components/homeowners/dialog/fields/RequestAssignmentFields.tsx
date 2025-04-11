@@ -1,0 +1,111 @@
+
+import React, { useEffect, useState } from 'react';
+import { UseFormReturn } from 'react-hook-form';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import FormFieldSelect from '@/components/homeowners/form/FormFieldSelect';
+
+interface RequestAssignmentFieldsProps {
+  form: UseFormReturn<any>;
+}
+
+const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({ form }) => {
+  // Get selected association ID for filtering properties and residents
+  const selectedAssociationId = form.watch('associationId');
+  const selectedPropertyId = form.watch('propertyId');
+  
+  // Fetch associations for the select dropdown
+  const { data: associations = [] } = useSupabaseQuery<any[]>(
+    'associations',
+    {
+      select: 'id, name',
+      order: { column: 'name', ascending: true },
+    }
+  );
+
+  // Fetch properties for the select dropdown
+  const { data: properties = [] } = useSupabaseQuery<any[]>(
+    'properties',
+    {
+      select: 'id, address, unit_number, association_id',
+      filter: selectedAssociationId ? [{ column: 'association_id', value: selectedAssociationId }] : [],
+      order: { column: 'address', ascending: true },
+    },
+    !!selectedAssociationId
+  );
+
+  // Fetch residents for the select dropdown
+  const { data: residents = [] } = useSupabaseQuery<any[]>(
+    'residents',
+    {
+      select: 'id, name, email, property_id',
+      filter: selectedPropertyId 
+        ? [{ column: 'property_id', value: selectedPropertyId }]
+        : (selectedAssociationId ? [] : []),
+      order: { column: 'name', ascending: true },
+    },
+    !!selectedPropertyId || !!selectedAssociationId
+  );
+
+  const associationOptions = associations.map(association => ({
+    value: association.id,
+    label: association.name,
+  }));
+
+  const propertyOptions = properties.map(property => ({
+    value: property.id,
+    label: `${property.address} ${property.unit_number ? `Unit ${property.unit_number}` : ''}`,
+  }));
+
+  const residentOptions = residents.map(resident => ({
+    value: resident.id,
+    label: resident.name || resident.email || `Resident ${resident.id.substring(0, 8)}`,
+  }));
+
+  // Reset propertyId when association changes
+  useEffect(() => {
+    if (selectedAssociationId) {
+      form.setValue('propertyId', '');
+    }
+  }, [selectedAssociationId, form]);
+
+  // Reset residentId when property changes
+  useEffect(() => {
+    if (selectedPropertyId) {
+      form.setValue('residentId', '');
+    }
+  }, [selectedPropertyId, form]);
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-base font-medium">Assignment</h3>
+      
+      <FormFieldSelect
+        form={form}
+        name="associationId"
+        label="Association"
+        placeholder="Select an association"
+        options={associationOptions}
+      />
+      
+      <FormFieldSelect
+        form={form}
+        name="propertyId"
+        label="Property"
+        placeholder={selectedAssociationId ? "Select a property" : "Select an association first"}
+        options={propertyOptions}
+        disabled={!selectedAssociationId}
+      />
+      
+      <FormFieldSelect
+        form={form}
+        name="residentId"
+        label="Resident"
+        placeholder={selectedPropertyId ? "Select a resident" : "Select a property first"}
+        options={residentOptions}
+        disabled={!selectedPropertyId && !selectedAssociationId}
+      />
+    </div>
+  );
+};
+
+export default RequestAssignmentFields;

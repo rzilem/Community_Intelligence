@@ -44,6 +44,9 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       priority: values.priority,
       type: values.type,
       assignedTo: values.assignedTo || null,
+      associationId: values.associationId || null,
+      propertyId: values.propertyId || null,
+      residentId: values.residentId || null,
     };
     
     if (values.status === 'resolved' && request.status !== 'resolved') {
