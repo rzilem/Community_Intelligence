@@ -26,24 +26,23 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   
   useEffect(() => {
-    // Initialize open sections based on current path
-    setOpenSections(prev => {
-      const newState = {...prev};
-      
-      if (location.pathname.startsWith('/properties') || 
-          location.pathname.startsWith('/homeowners') || 
-          location.pathname.startsWith('/compliance') || 
-          location.pathname.startsWith('/communications') || 
-          location.pathname.startsWith('/bid-requests')) {
-        newState['community-management'] = true;
+    // Initialize or update open sections based on current path
+    const newOpenSections = {...openSections};
+    
+    // Check each main navigation item to see if the current path is in its submenu
+    mainNavItems.forEach(item => {
+      if (item.submenu) {
+        const isSubmenuActive = item.submenu.some(
+          subItem => location.pathname === subItem.path
+        );
+        
+        if (isSubmenuActive) {
+          newOpenSections[item.path.replace('/', '')] = true;
+        }
       }
-      
-      if (location.pathname.startsWith('/accounting')) {
-        newState['accounting'] = true;
-      }
-      
-      return newState;
     });
+    
+    setOpenSections(newOpenSections);
   }, [location.pathname]);
 
   const toggleSection = (section: string) => {
@@ -51,6 +50,15 @@ const Sidebar: React.FC<SidebarProps> = ({
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  // Helper function to check if a main nav item has the current path in its submenu
+  const hasActiveSubmenu = (item: NavItemProps) => {
+    if (!item.submenu) return false;
+    
+    return item.submenu.some(
+      subItem => location.pathname === subItem.path
+    );
   };
 
   return (
@@ -86,7 +94,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               icon={item.icon}
               isOpen={!!openSections[item.path.replace('/', '')]}
               toggleSection={() => toggleSection(item.path.replace('/', ''))}
-              isActive={location.pathname.startsWith(item.path)}
+              isActive={hasActiveSubmenu(item)}
               submenu={item.submenu}
               showBadge={item.name === 'Communications'}
             />

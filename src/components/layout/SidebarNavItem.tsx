@@ -38,8 +38,8 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
             onClick={toggleSection}
             className={cn(
               "w-full text-left flex items-center justify-between py-2 px-3 rounded-md",
-              isOpen || isActive
-                ? "bg-sidebar-accent text-white"
+              isOpen 
+                ? "text-white"
                 : "text-white/80 hover:bg-white/10"
             )}
           >
