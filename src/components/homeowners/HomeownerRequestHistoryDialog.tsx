@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -12,9 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { format } from 'date-fns';
 import { Activity, MessageSquare, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { formatDate } from '@/lib/date-utils';
 
 interface HomeownerRequestHistoryDialogProps {
   request: HomeownerRequest | null;
@@ -93,7 +93,7 @@ const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps
                   }
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {format(new Date(comment.created_at), 'MMM d, yyyy h:mm a')}
+                  {formatDate(comment.created_at, 'MMM d, yyyy h:mm a')}
                 </p>
               </div>
               <p className="mt-1">{comment.content}</p>
@@ -141,7 +141,7 @@ const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps
                   <p className="font-medium flex justify-between">
                     <span>{change.status}</span>
                     <span className="text-xs text-muted-foreground">
-                      {format(new Date(change.date), 'MMM d, yyyy h:mm a')}
+                      {formatDate(change.date, 'MMM d, yyyy h:mm a')}
                     </span>
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">{change.description}</p>

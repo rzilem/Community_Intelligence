@@ -1,5 +1,5 @@
 
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, formatDistance, isValid } from 'date-fns';
 
 /**
  * Formats a date string from the server (ISO format) to a readable format
@@ -7,14 +7,21 @@ import { format, parseISO } from 'date-fns';
 export const formatDate = (dateString: string, formatStr: string = 'MMM d, yyyy') => {
   try {
     // If it's not a string or is falsy, return empty string
-    if (!dateString || typeof dateString !== 'string') return '';
+    if (!dateString || typeof dateString !== 'string') return 'N/A';
     
     // Parse ISO string and format
     const date = parseISO(dateString);
+    
+    // Check if the date is valid
+    if (!isValid(date)) {
+      console.warn(`Invalid date: ${dateString}`);
+      return 'Invalid date';
+    }
+    
     return format(date, formatStr);
   } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString; // Return original if there was an error
+    console.error('Error formatting date:', error, dateString);
+    return 'Invalid date';
   }
 };
 
@@ -23,9 +30,16 @@ export const formatDate = (dateString: string, formatStr: string = 'MMM d, yyyy'
  */
 export const formatRelativeDate = (dateString: string) => {
   try {
-    if (!dateString) return '';
+    if (!dateString || typeof dateString !== 'string') return 'N/A';
     
     const date = parseISO(dateString);
+    
+    // Check if the date is valid
+    if (!isValid(date)) {
+      console.warn(`Invalid date: ${dateString}`);
+      return 'Invalid date';
+    }
+    
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -44,7 +58,7 @@ export const formatRelativeDate = (dateString: string) => {
       return `${years} ${years === 1 ? 'year' : 'years'} ago`;
     }
   } catch (error) {
-    console.error('Error formatting relative date:', error);
-    return '';
+    console.error('Error formatting relative date:', error, dateString);
+    return 'Invalid date';
   }
 };

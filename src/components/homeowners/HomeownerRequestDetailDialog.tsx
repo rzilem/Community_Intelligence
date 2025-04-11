@@ -10,9 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/date-utils';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -91,7 +91,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                       <div>{renderPriorityBadge(request.priority)}</div>
                       
                       <div className="text-muted-foreground">Created:</div>
-                      <div>{formatDistanceToNow(new Date(request.createdAt), { addSuffix: true })}</div>
+                      <div>{formatDate(request.createdAt)}</div>
                     </div>
                   </div>
                   
@@ -125,7 +125,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                     <h3 className="font-medium text-lg">Resolution</h3>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="text-muted-foreground">Resolved At:</div>
-                      <div>{formatDistanceToNow(new Date(request.resolvedAt), { addSuffix: true })}</div>
+                      <div>{formatDate(request.resolvedAt)}</div>
                     </div>
                   </div>
                 )}

@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Eye, FileEdit, MessageSquare, Clock } from 'lucide-react';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import TooltipButton from '@/components/ui/tooltip-button';
-import { formatRelativeDate } from '@/lib/date-utils';
+import { formatDate, formatRelativeDate } from '@/lib/date-utils';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -50,14 +51,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         return <Badge variant="outline" className="bg-red-100 text-red-800">Urgent</Badge>;
       default:
         return <Badge>{priority}</Badge>;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy');
-    } catch (error) {
-      return dateString;
     }
   };
 
