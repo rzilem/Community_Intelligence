@@ -50,8 +50,8 @@ const Associations = () => {
   // Handle saving a new association
   const handleSaveAssociation = (data: AssociationFormData) => {
     // Map form data to the expected Association format
-    const newAssociation: Partial<Association> = {
-      name: data.name,
+    const newAssociation = {
+      name: data.name, // Ensure name is provided as a required field
       property_type: data.type,
       total_units: data.units,
       city: data.city,
