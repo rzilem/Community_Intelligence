@@ -11,13 +11,14 @@ export const useHomeownerRequestNotifications = () => {
   );
 
   // Get recent homeowner requests to check for unread ones
+  // Fix column name to match database (created_at instead of createdAt)
   const { data: recentRequests = [] } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
       select: '*',
-      order: { column: 'createdAt', ascending: false },
+      order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'createdAt', operator: 'gt', value: lastCheckedTimestamp }
+        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
       ]
     }
   );

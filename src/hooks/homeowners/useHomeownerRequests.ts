@@ -11,6 +11,7 @@ export const useHomeownerRequests = () => {
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
   // Fetch homeowner requests from Supabase
+  // Fix column name to match database (created_at instead of createdAt)
   const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
