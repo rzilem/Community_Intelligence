@@ -3,7 +3,6 @@ import React from 'react';
 import ResaleEventList from '../ResaleEventList';
 
 interface ResaleDayContentProps {
-  date: Date;
   events: any[];
   eventsLoading: boolean;
   setIsDialogOpen: (isOpen: boolean) => void;
@@ -15,9 +14,11 @@ const ResaleDayContent: React.FC<ResaleDayContentProps> = ({
   events,
   eventsLoading,
   setIsDialogOpen,
-  onDeleteEvent,
-  setSelectedDate
+  onDeleteEvent
 }) => {
+  // We're not using setSelectedDate anymore
+  const setSelectedDate = () => {};
+  
   return (
     <div className="flex-1 p-1 overflow-y-auto">
       <ResaleEventList 

@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { CalendarEvent } from '@/types/calendar-types';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResaleEvent, ResaleEventFilters } from '@/types/resale-event-types';
 import { getMockResaleEvents } from './mock/resaleEventsMock';
-import { useResaleEventsFilter } from './useResaleEventsFilter';
+import { filterResaleEvents } from './utils/resaleEventUtils';
+import { useResaleEventOperations } from './useResaleEventOperations';
 
 interface UseResaleCalendarEventsProps {
   date: Date;
@@ -15,9 +15,10 @@ interface UseResaleCalendarEventsProps {
 export const useResaleCalendarEvents = ({ date, filters }: UseResaleCalendarEventsProps) => {
   const { currentAssociation } = useAuth();
   const [allEvents, setAllEvents] = useState<ResaleEvent[]>([]);
+  const { handleDeleteEvent } = useResaleEventOperations(setAllEvents);
   
   // Query for calendar events (for future implementation)
-  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>(
+  const { data: calendarEvents, isLoading: eventsLoading } = useSupabaseQuery(
     'calendar_events',
     {
       select: '*',
@@ -33,12 +34,7 @@ export const useResaleCalendarEvents = ({ date, filters }: UseResaleCalendarEven
   }, [date]);
 
   // Filter events based on the filters
-  const events = useResaleEventsFilter(allEvents, filters);
-
-  // Delete event mutation
-  const handleDeleteEvent = (eventId: string) => {
-    setAllEvents(prev => prev.filter(event => event.id !== eventId));
-  };
+  const events = filterResaleEvents(allEvents, filters);
 
   return {
     events,
