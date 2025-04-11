@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Building2, Plus, FileDown, SlidersHorizontal } from 'lucide-react';
+import { Building2, Plus, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VendorList from '@/components/vendors/VendorList';
@@ -74,16 +74,10 @@ const Vendors = () => {
 
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Vendors</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <FileDown className="mr-2 h-4 w-4" />
-              Import/Export
-            </Button>
-            <Button variant="outline" size="sm">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              Customize Columns
-            </Button>
-          </div>
+          <Button variant="outline" size="sm">
+            <FileDown className="mr-2 h-4 w-4" />
+            Import/Export
+          </Button>
         </div>
 
         {isLoadingVendors ? (
