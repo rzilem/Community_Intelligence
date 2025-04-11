@@ -1,6 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { HOA } from '@/types/app-types';
+import { Association } from '@/types/association-types';
+
+// Create a type alias for HOA using Association to maintain backwards compatibility
+type HOA = Association;
 
 export const fetchHOAs = async (): Promise<HOA[]> => {
   const { data, error } = await supabase

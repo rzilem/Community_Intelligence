@@ -1,8 +1,12 @@
 
 import type { Database } from '@/integrations/supabase/types';
+import { Association } from './association-types';
 
 // Get strongly typed references to tables
 export type Tables = Database['public']['Tables'];
+
+// Define HOA type alias for backward compatibility
+export type HOA = Association;
 
 // Re-export all types from domain-specific files
 export * from './profile-types';

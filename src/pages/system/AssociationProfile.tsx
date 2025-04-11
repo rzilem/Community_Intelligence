@@ -106,9 +106,9 @@ const AssociationProfile = () => {
 
   return (
     <PageTemplate 
-      title={association.name} 
+      title={association?.name || 'Association Profile'} 
       icon={<Building2 className="h-8 w-8" />}
-      description={`Manage ${association.name} association details, properties, and settings.`}
+      description={`Manage ${association?.name} association details, properties, and settings.`}
     >
       {/* Association Header */}
       <AssociationHeader association={association} handleBack={handleBack} />
