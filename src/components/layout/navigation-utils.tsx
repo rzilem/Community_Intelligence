@@ -58,6 +58,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       submenu: [
         { name: 'Associations', path: '/associations', icon: Network },
         { name: 'Homeowners', path: '/homeowners', icon: Users2 },
+        { name: 'Homeowner Requests', path: '/community-management/homeowner-requests', icon: ClipboardList },
         { name: 'Compliance', path: '/compliance', icon: Shield },
         { name: 'Communications', path: '/communications', icon: MessageSquare },
         { name: 'Bid Requests', path: '/bid-requests', icon: ClipboardList },
