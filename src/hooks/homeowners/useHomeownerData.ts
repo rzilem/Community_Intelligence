@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { Homeowner } from '@/components/homeowners/detail/types';
+import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
 import { toast } from 'sonner';
 
 // Mock data for now, would be replaced with actual API calls
-const mockHomeowner = {
+const mockHomeowner: Homeowner = {
   id: '101',
   name: 'Alice Johnson',
   email: 'alice.j@example.com',
@@ -24,19 +24,19 @@ const mockHomeowner = {
   avatarUrl: '',
   notes: [
     {
-      type: 'system',
+      type: 'system' as const,
       author: 'System',
       content: 'Late payment notice automatically sent',
       date: '2023-05-16'
     },
     {
-      type: 'manual',
+      type: 'manual' as const,
       author: 'Jane Smith',
       content: 'Homeowner called about maintenance request for kitchen sink',
       date: '2023-05-02'
     },
     {
-      type: 'manual',
+      type: 'manual' as const,
       author: 'John Doe',
       content: 'Homeowner mentioned they might renew for another year',
       date: '2023-04-10'
