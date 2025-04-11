@@ -28,3 +28,6 @@ export * from './proposal-types';
 export * from './email-types';
 export * from './analytics-types';
 export * from './invoice-types';
+export * from './resale-types';
+export * from './resale-event-types';
+
