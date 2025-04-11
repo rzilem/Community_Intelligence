@@ -49,7 +49,7 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
             </div>
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
-          {(isOpen || isActive) && (
+          {isOpen && (
             <div className="pl-8 space-y-1">
               {submenu.map((item) => (
                 <Link

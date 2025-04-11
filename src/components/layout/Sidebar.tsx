@@ -46,10 +46,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [location.pathname]);
 
   const toggleSection = (section: string) => {
-    setOpenSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setOpenSections(prev => {
+      const newState = {...prev};
+      // Toggle the section state
+      newState[section] = !prev[section];
+      return newState;
+    });
   };
 
   // Helper function to check if a main nav item has the current path in its submenu
