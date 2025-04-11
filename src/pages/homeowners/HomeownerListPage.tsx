@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users, Search, Plus } from 'lucide-react';
+import { Users, Search, Plus, Columns } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ColumnSelector from '@/components/table/ColumnSelector';
+import { useHomeownerColumns } from './hooks/useHomeownerColumns';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +32,7 @@ const HomeownerListPage = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const navigate = useNavigate();
+  const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
 
   const filteredHomeowners = mockHomeowners.filter(homeowner => {
     const matchesSearch = 
@@ -64,7 +67,7 @@ const HomeownerListPage = () => {
             <p className="text-muted-foreground mb-6">View and manage all owners across your community associations.</p>
             
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center mb-6 gap-4">
-              <div className="relative flex-1">
+              <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search owners..." 
@@ -74,9 +77,9 @@ const HomeownerListPage = () => {
                 />
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
                 <Select value={filterAssociation} onValueChange={setFilterAssociation}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[170px]">
                     <SelectValue placeholder="All Associations" />
                   </SelectTrigger>
                   <SelectContent>
@@ -86,7 +89,7 @@ const HomeownerListPage = () => {
                 </Select>
                 
                 <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="All Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -97,7 +100,7 @@ const HomeownerListPage = () => {
                 </Select>
                 
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-[150px]">
+                  <SelectTrigger className="w-[120px]">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
@@ -107,6 +110,14 @@ const HomeownerListPage = () => {
                     <SelectItem value="family-member">Family Member</SelectItem>
                   </SelectContent>
                 </Select>
+                
+                <ColumnSelector
+                  columns={columns}
+                  selectedColumns={visibleColumnIds}
+                  onChange={updateVisibleColumns}
+                  onReorder={reorderColumns}
+                  className="ml-1"
+                />
               </div>
             </div>
             
@@ -114,51 +125,67 @@ const HomeownerListPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Association</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {visibleColumnIds.includes('name') && <TableHead>Name</TableHead>}
+                    {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
+                    {visibleColumnIds.includes('propertyAddress') && <TableHead>Property</TableHead>}
+                    {visibleColumnIds.includes('association') && <TableHead>Association</TableHead>}
+                    {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
+                    {visibleColumnIds.includes('type') && <TableHead>Type</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredHomeowners.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                      <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
                         No homeowners found matching your search.
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredHomeowners.map(homeowner => (
-                      <TableRow key={homeowner.id}>
-                        <TableCell className="font-medium cursor-pointer hover:text-primary" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
-                          {homeowner.name}
-                        </TableCell>
-                        <TableCell>{homeowner.email}</TableCell>
-                        <TableCell className="cursor-pointer hover:text-primary" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
-                          {homeowner.propertyAddress}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground truncate max-w-[200px]">
-                          {homeowner.association}
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={homeowner.status === 'active' ? 'default' : 'outline'} 
-                            className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
-                          >
-                            {homeowner.status === 'active' ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {homeowner.type === 'owner' ? 'Owner' : homeowner.type}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="outline" size="sm" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
-                            View
-                          </Button>
-                        </TableCell>
+                      <TableRow key={homeowner.id} className="group">
+                        {visibleColumnIds.includes('name') && (
+                          <TableCell className="font-medium">
+                            <span 
+                              className="cursor-pointer hover:text-primary hover:underline"
+                              onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                            >
+                              {homeowner.name}
+                            </span>
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('email') && (
+                          <TableCell>{homeowner.email}</TableCell>
+                        )}
+                        {visibleColumnIds.includes('propertyAddress') && (
+                          <TableCell>
+                            <span 
+                              className="cursor-pointer hover:text-primary hover:underline"
+                              onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                            >
+                              {homeowner.propertyAddress}
+                            </span>
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('association') && (
+                          <TableCell className="text-muted-foreground truncate max-w-[200px]">
+                            {homeowner.association}
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('status') && (
+                          <TableCell>
+                            <Badge 
+                              variant={homeowner.status === 'active' ? 'default' : 'outline'} 
+                              className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                            >
+                              {homeowner.status === 'active' ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('type') && (
+                          <TableCell>
+                            {homeowner.type === 'owner' ? 'Owner' : homeowner.type}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))
                   )}
