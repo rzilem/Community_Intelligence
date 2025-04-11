@@ -46,13 +46,24 @@ export async function extractRequestData(emailData: any, trackingNumber: string)
       requestData.title = requestData.title.substring(0, 97) + "...";
     }
     
-    // Try to extract association ID (would need to be configured in a real app)
-    // For now, we'll use a placeholder or you can add more sophisticated matching
-    requestData.association_id = await getDefaultAssociationId();
-    
-    // Similarly for property_id - in a real app, you might parse the email 
-    // to identify which property it's related to
-    requestData.property_id = await getDefaultPropertyId(requestData.association_id);
+    try {
+      // Try to get default association ID, but don't throw if not found
+      requestData.association_id = await getDefaultAssociationId();
+      
+      // Only try to get property if we have an association
+      if (requestData.association_id) {
+        // Try to get default property ID, but don't throw if not found
+        try {
+          requestData.property_id = await getDefaultPropertyId(requestData.association_id);
+        } catch (propertyError) {
+          console.warn("No default property found, creating request without property reference:", propertyError.message);
+        }
+      }
+    } catch (associationError) {
+      console.warn("No association found, creating request without association reference:", associationError.message);
+      // Since we couldn't find an association, we'll create a special system-level request
+      requestData.title = `[UNASSIGNED] ${requestData.title}`;
+    }
     
     console.log("Extracted request data:", requestData);
     return requestData;
@@ -127,8 +138,7 @@ function detectPriority(subject: string, content: string): string {
   return "medium";
 }
 
-// In a real app, you would have a more sophisticated way to determine
-// which association an email belongs to. For now, we'll get the first one.
+// Modified function to handle the case when no association is found
 async function getDefaultAssociationId(): Promise<string> {
   try {
     // Import the createClient function directly in the function
@@ -143,22 +153,25 @@ async function getDefaultAssociationId(): Promise<string> {
     const { data, error } = await supabase
       .from("associations")
       .select("id")
-      .limit(1)
-      .single();
+      .limit(1);
     
     if (error) {
       console.error("Error getting default association:", error);
       throw new Error(`Failed to get default association: ${error.message}`);
     }
     
-    return data.id;
+    if (!data || data.length === 0) {
+      throw new Error("No associations found in the database");
+    }
+    
+    return data[0].id;
   } catch (error) {
     console.error("Error in getDefaultAssociationId:", error);
     throw error;
   }
 }
 
-// Similar function to get a default property ID
+// Similar function to get a default property ID - modified to handle no results
 async function getDefaultPropertyId(associationId: string): Promise<string> {
   try {
     // Import the createClient function directly in the function
@@ -174,15 +187,18 @@ async function getDefaultPropertyId(associationId: string): Promise<string> {
       .from("properties")
       .select("id")
       .eq("association_id", associationId)
-      .limit(1)
-      .single();
+      .limit(1);
     
     if (error) {
       console.error("Error getting default property:", error);
       throw new Error(`Failed to get default property: ${error.message}`);
     }
     
-    return data.id;
+    if (!data || data.length === 0) {
+      throw new Error("No properties found for this association");
+    }
+    
+    return data[0].id;
   } catch (error) {
     console.error("Error in getDefaultPropertyId:", error);
     throw error;

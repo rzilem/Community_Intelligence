@@ -9,10 +9,39 @@ export async function createHomeownerRequest(requestData: Record<string, any>) {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
+    // Make sure we have the minimum required fields
+    const insertData = {
+      title: requestData.title || "Email Request",
+      description: requestData.description || "No content provided",
+      status: requestData.status || "open",
+      priority: requestData.priority || "medium",
+      type: requestData.type || "general",
+      html_content: requestData.html_content,
+      tracking_number: requestData.tracking_number,
+      created_at: requestData.created_at || new Date().toISOString(),
+      updated_at: requestData.updated_at || new Date().toISOString()
+    };
+    
+    // Only add optional fields if they exist
+    if (requestData.association_id) {
+      insertData.association_id = requestData.association_id;
+    }
+    
+    if (requestData.property_id) {
+      insertData.property_id = requestData.property_id;
+    }
+    
+    if (requestData.resident_id) {
+      insertData.resident_id = requestData.resident_id;
+    }
+    
+    // Log what we're going to insert
+    console.log("Inserting homeowner request:", insertData);
+    
     // Insert the homeowner request
     const { data, error } = await supabase
       .from("homeowner_requests")
-      .insert(requestData)
+      .insert(insertData)
       .select()
       .single();
     
