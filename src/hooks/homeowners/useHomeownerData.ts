@@ -99,10 +99,30 @@ export const useHomeownerData = (homeownerId: string) => {
     toast.success('Profile image updated successfully');
   };
 
+  const updateHomeownerData = async (updatedData: Partial<Homeowner>) => {
+    try {
+      // For mock data, we'll just update the state
+      // In a real app, we would make an API call here
+      setHomeowner(prev => ({
+        ...prev,
+        ...updatedData
+      }));
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return true;
+    } catch (err) {
+      console.error("Error updating homeowner data:", err);
+      throw new Error('Failed to update homeowner data');
+    }
+  };
+
   return {
     homeowner,
     loading,
     error,
-    updateHomeownerImage
+    updateHomeownerImage,
+    updateHomeownerData
   };
 };

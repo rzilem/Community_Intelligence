@@ -7,13 +7,31 @@ import { HomeownerHeader } from '@/components/homeowners/detail/HomeownerHeader'
 import { HomeownerInfo } from '@/components/homeowners/detail/HomeownerInfo';
 import { HomeownerTabs } from '@/components/homeowners/detail/HomeownerTabs';
 import { useHomeownerData } from '@/hooks/homeowners/useHomeownerData';
+import HomeownerEditForm from '@/components/homeowners/detail/HomeownerEditForm';
+import { useAuth } from '@/contexts/auth/useAuth';
+import { Homeowner } from '@/components/homeowners/detail/types';
 
 const HomeownerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState('Summary');
   const [activeNotesTab, setActiveNotesTab] = useState('Manual Notes');
+  const [isEditing, setIsEditing] = useState(false);
+  const { isAdmin } = useAuth();
   
-  const { homeowner, updateHomeownerImage } = useHomeownerData(id || '');
+  const { homeowner, updateHomeownerImage, updateHomeownerData } = useHomeownerData(id || '');
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+  
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+  
+  const handleSaveEdit = async (data: Partial<Homeowner>) => {
+    await updateHomeownerData(data);
+    setIsEditing(false);
+  };
 
   return (
     <AppLayout>
@@ -28,18 +46,27 @@ const HomeownerDetailPage: React.FC = () => {
               violations={homeowner.violations}
               avatarUrl={homeowner.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
+              onEditClick={isAdmin ? handleEdit : undefined}
             />
 
-            <HomeownerInfo 
-              id={homeowner.id}
-              email={homeowner.email}
-              phone={homeowner.phone}
-              moveInDate={homeowner.moveInDate}
-              property={homeowner.property}
-              unit={homeowner.unit}
-              balance={homeowner.balance}
-              lastContact={homeowner.lastContact}
-            />
+            {isEditing && isAdmin ? (
+              <HomeownerEditForm 
+                homeowner={homeowner}
+                onSave={handleSaveEdit}
+                onCancel={handleCancelEdit}
+              />
+            ) : (
+              <HomeownerInfo 
+                id={homeowner.id}
+                email={homeowner.email}
+                phone={homeowner.phone}
+                moveInDate={homeowner.moveInDate}
+                property={homeowner.property}
+                unit={homeowner.unit}
+                balance={homeowner.balance}
+                lastContact={homeowner.lastContact}
+              />
+            )}
           </div>
           
           <div className="ml-6">

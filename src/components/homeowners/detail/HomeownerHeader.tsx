@@ -1,89 +1,102 @@
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
-import ProfileImageUpload from '@/components/users/ProfileImageUpload';
-
-interface HomeownerTag {
-  tag: string;
-  color: string;
-}
+import { PencilIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/useAuth';
 
 interface HomeownerHeaderProps {
   id: string;
   name: string;
-  status: string;
-  tags: string[];
-  violations: string[];
-  avatarUrl: string;
-  onProfileImageUpdated: (newUrl: string) => void;
+  avatarUrl?: string;
+  status?: string;
+  tags?: string[];
+  violations?: string[];
+  onProfileImageUpdated?: (url: string) => void;
+  onEditClick?: () => void;
 }
 
-const getTagColor = (tag: string) => {
-  const tagColors: Record<string, string> = {
-    'Board Member': 'bg-blue-100 text-blue-800 border-blue-200',
-    'New Resident': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Delinquent': 'bg-red-100 text-red-800 border-red-200',
-    'Landscaping Violation': 'bg-orange-100 text-orange-800 border-orange-200',
-    'ARC Pending': 'bg-violet-100 text-violet-800 border-violet-200'
-  };
-  
-  return tagColors[tag] || 'bg-gray-100 text-gray-800 border-gray-200';
-};
-
-export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({ 
-  id, 
-  name, 
-  status, 
-  tags, 
-  violations, 
+export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
+  id,
+  name,
   avatarUrl,
-  onProfileImageUpdated
+  status = '',
+  tags = [],
+  violations = [],
+  onProfileImageUpdated,
+  onEditClick
 }) => {
+  const { userRole, isAdmin } = useAuth();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      case 'pending-approval':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div className="flex items-center gap-4">
-      <ProfileImageUpload
-        userId={id}
-        imageUrl={avatarUrl}
-        firstName={name.split(' ')[0]}
-        lastName={name.split(' ')[1] || ''}
-        onImageUpdated={onProfileImageUpdated}
-        size="lg"
-      />
+    <div className="flex items-center">
+      <div className="relative flex-shrink-0">
+        <Avatar className="h-20 w-20">
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={name} />
+          ) : null}
+          <AvatarFallback className="text-lg bg-primary text-primary-foreground">
+            {getInitials(name)}
+          </AvatarFallback>
+        </Avatar>
+      </div>
       
-      <div>
+      <div className="ml-4 flex-grow">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{name}</h1>
-          <Badge className="bg-green-100 text-green-800 border border-green-200 rounded-full px-3 py-1 ml-4">
-            {status}
-          </Badge>
-        </div>
-        
-        <div className="flex flex-wrap gap-2 mt-2">
-          {tags.map(tag => (
-            <Badge 
-              key={tag} 
+          <div>
+            <h2 className="text-2xl font-bold">{name}</h2>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {status && (
+                <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${getStatusColor(status)}`}>
+                  {status}
+                </span>
+              )}
+              {tags.map((tag, index) => (
+                <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                  {tag}
+                </span>
+              ))}
+              {violations.map((violation, index) => (
+                <span key={index} className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                  {violation}
+                </span>
+              ))}
+            </div>
+          </div>
+          
+          {isAdmin && onEditClick && (
+            <Button 
               variant="outline" 
-              className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(tag)}`}
+              size="sm" 
+              className="ml-auto" 
+              onClick={onEditClick}
             >
-              <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
-              {tag}
-            </Badge>
-          ))}
-          {violations.map(violation => (
-            <Badge 
-              key={violation} 
-              variant="outline" 
-              className={`rounded-full px-3 py-1 flex items-center gap-1 ${getTagColor(violation)}`}
-            >
-              <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
-              {violation}
-            </Badge>
-          ))}
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 text-sm h-7">
-            <Plus className="h-4 w-4" /> Add Tag
-          </Button>
+              <PencilIcon className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          )}
         </div>
       </div>
     </div>
