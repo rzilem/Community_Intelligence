@@ -45,9 +45,9 @@ export const associationMemberService = {
       association_id: member.association_id,
       role_type: member.role_type,
       role_name: member.role_name,
-      first_name: member.profiles?.first_name,
-      last_name: member.profiles?.last_name,
-      email: member.profiles?.email,
+      first_name: member.profiles?.first_name || '',
+      last_name: member.profiles?.last_name || '',
+      email: member.profiles?.email || '',
       created_at: member.created_at,
       updated_at: member.updated_at
     })) as AssociationMember[];
@@ -86,9 +86,9 @@ export const associationMemberService = {
       association_id: data.association_id,
       role_type: data.role_type,
       role_name: data.role_name,
-      first_name: data.profiles?.first_name,
-      last_name: data.profiles?.last_name,
-      email: data.profiles?.email,
+      first_name: data.profiles?.first_name || '',
+      last_name: data.profiles?.last_name || '',
+      email: data.profiles?.email || '',
       created_at: data.created_at,
       updated_at: data.updated_at
     } as AssociationMember;
@@ -126,9 +126,9 @@ export const associationMemberService = {
       association_id: data.association_id,
       role_type: data.role_type,
       role_name: data.role_name,
-      first_name: data.profiles?.first_name,
-      last_name: data.profiles?.last_name,
-      email: data.profiles?.email,
+      first_name: data.profiles?.first_name || '',
+      last_name: data.profiles?.last_name || '',
+      email: data.profiles?.email || '',
       created_at: data.created_at,
       updated_at: data.updated_at
     } as AssociationMember;

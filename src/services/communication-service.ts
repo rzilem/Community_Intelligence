@@ -28,7 +28,16 @@ export const communicationService = {
 
     const { data, error } = await supabase
       .from('announcements')
-      .insert(announcement)
+      .insert({
+        association_id: announcement.association_id,
+        title: announcement.title,
+        content: announcement.content,
+        author_id: announcement.author_id,
+        is_published: announcement.is_published,
+        publish_date: announcement.publish_date,
+        expiry_date: announcement.expiry_date,
+        priority: announcement.priority
+      })
       .select()
       .single();
 

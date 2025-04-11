@@ -7,7 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { communicationService, RecipientGroup } from '@/services/communication-service';
+import { communicationService } from '@/services/communication-service';
+import { RecipientGroup } from '@/types/communication-types';
 import { Association } from '@/types/association-types';
 
 interface RecipientSelectorProps {
