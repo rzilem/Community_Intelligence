@@ -18,6 +18,7 @@ export interface HomeownerRequest {
   assignedTo?: string;
   resolvedAt?: string;
   html_content?: string; // For original email content
+  tracking_number?: string; // Added tracking number field
 }
 
 export interface HomeownerRequestColumn {
@@ -40,4 +41,5 @@ export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'associationId', label: 'Association', accessorKey: 'associationId', defaultVisible: false },
   { id: 'assignedTo', label: 'Assigned To', accessorKey: 'assignedTo', defaultVisible: false },
   { id: 'resolvedAt', label: 'Resolved At', accessorKey: 'resolvedAt', defaultVisible: false },
+  { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: false },
 ];

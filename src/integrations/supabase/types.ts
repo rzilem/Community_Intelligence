@@ -760,6 +760,7 @@ export type Database = {
           resolved_at: string | null
           status: string
           title: string
+          tracking_number: string | null
           type: string
           updated_at: string
         }
@@ -776,6 +777,7 @@ export type Database = {
           resolved_at?: string | null
           status?: string
           title: string
+          tracking_number?: string | null
           type: string
           updated_at?: string
         }
@@ -792,6 +794,7 @@ export type Database = {
           resolved_at?: string | null
           status?: string
           title?: string
+          tracking_number?: string | null
           type?: string
           updated_at?: string
         }
