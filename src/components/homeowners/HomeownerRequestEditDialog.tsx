@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -86,17 +85,14 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       assignedTo: values.assignedTo || null,
     };
     
-    // If status changed to resolved, set resolved_at timestamp
     if (values.status === 'resolved' && request.status !== 'resolved') {
       updatedData.resolvedAt = new Date().toISOString();
     }
     
-    // If status changed from resolved, remove resolved_at timestamp
     if (values.status !== 'resolved' && request.status === 'resolved') {
       updatedData.resolvedAt = null;
     }
     
-    // Here we need to convert our camelCase properties to snake_case for the Supabase database
     updateRequest({
       id: request.id,
       data: {
@@ -105,8 +101,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         status: updatedData.status,
         priority: updatedData.priority,
         type: updatedData.type,
-        assignedTo: updatedData.assignedTo, // Change: Use camelCase property that matches our HomeownerRequest type
-        resolved_at: updatedData.resolvedAt, // This needs snake_case for Supabase but will be handled by the hook
+        assignedTo: updatedData.assignedTo,
+        resolvedAt: updatedData.resolvedAt,
       },
     });
   };

@@ -1,4 +1,3 @@
-
 export type HomeownerRequestStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
 export type HomeownerRequestPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type HomeownerRequestType = 'maintenance' | 'compliance' | 'billing' | 'general' | 'amenity';
@@ -47,6 +46,7 @@ export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'type', label: 'Type', accessorKey: 'type', defaultVisible: true },
   { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
   { id: 'priority', label: 'Priority', accessorKey: 'priority', defaultVisible: true },
+  { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: true },
   { id: 'createdAt', label: 'Created', accessorKey: 'createdAt', defaultVisible: true },
   { id: 'updatedAt', label: 'Updated', accessorKey: 'updatedAt', defaultVisible: false },
   { id: 'description', label: 'Description', accessorKey: 'description', defaultVisible: false },
@@ -55,5 +55,4 @@ export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'associationId', label: 'Association', accessorKey: 'associationId', defaultVisible: false },
   { id: 'assignedTo', label: 'Assigned To', accessorKey: 'assignedTo', defaultVisible: false },
   { id: 'resolvedAt', label: 'Resolved At', accessorKey: 'resolvedAt', defaultVisible: false },
-  { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: false },
 ];
