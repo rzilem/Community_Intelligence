@@ -3,6 +3,9 @@ export interface OnboardingTemplate {
   id: string;
   name: string;
   description?: string;
+  template_type: 'hoa' | 'condo' | 'onsite-hoa' | 'onsite-condo' | 'offboarding';
+  icon?: string;
+  estimated_days?: number;
   created_at: string;
   updated_at: string;
 }
@@ -26,6 +29,7 @@ export interface OnboardingTask {
   order_index: number;
   estimated_days?: number;
   assigned_role?: string;
+  task_type: 'client' | 'team';
   created_at: string;
   updated_at: string;
 }
@@ -46,10 +50,14 @@ export interface OnboardingProjectTask {
   id: string;
   project_id: string;
   template_task_id: string;
+  task_name: string;
+  stage_name: string;
   status: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  due_date: string;
   completed_at?: string;
   assigned_to?: string;
   notes?: string;
+  task_type: 'client' | 'team';
   created_at: string;
   updated_at: string;
 }
