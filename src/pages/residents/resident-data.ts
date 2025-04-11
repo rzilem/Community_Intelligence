@@ -1,7 +1,6 @@
-
 import { Resident } from './resident-types';
 
-export const mockResidents: Resident[] = [
+export const mockResidents = [
   {
     id: 'RES-201',
     name: 'Michael Thompson',

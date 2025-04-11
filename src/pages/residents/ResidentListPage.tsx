@@ -1,22 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users2 } from 'lucide-react';
+import { Users2, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import ResidentFilters from './ResidentFilters';
 import ResidentTable from './ResidentTable';
 import { mockResidents } from './resident-data';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import AddOwnerForm from './AddOwnerForm';
 
 const ResidentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [residents, setResidents] = useState(mockResidents);
   const navigate = useNavigate();
 
-  const filteredResidents = mockResidents.filter(resident => {
+  const filteredResidents = residents.filter(resident => {
     const matchesSearch = 
       resident.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       resident.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -29,20 +33,29 @@ const ResidentListPage = () => {
     return matchesSearch && matchesAssociation && matchesStatus && matchesType;
   });
 
+  const handleAddSuccess = (newOwner) => {
+    setResidents([...residents, newOwner]);
+    setIsAddDialogOpen(false);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Users2 className="h-8 w-8" />
-            <h1 className="text-3xl font-bold tracking-tight">Residents</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
           </div>
+          <Button onClick={() => setIsAddDialogOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Owner
+          </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Resident Management</CardTitle>
-            <CardDescription>View and manage all residents across your community associations.</CardDescription>
+            <CardTitle>Owner Management</CardTitle>
+            <CardDescription>View and manage all owners across your community associations.</CardDescription>
           </CardHeader>
           <CardContent>
             <ResidentFilters 
@@ -60,7 +73,7 @@ const ResidentListPage = () => {
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {filteredResidents.length} of {mockResidents.length} residents
+                Showing {filteredResidents.length} of {residents.length} owners
               </p>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" disabled>Previous</Button>
@@ -70,6 +83,15 @@ const ResidentListPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Add New Owner</DialogTitle>
+          </DialogHeader>
+          <AddOwnerForm onSuccess={handleAddSuccess} onCancel={() => setIsAddDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

@@ -1,54 +1,21 @@
-
 import React from 'react';
-import { Resident } from './resident-types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Link, useNavigate } from 'react-router-dom';
-import { formatDate } from '@/lib/date-utils';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
+// Keep the interface with the same structure
 interface ResidentTableProps {
-  residents: Resident[];
+  residents: any[];
 }
 
 const ResidentTable: React.FC<ResidentTableProps> = ({ residents }) => {
   const navigate = useNavigate();
   
-  // Function to handle row click
-  const handleResidentClick = (id: string) => {
-    navigate(`/residents/${id}`);
-  };
-
   if (residents.length === 0) {
     return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Property</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Move-In Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
-                No residents found matching your search.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+      <div className="text-center p-4 border rounded-md">
+        <p className="text-muted-foreground">No owners found matching your criteria.</p>
       </div>
     );
   }
@@ -61,50 +28,40 @@ const ResidentTable: React.FC<ResidentTableProps> = ({ residents }) => {
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Property</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Move-In Date</TableHead>
+            <TableHead>Association</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {residents.map(resident => (
-            <TableRow 
-              key={resident.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleResidentClick(resident.id)}
-            >
+          {residents.map((resident) => (
+            <TableRow key={resident.id}>
               <TableCell className="font-medium">{resident.name}</TableCell>
               <TableCell>{resident.email}</TableCell>
               <TableCell>{resident.propertyAddress}</TableCell>
-              <TableCell>{resident.type}</TableCell>
-              <TableCell>{formatDate(resident.moveInDate)}</TableCell>
+              <TableCell>{resident.association}</TableCell>
               <TableCell>
                 <Badge 
-                  variant={resident.status === 'active' ? 'default' : 'outline'} 
+                  variant={resident.status === 'active' ? 'default' : 'outline'}
                   className={resident.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
                 >
                   {resident.status.charAt(0).toUpperCase() + resident.status.slice(1)}
                 </Badge>
               </TableCell>
+              <TableCell>
+                {resident.type === 'owner' ? 'Owner' : 
+                 resident.type === 'tenant' ? 'Tenant' : 
+                 resident.type === 'family' ? 'Family Member' : 'Other'}
+              </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
-                  <TooltipButton
-                    size="sm"
-                    variant="ghost"
-                    tooltip="View details"
-                    onClick={() => navigate(`/residents/${resident.id}`)}
-                  >
-                    View
-                  </TooltipButton>
-                  <TooltipButton
-                    size="sm"
-                    variant="ghost"
-                    tooltip="Edit resident"
-                  >
-                    Edit
-                  </TooltipButton>
-                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate(`/residents/${resident.id}`)}
+                >
+                  View
+                </Button>
               </TableCell>
             </TableRow>
           ))}
