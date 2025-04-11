@@ -5,7 +5,7 @@ import { SlidersHorizontal, Save, Palette, Bell, Shield, Database, Puzzle } from
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client'; // Add the missing import
+import { supabase } from '@/integrations/supabase/client';
 import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
@@ -73,11 +73,12 @@ const SystemSettings = () => {
         
         // Only save if the setting has changed
         if (currentValue !== newValue) {
+          // Fix for TypeScript error: need to explicitly cast value to any as Json
           const { error } = await supabase
             .from('system_settings')
             .upsert({ 
               key: settingKey, 
-              value: unsavedSettings[settingKey] 
+              value: unsavedSettings[settingKey] as any // Use type assertion to handle Json type
             }, {
               onConflict: 'key'
             });
