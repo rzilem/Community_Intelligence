@@ -1,18 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Announcement } from '@/types/communication-types';
-
-export interface RecipientGroup {
-  id: string;
-  association_id: string;
-  name: string;
-  description: string | null;
-  group_type: 'system' | 'custom';
-  criteria: any | null;
-  created_at: string;
-  updated_at: string;
-}
+import { Announcement, RecipientGroup } from '@/types/communication-types';
 
 export const communicationService = {
   // Announcements
@@ -32,6 +21,11 @@ export const communicationService = {
   },
 
   createAnnouncement: async (announcement: Partial<Announcement>) => {
+    // Ensure announcement has the required fields
+    if (!announcement.association_id || !announcement.title || !announcement.content) {
+      throw new Error('Missing required fields for announcement');
+    }
+
     const { data, error } = await supabase
       .from('announcements')
       .insert(announcement)

@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { AssociationMemberRole } from '@/types/communication-types';
 
 export interface AssociationMember {
   id: string;
