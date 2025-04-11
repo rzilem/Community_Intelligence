@@ -73,6 +73,9 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }
   };
 
+  // Ensure we have a valid systemFields array
+  const safeSystemFields = Array.isArray(systemFields) ? systemFields : [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
@@ -89,16 +92,16 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         </Button>
       </div>
       
-      {fileColumns.map(column => (
+      {Array.isArray(fileColumns) && fileColumns.map(column => (
         <ColumnMappingField
           key={column}
           column={column}
-          systemFields={systemFields}
-          selectedValue={mappings[column]}
+          systemFields={safeSystemFields}
+          selectedValue={mappings[column] || ''}
           onMappingChange={handleMappingChange}
           isOpen={!!openState[column]}
           setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
-          suggestion={suggestions[column]?.fieldValue}
+          suggestion={suggestions[column]?.fieldValue || ''}
           confidence={suggestions[column]?.confidence || 0}
         />
       ))}

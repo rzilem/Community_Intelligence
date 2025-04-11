@@ -37,14 +37,20 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   useEffect(() => {
     // Load saved mappings if available
     const loadSavedMappings = async () => {
-      const savedMappings = await dataImportService.getImportMapping(associationId, importType);
-      if (savedMappings) {
-        setMappings(savedMappings);
+      try {
+        const savedMappings = await dataImportService.getImportMapping(associationId, importType);
+        if (savedMappings) {
+          setMappings(savedMappings);
+        }
+      } catch (error) {
+        console.error("Error loading saved mappings:", error);
       }
     };
     
-    loadSavedMappings();
-  }, [associationId, importType]);
+    if (associationId && importType) {
+      loadSavedMappings();
+    }
+  }, [associationId, importType, setMappings]);
   
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
@@ -56,6 +62,11 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const handleConfirm = () => {
     onConfirm(mappings);
   };
+
+  // Ensure we have valid arrays
+  const safeFileColumns = Array.isArray(fileColumns) ? fileColumns : [];
+  const safeSystemFields = Array.isArray(systemFields) ? systemFields : [];
+  const safePreviewData = Array.isArray(previewData) ? previewData : [];
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
@@ -75,18 +86,18 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
         <div className="py-4 max-h-[60vh] overflow-y-auto">
           {/* Data Preview */}
           <DataPreviewTable 
-            fileColumns={fileColumns} 
-            previewData={previewData} 
-            totalRows={fileData.length} 
+            fileColumns={safeFileColumns} 
+            previewData={safePreviewData} 
+            totalRows={Array.isArray(fileData) ? fileData.length : 0} 
           />
           
           {/* Column Mappings */}
           <ColumnMappingList 
-            fileColumns={fileColumns}
-            systemFields={systemFields}
+            fileColumns={safeFileColumns}
+            systemFields={safeSystemFields}
             mappings={mappings}
             onMappingChange={handleMappingChange}
-            previewData={previewData}
+            previewData={safePreviewData}
           />
         </div>
 

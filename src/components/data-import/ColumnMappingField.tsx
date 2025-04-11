@@ -1,12 +1,22 @@
 
 import React from 'react';
-import { Check, ChevronsUpDown, X, Sparkles } from 'lucide-react';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent
+} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Check, ChevronsUpDown, SparklesIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MappingOption } from './types/mapping-types';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 
 interface ColumnMappingFieldProps {
   column: string;
@@ -29,117 +39,67 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
   suggestion,
   confidence = 0
 }) => {
-  const getSelectedFieldLabel = () => {
-    if (!selectedValue) return null;
-    return systemFields.find(field => field.value === selectedValue)?.label;
-  };
-
-  const getSuggestionLabel = () => {
-    if (!suggestion) return null;
-    return systemFields.find(field => field.value === suggestion)?.label;
-  };
+  const selectedField = systemFields.find(field => field.value === selectedValue);
   
-  const getConfidenceColor = () => {
-    if (confidence >= 0.8) return "bg-green-500";
-    if (confidence >= 0.6) return "bg-amber-500";
-    return "bg-gray-300";
-  };
-
-  const handleApplySuggestion = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (suggestion) {
-      onMappingChange(column, suggestion);
-    }
-  };
-
   return (
-    <div className="grid grid-cols-5 items-center gap-4">
-      <div className="col-span-2">
-        <span className="text-sm font-medium">{column}</span>
-      </div>
-      <div className="col-span-3">
-        <Popover 
-          open={isOpen} 
-          onOpenChange={setIsOpen}
-        >
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={isOpen}
-              className="w-full justify-between"
-            >
-              {getSelectedFieldLabel() || "Select field..."}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
-            <Command>
-              <CommandInput placeholder="Search fields..." />
-              <CommandEmpty>No field found.</CommandEmpty>
-              <CommandGroup>
-                {systemFields.map(field => (
-                  <CommandItem
-                    key={field.value}
-                    value={field.value}
-                    onSelect={() => onMappingChange(column, field.value)}
-                    className={cn(
-                      field.value === suggestion && !selectedValue && "bg-muted/50 border-l-4 border-primary"
-                    )}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        selectedValue === field.value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {field.label}
-                    {field.value === suggestion && !selectedValue && (
-                      <div className="ml-auto flex items-center">
-                        <Sparkles className="h-3.5 w-3.5 text-primary mr-1" />
-                        <span className="text-xs text-primary">Suggested</span>
-                      </div>
-                    )}
-                  </CommandItem>
-                ))}
-                <CommandItem
-                  value="ignore"
-                  onSelect={() => onMappingChange(column, '')}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Ignore this column
-                </CommandItem>
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+    <div className="flex flex-col space-y-1">
+      <div className="grid grid-cols-12 gap-2">
+        <div className="col-span-4">
+          <div className="text-sm font-medium">{column}</div>
+          {suggestion && !selectedValue && confidence >= 0.7 && (
+            <div className="flex items-center text-xs text-muted-foreground mt-1">
+              <SparklesIcon className="h-3 w-3 mr-1 text-amber-500" />
+              <span>Suggested: {suggestion}</span>
+            </div>
+          )}
+        </div>
         
-        {suggestion && !selectedValue && (
-          <div className="flex items-center mt-1 text-xs">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={cn("w-2 h-2 rounded-full mr-1", getConfidenceColor())}></div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  {confidence >= 0.8 ? 'High confidence' : 
-                   confidence >= 0.6 ? 'Medium confidence' : 'Low confidence'} 
-                  ({Math.round(confidence * 100)}%)
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <span className="text-muted-foreground mr-1">Suggested:</span>
-            <span className="font-medium">{getSuggestionLabel()}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="ml-auto h-5 text-xs px-2" 
-              onClick={handleApplySuggestion}
-            >
-              Apply
-            </Button>
-          </div>
-        )}
+        <div className="col-span-8">
+          <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={isOpen}
+                className="w-full justify-between"
+              >
+                {selectedValue
+                  ? selectedField?.label || "Select field..."
+                  : "Select field..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Search fields..." className="h-9" />
+                <CommandEmpty>No field found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandList>
+                    {Array.isArray(systemFields) && systemFields.map((field) => (
+                      <CommandItem
+                        key={field.value}
+                        value={field.value}
+                        onSelect={(currentValue) => {
+                          onMappingChange(column, currentValue);
+                        }}
+                      >
+                        {field.label}
+                        <Check
+                          className={cn(
+                            "ml-auto h-4 w-4",
+                            selectedValue === field.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandList>
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
     </div>
   );
