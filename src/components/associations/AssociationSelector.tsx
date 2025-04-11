@@ -11,11 +11,13 @@ import { toast } from 'sonner';
 interface AssociationSelectorProps {
   onAssociationChange: (id: string) => void;
   initialAssociationId?: string;
+  className?: string;  // Added optional className prop
 }
 
 const AssociationSelector: React.FC<AssociationSelectorProps> = ({ 
   onAssociationChange,
-  initialAssociationId
+  initialAssociationId,
+  className  // Added to destructured props
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>(initialAssociationId);
@@ -56,7 +58,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", className)}>  // Added cn utility to merge classNames
       <h3 className="font-medium mb-1">Select Association</h3>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
