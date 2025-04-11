@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { ScrollText, ArrowRight, BarChart, Calendar } from 'lucide-react';
+import { ScrollText, ArrowRight, BarChart, Calendar, FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -14,9 +14,10 @@ const ResaleManagement = () => {
       path: "/resale-management/certificate"
     },
     {
-      title: "Condo Questionnaire",
-      description: "Complete and manage condominium questionnaires for lenders.",
-      path: "/resale-management/questionnaire"
+      title: "Docs Center",
+      description: "Manage resale documents, templates, questionnaires and custom products.",
+      path: "/resale-management/docs-center",
+      icon: <FileText className="h-4 w-4 mr-2" />
     },
     {
       title: "Resale Calendar",

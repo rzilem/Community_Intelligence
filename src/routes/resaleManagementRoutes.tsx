@@ -4,7 +4,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import ResaleManagement from "@/pages/resale-management/ResaleManagement";
 import ResaleCertificate from "@/pages/resale-management/ResaleCertificate";
 import ResaleCertificateDetail from "@/pages/resale-management/ResaleCertificateDetail";
-import CondoQuestionnaire from "@/pages/resale-management/CondoQuestionnaire";
+import DocsCenter from "@/pages/resale-management/DocsCenter";
 import OrderQueue from "@/pages/resale-management/OrderQueue";
 import ResaleAnalytics from "@/pages/resale-management/ResaleAnalytics";
 import ResaleCalendar from "@/pages/resale-management/ResaleCalendar";
@@ -24,8 +24,8 @@ export const resaleManagementRoutes: RouteObject[] = [
     element: <RequireAuth><ResaleCertificateDetail /></RequireAuth>
   },
   {
-    path: "/resale-management/questionnaire",
-    element: <RequireAuth><CondoQuestionnaire /></RequireAuth>
+    path: "/resale-management/docs-center",
+    element: <RequireAuth><DocsCenter /></RequireAuth>
   },
   {
     path: "/resale-management/calendar",
