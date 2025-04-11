@@ -25,4 +25,13 @@ export interface Homeowner {
   status: string;
   avatarUrl: string;
   notes: NoteType[];
+  // Additional fields from homeowner-types.ts for compatibility
+  type?: 'owner' | 'tenant' | 'family-member';
+  propertyId?: string;
+  propertyAddress?: string;
+  association?: string;
+  moveOutDate?: string;
+  lastPayment?: { amount: number; date: string };
+  aclStartDate?: string;
+  unitNumber?: string;
 }

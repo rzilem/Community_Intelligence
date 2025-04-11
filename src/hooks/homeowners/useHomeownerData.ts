@@ -43,9 +43,9 @@ export const useHomeownerData = (homeownerId: string) => {
             email: foundHomeowner.email,
             phone: foundHomeowner.phone || '',
             moveInDate: foundHomeowner.moveInDate,
-            property: foundHomeowner.property || '',
+            property: foundHomeowner.property || foundHomeowner.propertyAddress || '',
             unit: foundHomeowner.unit || foundHomeowner.unitNumber || '',
-            balance: foundHomeowner.balance,
+            balance: foundHomeowner.balance || 0,
             tags: foundHomeowner.tags || [],
             violations: foundHomeowner.violations || [],
             lastContact: {
@@ -55,12 +55,20 @@ export const useHomeownerData = (homeownerId: string) => {
             },
             status: foundHomeowner.status,
             avatarUrl: foundHomeowner.avatarUrl || '',
-            notes: foundHomeowner.notes?.map(note => ({
+            notes: (foundHomeowner.notes || []).map(note => ({
               type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
               author: note.author || '',
               content: note.content || '',
               date: note.date || ''
-            })) || []
+            })),
+            // Add additional fields for compatibility
+            type: foundHomeowner.type,
+            propertyId: foundHomeowner.propertyId,
+            propertyAddress: foundHomeowner.propertyAddress,
+            association: foundHomeowner.association,
+            moveOutDate: foundHomeowner.moveOutDate,
+            lastPayment: foundHomeowner.lastPayment,
+            aclStartDate: foundHomeowner.aclStartDate
           };
           
           setHomeowner(convertedHomeowner);
