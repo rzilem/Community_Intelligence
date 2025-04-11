@@ -24,6 +24,11 @@ const DataTypeSelector: React.FC<DataTypeSelectorProps> = ({ value, onChange }) 
           label="Associations" 
         />
         <DataTypeOption 
+          id="properties_owners" 
+          label="Properties & Owners" 
+          tooltip="Import both properties and their owners in a single process" 
+        />
+        <DataTypeOption 
           id="owners" 
           label="Owners/Residents" 
         />

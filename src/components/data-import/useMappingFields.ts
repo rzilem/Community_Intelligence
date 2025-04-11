@@ -38,6 +38,28 @@ export const useMappingFields = (
           { value: 'contact_email', label: 'Contact Email' }
         ]);
         break;
+      case 'properties_owners':
+        setSystemFields([
+          // Property fields
+          { value: 'property.address', label: 'Property: Street Address' },
+          { value: 'property.unit_number', label: 'Property: Unit Number' },
+          { value: 'property.city', label: 'Property: City' },
+          { value: 'property.state', label: 'Property: State' },
+          { value: 'property.zip', label: 'Property: Zip Code' },
+          { value: 'property.square_feet', label: 'Property: Square Footage' },
+          { value: 'property.bedrooms', label: 'Property: Bedrooms' },
+          { value: 'property.bathrooms', label: 'Property: Bathrooms' },
+          { value: 'property.property_type', label: 'Property: Type' },
+          // Owner fields
+          { value: 'owner.first_name', label: 'Owner: First Name' },
+          { value: 'owner.last_name', label: 'Owner: Last Name' },
+          { value: 'owner.email', label: 'Owner: Email Address' },
+          { value: 'owner.phone', label: 'Owner: Phone Number' },
+          { value: 'owner.move_in_date', label: 'Owner: Move-in Date' },
+          { value: 'owner.is_primary', label: 'Owner: Is Primary Owner' },
+          { value: 'owner.emergency_contact', label: 'Owner: Emergency Contact' }
+        ]);
+        break;
       case 'owners':
         setSystemFields([
           { value: 'first_name', label: 'First Name' },
@@ -110,7 +132,7 @@ export const useMappingFields = (
       
       // Try to find a match
       const match = systemFields.find(field => 
-        lowerColumn.includes(field.value) || 
+        lowerColumn.includes(field.value.split('.').pop() || '') || 
         field.label.toLowerCase().includes(lowerColumn) ||
         lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
         lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')

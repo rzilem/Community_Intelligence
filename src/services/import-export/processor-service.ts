@@ -2,7 +2,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { ImportResult } from '@/types/import-types';
 import { jobService } from './job-service';
-import { mappingService } from './mapping-service';
 
 export const processorService = {
   processImportData: async (
@@ -63,8 +62,11 @@ export const processorService = {
       if (dataType === 'associations') {
         return { ...row };
       }
-      // Add association_id to all other tables
-      return { ...row, association_id: associationId };
+      // Add association_id to all other tables if not already present
+      if (!row.association_id) {
+        return { ...row, association_id: associationId };
+      }
+      return { ...row };
     });
     
     for (let i = 0; i < finalProcessedData.length; i += batchSize) {

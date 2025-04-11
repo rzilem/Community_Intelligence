@@ -7,6 +7,26 @@ export const templateService = {
         address: 'Street Address',
         contact_email: 'Contact Email'
       },
+      properties_owners: {
+        // Property fields
+        address: 'Street Address',
+        unit_number: 'Unit Number',
+        property_type: 'Property Type',
+        city: 'City',
+        state: 'State',
+        zip: 'Zip Code',
+        square_feet: 'Square Footage',
+        bedrooms: 'Bedrooms',
+        bathrooms: 'Bathrooms',
+        // Owner fields
+        first_name: 'First Name',
+        last_name: 'Last Name',
+        email: 'Email Address',
+        phone: 'Phone Number',
+        move_in_date: 'Move-in Date (YYYY-MM-DD)',
+        is_primary: 'Is Primary Owner (true/false)',
+        emergency_contact: 'Emergency Contact'
+      },
       owners: {
         first_name: 'First Name',
         last_name: 'Last Name',
@@ -15,7 +35,8 @@ export const templateService = {
         property_address: 'Property Address (use this if you don\'t know the Property ID)',
         property_id: 'Property ID (optional, can be left blank)',
         move_in_date: 'Move-in Date (YYYY-MM-DD)',
-        is_primary: 'Is Primary Owner (true/false)'
+        is_primary: 'Is Primary Owner (true/false)',
+        emergency_contact: 'Emergency Contact'
       },
       properties: {
         address: 'Street Address',

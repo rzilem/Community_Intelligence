@@ -21,6 +21,11 @@ export const dataImportService = {
     const { associationId, dataType, data, mappings, userId } = options;
     
     try {
+      // Special handling for properties_owners import type
+      if (dataType === 'properties_owners') {
+        return await processPropertiesOwnersImport(associationId, data, mappings, userId);
+      }
+      
       const importJob = await jobService.createImportJob({
         associationId,
         importType: dataType,
@@ -86,13 +91,7 @@ export const dataImportService = {
         successfulImports: importResult.successfulImports,
         failedImports: importResult.failedImports,
         job_id: importJob.id,
-        details: [
-          { status: 'success', message: `${importResult.successfulImports} records imported successfully` },
-          ...(importResult.failedImports > 0 ? [{ 
-            status: 'error' as const, 
-            message: `${importResult.failedImports} records failed to import` 
-          }] : [])
-        ]
+        details: importResult.details
       };
     } catch (error) {
       console.error('Error importing data:', error);
@@ -109,3 +108,160 @@ export const dataImportService = {
     }
   }
 };
+
+// Helper function to process combined properties and owners import
+async function processPropertiesOwnersImport(
+  associationId: string,
+  data: any[],
+  mappings: Record<string, string>,
+  userId?: string
+): Promise<ImportResult> {
+  try {
+    // Create import job
+    const importJob = await jobService.createImportJob({
+      associationId,
+      importType: 'properties_owners',
+      fileName: `properties_owners_import_${new Date().toISOString()}`,
+      fileSize: JSON.stringify(data).length,
+      userId
+    });
+    
+    if (!importJob) {
+      return {
+        success: false,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: 0,
+        details: [{ status: 'error' as const, message: 'Failed to create import job' }]
+      };
+    }
+    
+    // Process the data - separate property and owner fields
+    const processedRows = data.map(row => {
+      const propertyData: Record<string, any> = { association_id: associationId };
+      const ownerData: Record<string, any> = { association_id: associationId };
+      
+      // Map fields from source data to destination fields
+      Object.entries(mappings).forEach(([column, field]) => {
+        if (field && row[column] !== undefined) {
+          if (field.startsWith('property.')) {
+            propertyData[field.replace('property.', '')] = row[column];
+          } else if (field.startsWith('owner.')) {
+            ownerData[field.replace('owner.', '')] = row[column];
+          }
+        }
+      });
+      
+      return { propertyData, ownerData };
+    });
+    
+    let successfulImports = 0;
+    let failedImports = 0;
+    const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
+    
+    // First, import all properties
+    const propertyDataToImport = processedRows.map(row => row.propertyData);
+    const propertyResult = await processorService.processImportData(
+      importJob.id,
+      associationId,
+      'properties',
+      propertyDataToImport
+    );
+    
+    details.push(...propertyResult.details);
+    
+    // If properties were successfully imported, get their IDs and attach to owners
+    if (propertyResult.successfulImports > 0) {
+      // Get created properties by matching addresses
+      const { data: createdProperties } = await import('@/integrations/supabase/client').then(mod => 
+        mod.supabase
+          .from('properties')
+          .select('id, address, unit_number')
+          .eq('association_id', associationId)
+      );
+      
+      // Map owners to their properties and import
+      const ownerDataToImport = [];
+      
+      for (let i = 0; i < processedRows.length; i++) {
+        const { propertyData, ownerData } = processedRows[i];
+        
+        // Find matching property
+        const matchingProperty = createdProperties?.find(p => 
+          p.address === propertyData.address && 
+          (p.unit_number === propertyData.unit_number || 
+            (!p.unit_number && !propertyData.unit_number))
+        );
+        
+        if (matchingProperty) {
+          ownerData.property_id = matchingProperty.id;
+          ownerData.resident_type = 'owner'; // Set resident type to owner
+          ownerDataToImport.push(ownerData);
+        } else {
+          failedImports++;
+          details.push({
+            status: 'error',
+            message: `Could not find matching property for address: ${propertyData.address} ${propertyData.unit_number || ''}`
+          });
+        }
+      }
+      
+      if (ownerDataToImport.length > 0) {
+        const ownerResult = await processorService.processImportData(
+          importJob.id,
+          associationId,
+          'owners',
+          ownerDataToImport
+        );
+        
+        successfulImports = ownerResult.successfulImports;
+        failedImports += ownerResult.failedImports;
+        details.push(...ownerResult.details);
+      }
+    } else {
+      failedImports = data.length;
+      details.push({
+        status: 'error',
+        message: 'Failed to import properties, cannot proceed with owner import'
+      });
+    }
+    
+    // Save the mapping for future use
+    await mappingService.saveImportMapping(
+      associationId,
+      'properties_owners',
+      mappings,
+      userId
+    );
+    
+    // Update job status
+    const finalStatus = failedImports === 0 ? 'completed' : 'failed';
+    await jobService.updateImportJobStatus(importJob.id, finalStatus as ImportJob['status'], {
+      processed: data.length,
+      succeeded: successfulImports,
+      failed: failedImports,
+      errorDetails: failedImports > 0 ? { details } : undefined
+    });
+    
+    return {
+      success: failedImports === 0,
+      totalProcessed: data.length,
+      successfulImports,
+      failedImports,
+      job_id: importJob.id,
+      details
+    };
+  } catch (error) {
+    console.error('Error in combined import:', error);
+    return {
+      success: false,
+      totalProcessed: 0,
+      successfulImports: 0,
+      failedImports: data.length,
+      details: [{ 
+        status: 'error' as const, 
+        message: `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      }]
+    };
+  }
+}
