@@ -193,20 +193,29 @@ export const deleteResident = async (id: string): Promise<void> => {
   toast.success('Resident deleted successfully');
 };
 
-export const enableRealtimeForResidents = async () => {
+export const enableRealtimeForResidents = () => {
   try {
-    const { error } = await supabase.rpc('supabase_realtime', {
-      table: 'residents',
-      action: 'enable'
-    });
+    // Use Supabase's built-in channel functionality instead of RPC calls
+    // This subscribes to changes on the residents table
+    const channel = supabase
+      .channel('residents-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'residents'
+      }, (payload) => {
+        console.log('Realtime update for residents:', payload);
+      })
+      .subscribe();
     
-    if (error) {
-      console.error('Error enabling realtime for residents:', error);
-    }
+    console.log('Realtime updates for residents enabled successfully');
+    
+    // Return the channel so it could be unsubscribed if needed
+    return channel;
   } catch (error) {
-    console.error('Error calling supabase_realtime function:', error);
+    console.error('Error setting up realtime for residents:', error);
   }
 };
 
-// Call this function when the app initializes
-enableRealtimeForResidents();
+// Initialize realtime updates when this module is loaded
+const residentsChannel = enableRealtimeForResidents();
