@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { 
@@ -73,7 +72,6 @@ const HomeownerDetailPage: React.FC = () => {
   const [activeNotesTab, setActiveNotesTab] = useState('Manual Notes');
   const [homeowner, setHomeowner] = useState(mockHomeowner);
   
-  // Function to handle profile image updates
   const handleProfileImageUpdated = (newUrl: string) => {
     setHomeowner(prev => ({
       ...prev,
@@ -206,7 +204,7 @@ const HomeownerDetailPage: React.FC = () => {
 
           <TabsContent value="Summary">
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-6 w-full max-w-full min-h-[200px] max-h-[400px] overflow-y-auto">
                 <h2>Homeowner Summary Content</h2>
                 <p>Summary information would appear here.</p>
               </CardContent>
