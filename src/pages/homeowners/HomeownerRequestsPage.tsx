@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ClipboardList, Plus } from 'lucide-react';
+import { ClipboardList, Plus, RefreshCw } from 'lucide-react';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType, HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
@@ -24,7 +24,7 @@ const HomeownerRequestsPage = () => {
   );
 
   // Fetch homeowner requests from Supabase
-  const { data: homeownerRequests = [], isLoading, error } = useSupabaseQuery<HomeownerRequest[]>(
+  const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
       select: '*',
@@ -51,11 +51,17 @@ const HomeownerRequestsPage = () => {
 
   const handleFormSuccess = () => {
     setOpen(false);
+    refetch();
     toast.success('Request created successfully');
   };
 
   const handleColumnChange = (selectedColumns: string[]) => {
     setVisibleColumnIds(selectedColumns);
+  };
+
+  const handleRefresh = () => {
+    refetch();
+    toast.success('Data refreshed');
   };
 
   return (
@@ -67,6 +73,14 @@ const HomeownerRequestsPage = () => {
             <h1 className="text-3xl font-bold tracking-tight">Homeowner Requests</h1>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={handleRefresh}
+              title="Refresh data"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             <HomeownerRequestsColumnSelector 
               columns={HOMEOWNER_REQUEST_COLUMNS}
               selectedColumns={visibleColumnIds}

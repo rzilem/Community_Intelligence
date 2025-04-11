@@ -14,6 +14,9 @@ import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-requ
 import { format } from 'date-fns';
 import TooltipButton from '@/components/ui/tooltip-button';
 import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from './HomeownerRequestEditDialog';
+import HomeownerRequestCommentDialog from './HomeownerRequestCommentDialog';
+import HomeownerRequestHistoryDialog from './HomeownerRequestHistoryDialog';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
@@ -28,6 +31,9 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
 }) => {
   const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const renderStatusBadge = (status: string) => {
     switch (status) {
@@ -64,6 +70,21 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
     setIsDetailOpen(true);
   };
 
+  const handleEditRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsEditOpen(true);
+  };
+
+  const handleAddComment = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsCommentOpen(true);
+  };
+
+  const handleViewHistory = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsHistoryOpen(true);
+  };
+
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
@@ -91,13 +112,15 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
       case 'residentId':
         return request.residentId || 'N/A';
       case 'propertyId':
-        return <span className="truncate max-w-[120px] block">{request.propertyId}</span>;
+        return <span className="truncate max-w-[120px] block">{request.propertyId || 'N/A'}</span>;
       case 'associationId':
-        return <span className="truncate max-w-[120px] block">{request.associationId}</span>;
+        return <span className="truncate max-w-[120px] block">{request.associationId || 'N/A'}</span>;
       case 'assignedTo':
         return request.assignedTo || 'Unassigned';
       case 'resolvedAt':
         return request.resolvedAt ? formatDate(request.resolvedAt) : 'Not resolved';
+      case 'tracking_number':
+        return request.tracking_number || 'N/A';
       default:
         return '';
     }
@@ -148,6 +171,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                       size="icon" 
                       tooltip="Edit Request"
                       tooltipSide="left"
+                      onClick={() => handleEditRequest(request)}
                     >
                       <FileEdit className="h-4 w-4" />
                     </TooltipButton>
@@ -156,6 +180,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                       size="icon" 
                       tooltip="Add Comment"
                       tooltipSide="left"
+                      onClick={() => handleAddComment(request)}
                     >
                       <MessageSquare className="h-4 w-4" />
                     </TooltipButton>
@@ -164,6 +189,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                       size="icon" 
                       tooltip="View History"
                       tooltipSide="left"
+                      onClick={() => handleViewHistory(request)}
                     >
                       <Clock className="h-4 w-4" />
                     </TooltipButton>
@@ -179,6 +205,24 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
         request={selectedRequest} 
         open={isDetailOpen} 
         onOpenChange={setIsDetailOpen} 
+      />
+      
+      <HomeownerRequestEditDialog 
+        request={selectedRequest}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+      />
+      
+      <HomeownerRequestCommentDialog
+        request={selectedRequest}
+        open={isCommentOpen}
+        onOpenChange={setIsCommentOpen}
+      />
+      
+      <HomeownerRequestHistoryDialog
+        request={selectedRequest}
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
       />
     </div>
   );

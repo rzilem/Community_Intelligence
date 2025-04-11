@@ -28,6 +28,20 @@ export interface HomeownerRequestColumn {
   defaultVisible: boolean;
 }
 
+export interface HomeownerRequestComment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  parent_id: string;
+  parent_type: string;
+  user?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
+}
+
 export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'title', label: 'Title', accessorKey: 'title', defaultVisible: true },
   { id: 'type', label: 'Type', accessorKey: 'type', defaultVisible: true },
