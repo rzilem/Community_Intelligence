@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { ClipboardList, Plus } from 'lucide-react';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
-import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType, HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestForm';
 import { toast } from 'sonner';
+import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
 
 const HomeownerRequestsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +19,9 @@ const HomeownerRequestsPage = () => {
   const [priority, setPriority] = useState<HomeownerRequestPriority | 'all'>('all');
   const [type, setType] = useState<HomeownerRequestType | 'all'>('all');
   const [open, setOpen] = useState(false);
+  const [visibleColumnIds, setVisibleColumnIds] = useState(() => 
+    HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id)
+  );
 
   // Fetch homeowner requests from Supabase
   const { data: homeownerRequests = [], isLoading, error } = useSupabaseQuery<HomeownerRequest[]>(
@@ -50,6 +54,10 @@ const HomeownerRequestsPage = () => {
     toast.success('Request created successfully');
   };
 
+  const handleColumnChange = (selectedColumns: string[]) => {
+    setVisibleColumnIds(selectedColumns);
+  };
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -58,19 +66,26 @@ const HomeownerRequestsPage = () => {
             <ClipboardList className="h-8 w-8" />
             <h1 className="text-3xl font-bold tracking-tight">Homeowner Requests</h1>
           </div>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> New Request
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Create New Request</DialogTitle>
-              </DialogHeader>
-              <HomeownerRequestForm onSuccess={handleFormSuccess} />
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <HomeownerRequestsColumnSelector 
+              columns={HOMEOWNER_REQUEST_COLUMNS}
+              selectedColumns={visibleColumnIds}
+              onChange={handleColumnChange}
+            />
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> New Request
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Create New Request</DialogTitle>
+                </DialogHeader>
+                <HomeownerRequestForm onSuccess={handleFormSuccess} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <Card>
@@ -93,7 +108,11 @@ const HomeownerRequestsPage = () => {
               <div className="py-8 text-center">Loading requests...</div>
             ) : (
               <>
-                <HomeownerRequestsTable requests={filteredRequests} />
+                <HomeownerRequestsTable 
+                  requests={filteredRequests} 
+                  columns={HOMEOWNER_REQUEST_COLUMNS}
+                  visibleColumnIds={visibleColumnIds}
+                />
                 
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm text-muted-foreground">
