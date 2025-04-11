@@ -4,23 +4,26 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AssociationForm, { AssociationFormData } from '@/components/associations/AssociationForm';
+import { useDialog } from '@/hooks/ui/useDialog';
 
 export interface AddAssociationDialogProps {
   isCreating: boolean;
   onSave: (data: AssociationFormData) => void;
 }
 
-// Rename the component to match the export name
-export const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCreating, onSave }) => {
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+export const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ 
+  isCreating, 
+  onSave 
+}) => {
+  const dialog = useDialog(false);
 
   const handleSave = (data: AssociationFormData) => {
     onSave(data);
-    setIsDialogOpen(false);
+    dialog.close();
   };
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <Dialog open={dialog.isOpen} onOpenChange={dialog.setIsOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" /> Add Association
@@ -34,7 +37,7 @@ export const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCr
           </DialogDescription>
         </DialogHeader>
         <AssociationForm 
-          onClose={() => setIsDialogOpen(false)} 
+          onClose={dialog.close} 
           onSave={handleSave}
           isSubmitting={isCreating}
         />
@@ -43,5 +46,4 @@ export const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCr
   );
 };
 
-// Add a default export as well for compatibility
 export default AddAssociationDialog;

@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Check, Confetti } from 'lucide-react';
+import { Check, PartyPopper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SuccessAnimationProps {
@@ -43,7 +43,7 @@ export const SuccessAnimation: React.FC<SuccessAnimationProps> = ({
             {variant === 'check' ? (
               <Check className="h-10 w-10" />
             ) : (
-              <Confetti className="h-10 w-10" />
+              <PartyPopper className="h-10 w-10" />
             )}
           </div>
         </div>
