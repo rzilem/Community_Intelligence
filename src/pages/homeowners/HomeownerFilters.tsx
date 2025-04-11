@@ -1,104 +1,99 @@
 
 import React from 'react';
-import { Download, PlusCircle, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import TooltipButton from '@/components/ui/tooltip-button';
-import ColumnSelector from '@/components/table/ColumnSelector';
+import { FilterIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface HomeownerFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (value: string) => void;
   filterAssociation: string;
   setFilterAssociation: (value: string) => void;
   filterStatus: string;
   setFilterStatus: (value: string) => void;
   filterType: string;
   setFilterType: (value: string) => void;
-  selectedColumns: string[];
-  setSelectedColumns: (columns: string[]) => void;
-  availableColumns: { id: string; label: string }[];
 }
 
 const HomeownerFilters: React.FC<HomeownerFiltersProps> = ({
-  searchTerm,
-  setSearchTerm,
   filterAssociation,
   setFilterAssociation,
   filterStatus,
   setFilterStatus,
   filterType,
-  setFilterType,
-  selectedColumns,
-  setSelectedColumns,
-  availableColumns
+  setFilterType
 }) => {
   return (
-    <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
-      <div className="relative w-full md:w-72">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search homeowners..."
-          className="pl-8"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={filterAssociation} onValueChange={setFilterAssociation}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Association" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Associations</SelectItem>
-              <SelectItem value="Oakridge Estates">Oakridge Estates</SelectItem>
-              <SelectItem value="Highland Towers">Highland Towers</SelectItem>
-              <SelectItem value="Lakeside Community">Lakeside Community</SelectItem>
-            </SelectContent>
-          </Select>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="h-10">
+          <FilterIcon className="h-4 w-4 mr-2" />
+          Filters
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-4" align="end">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="filter-association">Association</Label>
+            <Select 
+              value={filterAssociation} 
+              onValueChange={setFilterAssociation}
+            >
+              <SelectTrigger id="filter-association">
+                <SelectValue placeholder="Select association" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">All Associations</SelectItem>
+                  <SelectItem value="Oakwood Heights">Oakwood Heights</SelectItem>
+                  <SelectItem value="Pine Valley">Pine Valley</SelectItem>
+                  <SelectItem value="Riverside Gardens">Riverside Gardens</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="delinquent">Delinquent</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label htmlFor="filter-status">Status</Label>
+            <Select 
+              value={filterStatus} 
+              onValueChange={setFilterStatus}
+            >
+              <SelectTrigger id="filter-status">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Homeowner Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="owner-occupant">Owner Occupant</SelectItem>
-              <SelectItem value="investor">Investor</SelectItem>
-              <SelectItem value="board-member">Board Member</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <ColumnSelector 
-            columns={availableColumns}
-            selectedColumns={selectedColumns}
-            onChange={setSelectedColumns}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="filter-type">Resident Type</Label>
+            <Select 
+              value={filterType} 
+              onValueChange={setFilterType}
+            >
+              <SelectTrigger id="filter-type">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="tenant">Tenant</SelectItem>
+                  <SelectItem value="family">Family Member</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        
-        <div className="flex gap-2">
-          <TooltipButton tooltip="Export homeowners as CSV">
-            <Download className="h-4 w-4 mr-2" /> Export
-          </TooltipButton>
-          <TooltipButton variant="default" tooltip="Add a new homeowner">
-            <PlusCircle className="h-4 w-4 mr-2" /> Add Homeowner
-          </TooltipButton>
-        </div>
-      </div>
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

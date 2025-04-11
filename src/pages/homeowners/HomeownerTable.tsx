@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Homeowner } from './homeowner-types';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import TooltipButton from '@/components/ui/tooltip-button';
+import { Edit } from 'lucide-react';
 
 interface HomeownerTableProps {
   homeowners: Homeowner[];
@@ -22,11 +22,6 @@ interface HomeownerTableProps {
 const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedColumns }) => {
   const navigate = useNavigate();
   
-  // Function to handle row click
-  const handleHomeownerClick = (id: string) => {
-    navigate(`/homeowners/${id}`);
-  };
-
   if (homeowners.length === 0) {
     return (
       <div className="rounded-md border">
@@ -80,19 +75,29 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
         </TableHeader>
         <TableBody>
           {homeowners.map(homeowner => (
-            <TableRow 
-              key={homeowner.id} 
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => handleHomeownerClick(homeowner.id)}
-            >
+            <TableRow key={homeowner.id} className="group">
               {selectedColumns.includes('name') && (
-                <TableCell className="font-medium">{homeowner.name}</TableCell>
+                <TableCell className="font-medium">
+                  <span 
+                    className="cursor-pointer hover:text-primary hover:underline"
+                    onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                  >
+                    {homeowner.name}
+                  </span>
+                </TableCell>
               )}
               {selectedColumns.includes('unit') && (
                 <TableCell>{homeowner.unitNumber || homeowner.unit || '-'}</TableCell>
               )}
               {selectedColumns.includes('property') && (
-                <TableCell>{homeowner.property || homeowner.propertyId}</TableCell>
+                <TableCell>
+                  <span 
+                    className="cursor-pointer hover:text-primary hover:underline"
+                    onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                  >
+                    {homeowner.property || homeowner.propertyId}
+                  </span>
+                </TableCell>
               )}
               {selectedColumns.includes('email') && (
                 <TableCell>{homeowner.email}</TableCell>
@@ -133,21 +138,13 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
               )}
               {selectedColumns.includes('actions') && (
                 <TableCell className="text-right">
-                  <div className="flex justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
-                    <TooltipButton
-                      size="sm"
-                      variant="ghost"
-                      tooltip="View details"
-                      onClick={() => navigate(`/homeowners/${homeowner.id}`)}
-                    >
-                      View
-                    </TooltipButton>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <TooltipButton
                       size="sm"
                       variant="ghost"
                       tooltip="Edit homeowner"
                     >
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </TooltipButton>
                   </div>
                 </TableCell>

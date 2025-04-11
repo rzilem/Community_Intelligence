@@ -2,64 +2,77 @@
 import { useState, useEffect } from 'react';
 import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
 import { toast } from 'sonner';
-
-// Mock data for now, would be replaced with actual API calls
-const mockHomeowner: Homeowner = {
-  id: '101',
-  name: 'Alice Johnson',
-  email: 'alice.j@example.com',
-  phone: '(555) 123-4567',
-  moveInDate: '2021-03-15',
-  property: 'Oakwood Heights',
-  unit: 'Unit 301',
-  balance: 1250.00,
-  tags: ['Board Member', 'New Resident', 'Delinquent'],
-  violations: ['Landscaping Violation', 'ARC Pending'],
-  lastContact: {
-    called: '2023-06-05',
-    visit: '2023-05-20',
-    email: '2023-06-02'
-  },
-  status: 'Active',
-  avatarUrl: '',
-  notes: [
-    {
-      type: 'system' as const,
-      author: 'System',
-      content: 'Late payment notice automatically sent',
-      date: '2023-05-16'
-    },
-    {
-      type: 'manual' as const,
-      author: 'Jane Smith',
-      content: 'Homeowner called about maintenance request for kitchen sink',
-      date: '2023-05-02'
-    },
-    {
-      type: 'manual' as const,
-      author: 'John Doe',
-      content: 'Homeowner mentioned they might renew for another year',
-      date: '2023-04-10'
-    }
-  ]
-};
+import { mockHomeowners } from '@/pages/homeowners/homeowner-data';
 
 export const useHomeownerData = (homeownerId: string) => {
-  const [homeowner, setHomeowner] = useState<Homeowner>(mockHomeowner);
-  const [loading, setLoading] = useState(false);
+  const [homeowner, setHomeowner] = useState<Homeowner>({
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
+    moveInDate: '',
+    property: '',
+    unit: '',
+    balance: 0,
+    tags: [],
+    violations: [],
+    lastContact: {
+      called: '',
+      visit: '',
+      email: ''
+    },
+    status: '',
+    avatarUrl: '',
+    notes: []
+  });
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHomeowner = async () => {
-      // In a real implementation, this would fetch from an API
       setLoading(true);
       try {
-        // Simulating API fetch
-        setTimeout(() => {
-          setHomeowner(mockHomeowner);
-          setLoading(false);
-        }, 500);
+        // First check if the homeowner exists in the mockHomeowners data
+        const foundHomeowner = mockHomeowners.find(h => h.id === homeownerId);
+        
+        if (foundHomeowner) {
+          // Convert the mockHomeowners data to match Homeowner type
+          const convertedHomeowner: Homeowner = {
+            id: foundHomeowner.id,
+            name: foundHomeowner.name,
+            email: foundHomeowner.email,
+            phone: foundHomeowner.phone || '',
+            moveInDate: foundHomeowner.moveInDate,
+            property: foundHomeowner.property || '',
+            unit: foundHomeowner.unit || foundHomeowner.unitNumber || '',
+            balance: foundHomeowner.balance,
+            tags: foundHomeowner.tags || [],
+            violations: foundHomeowner.violations || [],
+            lastContact: {
+              called: foundHomeowner.lastContact?.called || '',
+              visit: foundHomeowner.lastContact?.visit || '',
+              email: foundHomeowner.lastContact?.email || ''
+            },
+            status: foundHomeowner.status,
+            avatarUrl: foundHomeowner.avatarUrl || '',
+            notes: foundHomeowner.notes?.map(note => ({
+              type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
+              author: note.author || '',
+              content: note.content || '',
+              date: note.date || ''
+            })) || []
+          };
+          
+          setHomeowner(convertedHomeowner);
+        } else {
+          // If not found in mock data, use mock data for now
+          console.warn(`Homeowner with id ${homeownerId} not found, using mock data instead`);
+          // Here we'd normally show an error or fallback, but for demo we'll show mock data
+          setHomeowner(prevState => ({...prevState, id: homeownerId}));
+        }
+        setLoading(false);
       } catch (err) {
+        console.error("Error fetching homeowner data:", err);
         setError('Failed to fetch homeowner data');
         setLoading(false);
       }
