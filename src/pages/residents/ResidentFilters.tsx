@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Search } from 'lucide-react';
 
 interface ResidentFiltersProps {
   searchTerm: string;
@@ -14,6 +13,7 @@ interface ResidentFiltersProps {
   setFilterStatus: (value: string) => void;
   filterType: string;
   setFilterType: (value: string) => void;
+  associations?: any[];
 }
 
 const ResidentFilters: React.FC<ResidentFiltersProps> = ({
@@ -24,62 +24,70 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
   filterStatus,
   setFilterStatus,
   filterType,
-  setFilterType
+  setFilterType,
+  associations = [],
 }) => {
   return (
-    <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
-      <div className="relative w-full md:w-72">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search owners..."
-          className="pl-8"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-      <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-        <div className="flex items-center gap-2">
-          <Select value={filterAssociation} onValueChange={setFilterAssociation}>
+    <div className="space-y-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-grow">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search owners..."
+            className="pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Select
+            value={filterAssociation}
+            onValueChange={setFilterAssociation}
+          >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select Association" />
+              <SelectValue placeholder="Association" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Associations</SelectItem>
-              <SelectItem value="Oakridge Estates">Oakridge Estates</SelectItem>
-              <SelectItem value="Highland Towers">Highland Towers</SelectItem>
-              <SelectItem value="Lakeside Community">Lakeside Community</SelectItem>
+              {associations.map(association => (
+                <SelectItem key={association.id} value={association.id}>
+                  {association.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px]">
+          <Select
+            value={filterStatus}
+            onValueChange={setFilterStatus}
+          >
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending-approval">Pending Approval</SelectItem>
             </SelectContent>
           </Select>
           
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Owner Type" />
+          <Select
+            value={filterType}
+            onValueChange={setFilterType}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="owner">Owner</SelectItem>
               <SelectItem value="tenant">Tenant</SelectItem>
-              <SelectItem value="family-member">Family Member</SelectItem>
+              <SelectItem value="family">Family Member</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        
-        <div className="flex gap-2">
-          <TooltipButton tooltip="Export owners as CSV">
-            <Download className="h-4 w-4 mr-2" /> Export
-          </TooltipButton>
         </div>
       </div>
     </div>

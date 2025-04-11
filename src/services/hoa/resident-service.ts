@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Resident, ResidentWithProfile } from '@/types/app-types';
 import { toast } from 'sonner';
@@ -193,3 +192,21 @@ export const deleteResident = async (id: string): Promise<void> => {
 
   toast.success('Resident deleted successfully');
 };
+
+export const enableRealtimeForResidents = async () => {
+  try {
+    const { error } = await supabase.rpc('supabase_realtime', {
+      table: 'residents',
+      action: 'enable'
+    });
+    
+    if (error) {
+      console.error('Error enabling realtime for residents:', error);
+    }
+  } catch (error) {
+    console.error('Error calling supabase_realtime function:', error);
+  }
+};
+
+// Call this function when the app initializes
+enableRealtimeForResidents();
