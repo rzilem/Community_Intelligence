@@ -48,13 +48,16 @@ export async function extractRequestData(emailData: any, trackingNumber: string)
     
     try {
       // Try to get default association ID, but don't throw if not found
-      requestData.association_id = await getDefaultAssociationId();
-      
-      // Only try to get property if we have an association
-      if (requestData.association_id) {
-        // Try to get default property ID, but don't throw if not found
+      const associationId = await getDefaultAssociationId();
+      if (associationId) {
+        requestData.association_id = associationId;
+        
+        // Only try to get property if we have an association
         try {
-          requestData.property_id = await getDefaultPropertyId(requestData.association_id);
+          const propertyId = await getDefaultPropertyId(associationId);
+          if (propertyId) {
+            requestData.property_id = propertyId;
+          }
         } catch (propertyError) {
           console.warn("No default property found, creating request without property reference:", propertyError.message);
         }
@@ -139,7 +142,7 @@ function detectPriority(subject: string, content: string): string {
 }
 
 // Modified function to handle the case when no association is found
-async function getDefaultAssociationId(): Promise<string> {
+async function getDefaultAssociationId(): Promise<string | null> {
   try {
     // Import the createClient function directly in the function
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.1.0");
@@ -157,22 +160,23 @@ async function getDefaultAssociationId(): Promise<string> {
     
     if (error) {
       console.error("Error getting default association:", error);
-      throw new Error(`Failed to get default association: ${error.message}`);
+      return null;
     }
     
     if (!data || data.length === 0) {
-      throw new Error("No associations found in the database");
+      console.warn("No associations found in the database");
+      return null;
     }
     
     return data[0].id;
   } catch (error) {
     console.error("Error in getDefaultAssociationId:", error);
-    throw error;
+    return null;
   }
 }
 
 // Similar function to get a default property ID - modified to handle no results
-async function getDefaultPropertyId(associationId: string): Promise<string> {
+async function getDefaultPropertyId(associationId: string): Promise<string | null> {
   try {
     // Import the createClient function directly in the function
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.1.0");
@@ -191,16 +195,17 @@ async function getDefaultPropertyId(associationId: string): Promise<string> {
     
     if (error) {
       console.error("Error getting default property:", error);
-      throw new Error(`Failed to get default property: ${error.message}`);
+      return null;
     }
     
     if (!data || data.length === 0) {
-      throw new Error("No properties found for this association");
+      console.warn("No properties found for this association");
+      return null;
     }
     
     return data[0].id;
   } catch (error) {
     console.error("Error in getDefaultPropertyId:", error);
-    throw error;
+    return null;
   }
 }

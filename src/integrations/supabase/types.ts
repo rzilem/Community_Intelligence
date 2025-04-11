@@ -749,13 +749,13 @@ export type Database = {
       homeowner_requests: {
         Row: {
           assigned_to: string | null
-          association_id: string
+          association_id: string | null
           created_at: string
           description: string
           html_content: string | null
           id: string
           priority: string
-          property_id: string
+          property_id: string | null
           resident_id: string | null
           resolved_at: string | null
           status: string
@@ -766,13 +766,13 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
-          association_id: string
+          association_id?: string | null
           created_at?: string
           description: string
           html_content?: string | null
           id?: string
           priority?: string
-          property_id: string
+          property_id?: string | null
           resident_id?: string | null
           resolved_at?: string | null
           status?: string
@@ -783,13 +783,13 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
-          association_id?: string
+          association_id?: string | null
           created_at?: string
           description?: string
           html_content?: string | null
           id?: string
           priority?: string
-          property_id?: string
+          property_id?: string | null
           resident_id?: string | null
           resolved_at?: string | null
           status?: string
