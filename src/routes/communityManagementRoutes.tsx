@@ -10,6 +10,7 @@ import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 import ResidentDetailPage from "@/pages/ResidentDetailPage";
 import HomeownerRequestsPage from "@/pages/homeowners/HomeownerRequestsPage";
 import HomeownerRequestsQueue from "@/pages/community-management/HomeownerRequestsQueue";
+import HomeownerListPage from "@/pages/homeowners/HomeownerListPage";
 
 export const communityManagementRoutes: RouteObject[] = [
   {
@@ -26,7 +27,11 @@ export const communityManagementRoutes: RouteObject[] = [
   },
   {
     path: "/homeowners",
-    element: <RequireAuth><ResidentListPage /></RequireAuth>
+    element: <RequireAuth><HomeownerListPage /></RequireAuth>
+  },
+  {
+    path: "/homeowners/add",
+    element: <RequireAuth><HomeownerDetailPage /></RequireAuth>
   },
   {
     path: "/homeowners/:id",

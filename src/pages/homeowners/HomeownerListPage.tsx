@@ -1,48 +1,35 @@
 
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users, Columns, Search } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, Search, Plus } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import HomeownerFilters from './HomeownerFilters';
-import HomeownerTable from './HomeownerTable';
 import { mockHomeowners } from './homeowner-data';
-import ColumnSelector from '@/components/table/ColumnSelector';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
-  const [selectedColumns, setSelectedColumns] = useState<string[]>([
-    'name', 'unit', 'property', 'email', 'status', 'moveInDate', 'moveOutDate',
-    'propertyAddress', 'balance', 'lastPayment', 'aclStartDate', 'actions'
-  ]);
   const navigate = useNavigate();
-
-  const availableColumns = [
-    { id: 'name', label: 'Name' },
-    { id: 'unit', label: 'Unit' },
-    { id: 'property', label: 'Property' },
-    { id: 'email', label: 'Email' },
-    { id: 'status', label: 'Status' },
-    { id: 'moveInDate', label: 'Move-In Date' },
-    { id: 'moveOutDate', label: 'Move-Out Date' },
-    { id: 'propertyAddress', label: 'Property Address' },
-    { id: 'balance', label: 'Balance' },
-    { id: 'lastPayment', label: 'Last Payment' },
-    { id: 'aclStartDate', label: 'ACL Start Date' },
-    { id: 'actions', label: 'Actions' }
-  ];
-
-  const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
-    const reorderedColumns = [...selectedColumns];
-    const [removed] = reorderedColumns.splice(sourceIndex, 1);
-    reorderedColumns.splice(destinationIndex, 0, removed);
-    setSelectedColumns(reorderedColumns);
-  };
 
   const filteredHomeowners = mockHomeowners.filter(homeowner => {
     const matchesSearch = 
@@ -63,56 +50,127 @@ const HomeownerListPage = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Users className="h-8 w-8" />
-            <h1 className="text-3xl font-bold tracking-tight">Homeowners</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
           </div>
+          <Button onClick={() => navigate('/homeowners/add')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Owner
+          </Button>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Homeowner Directory</CardTitle>
-            <CardDescription>Search and manage all homeowners across your community associations.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4">
-              <div className="flex-1 relative max-w-md">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold mb-2">Owner Management</h2>
+            <p className="text-muted-foreground mb-6">View and manage all owners across your community associations.</p>
+            
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center mb-6 gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name, email, or address..." 
+                  placeholder="Search owners..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
               
-              <div className="flex items-center gap-2">
-                <HomeownerFilters 
-                  filterAssociation={filterAssociation}
-                  setFilterAssociation={setFilterAssociation}
-                  filterStatus={filterStatus}
-                  setFilterStatus={setFilterStatus}
-                  filterType={filterType}
-                  setFilterType={setFilterType}
-                />
+              <div className="flex items-center gap-4">
+                <Select value={filterAssociation} onValueChange={setFilterAssociation}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="All Associations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Associations</SelectItem>
+                    {/* Add association options here */}
+                  </SelectContent>
+                </Select>
                 
-                <ColumnSelector
-                  columns={availableColumns}
-                  selectedColumns={selectedColumns}
-                  onChange={setSelectedColumns}
-                  onReorder={handleReorderColumns}
-                />
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="All Types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="owner">Owner</SelectItem>
+                    <SelectItem value="tenant">Tenant</SelectItem>
+                    <SelectItem value="family-member">Family Member</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
-            <HomeownerTable 
-              homeowners={filteredHomeowners} 
-              selectedColumns={selectedColumns} 
-            />
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Association</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredHomeowners.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
+                        No homeowners found matching your search.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredHomeowners.map(homeowner => (
+                      <TableRow key={homeowner.id}>
+                        <TableCell className="font-medium cursor-pointer hover:text-primary" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
+                          {homeowner.name}
+                        </TableCell>
+                        <TableCell>{homeowner.email}</TableCell>
+                        <TableCell className="cursor-pointer hover:text-primary" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
+                          {homeowner.propertyAddress}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground truncate max-w-[200px]">
+                          {homeowner.association}
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={homeowner.status === 'active' ? 'default' : 'outline'} 
+                            className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                          >
+                            {homeowner.status === 'active' ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {homeowner.type === 'owner' ? 'Owner' : homeowner.type}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => navigate(`/homeowners/${homeowner.id}`)}>
+                            View
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {filteredHomeowners.length} of {mockHomeowners.length} homeowners
+                Showing {filteredHomeowners.length} of {mockHomeowners.length} owners
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled>Previous</Button>
                 <Button variant="outline" size="sm" disabled>Next</Button>
               </div>
