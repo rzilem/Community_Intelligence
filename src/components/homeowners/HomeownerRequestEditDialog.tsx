@@ -96,6 +96,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       updatedData.resolvedAt = null;
     }
     
+    // Here we need to convert our camelCase properties to snake_case for the Supabase database
     updateRequest({
       id: request.id,
       data: {
@@ -104,8 +105,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         status: updatedData.status,
         priority: updatedData.priority,
         type: updatedData.type,
-        assigned_to: updatedData.assignedTo, // Using the correct field name for Supabase
-        resolved_at: updatedData.resolvedAt,
+        assignedTo: updatedData.assignedTo, // Change: Use camelCase property that matches our HomeownerRequest type
+        resolved_at: updatedData.resolvedAt, // This needs snake_case for Supabase but will be handled by the hook
       },
     });
   };
@@ -272,4 +273,3 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
 };
 
 export default HomeownerRequestEditDialog;
-
