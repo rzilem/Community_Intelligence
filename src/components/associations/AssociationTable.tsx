@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Association } from '@/types/association-types';
 import { 
@@ -17,19 +18,24 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import AssociationEditDialog from './AssociationEditDialog';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface AssociationTableProps {
   associations: Association[];
   isLoading: boolean;
   onEdit?: (id: string, data: Partial<Association>) => void;
   onDelete?: (id: string) => void;
+  onToggleSelect?: (association: Association) => void;
+  selectedAssociations?: Association[];
 }
 
 const AssociationTable: React.FC<AssociationTableProps> = ({ 
   associations, 
   isLoading, 
   onEdit,
-  onDelete 
+  onDelete,
+  onToggleSelect,
+  selectedAssociations = []
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -59,12 +65,12 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     setEditDialogOpen(false);
   };
 
+  const isSelected = (association: Association) => {
+    return selectedAssociations.some(a => a.id === association.id);
+  };
+
   if (isLoading) {
-    return (
-      <div className="rounded-md border p-8">
-        <div className="text-center text-muted-foreground">Loading associations...</div>
-      </div>
-    );
+    return <LoadingState variant="skeleton" count={3} />;
   }
   
   return (
@@ -73,6 +79,11 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
+              {onToggleSelect && (
+                <TableHead className="w-[50px]">
+                  <span className="sr-only">Select</span>
+                </TableHead>
+              )}
               <TableHead>Association Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Location</TableHead>
@@ -84,13 +95,25 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
           <TableBody>
             {associations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={onToggleSelect ? 7 : 6} className="text-center py-8 text-muted-foreground">
                   No associations found
                 </TableCell>
               </TableRow>
             ) : (
               associations.map((association) => (
-                <TableRow key={association.id}>
+                <TableRow 
+                  key={association.id}
+                  className={isSelected(association) ? "bg-muted/50" : ""}
+                >
+                  {onToggleSelect && (
+                    <TableCell>
+                      <Checkbox 
+                        checked={isSelected(association)}
+                        onCheckedChange={() => onToggleSelect(association)}
+                        aria-label={`Select ${association.name}`}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Link to={`/system/associations/${association.id}`} className="font-medium hover:underline">
                       {association.name}

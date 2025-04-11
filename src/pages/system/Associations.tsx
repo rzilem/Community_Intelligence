@@ -13,12 +13,19 @@ import AssociationStats from '@/components/associations/AssociationStats';
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationToolbar from '@/components/associations/AssociationToolbar';
 import AssociationTabs from '@/components/associations/AssociationTabs';
+import AssociationBulkActions from '@/components/associations/AssociationBulkActions';
 import { AssociationFormData } from '@/components/associations/AssociationForm';
 import { Association } from '@/types/association-types';
 import { useNavigate } from 'react-router-dom';
+import { LoadingState } from '@/components/ui/loading-state';
+import SuccessAnimation from '@/components/ui/success-animation';
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedAssociations, setSelectedAssociations] = useState<Association[]>([]);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -65,17 +72,51 @@ const Associations = () => {
     };
     
     createAssociation(newAssociation);
-    toast.success(`Association "${data.name}" created successfully`);
+    showSuccessNotification(`Association "${data.name}" created successfully`);
   };
   
   // Handle editing an existing association
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
     updateAssociation({ id, data });
+    showSuccessNotification("Association updated successfully");
   };
   
   // Handle deleting an association
   const handleDeleteAssociation = (id: string) => {
     deleteAssociation(id);
+    showSuccessNotification("Association archived successfully");
+  };
+
+  // Handle bulk actions
+  const handleBulkArchive = (ids: string[]) => {
+    Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: true } })))
+      .then(() => {
+        setSelectedAssociations([]);
+        showSuccessNotification(`${ids.length} associations archived successfully`);
+      });
+  };
+
+  const handleBulkRestore = (ids: string[]) => {
+    Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: false } })))
+      .then(() => {
+        setSelectedAssociations([]);
+        showSuccessNotification(`${ids.length} associations restored successfully`);
+      });
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    Promise.all(ids.map(id => deleteAssociation(id)))
+      .then(() => {
+        setSelectedAssociations([]);
+        showSuccessNotification(`${ids.length} associations deleted successfully`);
+      });
+  };
+
+  const showSuccessNotification = (message: string) => {
+    setSuccessMessage(message);
+    setShowSuccessAnimation(true);
+    // Also show a toast for users who might dismiss the animation quickly
+    toast.success(message);
   };
   
   const getAssociationStatusBadge = (isArchived: boolean) => (
@@ -86,6 +127,25 @@ const Associations = () => {
       {isArchived ? "Inactive" : "Active"}
     </Badge>
   );
+
+  const handleToggleSelectAssociation = (association: Association) => {
+    setSelectedAssociations(prev => {
+      const isSelected = prev.some(a => a.id === association.id);
+      if (isSelected) {
+        return prev.filter(a => a.id !== association.id);
+      } else {
+        return [...prev, association];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedAssociations.length === filteredAssociations.length) {
+      setSelectedAssociations([]);
+    } else {
+      setSelectedAssociations([...filteredAssociations]);
+    }
+  };
   
   return (
     <PageTemplate 
@@ -112,6 +172,13 @@ const Associations = () => {
         </TooltipProvider>
       }
     >
+      {showSuccessAnimation && (
+        <SuccessAnimation 
+          text={successMessage} 
+          onComplete={() => setShowSuccessAnimation(false)}
+        />
+      )}
+
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="mb-6 flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center gap-4">
@@ -132,8 +199,20 @@ const Associations = () => {
               isLoading={isLoading}
               isCreating={isCreating}
               onSaveAssociation={handleSaveAssociation}
+              onSelectAll={handleSelectAll}
+              selectedCount={selectedAssociations.length}
+              totalCount={filteredAssociations.length}
             />
           </div>
+          
+          <AssociationBulkActions 
+            selectedAssociations={selectedAssociations}
+            onArchive={handleBulkArchive}
+            onRestore={handleBulkRestore}
+            onDelete={handleBulkDelete}
+            onClearSelection={() => setSelectedAssociations([])}
+            isLoading={isUpdating || isDeleting}
+          />
           
           {error && (
             <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
@@ -145,13 +224,7 @@ const Associations = () => {
           )}
           
           {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((_, index) => (
-                <div key={index} className="flex items-center space-x-4 animate-pulse">
-                  <div className="h-10 bg-muted w-full rounded"></div>
-                </div>
-              ))}
-            </div>
+            <LoadingState variant="skeleton" count={3} />
           ) : filteredAssociations.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 bg-muted/30 rounded-md">
               <Network className="h-12 w-12 text-muted-foreground mb-4" />
@@ -167,6 +240,8 @@ const Associations = () => {
               isLoading={isLoading}
               onEdit={handleEditAssociation}
               onDelete={handleDeleteAssociation}
+              onToggleSelect={handleToggleSelectAssociation}
+              selectedAssociations={selectedAssociations}
             />
           )}
         </CardContent>

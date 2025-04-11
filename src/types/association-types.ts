@@ -1,46 +1,44 @@
 
-import type { Database } from '@/integrations/supabase/types';
-
-// Association related types
-export type Association = {
+export interface Association {
   id: string;
   name: string;
+  property_type?: string;
+  total_units?: number;
   address?: string;
-  contact_email?: string;
-  created_at?: string;
-  updated_at?: string;
-  
-  // Extended fields for association profile
   city?: string;
   state?: string;
   zip?: string;
-  country?: string;
+  contact_email?: string;
   phone?: string;
-  website?: string;
-  founded_date?: string;
-  total_units?: number;
-  description?: string;
-  property_type?: string;
-  insurance_expiration?: string;
-  fire_inspection_due?: string;
+  created_at: string;
+  updated_at: string;
   is_archived?: boolean;
-};
+}
 
-export type HOA = Association;
+export interface AssociationFormData {
+  name: string;
+  type?: string;
+  units?: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  email?: string;
+  phone?: string;
+}
 
-export type AssociationUser = {
-  id: string;
-  association_id: string;
-  user_id: string;
-  role: 'admin' | 'manager' | 'member';
-  created_at?: string;
-  updated_at?: string;
-};
+export interface AssociationStats {
+  total: number;
+  active: number;
+  inactive: number;
+  recentlyAdded: number;
+}
 
-export interface AssociationAIIssue {
-  id: string;
-  title: string;
-  description: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  daysRemaining?: number;
+export interface AssociationEditProps {
+  association: Association;
+  onSave: (data: Partial<Association>) => void;
+}
+
+export interface AssociationDetailsProps {
+  associationId: string;
 }

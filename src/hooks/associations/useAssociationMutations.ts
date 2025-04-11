@@ -1,78 +1,155 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { 
-  createAssociation, 
-  updateAssociation, 
-  deleteAssociation 
-} from '@/services/association-service';
 import { Association } from '@/types/association-types';
 
-/**
- * Custom hook for association mutations (create, update, delete)
- */
-export const useAssociationMutations = (retryCount: number = 0) => {
-  const queryClient = useQueryClient();
-  
-  // Create a new association
-  const createMutation = useMutation({
-    mutationFn: createAssociation,
-    onSuccess: (newAssociation) => {
-      if (newAssociation) {
-        // Force refetch to ensure we get the latest data
-        queryClient.invalidateQueries({ queryKey: ['associations'] });
-        
-        // Also add it directly to the cache to ensure UI updates immediately
-        queryClient.setQueryData(['associations', retryCount], (oldData: Association[] | undefined) => {
-          const existingData = oldData || [];
-          return [...existingData, newAssociation];
+export const useAssociationMutations = () => {
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const createAssociation = async (association: Omit<Association, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      setIsCreating(true);
+      
+      const { data, error } = await supabase
+        .rpc('create_association_with_admin', {
+          p_name: association.name,
+          p_address: association.address,
+          p_contact_email: association.contact_email,
+          p_city: association.city,
+          p_state: association.state,
+          p_zip: association.zip
         });
-      }
-    },
-    onError: (error: any) => {
+
+      if (error) throw error;
+      
+      return data;
+    } catch (error: any) {
+      console.error('Error creating association:', error);
       toast.error(`Failed to create association: ${error.message}`);
+      throw error;
+    } finally {
+      setIsCreating(false);
     }
-  });
-  
-  // Update an association
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: Partial<Association> }) => 
-      updateAssociation(id, data),
-    onSuccess: (updatedAssociation) => {
-      if (updatedAssociation) {
-        toast.success('Association updated successfully');
-        queryClient.invalidateQueries({ queryKey: ['associations'] });
-        queryClient.invalidateQueries({ 
-          queryKey: ['association', updatedAssociation.id] 
-        });
-      }
-    },
-    onError: (error: Error) => {
+  };
+
+  const updateAssociation = async ({ id, data }: { id: string, data: Partial<Association> }) => {
+    try {
+      setIsUpdating(true);
+      
+      const { data: updatedData, error } = await supabase
+        .from('associations')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      return updatedData;
+    } catch (error: any) {
+      console.error('Error updating association:', error);
       toast.error(`Failed to update association: ${error.message}`);
+      throw error;
+    } finally {
+      setIsUpdating(false);
     }
-  });
-  
-  // Delete an association
-  const deleteMutation = useMutation({
-    mutationFn: deleteAssociation,
-    onSuccess: (success, id) => {
-      if (success) {
-        toast.success('Association deleted successfully');
-        queryClient.invalidateQueries({ queryKey: ['associations'] });
-        queryClient.removeQueries({ queryKey: ['association', id] });
+  };
+
+  const deleteAssociation = async (id: string) => {
+    try {
+      setIsDeleting(true);
+      
+      // Instead of actually deleting, we'll set is_archived to true
+      const { error } = await supabase
+        .from('associations')
+        .update({ is_archived: true })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error archiving association:', error);
+      toast.error(`Failed to archive association: ${error.message}`);
+      throw error;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const bulkUpdateAssociations = async (ids: string[], updates: Partial<Association>) => {
+    try {
+      setIsUpdating(true);
+      
+      // We'll update each association one by one
+      const promises = ids.map(id => 
+        supabase
+          .from('associations')
+          .update(updates)
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(promises);
+      
+      // Check if any errors occurred
+      const errors = results.filter(result => result.error).map(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to update ${errors.length} associations`);
       }
-    },
-    onError: (error: Error) => {
-      toast.error(`Failed to delete association: ${error.message}`);
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error updating associations:', error);
+      toast.error(`Failed to update associations: ${error.message}`);
+      throw error;
+    } finally {
+      setIsUpdating(false);
     }
-  });
-  
+  };
+
+  const bulkDeleteAssociations = async (ids: string[]) => {
+    try {
+      setIsDeleting(true);
+      
+      // We'll update each association to is_archived=true one by one
+      const promises = ids.map(id => 
+        supabase
+          .from('associations')
+          .update({ is_archived: true })
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(promises);
+      
+      // Check if any errors occurred
+      const errors = results.filter(result => result.error).map(result => result.error);
+      
+      if (errors.length > 0) {
+        throw new Error(`Failed to archive ${errors.length} associations`);
+      }
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error archiving associations:', error);
+      toast.error(`Failed to archive associations: ${error.message}`);
+      throw error;
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return {
-    createAssociation: createMutation.mutate,
-    isCreating: createMutation.isPending,
-    updateAssociation: updateMutation.mutate,
-    isUpdating: updateMutation.isPending,
-    deleteAssociation: deleteMutation.mutate,
-    isDeleting: deleteMutation.isPending,
+    createAssociation,
+    isCreating,
+    updateAssociation,
+    isUpdating,
+    deleteAssociation,
+    isDeleting,
+    bulkUpdateAssociations,
+    bulkDeleteAssociations
   };
 };
