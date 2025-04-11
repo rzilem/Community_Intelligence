@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CheckIcon, ChevronDownIcon, X } from 'lucide-react';
+import { CheckIcon, ChevronDownIcon, X, Users, Home, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -15,6 +15,9 @@ interface RecipientSelectorProps {
   onSelectionChange: (selectedGroups: string[]) => void;
 }
 
+// Commonly used recipient group types
+const COMMON_GROUP_TYPES = ['owners', 'residents'];
+
 const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange }) => {
   const [open, setOpen] = useState(false);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -22,6 +25,9 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
   const [recipientGroups, setRecipientGroups] = useState<RecipientGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectAllAssociations, setSelectAllAssociations] = useState(false);
+  
+  // State to track common groups for quick access
+  const [commonGroups, setCommonGroups] = useState<{id: string, name: string, associationName: string}[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +44,23 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
           // Fetch recipient groups for all associations
           const groupsData = await communicationService.getRecipientGroupsForAssociations(associationIds);
           setRecipientGroups(groupsData);
+          
+          // Identify common groups (owners and residents)
+          const commonGroupsData = groupsData.filter(group => 
+            COMMON_GROUP_TYPES.some(type => 
+              group.name.toLowerCase().includes(type)
+            )
+          );
+          
+          // Format common groups for display
+          setCommonGroups(commonGroupsData.map(group => {
+            const association = associationsData.find(a => a.id === group.association_id);
+            return {
+              id: group.id,
+              name: group.name,
+              associationName: association?.name || ''
+            };
+          }));
         }
       } catch (error) {
         console.error('Error fetching recipient data:', error);
@@ -90,6 +113,31 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
       setSelectedGroups([]);
     }
   };
+  
+  // New handler for selecting common group types across all associations
+  const handleSelectCommonType = (groupType: string) => {
+    const matchingGroups = recipientGroups.filter(group => 
+      group.name.toLowerCase().includes(groupType.toLowerCase())
+    );
+    
+    if (!matchingGroups.length) return;
+    
+    const matchingGroupIds = matchingGroups.map(group => group.id);
+    
+    // Check if all matching groups are already selected
+    const allSelected = matchingGroupIds.every(id => selectedGroups.includes(id));
+    
+    if (allSelected) {
+      // Remove all matching groups
+      setSelectedGroups(prev => prev.filter(id => !matchingGroupIds.includes(id)));
+    } else {
+      // Add all matching groups that aren't already selected
+      setSelectedGroups(prev => {
+        const newSelections = matchingGroupIds.filter(id => !prev.includes(id));
+        return [...prev, ...newSelections];
+      });
+    }
+  };
 
   const getGroupById = (groupId: string) => {
     return recipientGroups.find(group => group.id === groupId);
@@ -115,6 +163,25 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
       someSelected: someGroupsSelected && !allGroupsSelected
     };
   });
+  
+  // Check if all owners or all residents are selected
+  const areAllOwnersSelected = () => {
+    const ownerGroups = recipientGroups.filter(group => 
+      group.name.toLowerCase().includes('owner')
+    );
+    return ownerGroups.length > 0 && ownerGroups.every(group => 
+      selectedGroups.includes(group.id)
+    );
+  };
+  
+  const areAllResidentsSelected = () => {
+    const residentGroups = recipientGroups.filter(group => 
+      group.name.toLowerCase().includes('resident')
+    );
+    return residentGroups.length > 0 && residentGroups.every(group => 
+      selectedGroups.includes(group.id)
+    );
+  };
 
   return (
     <div className="space-y-2">
@@ -165,7 +232,30 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
                 <div className="py-6 text-center text-sm">Loading recipient groups...</div>
               ) : (
                 <>
-                  <CommandGroup>
+                  {/* Common recipient types section */}
+                  <CommandGroup heading="Common Recipients">
+                    <CommandItem 
+                      onSelect={() => handleSelectCommonType('owner')}
+                      className="flex items-center gap-2"
+                    >
+                      <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${areAllOwnersSelected() ? 'bg-primary border-primary' : 'border-primary'}`}>
+                        {areAllOwnersSelected() && <CheckIcon className="h-3 w-3 text-primary-foreground" />}
+                      </div>
+                      <Home className="h-4 w-4 mr-1 text-blue-600" />
+                      <span className="font-medium">All Owners</span>
+                    </CommandItem>
+                    
+                    <CommandItem 
+                      onSelect={() => handleSelectCommonType('resident')}
+                      className="flex items-center gap-2"
+                    >
+                      <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${areAllResidentsSelected() ? 'bg-primary border-primary' : 'border-primary'}`}>
+                        {areAllResidentsSelected() && <CheckIcon className="h-3 w-3 text-primary-foreground" />}
+                      </div>
+                      <Users className="h-4 w-4 mr-1 text-green-600" />
+                      <span className="font-medium">All Residents</span>
+                    </CommandItem>
+                    
                     <CommandItem 
                       onSelect={() => handleSelectAll(!selectAllAssociations)}
                       className="flex items-center gap-2"
@@ -173,7 +263,8 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
                       <div className={`flex h-4 w-4 items-center justify-center rounded-sm border ${selectAllAssociations ? 'bg-primary border-primary' : 'border-primary'}`}>
                         {selectAllAssociations && <CheckIcon className="h-3 w-3 text-primary-foreground" />}
                       </div>
-                      <span className="font-semibold">All Associations</span>
+                      <Star className="h-4 w-4 mr-1 text-amber-500" />
+                      <span className="font-medium">All Recipients</span>
                     </CommandItem>
                   </CommandGroup>
                   
