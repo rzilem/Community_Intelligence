@@ -17,4 +17,27 @@ export interface HomeownerRequest {
   associationId: string;
   assignedTo?: string;
   resolvedAt?: string;
+  html_content?: string; // For original email content
 }
+
+export interface HomeownerRequestColumn {
+  id: string;
+  label: string;
+  accessorKey: string;
+  defaultVisible: boolean;
+}
+
+export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
+  { id: 'title', label: 'Title', accessorKey: 'title', defaultVisible: true },
+  { id: 'type', label: 'Type', accessorKey: 'type', defaultVisible: true },
+  { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
+  { id: 'priority', label: 'Priority', accessorKey: 'priority', defaultVisible: true },
+  { id: 'createdAt', label: 'Created', accessorKey: 'createdAt', defaultVisible: true },
+  { id: 'updatedAt', label: 'Updated', accessorKey: 'updatedAt', defaultVisible: false },
+  { id: 'description', label: 'Description', accessorKey: 'description', defaultVisible: false },
+  { id: 'residentId', label: 'Resident', accessorKey: 'residentId', defaultVisible: false },
+  { id: 'propertyId', label: 'Property', accessorKey: 'propertyId', defaultVisible: false },
+  { id: 'associationId', label: 'Association', accessorKey: 'associationId', defaultVisible: false },
+  { id: 'assignedTo', label: 'Assigned To', accessorKey: 'assignedTo', defaultVisible: false },
+  { id: 'resolvedAt', label: 'Resolved At', accessorKey: 'resolvedAt', defaultVisible: false },
+];

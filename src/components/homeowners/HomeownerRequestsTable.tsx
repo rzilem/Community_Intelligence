@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -9,18 +9,25 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Eye, FileEdit } from 'lucide-react';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { useNavigate } from 'react-router-dom';
+import { Eye, FileEdit, MessageSquare, Clock, Calendar } from 'lucide-react';
+import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { format } from 'date-fns';
+import TooltipButton from '@/components/ui/tooltip-button';
+import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
+  columns: HomeownerRequestColumn[];
+  visibleColumnIds: string[];
 }
 
-const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ requests }) => {
-  const navigate = useNavigate();
+const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
+  requests, 
+  columns, 
+  visibleColumnIds 
+}) => {
+  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const renderStatusBadge = (status: string) => {
     switch (status) {
@@ -52,10 +59,9 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ request
     }
   };
 
-  const handleViewRequest = (id: string) => {
-    // This will be implemented in the future for viewing request details
-    // For now, let's just log the ID
-    console.log(`View request ${id}`);
+  const handleViewRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsDetailOpen(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -66,51 +72,101 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ request
     }
   };
 
+  const renderCellContent = (request: HomeownerRequest, columnId: string) => {
+    switch (columnId) {
+      case 'title':
+        return <span className="font-medium">{request.title}</span>;
+      case 'type':
+        return <span className="capitalize">{request.type}</span>;
+      case 'status':
+        return renderStatusBadge(request.status);
+      case 'priority':
+        return renderPriorityBadge(request.priority);
+      case 'createdAt':
+        return formatDate(request.createdAt);
+      case 'updatedAt':
+        return formatDate(request.updatedAt);
+      case 'description':
+        return <span className="truncate max-w-[200px] block">{request.description}</span>;
+      case 'residentId':
+        return request.residentId || 'N/A';
+      case 'propertyId':
+        return <span className="truncate max-w-[120px] block">{request.propertyId}</span>;
+      case 'associationId':
+        return <span className="truncate max-w-[120px] block">{request.associationId}</span>;
+      case 'assignedTo':
+        return request.assignedTo || 'Unassigned';
+      case 'resolvedAt':
+        return request.resolvedAt ? formatDate(request.resolvedAt) : 'Not resolved';
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Created At</TableHead>
+            {visibleColumnIds.map((columnId) => {
+              const column = columns.find(col => col.id === columnId);
+              return column ? (
+                <TableHead key={columnId}>{column.label}</TableHead>
+              ) : null;
+            })}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={visibleColumnIds.length + 1} className="h-24 text-center">
                 No requests found.
               </TableCell>
             </TableRow>
           ) : (
             requests.map((request) => (
               <TableRow key={request.id}>
-                <TableCell className="font-medium">{request.title}</TableCell>
-                <TableCell className="capitalize">{request.type}</TableCell>
-                <TableCell>{renderStatusBadge(request.status)}</TableCell>
-                <TableCell>{renderPriorityBadge(request.priority)}</TableCell>
-                <TableCell>{formatDate(request.createdAt)}</TableCell>
+                {visibleColumnIds.map((columnId) => (
+                  <TableCell key={`${request.id}-${columnId}`}>
+                    {renderCellContent(request, columnId)}
+                  </TableCell>
+                ))}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button 
+                    <TooltipButton 
                       variant="ghost" 
                       size="icon" 
-                      title="View"
-                      onClick={() => handleViewRequest(request.id)}
+                      tooltip="View Request Details"
+                      tooltipSide="left"
+                      onClick={() => handleViewRequest(request)}
                     >
                       <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button 
+                    </TooltipButton>
+                    <TooltipButton 
                       variant="ghost" 
                       size="icon" 
-                      title="Edit"
+                      tooltip="Edit Request"
+                      tooltipSide="left"
                     >
                       <FileEdit className="h-4 w-4" />
-                    </Button>
+                    </TooltipButton>
+                    <TooltipButton 
+                      variant="ghost" 
+                      size="icon" 
+                      tooltip="Add Comment"
+                      tooltipSide="left"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                    </TooltipButton>
+                    <TooltipButton 
+                      variant="ghost" 
+                      size="icon" 
+                      tooltip="View History"
+                      tooltipSide="left"
+                    >
+                      <Clock className="h-4 w-4" />
+                    </TooltipButton>
                   </div>
                 </TableCell>
               </TableRow>
@@ -118,6 +174,12 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ request
           )}
         </TableBody>
       </Table>
+      
+      <HomeownerRequestDetailDialog 
+        request={selectedRequest} 
+        open={isDetailOpen} 
+        onOpenChange={setIsDetailOpen} 
+      />
     </div>
   );
 };

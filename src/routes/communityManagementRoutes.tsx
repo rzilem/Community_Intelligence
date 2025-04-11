@@ -1,3 +1,4 @@
+
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import CommunityManagement from "@/pages/community-management/CommunityManagement";
@@ -8,6 +9,7 @@ import ResidentListPage from "@/pages/residents/ResidentListPage";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 import ResidentDetailPage from "@/pages/ResidentDetailPage";
 import HomeownerRequestsPage from "@/pages/homeowners/HomeownerRequestsPage";
+import HomeownerRequestsQueue from "@/pages/community-management/HomeownerRequestsQueue";
 
 export const communityManagementRoutes: RouteObject[] = [
   {
@@ -49,5 +51,9 @@ export const communityManagementRoutes: RouteObject[] = [
   {
     path: "/homeowners/requests",
     element: <RequireAuth><HomeownerRequestsPage /></RequireAuth>
+  },
+  {
+    path: "/community-management/homeowner-requests",
+    element: <RequireAuth><HomeownerRequestsQueue /></RequireAuth>
   }
 ];
