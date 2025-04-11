@@ -71,7 +71,7 @@ const ResaleAnalytics = () => {
         <StatCard
           title="Total Transactions"
           value={transactionStats?.totalTransactions.toString() || "0"}
-          icon={props => <BarChart {...props} />}
+          icon={BarChart}
           trend={{ 
             value: 12, 
             isPositive: true
@@ -82,7 +82,7 @@ const ResaleAnalytics = () => {
         <StatCard
           title="Total Revenue"
           value={`$${transactionStats?.totalRevenue.toLocaleString() || "0"}`}
-          icon={props => <BarChart {...props} />}
+          icon={BarChart}
           trend={{ 
             value: 8, 
             isPositive: true
@@ -93,7 +93,7 @@ const ResaleAnalytics = () => {
         <StatCard
           title="Average Turnaround"
           value={`${transactionStats?.averageTime || "0"} days`}
-          icon={props => <BarChart {...props} />}
+          icon={BarChart}
           trend={{ 
             value: 0.5, 
             isPositive: false
@@ -104,7 +104,7 @@ const ResaleAnalytics = () => {
         <StatCard
           title="Conversion Rate"
           value={`${transactionStats?.conversionRate || "0"}%`}
-          icon={props => <BarChart {...props} />}
+          icon={BarChart}
           trend={{ 
             value: 5, 
             isPositive: true
