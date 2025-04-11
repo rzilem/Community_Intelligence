@@ -569,6 +569,54 @@ export type Database = {
           },
         ]
       }
+      homeowner_requests: {
+        Row: {
+          assigned_to: string | null
+          association_id: string
+          created_at: string
+          description: string
+          id: string
+          priority: string
+          property_id: string
+          resident_id: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          association_id: string
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string
+          property_id: string
+          resident_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          association_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string
+          property_id?: string
+          resident_id?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       import_jobs: {
         Row: {
           association_id: string

@@ -12,12 +12,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, FileEdit } from 'lucide-react';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ requests }) => {
+  const navigate = useNavigate();
+
   const renderStatusBadge = (status: string) => {
     switch (status) {
       case 'open':
@@ -48,6 +52,20 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ request
     }
   };
 
+  const handleViewRequest = (id: string) => {
+    // This will be implemented in the future for viewing request details
+    // For now, let's just log the ID
+    console.log(`View request ${id}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return dateString;
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -62,25 +80,42 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ request
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell>{request.title}</TableCell>
-              <TableCell>{request.type}</TableCell>
-              <TableCell>{renderStatusBadge(request.status)}</TableCell>
-              <TableCell>{renderPriorityBadge(request.priority)}</TableCell>
-              <TableCell>{new Date(request.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="icon" title="View">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" title="Edit">
-                    <FileEdit className="h-4 w-4" />
-                  </Button>
-                </div>
+          {requests.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="h-24 text-center">
+                No requests found.
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium">{request.title}</TableCell>
+                <TableCell className="capitalize">{request.type}</TableCell>
+                <TableCell>{renderStatusBadge(request.status)}</TableCell>
+                <TableCell>{renderPriorityBadge(request.priority)}</TableCell>
+                <TableCell>{formatDate(request.createdAt)}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      title="View"
+                      onClick={() => handleViewRequest(request.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      title="Edit"
+                    >
+                      <FileEdit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
     </div>
