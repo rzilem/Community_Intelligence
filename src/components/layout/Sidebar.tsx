@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, X } from 'lucide-react';
@@ -23,13 +22,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   handleSignOut
 }) => {
   const location = useLocation();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   
   useEffect(() => {
-    // Initialize or update open sections based on current path
-    const newOpenSections = {...openSections};
-    
-    // Check each main navigation item to see if the current path is in its submenu
+    // Initialize active section based on current path
     mainNavItems.forEach(item => {
       if (item.submenu) {
         const isSubmenuActive = item.submenu.some(
@@ -37,21 +33,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         );
         
         if (isSubmenuActive) {
-          newOpenSections[item.path.replace('/', '')] = true;
+          setActiveSection(item.path.replace('/', ''));
         }
       }
     });
-    
-    setOpenSections(newOpenSections);
-  }, [location.pathname]);
+  }, [location.pathname, mainNavItems]);
 
   const toggleSection = (section: string) => {
-    setOpenSections(prev => {
-      const newState = {...prev};
-      // Toggle the section state
-      newState[section] = !prev[section];
-      return newState;
-    });
+    // If clicking the currently active section, close it
+    if (activeSection === section) {
+      setActiveSection(null);
+    } else {
+      // Otherwise, set it as the new active section (and close the previous one)
+      setActiveSection(section);
+    }
   };
 
   // Helper function to check if a main nav item has the current path in its submenu
@@ -94,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               name={item.name}
               path={item.path}
               icon={item.icon}
-              isOpen={!!openSections[item.path.replace('/', '')]}
+              isOpen={activeSection === item.path.replace('/', '')}
               toggleSection={() => toggleSection(item.path.replace('/', ''))}
               isActive={hasActiveSubmenu(item)}
               submenu={item.submenu}
