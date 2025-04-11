@@ -50,7 +50,7 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
           {isOpen && (
-            <div className="pl-8 space-y-1">
+            <div className="pl-8 space-y-1 max-h-52 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20">
               {submenu.map((item) => (
                 <Link
                   key={item.path}
