@@ -115,8 +115,7 @@ const ExportDataTemplates: React.FC<ExportDataTemplatesProps> = ({ associationId
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="associations">Associations</SelectItem>
-                    <SelectItem value="owners">Owners/Residents</SelectItem>
-                    <SelectItem value="properties">Properties</SelectItem>
+                    <SelectItem value="properties_owners">Properties & Owners</SelectItem>
                     <SelectItem value="financial">Financial Data</SelectItem>
                     <SelectItem value="compliance">Compliance Issues</SelectItem>
                     <SelectItem value="maintenance">Maintenance Requests</SelectItem>
@@ -165,10 +164,12 @@ const ExportDataTemplates: React.FC<ExportDataTemplatesProps> = ({ associationId
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {['associations', 'owners', 'properties', 'financial', 'compliance', 'maintenance', 'vendors'].map((type) => (
+              {['associations', 'properties_owners', 'financial', 'compliance', 'maintenance', 'vendors'].map((type) => (
                 <Card key={type} className="overflow-hidden">
                   <CardHeader className="p-4">
-                    <CardTitle className="text-base capitalize">{type}</CardTitle>
+                    <CardTitle className="text-base capitalize">
+                      {type === 'properties_owners' ? 'Properties & Owners' : type}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 pt-0">
                     <Button 
