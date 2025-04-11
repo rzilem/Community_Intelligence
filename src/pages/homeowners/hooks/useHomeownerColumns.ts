@@ -11,10 +11,12 @@ export const useHomeownerColumns = (localStorageKey: string = 'homeowner-columns
   const defaultColumns: HomeownerColumn[] = [
     { id: 'name', label: 'Name' },
     { id: 'email', label: 'Email' },
-    { id: 'propertyAddress', label: 'Property' },
+    { id: 'propertyAddress', label: 'Street Address' },
     { id: 'association', label: 'Association' },
     { id: 'status', label: 'Status' },
-    { id: 'type', label: 'Type' }
+    { id: 'type', label: 'Type' },
+    { id: 'lastPaymentDate', label: 'Last Payment Date' },
+    { id: 'closingDate', label: 'Closing Date' }
   ];
   
   const defaultVisibleIds = defaultColumns.map(col => col.id);

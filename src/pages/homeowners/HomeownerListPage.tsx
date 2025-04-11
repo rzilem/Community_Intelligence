@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { useHomeownerColumns } from './hooks/useHomeownerColumns';
+import { formatDate } from '@/lib/date-utils';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +34,15 @@ const HomeownerListPage = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
+
+  // Extract just the street address part (without city, state, zip)
+  const extractStreetAddress = (fullAddress: string | undefined) => {
+    if (!fullAddress) return '';
+    // Simple extraction - assumes the street address is before the first comma
+    // More complex regex can be used for better extraction if needed
+    const parts = fullAddress.split(',');
+    return parts[0]?.trim() || fullAddress;
+  };
 
   const filteredHomeowners = mockHomeowners.filter(homeowner => {
     const matchesSearch = 
@@ -67,7 +77,7 @@ const HomeownerListPage = () => {
             <p className="text-muted-foreground mb-6">View and manage all owners across your community associations.</p>
             
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center mb-6 gap-4">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search owners..." 
@@ -127,10 +137,12 @@ const HomeownerListPage = () => {
                   <TableRow>
                     {visibleColumnIds.includes('name') && <TableHead>Name</TableHead>}
                     {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
-                    {visibleColumnIds.includes('propertyAddress') && <TableHead>Property</TableHead>}
+                    {visibleColumnIds.includes('propertyAddress') && <TableHead>Street Address</TableHead>}
                     {visibleColumnIds.includes('association') && <TableHead>Association</TableHead>}
                     {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
                     {visibleColumnIds.includes('type') && <TableHead>Type</TableHead>}
+                    {visibleColumnIds.includes('lastPaymentDate') && <TableHead>Last Payment Date</TableHead>}
+                    {visibleColumnIds.includes('closingDate') && <TableHead>Closing Date</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -162,7 +174,7 @@ const HomeownerListPage = () => {
                               className="cursor-pointer hover:text-primary hover:underline"
                               onClick={() => navigate(`/homeowners/${homeowner.id}`)}
                             >
-                              {homeowner.propertyAddress}
+                              {extractStreetAddress(homeowner.propertyAddress)}
                             </span>
                           </TableCell>
                         )}
@@ -184,6 +196,20 @@ const HomeownerListPage = () => {
                         {visibleColumnIds.includes('type') && (
                           <TableCell>
                             {homeowner.type === 'owner' ? 'Owner' : homeowner.type}
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('lastPaymentDate') && (
+                          <TableCell>
+                            {homeowner.lastPayment ? 
+                              formatDate(homeowner.lastPayment.date) : 
+                              '-'}
+                          </TableCell>
+                        )}
+                        {visibleColumnIds.includes('closingDate') && (
+                          <TableCell>
+                            {homeowner.closingDate ? 
+                              formatDate(homeowner.closingDate) : 
+                              '-'}
                           </TableCell>
                         )}
                       </TableRow>
