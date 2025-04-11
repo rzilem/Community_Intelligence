@@ -4,20 +4,12 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HomeownerRequestType, HomeownerRequestPriority } from '@/types/homeowner-request-types';
+import { Form } from '@/components/ui/form';
 import { useSupabaseCreate } from '@/hooks/supabase';
 import { useSupabaseQuery } from '@/hooks/supabase';
+import RequestBasicInfoFields from './form/RequestBasicInfoFields';
+import RequestLocationFields from './form/RequestLocationFields';
+import FormFieldTextarea from './form/FormFieldTextarea';
 
 const requestSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -43,7 +35,7 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
     }
   );
 
-  // Fetch properties for the select dropdown (we'll filter by association later)
+  // Fetch properties for the select dropdown
   const { data: properties = [] } = useSupabaseQuery<any[]>(
     'properties',
     {
@@ -84,157 +76,26 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
     });
   };
 
-  // Filter properties based on selected association
+  // Get selected association ID for filtering properties
   const selectedAssociationId = form.watch('associationId');
-  const filteredProperties = selectedAssociationId 
-    ? properties.filter(property => property.association_id === selectedAssociationId)
-    : properties;
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter request title" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+        <RequestBasicInfoFields form={form} />
+        
+        <RequestLocationFields 
+          form={form} 
+          associations={associations} 
+          properties={properties}
+          selectedAssociationId={selectedAssociationId}
         />
         
-        <FormField
-          control={form.control}
-          name="associationId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Association</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select association" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {associations.map((association) => (
-                    <SelectItem key={association.id} value={association.id}>
-                      {association.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="propertyId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Property</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                disabled={!selectedAssociationId}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={selectedAssociationId ? "Select property" : "Select an association first"} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredProperties.map((property) => (
-                    <SelectItem key={property.id} value={property.id}>
-                      {property.address} {property.unit_number ? `Unit ${property.unit_number}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Request Type</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="compliance">Compliance</SelectItem>
-                  <SelectItem value="billing">Billing</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="amenity">Amenity</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="priority"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Priority</FormLabel>
-              <Select
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
+        <FormFieldTextarea
+          form={form}
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Describe your request in detail..." 
-                  {...field} 
-                  rows={5}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          label="Description"
+          placeholder="Describe your request in detail..."
         />
         
         <div className="flex justify-end">
