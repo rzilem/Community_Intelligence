@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Network, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,12 +7,11 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from '@/contexts/auth';
-import { useAssociations } from '@/hooks/associations';
+import { useAssociationQueries, useAssociationMutations } from '@/hooks/associations';
 import AssociationStats from '@/components/associations/AssociationStats';
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationToolbar from '@/components/associations/AssociationToolbar';
 import AssociationTabs from '@/components/associations/AssociationTabs';
-import { supabase } from '@/integrations/supabase/client';
 import { AssociationFormData } from '@/components/associations/AssociationForm';
 import { Association } from '@/types/association-types';
 import { useNavigate } from 'react-router-dom';
@@ -27,14 +25,17 @@ const Associations = () => {
     associations, 
     isLoading, 
     error,
+    manuallyRefresh 
+  } = useAssociationQueries();
+
+  const { 
     createAssociation,
     isCreating,
     updateAssociation,
     isUpdating,
     deleteAssociation,
-    isDeleting,
-    manuallyRefresh 
-  } = useAssociations();
+    isDeleting
+  } = useAssociationMutations();
   
   // Ensure associations is an array
   const associationsArray = Array.isArray(associations) ? associations : [];
