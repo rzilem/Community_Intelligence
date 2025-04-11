@@ -2,7 +2,7 @@
 import React from 'react';
 import { format, addWeeks, subWeeks } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { DialogTrigger } from '@/components/ui/dialog';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -42,14 +42,12 @@ const ResaleCalendarHeader: React.FC<ResaleCalendarHeaderProps> = ({
         <Button variant="outline" size="icon" onClick={nextWeek}>
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Order
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+        <DialogTrigger asChild>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Order
+          </Button>
+        </DialogTrigger>
       </div>
     </CardHeader>
   );

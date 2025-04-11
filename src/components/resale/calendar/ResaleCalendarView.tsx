@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { startOfWeek, endOfWeek, eachDayOfInterval } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { Dialog } from '@/components/ui/dialog';
 
 // Import refactored components
 import ResaleCalendarHeader from './ResaleCalendarHeader';
@@ -92,17 +93,19 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
         </CardContent>
       </Card>
       
-      {/* Event form dialog */}
-      <ResaleEventForm 
-        newEvent={{
-          ...newEvent,
-          date: selectedDate
-        }} 
-        setNewEvent={setNewEvent} 
-        handleCreateEvent={handleSubmitEvent} 
-        isCreating={isCreating} 
-        hasAssociation={hasAssociation} 
-      />
+      {/* Event form dialog - Wrapped in Dialog component */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <ResaleEventForm 
+          newEvent={{
+            ...newEvent,
+            date: selectedDate
+          }} 
+          setNewEvent={setNewEvent} 
+          handleCreateEvent={handleSubmitEvent} 
+          isCreating={isCreating} 
+          hasAssociation={hasAssociation} 
+        />
+      </Dialog>
     </div>
   );
 };
