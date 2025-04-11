@@ -5,3 +5,8 @@ export type GLAccount = {
   type: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
   category: string;
 };
+
+export type ReportCategory = {
+  title: string;
+  reports: string[];
+};
