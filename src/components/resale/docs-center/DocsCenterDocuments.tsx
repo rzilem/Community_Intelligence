@@ -7,14 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import LinkDocumentsDialog from '@/components/resale/LinkDocumentsDialog';
-import { useAssociations } from '@/hooks/associations';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
 const DocsCenterDocuments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAssociation, setSelectedAssociation] = useState('');
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   
-  const { data: associations = [] } = useAssociations();
+  // Use the useSupabaseQuery hook to fetch associations
+  const { data: associations = [] } = useSupabaseQuery('associations', {
+    select: 'id, name',
+    order: { column: 'name', ascending: true }
+  });
   
   // Mock documents for UI demonstration
   const documents = [
@@ -46,7 +50,7 @@ const DocsCenterDocuments = () => {
               <SelectValue placeholder="Select Association" />
             </SelectTrigger>
             <SelectContent>
-              {associations.map(assoc => (
+              {associations.map((assoc: { id: string; name: string }) => (
                 <SelectItem key={assoc.id} value={assoc.id}>
                   {assoc.name}
                 </SelectItem>
