@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Eye, FileEdit, MessageSquare, Clock } from 'lucide-react';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import TooltipButton from '@/components/ui/tooltip-button';
-import { format } from 'date-fns';
+import { formatRelativeDate } from '@/lib/date-utils';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -75,7 +74,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       case 'createdAt':
         return formatDate(request.createdAt);
       case 'updatedAt':
-        return formatDate(request.updatedAt);
+        return formatRelativeDate(request.updatedAt);
       case 'description':
         return <span className="truncate max-w-[200px] block">{request.description}</span>;
       case 'residentId':
