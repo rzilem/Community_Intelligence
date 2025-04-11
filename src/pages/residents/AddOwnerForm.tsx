@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseCreate } from '@/hooks/supabase';
 
 // Form schema with validation
 const formSchema = z.object({
@@ -36,6 +37,12 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   const [properties, setProperties] = useState<any[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Use the useSupabaseCreate hook for better error handling
+  const createResident = useSupabaseCreate('residents', {
+    showSuccessToast: true,
+    showErrorToast: true
+  });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -114,44 +121,40 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
-      // Create the resident in the database
-      const { data: newResident, error } = await supabase
-        .from('residents')
-        .insert({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          property_id: data.property_id,
-          resident_type: data.resident_type,
-          is_primary: data.is_primary,
-          move_in_date: data.move_in_date || null,
-          emergency_contact: data.emergency_contact || null
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Get property details
-      const selectedProperty = properties.find(p => p.id === data.property_id);
-      const selectedAssociation = associations.find(a => a.id === data.association_id);
-
-      // Create a mock object for UI integration
-      const newOwnerForUI = {
-        id: newResident.id,
+      // Create the resident using the hook which handles RLS better
+      const newResident = await createResident.mutateAsync({
         name: data.name,
         email: data.email,
-        phone: data.phone || '',
-        type: data.resident_type,
-        propertyAddress: selectedProperty?.address || 'Unknown',
-        association: selectedAssociation?.name || 'Unknown',
-        status: 'active',
-        moveInDate: data.move_in_date || new Date().toISOString().split('T')[0],
-        propertyId: data.property_id
-      };
+        phone: data.phone,
+        property_id: data.property_id,
+        resident_type: data.resident_type,
+        is_primary: data.is_primary,
+        move_in_date: data.move_in_date || null,
+        emergency_contact: data.emergency_contact || null
+      });
 
-      toast.success('Owner added successfully');
-      onSuccess(newOwnerForUI);
+      if (newResident) {
+        // Get property details
+        const selectedProperty = properties.find(p => p.id === data.property_id);
+        const selectedAssociation = associations.find(a => a.id === data.association_id);
+
+        // Create a mock object for UI integration
+        const newOwnerForUI = {
+          id: newResident.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone || '',
+          type: data.resident_type,
+          propertyAddress: selectedProperty?.address || 'Unknown',
+          association: selectedAssociation?.name || 'Unknown',
+          status: 'active',
+          moveInDate: data.move_in_date || new Date().toISOString().split('T')[0],
+          propertyId: data.property_id
+        };
+
+        toast.success('Owner added successfully');
+        onSuccess(newOwnerForUI);
+      }
     } catch (error: any) {
       console.error('Error adding owner:', error);
       toast.error(error.message || 'Failed to add owner');

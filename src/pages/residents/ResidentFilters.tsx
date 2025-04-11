@@ -1,11 +1,9 @@
 
 import React from 'react';
-import { Search, Download, Users } from 'lucide-react';
+import { Search, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import AddOwnerForm from './AddOwnerForm';
 
 interface ResidentFiltersProps {
   searchTerm: string;
@@ -28,13 +26,6 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
   filterType,
   setFilterType
 }) => {
-  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
-
-  const handleAddSuccess = (newOwner) => {
-    // Placeholder for potential list update logic
-    setIsAddDialogOpen(false);
-  };
-
   return (
     <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
       <div className="relative w-full md:w-72">
@@ -89,27 +80,6 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
           <TooltipButton tooltip="Export owners as CSV">
             <Download className="h-4 w-4 mr-2" /> Export
           </TooltipButton>
-          
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <TooltipButton 
-                variant="default" 
-                tooltip="Add a new owner"
-                onClick={() => setIsAddDialogOpen(true)}
-              >
-                <Users className="h-4 w-4 mr-2" /> Add Owner
-              </TooltipButton>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Owner</DialogTitle>
-              </DialogHeader>
-              <AddOwnerForm 
-                onSuccess={handleAddSuccess} 
-                onCancel={() => setIsAddDialogOpen(false)} 
-              />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
     </div>

@@ -1,6 +1,4 @@
 
-import { Profile } from './profile-types';
-
 export type ResidentType = 'owner' | 'tenant' | 'family' | 'other';
 
 export interface Resident {
@@ -21,6 +19,14 @@ export interface Resident {
 
 export interface ResidentWithProfile extends Resident {
   user?: {
-    profile?: Profile;
+    profile?: {
+      id: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      role?: string;
+      phone_number?: string;
+      profile_image_url?: string;
+    };
   };
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users2, PlusCircle } from 'lucide-react';
@@ -9,6 +10,8 @@ import ResidentTable from './ResidentTable';
 import { mockResidents } from './resident-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AddOwnerForm from './AddOwnerForm';
+import TooltipButton from '@/components/ui/tooltip-button';
+
 const ResidentListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
@@ -17,17 +20,22 @@ const ResidentListPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [residents, setResidents] = useState(mockResidents);
   const navigate = useNavigate();
+  
   const filteredResidents = residents.filter(resident => {
-    const matchesSearch = resident.name.toLowerCase().includes(searchTerm.toLowerCase()) || resident.email.toLowerCase().includes(searchTerm.toLowerCase()) || resident.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = resident.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          resident.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          resident.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesAssociation = filterAssociation === 'all' || resident.association === filterAssociation;
     const matchesStatus = filterStatus === 'all' || resident.status === filterStatus;
     const matchesType = filterType === 'all' || resident.type === filterType;
     return matchesSearch && matchesAssociation && matchesStatus && matchesType;
   });
-  const handleAddSuccess = newOwner => {
+  
+  const handleAddSuccess = (newOwner) => {
     setResidents([...residents, newOwner]);
     setIsAddDialogOpen(false);
   };
+
   return <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
@@ -36,6 +44,23 @@ const ResidentListPage = () => {
             <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
           </div>
           
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <TooltipButton 
+                variant="default" 
+                tooltip="Add a new owner"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" /> Add Owner
+              </TooltipButton>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Add New Owner</DialogTitle>
+              </DialogHeader>
+              <AddOwnerForm onSuccess={handleAddSuccess} onCancel={() => setIsAddDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
         </div>
 
         <Card>
@@ -44,7 +69,16 @@ const ResidentListPage = () => {
             <CardDescription>View and manage all owners across your community associations.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResidentFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} filterAssociation={filterAssociation} setFilterAssociation={setFilterAssociation} filterStatus={filterStatus} setFilterStatus={setFilterStatus} filterType={filterType} setFilterType={setFilterType} />
+            <ResidentFilters 
+              searchTerm={searchTerm} 
+              setSearchTerm={setSearchTerm} 
+              filterAssociation={filterAssociation} 
+              setFilterAssociation={setFilterAssociation} 
+              filterStatus={filterStatus} 
+              setFilterStatus={setFilterStatus} 
+              filterType={filterType} 
+              setFilterType={setFilterType} 
+            />
             
             <ResidentTable residents={filteredResidents} />
             
@@ -60,15 +94,7 @@ const ResidentListPage = () => {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Add New Owner</DialogTitle>
-          </DialogHeader>
-          <AddOwnerForm onSuccess={handleAddSuccess} onCancel={() => setIsAddDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
     </AppLayout>;
 };
+
 export default ResidentListPage;
