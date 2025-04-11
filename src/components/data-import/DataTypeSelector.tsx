@@ -29,14 +29,6 @@ const DataTypeSelector: React.FC<DataTypeSelectorProps> = ({ value, onChange }) 
           tooltip="Import both properties and their owners in a single process" 
         />
         <DataTypeOption 
-          id="owners" 
-          label="Owners/Residents" 
-        />
-        <DataTypeOption 
-          id="properties" 
-          label="Properties" 
-        />
-        <DataTypeOption 
           id="financial" 
           label="Financial Data"
           tooltip="Import financial data including assessments, payments, and transactions" 
