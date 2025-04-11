@@ -205,6 +205,44 @@ export type Database = {
           },
         ]
       }
+      association_member_roles: {
+        Row: {
+          association_id: string
+          created_at: string
+          id: string
+          role_name: string
+          role_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          id?: string
+          role_name: string
+          role_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          id?: string
+          role_name?: string
+          role_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "association_member_roles_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       association_users: {
         Row: {
           association_id: string
@@ -1574,6 +1612,47 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "proposal_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipient_groups: {
+        Row: {
+          association_id: string
+          created_at: string
+          criteria: Json | null
+          description: string | null
+          group_type: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          criteria?: Json | null
+          description?: string | null
+          group_type: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          criteria?: Json | null
+          description?: string | null
+          group_type?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipient_groups_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]

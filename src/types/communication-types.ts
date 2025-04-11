@@ -52,3 +52,35 @@ export interface CommunicationLogEntry {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface RecipientGroup {
+  id: string;
+  association_id: string;
+  name: string;
+  description: string | null;
+  group_type: 'system' | 'custom';
+  criteria: any | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessageRecipient {
+  id: string;
+  name: string;
+  group_id: string;
+  association_id: string;
+  association_name?: string;
+}
+
+export interface AssociationMemberRole {
+  id: string;
+  user_id: string;
+  association_id: string;
+  role_type: 'board' | 'committee';
+  role_name: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  created_at: string;
+  updated_at: string;
+}

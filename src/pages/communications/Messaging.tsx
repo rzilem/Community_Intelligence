@@ -1,11 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Mail, 
   MessageSquare, 
   AlertTriangle, 
   FileText, 
-  ChevronDown, 
   Users, 
   Sparkles,
   Tags,
@@ -19,9 +18,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 import MessageTemplateCard from '@/components/communications/MessageTemplateCard';
 import MessageHistoryTable, { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
+import RecipientSelector from '@/components/communications/RecipientSelector';
+import { communicationService } from '@/services/communication-service';
 
 const mockHistoryData: MessageHistoryItem[] = [
   {
@@ -104,11 +106,26 @@ const MessagingPage = () => {
   const [messageType, setMessageType] = useState<'email' | 'sms'>('email');
   const [subject, setSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
-  const [community, setCommunity] = useState('');
   const [activeTab, setActiveTab] = useState('compose');
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [associations, setAssociations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [searchHistory, setSearchHistory] = useState('');
   const [searchTemplates, setSearchTemplates] = useState('');
+
+  useEffect(() => {
+    const fetchAssociations = async () => {
+      try {
+        const data = await communicationService.getAllAssociations();
+        setAssociations(data);
+      } catch (error) {
+        console.error('Error fetching associations:', error);
+      }
+    };
+
+    fetchAssociations();
+  }, []);
 
   const handleViewMessage = (id: string) => {
     console.log(`Viewing message ${id}`);
@@ -138,6 +155,41 @@ const MessagingPage = () => {
     // Implementation for template actions
   };
 
+  const handleSendMessage = async () => {
+    if (!subject || !messageContent || selectedGroups.length === 0) {
+      toast.error('Please fill out all required fields and select at least one recipient group');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Get the first association from the first selected group for simplicity
+      // In a real implementation, you'd handle multiple associations differently
+      const firstGroup = await communicationService.getRecipientGroups('');
+      const associationId = firstGroup && firstGroup.length > 0 ? firstGroup[0].association_id : associations[0]?.id;
+
+      await communicationService.sendMessage({
+        subject,
+        content: messageContent,
+        association_id: associationId,
+        recipient_groups: selectedGroups,
+        type: messageType
+      });
+
+      // Reset form
+      setSubject('');
+      setMessageContent('');
+      setSelectedGroups([]);
+      setActiveTab('history');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Tabs defaultValue="compose" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -150,21 +202,7 @@ const MessagingPage = () => {
         <TabsContent value="compose" className="space-y-6">
           <h2 className="text-2xl font-semibold">Compose Message</h2>
           
-          <div className="bg-white rounded-lg border p-6 space-y-6">
-            <div className="space-y-2">
-              <label htmlFor="community" className="block font-medium">Community</label>
-              <Select value={community} onValueChange={setCommunity}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Riverside HOA" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="riverside">Riverside HOA</SelectItem>
-                  <SelectItem value="oakview">Oak View Community</SelectItem>
-                  <SelectItem value="pinecrest">Pine Crest Association</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
+          <div className="bg-white rounded-lg border p-6 space-y-6">            
             <div className="space-y-2">
               <label className="block font-medium">Message Type</label>
               <div className="flex gap-3">
@@ -192,15 +230,14 @@ const MessagingPage = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="block font-medium">Recipients</label>
-                <Button variant="outline" className="gap-2">
-                  <Users className="h-4 w-4" />
-                  Select Groups
-                </Button>
               </div>
-              <div className="flex items-center border rounded-md p-4 text-amber-600 bg-amber-50 border-amber-200">
-                <AlertTriangle className="h-5 w-5 mr-2" />
-                <span>No recipients selected</span>
-              </div>
+              <RecipientSelector onSelectionChange={setSelectedGroups} />
+              {selectedGroups.length === 0 && (
+                <div className="flex items-center border rounded-md p-4 text-amber-600 bg-amber-50 border-amber-200">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  <span>No recipients selected</span>
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -264,8 +301,19 @@ const MessagingPage = () => {
             </div>
             
             <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline">Cancel</Button>
-              <Button disabled={!subject || !messageContent}>Send Message</Button>
+              <Button variant="outline" onClick={() => {
+                setSubject('');
+                setMessageContent('');
+                setSelectedGroups([]);
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                disabled={!subject || !messageContent || selectedGroups.length === 0 || isLoading}
+                onClick={handleSendMessage}
+              >
+                {isLoading ? 'Sending...' : 'Send Message'}
+              </Button>
             </div>
           </div>
         </TabsContent>
