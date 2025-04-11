@@ -3,13 +3,13 @@ import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import System from "@/pages/system/System";
 import SystemSettings from "@/pages/system/SystemSettings";
-import Integrations from "@/pages/system/Integrations";
 import Permissions from "@/pages/system/Permissions";
 import DataImportExport from "@/pages/system/DataImportExport";
 import Associations from "@/pages/system/Associations";
 import AssociationProfile from "@/pages/system/AssociationProfile";
 import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
+import { Navigate } from "react-router-dom";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
@@ -23,7 +23,7 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/integrations",
-    element: <RequireAuth><Integrations /></RequireAuth>
+    element: <Navigate to="/system/settings" replace />
   },
   {
     path: "/system/permissions",

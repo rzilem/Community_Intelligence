@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { SlidersHorizontal, Save, Palette, Bell, Shield, Database } from 'lucide-react';
+import { SlidersHorizontal, Save, Palette, Bell, Shield, Database, Puzzle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -8,6 +9,7 @@ import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
 import SystemPreferencesTab from '@/components/settings/SystemPreferencesTab';
+import IntegrationsTab from '@/components/settings/IntegrationsTab';
 import type { 
   AppearanceSettings, 
   NotificationSettings, 
@@ -104,7 +106,7 @@ const SystemSettings = () => {
         className="mt-6"
       >
         <div className="flex items-center justify-between mb-6">
-          <TabsList className="grid grid-cols-4 w-full md:w-auto">
+          <TabsList className="grid grid-cols-5 w-full md:w-auto">
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" /> 
               <span className="hidden sm:inline">Appearance</span>
@@ -120,6 +122,10 @@ const SystemSettings = () => {
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Database className="h-4 w-4" /> 
               <span className="hidden sm:inline">System</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Puzzle className="h-4 w-4" /> 
+              <span className="hidden sm:inline">Integrations</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -150,6 +156,10 @@ const SystemSettings = () => {
             settings={settings.preferences} 
             onChange={handlePreferencesChange} 
           />
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationsTab />
         </TabsContent>
       </Tabs>
     </PageTemplate>

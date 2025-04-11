@@ -32,7 +32,6 @@ import {
   Clipboard,
   ListOrdered,
   Settings,
-  Puzzle,
   SlidersHorizontal,
   MailCheck,
   Download,
@@ -154,7 +153,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       path: '/system', 
       icon: Settings,
       submenu: [
-        { name: 'Integrations', path: '/system/integrations', icon: Puzzle },
         { name: 'Settings', path: '/system/settings', icon: SlidersHorizontal },
         { name: 'Email Workflows', path: '/system/email-workflows', icon: MailCheck },
         { name: 'Data Import & Export', path: '/system/import-export', icon: Download },
