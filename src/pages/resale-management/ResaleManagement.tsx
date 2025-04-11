@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { ScrollText, ArrowRight, BarChart } from 'lucide-react';
+import { ScrollText, ArrowRight, BarChart, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -19,19 +19,10 @@ const ResaleManagement = () => {
       path: "/resale-management/questionnaire"
     },
     {
-      title: "Property Inspection",
-      description: "Schedule and document property inspections for resale.",
-      path: "/resale-management/inspection"
-    },
-    {
-      title: "Account Statements",
-      description: "Generate account statements for closing and resale transactions.",
-      path: "/resale-management/statements"
-    },
-    {
-      title: "TREC Forms",
-      description: "Access and complete Texas Real Estate Commission standard forms.",
-      path: "/resale-management/trec-forms"
+      title: "Resale Calendar",
+      description: "Track resale orders, inspections, and document deadlines.",
+      path: "/resale-management/calendar",
+      icon: <Calendar className="h-4 w-4 mr-2" />
     },
     {
       title: "Order Queue",

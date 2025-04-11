@@ -1,115 +1,60 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { TimeSeriesData, LeadSourceData, ConversionRateData } from '@/types/analytics-types';
 
-// This is a placeholder service that would be implemented with actual Supabase queries
-// For now, it returns mock data for demonstration purposes
-
-export const fetchResaleTransactionData = async (
-  timeRange: string = 'monthly',
-  associationId?: string
-): Promise<{
-  totalTransactions: number;
-  revenue: number;
-  averageProcessingTime: number;
-  pendingOrders: number;
-  transactionTrend: { value: number; isPositive: boolean };
-  revenueTrend: { value: number; isPositive: boolean };
-  processingTimeTrend: { value: number; isPositive: boolean };
-  pendingOrdersTrend: { value: number; isPositive: boolean };
-}> => {
-  try {
-    // In a real implementation, this would query the resale_packages table
-    // For example:
-    // const { data, error } = await supabase
-    //   .from('resale_packages')
-    //   .select('id, status, total_fee, created_at, completed_date')
-    //   .eq('association_id', associationId)
-    //   .gte('created_at', getTimeRangeStart(timeRange))
-    //   .order('created_at', { ascending: false });
-
-    // Mock data for demonstration
-    return {
-      totalTransactions: 1284,
-      revenue: 257950,
-      averageProcessingTime: 2.5,
-      pendingOrders: 38,
-      transactionTrend: { value: 12.5, isPositive: true },
-      revenueTrend: { value: 15.2, isPositive: true },
-      processingTimeTrend: { value: 8.3, isPositive: false },
-      pendingOrdersTrend: { value: 5.7, isPositive: false }
-    };
-  } catch (error) {
-    console.error('Error fetching resale analytics data:', error);
-    throw error;
-  }
+export const fetchResaleTransactionData = async (timeRange: string, associationId?: string) => {
+  // Mock implementation for resale transaction data
+  return {
+    totalTransactions: 58,
+    totalRevenue: 17500,
+    averageTime: 4.3,
+    conversionRate: 82
+  };
 };
 
-export const fetchResaleTimeSeriesData = async (
-  timeRange: string = 'monthly'
-): Promise<TimeSeriesData[]> => {
-  // This would be a query to get data over time
+export const fetchResaleTimeSeriesData = async (timeRange: string): Promise<TimeSeriesData[]> => {
+  // Mock implementation for time series data
   return [
-    { date: 'Jan', new_leads: 65, converted_leads: 45 },
-    { date: 'Feb', new_leads: 80, converted_leads: 53 },
-    { date: 'Mar', new_leads: 95, converted_leads: 68 },
-    { date: 'Apr', new_leads: 120, converted_leads: 85 },
-    { date: 'May', new_leads: 110, converted_leads: 80 },
-    { date: 'Jun', new_leads: 140, converted_leads: 100 }
+    { date: '2024-04', new_leads: 24, converted_leads: 18 },
+    { date: '2024-05', new_leads: 32, converted_leads: 27 },
+    { date: '2024-06', new_leads: 28, converted_leads: 22 },
+    { date: '2024-07', new_leads: 35, converted_leads: 30 },
+    { date: '2024-08', new_leads: 42, converted_leads: 35 },
+    { date: '2024-09', new_leads: 38, converted_leads: 32 }
   ];
 };
 
 export const fetchResaleSourceData = async (): Promise<LeadSourceData[]> => {
-  // This would query the distribution of document types
-  return [
-    { source: 'Resale Certificate', count: 250 },
-    { source: 'Condo Questionnaire', count: 175 },
-    { source: 'Account Statements', count: 150 },
-    { source: 'Property Inspection', count: 125 },
-    { source: 'TREC Forms', count: 85 }
+  // Mock implementation for source distribution data
+  // Updated to include the percentage property as required by the LeadSourceData type
+  const sources = [
+    { source: 'Real Estate Agents', count: 45, percentage: 45 },
+    { source: 'Title Companies', count: 28, percentage: 28 },
+    { source: 'Homeowners', count: 15, percentage: 15 },
+    { source: 'Property Managers', count: 8, percentage: 8 },
+    { source: 'Other', count: 4, percentage: 4 }
   ];
+  
+  return sources;
 };
 
 export const fetchResaleConversionData = async (): Promise<ConversionRateData[]> => {
-  // This would query the pipeline conversion rates
+  // Mock implementation for conversion funnel data
   return [
-    { stage: 'Request', count: 1250, rate: 100 },
-    { stage: 'Processing', count: 1050, rate: 84 },
-    { stage: 'Completed', count: 950, rate: 76 },
-    { stage: 'Delivered', count: 900, rate: 72 },
-    { stage: 'Paid', count: 875, rate: 70 }
+    { stage: 'Inquiry', rate: 100, count: 100 },
+    { stage: 'Form Submission', rate: 85, count: 85 },
+    { stage: 'Document Review', rate: 70, count: 70 },
+    { stage: 'Payment', rate: 60, count: 60 },
+    { stage: 'Completion', rate: 55, count: 55 }
   ];
 };
 
-export const fetchMostRequestedDocuments = async (): Promise<{
-  documentName: string;
-  requestPercentage: number;
-}[]> => {
-  // This would query the frequency of document requests
+export const fetchMostRequestedDocuments = async () => {
+  // Mock implementation for most requested documents
   return [
-    { documentName: 'Bylaws', requestPercentage: 92 },
-    { documentName: 'CC&Rs', requestPercentage: 88 },
-    { documentName: 'Financial Statements', requestPercentage: 75 },
-    { documentName: 'Reserve Study', requestPercentage: 68 },
-    { documentName: 'Insurance Declarations', requestPercentage: 62 }
+    { document: 'Association Bylaws', count: 58, percentage: 95 },
+    { document: 'Financial Statements', count: 54, percentage: 88 },
+    { document: 'Rules & Regulations', count: 49, percentage: 80 },
+    { document: 'Insurance Certificate', count: 45, percentage: 74 },
+    { document: 'Board Meeting Minutes', count: 38, percentage: 62 }
   ];
-};
-
-// Helper function to calculate the start date for time range queries
-const getTimeRangeStart = (timeRange: string): string => {
-  const now = new Date();
-  switch (timeRange) {
-    case 'daily':
-      return new Date(now.setDate(now.getDate() - 1)).toISOString();
-    case 'weekly':
-      return new Date(now.setDate(now.getDate() - 7)).toISOString();
-    case 'monthly':
-      return new Date(now.setFullYear(now.getFullYear(), now.getMonth() - 1)).toISOString();
-    case 'quarterly':
-      return new Date(now.setMonth(now.getMonth() - 3)).toISOString();
-    case 'yearly':
-      return new Date(now.setFullYear(now.getFullYear() - 1)).toISOString();
-    default:
-      return new Date(now.setMonth(now.getMonth() - 1)).toISOString();
-  }
 };

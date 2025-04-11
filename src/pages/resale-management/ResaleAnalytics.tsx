@@ -1,214 +1,243 @@
 
 import React, { useState } from 'react';
-import { BarChart, CircleDollarSign, FileBarChart, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, Calendar, DollarSign, Clock } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useResaleAnalytics } from '@/hooks/resale/useResaleAnalytics';
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, Pie, PieChart, Cell } from 'recharts';
 import StatCard from '@/components/dashboard/StatCard';
-import { useQuery } from '@tanstack/react-query';
-import LeadTimeSeriesChart from '@/components/analytics/LeadTimeSeriesChart';
-import LeadSourceChart from '@/components/analytics/LeadSourceChart';
-import ConversionFunnelChart from '@/components/analytics/ConversionFunnelChart';
-import { TimeSeriesData, LeadSourceData, ConversionRateData } from '@/types/analytics-types';
 
 const ResaleAnalytics = () => {
-  const [timeRange, setTimeRange] = useState<string>('monthly');
-  
-  // Mock data - in a real implementation, this would come from an API
-  const { data: resaleStats } = useQuery({
-    queryKey: ['resale-analytics', timeRange],
-    queryFn: async (): Promise<{
-      totalTransactions: number;
-      revenue: number;
-      averageProcessingTime: number;
-      pendingOrders: number;
-      transactionTrend: { value: number; isPositive: boolean };
-      revenueTrend: { value: number; isPositive: boolean };
-      processingTimeTrend: { value: number; isPositive: boolean };
-      pendingOrdersTrend: { value: number; isPositive: boolean };
-    }> => {
-      // This would be replaced with an actual API call
-      return {
-        totalTransactions: 1284,
-        revenue: 257950,
-        averageProcessingTime: 2.5,
-        pendingOrders: 38,
-        transactionTrend: { value: 12.5, isPositive: true },
-        revenueTrend: { value: 15.2, isPositive: true },
-        processingTimeTrend: { value: 8.3, isPositive: false },
-        pendingOrdersTrend: { value: 5.7, isPositive: false }
-      };
-    },
-    placeholderData: {
-      totalTransactions: 0,
-      revenue: 0,
-      averageProcessingTime: 0,
-      pendingOrders: 0,
-      transactionTrend: { value: 0, isPositive: true },
-      revenueTrend: { value: 0, isPositive: true },
-      processingTimeTrend: { value: 0, isPositive: true },
-      pendingOrdersTrend: { value: 0, isPositive: true }
-    }
-  });
+  const [timeRange, setTimeRange] = useState('monthly');
+  const { 
+    transactionStats,
+    timeSeriesData,
+    sourceData,
+    conversionData,
+    requestedDocuments,
+    isLoading
+  } = useResaleAnalytics(timeRange);
 
-  const mockTimeSeriesData: TimeSeriesData[] = [
-    { date: 'Jan', new_leads: 65, converted_leads: 45 },
-    { date: 'Feb', new_leads: 80, converted_leads: 53 },
-    { date: 'Mar', new_leads: 95, converted_leads: 68 },
-    { date: 'Apr', new_leads: 120, converted_leads: 85 },
-    { date: 'May', new_leads: 110, converted_leads: 80 },
-    { date: 'Jun', new_leads: 140, converted_leads: 100 }
-  ];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
-  const mockSourceData: LeadSourceData[] = [
-    { source: 'Resale Certificate', count: 250 },
-    { source: 'Condo Questionnaire', count: 175 },
-    { source: 'Account Statements', count: 150 },
-    { source: 'Property Inspection', count: 125 },
-    { source: 'TREC Forms', count: 85 }
-  ];
+  // Custom data visualization for source distribution
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-  const mockConversionData: ConversionRateData[] = [
-    { stage: 'Request', count: 1250, rate: 100 },
-    { stage: 'Processing', count: 1050, rate: 84 },
-    { stage: 'Completed', count: 950, rate: 76 },
-    { stage: 'Delivered', count: 900, rate: 72 },
-    { stage: 'Paid', count: 875, rate: 70 }
-  ];
+    return (
+      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
+    );
+  };
 
   return (
-    <PageTemplate
-      title="Resale Analytics"
+    <PageTemplate 
+      title="Resale Analytics" 
       icon={<BarChart className="h-8 w-8" />}
-      description="Track performance metrics for resale documentation services"
+      description="Track performance metrics and reports for resale operations."
+      actions={
+        <Select
+          value={timeRange}
+          onValueChange={setTimeRange}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select time range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="weekly">Weekly</SelectItem>
+            <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectItem value="quarterly">Quarterly</SelectItem>
+            <SelectItem value="yearly">Yearly</SelectItem>
+          </SelectContent>
+        </Select>
+      }
     >
-      <div className="mb-6">
-        <Tabs value={timeRange} onValueChange={setTimeRange} className="w-full">
-          <TabsList className="ml-auto">
-            <TabsTrigger value="daily">Daily</TabsTrigger>
-            <TabsTrigger value="weekly">Weekly</TabsTrigger>
-            <TabsTrigger value="monthly">Monthly</TabsTrigger>
-            <TabsTrigger value="quarterly">Quarterly</TabsTrigger>
-            <TabsTrigger value="yearly">Yearly</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Transactions Stat Card */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
         <StatCard
           title="Total Transactions"
-          value={resaleStats?.totalTransactions.toLocaleString() || "0"}
-          icon={FileBarChart}
-          trend={resaleStats?.transactionTrend}
-        />
-        
-        {/* Revenue Stat Card */}
-        <StatCard
-          title="Revenue"
-          value={`$${resaleStats?.revenue.toLocaleString() || "0"}`}
-          icon={CircleDollarSign}
-          trend={resaleStats?.revenueTrend}
-        />
-        
-        {/* Average Processing Time Stat Card */}
-        <StatCard
-          title="Avg. Processing Time"
-          value={`${resaleStats?.averageProcessingTime || "0"} days`}
+          value={transactionStats?.totalTransactions.toString() || "0"}
           icon={Calendar}
-          trend={resaleStats?.processingTimeTrend}
-          trendDescription={resaleStats?.processingTimeTrend?.isPositive ? "Slower than last period" : "Faster than last period"}
-          inverseTrend
+          trend={{ 
+            value: 12, 
+            direction: 'up'
+          }}
+          description="From previous period"
         />
-        
-        {/* Pending Orders Stat Card */}
+
         <StatCard
-          title="Pending Orders"
-          value={resaleStats?.pendingOrders.toString() || "0"}
-          icon={ArrowDown}
-          trend={resaleStats?.pendingOrdersTrend}
-          trendDescription={resaleStats?.pendingOrdersTrend?.isPositive ? "More than last period" : "Fewer than last period"}
-          inverseTrend
+          title="Total Revenue"
+          value={`$${transactionStats?.totalRevenue.toLocaleString() || "0"}`}
+          icon={DollarSign}
+          trend={{ 
+            value: 8, 
+            direction: 'up'
+          }}
+          description="From previous period"
+          inverseTrend={true}
+        />
+
+        <StatCard
+          title="Average Turnaround"
+          value={`${transactionStats?.averageTime || "0"} days`}
+          icon={Clock}
+          trend={{ 
+            value: 0.5, 
+            direction: 'down'
+          }}
+          description="Faster than previous period"
+          inverseTrend={true}
+        />
+
+        <StatCard
+          title="Conversion Rate"
+          value={`${transactionStats?.conversionRate || "0"}%`}
+          icon={BarChart}
+          trend={{ 
+            value: 5, 
+            direction: 'up'
+          }}
+          description="From previous period"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <LeadTimeSeriesChart 
-          data={mockTimeSeriesData} 
-          className="h-[400px]"
-        />
-
-        <LeadSourceChart 
-          data={mockSourceData} 
-          className="h-[400px]"
-        />
-      </div>
-
-      <ConversionFunnelChart 
-        data={mockConversionData} 
-        className="h-[400px] mb-8"
-      />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Fulfillment Analysis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Most Requested Documents</h3>
-              <div className="bg-gray-50 rounded-md p-4 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span>Bylaws</span>
-                  <span className="font-semibold">92%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-primary h-2.5 rounded-full" style={{ width: '92%' }}></div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span>CC&Rs</span>
-                  <span className="font-semibold">88%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-primary h-2.5 rounded-full" style={{ width: '88%' }}></div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span>Financial Statements</span>
-                  <span className="font-semibold">75%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-primary h-2.5 rounded-full" style={{ width: '75%' }}></div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span>Reserve Study</span>
-                  <span className="font-semibold">68%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-primary h-2.5 rounded-full" style={{ width: '68%' }}></div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span>Insurance Declarations</span>
-                  <span className="font-semibold">62%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div className="bg-primary h-2.5 rounded-full" style={{ width: '62%' }}></div>
-                </div>
+      <Tabs defaultValue="overview" className="mt-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="sources">Source Distribution</TabsTrigger>
+          <TabsTrigger value="documents">Requested Documents</TabsTrigger>
+          <TabsTrigger value="conversion">Conversion Funnel</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <Card className="col-span-3">
+            <CardHeader>
+              <CardTitle>Resale Transactions Over Time</CardTitle>
+              <CardDescription>Tracks new and converted resale requests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart
+                    data={timeSeriesData}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="new_leads" fill="#8884d8" name="New Requests" />
+                    <Bar dataKey="converted_leads" fill="#82ca9d" name="Completed" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Revenue by Document Type</h3>
-              <div className="bg-gray-50 rounded-md p-4 h-64 flex items-center justify-center">
-                <p className="text-gray-500">Pie chart showing revenue distribution across document types</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sources" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Request Source Distribution</CardTitle>
+              <CardDescription>Where resale requests originate from</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sourceData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={renderCustomizedLabel}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="count"
+                      nameKey="source"
+                    >
+                      {sourceData?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Most Requested Documents</CardTitle>
+              <CardDescription>Documents most frequently included in resale packages</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart
+                    data={requestedDocuments}
+                    layout="vertical"
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 120,
+                      bottom: 5,
+                    }}
+                  >
+                    <XAxis type="number" />
+                    <YAxis dataKey="document" type="category" width={100} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#82ca9d" name="Request Count" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="conversion" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Conversion Funnel</CardTitle>
+              <CardDescription>Tracking of resale request progression through stages</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart
+                    data={conversionData}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <XAxis dataKey="stage" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8884d8" name="Count" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </PageTemplate>
   );
 };

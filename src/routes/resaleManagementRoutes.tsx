@@ -5,11 +5,9 @@ import ResaleManagement from "@/pages/resale-management/ResaleManagement";
 import ResaleCertificate from "@/pages/resale-management/ResaleCertificate";
 import ResaleCertificateDetail from "@/pages/resale-management/ResaleCertificateDetail";
 import CondoQuestionnaire from "@/pages/resale-management/CondoQuestionnaire";
-import PropertyInspection from "@/pages/resale-management/PropertyInspection";
-import AccountStatements from "@/pages/resale-management/AccountStatements";
-import TRECForms from "@/pages/resale-management/TRECForms";
 import OrderQueue from "@/pages/resale-management/OrderQueue";
 import ResaleAnalytics from "@/pages/resale-management/ResaleAnalytics";
+import ResaleCalendar from "@/pages/resale-management/ResaleCalendar";
 
 // Resale Management Routes
 export const resaleManagementRoutes: RouteObject[] = [
@@ -30,16 +28,8 @@ export const resaleManagementRoutes: RouteObject[] = [
     element: <RequireAuth><CondoQuestionnaire /></RequireAuth>
   },
   {
-    path: "/resale-management/inspection",
-    element: <RequireAuth><PropertyInspection /></RequireAuth>
-  },
-  {
-    path: "/resale-management/statements",
-    element: <RequireAuth><AccountStatements /></RequireAuth>
-  },
-  {
-    path: "/resale-management/trec-forms",
-    element: <RequireAuth><TRECForms /></RequireAuth>
+    path: "/resale-management/calendar",
+    element: <RequireAuth><ResaleCalendar /></RequireAuth>
   },
   {
     path: "/resale-management/order-queue",

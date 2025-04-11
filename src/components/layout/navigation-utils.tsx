@@ -30,9 +30,6 @@ import {
   FileBarChart,
   ScrollText,
   Clipboard,
-  CalendarCheck,
-  CircleDollarSign,
-  FileCode,
   ListOrdered,
   Settings,
   Puzzle,
@@ -147,10 +144,9 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       submenu: [
         { name: 'Resale Certificate', path: '/resale-management/certificate', icon: Clipboard },
         { name: 'Condo Questionnaire', path: '/resale-management/questionnaire', icon: ClipboardList },
-        { name: 'Property Inspection', path: '/resale-management/inspection', icon: CalendarCheck },
-        { name: 'Account Statements', path: '/resale-management/statements', icon: CircleDollarSign },
-        { name: 'TREC Forms', path: '/resale-management/trec-forms', icon: FileCode },
+        { name: 'Resale Calendar', path: '/resale-management/calendar', icon: Calendar },
         { name: 'Order Queue', path: '/resale-management/order-queue', icon: ListOrdered },
+        { name: 'Analytics', path: '/resale-management/analytics', icon: BarChart },
       ]
     });
   }
