@@ -5,8 +5,7 @@ import AccountingDashboard from "@/pages/accounting/AccountingDashboard";
 import BankAccounts from "@/pages/accounting/BankAccounts";
 import InvoiceQueue from "@/pages/accounting/InvoiceQueue";
 import InvoiceDetail from "@/pages/accounting/InvoiceDetail";
-import Transactions from "@/pages/accounting/Transactions";
-import Payments from "@/pages/accounting/Payments";
+import TransactionsAndPayments from "@/pages/accounting/TransactionsAndPayments";
 import JournalEntries from "@/pages/accounting/JournalEntries";
 import GLAccounts from "@/pages/accounting/GLAccounts";
 import FinancialReports from "@/pages/accounting/FinancialReports";
@@ -31,12 +30,8 @@ export const accountingRoutes: RouteObject[] = [
     element: <RequireAuth><InvoiceDetail /></RequireAuth>
   },
   {
-    path: "/accounting/transactions",
-    element: <RequireAuth><Transactions /></RequireAuth>
-  },
-  {
-    path: "/accounting/payments",
-    element: <RequireAuth><Payments /></RequireAuth>
+    path: "/accounting/transactions-payments",
+    element: <RequireAuth><TransactionsAndPayments /></RequireAuth>
   },
   {
     path: "/accounting/journal-entries",

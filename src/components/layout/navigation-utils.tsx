@@ -71,8 +71,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Dashboard', path: '/accounting/dashboard', icon: BarChart },
         { name: 'Bank Accounts', path: '/accounting/bank-accounts', icon: Building },
         { name: 'Invoice Queue', path: '/accounting/invoice-queue', icon: Receipt },
-        { name: 'Transactions', path: '/accounting/transactions', icon: Receipt },
-        { name: 'Payments', path: '/accounting/payments', icon: Wallet },
+        { name: 'Transactions & Payments', path: '/accounting/transactions-payments', icon: CreditCard },
         { name: 'Journal Entries', path: '/accounting/journal-entries', icon: BookOpen },
         { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
         { name: 'Financial Reports', path: '/accounting/financial-reports', icon: BarChart2 },
@@ -168,4 +167,3 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
   
   return items;
 };
-
