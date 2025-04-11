@@ -1,12 +1,15 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { LineChart, BarChart3, PieChart, Download, Filter } from 'lucide-react';
+import { LineChart, BarChart3, PieChart, Download, Filter, BarChart2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Button } from '@/components/ui/button';
+import AssociationSelector from '@/components/associations/AssociationSelector';
+import FinancialReportCategories from '@/components/accounting/FinancialReportCategories';
+import { ReportCategory } from '@/types/accounting-types';
 
 // Mock data for charts
 const mockData = {
@@ -34,15 +37,52 @@ const mockReports = [
   { id: 5, name: 'Maintenance Request Trends', type: 'custom', lastRun: '2025-04-02', schedule: 'Weekly' },
 ];
 
+// Define report categories for financial reports
+const financialReportCategories: ReportCategory[] = [
+  {
+    title: "Financial Statements",
+    reports: [
+      "Balance Sheet",
+      "Income Statement",
+      "Cash Flow Statement",
+      "Statement of Changes in Equity"
+    ]
+  },
+  {
+    title: "Budget Reports",
+    reports: [
+      "Budget vs. Actual",
+      "Budget Variance Analysis",
+      "Budget Forecast",
+      "Annual Budget Overview"
+    ]
+  },
+  {
+    title: "Compliance Reports",
+    reports: [
+      "Aged Receivables",
+      "Delinquency Report", 
+      "Collection Status",
+      "Legal Status Report"
+    ]
+  }
+];
+
 const Reports = () => {
   const [selectedHOA, setSelectedHOA] = useState<string>('all');
   const [selectedReportType, setSelectedReportType] = useState<string>('all');
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
 
   // Filter reports based on selections
   const filteredReports = mockReports.filter(report => {
     if (selectedReportType !== 'all' && report.type !== selectedReportType) return false;
     return true;
   });
+
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+    setSelectedHOA(associationId || 'all');
+  };
 
   return (
     <PageTemplate 
@@ -53,18 +93,12 @@ const Reports = () => {
       <div className="mt-6 space-y-6">
         <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="w-full md:w-[200px]">
-              <Select value={selectedHOA} onValueChange={setSelectedHOA}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select HOA" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All HOAs</SelectItem>
-                  <SelectItem value="oakridge">Oakridge Estates</SelectItem>
-                  <SelectItem value="lakeside">Lakeside Community</SelectItem>
-                  <SelectItem value="highland">Highland Towers</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="w-full md:w-[250px]">
+              <AssociationSelector 
+                onAssociationChange={handleAssociationChange}
+                initialAssociationId={selectedAssociationId}
+                label="Filter by Association"
+              />
             </div>
             <div className="w-full md:w-[200px]">
               <Select value={selectedReportType} onValueChange={setSelectedReportType}>
@@ -94,6 +128,7 @@ const Reports = () => {
         <Tabs defaultValue="charts">
           <TabsList>
             <TabsTrigger value="charts">Charts</TabsTrigger>
+            <TabsTrigger value="financial">Financial Reports</TabsTrigger>
             <TabsTrigger value="saved">Saved Reports</TabsTrigger>
             <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
           </TabsList>
@@ -146,6 +181,30 @@ const Reports = () => {
                 </CardFooter>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="financial">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Financial Reports</CardTitle>
+                    <CardDescription>Generate and analyze financial statements and reports</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-3 mb-6">
+                  <Button variant="outline">
+                    <Filter className="h-4 w-4 mr-2" /> Filter
+                  </Button>
+                  <Button variant="outline">
+                    <Download className="h-4 w-4 mr-2" /> Export
+                  </Button>
+                </div>
+                <FinancialReportCategories categories={financialReportCategories} />
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="saved">

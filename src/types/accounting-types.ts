@@ -1,12 +1,5 @@
 
-export type GLAccount = {
-  code: string;
-  description: string;
-  type: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense';
-  category: string;
-};
-
-export type ReportCategory = {
+export interface ReportCategory {
   title: string;
   reports: string[];
-};
+}

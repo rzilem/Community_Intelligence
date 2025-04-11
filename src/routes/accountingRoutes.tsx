@@ -8,7 +8,6 @@ import InvoiceDetail from "@/pages/accounting/InvoiceDetail";
 import TransactionsAndPayments from "@/pages/accounting/TransactionsAndPayments";
 import JournalEntries from "@/pages/accounting/JournalEntries";
 import GLAccounts from "@/pages/accounting/GLAccounts";
-import FinancialReports from "@/pages/accounting/FinancialReports";
 import BudgetPlanning from "@/pages/accounting/BudgetPlanning";
 
 // Accounting Routes
@@ -40,10 +39,6 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/gl-accounts",
     element: <RequireAuth><GLAccounts /></RequireAuth>
-  },
-  {
-    path: "/accounting/financial-reports",
-    element: <RequireAuth><FinancialReports /></RequireAuth>
   },
   {
     path: "/accounting/budget-planning",
