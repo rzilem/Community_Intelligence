@@ -39,9 +39,14 @@ export interface SecuritySettings {
   ipWhitelist: string[];
 }
 
+export interface IntegrationSettings {
+  integrationSettings: Record<string, any>;
+}
+
 export interface SystemSettings {
   appearance: AppearanceSettings;
   notifications: NotificationSettings;
   security: SecuritySettings;
   preferences: SystemPreferences;
+  integrations: IntegrationSettings;
 }

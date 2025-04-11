@@ -9,6 +9,8 @@ import ThemeSelector from '@/components/settings/ThemeSelector';
 import ColorSchemeSelector from '@/components/settings/ColorSchemeSelector';
 import { AppearanceSettings, DensityOption } from '@/types/settings-types';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useSystemSetting, useUpdateSystemSetting } from '@/hooks/settings/use-system-settings';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AppearanceTabProps {
   settings: AppearanceSettings;
@@ -16,6 +18,15 @@ interface AppearanceTabProps {
 }
 
 const AppearanceTab: React.FC<AppearanceTabProps> = ({ settings, onChange }) => {
+  // We can also use the direct hooks if we want to bypass the parent component
+  // const { data: settings, isLoading } = useSystemSetting<AppearanceSettings>('appearance');
+  // const { mutate: updateSettings } = useUpdateSystemSetting<AppearanceSettings>('appearance');
+  
+  // If we decide to load data directly in the component:
+  // if (isLoading) {
+  //   return <AppearanceTabSkeleton />;
+  // }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -127,5 +138,22 @@ const AppearanceTab: React.FC<AppearanceTabProps> = ({ settings, onChange }) => 
     </div>
   );
 };
+
+// Skeleton component that can be used when loading data
+const AppearanceTabSkeleton = () => (
+  <div className="space-y-6">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <Card key={i}>
+        <CardHeader className="pb-3">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-48 mt-1" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-24 w-full" />
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+);
 
 export default AppearanceTab;

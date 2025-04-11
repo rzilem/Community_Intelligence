@@ -17,76 +17,96 @@ import type {
   SystemPreferences, 
   SystemSettings as SystemSettingsType 
 } from '@/types/settings-types';
+import { useAllSystemSettings } from '@/hooks/settings/use-system-settings';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
+  const { settings, isLoading } = useAllSystemSettings();
   
-  // Default settings
-  const [settings, setSettings] = useState<SystemSettingsType>({
-    appearance: {
-      theme: 'system',
-      colorScheme: 'default',
-      density: 'default',
-      animationsEnabled: true,
-      fontScale: 1
-    },
-    notifications: {
-      emailNotifications: true,
-      pushNotifications: true,
-      smsNotifications: false,
-      maintenanceAlerts: true,
-      securityAlerts: true,
-      newsAndUpdates: false
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: 30,
-      passwordResetInterval: 90,
-      ipWhitelist: ['192.168.1.1', '10.0.0.1']
-    },
-    preferences: {
-      defaultAssociationId: 'assoc-1',
-      defaultDateFormat: 'MM/DD/YYYY',
-      defaultTimeFormat: '12h',
-      defaultCurrency: 'USD',
-      defaultLanguage: 'en',
-      autoSave: true,
-      sessionTimeout: 30
+  // Local state to track unsaved changes
+  const [unsavedSettings, setUnsavedSettings] = useState<SystemSettingsType>(settings);
+  
+  // Update local state when settings are loaded
+  React.useEffect(() => {
+    if (!isLoading) {
+      setUnsavedSettings(settings);
     }
-  });
+  }, [isLoading, settings]);
 
   const handleAppearanceChange = (appearanceSettings: Partial<AppearanceSettings>) => {
-    setSettings(prev => ({
+    setUnsavedSettings(prev => ({
       ...prev,
       appearance: { ...prev.appearance, ...appearanceSettings }
     }));
   };
 
   const handleNotificationsChange = (notificationsSettings: Partial<NotificationSettings>) => {
-    setSettings(prev => ({
+    setUnsavedSettings(prev => ({
       ...prev,
       notifications: { ...prev.notifications, ...notificationsSettings }
     }));
   };
 
   const handleSecurityChange = (securitySettings: Partial<SecuritySettings>) => {
-    setSettings(prev => ({
+    setUnsavedSettings(prev => ({
       ...prev,
       security: { ...prev.security, ...securitySettings }
     }));
   };
 
   const handlePreferencesChange = (preferencesSettings: Partial<SystemPreferences>) => {
-    setSettings(prev => ({
+    setUnsavedSettings(prev => ({
       ...prev,
       preferences: { ...prev.preferences, ...preferencesSettings }
     }));
   };
 
-  const handleSave = () => {
-    // In a real app, this would save the settings to the database
-    toast.success("System settings saved successfully!");
+  const handleSave = async () => {
+    try {
+      // Save all settings that have changed
+      const savePromises = Object.keys(unsavedSettings).map(async (key) => {
+        const settingKey = key as keyof SystemSettingsType;
+        const currentValue = JSON.stringify(settings[settingKey]);
+        const newValue = JSON.stringify(unsavedSettings[settingKey]);
+        
+        // Only save if the setting has changed
+        if (currentValue !== newValue) {
+          const { error } = await supabase
+            .from('system_settings')
+            .upsert({ 
+              key: settingKey, 
+              value: unsavedSettings[settingKey] 
+            }, {
+              onConflict: 'key'
+            });
+            
+          if (error) throw error;
+        }
+      });
+      
+      await Promise.all(savePromises);
+      toast.success("System settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error("Failed to save settings. Please try again.");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <PageTemplate 
+        title="System Settings" 
+        icon={<SlidersHorizontal className="h-8 w-8" />}
+        description="Configure system-wide settings and preferences."
+      >
+        <div className="space-y-6 mt-6">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </PageTemplate>
+    );
+  }
 
   return (
     <PageTemplate 
@@ -132,28 +152,28 @@ const SystemSettings = () => {
 
         <TabsContent value="appearance">
           <AppearanceTab 
-            settings={settings.appearance} 
+            settings={unsavedSettings.appearance} 
             onChange={handleAppearanceChange} 
           />
         </TabsContent>
 
         <TabsContent value="notifications">
           <NotificationsTab 
-            settings={settings.notifications} 
+            settings={unsavedSettings.notifications} 
             onChange={handleNotificationsChange} 
           />
         </TabsContent>
 
         <TabsContent value="security">
           <SecurityTab 
-            settings={settings.security} 
+            settings={unsavedSettings.security} 
             onChange={handleSecurityChange} 
           />
         </TabsContent>
 
         <TabsContent value="system">
           <SystemPreferencesTab 
-            settings={settings.preferences} 
+            settings={unsavedSettings.preferences} 
             onChange={handlePreferencesChange} 
           />
         </TabsContent>

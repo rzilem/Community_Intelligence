@@ -1737,6 +1737,30 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string | null
@@ -1900,6 +1924,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_system_setting: {
+        Args: { setting_key: string }
+        Returns: Json
+      }
       get_user_association_role: {
         Args: { association_uuid: string }
         Returns: string
@@ -1927,6 +1955,10 @@ export type Database = {
           website: string | null
           zip: string | null
         }[]
+      }
+      update_system_setting: {
+        Args: { setting_key: string; setting_value: Json }
+        Returns: undefined
       }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
