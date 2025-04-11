@@ -134,9 +134,11 @@ const OnboardingTemplates = () => {
     try {
       await updateTemplate({
         id: selectedTemplate.id,
-        name: formData.name,
-        description: formData.description || undefined,
-        template_type: formData.template_type
+        data: {
+          name: formData.name,
+          description: formData.description || undefined,
+          template_type: formData.template_type
+        }
       });
       setFormData({ name: '', description: '', template_type: 'hoa' });
       setSelectedTemplate(null);
@@ -150,7 +152,7 @@ const OnboardingTemplates = () => {
     if (!selectedTemplate) return;
 
     try {
-      await deleteTemplate({ id: selectedTemplate.id });
+      await deleteTemplate(selectedTemplate.id);
       setSelectedTemplate(null);
       setIsDeleteDialogOpen(false);
     } catch (error) {

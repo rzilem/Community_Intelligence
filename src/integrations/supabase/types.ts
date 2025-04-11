@@ -1184,10 +1184,14 @@ export type Database = {
           assigned_to: string | null
           completed_at: string | null
           created_at: string
+          due_date: string
           id: string
           notes: string | null
           project_id: string
+          stage_name: string
           status: string
+          task_name: string
+          task_type: string
           template_task_id: string
           updated_at: string
         }
@@ -1195,10 +1199,14 @@ export type Database = {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
+          due_date?: string
           id?: string
           notes?: string | null
           project_id: string
+          stage_name?: string
           status?: string
+          task_name?: string
+          task_type?: string
           template_task_id: string
           updated_at?: string
         }
@@ -1206,10 +1214,14 @@ export type Database = {
           assigned_to?: string | null
           completed_at?: string | null
           created_at?: string
+          due_date?: string
           id?: string
           notes?: string | null
           project_id?: string
+          stage_name?: string
           status?: string
+          task_name?: string
+          task_type?: string
           template_task_id?: string
           updated_at?: string
         }
@@ -1332,6 +1344,7 @@ export type Database = {
           name: string
           order_index: number
           stage_id: string
+          task_type: string
           updated_at: string
         }
         Insert: {
@@ -1343,6 +1356,7 @@ export type Database = {
           name: string
           order_index: number
           stage_id: string
+          task_type?: string
           updated_at?: string
         }
         Update: {
@@ -1354,6 +1368,7 @@ export type Database = {
           name?: string
           order_index?: number
           stage_id?: string
+          task_type?: string
           updated_at?: string
         }
         Relationships: [
@@ -1370,22 +1385,31 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          estimated_days: number | null
+          icon: string | null
           id: string
           name: string
+          template_type: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          estimated_days?: number | null
+          icon?: string | null
           id?: string
           name: string
+          template_type?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          estimated_days?: number | null
+          icon?: string | null
           id?: string
           name?: string
+          template_type?: string
           updated_at?: string
         }
         Relationships: []

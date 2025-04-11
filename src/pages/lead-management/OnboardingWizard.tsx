@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -41,14 +40,14 @@ const OnboardingWizard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { projects, getProjectTasks, getProjectLead, updateTaskStatus, createProjectFromTemplate } = useOnboardingProjects();
   const { templates } = useOnboardingTemplates();
-  const { leads = [] } = useLeads({});
+  const { leads = [] } = useLeads();
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   const [projectName, setProjectName] = useState<string>('');
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [viewMode, setViewMode] = useState<'project' | 'templates'>(projectId ? 'project' : 'templates');
+  const [viewMode, setViewMode<'project' | 'templates'>(projectId ? 'project' : 'templates');
 
   // Group the tasks by stage for display
   const [tasksByStage, setTasksByStage] = useState<any[]>([]);

@@ -125,7 +125,7 @@ export const useOnboardingProjects = () => {
   ) => {
     try {
       // Create the project
-      const { data: projectData, error: projectError } = await supabase
+      const { data: newProject, error: projectError } = await supabase
         .from('onboarding_projects')
         .insert({
           name: projectData.name,
@@ -141,7 +141,11 @@ export const useOnboardingProjects = () => {
         throw projectError;
       }
       
-      const newProject = projectData[0];
+      if (!newProject || newProject.length === 0) {
+        throw new Error('Failed to create project - no data returned');
+      }
+      
+      const createdProject = newProject[0];
       
       // Get template stages and tasks
       const { data: templateStages, error: stagesError } = await supabase
@@ -160,7 +164,7 @@ export const useOnboardingProjects = () => {
       const startDate = new Date(projectData.start_date);
       const projectTasks = [];
       
-      for (const stage of templateStages) {
+      for (const stage of templateStages || []) {
         const { data: tasks, error: tasksError } = await supabase
           .from('onboarding_tasks')
           .select('*')
@@ -172,14 +176,14 @@ export const useOnboardingProjects = () => {
           continue;
         }
         
-        for (const task of tasks) {
+        for (const task of tasks || []) {
           // Calculate due date based on task estimated days
           const daysToAdd = task.estimated_days || 1;
           const dueDate = format(addDays(startDate, dayOffset + daysToAdd), 'yyyy-MM-dd');
           dayOffset += daysToAdd;
           
           projectTasks.push({
-            project_id: newProject.id,
+            project_id: createdProject.id,
             template_task_id: task.id,
             task_name: task.name,
             stage_name: stage.name,
@@ -207,7 +211,7 @@ export const useOnboardingProjects = () => {
       toast.success('Project created with all tasks');
       refetch();
       
-      return newProject;
+      return createdProject;
     } catch (error) {
       console.error('Error in createProjectFromTemplate:', error);
       throw error;

@@ -1,3 +1,4 @@
+
 export type AnnouncementPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export interface Announcement {
@@ -29,4 +30,33 @@ export interface MessageRecipient {
   name: string;
   email: string;
   type: string;
+}
+
+export interface AssociationMemberRole {
+  id: string;
+  association_id: string;
+  user_id: string;
+  role_name: string;
+  role_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommunicationType {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface CommunicationLogEntry {
+  id: string;
+  communication_type: string;
+  received_at: string;
+  processed_at?: string;
+  status: 'received' | 'processing' | 'completed' | 'failed';
+  tracking_number: string;
+  homeowner_request_id?: string;
+  metadata?: any;
+  created_at: string;
+  updated_at: string;
 }
