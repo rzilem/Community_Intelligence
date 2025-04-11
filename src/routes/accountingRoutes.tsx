@@ -6,7 +6,6 @@ import BankAccounts from "@/pages/accounting/BankAccounts";
 import InvoiceQueue from "@/pages/accounting/InvoiceQueue";
 import InvoiceDetail from "@/pages/accounting/InvoiceDetail";
 import TransactionsAndPayments from "@/pages/accounting/TransactionsAndPayments";
-import JournalEntries from "@/pages/accounting/JournalEntries";
 import GLAccounts from "@/pages/accounting/GLAccounts";
 import BudgetPlanning from "@/pages/accounting/BudgetPlanning";
 
@@ -31,10 +30,6 @@ export const accountingRoutes: RouteObject[] = [
   {
     path: "/accounting/transactions-payments",
     element: <RequireAuth><TransactionsAndPayments /></RequireAuth>
-  },
-  {
-    path: "/accounting/journal-entries",
-    element: <RequireAuth><JournalEntries /></RequireAuth>
   },
   {
     path: "/accounting/gl-accounts",

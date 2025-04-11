@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   LayoutDashboard,
@@ -71,7 +70,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Bank Accounts', path: '/accounting/bank-accounts', icon: Building },
         { name: 'Invoice Queue', path: '/accounting/invoice-queue', icon: Receipt },
         { name: 'Transactions & Payments', path: '/accounting/transactions-payments', icon: CreditCard },
-        { name: 'Journal Entries', path: '/accounting/journal-entries', icon: BookOpen },
         { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
         { name: 'Budget Planning', path: '/accounting/budget-planning', icon: PiggyBank },
       ]
