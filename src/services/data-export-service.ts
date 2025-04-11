@@ -53,7 +53,7 @@ export const dataExportService = {
           throw new Error(`Unknown data type: ${dataType}`);
       }
       
-      // Only execute the query if we didn't do a special case above
+      // Only execute the query if we've set up the query variable
       if (dataType !== 'properties_owners') {
         const { data: exportData, error } = await query;
         

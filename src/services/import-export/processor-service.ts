@@ -267,7 +267,7 @@ async function processPropertiesOwnersImport(
       processed: processedData.length,
       succeeded: 0,
       failed: failedImports,
-      error_details: { message: e instanceof Error ? e.message : 'Unknown error' }
+      errorDetails: { message: e instanceof Error ? e.message : 'Unknown error' }
     });
     
     return {
