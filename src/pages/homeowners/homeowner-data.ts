@@ -1,3 +1,4 @@
+
 import { Homeowner } from './homeowner-types';
 
 export const mockHomeowners: Homeowner[] = [
@@ -257,6 +258,8 @@ export const mockHomeowners: Homeowner[] = [
     aclStartDate: '',
     closingDate: '2022-11-25'
   },
+  
+  // Adding more owners with varied data
   {
     id: 'RES-201',
     name: 'Alice Johnson',
