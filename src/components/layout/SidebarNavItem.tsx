@@ -18,6 +18,7 @@ interface NavItemProps {
     icon: React.ElementType;
   }[];
   showBadge?: boolean;
+  badgeCount?: number;
 }
 
 const SidebarNavItem: React.FC<NavItemProps> = ({
@@ -28,7 +29,8 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
   toggleSection,
   isActive,
   submenu,
-  showBadge = false
+  showBadge = false,
+  badgeCount = 0
 }) => {
   return (
     <div className="space-y-1">
@@ -46,6 +48,11 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
             <div className="flex items-center gap-2">
               <Icon size={20} />
               <span>{name}</span>
+              {showBadge && badgeCount > 0 && (
+                <Badge variant="warning" className="ml-1 text-xs py-0 px-1.5 min-w-5 text-center">
+                  {badgeCount > 99 ? '99+' : badgeCount}
+                </Badge>
+              )}
             </div>
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
@@ -81,7 +88,11 @@ const SidebarNavItem: React.FC<NavItemProps> = ({
         >
           <Icon size={20} />
           <span>{name}</span>
-          {showBadge && <Badge className="ml-auto bg-sidebar-accent text-white">3</Badge>}
+          {showBadge && badgeCount > 0 && (
+            <Badge variant="warning" className="ml-auto text-xs py-0 px-1.5 min-w-5 text-center">
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </Badge>
+          )}
         </Link>
       )}
     </div>

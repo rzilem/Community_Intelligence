@@ -1,15 +1,17 @@
 
-import { ReactElement } from 'react';
+import { ElementType } from 'react';
 
 export interface NavItemProps {
   name: string;
   path: string;
-  icon: React.ElementType;
+  icon: ElementType;
   submenu?: {
     name: string;
     path: string;
-    icon: React.ElementType;
+    icon: ElementType;
   }[];
+  showBadge?: boolean;
+  badgeCount?: number;
 }
 
 export interface AppLayoutProps {

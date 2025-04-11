@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, X } from 'lucide-react';
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
 import { NavItemProps } from './types';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface SidebarProps {
   isMobile: boolean;
@@ -23,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const { getCountForSection } = useNotifications();
   
   useEffect(() => {
     // Initialize active section based on current path
@@ -56,6 +59,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     return item.submenu.some(
       subItem => location.pathname === subItem.path
     );
+  };
+
+  // Function to determine whether to show a badge and how many notifications to display
+  const getNotificationCount = (itemPath: string): number => {
+    const section = itemPath.replace('/', '');
+    return getCountForSection(section);
   };
 
   return (
@@ -93,7 +102,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               toggleSection={() => toggleSection(item.path.replace('/', ''))}
               isActive={hasActiveSubmenu(item)}
               submenu={item.submenu}
-              showBadge={item.name === 'Communications'}
+              showBadge={true}
+              badgeCount={getNotificationCount(item.path)}
             />
           ))}
         </div>
