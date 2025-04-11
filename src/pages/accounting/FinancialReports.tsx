@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AssociationSelector from '@/components/associations/AssociationSelector';
+import { useState } from 'react';
 
 const reportCategories = [
   {
@@ -39,6 +40,11 @@ const reportCategories = [
 
 const FinancialReports = () => {
   const navigate = useNavigate();
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
+
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+  };
 
   return (
     <PageTemplate 
@@ -53,7 +59,10 @@ const FinancialReports = () => {
               <CardTitle>Financial Reports</CardTitle>
               <CardDescription>Generate and analyze financial statements and reports</CardDescription>
             </div>
-            <AssociationSelector className="md:self-end" />
+            <AssociationSelector 
+              className="md:self-end" 
+              onAssociationChange={handleAssociationChange}
+            />
           </div>
         </CardHeader>
         <CardContent>

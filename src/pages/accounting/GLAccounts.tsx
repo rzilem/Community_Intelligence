@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Database, Search, ArrowUpDown, Download, PlusCircle } from 'lucide-react';
@@ -43,6 +42,11 @@ const GLAccounts = () => {
   const [accountType, setAccountType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('master');
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>(['code', 'description', 'type', 'category']);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
+
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+  };
 
   const filteredAccounts = mockGLAccounts.filter(account => {
     const matchesSearch = account.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -76,7 +80,10 @@ const GLAccounts = () => {
               <CardTitle>Chart of Accounts</CardTitle>
               <CardDescription>Manage general ledger accounts for your associations</CardDescription>
             </div>
-            <AssociationSelector className="md:self-end" />
+            <AssociationSelector 
+              className="md:self-end" 
+              onAssociationChange={handleAssociationChange}
+            />
           </div>
         </CardHeader>
         <CardContent>
