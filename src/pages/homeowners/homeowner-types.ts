@@ -18,4 +18,17 @@ export interface Homeowner {
   unitNumber?: string;
   property?: string; // Adding this for backward compatibility
   unit?: string; // Adding this for backward compatibility
+  tags?: string[]; // Add missing property used in useHomeownerData
+  violations?: string[]; // Add missing property used in useHomeownerData
+  lastContact?: { // Add missing property used in useHomeownerData
+    called: string;
+    visit: string;
+    email: string;
+  };
+  notes?: { // Add missing property used in useHomeownerData
+    type: 'system' | 'manual';
+    author: string;
+    content: string;
+    date: string;
+  }[];
 }
