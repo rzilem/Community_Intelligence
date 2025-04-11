@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Book, Map, Cube, Package } from 'lucide-react';
+import { Search, Plus, Book, Map, Package, Boxes } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -64,7 +64,7 @@ const DocsCenterAddOns = () => {
       case 'book':
         return <Book className="h-4 w-4 mr-2 text-blue-500" />;
       case '3d-map':
-        return <Cube className="h-4 w-4 mr-2 text-purple-500" />;
+        return <Boxes className="h-4 w-4 mr-2 text-purple-500" />;
       case 'map':
         return <Map className="h-4 w-4 mr-2 text-green-500" />;
       case 'package':

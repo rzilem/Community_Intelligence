@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { FileText, ClipboardList, BookOpen, Map, Cube, Package } from 'lucide-react';
+import { FileText, ClipboardList, BookOpen, Map, Package } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import DocsCenterDocuments from '@/components/resale/docs-center/DocsCenterDocuments';
 import DocsCenterTemplates from '@/components/resale/docs-center/DocsCenterTemplates';
