@@ -40,8 +40,15 @@ export const dataImportService = {
       }
       
       const processedData = data.map(row => {
-        const mappedRow: Record<string, any> = { association_id: associationId };
+        // Create a new object to hold mapped data
+        const mappedRow: Record<string, any> = {};
         
+        // Only add association_id for non-association imports
+        if (dataType !== 'associations') {
+          mappedRow.association_id = associationId;
+        }
+        
+        // Map fields from the source data to destination fields
         Object.entries(mappings).forEach(([column, field]) => {
           if (field && row[column] !== undefined) {
             mappedRow[field] = row[column];

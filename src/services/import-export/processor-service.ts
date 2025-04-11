@@ -57,10 +57,21 @@ export const processorService = {
     let failedImports = 0;
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
     
-    for (let i = 0; i < processedData.length; i += batchSize) {
-      const batch = processedData.slice(i, i + batchSize);
+    // Process data by adding association_id to non-association tables
+    const finalProcessedData = processedData.map(row => {
+      // Don't add association_id when importing associations
+      if (dataType === 'associations') {
+        return { ...row };
+      }
+      // Add association_id to all other tables
+      return { ...row, association_id: associationId };
+    });
+    
+    for (let i = 0; i < finalProcessedData.length; i += batchSize) {
+      const batch = finalProcessedData.slice(i, i + batchSize);
       
       try {
+        console.log(`Importing batch to ${tableName}:`, batch);
         const { data: insertedData, error } = await supabase
           .from(tableName as any)
           .insert(batch as any)
