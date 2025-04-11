@@ -31,4 +31,5 @@ export interface Homeowner {
     content: string;
     date: string;
   }[];
+  closingDate?: string; // Added the missing closingDate property
 }

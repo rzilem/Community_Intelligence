@@ -34,4 +34,5 @@ export interface Homeowner {
   lastPayment?: { amount: number; date: string };
   aclStartDate?: string;
   unitNumber?: string;
+  closingDate?: string; // Added the missing closingDate property
 }
