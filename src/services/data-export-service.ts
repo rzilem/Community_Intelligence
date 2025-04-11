@@ -53,22 +53,21 @@ export const dataExportService = {
           throw new Error(`Unknown data type: ${dataType}`);
       }
       
-      // Only execute the query if we've set up the query variable
-      if (dataType !== 'properties_owners') {
-        const { data: exportData, error } = await query;
-        
-        if (error) {
-          console.error(`Error exporting ${dataType} data:`, error);
-          throw error;
-        }
-        
-        return {
-          success: true,
-          message: `${dataType} data exported successfully in ${format} format`,
-          fileName: `${dataType}_export.${format}`,
-          data: exportData
-        };
+      // Only execute the query if we're not handling a special case like properties_owners
+      // which has already been processed and returned above
+      const { data: exportData, error } = await query;
+      
+      if (error) {
+        console.error(`Error exporting ${dataType} data:`, error);
+        throw error;
       }
+      
+      return {
+        success: true,
+        message: `${dataType} data exported successfully in ${format} format`,
+        fileName: `${dataType}_export.${format}`,
+        data: exportData
+      };
     } catch (error) {
       console.error('Error exporting data:', error);
       throw error;
