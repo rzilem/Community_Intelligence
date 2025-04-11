@@ -5,6 +5,7 @@ import { SlidersHorizontal, Save, Palette, Bell, Shield, Database, Puzzle } from
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client'; // Add the missing import
 import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';

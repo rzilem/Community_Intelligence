@@ -84,11 +84,12 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
   
   return useMutation({
     mutationFn: async (newValue: T): Promise<void> => {
+      // Fix for TypeScript error: explicitly specify the type structure
       const { error } = await supabase
         .from('system_settings')
         .upsert({ 
           key, 
-          value: newValue 
+          value: newValue as any // Use type assertion to avoid type checking here
         }, {
           onConflict: 'key'
         });
@@ -130,7 +131,8 @@ export const useAllSystemSettings = () => {
         
         data.forEach((item) => {
           const key = item.key as SettingKey;
-          newSettings[key] = item.value;
+          // Fix: Use type assertion to handle the conversion properly
+          newSettings[key] = item.value as any;
         });
         
         setSettings(newSettings);
