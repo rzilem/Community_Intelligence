@@ -366,6 +366,53 @@ export type Database = {
           },
         ]
       }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          clicked_date: string | null
+          created_at: string
+          email: string
+          id: string
+          lead_id: string | null
+          opened_date: string | null
+          sent_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          clicked_date?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          lead_id?: string | null
+          opened_date?: string | null
+          sent_date?: string | null
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          clicked_date?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          lead_id?: string | null
+          opened_date?: string | null
+          sent_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -408,6 +455,7 @@ export type Database = {
         Row: {
           communication_type: string
           created_at: string
+          homeowner_request_id: string | null
           id: string
           metadata: Json | null
           processed_at: string | null
@@ -419,6 +467,7 @@ export type Database = {
         Insert: {
           communication_type: string
           created_at?: string
+          homeowner_request_id?: string | null
           id?: string
           metadata?: Json | null
           processed_at?: string | null
@@ -430,6 +479,7 @@ export type Database = {
         Update: {
           communication_type?: string
           created_at?: string
+          homeowner_request_id?: string | null
           id?: string
           metadata?: Json | null
           processed_at?: string | null
@@ -438,7 +488,15 @@ export type Database = {
           tracking_number?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "communications_log_homeowner_request_id_fkey"
+            columns: ["homeowner_request_id"]
+            isOneToOne: false
+            referencedRelation: "homeowner_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compliance_issues: {
         Row: {
@@ -569,12 +627,132 @@ export type Database = {
           },
         ]
       }
+      email_campaigns: {
+        Row: {
+          body: string
+          click_count: number
+          created_at: string
+          id: string
+          name: string
+          open_count: number
+          recipient_count: number
+          scheduled_date: string | null
+          sent_date: string | null
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          name: string
+          open_count?: number
+          recipient_count?: number
+          scheduled_date?: string | null
+          sent_date?: string | null
+          status: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          click_count?: number
+          created_at?: string
+          id?: string
+          name?: string
+          open_count?: number
+          recipient_count?: number
+          scheduled_date?: string | null
+          sent_date?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      email_workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          settings: Json | null
+          template_id: string | null
+          trigger_event: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          settings?: Json | null
+          template_id?: string | null
+          trigger_event?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          settings?: Json | null
+          template_id?: string | null
+          trigger_event?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_workflows_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
           association_id: string
           created_at: string
           description: string
+          html_content: string | null
           id: string
           priority: string
           property_id: string
@@ -590,6 +768,7 @@ export type Database = {
           association_id: string
           created_at?: string
           description: string
+          html_content?: string | null
           id?: string
           priority?: string
           property_id: string
@@ -605,6 +784,7 @@ export type Database = {
           association_id?: string
           created_at?: string
           description?: string
+          html_content?: string | null
           id?: string
           priority?: string
           property_id?: string
