@@ -19,38 +19,52 @@ export interface AssociationMember {
 export const associationMemberService = {
   // Fetch board and committee members for an association
   getAssociationMembers: async (associationId: string) => {
-    const { data, error } = await supabase
-      .from('association_member_roles')
-      .select(`
-        *,
-        profiles:user_id (
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .eq('association_id', associationId)
-      .order('role_type')
-      .order('role_name');
+    try {
+      const { data, error } = await supabase
+        .from('association_member_roles')
+        .select('*')
+        .eq('association_id', associationId)
+        .order('role_type')
+        .order('role_name');
 
-    if (error) {
-      console.error('Error fetching association members:', error);
+      if (error) {
+        console.error('Error fetching association members:', error);
+        throw error;
+      }
+
+      // For each member, fetch their profile information
+      const membersWithProfiles = await Promise.all(
+        data.map(async (member) => {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, email')
+            .eq('id', member.user_id)
+            .single();
+
+          if (profileError) {
+            console.warn(`Could not fetch profile for user ${member.user_id}:`, profileError);
+          }
+
+          return {
+            id: member.id,
+            user_id: member.user_id,
+            association_id: member.association_id,
+            role_type: member.role_type,
+            role_name: member.role_name,
+            first_name: profileData?.first_name || '',
+            last_name: profileData?.last_name || '',
+            email: profileData?.email || '',
+            created_at: member.created_at,
+            updated_at: member.updated_at
+          };
+        })
+      );
+
+      return membersWithProfiles as AssociationMember[];
+    } catch (error) {
+      console.error('Error in getAssociationMembers:', error);
       throw error;
     }
-
-    // Transform the data to flatten the profiles information
-    return data.map(member => ({
-      id: member.id,
-      user_id: member.user_id,
-      association_id: member.association_id,
-      role_type: member.role_type,
-      role_name: member.role_name,
-      first_name: member.profiles?.first_name || '',
-      last_name: member.profiles?.last_name || '',
-      email: member.profiles?.email || '',
-      created_at: member.created_at,
-      updated_at: member.updated_at
-    })) as AssociationMember[];
   },
 
   // Add a new board or committee member
@@ -60,38 +74,48 @@ export const associationMemberService = {
     role_type: 'board' | 'committee';
     role_name: string;
   }) => {
-    const { data, error } = await supabase
-      .from('association_member_roles')
-      .insert(memberData)
-      .select(`
-        *,
-        profiles:user_id (
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .single();
+    try {
+      // First, insert the member role
+      const { data, error } = await supabase
+        .from('association_member_roles')
+        .insert(memberData)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error adding association member:', error);
+      if (error) {
+        console.error('Error adding association member:', error);
+        throw error;
+      }
+
+      // Then fetch the profile data for the user
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', memberData.user_id)
+        .single();
+
+      if (profileError) {
+        console.warn(`Could not fetch profile for user ${memberData.user_id}:`, profileError);
+      }
+
+      toast.success(`Member added as ${memberData.role_name} successfully`);
+
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        association_id: data.association_id,
+        role_type: data.role_type,
+        role_name: data.role_name,
+        first_name: profileData?.first_name || '',
+        last_name: profileData?.last_name || '',
+        email: profileData?.email || '',
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      } as AssociationMember;
+    } catch (error) {
+      console.error('Error in addAssociationMember:', error);
       throw error;
     }
-
-    toast.success(`Member added as ${memberData.role_name} successfully`);
-
-    return {
-      id: data.id,
-      user_id: data.user_id,
-      association_id: data.association_id,
-      role_type: data.role_type,
-      role_name: data.role_name,
-      first_name: data.profiles?.first_name || '',
-      last_name: data.profiles?.last_name || '',
-      email: data.profiles?.email || '',
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    } as AssociationMember;
   },
 
   // Update an existing board or committee member
@@ -99,39 +123,48 @@ export const associationMemberService = {
     role_type: 'board' | 'committee';
     role_name: string;
   }) => {
-    const { data, error } = await supabase
-      .from('association_member_roles')
-      .update(memberData)
-      .eq('id', id)
-      .select(`
-        *,
-        profiles:user_id (
-          first_name,
-          last_name,
-          email
-        )
-      `)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('association_member_roles')
+        .update(memberData)
+        .eq('id', id)
+        .select()
+        .single();
 
-    if (error) {
-      console.error('Error updating association member:', error);
+      if (error) {
+        console.error('Error updating association member:', error);
+        throw error;
+      }
+
+      // Fetch the profile data for the user
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, email')
+        .eq('id', data.user_id)
+        .single();
+
+      if (profileError) {
+        console.warn(`Could not fetch profile for user ${data.user_id}:`, profileError);
+      }
+
+      toast.success(`Member updated successfully`);
+
+      return {
+        id: data.id,
+        user_id: data.user_id,
+        association_id: data.association_id,
+        role_type: data.role_type,
+        role_name: data.role_name,
+        first_name: profileData?.first_name || '',
+        last_name: profileData?.last_name || '',
+        email: profileData?.email || '',
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      } as AssociationMember;
+    } catch (error) {
+      console.error('Error in updateAssociationMember:', error);
       throw error;
     }
-
-    toast.success(`Member updated successfully`);
-
-    return {
-      id: data.id,
-      user_id: data.user_id,
-      association_id: data.association_id,
-      role_type: data.role_type,
-      role_name: data.role_name,
-      first_name: data.profiles?.first_name || '',
-      last_name: data.profiles?.last_name || '',
-      email: data.profiles?.email || '',
-      created_at: data.created_at,
-      updated_at: data.updated_at
-    } as AssociationMember;
   },
 
   // Remove a board or committee member
