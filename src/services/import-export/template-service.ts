@@ -24,6 +24,7 @@ export const templateService = {
         email: 'Email Address',
         phone: 'Phone Number',
         move_in_date: 'Move-in Date (YYYY-MM-DD)',
+        closing_date: 'Closing Date (YYYY-MM-DD)',
         is_primary: 'Is Primary Owner (true/false)',
         emergency_contact: 'Emergency Contact'
       },

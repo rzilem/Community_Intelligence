@@ -56,6 +56,7 @@ export const useMappingFields = (
           { value: 'owner.email', label: 'Owner: Email Address' },
           { value: 'owner.phone', label: 'Owner: Phone Number' },
           { value: 'owner.move_in_date', label: 'Owner: Move-in Date' },
+          { value: 'owner.closing_date', label: 'Owner: Closing Date' },
           { value: 'owner.is_primary', label: 'Owner: Is Primary Owner' },
           { value: 'owner.emergency_contact', label: 'Owner: Emergency Contact' }
         ]);
@@ -68,6 +69,7 @@ export const useMappingFields = (
           { value: 'phone', label: 'Phone Number' },
           { value: 'property_id', label: 'Property ID' },
           { value: 'move_in_date', label: 'Move-in Date' },
+          { value: 'closing_date', label: 'Closing Date' },
           { value: 'is_primary', label: 'Is Primary Owner' },
           { value: 'emergency_contact', label: 'Emergency Contact' }
         ]);
