@@ -47,6 +47,35 @@ const Associations = () => {
   const activeAssociations = filteredAssociations.filter(a => !a.is_archived);
   const inactiveAssociations = filteredAssociations.filter(a => a.is_archived);
   
+  // Handle saving a new association
+  const handleSaveAssociation = (data: AssociationFormData) => {
+    // Map form data to the expected Association format
+    const newAssociation: Partial<Association> = {
+      name: data.name,
+      property_type: data.type,
+      total_units: data.units,
+      city: data.city,
+      state: data.state,
+      address: data.address,
+      zip: data.zipCode,
+      phone: data.phone,
+      contact_email: data.email
+    };
+    
+    createAssociation(newAssociation);
+    toast.success(`Association "${data.name}" created successfully`);
+  };
+  
+  // Handle editing an existing association
+  const handleEditAssociation = (id: string, data: Partial<Association>) => {
+    updateAssociation({ id, data });
+  };
+  
+  // Handle deleting an association
+  const handleDeleteAssociation = (id: string) => {
+    deleteAssociation(id);
+  };
+  
   const getAssociationStatusBadge = (isArchived: boolean) => (
     <Badge 
       variant={isArchived ? "outline" : "default"}
