@@ -81,9 +81,7 @@ const ResaleCalendar = () => {
       }
     >
       <div className="mt-6">
-        {/* Add the critical info tabs above the calendar */}
         <CriticalInfoTabs />
-        
         <ResaleCalendarView filters={filters} />
       </div>
     </PageTemplate>

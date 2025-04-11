@@ -27,17 +27,11 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentWeek, setCurrentWeek] = useState<Date[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const {
     events,
-    newEvent,
-    setNewEvent,
     eventsLoading,
-    isCreating,
-    handleCreateEvent,
     handleDeleteEvent,
-    hasAssociation
   } = useResaleCalendarEvents({
     date: selectedDate,
     filters
@@ -58,40 +52,19 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
     setCurrentWeek(weekDays);
   }, [selectedDate]);
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-  };
-
-  const handleSubmitEvent = () => {
-    const success = handleCreateEvent();
-    if (success) {
-      setIsDialogOpen(false);
-    }
-    return true;
-  };
-
   return (
     <div className={cn("space-y-4", className)}>
       <Card>
         <ResaleCalendarHeader
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
-          isDialogOpen={isDialogOpen}
-          setIsDialogOpen={setIsDialogOpen}
-          newEvent={newEvent}
-          setNewEvent={setNewEvent}
-          handleSubmitEvent={handleSubmitEvent}
-          isCreating={isCreating}
-          hasAssociation={hasAssociation}
         />
         <CardContent className="p-0">
           <ResaleWeekView
             currentWeek={currentWeek}
             events={events}
             eventsLoading={eventsLoading}
-            setIsDialogOpen={setIsDialogOpen}
             handleDeleteEvent={handleDeleteEvent}
-            handleDateSelect={handleDateSelect}
           />
         </CardContent>
       </Card>
