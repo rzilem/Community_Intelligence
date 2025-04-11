@@ -25,16 +25,13 @@ export const fetchResaleTimeSeriesData = async (timeRange: string): Promise<Time
 
 export const fetchResaleSourceData = async (): Promise<LeadSourceData[]> => {
   // Mock implementation for source distribution data
-  // Updated to include the percentage property as required by the LeadSourceData type
-  const sources = [
+  return [
     { source: 'Real Estate Agents', count: 45, percentage: 45 },
     { source: 'Title Companies', count: 28, percentage: 28 },
     { source: 'Homeowners', count: 15, percentage: 15 },
     { source: 'Property Managers', count: 8, percentage: 8 },
     { source: 'Other', count: 4, percentage: 4 }
   ];
-  
-  return sources;
 };
 
 export const fetchResaleConversionData = async (): Promise<ConversionRateData[]> => {
