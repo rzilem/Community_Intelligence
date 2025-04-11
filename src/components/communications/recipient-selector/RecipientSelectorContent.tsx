@@ -17,6 +17,7 @@ interface RecipientSelectorContentProps {
   handleSelectAll: (selected: boolean) => void;
   handleSelectAllForAssociation: (associationId: string, selected: boolean) => void;
   handleSelectGroup: (groupId: string) => void;
+  showAssociationGroups?: boolean; // New prop to control showing association groups
 }
 
 const RecipientSelectorContent: React.FC<RecipientSelectorContentProps> = ({
@@ -29,6 +30,7 @@ const RecipientSelectorContent: React.FC<RecipientSelectorContentProps> = ({
   handleSelectAll,
   handleSelectAllForAssociation,
   handleSelectGroup,
+  showAssociationGroups = true, // Default to showing all associations
 }) => {
   const groupedByAssociation = associations.map(association => {
     const groups = recipientGroups.filter(group => group.association_id === association.id);
@@ -63,23 +65,27 @@ const RecipientSelectorContent: React.FC<RecipientSelectorContentProps> = ({
             />
           </CommandGroup>
           
-          <CommandSeparator />
-          
-          <ScrollArea className="h-[300px]">
-            {groupedByAssociation.map(({ association, groups, allSelected, someSelected }) => (
-              <CommandGroup key={association.id} heading={association.name}>
-                <RecipientAssociationGroup
-                  association={association}
-                  groups={groups}
-                  allSelected={allSelected}
-                  someSelected={someSelected}
-                  selectedGroups={selectedGroups}
-                  handleSelectAllForAssociation={handleSelectAllForAssociation}
-                  handleSelectGroup={handleSelectGroup}
-                />
-              </CommandGroup>
-            ))}
-          </ScrollArea>
+          {showAssociationGroups && (
+            <>
+              <CommandSeparator />
+              
+              <ScrollArea className="h-[300px]">
+                {groupedByAssociation.map(({ association, groups, allSelected, someSelected }) => (
+                  <CommandGroup key={association.id} heading={association.name}>
+                    <RecipientAssociationGroup
+                      association={association}
+                      groups={groups}
+                      allSelected={allSelected}
+                      someSelected={someSelected}
+                      selectedGroups={selectedGroups}
+                      handleSelectAllForAssociation={handleSelectAllForAssociation}
+                      handleSelectGroup={handleSelectGroup}
+                    />
+                  </CommandGroup>
+                ))}
+              </ScrollArea>
+            </>
+          )}
         </>
       )}
     </CommandList>

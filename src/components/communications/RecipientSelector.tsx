@@ -10,9 +10,10 @@ import RecipientSelectorContent from './recipient-selector/RecipientSelectorCont
 
 interface RecipientSelectorProps {
   onSelectionChange: (selectedGroups: string[]) => void;
+  associationId?: string; // New prop to filter by association
 }
 
-const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange }) => {
+const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange, associationId }) => {
   const {
     open,
     setOpen,
@@ -26,7 +27,7 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
     handleSelectAll,
     handleSelectCommonType,
     removeGroup
-  } = useRecipientSelector(onSelectionChange);
+  } = useRecipientSelector(onSelectionChange, associationId);
 
   return (
     <div className="space-y-2">
@@ -65,6 +66,7 @@ const RecipientSelector: React.FC<RecipientSelectorProps> = ({ onSelectionChange
               handleSelectAll={handleSelectAll}
               handleSelectAllForAssociation={handleSelectAllForAssociation}
               handleSelectGroup={handleSelectGroup}
+              showAssociationGroups={!associationId} // Only show association groups if no associationId is provided
             />
           </Command>
         </PopoverContent>

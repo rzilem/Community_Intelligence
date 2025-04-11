@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Mail, 
@@ -23,6 +22,7 @@ import { toast } from 'sonner';
 import MessageTemplateCard from '@/components/communications/MessageTemplateCard';
 import MessageHistoryTable, { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
 import RecipientSelector from '@/components/communications/RecipientSelector';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 import { communicationService } from '@/services/communication-service';
 
 const mockHistoryData: MessageHistoryItem[] = [
@@ -110,6 +110,7 @@ const MessagingPage = () => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [associations, setAssociations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
 
   const [searchHistory, setSearchHistory] = useState('');
   const [searchTemplates, setSearchTemplates] = useState('');
@@ -119,6 +120,9 @@ const MessagingPage = () => {
       try {
         const data = await communicationService.getAllAssociations();
         setAssociations(data);
+        if (data.length > 0) {
+          setSelectedAssociationId(data[0].id);
+        }
       } catch (error) {
         console.error('Error fetching associations:', error);
       }
@@ -126,6 +130,11 @@ const MessagingPage = () => {
 
     fetchAssociations();
   }, []);
+
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+    setSelectedGroups([]); // Clear selected groups when association changes
+  };
 
   const handleViewMessage = (id: string) => {
     console.log(`Viewing message ${id}`);
@@ -164,15 +173,10 @@ const MessagingPage = () => {
     setIsLoading(true);
 
     try {
-      // Get the first association from the first selected group for simplicity
-      // In a real implementation, you'd handle multiple associations differently
-      const firstGroup = await communicationService.getRecipientGroups('');
-      const associationId = firstGroup && firstGroup.length > 0 ? firstGroup[0].association_id : associations[0]?.id;
-
       await communicationService.sendMessage({
         subject,
         content: messageContent,
-        association_id: associationId,
+        association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
         type: messageType
       });
@@ -227,17 +231,31 @@ const MessagingPage = () => {
               </div>
             </div>
             
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="block font-medium">Recipients</label>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="block font-medium">Association</label>
+                <AssociationSelector 
+                  onAssociationChange={handleAssociationChange}
+                  initialAssociationId={selectedAssociationId}
+                  label={false}
+                />
               </div>
-              <RecipientSelector onSelectionChange={setSelectedGroups} />
-              {selectedGroups.length === 0 && (
-                <div className="flex items-center border rounded-md p-4 text-amber-600 bg-amber-50 border-amber-200">
-                  <AlertTriangle className="h-5 w-5 mr-2" />
-                  <span>No recipients selected</span>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="block font-medium">Recipients</label>
                 </div>
-              )}
+                <RecipientSelector 
+                  onSelectionChange={setSelectedGroups} 
+                  associationId={selectedAssociationId}
+                />
+                {selectedGroups.length === 0 && (
+                  <div className="flex items-center border rounded-md p-4 text-amber-600 bg-amber-50 border-amber-200">
+                    <AlertTriangle className="h-5 w-5 mr-2" />
+                    <span>No recipients selected</span>
+                  </div>
+                )}
+              </div>
             </div>
             
             <div className="space-y-2">
