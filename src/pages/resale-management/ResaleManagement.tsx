@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { ScrollText, ArrowRight } from 'lucide-react';
+import { ScrollText, ArrowRight, BarChart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -37,6 +37,12 @@ const ResaleManagement = () => {
       title: "Order Queue",
       description: "Track and manage resale document orders and requests.",
       path: "/resale-management/order-queue"
+    },
+    {
+      title: "Analytics",
+      description: "View performance metrics and reports for resale operations.",
+      path: "/resale-management/analytics",
+      icon: <BarChart className="h-4 w-4 mr-2" />
     }
   ];
 
@@ -53,6 +59,7 @@ const ResaleManagement = () => {
             <p className="text-gray-500 mb-4">{option.description}</p>
             <Link to={option.path}>
               <Button variant="outline" className="w-full flex justify-between">
+                {option.icon ? option.icon : null}
                 View {option.title}
                 <ArrowRight className="h-4 w-4" />
               </Button>

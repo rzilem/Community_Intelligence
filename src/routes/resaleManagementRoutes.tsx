@@ -9,6 +9,7 @@ import PropertyInspection from "@/pages/resale-management/PropertyInspection";
 import AccountStatements from "@/pages/resale-management/AccountStatements";
 import TRECForms from "@/pages/resale-management/TRECForms";
 import OrderQueue from "@/pages/resale-management/OrderQueue";
+import ResaleAnalytics from "@/pages/resale-management/ResaleAnalytics";
 
 // Resale Management Routes
 export const resaleManagementRoutes: RouteObject[] = [
@@ -43,5 +44,9 @@ export const resaleManagementRoutes: RouteObject[] = [
   {
     path: "/resale-management/order-queue",
     element: <RequireAuth><OrderQueue /></RequireAuth>
+  },
+  {
+    path: "/resale-management/analytics",
+    element: <RequireAuth><ResaleAnalytics /></RequireAuth>
   }
 ];
