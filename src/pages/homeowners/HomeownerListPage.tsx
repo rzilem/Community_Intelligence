@@ -48,7 +48,7 @@ const HomeownerListPage = () => {
     const matchesSearch = 
       homeowner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       homeowner.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      homeowner.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
+      (homeowner.propertyAddress && homeowner.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()));
       
     const matchesAssociation = filterAssociation === 'all' || homeowner.association === filterAssociation;
     const matchesStatus = filterStatus === 'all' || homeowner.status === filterStatus;
@@ -77,7 +77,7 @@ const HomeownerListPage = () => {
               <div className="flex-1 relative max-w-md">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search owners..." 
+                  placeholder="Search by name, email, or address..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"

@@ -1,4 +1,4 @@
 
-import ResidentListPage from './residents/ResidentListPage';
+import HomeownerListPage from './homeowners/HomeownerListPage';
 
-export default ResidentListPage;
+export default HomeownerListPage;

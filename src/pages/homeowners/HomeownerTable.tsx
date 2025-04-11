@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Homeowner } from './homeowner-types';
 import { Badge } from '@/components/ui/badge';
@@ -95,7 +96,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
                     className="cursor-pointer hover:text-primary hover:underline"
                     onClick={() => navigate(`/homeowners/${homeowner.id}`)}
                   >
-                    {homeowner.property || homeowner.propertyId}
+                    {homeowner.property || homeowner.propertyId || homeowner.propertyAddress}
                   </span>
                 </TableCell>
               )}
@@ -123,7 +124,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
               )}
               {selectedColumns.includes('balance') && (
                 <TableCell className={homeowner.balance > 0 ? 'text-red-600 font-medium' : ''}>
-                  ${homeowner.balance.toFixed(2)}
+                  ${homeowner.balance?.toFixed(2) || '0.00'}
                 </TableCell>
               )}
               {selectedColumns.includes('lastPayment') && (
@@ -143,6 +144,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({ homeowners, selectedCol
                       size="sm"
                       variant="ghost"
                       tooltip="Edit homeowner"
+                      onClick={() => navigate(`/homeowners/${homeowner.id}`)}
                     >
                       <Edit className="h-4 w-4" />
                     </TooltipButton>
