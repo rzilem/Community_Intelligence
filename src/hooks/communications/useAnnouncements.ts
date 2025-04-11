@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Announcement } from '@/types/communication-types';
+import { Announcement, AnnouncementPriority } from '@/types/communication-types';
 import { toast } from 'sonner';
 
 export const useAnnouncements = () => {
@@ -22,7 +22,13 @@ export const useAnnouncements = () => {
         throw new Error(error.message);
       }
 
-      setAnnouncements(data || []);
+      // Type cast the data to match our Announcement interface
+      const typedData = data?.map(item => ({
+        ...item,
+        priority: (item.priority || 'normal') as AnnouncementPriority
+      })) || [];
+      
+      setAnnouncements(typedData);
     } catch (error: any) {
       console.error('Error fetching announcements:', error);
       setError(error);
@@ -44,9 +50,15 @@ export const useAnnouncements = () => {
         throw new Error(error.message);
       }
 
-      setAnnouncements((prev) => [data, ...prev]);
+      // Type cast to ensure priority is of type AnnouncementPriority
+      const typedData = {
+        ...data,
+        priority: data.priority as AnnouncementPriority
+      };
+
+      setAnnouncements((prev) => [typedData, ...prev]);
       toast.success('Announcement created successfully');
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Error creating announcement:', error);
       toast.error(`Failed to create announcement: ${error.message}`);
@@ -68,11 +80,17 @@ export const useAnnouncements = () => {
         throw new Error(error.message);
       }
 
+      // Type cast to ensure priority is of type AnnouncementPriority
+      const typedData = {
+        ...data,
+        priority: data.priority as AnnouncementPriority
+      };
+
       setAnnouncements((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, ...data } : item))
+        prev.map((item) => (item.id === id ? { ...item, ...typedData } : item))
       );
       toast.success('Announcement updated successfully');
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Error updating announcement:', error);
       toast.error(`Failed to update announcement: ${error.message}`);

@@ -1,11 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { CommunicationLogEntry, CommunicationType } from '@/types/communication-types';
+import { CommunicationLogEntry } from '@/types/communication-types';
 
 /**
  * Gets the communications log entries, optionally filtered by type
  */
-export async function getCommunicationLogs(type?: CommunicationType): Promise<CommunicationLogEntry[]> {
+export async function getCommunicationLogs(type?: string): Promise<CommunicationLogEntry[]> {
   try {
     let query = supabase
       .from('communications_log')
@@ -79,7 +79,7 @@ export async function getNextTrackingNumber(): Promise<string> {
  */
 export async function registerCommunication(
   trackingNumber: string, 
-  communicationType: CommunicationType, 
+  communicationType: string, 
   metadata: Record<string, any>
 ): Promise<CommunicationLogEntry | null> {
   try {

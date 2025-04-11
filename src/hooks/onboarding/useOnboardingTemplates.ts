@@ -1,8 +1,8 @@
 
+import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
 import { OnboardingTemplate, OnboardingStage, OnboardingTask } from '@/types/onboarding-types';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 export const useOnboardingTemplates = () => {
   const { 
@@ -14,36 +14,35 @@ export const useOnboardingTemplates = () => {
     order: { column: 'name', ascending: true }
   });
 
+  // Create a new template
   const createTemplate = useSupabaseCreate<OnboardingTemplate>('onboarding_templates', {
     onSuccess: () => {
       toast.success('Template created successfully');
       refetch();
     },
-    onError: (error) => {
-      toast.error(`Failed to create template: ${error.message}`);
-    }
+    showSuccessToast: false,
+    showErrorToast: true
   });
 
+  // Update a template
   const updateTemplate = useSupabaseUpdate<OnboardingTemplate>('onboarding_templates', {
     onSuccess: () => {
       toast.success('Template updated successfully');
       refetch();
     },
-    onError: (error) => {
-      toast.error(`Failed to update template: ${error.message}`);
-    }
+    showSuccessToast: false,
+    showErrorToast: true
   });
 
-  const deleteTemplate = useSupabaseDelete<OnboardingTemplate>('onboarding_templates', {
+  // Delete a template
+  const deleteTemplate = useSupabaseDelete('onboarding_templates', {
     onSuccess: () => {
       toast.success('Template deleted successfully');
       refetch();
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete template: ${error.message}`);
     }
   });
 
+  // Get template stages
   const getTemplateStages = async (templateId: string): Promise<OnboardingStage[]> => {
     try {
       const { data, error } = await supabase
@@ -63,8 +62,9 @@ export const useOnboardingTemplates = () => {
       return [];
     }
   };
-
-  const getTasksForStage = async (stageId: string): Promise<OnboardingTask[]> => {
+  
+  // Get stage tasks
+  const getStageTasks = async (stageId: string): Promise<OnboardingTask[]> => {
     try {
       const { data, error } = await supabase
         .from('onboarding_tasks')
@@ -76,20 +76,28 @@ export const useOnboardingTemplates = () => {
         toast.error(`Error loading tasks: ${error.message}`);
         throw error;
       }
+
+      // Type cast to ensure task_type is of the correct type
+      const typedData = data?.map(task => ({
+        ...task,
+        task_type: (task.task_type || 'team') as 'client' | 'team'
+      })) || [];
       
-      return data || [];
+      return typedData;
     } catch (error) {
       console.error('Error fetching stage tasks:', error);
       return [];
     }
   };
-
-  const createStage = async (stage: Omit<OnboardingStage, 'id' | 'created_at' | 'updated_at'>) => {
+  
+  // Create a new stage
+  const createStage = async (stage: Omit<OnboardingStage, 'id' | 'created_at' | 'updated_at'>): Promise<OnboardingStage> => {
     try {
       const { data, error } = await supabase
         .from('onboarding_stages')
-        .insert(stage)
-        .select();
+        .insert([stage])
+        .select()
+        .single();
         
       if (error) {
         toast.error(`Error creating stage: ${error.message}`);
@@ -97,27 +105,35 @@ export const useOnboardingTemplates = () => {
       }
       
       toast.success('Stage created successfully');
-      return data?.[0];
+      return data;
     } catch (error) {
       console.error('Error creating stage:', error);
       throw error;
     }
   };
-
-  const createTask = async (task: Omit<OnboardingTask, 'id' | 'created_at' | 'updated_at'>) => {
+  
+  // Create a new task
+  const createTask = async (task: Omit<OnboardingTask, 'id' | 'created_at' | 'updated_at'>): Promise<OnboardingTask> => {
     try {
       const { data, error } = await supabase
         .from('onboarding_tasks')
-        .insert(task)
-        .select();
+        .insert([task])
+        .select()
+        .single();
         
       if (error) {
         toast.error(`Error creating task: ${error.message}`);
         throw error;
       }
       
+      // Type cast to ensure task_type is of the correct type
+      const typedData = {
+        ...data,
+        task_type: data.task_type as 'client' | 'team'
+      };
+      
       toast.success('Task created successfully');
-      return data?.[0];
+      return typedData;
     } catch (error) {
       console.error('Error creating task:', error);
       throw error;
@@ -135,7 +151,7 @@ export const useOnboardingTemplates = () => {
     isUpdating: updateTemplate.isPending,
     isDeleting: deleteTemplate.isPending,
     getTemplateStages,
-    getTasksForStage,
+    getStageTasks,
     createStage,
     createTask,
     refreshTemplates: refetch

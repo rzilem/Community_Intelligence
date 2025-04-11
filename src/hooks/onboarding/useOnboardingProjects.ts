@@ -44,7 +44,14 @@ export const useOnboardingProjects = () => {
         throw error;
       }
       
-      return data || [];
+      // Type cast to ensure status is of the correct type
+      const typedData = data?.map(task => ({
+        ...task,
+        status: (task.status || 'pending') as 'pending' | 'in_progress' | 'completed' | 'blocked',
+        task_type: task.task_type as 'client' | 'team'
+      })) || [];
+      
+      return typedData;
     } catch (error) {
       console.error('Error fetching project tasks:', error);
       return [];
@@ -182,6 +189,9 @@ export const useOnboardingProjects = () => {
           const dueDate = format(addDays(startDate, dayOffset + daysToAdd), 'yyyy-MM-dd');
           dayOffset += daysToAdd;
           
+          // Make sure to handle the task_type type safely
+          const taskType = task.task_type === 'client' ? 'client' : 'team';
+          
           projectTasks.push({
             project_id: createdProject.id,
             template_task_id: task.id,
@@ -189,7 +199,7 @@ export const useOnboardingProjects = () => {
             stage_name: stage.name,
             status: 'pending',
             due_date: dueDate,
-            task_type: task.task_type,
+            task_type: taskType,
             assigned_to: null,
             notes: task.description || null
           });
