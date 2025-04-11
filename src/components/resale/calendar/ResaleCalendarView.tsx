@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay, isWithinInterval, startOfMonth, endOfMonth, isSameMonth, addWeeks, subWeeks, isToday } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import ResaleEventForm from './ResaleEventForm';
 
 // Import custom hooks
 import { useResaleCalendarEvents } from '@/hooks/resale/useResaleCalendarEvents';
+
 interface ResaleCalendarViewProps {
   className?: string;
   filters: {
@@ -21,6 +23,7 @@ interface ResaleCalendarViewProps {
     documentUpdates: boolean;
   };
 }
+
 export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
   className,
   filters
@@ -29,6 +32,7 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
   const [currentWeek, setCurrentWeek] = useState<Date[]>([]);
   const [monthDays, setMonthDays] = useState<Date[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const {
     events,
     newEvent,
@@ -42,6 +46,7 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
     date: selectedDate,
     filters
   });
+
   useEffect(() => {
     // Get the current week days
     const startWeek = startOfWeek(selectedDate, {
@@ -71,15 +76,19 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
     });
     setMonthDays(allDays);
   }, [selectedDate]);
+
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
   };
+
   const nextWeek = () => {
     setSelectedDate(addWeeks(selectedDate, 1));
   };
+
   const prevWeek = () => {
     setSelectedDate(subWeeks(selectedDate, 1));
   };
+
   const handleSubmitEvent = () => {
     const success = handleCreateEvent();
     if (success) {
@@ -95,20 +104,44 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
       events: events.filter(event => isSameDay(new Date(event.date), day))
     };
   });
-  return <div className={cn("space-y-4", className)}>
+
+  return (
+    <div className={cn("space-y-4", className)}>
       {/* Mini month calendar */}
       <div className="grid grid-cols-1 md:grid-cols-7 lg:grid-cols-9 gap-4">
-        
+        <Card className="col-span-2 hidden lg:block">
+          <CardHeader>
+            <CardTitle>{format(selectedDate, 'MMMM yyyy')}</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-7 gap-1 p-2">
+              {monthDays.map((day, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleDateSelect(day)}
+                  className={cn(
+                    "text-xs text-center p-1 rounded hover:bg-accent",
+                    isSameMonth(day, selectedDate) ? "text-foreground" : "text-muted-foreground",
+                    isSameDay(day, selectedDate) && "bg-primary text-primary-foreground",
+                    isToday(day) && "border border-primary"
+                  )}
+                >
+                  {format(day, 'd')}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Week view */}
         <Card className="md:col-span-5 lg:col-span-7">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardTitle>
               {format(startOfWeek(selectedDate, {
-              weekStartsOn: 1
-            }), 'MMM d')} - {format(endOfWeek(selectedDate, {
-              weekStartsOn: 1
-            }), 'MMM d, yyyy')}
+                weekStartsOn: 1
+              }), 'MMM d')} - {format(endOfWeek(selectedDate, {
+                weekStartsOn: 1
+              }), 'MMM d, yyyy')}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="icon" onClick={prevWeek}>
@@ -127,27 +160,60 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
                     New Order
                   </Button>
                 </DialogTrigger>
-                <ResaleEventForm newEvent={{
-                ...newEvent,
-                date: selectedDate
-              }} setNewEvent={setNewEvent} handleCreateEvent={handleSubmitEvent} isCreating={isCreating} hasAssociation={hasAssociation} />
+                <ResaleEventForm 
+                  newEvent={{
+                    ...newEvent,
+                    date: selectedDate
+                  }} 
+                  setNewEvent={setNewEvent} 
+                  handleCreateEvent={handleSubmitEvent} 
+                  isCreating={isCreating} 
+                  hasAssociation={hasAssociation} 
+                />
               </Dialog>
             </div>
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-7 h-full divide-x">
               {eventsForCurrentWeek.map(({
-              date,
-              events
-            }, index) => <div key={index} className={cn("min-h-[60vh] flex flex-col", isToday(date) && "bg-hoa-blue-50 border-t-2 border-t-primary")}>
-                  <div className={cn("py-2 px-3 text-center font-medium sticky top-0 bg-background", isToday(date) && "bg-hoa-blue-50 text-primary")}>
+                date,
+                events
+              }, index) => (
+                <div 
+                  key={index} 
+                  className={cn(
+                    "min-h-[60vh] flex flex-col", 
+                    isToday(date) && "bg-hoa-blue-50 border-t-2 border-t-primary"
+                  )}
+                >
+                  <div 
+                    className={cn(
+                      "py-2 px-3 text-center font-medium sticky top-0 bg-background", 
+                      isToday(date) && "bg-hoa-blue-50 text-primary"
+                    )}
+                  >
                     <div>{format(date, 'EEE')}</div>
-                    <div className={cn("text-2xl", isToday(date) && "font-bold text-primary")}>{format(date, 'd')}</div>
+                    <div 
+                      className={cn(
+                        "text-2xl", 
+                        isToday(date) && "font-bold text-primary"
+                      )}
+                    >
+                      {format(date, 'd')}
+                    </div>
                   </div>
                   <div className="flex-1 p-1 overflow-y-auto">
-                    <ResaleEventList events={events} loading={eventsLoading} setIsDialogOpen={setIsDialogOpen} onDeleteEvent={handleDeleteEvent} compact={true} setSelectedDate={() => handleDateSelect(date)} />
+                    <ResaleEventList 
+                      events={events} 
+                      loading={eventsLoading} 
+                      setIsDialogOpen={setIsDialogOpen} 
+                      onDeleteEvent={handleDeleteEvent} 
+                      compact={true} 
+                      setSelectedDate={() => handleDateSelect(date)} 
+                    />
                   </div>
-                </div>)}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -159,14 +225,26 @@ export const ResaleCalendarView: React.FC<ResaleCalendarViewProps> = ({
           <CardTitle>Events for {format(selectedDate, 'MMMM d, yyyy')}</CardTitle>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              
+              <Button variant="ghost" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </Button>
             </DialogTrigger>
           </Dialog>
         </CardHeader>
         <CardContent>
-          <ResaleEventList events={events.filter(event => isSameDay(new Date(event.date), selectedDate))} loading={eventsLoading} setIsDialogOpen={setIsDialogOpen} onDeleteEvent={handleDeleteEvent} compact={false} />
+          <ResaleEventList 
+            events={events.filter(event => isSameDay(new Date(event.date), selectedDate))} 
+            loading={eventsLoading} 
+            setIsDialogOpen={setIsDialogOpen} 
+            onDeleteEvent={handleDeleteEvent} 
+            compact={false} 
+          />
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default ResaleCalendarView;
+
