@@ -10,6 +10,9 @@ export interface GLAccount {
   name: string;
   type: string;
   balance: number;
+  code: string;
+  description: string;
+  category: string;
 }
 
 export interface JournalEntry {
