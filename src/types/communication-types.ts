@@ -67,9 +67,11 @@ export interface RecipientGroup {
 export interface MessageRecipient {
   id: string;
   name: string;
-  group_id: string;
-  association_id: string;
+  group_id?: string;
+  association_id?: string;
   association_name?: string;
+  email?: string;
+  type?: 'resident' | 'member' | 'other';
 }
 
 export interface AssociationMemberRole {
@@ -83,4 +85,13 @@ export interface AssociationMemberRole {
   email?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface MergeTagData {
+  resident?: any;
+  property?: any;
+  association?: any;
+  payment?: any;
+  compliance?: any;
+  [key: string]: any;
 }

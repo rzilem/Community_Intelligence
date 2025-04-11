@@ -11,6 +11,7 @@ import MessageSubjectField from './MessageSubjectField';
 import MessageContentField from './MessageContentField';
 import RecipientWarning from './RecipientWarning';
 import { communicationService } from '@/services/communication-service';
+import { replaceMergeTags } from '@/utils/mergeTags';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -27,6 +28,46 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewData, setPreviewData] = useState({
+    resident: {
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '(512) 555-1234',
+      move_in_date: '2022-06-15',
+      resident_type: 'Owner'
+    },
+    property: {
+      address: '123 Oak Lane',
+      unit_number: '4B',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701',
+      property_type: 'Condo',
+      square_feet: 1250
+    },
+    association: {
+      name: 'Oakridge Estates',
+      contact_email: 'info@oakridgeestates.org',
+      phone: '(512) 555-9000',
+      website: 'www.oakridgeestates.org',
+      address: '500 Main Street, Suite 300',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701'
+    },
+    payment: {
+      amount: 350,
+      dueDate: new Date('2025-05-01'),
+      lateFee: 25,
+      pastDue: 725
+    },
+    compliance: {
+      violation: 'Landscaping',
+      fine: 100,
+      deadline: new Date('2025-05-15')
+    }
+  });
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
@@ -42,9 +83,13 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
     setIsLoading(true);
 
     try {
+      // Process merge tags in content before sending
+      const processedContent = replaceMergeTags(messageContent, previewData);
+      const processedSubject = replaceMergeTags(subject, previewData);
+
       await communicationService.sendMessage({
-        subject,
-        content: messageContent,
+        subject: processedSubject,
+        content: processedContent,
         association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
         type: messageType
@@ -54,6 +99,7 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
       setSubject('');
       setMessageContent('');
       setSelectedGroups([]);
+      setPreviewMode(false);
       onMessageSent();
       toast.success('Message sent successfully');
     } catch (error) {
@@ -68,7 +114,20 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
     setSubject('');
     setMessageContent('');
     setSelectedGroups([]);
+    setPreviewMode(false);
   };
+
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
+  };
+
+  const previewContent = previewMode 
+    ? replaceMergeTags(messageContent, previewData)
+    : messageContent;
+
+  const previewSubject = previewMode
+    ? replaceMergeTags(subject, previewData)
+    : subject;
   
   return (
     <div className="bg-white rounded-lg border p-6 space-y-6">
@@ -99,30 +158,61 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
         </div>
       </div>
       
-      <MessageSubjectField 
-        subject={subject} 
-        onChange={setSubject} 
-        onUseTemplate={onUseTemplate} 
-      />
+      {previewMode ? (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="block font-medium">Subject</label>
+          </div>
+          <div className="p-3 border rounded-md">
+            {previewSubject || <span className="text-muted-foreground">No subject</span>}
+          </div>
+        </div>
+      ) : (
+        <MessageSubjectField 
+          subject={subject} 
+          onChange={setSubject} 
+          onUseTemplate={onUseTemplate} 
+        />
+      )}
       
-      <MessageContentField 
-        content={messageContent} 
-        onChange={setMessageContent} 
-      />
+      {previewMode ? (
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <label className="block font-medium">Message Content (Preview)</label>
+          </div>
+          <div className="p-3 border rounded-md min-h-[300px] whitespace-pre-wrap">
+            {previewContent || <span className="text-muted-foreground">No content</span>}
+          </div>
+        </div>
+      ) : (
+        <MessageContentField 
+          content={messageContent} 
+          onChange={setMessageContent} 
+        />
+      )}
       
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-between pt-4">
         <Button 
           variant="outline" 
-          onClick={handleReset}
+          onClick={togglePreview}
         >
-          Cancel
+          {previewMode ? 'Edit Message' : 'Preview with Sample Data'}
         </Button>
-        <Button 
-          disabled={!subject || !messageContent || selectedGroups.length === 0 || isLoading}
-          onClick={handleSendMessage}
-        >
-          {isLoading ? 'Sending...' : 'Send Message'}
-        </Button>
+        
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={handleReset}
+          >
+            Cancel
+          </Button>
+          <Button 
+            disabled={!subject || !messageContent || selectedGroups.length === 0 || isLoading}
+            onClick={handleSendMessage}
+          >
+            {isLoading ? 'Sending...' : 'Send Message'}
+          </Button>
+        </div>
       </div>
     </div>
   );
