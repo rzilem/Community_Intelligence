@@ -106,6 +106,14 @@ export const fetchResidentsWithProfiles = async (propertyId: string): Promise<Re
 };
 
 export const createResident = async (resident: Partial<Resident>): Promise<Resident> => {
+  console.log("Creating resident with data:", resident);
+  
+  // Make sure we have valid property ID
+  if (!resident.property_id) {
+    toast.error(`Error creating resident: Property ID is required`);
+    throw new Error(`Error creating resident: Property ID is required`);
+  }
+
   const { data, error } = await supabase
     .from('residents' as any)
     .insert(resident as any)
@@ -113,12 +121,14 @@ export const createResident = async (resident: Partial<Resident>): Promise<Resid
     .single();
 
   if (error) {
+    console.error("Supabase error:", error);
     toast.error(`Error creating resident: ${error.message}`);
     throw new Error(`Error creating resident: ${error.message}`);
   }
 
   toast.success('Resident created successfully');
   const newResident = data as any;
+  console.log("Resident created:", newResident);
   
   return {
     id: newResident.id,

@@ -60,12 +60,17 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   useEffect(() => {
     const fetchAssociations = async () => {
       try {
+        // Get associations the current user has access to
         const { data, error } = await supabase
-          .from('associations')
-          .select('*');
+          .rpc('get_user_associations');
 
         if (error) throw error;
         setAssociations(data || []);
+        
+        // If there's only one association, preselect it
+        if (data && data.length === 1) {
+          form.setValue('association_id', data[0].id);
+        }
       } catch (error) {
         console.error('Error fetching associations:', error);
         toast.error('Failed to load associations');
@@ -73,7 +78,7 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
     };
 
     fetchAssociations();
-  }, []);
+  }, [form]);
 
   // Fetch properties
   useEffect(() => {
@@ -116,6 +121,8 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     try {
+      console.log("Submitting form with data:", data);
+      
       // Create the resident directly using the resident service
       const newResident = await createResident({
         name: data.name,
@@ -129,6 +136,8 @@ const AddOwnerForm: React.FC<AddOwnerFormProps> = ({ onSuccess, onCancel }) => {
       });
 
       if (newResident) {
+        console.log("New resident created:", newResident);
+        
         // Get property details
         const selectedProperty = properties.find(p => p.id === data.property_id);
         const selectedAssociation = associations.find(a => a.id === data.association_id);
