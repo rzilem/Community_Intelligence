@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/table';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
-import HomeownerRequestEditDialog from './HomeownerRequestEditDialog';
+import HomeownerRequestEditDialog from './dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from './HomeownerRequestCommentDialog';
 import HomeownerRequestHistoryDialog from './HomeownerRequestHistoryDialog';
 import RequestTableHeader from './table/RequestTableHeader';
