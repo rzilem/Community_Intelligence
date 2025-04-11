@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Building2, Plus, FileDown } from 'lucide-react';
+import { Building2, Plus, FileDown, SlidersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VendorList from '@/components/vendors/VendorList';
@@ -64,7 +64,7 @@ const Vendors = () => {
               Vendor List
             </TabsTrigger>
             <TabsTrigger value="metrics">
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              <SlidersIcon className="mr-2 h-4 w-4" />
               Metrics & Analytics
             </TabsTrigger>
           </TabsList>
