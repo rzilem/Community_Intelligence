@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Network, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from '@/contexts/auth';
-import { useAssociationQueries, useAssociationMutations } from '@/hooks/associations';
+import { useAssociationsList, useAssociationMutations } from '@/hooks/associations';
 import AssociationStats from '@/components/associations/AssociationStats';
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationToolbar from '@/components/associations/AssociationToolbar';
@@ -26,7 +27,7 @@ const Associations = () => {
     isLoading, 
     error,
     manuallyRefresh 
-  } = useAssociationQueries();
+  } = useAssociationsList();
 
   const { 
     createAssociation,
