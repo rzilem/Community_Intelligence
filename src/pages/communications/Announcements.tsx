@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Bell, Plus, Search, Filter, Edit, Trash, Calendar, Check, X, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -59,7 +58,13 @@ const Announcements = () => {
     try {
       setIsLoading(true);
       const data = await communicationService.getAnnouncements(associationId);
-      setAnnouncements(data);
+      
+      const typedAnnouncements: Announcement[] = data.map(a => ({
+        ...a,
+        priority: a.priority as 'low' | 'normal' | 'high' | 'urgent' || 'normal'
+      }));
+      
+      setAnnouncements(typedAnnouncements);
     } catch (error) {
       console.error('Error fetching announcements:', error);
       toast.error('Failed to load announcements');
@@ -94,26 +99,29 @@ const Announcements = () => {
     try {
       setIsLoading(true);
       
-      const announcementData: Partial<Announcement> = {
-        title,
-        content,
-        priority,
-        association_id: selectedAssociation,
-        is_published: true,
-        publish_date: new Date().toISOString()
-      };
-
       if (editingAnnouncement) {
-        // Update existing announcement
-        await communicationService.updateAnnouncement(editingAnnouncement.id, announcementData);
+        await communicationService.updateAnnouncement(editingAnnouncement.id, {
+          title,
+          content,
+          priority,
+          is_published: true,
+          publish_date: new Date().toISOString()
+        });
         toast.success('Announcement updated successfully');
       } else {
-        // Create new announcement
+        const announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> = {
+          title,
+          content,
+          priority,
+          association_id: selectedAssociation,
+          is_published: true,
+          publish_date: new Date().toISOString()
+        };
+
         await communicationService.createAnnouncement(announcementData);
         toast.success('Announcement created successfully');
       }
 
-      // Refresh the list
       fetchAnnouncements(selectedAssociation);
       setIsDialogOpen(false);
     } catch (error) {
@@ -134,7 +142,6 @@ const Announcements = () => {
       await communicationService.deleteAnnouncement(id);
       toast.success('Announcement deleted successfully');
       
-      // Refresh the list
       fetchAnnouncements(selectedAssociation);
     } catch (error) {
       console.error('Error deleting announcement:', error);

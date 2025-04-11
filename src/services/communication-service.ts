@@ -105,9 +105,12 @@ export const communicationService = {
       if (groupError) throw groupError;
       
       // Depending on the group type and criteria, fetch the recipients
-      if (group.group_type === 'system') {
-        // Handle system groups
-        switch (group.criteria?.type) {
+      if (group.group_type === 'system' && group.criteria) {
+        // Handle system groups - safely check type property
+        const criteriaType = typeof group.criteria === 'object' && group.criteria ? 
+          (group.criteria as Record<string, unknown>).type : null;
+        
+        switch (criteriaType) {
           case 'all_residents':
             return await communicationService.getAllResidents(group.association_id);
           case 'owners':
@@ -185,12 +188,16 @@ export const communicationService = {
         
       if (error) throw error;
       
-      return data?.map(member => ({
-        id: member.id,
-        name: `${member.profiles.first_name} ${member.profiles.last_name}`,
-        email: member.profiles.email,
-        type: 'member'
-      })) || [];
+      // Fix the types by safely accessing properties
+      return data?.map(member => {
+        const profile = member.profiles as any; // Type assertion to avoid errors
+        return {
+          id: member.id,
+          name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : 'Unknown',
+          email: profile?.email || '',
+          type: 'member'
+        };
+      }) || [];
     } catch (error) {
       console.error(`Error fetching members of role type ${roleType}:`, error);
       return [];

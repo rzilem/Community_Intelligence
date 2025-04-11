@@ -12,6 +12,7 @@ import MessageContentField from './MessageContentField';
 import RecipientWarning from './RecipientWarning';
 import { communicationService } from '@/services/communication-service';
 import { replaceMergeTags } from '@/utils/mergeTags';
+import { ResidentType } from '@/types/resident-types';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -35,7 +36,7 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
       email: 'john.smith@example.com',
       phone: '(512) 555-1234',
       move_in_date: '2022-06-15',
-      resident_type: 'Owner'
+      resident_type: 'Owner' as ResidentType
     },
     property: {
       address: '123 Oak Lane',

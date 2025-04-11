@@ -1,5 +1,5 @@
 
-import { Resident } from '@/types/resident-types';
+import { Resident, ResidentType } from '@/types/resident-types';
 import { Property } from '@/types/property-types';
 import { Association } from '@/types/association-types';
 import { format } from 'date-fns';
@@ -266,11 +266,12 @@ export const getMergeTagsByCategory = (category: MergeTagCategory): MergeTag[] =
 export const replaceMergeTags = (
   content: string,
   data: {
-    resident?: Partial<Resident>;
-    property?: Partial<Property>;
-    association?: Partial<Association>;
+    resident?: Partial<Resident> | any;
+    property?: Partial<Property> | any;
+    association?: Partial<Association> | any;
     payment?: { amount?: number; dueDate?: Date; lateFee?: number; pastDue?: number };
     compliance?: { violation?: string; fine?: number; deadline?: Date };
+    [key: string]: any;
   }
 ): string => {
   let processedContent = content;
