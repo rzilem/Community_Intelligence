@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   LayoutDashboard,
@@ -127,7 +128,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
       path: '/records-reports', 
       icon: FileText,
       submenu: [
-        { name: 'Records', path: '/records-reports/records', icon: Database },
         { name: 'Documents', path: '/records-reports/documents', icon: File },
         { name: 'Reports', path: '/records-reports/reports', icon: FileBarChart },
       ]
@@ -168,3 +168,4 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
   
   return items;
 };
+
