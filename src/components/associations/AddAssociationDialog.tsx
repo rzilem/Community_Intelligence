@@ -5,16 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import AssociationForm, { AssociationFormData } from '@/components/associations/AssociationForm';
 
-interface AddAssociationDialogProps {
+export interface AddAssociationDialogProps {
   isCreating: boolean;
   onSave: (data: AssociationFormData) => void;
 }
 
-const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCreating, onSave }) => {
+// Rename the component to match the export name
+export const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCreating, onSave }) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
 
   const handleSave = (data: AssociationFormData) => {
     onSave(data);
+    setIsDialogOpen(false);
   };
 
   return (
@@ -41,4 +43,5 @@ const AddAssociationDialog: React.FC<AddAssociationDialogProps> = ({ isCreating,
   );
 };
 
+// Add a default export as well for compatibility
 export default AddAssociationDialog;
