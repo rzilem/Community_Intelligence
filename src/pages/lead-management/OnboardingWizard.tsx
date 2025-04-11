@@ -47,7 +47,7 @@ const OnboardingWizard = () => {
   const [projectName, setProjectName] = useState<string>('');
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [viewMode, setViewMode<'project' | 'templates'>(projectId ? 'project' : 'templates');
+  const [viewMode, setViewMode] = useState<'project' | 'templates'>(projectId ? 'project' : 'templates');
 
   // Group the tasks by stage for display
   const [tasksByStage, setTasksByStage] = useState<any[]>([]);
