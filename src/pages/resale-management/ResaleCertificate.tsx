@@ -12,15 +12,49 @@ import {
   Users,
   DollarSign,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  ExternalLink
 } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import StatCard from '@/components/dashboard/StatCard';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
+// Mock data for the resale certificates
+const mockCertificates = [
+  {
+    id: "cert-1",
+    property_address: "123 Main St, Austin, TX 78701",
+    requester_name: "John Smith",
+    request_date: "2025-03-15",
+    due_date: "2025-03-22",
+    status: "in_progress",
+    total_fee: 300.00
+  },
+  {
+    id: "cert-2",
+    property_address: "456 Oak Ave, Austin, TX 78702",
+    requester_name: "Sarah Johnson",
+    request_date: "2025-03-12",
+    due_date: "2025-03-19",
+    status: "completed",
+    total_fee: 250.00
+  },
+  {
+    id: "cert-3",
+    property_address: "789 Pine Ln, Austin, TX 78703",
+    requester_name: "Michael Williams",
+    request_date: "2025-03-10",
+    due_date: "2025-03-17",
+    status: "pending",
+    total_fee: 275.00
+  }
+];
 
 const ResaleCertificate = () => {
   // Sample document counts
@@ -67,6 +101,55 @@ const ResaleCertificate = () => {
           New Resale Request
         </Button>
       </div>
+
+      {/* Recent Orders Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Recent Resale Certificates</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Property</TableHead>
+                <TableHead>Requester</TableHead>
+                <TableHead>Due Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Fee</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mockCertificates.map(cert => (
+                <TableRow key={cert.id}>
+                  <TableCell className="font-medium">{cert.property_address}</TableCell>
+                  <TableCell>{cert.requester_name}</TableCell>
+                  <TableCell>{cert.due_date}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn(
+                      "capitalize",
+                      cert.status === "completed" && "bg-green-50 text-green-700 border-green-200",
+                      cert.status === "in_progress" && "bg-amber-50 text-amber-700 border-amber-200",
+                      cert.status === "pending" && "bg-blue-50 text-blue-700 border-blue-200"
+                    )}>
+                      {cert.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>${cert.total_fee.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to={`/resale-management/certificate/${cert.id}`}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card className="mb-8">
         <CardContent className="pt-6">
@@ -235,7 +318,7 @@ const ResaleCertificate = () => {
   );
 };
 
-// Document Card Component
+// DocumentCard Component
 interface DocumentCardProps {
   title: string;
   count: number;

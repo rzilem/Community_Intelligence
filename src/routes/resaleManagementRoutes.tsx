@@ -3,6 +3,7 @@ import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import ResaleManagement from "@/pages/resale-management/ResaleManagement";
 import ResaleCertificate from "@/pages/resale-management/ResaleCertificate";
+import ResaleCertificateDetail from "@/pages/resale-management/ResaleCertificateDetail";
 import CondoQuestionnaire from "@/pages/resale-management/CondoQuestionnaire";
 import PropertyInspection from "@/pages/resale-management/PropertyInspection";
 import AccountStatements from "@/pages/resale-management/AccountStatements";
@@ -18,6 +19,10 @@ export const resaleManagementRoutes: RouteObject[] = [
   {
     path: "/resale-management/certificate",
     element: <RequireAuth><ResaleCertificate /></RequireAuth>
+  },
+  {
+    path: "/resale-management/certificate/:id",
+    element: <RequireAuth><ResaleCertificateDetail /></RequireAuth>
   },
   {
     path: "/resale-management/questionnaire",
