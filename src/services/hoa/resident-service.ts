@@ -1,10 +1,11 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Resident, ResidentWithProfile } from '@/types/app-types';
 import { toast } from 'sonner';
 
 export const fetchResidentsByProperty = async (propertyId: string): Promise<Resident[]> => {
   const { data, error } = await supabase
-    .from('residents' as any)
+    .from('residents')
     .select('*')
     .eq('property_id', propertyId)
     .order('created_at');
@@ -33,7 +34,7 @@ export const fetchResidentsByProperty = async (propertyId: string): Promise<Resi
 
 export const fetchResidentById = async (id: string): Promise<Resident> => {
   const { data, error } = await supabase
-    .from('residents' as any)
+    .from('residents')
     .select('*')
     .eq('id', id)
     .single();
@@ -63,20 +64,40 @@ export const fetchResidentById = async (id: string): Promise<Resident> => {
 };
 
 export const fetchResidentsWithProfiles = async (propertyId: string): Promise<ResidentWithProfile[]> => {
+  // Instead of trying to join with profiles directly which was causing the error,
+  // we'll fetch residents first and then get profiles separately if needed
   const { data, error } = await supabase
-    .from('residents' as any)
-    .select(`
-      *,
-      profiles:user_id (*)
-    `)
+    .from('residents')
+    .select('*')
     .eq('property_id', propertyId);
 
   if (error) {
-    toast.error(`Error fetching residents with profiles: ${error.message}`);
-    throw new Error(`Error fetching residents with profiles: ${error.message}`);
+    toast.error(`Error fetching residents: ${error.message}`);
+    throw new Error(`Error fetching residents: ${error.message}`);
   }
 
-  return (data as any[]).map(resident => ({
+  // If we have user_ids, we could fetch profiles in a separate query
+  const userIds = (data || [])
+    .filter(resident => resident.user_id)
+    .map(resident => resident.user_id);
+  
+  let profilesMap = {};
+  
+  if (userIds.length > 0) {
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', userIds);
+      
+    if (!profilesError && profilesData) {
+      profilesMap = profilesData.reduce((map, profile) => {
+        map[profile.id] = profile;
+        return map;
+      }, {});
+    }
+  }
+
+  return (data || []).map(resident => ({
     id: resident.id,
     user_id: resident.user_id,
     property_id: resident.property_id,
@@ -90,15 +111,15 @@ export const fetchResidentsWithProfiles = async (propertyId: string): Promise<Re
     emergency_contact: resident.emergency_contact,
     created_at: resident.created_at,
     updated_at: resident.updated_at,
-    user: resident.profiles ? {
+    user: resident.user_id && profilesMap[resident.user_id] ? {
       profile: {
-        id: resident.profiles.id,
-        first_name: resident.profiles.first_name,
-        last_name: resident.profiles.last_name,
-        email: resident.profiles.email,
-        role: resident.profiles.role,
-        phone_number: resident.profiles.phone_number,
-        profile_image_url: resident.profiles.profile_image_url,
+        id: profilesMap[resident.user_id].id,
+        first_name: profilesMap[resident.user_id].first_name,
+        last_name: profilesMap[resident.user_id].last_name,
+        email: profilesMap[resident.user_id].email,
+        role: profilesMap[resident.user_id].role,
+        phone_number: profilesMap[resident.user_id].phone_number,
+        profile_image_url: profilesMap[resident.user_id].profile_image_url,
       }
     } : undefined
   }));
