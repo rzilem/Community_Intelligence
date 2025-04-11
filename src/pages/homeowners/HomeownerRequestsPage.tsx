@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestForm';
 import { toast } from 'sonner';
 import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
+import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
 
 const HomeownerRequestsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,7 +23,6 @@ const HomeownerRequestsPage = () => {
     HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id)
   );
 
-  // Fetch homeowner requests from Supabase
   const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
@@ -32,11 +31,16 @@ const HomeownerRequestsPage = () => {
     }
   );
 
+  const { markAllAsRead } = useHomeownerRequestNotifications();
+  
+  useEffect(() => {
+    markAllAsRead();
+  }, []);
+
   if (error) {
     console.error('Error fetching homeowner requests:', error);
   }
 
-  // Filter requests based on search and filter criteria
   const filteredRequests = homeownerRequests.filter(request => {
     const matchesSearch = 
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
