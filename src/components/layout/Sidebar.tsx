@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogOut, X } from 'lucide-react';
@@ -25,8 +26,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   
   useEffect(() => {
+    // Initialize or update open sections based on current path
     const newOpenSections = {...openSections};
     
+    // Check each main navigation item to see if the current path is in its submenu
     mainNavItems.forEach(item => {
       if (item.submenu) {
         const isSubmenuActive = item.submenu.some(
@@ -45,11 +48,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   const toggleSection = (section: string) => {
     setOpenSections(prev => {
       const newState = {...prev};
+      // Toggle the section state
       newState[section] = !prev[section];
       return newState;
     });
   };
 
+  // Helper function to check if a main nav item has the current path in its submenu
   const hasActiveSubmenu = (item: NavItemProps) => {
     if (!item.submenu) return false;
     
@@ -61,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div
       className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
+        "fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out",
         isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0"
       )}
     >
@@ -81,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
       
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 pr-1">
+      <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
           {mainNavItems.map((item) => (
             <SidebarNavItem
