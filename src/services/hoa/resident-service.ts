@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Resident, ResidentWithProfile } from '@/types/app-types';
+import { Resident, ResidentType, ResidentWithProfile } from '@/types/app-types';
 import { toast } from 'sonner';
 
 export const fetchResidentsByProperty = async (propertyId: string): Promise<Resident[]> => {
@@ -63,6 +63,14 @@ export const fetchResidentById = async (id: string): Promise<Resident> => {
   };
 };
 
+// Helper function to convert string to ResidentType
+const toResidentType = (typeString: string): ResidentType => {
+  const validTypes: ResidentType[] = ['owner', 'tenant', 'family', 'other'];
+  return validTypes.includes(typeString as ResidentType) 
+    ? (typeString as ResidentType) 
+    : 'other';
+};
+
 export const fetchResidentsWithProfiles = async (propertyId: string): Promise<ResidentWithProfile[]> => {
   // Instead of trying to join with profiles directly which was causing the error,
   // we'll fetch residents first and then get profiles separately if needed
@@ -101,7 +109,7 @@ export const fetchResidentsWithProfiles = async (propertyId: string): Promise<Re
     id: resident.id,
     user_id: resident.user_id,
     property_id: resident.property_id,
-    resident_type: resident.resident_type,
+    resident_type: toResidentType(resident.resident_type), // Convert string to ResidentType
     is_primary: resident.is_primary,
     move_in_date: resident.move_in_date,
     move_out_date: resident.move_out_date,
@@ -134,6 +142,11 @@ export const createResident = async (resident: Partial<Resident>): Promise<Resid
     throw new Error(`Error creating resident: Property ID is required`);
   }
 
+  // Make sure resident_type is a valid ResidentType
+  if (resident.resident_type) {
+    resident.resident_type = toResidentType(resident.resident_type as string);
+  }
+
   const { data, error } = await supabase
     .from('residents' as any)
     .insert(resident as any)
@@ -154,7 +167,7 @@ export const createResident = async (resident: Partial<Resident>): Promise<Resid
     id: newResident.id,
     user_id: newResident.user_id,
     property_id: newResident.property_id,
-    resident_type: newResident.resident_type,
+    resident_type: toResidentType(newResident.resident_type),
     is_primary: newResident.is_primary,
     move_in_date: newResident.move_in_date,
     move_out_date: newResident.move_out_date,
@@ -168,6 +181,11 @@ export const createResident = async (resident: Partial<Resident>): Promise<Resid
 };
 
 export const updateResident = async (id: string, resident: Partial<Resident>): Promise<Resident> => {
+  // Make sure resident_type is a valid ResidentType if provided
+  if (resident.resident_type) {
+    resident.resident_type = toResidentType(resident.resident_type as string);
+  }
+
   const { data, error } = await supabase
     .from('residents' as any)
     .update(resident as any)
@@ -187,7 +205,7 @@ export const updateResident = async (id: string, resident: Partial<Resident>): P
     id: updatedResident.id,
     user_id: updatedResident.user_id,
     property_id: updatedResident.property_id,
-    resident_type: updatedResident.resident_type,
+    resident_type: toResidentType(updatedResident.resident_type),
     is_primary: updatedResident.is_primary,
     move_in_date: updatedResident.move_in_date,
     move_out_date: updatedResident.move_out_date,
