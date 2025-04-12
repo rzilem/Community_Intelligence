@@ -2,8 +2,8 @@
 import React from 'react';
 import { Bell, Mail, MessageCircle, AlertTriangle, MessageSquare, Newspaper } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { NotificationSettings } from '@/types/settings-types';
+import NotificationItem from '@/components/settings/notifications/NotificationItem';
 
 interface NotificationsTabProps {
   settings: NotificationSettings;
@@ -74,22 +74,14 @@ const NotificationsTab: React.FC<NotificationsTabProps> = ({ settings, onChange 
         </CardHeader>
         <CardContent className="space-y-6">
           {notifications.map((notification) => (
-            <div 
-              key={notification.id} 
-              className="flex items-center justify-between py-3 border-b last:border-0"
-            >
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">{notification.icon}</div>
-                <div>
-                  <h3 className="font-medium">{notification.title}</h3>
-                  <p className="text-sm text-muted-foreground">{notification.description}</p>
-                </div>
-              </div>
-              <Switch 
-                checked={notification.value} 
-                onCheckedChange={(checked) => handleToggle(notification.id as keyof NotificationSettings, checked)} 
-              />
-            </div>
+            <NotificationItem
+              key={notification.id}
+              title={notification.title}
+              description={notification.description}
+              icon={notification.icon}
+              checked={notification.value}
+              onCheckedChange={(checked) => handleToggle(notification.id as keyof NotificationSettings, checked)}
+            />
           ))}
         </CardContent>
       </Card>
