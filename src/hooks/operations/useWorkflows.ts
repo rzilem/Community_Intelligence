@@ -1,14 +1,16 @@
 
 import { useState } from 'react';
-import { Workflow, WorkflowType } from '@/types/workflow-types';
+import { Workflow, WorkflowType, WorkflowStatus } from '@/types/workflow-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 export const useWorkflows = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   
   // Fetch workflow templates from Supabase
   const { 
@@ -100,6 +102,15 @@ export const useWorkflows = () => {
         if (templateError) throw new Error(templateError.message);
         
         // Create a new workflow from the template
+        // Fixed RLS issue by ensuring all required fields are properly set
+        // and specifically using auth.getUser() to set created_by
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        
+        if (!userId) {
+          throw new Error("User not authenticated");
+        }
+        
         const { data, error } = await supabase
           .from('workflows')
           .insert({
@@ -109,7 +120,7 @@ export const useWorkflows = () => {
             status: 'active',
             steps: template.steps,
             is_template: false,
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: userId
           })
           .select()
           .single();
@@ -130,6 +141,53 @@ export const useWorkflows = () => {
     }
   });
 
+  // Duplicate template mutation
+  const duplicateTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setLoading(true);
+      
+      try {
+        // Get the original template
+        const { data: template, error: templateError } = await supabase
+          .from('workflow_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+          
+        if (templateError) throw new Error(templateError.message);
+        
+        // Create a duplicate template
+        const { data, error } = await supabase
+          .from('workflow_templates')
+          .insert({
+            name: `${template.name} (Copy)`,
+            description: template.description,
+            type: template.type,
+            status: template.status,
+            steps: template.steps,
+            is_template: true,
+            is_popular: false
+          })
+          .select()
+          .single();
+          
+        if (error) throw new Error(error.message);
+        
+        return data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Template duplicated successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+    },
+    onError: (error) => {
+      toast.error(`Error duplicating template: ${error.message}`);
+    }
+  });
+
+  // Create custom template mutation
   const createTemplateMutation = useMutation({
     mutationFn: async (workflowData: Partial<Workflow>) => {
       // Convert steps to a format compatible with JSON storage
@@ -163,13 +221,84 @@ export const useWorkflows = () => {
     }
   });
 
+  // Pause workflow mutation
+  const pauseWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .update({ status: 'inactive' })
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow paused');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error pausing workflow: ${error.message}`);
+    }
+  });
+
+  // Resume workflow mutation
+  const resumeWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .update({ status: 'active' })
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow resumed');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error resuming workflow: ${error.message}`);
+    }
+  });
+
+  // Cancel workflow mutation
+  const cancelWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .delete()
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow cancelled');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error cancelling workflow: ${error.message}`);
+    }
+  });
+
+  // Handler functions
   const useWorkflowTemplate = (workflowId: string) => {
     useTemplateMutation.mutate(workflowId);
   };
 
+  const duplicateTemplate = (workflowId: string) => {
+    duplicateTemplateMutation.mutate(workflowId);
+  };
+
   const createCustomTemplate = () => {
-    // Open dialog to create custom template
     // For now, just create a simple template
+    // In the future, this would open a dialog with a form
     createTemplateMutation.mutate({
       name: 'Custom Workflow',
       description: 'A custom workflow template',
@@ -186,13 +315,34 @@ export const useWorkflows = () => {
     });
   };
 
+  const pauseWorkflow = (workflowId: string) => {
+    pauseWorkflowMutation.mutate(workflowId);
+  };
+
+  const resumeWorkflow = (workflowId: string) => {
+    resumeWorkflowMutation.mutate(workflowId);
+  };
+
+  const cancelWorkflow = (workflowId: string) => {
+    cancelWorkflowMutation.mutate(workflowId);
+  };
+
+  const viewWorkflowDetails = (workflowId: string) => {
+    navigate(`/operations/workflows/${workflowId}`);
+  };
+
   return {
     workflowTemplates,
     activeWorkflows,
     loading: isLoading || activeLoading || loading,
     error: fetchError || activeError || error,
     useWorkflowTemplate,
+    duplicateTemplate,
     createCustomTemplate,
+    pauseWorkflow,
+    resumeWorkflow,
+    cancelWorkflow,
+    viewWorkflowDetails,
     refreshWorkflows: () => {
       refetch();
       refetchActive();

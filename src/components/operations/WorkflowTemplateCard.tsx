@@ -9,16 +9,23 @@ import {
   ClipboardList, 
   MessageSquare, 
   Calendar, 
-  Home 
+  Home,
+  Copy
 } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface WorkflowTemplateCardProps {
   workflow: Workflow;
   onUseTemplate: (workflowId: string) => void;
+  onDuplicateTemplate: (workflowId: string) => void;
 }
 
-const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({ workflow, onUseTemplate }) => {
+const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({ 
+  workflow, 
+  onUseTemplate,
+  onDuplicateTemplate
+}) => {
   const getWorkflowIcon = () => {
     switch (workflow.type) {
       case 'Financial':
@@ -31,6 +38,8 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({ workflow, o
         return <MessageSquare className="h-10 w-10 text-blue-500" />;
       case 'Governance':
         return <Calendar className="h-10 w-10 text-purple-500" />;
+      case 'Communication':
+        return <MessageSquare className="h-10 w-10 text-indigo-500" />;
       default:
         return <Home className="h-10 w-10 text-gray-500" />;
     }
@@ -59,6 +68,23 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({ workflow, o
               Popular Template
             </Badge>
           )}
+
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  onClick={() => onDuplicateTemplate(workflow.id)} 
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicate
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Create a copy of this template</TooltipContent>
+            </Tooltip>
+          </div>
 
           <Button 
             onClick={() => onUseTemplate(workflow.id)} 
