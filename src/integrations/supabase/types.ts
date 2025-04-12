@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_tokens: number | null
+          model: string | null
+          prompt_templates: Json | null
+          temperature: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_tokens?: number | null
+          model?: string | null
+          prompt_templates?: Json | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_tokens?: number | null
+          model?: string | null
+          prompt_templates?: Json | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       amenities: {
         Row: {
           association_id: string
@@ -1958,6 +1991,15 @@ export type Database = {
       }
       update_system_setting: {
         Args: { setting_key: string; setting_value: Json }
+        Returns: undefined
+      }
+      update_user_ai_settings: {
+        Args: {
+          p_model?: string
+          p_temperature?: number
+          p_max_tokens?: number
+          p_prompt_templates?: Json
+        }
         Returns: undefined
       }
       user_has_association_access: {
