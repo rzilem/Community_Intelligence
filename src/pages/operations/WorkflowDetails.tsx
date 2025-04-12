@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -17,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Workflow, WorkflowStep } from '@/types/workflow-types';
+import { Workflow, WorkflowStep, WorkflowType, WorkflowStatus } from '@/types/workflow-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -50,10 +49,10 @@ const WorkflowDetails = () => {
           id: workflowData.id,
           name: workflowData.name,
           description: workflowData.description || '',
-          type: workflowData.type,
-          status: workflowData.status,
-          steps: workflowData.steps || [],
-          isTemplate: workflowData.is_template,
+          type: workflowData.type as WorkflowType,
+          status: workflowData.status as WorkflowStatus,
+          steps: Array.isArray(workflowData.steps) ? workflowData.steps as WorkflowStep[] : [],
+          isTemplate: Boolean(workflowData.is_template),
           isPopular: false
         });
       } catch (error) {
@@ -80,7 +79,7 @@ const WorkflowDetails = () => {
         throw error;
       }
 
-      setWorkflow({ ...workflow, status: newStatus });
+      setWorkflow({ ...workflow, status: newStatus as WorkflowStatus });
       toast.success(`Workflow ${newStatus === 'active' ? 'activated' : 'paused'} successfully`);
     } catch (error) {
       console.error('Error updating workflow status:', error);
