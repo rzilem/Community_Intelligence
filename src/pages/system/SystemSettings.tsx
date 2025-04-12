@@ -68,11 +68,20 @@ const SystemSettings = () => {
     try {
       setIsSaving(true);
       
+      // Get the user session and user ID properly
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      
+      if (!userId) {
+        toast.error("You must be logged in to update system settings");
+        return;
+      }
+      
       // Get the user's profile to check if they're an admin
       const { data: profileData } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', supabase.auth.getUser().then(res => res.data.user?.id))
+        .eq('id', userId)
         .single();
 
       if (profileData?.role !== 'admin') {
