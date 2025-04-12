@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -158,10 +157,10 @@ const OnboardingTemplates = () => {
     setSelectedTemplate(template);
     setIsDeleteDialogOpen(true);
   };
-  
+
   const handleViewDetails = (templateId: string) => {
-    // Navigate to template details or open a detailed view
     console.log("View details for template:", templateId);
+    navigate(`/lead-management/onboarding/templates/${templateId}`);
   };
 
   const filteredTemplates = activeTab === 'all' 
@@ -177,7 +176,6 @@ const OnboardingTemplates = () => {
 
   return (
     <div className="space-y-6">
-      {/* Debug information */}
       <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
         Available templates: {templates.length}
       </div>
@@ -237,7 +235,6 @@ const OnboardingTemplates = () => {
         </div>
       )}
 
-      {/* Create/Edit Template Dialog */}
       <TemplateDialog 
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -248,7 +245,6 @@ const OnboardingTemplates = () => {
         isEditing={!!selectedTemplate}
       />
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog 
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
