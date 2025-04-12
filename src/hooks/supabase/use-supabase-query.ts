@@ -22,6 +22,8 @@ export function useSupabaseQuery<T = any>(
   return useQuery({
     queryKey: queryKey,
     queryFn: async () => {
+      console.log(`Executing query for table: ${table} with filters:`, filter);
+      
       let query = supabase
         .from(table as any)
         .select(select);
@@ -61,24 +63,30 @@ export function useSupabaseQuery<T = any>(
 
       // Get single result if requested
       if (single) {
+        console.log('Executing single() query');
         const { data, error } = await query.single();
         
         if (error) {
+          console.error(`Error fetching from ${table}:`, error);
           showErrorToast('fetching', table, error);
           throw error;
         }
         
+        console.log(`Data fetched from ${table} (single):`, data);
         return data as T;
       }
 
       // Get multiple results
+      console.log('Executing regular query');
       const { data, error } = await query;
       
       if (error) {
+        console.error(`Error fetching from ${table}:`, error);
         showErrorToast('fetching', table, error);
         throw error;
       }
       
+      console.log(`Data fetched from ${table}:`, data);
       // Return data as an array to ensure consistent typing
       return (data || []) as T;
     },

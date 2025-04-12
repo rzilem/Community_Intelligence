@@ -41,6 +41,10 @@ const UserManagement: React.FC<UserManagementProps> = ({
     );
   });
 
+  // Debug - Log all users received from parent
+  console.log('UserManagement - All users:', users);
+  console.log('UserManagement - Filtered users:', filteredUsers);
+
   return (
     <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">

@@ -28,6 +28,9 @@ const Permissions = () => {
     }
   );
   
+  // Log the raw data fetched from Supabase
+  console.log('Permissions - Raw profiles data:', data);
+  
   // Transform the profiles data to match the UserWithProfile structure
   const users = data.map(profile => ({
     id: profile.id,
@@ -42,6 +45,9 @@ const Permissions = () => {
       profile_image_url: profile.profile_image_url
     }
   })) as UserWithProfile[];
+
+  // Log the transformed users data
+  console.log('Permissions - Transformed users:', users);
 
   useEffect(() => {
     if (error) {
