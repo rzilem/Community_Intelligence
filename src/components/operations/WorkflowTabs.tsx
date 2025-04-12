@@ -29,11 +29,12 @@ const WorkflowTabs: React.FC<WorkflowTabsProps> = ({
         />
       </div>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
+        <TabsList className="w-full grid grid-cols-5">
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="active">Active Workflows</TabsTrigger>
           <TabsTrigger value="custom">Custom Workflows</TabsTrigger>
           <TabsTrigger value="builder">Workflow Builder</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

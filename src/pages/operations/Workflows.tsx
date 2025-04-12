@@ -15,6 +15,7 @@ import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
 import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
 import { WorkflowType } from '@/types/workflow-types';
+import WorkflowAnalyticsDashboard from '@/components/operations/WorkflowAnalyticsDashboard';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
@@ -184,6 +185,13 @@ const Workflows = () => {
               <h2 className="text-2xl font-bold">Workflow Builder</h2>
               <p className="text-muted-foreground">This feature is coming soon. Please check back later.</p>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="mt-0">
+            <WorkflowAnalyticsDashboard 
+              activeWorkflows={activeWorkflows}
+              workflowTemplates={workflowTemplates}
+            />
           </TabsContent>
         </Tabs>
       </div>
