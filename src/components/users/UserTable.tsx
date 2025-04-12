@@ -4,7 +4,7 @@ import { UserWithProfile } from '@/types/user-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { UserCheck } from 'lucide-react';
+import { UserCheck, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
@@ -18,6 +18,7 @@ interface UserTableProps {
 const UserTable: React.FC<UserTableProps> = ({ users, roles, onRoleUpdate }) => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
+  const [refreshingProfile, setRefreshingProfile] = useState<Record<string, boolean>>({});
 
   // Initialize user roles
   React.useEffect(() => {
@@ -58,6 +59,39 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRoleUpdate }) => 
     onRoleUpdate();
   };
 
+  // Create or update a profile for users who don't have complete profile data
+  const refreshUserProfile = async (userId: string) => {
+    try {
+      setRefreshingProfile(prev => ({ ...prev, [userId]: true }));
+      const user = users.find(u => u.id === userId);
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email: user.email,
+          role: user.profile?.role || 'user',
+          first_name: user.profile?.first_name || '',
+          last_name: user.profile?.last_name || '',
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      
+      if (error) throw error;
+      
+      toast.success('User profile refreshed');
+      onRoleUpdate();
+    } catch (err: any) {
+      console.error('Error refreshing profile:', err);
+      toast.error(`Error refreshing profile: ${err.message}`);
+    } finally {
+      setRefreshingProfile(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -90,7 +124,25 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRoleUpdate }) => 
                     size="sm"
                   />
                   <div>
-                    <p className="font-medium">{user.profile?.first_name || 'Unknown'} {user.profile?.last_name || 'User'}</p>
+                    <p className="font-medium">
+                      {user.profile?.first_name || 'Unknown'} {user.profile?.last_name || 'User'}
+                      {(!user.profile?.first_name && !user.profile?.last_name) && (
+                        <Button 
+                          variant="ghost" 
+                          size="xs" 
+                          className="ml-2 h-6 px-2 text-xs"
+                          onClick={() => refreshUserProfile(user.id)}
+                          disabled={refreshingProfile[user.id]}
+                        >
+                          {refreshingProfile[user.id] ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          <span className="ml-1">Refresh</span>
+                        </Button>
+                      )}
+                    </p>
                     <p className="text-sm text-muted-foreground">ID: {user.id.slice(0, 8)}...</p>
                   </div>
                 </div>

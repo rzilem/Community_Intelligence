@@ -7,6 +7,9 @@ import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
 import RolePermissionsCard from '@/components/users/RolePermissionsCard';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -18,7 +21,7 @@ const roles = [
 ];
 
 const Permissions = () => {
-  // Query directly from profiles table
+  // Query directly from profiles table with more detailed logging
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
     {
@@ -49,6 +52,26 @@ const Permissions = () => {
   // Log the transformed users data
   console.log('Permissions - Transformed users:', users);
 
+  // Function to sync Supabase auth users with profiles
+  const syncMissingProfiles = async () => {
+    try {
+      toast.loading('Syncing user profiles...');
+      
+      // Get all auth users (requires admin rights, may fail in client-side)
+      const { data: authData, error: authError } = await supabase.rpc('sync_missing_profiles');
+      
+      if (authError) {
+        throw authError;
+      }
+      
+      toast.success('User profiles synced successfully');
+      refetch();
+    } catch (err: any) {
+      console.error('Error syncing profiles:', err);
+      toast.error(`Failed to sync profiles: ${err.message}`);
+    }
+  };
+
   useEffect(() => {
     if (error) {
       console.error('Error fetching users:', error);
@@ -66,6 +89,12 @@ const Permissions = () => {
       title="User Permissions" 
       icon={<Shield className="h-8 w-8" />}
       description="Manage user roles and permissions across the platform."
+      actions={
+        <Button onClick={syncMissingProfiles} variant="outline" className="flex items-center gap-2">
+          <RefreshCw className="h-4 w-4" />
+          Sync Missing Profiles
+        </Button>
+      }
     >
       <UserManagement 
         users={users} 
