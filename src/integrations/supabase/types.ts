@@ -1989,6 +1989,10 @@ export type Database = {
           zip: string | null
         }[]
       }
+      sync_missing_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       update_system_setting: {
         Args: { setting_key: string; setting_value: Json }
         Returns: undefined

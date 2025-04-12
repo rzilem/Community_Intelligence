@@ -129,7 +129,7 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRoleUpdate }) => 
                       {(!user.profile?.first_name && !user.profile?.last_name) && (
                         <Button 
                           variant="ghost" 
-                          size="xs" 
+                          size="sm" 
                           className="ml-2 h-6 px-2 text-xs"
                           onClick={() => refreshUserProfile(user.id)}
                           disabled={refreshingProfile[user.id]}

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield } from 'lucide-react';
+import { Shield, RefreshCw } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
@@ -9,7 +9,6 @@ import RolePermissionsCard from '@/components/users/RolePermissionsCard';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { RefreshCw } from 'lucide-react';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -57,7 +56,7 @@ const Permissions = () => {
     try {
       toast.loading('Syncing user profiles...');
       
-      // Get all auth users (requires admin rights, may fail in client-side)
+      // Use the new database function to sync missing profiles
       const { data: authData, error: authError } = await supabase.rpc('sync_missing_profiles');
       
       if (authError) {
