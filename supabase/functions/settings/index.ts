@@ -79,23 +79,6 @@ serve(async (req) => {
         // Parse the request body
         const requestData = await req.json();
         
-        // Additional validation if needed
-        // For example, validate integration credentials before saving
-        if (action === 'integrations' && requestData.validateCredentials) {
-          // You would validate the credentials here
-          // This is just a placeholder for more complex validation
-          const isValid = true; // Simulate validation
-          
-          if (!isValid) {
-            return new Response(JSON.stringify({ 
-              error: 'Invalid credentials' 
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 400,
-            });
-          }
-        }
-        
         // Update the setting
         const { data, error } = await supabase
           .from('system_settings')
