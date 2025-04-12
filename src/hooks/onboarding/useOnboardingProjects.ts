@@ -1,11 +1,12 @@
 
-import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
+import { useState, useEffect } from 'react';
+import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
 import { OnboardingProject, OnboardingProjectTask, OnboardingTemplate, OnboardingTask, OnboardingStage } from '@/types/onboarding-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead-types';
 import { useOnboardingTemplates } from './useOnboardingTemplates';
-import { format, addDays } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 export const useOnboardingProjects = () => {
   const { 
@@ -98,26 +99,6 @@ export const useOnboardingProjects = () => {
       return data as Lead;
     } catch (error) {
       console.error('Error fetching project lead:', error);
-      return null;
-    }
-  };
-
-  const getProjectTemplate = async (templateId: string): Promise<OnboardingTemplate | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('onboarding_templates')
-        .select('*')
-        .eq('id', templateId)
-        .single();
-        
-      if (error) {
-        console.error(`Error loading template: ${error.message}`);
-        return null;
-      }
-      
-      return data as OnboardingTemplate;
-    } catch (error) {
-      console.error('Error fetching project template:', error);
       return null;
     }
   };
@@ -239,7 +220,6 @@ export const useOnboardingProjects = () => {
     getProjectTasks,
     updateTaskStatus,
     getProjectLead,
-    getProjectTemplate,
     createProjectFromTemplate,
     refreshProjects: refetch
   };

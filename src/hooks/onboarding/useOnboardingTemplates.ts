@@ -1,8 +1,8 @@
 
-import { supabase } from '@/integrations/supabase/client';
 import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
 import { OnboardingTemplate, OnboardingStage, OnboardingTask } from '@/types/onboarding-types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useOnboardingTemplates = () => {
   const { 
