@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -25,7 +24,6 @@ import { OnboardingProjectTask, OnboardingTemplate } from '@/types/onboarding-ty
 import { Lead } from '@/types/lead-types';
 import { useLeads } from '@/hooks/leads/useLeads';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import { format, formatDistanceToNow, addDays } from 'date-fns';
 import OnboardingTemplates from '@/components/onboarding/OnboardingTemplates';
 import { Input } from '@/components/ui/input';
@@ -40,7 +38,7 @@ const OnboardingWizard = () => {
   const [projectTasks, setProjectTasks] = useState<OnboardingProjectTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { projects, getProjectTasks, getProjectLead, updateTaskStatus, createProjectFromTemplate } = useOnboardingProjects();
-  const { templates } = useOnboardingTemplates();
+  const { templates, isLoading: templatesLoading } = useOnboardingTemplates();
   const { leads = [] } = useLeads();
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -54,20 +52,32 @@ const OnboardingWizard = () => {
   const [tasksByStage, setTasksByStage] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log("OnboardingWizard loaded. Templates:", templates);
+    console.log("Projects:", projects);
+    console.log("View mode:", viewMode);
+    console.log("Project ID from params:", projectId);
+  }, [templates, projects, viewMode, projectId]);
+
+  useEffect(() => {
     if (projectId) {
       setViewMode('project');
+      console.log("Setting view mode to project due to projectId");
     } else if (projects.length > 0) {
       setViewMode('project');
+      console.log("Setting view mode to project due to existing projects");
     } else {
       setViewMode('templates');
+      console.log("Setting view mode to templates");
     }
   }, [projectId, projects]);
 
   useEffect(() => {
     // If no projects exist yet or no specific project ID, show templates
-    if (projects.length === 0 && !projectId && !isLoading) {
-      setViewMode('templates');
-      setIsLoading(false);
+    if ((projects.length === 0 && !projectId) || templatesLoading) {
+      console.log("No projects or templates still loading");
+      if (!templatesLoading) {
+        setIsLoading(false);
+      }
       return;
     }
     
@@ -76,24 +86,28 @@ const OnboardingWizard = () => {
       const project = projects.find(p => p.id === projectId);
       
       if (project) {
+        console.log("Found specific project", project);
         setActiveProject(project);
         
         // Load project tasks and associated lead info
         loadProjectData(project.id, project.lead_id);
       } else {
+        console.log("Project not found");
         setIsLoading(false);
       }
     } else if (projects.length > 0) {
       // Just load the first project if no specific projectId
       const project = projects[0];
+      console.log("Loading first project", project);
       setActiveProject(project);
       
       // Load project tasks and associated lead info
       loadProjectData(project.id, project.lead_id);
     } else {
+      console.log("No projects to load");
       setIsLoading(false);
     }
-  }, [projects, projectId, isLoading]);
+  }, [projects, projectId, templatesLoading]);
 
   const loadProjectData = async (projectId: string, leadId: string) => {
     setIsLoading(true);
@@ -339,6 +353,13 @@ const OnboardingWizard = () => {
       description="Manage the onboarding process for new communities and associations."
     >
       <div className="space-y-6">
+        {/* Display template count for debugging */}
+        <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
+          Available templates: {templates.length} | 
+          Available projects: {projects.length} | 
+          Current view: {viewMode}
+        </div>
+
         {/* Tabs to switch between project view and templates */}
         {projects.length > 0 && (
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'project' | 'templates')}>
@@ -352,7 +373,7 @@ const OnboardingWizard = () => {
         {viewMode === 'templates' ? (
           <OnboardingTemplates />
         ) : (
-          <>
+          <div>
             {/* Active HOA Project */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
               <div>
@@ -389,7 +410,7 @@ const OnboardingWizard = () => {
             </div>
             
             {/* Summary Card */}
-            <Card>
+            <Card className="mt-6">
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div>
@@ -446,7 +467,7 @@ const OnboardingWizard = () => {
             </Card>
             
             {/* Tabs Section */}
-            <Tabs defaultValue="tasks" className="w-full">
+            <Tabs defaultValue="tasks" className="w-full mt-6">
               <TabsList className="bg-card border-b">
                 <TabsTrigger value="tasks">Tasks & Timeline</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -673,7 +694,7 @@ const OnboardingWizard = () => {
                 </Card>
               </TabsContent>
             </Tabs>
-          </>
+          </div>
         )}
       </div>
 

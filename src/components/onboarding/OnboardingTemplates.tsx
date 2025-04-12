@@ -57,7 +57,8 @@ const OnboardingTemplates = () => {
     createTemplate, 
     updateTemplate,
     deleteTemplate,
-    getTemplateStages
+    getTemplateStages,
+    refreshTemplates
   } = useOnboardingTemplates();
   
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -73,13 +74,21 @@ const OnboardingTemplates = () => {
   const [loadingStages, setLoadingStages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    console.log("OnboardingTemplates component loaded. Templates:", templates);
+    
+    // Immediately fetch the templates if they're not loaded yet
+    if (templates.length === 0 && !isLoading) {
+      console.log("No templates found, refreshing...");
+      refreshTemplates();
+    }
+    
     // Load stages for each template
     templates.forEach(template => {
       if (!templateStages[template.id]) {
         loadStagesForTemplate(template.id);
       }
     });
-  }, [templates]);
+  }, [templates, isLoading]);
 
   const loadStagesForTemplate = async (templateId: string) => {
     setLoadingStages(prev => ({ ...prev, [templateId]: true }));
@@ -186,11 +195,19 @@ const OnboardingTemplates = () => {
     : templates.filter(t => t.template_type === activeTab);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64">Loading templates...</div>;
+    return <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="ml-2 text-lg">Loading templates...</span>
+    </div>;
   }
 
   return (
     <div className="space-y-6">
+      {/* Debug information */}
+      <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
+        Available templates: {templates.length}
+      </div>
+      
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Onboarding Templates</h2>
         <TooltipButton 
