@@ -50,24 +50,53 @@ const defaultSettings: SystemSettings = {
   }
 };
 
+// Helper function to check if user is admin
+const isUserAdmin = async (): Promise<boolean> => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+      
+    return data?.role === 'admin';
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
 // Fetch a specific setting by key
 export const useSystemSetting = <T>(key: SettingKey) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['systemSettings', key],
     queryFn: async (): Promise<T> => {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', key)
-        .single();
-      
-      if (error) {
-        console.error(`Error fetching ${key} settings:`, error);
-        // Return default settings if we can't fetch from the database
+      try {
+        const isAdmin = await isUserAdmin();
+        if (!isAdmin) {
+          return (defaultSettings[key] as unknown) as T;
+        }
+        
+        const { data, error } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', key)
+          .single();
+        
+        if (error) {
+          console.error(`Error fetching ${key} settings:`, error);
+          // Return default settings if we can't fetch from the database
+          return (defaultSettings[key] as unknown) as T;
+        }
+        
+        return data.value as T;
+      } catch (err) {
+        console.error(`Error in useSystemSetting for ${key}:`, err);
         return (defaultSettings[key] as unknown) as T;
       }
-      
-      return data.value as T;
     }
   });
 
@@ -84,19 +113,24 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
   
   return useMutation({
     mutationFn: async (newValue: T): Promise<void> => {
-      // Fix for TypeScript error: explicitly specify the type structure
-      const { error } = await supabase
-        .from('system_settings')
-        .upsert({ 
-          key, 
-          value: newValue as any // Use type assertion to avoid type checking here
-        }, {
-          onConflict: 'key'
-        });
+      const isAdmin = await isUserAdmin();
+      if (!isAdmin) {
+        throw new Error('Only administrators can update system settings');
+      }
       
-      if (error) {
-        console.error(`Error updating ${key} settings:`, error);
-        throw error;
+      // Use the edge function to update settings
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+        },
+        body: JSON.stringify(newValue),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update settings');
       }
     },
     onSuccess: () => {
@@ -119,6 +153,16 @@ export const useAllSystemSettings = () => {
     const fetchAllSettings = async () => {
       try {
         setIsLoading(true);
+        
+        // Check if user is admin
+        const isAdmin = await isUserAdmin();
+        
+        if (!isAdmin) {
+          // Return default settings for non-admin users
+          setSettings(defaultSettings);
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('system_settings')
           .select('key, value');
@@ -129,11 +173,13 @@ export const useAllSystemSettings = () => {
         
         const newSettings = { ...defaultSettings };
         
-        data.forEach((item) => {
-          const key = item.key as SettingKey;
-          // Fix: Use type assertion to handle the conversion properly
-          newSettings[key] = item.value as any;
-        });
+        if (data && data.length > 0) {
+          data.forEach((item) => {
+            const key = item.key as SettingKey;
+            // Fix: Use type assertion to handle the conversion properly
+            newSettings[key] = item.value as any;
+          });
+        }
         
         setSettings(newSettings);
       } catch (err) {

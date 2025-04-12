@@ -5,7 +5,6 @@ import { SlidersHorizontal, Save, Palette, Bell, Shield, Database, Puzzle } from
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
@@ -20,10 +19,12 @@ import type {
 } from '@/types/settings-types';
 import { useAllSystemSettings } from '@/hooks/settings/use-system-settings';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
   const { settings, isLoading } = useAllSystemSettings();
+  const [isSaving, setIsSaving] = useState(false);
   
   // Local state to track unsaved changes
   const [unsavedSettings, setUnsavedSettings] = useState<SystemSettingsType>(settings);
@@ -65,25 +66,37 @@ const SystemSettings = () => {
 
   const handleSave = async () => {
     try {
-      // Save all settings that have changed
+      setIsSaving(true);
+      
+      // Get the user's profile to check if they're an admin
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', supabase.auth.getUser().then(res => res.data.user?.id))
+        .single();
+
+      if (profileData?.role !== 'admin') {
+        toast.error("Only administrators can update system settings");
+        return;
+      }
+      
+      // Save all settings that have changed using the Supabase edge function
       const savePromises = Object.keys(unsavedSettings).map(async (key) => {
         const settingKey = key as keyof SystemSettingsType;
-        const currentValue = JSON.stringify(settings[settingKey]);
-        const newValue = JSON.stringify(unsavedSettings[settingKey]);
         
-        // Only save if the setting has changed
-        if (currentValue !== newValue) {
-          // Fix for TypeScript error: need to explicitly cast value to any as Json
-          const { error } = await supabase
-            .from('system_settings')
-            .upsert({ 
-              key: settingKey, 
-              value: unsavedSettings[settingKey] as any // Use type assertion to handle Json type
-            }, {
-              onConflict: 'key'
-            });
-            
-          if (error) throw error;
+        // Call the settings edge function
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${settingKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify(unsavedSettings[settingKey]),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save settings');
         }
       });
       
@@ -91,7 +104,9 @@ const SystemSettings = () => {
       toast.success("System settings saved successfully!");
     } catch (error) {
       console.error("Error saving settings:", error);
-      toast.error("Failed to save settings. Please try again.");
+      toast.error(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -116,9 +131,9 @@ const SystemSettings = () => {
       icon={<SlidersHorizontal className="h-8 w-8" />}
       description="Configure system-wide settings and preferences."
       actions={
-        <Button onClick={handleSave} className="flex items-center gap-2">
+        <Button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2">
           <Save className="h-4 w-4" /> 
-          Save Settings
+          {isSaving ? 'Saving...' : 'Save Settings'}
         </Button>
       }
     >
