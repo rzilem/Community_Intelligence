@@ -9,6 +9,7 @@ import Analytics from "@/pages/lead-management/Analytics";
 import OnboardingWizard from "@/pages/lead-management/OnboardingWizard";
 import Templates from "@/pages/lead-management/Templates";
 import LeadDetailPage from "@/components/leads/LeadDetailPage";
+import TemplateDetails from "@/components/onboarding/TemplateDetails";
 
 // Lead Management Routes
 export const leadManagementRoutes: RouteObject[] = [
@@ -39,6 +40,10 @@ export const leadManagementRoutes: RouteObject[] = [
   {
     path: "/lead-management/onboarding/:projectId",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><OnboardingWizard /></RequireAuth>
+  },
+  {
+    path: "/lead-management/onboarding/templates/:templateId",
+    element: <RequireAuth allowedRoles={['admin', 'manager']}><TemplateDetails /></RequireAuth>
   },
   {
     path: "/lead-management/templates",
