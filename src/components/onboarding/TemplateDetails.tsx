@@ -4,10 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Card, CardContent, CardHeader, CardTitle, CardDescription 
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 import { 
-  Button, Input, Textarea, Separator, Dialog, DialogContent, 
-  DialogHeader, DialogTitle, DialogFooter
-} from '@/components/ui/card';
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter 
+} from '@/components/ui/dialog';
 import { 
   Tabs, TabsList, TabsTrigger, TabsContent 
 } from '@/components/ui/tabs';
