@@ -1,4 +1,3 @@
-
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import CommunityManagement from "@/pages/community-management/CommunityManagement";
@@ -50,7 +49,7 @@ export const communityManagementRoutes: RouteObject[] = [
     element: <RequireAuth><CompliancePage /></RequireAuth>
   },
   {
-    path: "/bid-requests",
+    path: "/bid-requests", 
     element: <RequireAuth><BidRequests /></RequireAuth>
   },
   {
