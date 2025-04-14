@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import CommunityManagement from '@/pages/community-management/CommunityManagement';
 import CreateBidRequest from '@/pages/community-management/CreateBidRequest';
 import HomeownerRequestsQueue from '@/pages/community-management/HomeownerRequestsQueue';
 import BidRequests from '@/pages/community-management/BidRequests';
+import ProposalRequest from '@/pages/community-management/ProposalRequest';
 
 export const communityManagementRoutes = [
   {
@@ -31,7 +31,14 @@ export const communityManagementRoutes = [
       </RequireAuth>
     ),
   },
-  // Add the new route for bid requests
+  {
+    path: '/community-management/proposal-request',
+    element: (
+      <RequireAuth>
+        <ProposalRequest />
+      </RequireAuth>
+    ),
+  },
   {
     path: '/bid-requests',
     element: (
