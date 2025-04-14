@@ -121,7 +121,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               ))}
             </select>
             
-            <Alert variant="outline" className="mt-2">
+            <Alert variant="default" className="mt-2">
               <InfoIcon className="h-4 w-4" />
               <AlertDescription>
                 Selecting an association will filter the available properties
