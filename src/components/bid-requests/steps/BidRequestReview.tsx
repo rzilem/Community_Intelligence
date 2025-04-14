@@ -13,7 +13,7 @@ interface BidRequestReviewProps {
 }
 
 const BidRequestReview: React.FC<BidRequestReviewProps> = ({ formData }) => {
-  const { specifications = {}, locationData = {} } = formData;
+  const { specifications = {}, locationData = { address: '', coordinates: null } } = formData;
   
   return (
     <div className="space-y-6">
@@ -82,7 +82,7 @@ const BidRequestReview: React.FC<BidRequestReviewProps> = ({ formData }) => {
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
                   <p className="text-base">
-                    {locationData?.address || 'No address provided'}
+                    {locationData.address || 'No address provided'}
                   </p>
                 </div>
                 

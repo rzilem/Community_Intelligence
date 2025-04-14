@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
-import { FormFieldInput } from '@/components/homeowners/form/FormFieldInput';
-import { FormFieldTextarea } from '@/components/homeowners/form/FormFieldTextarea';
+import FormFieldInput from '@/components/homeowners/form/FormFieldInput';
+import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import BidRequestCategorySelector from '@/components/bid-requests/form/BidRequestCategorySelector';
@@ -58,7 +58,6 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
               name="title"
               label="Project Title"
               placeholder="Enter a clear, descriptive title for the project"
-              description="A concise title helps vendors quickly understand the project scope."
             />
             
             <FormFieldTextarea
@@ -66,7 +65,6 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
               name="description"
               label="Project Description"
               placeholder="Provide a detailed description of the project requirements"
-              description="Be specific about what you need, including any important details about the scope and objectives."
               rows={5}
             />
             
@@ -82,7 +80,6 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
                   label="Estimated Budget"
                   placeholder="Enter estimated budget (optional)"
                   type="number"
-                  description="Providing a budget range helps vendors tailor their bids appropriately."
                 />
               </div>
             </div>

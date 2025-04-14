@@ -77,13 +77,22 @@ export async function uploadBidRequestAttachment(bidRequestId: string, file: Fil
   
   // Update the bid request with the new attachment
   const currentAttachments = bidRequestData.attachments || [];
-  const updatedAttachments = [...currentAttachments, {
-    url: attachmentUrl,
-    name: file.name,
-    type: file.type,
-    size: file.size,
-    uploaded_at: new Date().toISOString()
-  }];
+  // Convert the array to a proper array if it's not already
+  const updatedAttachments = Array.isArray(currentAttachments) 
+    ? [...currentAttachments, {
+        url: attachmentUrl,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        uploaded_at: new Date().toISOString()
+      }]
+    : [{
+        url: attachmentUrl,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        uploaded_at: new Date().toISOString()
+      }];
   
   const { error: updateError } = await supabase
     .from('bid_requests')

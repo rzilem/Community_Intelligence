@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BidRequestWithVendors } from '@/types/bid-request-types';
+import { BidRequestWithVendors, BidRequestVendor } from '@/types/bid-request-types';
 import { Vendor } from '@/types/vendor-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { bidRequestService } from '@/services/bid-request-service';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { FormFieldTextarea } from '@/components/homeowners/form/FormFieldTextarea';
+import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 
@@ -58,7 +58,10 @@ const BidRequestVendorSelection: React.FC<BidRequestVendorSelectionProps> = ({
         : [...prev, vendorId];
       
       // Update parent component with vendor selection
+      // Create vendor objects with the required properties
       const vendors = newSelection.map(id => ({
+        id: `temp-${id}`, // Temporary ID that will be replaced on server
+        bidRequestId: 'pending', // Will be set when the bid request is created
         vendorId: id,
         status: 'invited' as const
       }));
@@ -175,7 +178,6 @@ const BidRequestVendorSelection: React.FC<BidRequestVendorSelectionProps> = ({
               name="vendorNotes"
               label="Notes to Vendors"
               placeholder="Include any specific instructions or information for the selected vendors"
-              description="These notes will be included in the bid request email sent to vendors."
               rows={3}
             />
           </CardContent>

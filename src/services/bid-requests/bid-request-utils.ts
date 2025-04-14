@@ -1,29 +1,31 @@
 
-import { BidRequestWithVendors } from '@/types/bid-request-types';
-
 /**
- * Maps a category to its corresponding image URL
+ * Get image URL for a given bid request category
  */
 export function getCategoryImageUrl(category: string): string {
+  const defaultImageUrl = "/assets/images/placeholder-project.jpg";
+  
+  // Map categories to image URLs
   const categoryImageMap: Record<string, string> = {
-    'access_system': '/public/lovable-uploads/f12ed9b3-cd47-4ba5-906e-2767368c119a.png',
-    'arborist': '/public/lovable-uploads/e90108c2-2755-4279-a815-f594603fca7e.png',
-    'concrete': '/public/lovable-uploads/b6e52903-4de7-438c-9720-949fdc6e10f1.png',
-    'construction': '/public/lovable-uploads/e44c8451-97f3-4e21-a1f6-3164610fd910.png',
-    'landscaping': '/public/lovable-uploads/bd464cd6-d2b0-43bc-bdd2-8445695e564e.png',
-    // Add more category images as they become available
+    "Power Washing": "/assets/images/categories/power-washing.jpg",
+    "Privacy Gate": "/assets/images/categories/privacy-gate.jpg",
+    "Regular Maintenance": "/assets/images/categories/regular-maintenance.jpg",
+    "Renovation Project": "/assets/images/categories/renovation.jpg",
+    "Repair Work": "/assets/images/categories/repair-work.jpg",
+    "Reserve Study": "/assets/images/categories/reserve-study.jpg",
+    "Roof Repair / Replacement": "/assets/images/categories/roof-repair.jpg",
+    "Roofing": "/assets/images/categories/roofing.jpg",
+    "Signs": "/assets/images/categories/signs.jpg",
+    "Sports Courts": "/assets/images/categories/sports-courts.jpg",
+    "Street Repairs / Paving / Striping": "/assets/images/categories/street-repairs.jpg",
+    "Stucco": "/assets/images/categories/stucco.jpg",
+    "Towing": "/assets/images/categories/towing.jpg",
+    "Trash Disposal": "/assets/images/categories/trash-disposal.jpg",
+    "Trash Services": "/assets/images/categories/trash-services.jpg",
+    "Welder": "/assets/images/categories/welder.jpg",
+    "Window Services": "/assets/images/categories/window-services.jpg",
   };
-
-  return categoryImageMap[category] || '/placeholder.svg';
-}
-
-/**
- * Format bid request data for display
- */
-export function formatBidRequestForDisplay(bidRequest: Partial<BidRequestWithVendors>): Partial<BidRequestWithVendors> {
-  return {
-    ...bidRequest,
-    // Add category image URL if not already present
-    imageUrl: bidRequest.imageUrl || getCategoryImageUrl(bidRequest.category || '')
-  };
+  
+  // Return the mapped image URL or the default if not found
+  return categoryImageMap[category] || defaultImageUrl;
 }

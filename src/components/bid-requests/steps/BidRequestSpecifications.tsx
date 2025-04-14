@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, X, FileText, CalendarIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { FormFieldTextarea } from '@/components/homeowners/form/FormFieldTextarea';
+import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
@@ -32,7 +32,12 @@ const BidRequestSpecifications: React.FC<BidRequestSpecificationsProps> = ({
     formData.dueDate ? new Date(formData.dueDate) : undefined
   );
 
-  const form = useForm<Partial<BidRequestWithVendors>>({
+  const form = useForm<{
+    projectGoals: string;
+    materialRequirements: string;
+    timelineExpectations: string;
+    specialNotes: string;
+  }>({
     defaultValues: {
       projectGoals: formData.specifications?.projectGoals || '',
       materialRequirements: formData.specifications?.materialRequirements || '',
@@ -114,7 +119,6 @@ const BidRequestSpecifications: React.FC<BidRequestSpecificationsProps> = ({
               name="projectGoals"
               label="Project Goals & Objectives"
               placeholder="Describe what you want to achieve with this project"
-              description="Clearly state the desired outcomes and objectives of the project."
               rows={3}
             />
             
@@ -123,7 +127,6 @@ const BidRequestSpecifications: React.FC<BidRequestSpecificationsProps> = ({
               name="materialRequirements"
               label="Material Requirements & Specifications"
               placeholder="Specify any material requirements or quality standards"
-              description="Indicate specific materials, brands, or quality standards required."
               rows={3}
             />
             
@@ -132,7 +135,6 @@ const BidRequestSpecifications: React.FC<BidRequestSpecificationsProps> = ({
               name="timelineExpectations"
               label="Timeline Expectations"
               placeholder="Describe your expected timeline for the project"
-              description="Specify any important dates, milestones, or completion deadlines."
               rows={3}
             />
             
@@ -170,7 +172,6 @@ const BidRequestSpecifications: React.FC<BidRequestSpecificationsProps> = ({
               name="specialNotes"
               label="Special Instructions & Notes"
               placeholder="Any additional instructions or special considerations"
-              description="Include any other details that vendors should be aware of when bidding."
               rows={3}
             />
             

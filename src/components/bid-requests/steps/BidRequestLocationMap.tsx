@@ -4,7 +4,7 @@ import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { FormFieldTextarea } from '@/components/homeowners/form/FormFieldTextarea';
+import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
 import { useForm } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { Search, MapPin } from 'lucide-react';
@@ -96,7 +96,6 @@ const BidRequestLocationMap: React.FC<BidRequestLocationMapProps> = ({
               name="locationNotes"
               label="Location Notes"
               placeholder="Provide any additional details about the location (e.g., access instructions, parking information)"
-              description="Help vendors prepare for their site visit with specific location details."
               rows={3}
             />
           </CardContent>
