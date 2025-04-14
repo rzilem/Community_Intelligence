@@ -1,47 +1,29 @@
 
-/**
- * Utility functions for bid requests
- */
+import { BidRequestWithVendors } from '@/types/bid-request-types';
 
 /**
- * Convert a database bid request to the frontend format
+ * Maps a category to its corresponding image URL
  */
-export function mapDbBidRequestToModel(dbBidRequest: any): any {
-  return {
-    id: dbBidRequest.id,
-    title: dbBidRequest.title,
-    description: dbBidRequest.description,
-    status: dbBidRequest.status as "draft" | "open" | "closed" | "awarded",
-    associationId: dbBidRequest.association_id,
-    createdBy: dbBidRequest.created_by,
-    assignedTo: dbBidRequest.assigned_to,
-    createdAt: dbBidRequest.created_at,
-    updatedAt: dbBidRequest.updated_at,
-    dueDate: dbBidRequest.due_date,
-    budget: dbBidRequest.budget,
-    category: dbBidRequest.category,
-    visibility: dbBidRequest.visibility as "private" | "association" | "public",
-    imageUrl: dbBidRequest.image_url,
-    attachments: dbBidRequest.attachments as string[]
+export function getCategoryImageUrl(category: string): string {
+  const categoryImageMap: Record<string, string> = {
+    'access_system': '/public/lovable-uploads/f12ed9b3-cd47-4ba5-906e-2767368c119a.png',
+    'arborist': '/public/lovable-uploads/e90108c2-2755-4279-a815-f594603fca7e.png',
+    'concrete': '/public/lovable-uploads/b6e52903-4de7-438c-9720-949fdc6e10f1.png',
+    'construction': '/public/lovable-uploads/e44c8451-97f3-4e21-a1f6-3164610fd910.png',
+    'landscaping': '/public/lovable-uploads/bd464cd6-d2b0-43bc-bdd2-8445695e564e.png',
+    // Add more category images as they become available
   };
+
+  return categoryImageMap[category] || '/placeholder.svg';
 }
 
 /**
- * Convert a model bid request to the database format
+ * Format bid request data for display
  */
-export function mapModelBidRequestToDb(bidRequest: any): any {
+export function formatBidRequestForDisplay(bidRequest: Partial<BidRequestWithVendors>): Partial<BidRequestWithVendors> {
   return {
-    title: bidRequest.title,
-    description: bidRequest.description,
-    status: bidRequest.status || 'draft',
-    association_id: bidRequest.associationId,
-    created_by: bidRequest.createdBy,
-    assigned_to: bidRequest.assignedTo,
-    due_date: bidRequest.dueDate,
-    budget: bidRequest.budget,
-    category: bidRequest.category,
-    visibility: bidRequest.visibility || 'private',
-    image_url: bidRequest.imageUrl,
-    attachments: bidRequest.attachments || []
+    ...bidRequest,
+    // Add category image URL if not already present
+    imageUrl: bidRequest.imageUrl || getCategoryImageUrl(bidRequest.category || '')
   };
 }

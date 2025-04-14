@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { formatCurrency } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { getCategoryImageUrl } from '@/services/bid-requests/bid-request-utils';
 
 interface BidRequestListProps {
   bidRequests: BidRequestWithVendors[];
@@ -24,12 +25,12 @@ const BidRequestList: React.FC<BidRequestListProps> = ({ bidRequests }) => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {bidRequests.map((bidRequest) => (
         <Card key={bidRequest.id} className="hover:shadow-md transition-shadow">
-          {bidRequest.imageUrl && (
-            <div 
-              className="h-48 bg-cover bg-center"
-              style={{ backgroundImage: `url(${bidRequest.imageUrl})` }}
-            />
-          )}
+          <div 
+            className="h-48 bg-cover bg-center"
+            style={{ 
+              backgroundImage: `url(${bidRequest.imageUrl || getCategoryImageUrl(bidRequest.category || '')})` 
+            }}
+          />
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle className="text-lg">{bidRequest.title}</CardTitle>
