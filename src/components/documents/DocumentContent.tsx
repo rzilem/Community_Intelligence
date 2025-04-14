@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Download, History, Eye, Trash2, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import DocumentVersion from '@/types/document-versioning-types';
-import LoadingSpinner from '@/components/ui/spinner';
+import { DocumentWithVersions, VersionHistoryState } from '@/types/document-versioning-types';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 import DocumentVersionHistory from './DocumentVersionHistory';
-import { DocumentWithVersions, VersionHistoryState } from '@/types/document-versioning-types';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DocumentContentProps {
@@ -94,7 +93,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
                 {doc.description && <p>{doc.description}</p>}
                 <p className="text-xs text-muted-foreground">
                   {(doc.file_size / 1024).toFixed(2)} KB 
-                  {doc.current_version && ` • Version ${doc.current_version}`}
+                  {doc.current_version ? ` • Version ${doc.current_version}` : ''}
                 </p>
               </div>
               

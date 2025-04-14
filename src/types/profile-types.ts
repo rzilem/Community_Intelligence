@@ -1,33 +1,22 @@
 
-import type { Database } from '@/integrations/supabase/types';
-
-// User profile related types
-export type Profile = {
+export interface Profile {
   id: string;
-  role: string;
   first_name?: string;
   last_name?: string;
   email?: string;
   phone_number?: string;
-  profile_image_url?: string;
-  job_title?: string; 
-  phone?: string; 
-  created_at?: string;
-  updated_at?: string;
-  activeAssociationId?: string; // This is needed for accessing the active association
-};
+  role: string;
+  avatar_url?: string;
+  job_title?: string;
+  created_at: string;
+  updated_at: string;
+}
 
-export type UserSettings = {
+export interface UserSettings {
   id: string;
   user_id: string;
-  theme?: string;
-  notifications_enabled?: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
-
-export interface UserWithProfile {
-  id: string;
-  email: string;
-  profile: Profile | null;
+  theme: string;
+  notifications_enabled: boolean;
+  created_at: string;
+  updated_at: string;
 }

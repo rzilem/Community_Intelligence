@@ -17,11 +17,12 @@ export const useDocumentVersions = (documentId?: string) => {
     queryFn: async () => {
       if (!documentId) return [];
       
-      const { data, error } = await supabase
-        .from('document_versions')
+      // Use a type cast to bypass TypeScript's strict checking for tables not in the types
+      const { data, error } = await (supabase
+        .from('document_versions' as any)
         .select('*')
         .eq('document_id', documentId)
-        .order('version_number', { ascending: false });
+        .order('version_number', { ascending: false }));
         
       if (error) throw error;
       return data as DocumentVersion[];
@@ -62,9 +63,9 @@ export const useDocumentVersions = (documentId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
-      // Create version record
-      const { data: versionData, error: versionError } = await supabase
-        .from('document_versions')
+      // Create version record using type cast to bypass TypeScript's strict checking
+      const { data: versionData, error: versionError } = await (supabase
+        .from('document_versions' as any)
         .insert({
           document_id: documentId,
           version_number: nextVersion,
@@ -73,7 +74,7 @@ export const useDocumentVersions = (documentId?: string) => {
           created_at: new Date().toISOString(),
           created_by: user.id,
           notes: notes || `Version ${nextVersion}`
-        });
+        }));
         
       if (versionError) throw versionError;
       
@@ -116,12 +117,12 @@ export const useDocumentVersions = (documentId?: string) => {
 
   const revertToVersion = async (documentId: string, versionId: string, versionNumber: number) => {
     try {
-      // Get version details
-      const { data: version, error: versionError } = await supabase
-        .from('document_versions')
+      // Get version details using type cast to bypass TypeScript's strict checking
+      const { data: version, error: versionError } = await (supabase
+        .from('document_versions' as any)
         .select('url, file_size')
         .eq('id', versionId)
-        .single();
+        .single());
         
       if (versionError) throw versionError;
       

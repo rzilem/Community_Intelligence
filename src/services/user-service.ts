@@ -1,4 +1,4 @@
 
-// This file is now just re-exporting from the proper modules
-// It's kept for backward compatibility during the transition
-export * from './user';
+export * from './user/profile-service';
+export * from './user/profile-image-service';
+export * from './user/fetchUserProfile';

@@ -14,6 +14,7 @@ export type Document = {
   is_archived?: boolean;
   uploaded_by?: string;
   uploaded_at: string;
+  current_version?: number;
 };
 
 // Document category type

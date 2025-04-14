@@ -55,7 +55,7 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
       
       <TemplatesGrid
         templates={templates}
-        searchTerm={searchTemplates}
+        searchValue={searchTemplates}
         onUseTemplate={onUseTemplate}
         onTemplateAction={onTemplateAction}
       />
