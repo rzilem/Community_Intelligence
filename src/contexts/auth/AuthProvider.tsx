@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (user?.id) {
-      const updatedProfile = await fetchUserProfile(user.id);
+      const { profile: updatedProfile } = await fetchUserProfile(user.id);
       if (updatedProfile) {
         setProfile(updatedProfile);
       }

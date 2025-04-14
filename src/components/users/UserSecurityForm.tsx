@@ -38,11 +38,7 @@ const UserSecurityForm: React.FC<UserSecurityFormProps> = ({ userId }) => {
   
   const handleSubmit = async (values: SecurityFormValues) => {
     try {
-      const result = await updateUserPassword(
-        userId,
-        values.currentPassword,
-        values.newPassword
-      );
+      const result = await updateUserPassword(values.newPassword);
       
       if (result.success) {
         toast.success('Password updated successfully');

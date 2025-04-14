@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ResidentInputField } from './form/ResidentInputField';
 import { ResidentTypeSelect } from './form/ResidentTypeSelect';
-import { PropertySelect } from './form/PropertySelect';
+import PropertySelect from './form/PropertySelect';
 import { ResidentCheckboxField } from './form/ResidentCheckboxField';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon } from 'lucide-react';

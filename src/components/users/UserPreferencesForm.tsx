@@ -38,12 +38,12 @@ const UserPreferencesForm: React.FC<UserPreferencesFormProps> = ({ userId }) => 
     const loadPreferences = async () => {
       try {
         setIsLoading(true);
-        const settings = await fetchUserSettings(userId);
+        const result = await fetchUserSettings(userId);
           
-        if (settings) {
+        if (result.data) {
           form.reset({
-            theme: settings.theme || 'system',
-            notifications_enabled: settings.notifications_enabled !== false, // default to true
+            theme: result.data.theme || 'system',
+            notifications_enabled: result.data.notifications_enabled !== false, // default to true
           });
         }
       } catch (error) {

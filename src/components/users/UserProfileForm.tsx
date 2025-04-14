@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Profile } from '@/types/profile-types';
-import { updateUserProfile } from '@/services/user/profile-service';
+import { updateProfile } from '@/services/user/profile-service';
 import { toast } from 'sonner';
 
 const profileFormSchema = z.object({
@@ -43,20 +43,17 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onProfileUpd
     if (!profile?.id) return;
     
     try {
-      const updatedProfile = await updateUserProfile({
-        id: profile.id,
-        ...values,
-      });
+      const result = await updateProfile(profile.id, values);
       
-      if (updatedProfile) {
+      if (result.success) {
         toast.success('Profile updated successfully');
         onProfileUpdated();
       } else {
-        toast.error('Failed to update profile');
+        toast.error(`Failed to update profile: ${result.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('An error occurred while updating your profile');
+      toast.error(`An error occurred: ${error.message}`);
     }
   };
   

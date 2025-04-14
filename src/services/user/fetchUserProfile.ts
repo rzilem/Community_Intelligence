@@ -25,9 +25,9 @@ export const fetchUserProfile = async (userId: string): Promise<{ profile?: Prof
       role: data.role || 'user',
       created_at: data.created_at,
       updated_at: data.updated_at,
-      // Map fields for backward compatibility
-      profile_image_url: data.profile_image_url || data.avatar_url,
-      phone: data.phone || data.phone_number
+      // Backward compatibility fields if needed
+      profile_image_url: data.profile_image_url || null,
+      phone: data.phone_number || null
     };
 
     return { profile };
