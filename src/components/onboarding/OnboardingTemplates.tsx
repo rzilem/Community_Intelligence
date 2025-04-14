@@ -53,6 +53,13 @@ const OnboardingTemplates = () => {
     ? templates 
     : templates.filter(t => t.template_type === activeTab);
 
+  // Determine if we have the Complete HOA Onboarding template
+  const hasCompleteTemplate = templates.some(t => 
+    t.name === 'Complete HOA Onboarding' ||
+    t.name.includes('60-Day') ||
+    t.name.includes('60 Day')
+  );
+  
   return (
     <div className="space-y-6">
       <TemplatesHeader 
