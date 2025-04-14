@@ -72,21 +72,19 @@ export async function filterEligibleVendors(associationId: string): Promise<any[
   console.log('Filtering eligible vendors for association:', associationId);
   
   try {
-    // Use execute_sql function instead of direct RPC call
-    const { data, error } = await supabase.rpc('execute_sql', {
-      sql_query: 'SELECT * FROM get_eligible_vendors($1)',
-      params: JSON.stringify([associationId])
-    });
+    // Query vendors directly instead of using RPC
+    const { data, error } = await supabase
+      .from('vendors')
+      .select('*')
+      .eq('association_id', associationId)
+      .eq('include_in_bids', true);
     
-    if (error) throw error;
-    
-    // Ensure we return an array even if data is not in the expected format
-    if (!data || !Array.isArray(data)) {
-      console.warn('Unexpected data format from get_eligible_vendors:', data);
-      return [];
+    if (error) {
+      console.error('Error querying eligible vendors:', error);
+      throw error;
     }
     
-    return data;
+    return data || [];
   } catch (e) {
     console.error('Error filtering eligible vendors:', e);
     // Return mock data for now
