@@ -13,9 +13,9 @@ const BidRequestList: React.FC<BidRequestListProps> = ({ bidRequests }) => {
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'draft': return 'secondary';
-      case 'open': return 'primary';
+      case 'open': return 'default';
       case 'closed': return 'destructive';
-      case 'awarded': return 'success';
+      case 'awarded': return 'secondary';
       default: return 'secondary';
     }
   };

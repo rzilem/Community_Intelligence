@@ -14,13 +14,14 @@ const BidRequests: React.FC = () => {
   const [bidRequests, setBidRequests] = useState<BidRequestWithVendors[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { user, profile } = useAuth();
+  const associationId = profile?.activeAssociationId || '';
 
   useEffect(() => {
     const fetchBidRequests = async () => {
-      // Assuming user has an active association
-      if (user && profile?.active_association_id) {
+      // Fetch bid requests for the active association
+      if (user && associationId) {
         try {
-          const requests = await bidRequestService.getBidRequests(profile.active_association_id);
+          const requests = await bidRequestService.getBidRequests(associationId);
           setBidRequests(requests);
         } catch (error) {
           console.error('Error fetching bid requests:', error);
@@ -29,18 +30,18 @@ const BidRequests: React.FC = () => {
     };
 
     fetchBidRequests();
-  }, [user, profile]);
+  }, [user, associationId]);
 
   const handleCreateBidRequest = async (newBidRequest: Partial<BidRequestWithVendors>) => {
     try {
       const createdRequest = await bidRequestService.createBidRequest({
         ...newBidRequest,
-        associationId: profile?.active_association_id,
-        createdBy: user?.id,
+        associationId: associationId,
+        createdBy: user?.id || '',
       });
       
       // Refresh the list of bid requests
-      const updatedRequests = await bidRequestService.getBidRequests(profile?.active_association_id || '');
+      const updatedRequests = await bidRequestService.getBidRequests(associationId);
       setBidRequests(updatedRequests);
       
       setIsDialogOpen(false);

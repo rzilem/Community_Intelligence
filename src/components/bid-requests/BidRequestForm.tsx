@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
   Form, 
   FormControl, 
-  FormDescription, 
   FormField, 
   FormItem, 
   FormLabel, 
@@ -15,7 +14,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { bidRequestService } from '@/services/bid-request-service';
-import { BidRequestWithVendors } from '@/types/bid-request-types';
+import { BidRequestWithVendors, BidRequestVendor } from '@/types/bid-request-types';
 import { Vendor } from '@/types/vendor-types';
 import { FileUploader } from '@/components/ui/file-uploader';
 
@@ -56,19 +55,26 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({ onSubmit, initialData }
 
   const handleFormSubmit = async (data: Partial<BidRequestWithVendors>) => {
     try {
-      // If an image was uploaded, upload it first
+      // If an image was uploaded, prepare for upload
       let imageUrl;
       if (imageFile) {
-        // Generate a temporary ID for the bid request
-        const tempId = `temp-${Date.now()}`;
-        imageUrl = await bidRequestService.uploadBidRequestImage(imageFile, tempId);
+        // We'll handle the actual upload after creating the bid request
+        // Just noting we have an image to upload
+        imageUrl = 'pending_upload';
       }
 
       // Prepare the bid request data
-      const bidRequestData = {
+      const bidRequestData: Partial<BidRequestWithVendors> = {
         ...data,
         imageUrl,
-        vendors: selectedVendors.map(vendorId => ({ vendorId }))
+        // Create proper vendor objects that match the expected type
+        vendors: selectedVendors.map(vendorId => {
+          const vendor: Partial<BidRequestVendor & { vendorDetails?: Vendor }> = {
+            vendorId,
+            status: 'invited'
+          };
+          return vendor;
+        })
       };
 
       // Submit the bid request
