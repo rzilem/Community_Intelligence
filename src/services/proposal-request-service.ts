@@ -4,7 +4,7 @@ import { ProposalRequest, ProposalRequestFormData } from '@/types/proposal-reque
 
 export const submitProposalRequest = async (formData: ProposalRequestFormData, userId: string): Promise<{ data: ProposalRequest | null; error: Error | null }> => {
   try {
-    const proposalRequest: Omit<ProposalRequest, 'id'> = {
+    const proposalRequest = {
       community_name: formData.communityName,
       number_of_bids: parseInt(formData.numberOfBids),
       address: formData.address,
@@ -17,11 +17,11 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
       additional_details: formData.additionalDetails,
       status: 'pending',
       created_by: userId
-    };
+    } as const;
 
     const { data, error } = await supabase
       .from('proposal_requests')
-      .insert([proposalRequest])
+      .insert(proposalRequest)
       .select()
       .single();
 

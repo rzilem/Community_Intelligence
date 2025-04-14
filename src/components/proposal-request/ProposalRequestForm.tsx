@@ -38,13 +38,16 @@ const ProposalRequestForm: React.FC = () => {
   const handleChange = (field: string, value: any) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof ProposalRequestFormData],
-          [child]: value
+      setFormData(prev => {
+        const updatedData = { ...prev };
+        if (parent === 'address') {
+          updatedData.address = {
+            ...prev.address,
+            [child]: value
+          };
         }
-      }));
+        return updatedData;
+      });
     } else {
       setFormData(prev => ({
         ...prev,
