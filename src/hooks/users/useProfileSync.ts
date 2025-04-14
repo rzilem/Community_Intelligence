@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { UserWithProfile } from '@/types/user-types';
 import { toast } from 'sonner';
+import { User } from '@supabase/supabase-js';
 
 export const useProfileSync = (users: UserWithProfile[]) => {
   const [syncInProgress, setSyncInProgress] = useState(false);
@@ -21,26 +22,27 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     const checkMissingProfiles = async () => {
       try {
         // Get all users from auth.users
-        const { data: authUsers, error, count } = await supabase.auth.admin.listUsers({
+        const { data, error } = await supabase.auth.admin.listUsers({
           page: 1,
           perPage: 100 // Adjust based on expected user count
         });
         
         if (error) throw error;
         
-        if (authUsers) {
-          setAuthUserCount(authUsers.users.length);
+        if (data && data.users) {
+          const authUsers = data.users;
+          setAuthUserCount(authUsers.length);
           
           // Create a set of existing profile IDs for fast lookup
           const existingProfileIds = new Set(users.map(user => user.id));
           
           // Find auth users without profiles
-          const missingProfiles = authUsers.users.filter(
+          const missingProfiles = authUsers.filter(
             authUser => !existingProfileIds.has(authUser.id)
           );
           
           setSyncInfo({
-            totalAuthUsers: authUsers.users.length,
+            totalAuthUsers: authUsers.length,
             missingProfiles: missingProfiles.length
           });
         }
@@ -61,24 +63,26 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     
     try {
       // Get all users from auth.users
-      const { data: authUsers, error } = await supabase.auth.admin.listUsers({
+      const { data, error } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 100
       });
       
       if (error) throw error;
       
-      if (!authUsers || !authUsers.users.length) {
+      if (!data || !data.users || !data.users.length) {
         toast.error('No users found in the authentication system');
         setSyncInProgress(false);
         return;
       }
       
+      const authUsers = data.users;
+      
       // Create a set of existing profile IDs for fast lookup
       const existingProfileIds = new Set(users.map(user => user.id));
       
       // Find auth users without profiles
-      const missingProfiles = authUsers.users.filter(
+      const missingProfiles = authUsers.filter(
         authUser => !existingProfileIds.has(authUser.id)
       );
       

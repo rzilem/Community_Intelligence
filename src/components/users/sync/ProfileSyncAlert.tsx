@@ -67,7 +67,7 @@ const ProfileSyncAlert: React.FC<ProfileSyncAlertProps> = ({
   // Show status info when everything is synced
   if (syncInfo && syncInfo.missingProfiles === 0 && userCount > 0) {
     return (
-      <Alert className="mb-6" variant="success">
+      <Alert className="mb-6" variant="default">
         <CheckCircle className="h-4 w-4" />
         <AlertTitle>All Profiles Synced</AlertTitle>
         <AlertDescription>

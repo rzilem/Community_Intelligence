@@ -71,7 +71,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     console.log('Loading associations for user:', userId);
     
     const { data, error } = await supabase
-      .from('user_associations')
+      .from('association_users')
       .select(`
         *,
         associations:association_id (*)
@@ -84,7 +84,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     }
     
     console.log('Associations loaded:', data);
-    return data as UserAssociation[];
+    return data as unknown as UserAssociation[];
   } catch (error) {
     console.error('Unexpected error loading user associations:', error);
     return [];
