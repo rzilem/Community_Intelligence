@@ -18,6 +18,20 @@ export interface BidRequest {
   visibility: 'private' | 'association' | 'public';
   imageUrl?: string;
   attachments?: string[];
+  // New fields for enhanced bid requests
+  locationData?: {
+    address: string;
+    coordinates: { lat: number; lng: number } | null;
+  };
+  locationNotes?: string;
+  vendorNotes?: string;
+  specifications?: {
+    projectGoals?: string;
+    materialRequirements?: string;
+    timelineExpectations?: string;
+    specialNotes?: string;
+    customQuestions?: { id: string; question: string }[];
+  };
 }
 
 export interface BidRequestVendor {
