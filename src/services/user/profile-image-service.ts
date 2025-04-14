@@ -2,62 +2,42 @@
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * Updates the user's profile image
+ * Updates a user's profile image in Supabase storage and updates the profile record
  */
-export const updateProfileImage = async (
-  userId: string, 
-  imageFile: File
-): Promise<{ url: string | null; error: string | null }> => {
+export const updateProfileImage = async (userId: string, file: File): Promise<string | null> => {
   try {
-    // Validate file
-    if (!imageFile) {
-      return { url: null, error: 'No file provided' };
-    }
-    
-    // Validate file is an image
-    if (!imageFile.type.startsWith('image/')) {
-      return { url: null, error: 'File must be an image' };
-    }
-    
-    // Validate file size (max 5MB)
-    if (imageFile.size > 5 * 1024 * 1024) {
-      return { url: null, error: 'Image must be less than 5MB' };
-    }
-    
-    // Create file path using user ID to enforce ownership
-    const filePath = `${userId}/${Date.now()}_${imageFile.name.replace(/\s+/g, '_')}`;
-    
-    // Upload image to Supabase storage
+    // Upload file to storage
+    const fileName = `${userId}-${Date.now()}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('profile_images')
-      .upload(filePath, imageFile);
-    
+      .from('profile-images')
+      .upload(`public/${fileName}`, file);
+
     if (uploadError) {
-      console.error('Error uploading image:', uploadError);
-      return { url: null, error: uploadError.message };
+      console.error('Error uploading profile image:', uploadError);
+      return null;
     }
-    
-    // Get the public URL of the uploaded image
-    const { data: publicUrlData } = supabase.storage
-      .from('profile_images')
-      .getPublicUrl(uploadData.path);
-    
-    const imageUrl = publicUrlData.publicUrl;
-    
-    // Update the user's profile with the new image URL
+
+    // Get public URL
+    const { data: urlData } = await supabase.storage
+      .from('profile-images')
+      .getPublicUrl(`public/${fileName}`);
+
+    const imageUrl = urlData.publicUrl;
+
+    // Update user profile with image URL
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ profile_image_url: imageUrl })
+      .update({ avatar_url: imageUrl })
       .eq('id', userId);
-    
+
     if (updateError) {
       console.error('Error updating profile with image URL:', updateError);
-      return { url: null, error: updateError.message };
+      return null;
     }
-    
-    return { url: imageUrl, error: null };
-  } catch (error: any) {
-    console.error('Error in updateProfileImage:', error);
-    return { url: null, error: error.message };
+
+    return imageUrl;
+  } catch (error) {
+    console.error('Unexpected error updating profile image:', error);
+    return null;
   }
 };

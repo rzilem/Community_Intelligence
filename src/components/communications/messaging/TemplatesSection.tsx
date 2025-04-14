@@ -1,18 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 import TemplateSearch from './TemplateSearch';
 import TemplatesGrid from './TemplatesGrid';
-
-interface Template {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: 'email' | 'sms';
-}
+import AITemplateCreator from '../ai-templates/AITemplateCreator';
+import { useToast } from '@/components/ui/use-toast';
 
 interface TemplatesSectionProps {
-  templates: Template[];
+  templates: any[];
   searchTemplates: string;
   onSearchChange: (value: string) => void;
   onUseTemplate: (id: string) => void;
@@ -26,22 +22,44 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
   onUseTemplate,
   onTemplateAction
 }) => {
+  const { toast } = useToast();
+  
+  const handleSaveTemplate = (title: string, content: string, type: string) => {
+    console.log('Saving template:', { title, content, type });
+    // In a real implementation, you would save this to the database
+    // For now, just show a toast notification
+    toast({
+      title: 'Template Created',
+      description: `"${title}" has been saved as a ${type} template.`,
+    });
+    
+    // Refresh template list or add to local state
+  };
+
   return (
-    <>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h2 className="text-2xl font-semibold">Message Templates</h2>
-        <TemplateSearch 
-          searchValue={searchTemplates} 
-          onSearchChange={onSearchChange} 
-        />
+        
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <TemplateSearch 
+            searchValue={searchTemplates} 
+            onSearchChange={onSearchChange}
+          />
+          
+          <AITemplateCreator 
+            onSaveTemplate={handleSaveTemplate}
+          />
+        </div>
       </div>
       
-      <TemplatesGrid 
+      <TemplatesGrid
         templates={templates}
+        searchTerm={searchTemplates}
         onUseTemplate={onUseTemplate}
         onTemplateAction={onTemplateAction}
       />
-    </>
+    </div>
   );
 };
 

@@ -38,7 +38,7 @@ export const useProfileSync = (users: UserWithProfile[]) => {
           
           // Find auth users without profiles
           const missingProfiles = authUsers.filter(
-            authUser => !existingProfileIds.has(authUser.id)
+            (authUser: User) => !existingProfileIds.has(authUser.id)
           );
           
           setSyncInfo({
@@ -83,7 +83,7 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       
       // Find auth users without profiles
       const missingProfiles = authUsers.filter(
-        authUser => !existingProfileIds.has(authUser.id)
+        (authUser: User) => !existingProfileIds.has(authUser.id)
       );
       
       if (missingProfiles.length === 0) {

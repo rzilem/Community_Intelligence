@@ -1,95 +1,51 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/auth';
-import { DashboardStats } from './useDashboardData';
+import { Profile } from '@/types/app-types';
+import CalendarTab from '@/components/dashboard/CalendarTab';
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import MessagesFeed from '@/components/dashboard/MessagesFeed';
+import TreasurerDashboard from '@/components/dashboard/TreasurerDashboard';
 
-// Define role-specific content configurations
-export const useDashboardRoleContent = (stats?: DashboardStats | null) => {
-  const { userRole } = useAuth();
-  
-  // Role-specific dashboard titles
-  const dashboardTitle = React.useMemo(() => {
-    switch (userRole) {
-      case 'admin':
-        return 'Administrator Dashboard';
-      case 'manager':
-        return 'Property Manager Dashboard';
-      case 'accountant':
-        return 'Financial Dashboard';
-      case 'maintenance':
-        return 'Maintenance Dashboard';
-      case 'resident':
-        return 'Resident Portal';
-      default:
-        return 'Dashboard';
-    }
-  }, [userRole]);
-  
-  // Role-specific dashboard stats to highlight
-  const priorityStats = React.useMemo(() => {
-    if (!stats) return [];
+export const useDashboardRoleContent = (
+  user: Profile | null,
+  recentActivity: any[] = [],
+  loading: boolean = false,
+  error: Error | null = null
+) => {
+  const getContentForRole = () => {
+    if (!user) return null;
     
-    switch (userRole) {
-      case 'admin':
-        return [
-          { label: 'Properties', value: stats.propertyCount, change: null },
-          { label: 'Residents', value: stats.residentCount, change: null },
-          { label: 'Collections', value: `${stats.collectionRate}%`, change: stats.collectionTrend },
-          { label: 'Compliance', value: stats.complianceCount, change: stats.complianceTrend }
-        ];
-      case 'manager':
-        return [
-          { label: 'Properties', value: stats.propertyCount, change: null },
-          { label: 'Compliance', value: stats.complianceCount, change: stats.complianceTrend },
-          { label: 'Residents', value: stats.residentCount, change: null },
-          { label: 'Notifications', value: stats.notificationCount, change: null }
-        ];
-      case 'accountant':
-        return [
-          { label: 'Assessments', value: `$${stats.assessmentAmount.toLocaleString()}`, change: null },
-          { label: 'Collection Rate', value: `${stats.collectionRate}%`, change: stats.collectionTrend },
-          { label: 'Properties', value: stats.propertyCount, change: null },
-          { label: 'Residents', value: stats.residentCount, change: null }
-        ];
-      case 'maintenance':
-        return [
-          { label: 'Properties', value: stats.propertyCount, change: null },
-          { label: 'Compliance', value: stats.complianceCount, change: stats.complianceTrend },
-          { label: 'Notifications', value: stats.notificationCount, change: null }
-        ];
-      case 'resident':
-        return [
-          { label: 'Notifications', value: stats.notificationCount, change: null },
-          { label: 'Compliance', value: stats.complianceCount, change: stats.complianceTrend }
-        ];
+    switch (user.role) {
+      case 'treasurer':
+        return <TreasurerDashboard />;
       default:
-        return [
-          { label: 'Properties', value: stats.propertyCount, change: null },
-          { label: 'Residents', value: stats.residentCount, change: null }
-        ];
+        return (
+          <>
+            <div className="space-y-4">
+              <CalendarTab />
+            </div>
+          </>
+        );
     }
-  }, [stats, userRole]);
+  };
   
-  // Default tab to show first based on role
-  const defaultTab = React.useMemo(() => {
-    switch (userRole) {
-      case 'admin':
-      case 'manager':
-        return 'activity';
-      case 'accountant':
-        return 'messages';
-      case 'maintenance':
-        return 'activity';
-      case 'resident':
-        return 'calendar';
-      default:
-        return 'calendar';
-    }
-  }, [userRole]);
+  const getActivityContent = () => {
+    return (
+      <ActivityFeed 
+        recentActivity={recentActivity} 
+        loading={loading}
+        error={error} 
+      />
+    );
+  };
+  
+  const getMessagesContent = () => {
+    return <MessagesFeed />;
+  };
   
   return {
-    dashboardTitle,
-    priorityStats,
-    defaultTab
+    getContentForRole,
+    getActivityContent,
+    getMessagesContent
   };
 };
