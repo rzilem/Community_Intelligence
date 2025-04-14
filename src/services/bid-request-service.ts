@@ -22,79 +22,48 @@ export const bidRequestService = {
 
     console.log('Creating bid request with data:', dbBidRequest);
 
-    // Use the rpc function to execute raw SQL instead of the typed client
     const { data, error } = await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          INSERT INTO bid_requests (
-            title, description, status, association_id, created_by, assigned_to, 
-            due_date, budget, category, visibility, image_url, attachments
-          ) 
-          VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
-          )
-          RETURNING *
-        `,
-        params: [
-          dbBidRequest.title,
-          dbBidRequest.description,
-          dbBidRequest.status,
-          dbBidRequest.association_id,
-          dbBidRequest.created_by,
-          dbBidRequest.assigned_to,
-          dbBidRequest.due_date,
-          dbBidRequest.budget,
-          dbBidRequest.category,
-          dbBidRequest.visibility,
-          dbBidRequest.image_url,
-          JSON.stringify(dbBidRequest.attachments)
-        ]
-      });
+      .from('bid_requests')
+      .insert(dbBidRequest)
+      .select()
+      .single();
 
     if (error) {
       console.error('Error creating bid request:', error);
       throw error;
     }
     
-    // When using rpc, data will be an array of rows
-    const result = Array.isArray(data) ? data[0] : data;
-    
     // Convert snake_case back to camelCase for frontend
     return {
-      id: result.id,
-      title: result.title,
-      description: result.description,
-      status: result.status,
-      associationId: result.association_id,
-      createdBy: result.created_by,
-      assignedTo: result.assigned_to,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at,
-      dueDate: result.due_date,
-      budget: result.budget,
-      category: result.category,
-      visibility: result.visibility,
-      imageUrl: result.image_url,
-      attachments: result.attachments
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      associationId: data.association_id,
+      createdBy: data.created_by,
+      assignedTo: data.assigned_to,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      dueDate: data.due_date,
+      budget: data.budget,
+      category: data.category,
+      visibility: data.visibility,
+      imageUrl: data.image_url,
+      attachments: data.attachments
     };
   },
 
   async getBidRequests(associationId: string): Promise<BidRequestWithVendors[]> {
     console.log('Fetching bid requests for association:', associationId);
     
-    // Use the rpc function to execute raw SQL
     const { data, error } = await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          SELECT 
-            id, title, description, status, association_id, created_by, assigned_to,
-            created_at, updated_at, due_date, budget, category, visibility,
-            image_url, attachments
-          FROM bid_requests
-          WHERE association_id = $1
-        `,
-        params: [associationId]
-      });
+      .from('bid_requests')
+      .select(`
+        id, title, description, status, association_id, created_by, assigned_to,
+        created_at, updated_at, due_date, budget, category, visibility,
+        image_url, attachments
+      `)
+      .eq('association_id', associationId);
 
     if (error) {
       console.error('Error fetching bid requests:', error);
@@ -104,7 +73,7 @@ export const bidRequestService = {
     console.log('Fetched bid requests:', data);
     
     // Convert snake_case to camelCase
-    return (Array.isArray(data) ? data : []).map(item => ({
+    return (data || []).map(item => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -125,45 +94,30 @@ export const bidRequestService = {
   },
 
   async getBidRequestById(id: string): Promise<BidRequestWithVendors> {
-    // Use the rpc function to execute raw SQL
+    // Fetch bid request
     const { data: requestData, error: requestError } = await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          SELECT 
-            id, title, description, status, association_id, created_by, assigned_to,
-            created_at, updated_at, due_date, budget, category, visibility,
-            image_url, attachments
-          FROM bid_requests
-          WHERE id = $1
-        `,
-        params: [id]
-      });
+      .from('bid_requests')
+      .select(`
+        id, title, description, status, association_id, created_by, assigned_to,
+        created_at, updated_at, due_date, budget, category, visibility,
+        image_url, attachments
+      `)
+      .eq('id', id)
+      .single();
 
     if (requestError) {
       console.error('Error fetching bid request by ID:', requestError);
       throw requestError;
     }
     
-    const bidRequestRow = Array.isArray(requestData) && requestData.length > 0 
-      ? requestData[0] 
-      : null;
-      
-    if (!bidRequestRow) {
-      throw new Error(`Bid request with ID ${id} not found`);
-    }
-    
     // Get vendors for this bid request
     const { data: vendorData, error: vendorError } = await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          SELECT 
-            id, bid_request_id, vendor_id, status, quote_amount,
-            quote_details, submitted_at
-          FROM bid_request_vendors
-          WHERE bid_request_id = $1
-        `,
-        params: [id]
-      });
+      .from('bid_request_vendors')
+      .select(`
+        id, bid_request_id, vendor_id, status, quote_amount,
+        quote_details, submitted_at
+      `)
+      .eq('bid_request_id', id);
 
     if (vendorError) {
       console.error('Error fetching bid request vendors:', vendorError);
@@ -171,34 +125,32 @@ export const bidRequestService = {
     }
     
     // Convert snake_case to camelCase
-    const vendors = Array.isArray(vendorData) 
-      ? vendorData.map(item => ({
-          id: item.id,
-          bidRequestId: item.bid_request_id,
-          vendorId: item.vendor_id,
-          status: item.status,
-          quoteAmount: item.quote_amount,
-          quoteDetails: item.quote_details,
-          submittedAt: item.submitted_at
-        }))
-      : [];
+    const vendors = (vendorData || []).map(item => ({
+      id: item.id,
+      bidRequestId: item.bid_request_id,
+      vendorId: item.vendor_id,
+      status: item.status,
+      quoteAmount: item.quote_amount,
+      quoteDetails: item.quote_details,
+      submittedAt: item.submitted_at
+    }));
 
     return {
-      id: bidRequestRow.id,
-      title: bidRequestRow.title,
-      description: bidRequestRow.description,
-      status: bidRequestRow.status,
-      associationId: bidRequestRow.association_id,
-      createdBy: bidRequestRow.created_by,
-      assignedTo: bidRequestRow.assigned_to,
-      createdAt: bidRequestRow.created_at,
-      updatedAt: bidRequestRow.updated_at,
-      dueDate: bidRequestRow.due_date,
-      budget: bidRequestRow.budget,
-      category: bidRequestRow.category,
-      visibility: bidRequestRow.visibility,
-      imageUrl: bidRequestRow.image_url,
-      attachments: bidRequestRow.attachments,
+      id: requestData.id,
+      title: requestData.title,
+      description: requestData.description,
+      status: requestData.status,
+      associationId: requestData.association_id,
+      createdBy: requestData.created_by,
+      assignedTo: requestData.assigned_to,
+      createdAt: requestData.created_at,
+      updatedAt: requestData.updated_at,
+      dueDate: requestData.due_date,
+      budget: requestData.budget,
+      category: requestData.category,
+      visibility: requestData.visibility,
+      imageUrl: requestData.image_url,
+      attachments: requestData.attachments,
       vendors
     };
   },
@@ -210,50 +162,30 @@ export const bidRequestService = {
       vendor_id: bidRequestVendor.vendorId,
       status: bidRequestVendor.status || 'invited',
       quote_amount: bidRequestVendor.quoteAmount,
-      quote_details: bidRequestVendor.quoteDetails,
+      quote_details: bidRequestVendor.quoteDetails || {},
       submitted_at: bidRequestVendor.submittedAt
     };
 
-    // Use the rpc function to execute raw SQL
     const { data, error } = await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          INSERT INTO bid_request_vendors (
-            bid_request_id, vendor_id, status, quote_amount, quote_details, submitted_at
-          )
-          VALUES ($1, $2, $3, $4, $5, $6)
-          RETURNING *
-        `,
-        params: [
-          dbVendor.bid_request_id,
-          dbVendor.vendor_id,
-          dbVendor.status,
-          dbVendor.quote_amount,
-          JSON.stringify(dbVendor.quote_details || {}),
-          dbVendor.submitted_at
-        ]
-      });
+      .from('bid_request_vendors')
+      .insert(dbVendor)
+      .select()
+      .single();
 
     if (error) {
       console.error('Error adding vendor to bid request:', error);
       throw error;
     }
     
-    const result = Array.isArray(data) && data.length > 0 ? data[0] : null;
-    
-    if (!result) {
-      throw new Error('Failed to insert bid request vendor');
-    }
-    
     // Convert snake_case back to camelCase
     return {
-      id: result.id,
-      bidRequestId: result.bid_request_id,
-      vendorId: result.vendor_id,
-      status: result.status,
-      quoteAmount: result.quote_amount,
-      quoteDetails: result.quote_details,
-      submittedAt: result.submitted_at
+      id: data.id,
+      bidRequestId: data.bid_request_id,
+      vendorId: data.vendor_id,
+      status: data.status,
+      quoteAmount: data.quote_amount,
+      quoteDetails: data.quote_details,
+      submittedAt: data.submitted_at
     };
   },
 
@@ -279,16 +211,16 @@ export const bidRequestService = {
 
     console.log('File uploaded, public URL:', publicUrl);
 
-    // Update bid request with image URL using rpc
-    await supabase
-      .rpc('execute_sql', {
-        sql_query: `
-          UPDATE bid_requests
-          SET image_url = $1
-          WHERE id = $2
-        `,
-        params: [publicUrl, bidRequestId]
-      });
+    // Update bid request with image URL
+    const { error: updateError } = await supabase
+      .from('bid_requests')
+      .update({ image_url: publicUrl })
+      .eq('id', bidRequestId);
+
+    if (updateError) {
+      console.error('Error updating bid request with image URL:', updateError);
+      throw updateError;
+    }
 
     return publicUrl;
   },
