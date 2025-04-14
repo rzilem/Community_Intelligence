@@ -1,15 +1,7 @@
-
 import React from 'react';
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
-
 interface FormFieldInputProps {
   form: UseFormReturn<any>;
   name: string;
@@ -17,29 +9,15 @@ interface FormFieldInputProps {
   placeholder: string;
   type?: string;
 }
-
 const FormFieldInput = ({
   form,
   name,
   label,
   placeholder,
-  type = 'text',
+  type = 'text'
 }: FormFieldInputProps) => {
-  return (
-    <FormField
-      control={form.control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>{label}</FormLabel>
-          <FormControl>
-            <Input placeholder={placeholder} {...field} type={type} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  );
+  return <FormField control={form.control} name={name} render={({
+    field
+  }) => {}} />;
 };
-
 export default FormFieldInput;
