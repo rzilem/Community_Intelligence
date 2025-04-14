@@ -217,16 +217,22 @@ export const bidRequestService = {
   async filterEligibleVendors(associationId: string): Promise<any[]> {
     console.log('Filtering eligible vendors for association:', associationId);
     
-    // Since we don't have a "vendors" table in the Supabase schema yet,
-    // we'll need to use a workaround or create one. For now:
     try {
-      // This is a temporary solution
-      const { data, error } = await supabase.rpc('get_eligible_vendors', {
-        association_id: associationId
+      // Use execute_sql function instead of direct RPC call
+      const { data, error } = await supabase.rpc('execute_sql', {
+        sql_query: 'SELECT * FROM get_eligible_vendors($1)',
+        params: JSON.stringify([associationId])
       });
       
       if (error) throw error;
-      return data || [];
+      
+      // Ensure we return an array even if data is not in the expected format
+      if (!data || !Array.isArray(data)) {
+        console.warn('Unexpected data format from get_eligible_vendors:', data);
+        return [];
+      }
+      
+      return data;
     } catch (e) {
       console.error('Error filtering eligible vendors:', e);
       // Return mock data for now
