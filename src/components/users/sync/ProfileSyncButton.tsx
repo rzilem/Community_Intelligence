@@ -14,17 +14,13 @@ const ProfileSyncButton: React.FC<ProfileSyncButtonProps> = ({
 }) => {
   return (
     <Button 
-      onClick={onSync} 
       variant="outline" 
-      className="flex items-center gap-2"
+      size="sm" 
+      onClick={onSync}
       disabled={syncInProgress}
     >
-      {syncInProgress ? (
-        <RefreshCw className="h-4 w-4 animate-spin" />
-      ) : (
-        <RefreshCw className="h-4 w-4" />
-      )}
-      Sync Missing Profiles
+      <RefreshCw className={`mr-2 h-4 w-4 ${syncInProgress ? 'animate-spin' : ''}`} />
+      {syncInProgress ? 'Syncing Profiles...' : 'Sync Missing Profiles'}
     </Button>
   );
 };

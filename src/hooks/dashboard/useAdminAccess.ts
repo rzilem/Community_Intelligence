@@ -1,41 +1,27 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
-export function useAdminAccess(userId?: string) {
-  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+export const useAdminAccess = (userId?: string) => {
+  const { userRole } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
-    const ensureAdminAccess = async () => {
-      if (!userId) return;
-      
-      try {
-        setIsUpdatingRole(true);
-        const { data, error } = await supabase
-          .from('profiles')
-          .update({ role: 'admin' })
-          .eq('id', userId)
-          .select();
-
-        if (error) {
-          console.error('Error updating role:', error);
-          setError(error);
-        } else {
-          console.log('User role updated to admin:', data);
-          toast.success('Admin access granted successfully');
-        }
-      } catch (err) {
-        console.error('Error ensuring admin access:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-      } finally {
-        setIsUpdatingRole(false);
-      }
-    };
-
-    ensureAdminAccess();
-  }, [userId]);
-
-  return { isUpdatingRole, error };
-}
+    // This is just a verification for development purposes
+    // In production, actual RLS policies would handle permissions
+    if (userId && userRole === 'admin') {
+      console.log('Admin access verified for user:', userId);
+    }
+    
+    // For demonstration only - normally handled by RLS
+    // This just shows we could redirect non-admins from protected areas
+    if (userId && window.location.pathname.includes('/system/') && userRole !== 'admin') {
+      toast.error('You need admin privileges to access this section');
+      navigate('/dashboard');
+    }
+  }, [userId, userRole, navigate]);
+  
+  return { isAdmin: userRole === 'admin' };
+};

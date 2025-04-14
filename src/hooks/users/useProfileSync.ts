@@ -1,83 +1,156 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { UserWithProfile } from '@/types/user-types';
+import { toast } from 'sonner';
 
 export const useProfileSync = (users: UserWithProfile[]) => {
   const [syncInProgress, setSyncInProgress] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ success: boolean; created_count: number } | null>(null);
-  const [authUserCount, setAuthUserCount] = useState<number | null>(null);
-  const [syncInfo, setSyncInfo] = useState<string | null>(null);
-
-  // Get auth user count for comparison with profiles
+  const [authUserCount, setAuthUserCount] = useState(0);
+  const [syncInfo, setSyncInfo] = useState<{
+    totalAuthUsers: number;
+    missingProfiles: number;
+  } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    success: number;
+    failed: number;
+  } | null>(null);
+  
+  // Check for missing profiles when users data changes
   useEffect(() => {
-    const fetchAuthUserCount = async () => {
+    const checkMissingProfiles = async () => {
       try {
-        // Use a direct query to get the count of auth users with proper typing
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('count', { count: 'exact', head: true });
+        // Get all users from auth.users
+        const { data: authUsers, error, count } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 100 // Adjust based on expected user count
+        });
         
-        if (error) {
-          console.error('Error fetching auth user count:', error);
-          return;
+        if (error) throw error;
+        
+        if (authUsers) {
+          setAuthUserCount(authUsers.users.length);
+          
+          // Create a set of existing profile IDs for fast lookup
+          const existingProfileIds = new Set(users.map(user => user.id));
+          
+          // Find auth users without profiles
+          const missingProfiles = authUsers.users.filter(
+            authUser => !existingProfileIds.has(authUser.id)
+          );
+          
+          setSyncInfo({
+            totalAuthUsers: authUsers.users.length,
+            missingProfiles: missingProfiles.length
+          });
         }
-        
-        // The count comes back as a string but we need it as a number
-        const totalUsers = data ? parseInt(data as unknown as string) : 0;
-        setAuthUserCount(totalUsers);
-        
-        // If profiles count is less than auth users, show info message
-        if (totalUsers > users.length) {
-          setSyncInfo(`There are ${totalUsers} registered users but only ${users.length} user profiles. 
-            Click "Sync Missing Profiles" to create the missing profiles.`);
-        } else {
-          setSyncInfo(null);
-        }
-      } catch (err) {
-        console.error('Error in fetchAuthUserCount:', err);
+      } catch (error) {
+        console.error('Error checking for missing profiles:', error);
       }
     };
     
-    if (users.length >= 0) {
-      fetchAuthUserCount();
-    }
+    checkMissingProfiles();
   }, [users]);
-
-  // Function to sync Supabase auth users with profiles
+  
+  // Function to sync missing profiles
   const syncMissingProfiles = async () => {
+    if (syncInProgress) return;
+    
+    setSyncInProgress(true);
+    setSyncResult(null);
+    
     try {
-      setSyncInProgress(true);
-      toast.loading('Syncing user profiles...');
+      // Get all users from auth.users
+      const { data: authUsers, error } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 100
+      });
       
-      // Use the database function to sync missing profiles
-      const { data: authData, error: authError } = await supabase.rpc('sync_missing_profiles');
+      if (error) throw error;
       
-      if (authError) {
-        throw authError;
+      if (!authUsers || !authUsers.users.length) {
+        toast.error('No users found in the authentication system');
+        setSyncInProgress(false);
+        return;
       }
       
-      console.log('Sync profiles result:', authData);
+      // Create a set of existing profile IDs for fast lookup
+      const existingProfileIds = new Set(users.map(user => user.id));
       
-      // Cast the data to the expected type
-      const typedData = authData as { success: boolean; created_count: number };
-      setSyncResult(typedData);
+      // Find auth users without profiles
+      const missingProfiles = authUsers.users.filter(
+        authUser => !existingProfileIds.has(authUser.id)
+      );
       
-      if (typedData.created_count > 0) {
-        toast.success(`User profiles synced successfully. Created ${typedData.created_count} new profiles.`);
-        setSyncInfo(null);
-      } else {
-        toast.info('All users already have profiles. No new profiles were created.');
+      if (missingProfiles.length === 0) {
+        toast.success('All users already have profiles');
+        setSyncInProgress(false);
+        return;
       }
-    } catch (err: any) {
-      console.error('Error syncing profiles:', err);
-      toast.error(`Failed to sync profiles: ${err.message}`);
+      
+      let successCount = 0;
+      let failedCount = 0;
+      
+      // Create profiles for users without them
+      for (const authUser of missingProfiles) {
+        try {
+          // Extract user metadata if available
+          const metadata = authUser.user_metadata || {};
+          const firstName = metadata.first_name || '';
+          const lastName = metadata.last_name || '';
+          
+          // Create a profile for this user
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: authUser.id,
+              email: authUser.email,
+              first_name: firstName,
+              last_name: lastName,
+              role: 'user', // Default role
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+            
+          if (insertError) {
+            console.error(`Error creating profile for ${authUser.email}:`, insertError);
+            failedCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          console.error(`Error processing user ${authUser.email}:`, error);
+          failedCount++;
+        }
+      }
+      
+      // Update sync results
+      setSyncResult({
+        success: successCount,
+        failed: failedCount
+      });
+      
+      // Show toast with results
+      if (successCount > 0 && failedCount === 0) {
+        toast.success(`Successfully created ${successCount} user profiles`);
+      } else if (successCount > 0 && failedCount > 0) {
+        toast.warning(`Created ${successCount} profiles, but ${failedCount} failed`);
+      } else if (successCount === 0 && failedCount > 0) {
+        toast.error(`Failed to create ${failedCount} profiles`);
+      }
+      
+    } catch (error: any) {
+      console.error('Error syncing profiles:', error);
+      toast.error(`Error syncing profiles: ${error.message}`);
+      setSyncResult({
+        success: 0,
+        failed: syncInfo?.missingProfiles || 0
+      });
     } finally {
       setSyncInProgress(false);
     }
   };
-
+  
   return {
     syncInProgress,
     syncResult,
