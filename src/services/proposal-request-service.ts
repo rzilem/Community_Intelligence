@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ProposalRequest, ProposalRequestFormData } from '@/types/proposal-request-types';
+import { ProposalRequest, ProposalRequestFormData, ProposalAddress } from '@/types/proposal-request-types';
 
 export const submitProposalRequest = async (formData: ProposalRequestFormData, userId: string): Promise<{ data: ProposalRequest | null; error: Error | null }> => {
   try {
@@ -27,7 +27,13 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
 
     if (error) throw error;
     
-    return { data: data as ProposalRequest, error: null };
+    // Transform the data from Supabase to our frontend type
+    const transformedData: ProposalRequest = {
+      ...data,
+      address: data.address as unknown as ProposalAddress
+    };
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error submitting proposal request:', error);
     return { data: null, error: error as Error };
@@ -43,7 +49,13 @@ export const getProposalRequests = async (): Promise<{ data: ProposalRequest[] |
 
     if (error) throw error;
     
-    return { data: data as ProposalRequest[], error: null };
+    // Transform the data from Supabase to our frontend type
+    const transformedData: ProposalRequest[] = data.map(item => ({
+      ...item,
+      address: item.address as unknown as ProposalAddress
+    }));
+    
+    return { data: transformedData, error: null };
   } catch (error) {
     console.error('Error fetching proposal requests:', error);
     return { data: null, error: error as Error };
