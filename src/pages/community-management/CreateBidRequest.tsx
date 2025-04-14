@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -28,8 +27,8 @@ const CreateBidRequest: React.FC = () => {
     title: '',
     description: '',
     category: '',
-    status: 'draft',
-    visibility: 'private',
+    status: 'draft' as const,
+    visibility: 'private' as const,
     imageUrl: '',
     attachments: [],
     specifications: {},
@@ -85,6 +84,7 @@ const CreateBidRequest: React.FC = () => {
         ...formData,
         associationId,
         createdBy: user?.id || '',
+        status: formData.status as "draft" | "open" | "closed" | "awarded"
       };
       
       if (formId) {
@@ -126,7 +126,7 @@ const CreateBidRequest: React.FC = () => {
         ...formData,
         associationId,
         createdBy: user?.id || '',
-        status: 'open', // Change status from draft to open
+        status: 'open' as const,
       };
       
       // First create or update the bid request
