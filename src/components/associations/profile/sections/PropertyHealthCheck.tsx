@@ -31,18 +31,29 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
         setPropertyCount(propCount);
         
         // Get owners count
-        const { data: residents, error: resError } = await supabase
-          .from('residents')
-          .select('property_id')
-          .eq('resident_type', 'owner')
-          .in('property_id', supabase
-            .from('properties')
-            .select('id')
-            .eq('association_id', association.id)
-          );
+        // First, fetch property IDs for this association
+        const { data: propertyData, error: propIdError } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('association_id', association.id);
           
-        if (resError) throw resError;
-        setOwnersCount(residents?.length || 0);
+        if (propIdError) throw propIdError;
+        
+        if (propertyData && propertyData.length > 0) {
+          const propertyIds = propertyData.map(p => p.id);
+          
+          // Then use those IDs to count owners
+          const { data: residents, error: resError } = await supabase
+            .from('residents')
+            .select('property_id')
+            .eq('resident_type', 'owner')
+            .in('property_id', propertyIds);
+            
+          if (resError) throw resError;
+          setOwnersCount(residents?.length || 0);
+        } else {
+          setOwnersCount(0);
+        }
       } catch (err) {
         console.error('Error fetching counts:', err);
       } finally {
