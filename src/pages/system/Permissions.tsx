@@ -61,19 +61,23 @@ const Permissions = () => {
   useEffect(() => {
     const fetchAuthUserCount = async () => {
       try {
-        // Use a service function to get the count of auth users
-        const { data, error } = await supabase.rpc('get_auth_user_count');
+        // Use a direct query to get the count of auth users with proper typing
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('count', { count: 'exact', head: true });
         
         if (error) {
           console.error('Error fetching auth user count:', error);
           return;
         }
         
-        setAuthUserCount(data as number);
+        // The count comes back as a string but we need it as a number
+        const totalUsers = data ? parseInt(data as unknown as string) : 0;
+        setAuthUserCount(totalUsers);
         
         // If profiles count is less than auth users, show info message
-        if (data > users.length) {
-          setSyncInfo(`There are ${data} registered users but only ${users.length} user profiles. 
+        if (totalUsers > users.length) {
+          setSyncInfo(`There are ${totalUsers} registered users but only ${users.length} user profiles. 
             Click "Sync Missing Profiles" to create the missing profiles.`);
         } else {
           setSyncInfo(null);
@@ -103,7 +107,7 @@ const Permissions = () => {
       
       console.log('Sync profiles result:', authData);
       
-      // Fix: Cast the data to the expected type
+      // Cast the data to the expected type
       const typedData = authData as { success: boolean; created_count: number };
       setSyncResult(typedData);
       
