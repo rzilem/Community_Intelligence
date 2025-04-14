@@ -30,7 +30,8 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
     // Transform the data from Supabase to our frontend type
     const transformedData: ProposalRequest = {
       ...data,
-      address: data.address as unknown as ProposalAddress
+      address: data.address as unknown as ProposalAddress,
+      status: data.status as "pending" | "approved" | "rejected" | "in_progress" | "completed"
     };
     
     return { data: transformedData, error: null };
@@ -52,7 +53,8 @@ export const getProposalRequests = async (): Promise<{ data: ProposalRequest[] |
     // Transform the data from Supabase to our frontend type
     const transformedData: ProposalRequest[] = data.map(item => ({
       ...item,
-      address: item.address as unknown as ProposalAddress
+      address: item.address as unknown as ProposalAddress,
+      status: item.status as "pending" | "approved" | "rejected" | "in_progress" | "completed"
     }));
     
     return { data: transformedData, error: null };
