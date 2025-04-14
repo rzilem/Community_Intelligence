@@ -30,4 +30,5 @@ export * from './analytics-types';
 export * from './invoice-types';
 export * from './resale-types';
 export * from './resale-event-types';
+export * from './bid-request-types'; // Add the bid request types export
 
