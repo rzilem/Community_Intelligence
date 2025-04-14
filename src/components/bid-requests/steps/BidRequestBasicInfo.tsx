@@ -8,6 +8,19 @@ import { Form } from '@/components/ui/form';
 import BidRequestCategorySelector from '@/components/bid-requests/form/BidRequestCategorySelector';
 import BidRequestImageUpload from '@/components/bid-requests/form/BidRequestImageUpload';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Save } from 'lucide-react';
+
+// Create a schema for form validation
+const basicInfoSchema = z.object({
+  title: z.string().min(5, { message: "Title must be at least 5 characters long" }),
+  description: z.string().min(20, { message: "Description must be at least 20 characters long" }),
+  category: z.string().min(1, { message: "Please select a category" }),
+});
+
+type BasicInfoValues = z.infer<typeof basicInfoSchema>;
 
 interface BidRequestBasicInfoProps {
   formData: Partial<BidRequestWithVendors>;
@@ -20,31 +33,36 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
   onUpdate,
   onImageSelect 
 }) => {
-  const form = useForm<Partial<BidRequestWithVendors>>({
+  const form = useForm<BasicInfoValues>({
+    resolver: zodResolver(basicInfoSchema),
     defaultValues: {
       title: formData.title || '',
       description: formData.description || '',
       category: formData.category || '',
-      // Removed budget from default values
-    }
+    },
+    mode: 'onChange'
   });
 
-  const handleSubmit = (data: Partial<BidRequestWithVendors>) => {
+  const { formState } = form;
+
+  const handleSubmit = (data: BasicInfoValues) => {
     onUpdate(data);
   };
 
-  // Auto-save as the user types
+  // Auto-save as the user types, but only if valid
   React.useEffect(() => {
     const subscription = form.watch((value) => {
-      handleSubmit(value as Partial<BidRequestWithVendors>);
+      if (formState.isValid) {
+        handleSubmit(value as BasicInfoValues);
+      }
     });
     
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [form.watch, formState.isValid]);
 
   return (
     <Form {...form}>
-      <form className="space-y-6">
+      <form className="space-y-6" onSubmit={form.handleSubmit(handleSubmit)}>
         <Card>
           <CardHeader>
             <CardTitle>Basic Project Information</CardTitle>
@@ -68,11 +86,27 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
               rows={5}
             />
             
-            <div>
+            <div className="w-full">
               <BidRequestCategorySelector form={form} />
             </div>
             
-            <BidRequestImageUpload onFileSelect={(file) => onImageSelect(file)} />
+            <div className="space-y-2">
+              <BidRequestImageUpload 
+                onFileSelect={(file) => onImageSelect(file)} 
+                currentImageUrl={formData.imageUrl}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!formState.isValid || !formState.isDirty}
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Save Changes
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </form>

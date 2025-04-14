@@ -57,6 +57,66 @@ export async function createBidRequest(bidRequest: Partial<BidRequest>): Promise
 }
 
 /**
+ * Update an existing bid request
+ */
+export async function updateBidRequest(id: string, bidRequest: Partial<BidRequest>): Promise<BidRequest> {
+  // Convert camelCase fields to snake_case for database
+  const dbBidRequest = {
+    title: bidRequest.title,
+    description: bidRequest.description,
+    status: bidRequest.status,
+    association_id: bidRequest.associationId,
+    assigned_to: bidRequest.assignedTo,
+    due_date: bidRequest.dueDate,
+    budget: bidRequest.budget,
+    category: bidRequest.category,
+    visibility: bidRequest.visibility,
+    image_url: bidRequest.imageUrl,
+    attachments: bidRequest.attachments
+  };
+
+  // Remove undefined fields to not overwrite with nulls
+  Object.keys(dbBidRequest).forEach(key => {
+    if (dbBidRequest[key] === undefined) {
+      delete dbBidRequest[key];
+    }
+  });
+
+  console.log(`Updating bid request ${id} with data:`, dbBidRequest);
+
+  const { data, error } = await supabase
+    .from('bid_requests')
+    .update(dbBidRequest)
+    .eq('id', id)
+    .select('*')
+    .single();
+
+  if (error) {
+    console.error('Error updating bid request:', error);
+    throw error;
+  }
+  
+  // Convert snake_case back to camelCase for frontend
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    status: data.status as "draft" | "open" | "closed" | "awarded",
+    associationId: data.association_id,
+    createdBy: data.created_by,
+    assignedTo: data.assigned_to,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+    dueDate: data.due_date,
+    budget: data.budget,
+    category: data.category,
+    visibility: data.visibility as "private" | "association" | "public",
+    imageUrl: data.image_url,
+    attachments: data.attachments as string[]
+  };
+}
+
+/**
  * Get all bid requests for an association
  */
 export async function getBidRequests(associationId: string): Promise<BidRequestWithVendors[]> {

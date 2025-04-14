@@ -5,7 +5,8 @@
 import { 
   createBidRequest, 
   getBidRequests, 
-  getBidRequestById 
+  getBidRequestById,
+  updateBidRequest 
 } from './bid-requests/bid-request-api';
 
 import { 
@@ -23,6 +24,7 @@ export const bidRequestService = {
   createBidRequest,
   getBidRequests,
   getBidRequestById,
+  updateBidRequest,
   addVendorToBidRequest,
   uploadBidRequestImage,
   filterEligibleVendors
