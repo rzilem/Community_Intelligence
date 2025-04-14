@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserWithProfile } from '@/types/user-types';
-import { Search, UserPlus } from 'lucide-react';
+import { Search, UserPlus, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,10 @@ const UserManagement: React.FC<UserManagementProps> = ({
   });
 
   // Debug - Log all users received from parent
-  console.log('UserManagement - All users:', users);
-  console.log('UserManagement - Filtered users:', filteredUsers);
+  useEffect(() => {
+    console.log('UserManagement - All users:', users);
+    console.log('UserManagement - Filtered users:', filteredUsers);
+  }, [users, filteredUsers]);
 
   return (
     <Card className="mb-6">
@@ -54,10 +56,21 @@ const UserManagement: React.FC<UserManagementProps> = ({
             Assign roles to control what users can access in the system.
           </CardDescription>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Create User
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={onRefresh} 
+            variant="outline" 
+            size="icon" 
+            className="h-9 w-9"
+            title="Refresh user list"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Create User
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="mb-6">
@@ -84,9 +97,15 @@ const UserManagement: React.FC<UserManagementProps> = ({
           <UserTable users={filteredUsers} roles={roles} onRoleUpdate={onRefresh} />
         ) : (
           <div className="text-center py-10">
-            <p className="text-muted-foreground">
-              {searchTerm ? "No users match your search." : "No users found."}
+            <p className="text-muted-foreground mb-4">
+              {searchTerm ? "No users match your search." : "No user profiles found."}
             </p>
+            {!searchTerm && (
+              <p className="text-muted-foreground text-sm">
+                Try clicking "Sync Missing Profiles" at the top of the page to sync user profiles 
+                from the authentication system.
+              </p>
+            )}
           </div>
         )}
       </CardContent>

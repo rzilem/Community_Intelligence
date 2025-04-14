@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserWithProfile } from '@/types/user-types';
-import { Table, TableBody } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import UserTableHeader from './table/UserTableHeader';
@@ -28,6 +28,9 @@ const UserTable: React.FC<UserTableProps> = ({ users, roles, onRoleUpdate }) => 
       }
     });
     setUserRoles(rolesMap);
+    
+    // Log current users for debugging
+    console.log("UserTable - Current users:", users);
   }, [users]);
 
   const updateUserRole = async (userId: string, role: string) => {
