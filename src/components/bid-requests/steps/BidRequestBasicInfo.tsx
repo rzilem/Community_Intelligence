@@ -25,7 +25,7 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
       title: formData.title || '',
       description: formData.description || '',
       category: formData.category || '',
-      budget: formData.budget || undefined,
+      // Removed budget from default values
     }
   });
 
@@ -68,20 +68,8 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
               rows={5}
             />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <BidRequestCategorySelector form={form} />
-              </div>
-              
-              <div>
-                <FormFieldInput
-                  form={form}
-                  name="budget"
-                  label="Estimated Budget"
-                  placeholder="Enter estimated budget (optional)"
-                  type="number"
-                />
-              </div>
+            <div>
+              <BidRequestCategorySelector form={form} />
             </div>
             
             <BidRequestImageUpload onFileSelect={(file) => onImageSelect(file)} />

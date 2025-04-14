@@ -1,4 +1,3 @@
-
 import { Vendor } from './vendor-types';
 import { Association } from './association-types';
 
@@ -18,7 +17,6 @@ export interface BidRequest {
   visibility: 'private' | 'association' | 'public';
   imageUrl?: string;
   attachments?: string[];
-  // New fields for enhanced bid requests
   locationData?: {
     address: string;
     coordinates: { lat: number; lng: number } | null;
