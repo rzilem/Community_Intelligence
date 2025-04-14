@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield, RefreshCw, AlertCircle } from 'lucide-react';
+import { Shield, RefreshCw, AlertCircle, Info } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
@@ -23,6 +23,8 @@ const roles = [
 const Permissions = () => {
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [syncResult, setSyncResult] = useState<{ success: boolean; created_count: number } | null>(null);
+  const [authUserCount, setAuthUserCount] = useState<number | null>(null);
+  const [syncInfo, setSyncInfo] = useState<string | null>(null);
   
   // Query directly from profiles table with more detailed logging
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
@@ -55,6 +57,37 @@ const Permissions = () => {
   // Log the transformed users data
   console.log('Permissions - Transformed users:', users);
 
+  // Get auth user count for comparison with profiles
+  useEffect(() => {
+    const fetchAuthUserCount = async () => {
+      try {
+        // Use a service function to get the count of auth users
+        const { data, error } = await supabase.rpc('get_auth_user_count');
+        
+        if (error) {
+          console.error('Error fetching auth user count:', error);
+          return;
+        }
+        
+        setAuthUserCount(data as number);
+        
+        // If profiles count is less than auth users, show info message
+        if (data > users.length) {
+          setSyncInfo(`There are ${data} registered users but only ${users.length} user profiles. 
+            Click "Sync Missing Profiles" to create the missing profiles.`);
+        } else {
+          setSyncInfo(null);
+        }
+      } catch (err) {
+        console.error('Error in fetchAuthUserCount:', err);
+      }
+    };
+    
+    if (!isLoading && users.length > 0) {
+      fetchAuthUserCount();
+    }
+  }, [users, isLoading]);
+
   // Function to sync Supabase auth users with profiles
   const syncMissingProfiles = async () => {
     try {
@@ -74,7 +107,13 @@ const Permissions = () => {
       const typedData = authData as { success: boolean; created_count: number };
       setSyncResult(typedData);
       
-      toast.success(`User profiles synced successfully. Created ${typedData.created_count} new profiles.`);
+      if (typedData.created_count > 0) {
+        toast.success(`User profiles synced successfully. Created ${typedData.created_count} new profiles.`);
+        setSyncInfo(null);
+      } else {
+        toast.info('All users already have profiles. No new profiles were created.');
+      }
+      
       refetch();
     } catch (err: any) {
       console.error('Error syncing profiles:', err);
@@ -117,6 +156,15 @@ const Permissions = () => {
         </Button>
       }
     >
+      {syncInfo && (
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            {syncInfo}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {syncResult && syncResult.created_count > 0 && (
         <Alert className="mb-4">
           <AlertCircle className="h-4 w-4" />
