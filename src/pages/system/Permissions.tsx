@@ -1,15 +1,15 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield, RefreshCw, AlertCircle, Info } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
 import RolePermissionsCard from '@/components/users/RolePermissionsCard';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
+import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
+import { useProfileSync } from '@/hooks/users/useProfileSync';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -21,11 +21,6 @@ const roles = [
 ];
 
 const Permissions = () => {
-  const [syncInProgress, setSyncInProgress] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ success: boolean; created_count: number } | null>(null);
-  const [authUserCount, setAuthUserCount] = useState<number | null>(null);
-  const [syncInfo, setSyncInfo] = useState<string | null>(null);
-  
   // Query directly from profiles table with more detailed logging
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
@@ -57,75 +52,14 @@ const Permissions = () => {
   // Log the transformed users data
   console.log('Permissions - Transformed users:', users);
 
-  // Get auth user count for comparison with profiles
-  useEffect(() => {
-    const fetchAuthUserCount = async () => {
-      try {
-        // Use a direct query to get the count of auth users with proper typing
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('count', { count: 'exact', head: true });
-        
-        if (error) {
-          console.error('Error fetching auth user count:', error);
-          return;
-        }
-        
-        // The count comes back as a string but we need it as a number
-        const totalUsers = data ? parseInt(data as unknown as string) : 0;
-        setAuthUserCount(totalUsers);
-        
-        // If profiles count is less than auth users, show info message
-        if (totalUsers > users.length) {
-          setSyncInfo(`There are ${totalUsers} registered users but only ${users.length} user profiles. 
-            Click "Sync Missing Profiles" to create the missing profiles.`);
-        } else {
-          setSyncInfo(null);
-        }
-      } catch (err) {
-        console.error('Error in fetchAuthUserCount:', err);
-      }
-    };
-    
-    if (!isLoading && users.length > 0) {
-      fetchAuthUserCount();
-    }
-  }, [users, isLoading]);
-
-  // Function to sync Supabase auth users with profiles
-  const syncMissingProfiles = async () => {
-    try {
-      setSyncInProgress(true);
-      toast.loading('Syncing user profiles...');
-      
-      // Use the database function to sync missing profiles
-      const { data: authData, error: authError } = await supabase.rpc('sync_missing_profiles');
-      
-      if (authError) {
-        throw authError;
-      }
-      
-      console.log('Sync profiles result:', authData);
-      
-      // Cast the data to the expected type
-      const typedData = authData as { success: boolean; created_count: number };
-      setSyncResult(typedData);
-      
-      if (typedData.created_count > 0) {
-        toast.success(`User profiles synced successfully. Created ${typedData.created_count} new profiles.`);
-        setSyncInfo(null);
-      } else {
-        toast.info('All users already have profiles. No new profiles were created.');
-      }
-      
-      refetch();
-    } catch (err: any) {
-      console.error('Error syncing profiles:', err);
-      toast.error(`Failed to sync profiles: ${err.message}`);
-    } finally {
-      setSyncInProgress(false);
-    }
-  };
+  // Use the profile sync hook to manage sync operations
+  const { 
+    syncInProgress, 
+    syncResult, 
+    authUserCount, 
+    syncInfo, 
+    syncMissingProfiles 
+  } = useProfileSync(users);
 
   useEffect(() => {
     if (error) {
@@ -145,49 +79,18 @@ const Permissions = () => {
       icon={<Shield className="h-8 w-8" />}
       description="Manage user roles and permissions across the platform."
       actions={
-        <Button 
-          onClick={syncMissingProfiles} 
-          variant="outline" 
-          className="flex items-center gap-2"
-          disabled={syncInProgress}
-        >
-          {syncInProgress ? (
-            <RefreshCw className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          Sync Missing Profiles
-        </Button>
+        <ProfileSyncButton 
+          syncInProgress={syncInProgress} 
+          onSync={syncMissingProfiles} 
+        />
       }
     >
-      {syncInfo && (
-        <Alert className="mb-4">
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            {syncInfo}
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {syncResult && syncResult.created_count > 0 && (
-        <Alert className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Successfully created {syncResult.created_count} new user profiles. 
-            These users should now appear in the list below.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {users.length === 0 && !isLoading && (
-        <Alert className="mb-4" variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No user profiles found. Try clicking "Sync Missing Profiles" to create profiles 
-            for all authenticated users.
-          </AlertDescription>
-        </Alert>
-      )}
+      <ProfileSyncAlert
+        syncInfo={syncInfo}
+        syncResult={syncResult}
+        userCount={users.length}
+        isLoading={isLoading}
+      />
       
       <UserManagement 
         users={users} 
