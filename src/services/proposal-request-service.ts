@@ -7,7 +7,7 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
     const proposalRequest = {
       community_name: formData.communityName,
       number_of_bids: parseInt(formData.numberOfBids),
-      address: formData.address,
+      address: formData.address as any, // Cast to any to avoid type issues with Json
       project_type: formData.projectType,
       bid_request_type: formData.bidRequestType,
       work_location: formData.workLocation,
@@ -17,7 +17,7 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
       additional_details: formData.additionalDetails,
       status: 'pending',
       created_by: userId
-    } as const;
+    };
 
     const { data, error } = await supabase
       .from('proposal_requests')
@@ -27,7 +27,7 @@ export const submitProposalRequest = async (formData: ProposalRequestFormData, u
 
     if (error) throw error;
     
-    return { data, error: null };
+    return { data: data as ProposalRequest, error: null };
   } catch (error) {
     console.error('Error submitting proposal request:', error);
     return { data: null, error: error as Error };
@@ -43,7 +43,7 @@ export const getProposalRequests = async (): Promise<{ data: ProposalRequest[] |
 
     if (error) throw error;
     
-    return { data, error: null };
+    return { data: data as ProposalRequest[], error: null };
   } catch (error) {
     console.error('Error fetching proposal requests:', error);
     return { data: null, error: error as Error };
