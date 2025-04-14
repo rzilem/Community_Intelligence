@@ -7,12 +7,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 
 const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) => {
-  // Show different fields based on the project type
   const showBidRequestType = !['CPA', 'Engineer'].includes(formData.projectType);
   const showWorkLocation = ['Electrician', 'HVAC', 'Painting', 'Pest Control', 'Plumbing', 'Locksmith', 'Power Washing', 'Leak Detection', 'Construction (Big Projects)'].includes(formData.projectType);
   const showCpaService = formData.projectType === 'CPA';
   const showRoadWorkTypes = formData.projectType === 'Street Repairs / Paving / Striping';
   const showFenceLocation = formData.projectType === 'Fencing';
+
+  const handleRoadWorkTypeChange = (type: string, checked: boolean) => {
+    const currentTypes = formData.roadWorkTypes || [];
+    const newTypes = checked
+      ? [...currentTypes, type]
+      : currentTypes.filter(t => t !== type);
+    
+    onChange('roadWorkTypes', newTypes);
+  };
 
   return (
     <div className="space-y-6">
@@ -24,12 +32,12 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
           <RadioGroup 
             value={formData.bidRequestType || ''} 
             onValueChange={(value) => onChange('bidRequestType', value)}
-            className="flex flex-col space-y-1"
+            className="space-y-1"
           >
             {['Maintenance / Repair', 'Service Contract', 'Construction / New Build'].map(type => (
               <div key={type} className="flex items-center space-x-2">
                 <RadioGroupItem value={type} id={`bid-type-${type}`} />
-                <Label htmlFor={`bid-type-${type}`}>{type}</Label>
+                <Label htmlFor={`bid-type-${type}`} className="cursor-pointer">{type}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -42,12 +50,12 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
           <RadioGroup 
             value={formData.workLocation || ''} 
             onValueChange={(value) => onChange('workLocation', value)}
-            className="flex flex-col space-y-1"
+            className="space-y-1"
           >
             {['Exterior (outside of unit)', 'Interior (inside of unit)', 'Both'].map(location => (
               <div key={location} className="flex items-center space-x-2">
                 <RadioGroupItem value={location} id={`work-location-${location}`} />
-                <Label htmlFor={`work-location-${location}`}>{location}</Label>
+                <Label htmlFor={`work-location-${location}`} className="cursor-pointer">{location}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -63,12 +71,12 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
           <RadioGroup 
             value={formData.cpaService || ''} 
             onValueChange={(value) => onChange('cpaService', value)}
-            className="flex flex-col space-y-1"
+            className="space-y-1"
           >
             {['Financial Review', 'Financial Audit'].map(service => (
               <div key={service} className="flex items-center space-x-2">
                 <RadioGroupItem value={service} id={`cpa-service-${service}`} />
-                <Label htmlFor={`cpa-service-${service}`}>{service}</Label>
+                <Label htmlFor={`cpa-service-${service}`} className="cursor-pointer">{service}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -78,21 +86,15 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
       {showRoadWorkTypes && (
         <div className="space-y-2">
           <Label>Type of Road Work Needed (Check all that apply) <span className="text-red-500">*</span></Label>
-          <div className="flex flex-col space-y-2">
+          <div className="space-y-2">
             {['Road Repair', 'Road Re-Paving', 'Striping'].map(type => (
               <div key={type} className="flex items-center space-x-2">
                 <Checkbox 
-                  id={`road-work-${type}`} 
+                  id={`road-work-${type}`}
                   checked={(formData.roadWorkTypes || []).includes(type)}
-                  onCheckedChange={(checked) => {
-                    const currentTypes = formData.roadWorkTypes || [];
-                    const newTypes = checked 
-                      ? [...currentTypes, type] 
-                      : currentTypes.filter(t => t !== type);
-                    onChange('roadWorkTypes', newTypes);
-                  }}
+                  onCheckedChange={(checked) => handleRoadWorkTypeChange(type, checked as boolean)}
                 />
-                <Label htmlFor={`road-work-${type}`}>{type}</Label>
+                <Label htmlFor={`road-work-${type}`} className="cursor-pointer">{type}</Label>
               </div>
             ))}
           </div>
@@ -108,12 +110,12 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
           <RadioGroup 
             value={formData.fenceLocation || ''} 
             onValueChange={(value) => onChange('fenceLocation', value)}
-            className="flex flex-col space-y-1"
+            className="space-y-1"
           >
             {['Exterior Community Fence', 'Pool Fence', 'Park or Dog Park Fence', 'Other'].map(location => (
               <div key={location} className="flex items-center space-x-2">
                 <RadioGroupItem value={location} id={`fence-location-${location}`} />
-                <Label htmlFor={`fence-location-${location}`}>{location}</Label>
+                <Label htmlFor={`fence-location-${location}`} className="cursor-pointer">{location}</Label>
               </div>
             ))}
           </RadioGroup>
@@ -127,9 +129,9 @@ const FormStepThree: React.FC<FormStepProps> = ({ formData, onChange, errors }) 
         <Label htmlFor="additionalDetails">Additional Details</Label>
         <Textarea
           id="additionalDetails"
-          placeholder="Provide any additional information about your project needs..."
           value={formData.additionalDetails || ''}
           onChange={(e) => onChange('additionalDetails', e.target.value)}
+          placeholder="Please provide any additional details that would be helpful for the vendors..."
           className="h-32"
         />
       </div>

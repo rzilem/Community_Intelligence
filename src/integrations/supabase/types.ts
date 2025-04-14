@@ -1686,6 +1686,60 @@ export type Database = {
           },
         ]
       }
+      proposal_requests: {
+        Row: {
+          additional_details: string | null
+          address: Json
+          bid_request_type: string | null
+          community_name: string
+          cpa_service: string | null
+          created_at: string | null
+          created_by: string | null
+          fence_location: string | null
+          id: string
+          number_of_bids: number
+          project_type: string
+          road_work_types: string[] | null
+          status: string
+          updated_at: string | null
+          work_location: string | null
+        }
+        Insert: {
+          additional_details?: string | null
+          address: Json
+          bid_request_type?: string | null
+          community_name: string
+          cpa_service?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fence_location?: string | null
+          id?: string
+          number_of_bids: number
+          project_type: string
+          road_work_types?: string[] | null
+          status?: string
+          updated_at?: string | null
+          work_location?: string | null
+        }
+        Update: {
+          additional_details?: string | null
+          address?: Json
+          bid_request_type?: string | null
+          community_name?: string
+          cpa_service?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fence_location?: string | null
+          id?: string
+          number_of_bids?: number
+          project_type?: string
+          road_work_types?: string[] | null
+          status?: string
+          updated_at?: string | null
+          work_location?: string | null
+        }
+        Relationships: []
+      }
       proposal_templates: {
         Row: {
           attachments: Json | null

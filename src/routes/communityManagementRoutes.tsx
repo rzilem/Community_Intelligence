@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import CommunityManagement from '@/pages/community-management/CommunityManagement';
