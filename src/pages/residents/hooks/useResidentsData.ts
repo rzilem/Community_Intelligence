@@ -15,10 +15,33 @@ export const useResidentsData = () => {
     try {
       setLoading(true);
       
-      // First get all properties for the user's associations
+      // First get user's associations
+      const { data: userAssociations, error: associationsError } = await supabase
+        .rpc('get_user_associations');
+          
+      if (associationsError) {
+        console.error('Error fetching user associations:', associationsError);
+        toast.error('Failed to load associations');
+        setLoading(false);
+        return;
+      }
+      
+      setAssociations(userAssociations || []);
+      
+      if (!userAssociations || userAssociations.length === 0) {
+        console.log('No associations found for user');
+        setLoading(false);
+        return;
+      }
+      
+      const associationIds = userAssociations.map(a => a.id);
+      console.log('User has access to associations:', associationIds);
+      
+      // Then get properties for these associations
       const { data: properties, error: propertiesError } = await supabase
         .from('properties')
-        .select('*');
+        .select('*')
+        .in('association_id', associationIds);
         
       if (propertiesError) {
         console.error('Error fetching properties:', propertiesError);
@@ -28,6 +51,7 @@ export const useResidentsData = () => {
       }
       
       if (!properties || properties.length === 0) {
+        console.log('No properties found for associations:', associationIds);
         setLoading(false);
         return;
       }
@@ -35,7 +59,7 @@ export const useResidentsData = () => {
       // Get all residents for these properties
       const propertyIds = properties.map(p => p.id);
       
-      // Fetch all residents directly using a JOIN query instead of separate queries
+      // Fetch all residents directly using a JOIN query
       const { data: residentsData, error: residentsError } = await supabase
         .from('residents')
         .select(`
@@ -56,24 +80,17 @@ export const useResidentsData = () => {
         return;
       }
       
-      // Get associations to display proper names
-      const { data: associationsData, error: associationsError } = await supabase
-        .from('associations')
-        .select('id, name');
-        
-      if (associationsError) {
-        console.error('Error fetching associations:', associationsError);
-      }
-      
-      const associationsMap = (associationsData || []).reduce((map, assoc) => {
+      // Create association name lookup
+      const associationsMap = userAssociations.reduce((map, assoc) => {
         map[assoc.id] = assoc.name;
         return map;
       }, {});
       
-      // Map the results
+      // Map the results with validated associations
       const allResidents = (residentsData || []).map(resident => {
         const property = resident.properties;
-        const associationId = property?.association_id || '';
+        const associationId = property?.association_id;
+        const hasValidAssociation = associationId && associationsMap[associationId];
         
         return {
           id: resident.id,
@@ -86,23 +103,22 @@ export const useResidentsData = () => {
           status: resident.move_out_date ? 'inactive' : 'active',
           moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
           moveOutDate: resident.move_out_date,
-          association: associationId,
-          associationName: associationsMap[associationId] || 'Unknown',
+          association: associationId || '',
+          associationName: hasValidAssociation ? associationsMap[associationId] : 'Unknown Association',
+          hasValidAssociation: !!hasValidAssociation,
           balance: 0, // We'll add real data later
         };
       });
       
-      setResidents(allResidents);
+      // Log statistics about valid/invalid associations
+      const validCount = allResidents.filter(r => r.hasValidAssociation).length;
+      const invalidCount = allResidents.length - validCount;
       
-      // Fetch associations for filtering
-      const { data: userAssociations, error: userAssociationsError } = await supabase
-        .rpc('get_user_associations');
-          
-      if (userAssociationsError) {
-        console.error('Error fetching user associations:', userAssociationsError);
-      } else {
-        setAssociations(userAssociations || []);
+      if (invalidCount > 0) {
+        console.warn(`Found ${invalidCount} residents with invalid or missing associations`);
       }
+      
+      setResidents(allResidents);
     } catch (error) {
       console.error('Error loading residents:', error);
       toast.error('Failed to load residents');

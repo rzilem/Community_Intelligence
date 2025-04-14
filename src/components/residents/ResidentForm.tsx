@@ -10,6 +10,8 @@ import { ResidentInputField } from './form/ResidentInputField';
 import { ResidentTypeSelect } from './form/ResidentTypeSelect';
 import { PropertySelect } from './form/PropertySelect';
 import { ResidentCheckboxField } from './form/ResidentCheckboxField';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoIcon } from 'lucide-react';
 
 interface ResidentFormProps {
   defaultValues: Partial<ResidentWithProfile>;
@@ -27,6 +29,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const { currentAssociation } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
+  const [associations, setAssociations] = useState<any[]>([]);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>(currentAssociation?.id || '');
   
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<Partial<ResidentWithProfile>>({
     defaultValues
@@ -34,20 +38,51 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   
   const residentType = watch('resident_type');
   const isPrimary = watch('is_primary');
+  const selectedPropertyId = watch('property_id');
 
+  // Fetch associations the user has access to
+  useEffect(() => {
+    const fetchAssociations = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_user_associations');
+        if (error) throw error;
+        
+        setAssociations(data || []);
+        
+        // If there's only one association, auto-select it
+        if (data && data.length === 1 && !selectedAssociationId) {
+          setSelectedAssociationId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Error fetching associations:', error);
+      }
+    };
+    
+    fetchAssociations();
+  }, [selectedAssociationId]);
+
+  // Fetch properties for the selected association
   useEffect(() => {
     const fetchProperties = async () => {
-      if (!currentAssociation) return;
+      if (!selectedAssociationId) return;
       
       setLoading(true);
       try {
         const { data, error } = await supabase
           .from('properties')
           .select('*')
-          .eq('association_id', currentAssociation.id);
+          .eq('association_id', selectedAssociationId);
           
         if (error) throw error;
         setProperties(data as Property[]);
+        
+        // If the currently selected property doesn't belong to this association, clear it
+        if (selectedPropertyId) {
+          const propertyExists = data.some(p => p.id === selectedPropertyId);
+          if (!propertyExists) {
+            setValue('property_id', '');
+          }
+        }
       } catch (error) {
         console.error('Error fetching properties:', error);
       } finally {
@@ -56,11 +91,45 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     };
     
     fetchProperties();
-  }, [currentAssociation]);
+  }, [selectedAssociationId, selectedPropertyId, setValue]);
+  
+  // Handle association change
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+    // Clear property selection when association changes
+    setValue('property_id', '');
+  };
+  
+  const filteredProperties = selectedAssociationId 
+    ? properties.filter(p => p.association_id === selectedAssociationId)
+    : [];
   
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-4 py-4">
+        {associations.length > 1 && (
+          <div className="space-y-2">
+            <label className="font-medium text-sm">Association</label>
+            <select 
+              className="w-full px-3 py-2 border rounded-md"
+              value={selectedAssociationId} 
+              onChange={(e) => handleAssociationChange(e.target.value)}
+            >
+              <option value="">Select Association</option>
+              {associations.map(assoc => (
+                <option key={assoc.id} value={assoc.id}>{assoc.name}</option>
+              ))}
+            </select>
+            
+            <Alert variant="outline" className="mt-2">
+              <InfoIcon className="h-4 w-4" />
+              <AlertDescription>
+                Selecting an association will filter the available properties
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+        
         <ResidentInputField
           id="name"
           label="Name"
@@ -101,8 +170,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         />
         
         <PropertySelect
-          properties={properties}
-          selectedPropertyId={defaultValues.property_id}
+          properties={filteredProperties}
+          selectedPropertyId={selectedPropertyId}
           onChange={(value) => setValue('property_id', value)}
           loading={loading}
         />
@@ -143,7 +212,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         <Button variant="outline" type="button" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !selectedPropertyId}>
           {isSubmitting ? 'Saving...' : defaultValues.id ? 'Update' : 'Add'} Resident
         </Button>
       </DialogFooter>
