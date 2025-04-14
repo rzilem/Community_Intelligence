@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PropertyUI } from '@/types/property-types';
@@ -14,6 +15,7 @@ import {
 
 interface PropertyTableProps {
   properties: PropertyUI[];
+  showOwnerWarning?: boolean;
 }
 
 const getStatusBadge = (status: PropertyUI['status']) => {
@@ -31,7 +33,10 @@ const getStatusBadge = (status: PropertyUI['status']) => {
   }
 };
 
-export const PropertyTable: React.FC<PropertyTableProps> = ({ properties }) => {
+export const PropertyTable: React.FC<PropertyTableProps> = ({ 
+  properties,
+  showOwnerWarning = true  
+}) => {
   const navigate = useNavigate();
   
   const navigateToAssociation = (associationId: string) => {
@@ -76,7 +81,15 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({ properties }) => {
                   </button>
                 </TableCell>
                 <TableCell>{getStatusBadge(property.status)}</TableCell>
-                <TableCell>{property.ownerName || 'Not Assigned'}</TableCell>
+                <TableCell>
+                  {property.ownerName ? (
+                    <span>{property.ownerName}</span>
+                  ) : (
+                    <Badge variant="outline" className={showOwnerWarning ? "border-amber-500 text-amber-500" : ""}>
+                      {showOwnerWarning ? "Missing Owner" : "Not Assigned"}
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <TooltipButton size="sm" variant="ghost" tooltip="View property details">
@@ -85,6 +98,11 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({ properties }) => {
                     <TooltipButton size="sm" variant="outline" tooltip="Edit property information">
                       Edit
                     </TooltipButton>
+                    {!property.ownerName && (
+                      <TooltipButton size="sm" variant="outline" tooltip="Assign an owner" onClick={() => navigate('/residents')}>
+                        Assign Owner
+                      </TooltipButton>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

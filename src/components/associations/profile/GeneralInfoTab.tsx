@@ -5,6 +5,7 @@ import { Association, AssociationAIIssue } from '@/types/association-types';
 import { AIAnalysisSection } from './AIAnalysisSection';
 import { GeneralInformation } from './sections/GeneralInformation';
 import { CriticalDates } from './sections/CriticalDates';
+import { PropertyHealthCheck } from './sections/PropertyHealthCheck';
 
 interface GeneralInfoTabProps {
   association: Association;
@@ -20,6 +21,9 @@ export const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({ association, aiI
           <GeneralInformation association={association} />
         </CardContent>
       </Card>
+
+      {/* Property Health Check */}
+      <PropertyHealthCheck association={association} />
 
       {/* Critical Dates */}
       <Card>
