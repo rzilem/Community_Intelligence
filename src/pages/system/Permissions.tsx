@@ -69,9 +69,12 @@ const Permissions = () => {
       }
       
       console.log('Sync profiles result:', authData);
-      setSyncResult(authData as any);
       
-      toast.success(`User profiles synced successfully. Created ${authData.created_count} new profiles.`);
+      // Fix: Cast the data to the expected type
+      const typedData = authData as { success: boolean; created_count: number };
+      setSyncResult(typedData);
+      
+      toast.success(`User profiles synced successfully. Created ${typedData.created_count} new profiles.`);
       refetch();
     } catch (err: any) {
       console.error('Error syncing profiles:', err);
