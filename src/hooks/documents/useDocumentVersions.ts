@@ -17,15 +17,23 @@ export const useDocumentVersions = (documentId?: string) => {
     queryFn: async () => {
       if (!documentId) return [];
       
-      // Use a type cast to bypass TypeScript's strict checking for tables not in the types
-      const { data, error } = await (supabase
-        .from('document_versions' as any)
-        .select('*')
-        .eq('document_id', documentId)
-        .order('version_number', { ascending: false }));
+      try {
+        // Use a more type-safe approach to query document versions
+        const { data, error } = await supabase
+          .from('document_versions')
+          .select('*')
+          .eq('document_id', documentId)
+          .order('version_number', { ascending: false });
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      return data as DocumentVersion[];
+        // Return the data as DocumentVersion[]
+        return (data || []) as DocumentVersion[];
+      } catch (error: any) {
+        console.error('Error fetching document versions:', error);
+        toast.error(`Error loading versions: ${error.message}`);
+        return [];
+      }
     },
     enabled: !!documentId
   });
@@ -42,7 +50,12 @@ export const useDocumentVersions = (documentId?: string) => {
         
       if (docError) throw docError;
       
-      const nextVersion = (document?.current_version || 0) + 1;
+      // Safely handle the current_version
+      const currentVersion = document && typeof document.current_version === 'number' 
+        ? document.current_version 
+        : 0;
+      
+      const nextVersion = currentVersion + 1;
       
       // Upload file to storage
       const fileName = `${documentId}/v${nextVersion}_${file.name}`;
@@ -63,18 +76,17 @@ export const useDocumentVersions = (documentId?: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
       
-      // Create version record using type cast to bypass TypeScript's strict checking
-      const { data: versionData, error: versionError } = await (supabase
-        .from('document_versions' as any)
+      // Create version record
+      const { data: versionData, error: versionError } = await supabase
+        .from('document_versions')
         .insert({
           document_id: documentId,
           version_number: nextVersion,
           url: fileUrl,
           file_size: file.size,
-          created_at: new Date().toISOString(),
           created_by: user.id,
           notes: notes || `Version ${nextVersion}`
-        }));
+        });
         
       if (versionError) throw versionError;
       
@@ -117,14 +129,19 @@ export const useDocumentVersions = (documentId?: string) => {
 
   const revertToVersion = async (documentId: string, versionId: string, versionNumber: number) => {
     try {
-      // Get version details using type cast to bypass TypeScript's strict checking
-      const { data: version, error: versionError } = await (supabase
-        .from('document_versions' as any)
+      // Get version details
+      const { data: version, error: versionError } = await supabase
+        .from('document_versions')
         .select('url, file_size')
         .eq('id', versionId)
-        .single());
+        .single();
         
       if (versionError) throw versionError;
+      
+      // Ensure we have valid data before proceeding
+      if (!version || !version.url || typeof version.file_size !== 'number') {
+        throw new Error('Invalid version data');
+      }
       
       // Update document with version info
       const { error: updateError } = await supabase
@@ -161,7 +178,7 @@ export const useDocumentVersions = (documentId?: string) => {
   });
 
   return {
-    versions,
+    versions: versions || [],
     versionsLoading,
     isUploadingVersion: isUploadingVersion || uploadVersionMutation.isPending,
     uploadNewVersion: uploadVersionMutation.mutate,

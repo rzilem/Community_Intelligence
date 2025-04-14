@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +14,7 @@ import DashboardStatsSection from '@/components/dashboard/DashboardStats';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import CalendarTab from '@/components/dashboard/CalendarTab';
+import { Profile } from '@/types/profile-types';
 
 const Dashboard = () => {
   const { currentAssociation, user } = useAuth();
@@ -20,8 +22,17 @@ const Dashboard = () => {
   const isMobile = useIsMobile();
   
   useAdminAccess(user?.id);
+  
+  // Convert user to Profile type if needed
+  const userProfile: Profile | undefined = user ? {
+    ...user,
+    role: user.role || 'user', // Ensure role is always defined
+    created_at: user.created_at || new Date().toISOString(),
+    updated_at: user.updated_at || new Date().toISOString()
+  } as Profile : undefined;
+  
   const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
-    user,
+    userProfile,
     recentActivity,
     loading,
     error

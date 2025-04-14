@@ -1,72 +1,64 @@
-
-import React from 'react';
-import { Label } from '@/components/ui/label';
-import {
+import React, { useState, useEffect } from 'react';
+import { 
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Property } from '@/types/app-types';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { usePropertyList } from '@/hooks/properties/usePropertyList';
 
 interface PropertySelectProps {
-  properties: Property[];
-  selectedPropertyId?: string;
-  onChange: (value: string) => void;
-  loading: boolean;
+  associationId?: string;
+  propertyId?: string;
+  onChange: (propertyId: string) => void;
 }
 
-export const PropertySelect: React.FC<PropertySelectProps> = ({
-  properties,
-  selectedPropertyId,
-  onChange,
-  loading
-}) => {
-  if (loading) {
-    return (
-      <div className="space-y-2">
-        <Label>Property</Label>
-        <div className="flex items-center h-10 px-3 border rounded-md">
-          <Spinner className="h-4 w-4 mr-2" />
-          <span className="text-sm text-muted-foreground">Loading properties...</span>
-        </div>
-      </div>
-    );
-  }
+const PropertySelect: React.FC<PropertySelectProps> = ({ associationId, propertyId, onChange }) => {
+  const [selectedProperty, setSelectedProperty] = useState<string>(propertyId || '');
 
-  if (properties.length === 0) {
-    return (
-      <div className="space-y-2">
-        <Label>Property</Label>
-        <div className="flex items-center h-10 px-3 border rounded-md bg-amber-50">
-          <span className="text-sm text-amber-700">
-            No properties available. Please add properties first.
-          </span>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (propertyId) {
+      setSelectedProperty(propertyId);
+    }
+  }, [propertyId]);
+
+  const { properties, isLoading, error } = usePropertyList(associationId);
+
+  const handlePropertyChange = (value: string) => {
+    setSelectedProperty(value);
+    onChange(value);
+  };
 
   return (
-    <div className="space-y-2">
-      <Label>Property</Label>
-      <Select value={selectedPropertyId} onValueChange={onChange}>
-        <SelectTrigger>
+    <div>
+      <Label htmlFor="property">Property</Label>
+      <Select onValueChange={handlePropertyChange} defaultValue={selectedProperty}>
+        <SelectTrigger id="property">
           <SelectValue placeholder="Select a property" />
         </SelectTrigger>
         <SelectContent>
-          {properties.map((property) => (
-            <SelectItem key={property.id} value={property.id}>
-              {property.address} {property.unit_number ? `Unit ${property.unit_number}` : ''}
+          {isLoading ? (
+            <SelectItem value="loading" disabled>
+              <LoadingSpinner size="sm" /> Loading...
             </SelectItem>
-          ))}
+          ) : error ? (
+            <SelectItem value="error" disabled>
+              Error loading properties
+            </SelectItem>
+          ) : (
+            properties?.map((property) => (
+              <SelectItem key={property.id} value={property.id}>
+                {property.address}
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
-      <p className="text-xs text-muted-foreground">
-        This will automatically assign the resident to the correct association
-      </p>
     </div>
   );
 };
+
+export default PropertySelect;

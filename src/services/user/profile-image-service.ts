@@ -25,9 +25,10 @@ export const updateProfileImage = async (userId: string, file: File): Promise<{ 
     const imageUrl = urlData.publicUrl;
 
     // Update user profile with image URL
+    // Use profile_image_url as the field name
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({ avatar_url: imageUrl })
+      .update({ profile_image_url: imageUrl })
       .eq('id', userId);
 
     if (updateError) {

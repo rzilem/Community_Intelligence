@@ -7,9 +7,12 @@ export interface Profile {
   phone_number?: string;
   role: string;
   avatar_url?: string;
+  profile_image_url?: string; // For backward compatibility
   job_title?: string;
   created_at: string;
   updated_at: string;
+  phone?: string; // For backward compatibility
+  activeAssociationId?: string; // For association-related pages
 }
 
 export interface UserSettings {

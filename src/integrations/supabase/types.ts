@@ -742,11 +742,53 @@ export type Database = {
           },
         ]
       }
+      document_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_id: string
+          file_size: number
+          id: string
+          notes: string | null
+          url: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          file_size: number
+          id?: string
+          notes?: string | null
+          url: string
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          file_size?: number
+          id?: string
+          notes?: string | null
+          url?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           association_id: string
           category: string | null
           created_at: string
+          current_version: number | null
           description: string | null
           file_size: number
           file_type: string
@@ -764,6 +806,7 @@ export type Database = {
           association_id: string
           category?: string | null
           created_at?: string
+          current_version?: number | null
           description?: string | null
           file_size: number
           file_type: string
@@ -781,6 +824,7 @@ export type Database = {
           association_id?: string
           category?: string | null
           created_at?: string
+          current_version?: number | null
           description?: string | null
           file_size?: number
           file_type?: string

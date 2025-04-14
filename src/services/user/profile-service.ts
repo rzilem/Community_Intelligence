@@ -1,134 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Profile } from '@/types/app-types';
-import { UserSettings } from '@/types/profile-types';
+import { Profile, UserSettings } from '@/types/profile-types';
 
 /**
- * Updates a user's profile information
+ * Update a user's profile in Supabase
  */
-export const updateProfile = async (userId: string, profileData: Partial<Profile>): Promise<boolean> => {
+export const updateProfile = async (userId: string, data: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('profiles')
-      .update(profileData)
+      .update(data)
       .eq('id', userId);
-    
-    if (error) {
-      console.error('Error updating profile:', error);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Unexpected error updating profile:', error);
-    return false;
-  }
-};
 
-/**
- * Fetches a user's profile information
- * This function is exported from here to avoid duplicate export from fetchUserProfile.ts
- */
-export const getProfileById = async (userId: string): Promise<Profile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return null;
-    }
-    
-    return data as Profile;
-  } catch (error) {
-    console.error('Unexpected error fetching profile:', error);
-    return null;
-  }
-};
-
-/**
- * Updates a user's password
- */
-export const updateUserPassword = async (
-  userId: string, 
-  currentPassword: string, 
-  newPassword: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    
+    if (error) throw error;
     return { success: true };
   } catch (error: any) {
+    console.error('Error updating profile:', error);
     return { success: false, error: error.message };
   }
 };
 
 /**
- * Updates a user's profile
- * Alias for updateProfile for compatibility
+ * Alias for updateProfile for backward compatibility
  */
-export const updateUserProfile = async (profileData: Partial<Profile>): Promise<boolean> => {
-  if (!profileData.id) return false;
-  return updateProfile(profileData.id, profileData);
+export const updateUserProfile = updateProfile;
+
+/**
+ * Update a user's password in Supabase
+ */
+export const updateUserPassword = async (password: string): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating password:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 /**
- * Fetches a user's settings
+ * Fetch user settings from Supabase
  */
-export const fetchUserSettings = async (userId: string): Promise<UserSettings | null> => {
+export const fetchUserSettings = async (userId: string): Promise<{ data?: UserSettings; error?: string }> => {
   try {
     const { data, error } = await supabase
       .from('user_settings')
       .select('*')
       .eq('user_id', userId)
       .single();
-    
-    if (error) {
-      console.error('Error fetching user settings:', error);
-      return null;
-    }
-    
-    return data as UserSettings;
-  } catch (error) {
-    console.error('Unexpected error fetching user settings:', error);
-    return null;
+
+    if (error) throw error;
+    return { data: data as UserSettings };
+  } catch (error: any) {
+    console.error('Error fetching user settings:', error);
+    return { error: error.message };
   }
 };
 
 /**
- * Updates a user's preferences
+ * Update user preferences in Supabase
  */
 export const updateUserPreferences = async (
   userId: string, 
-  preferences: { 
-    theme?: string; 
-    notifications_enabled?: boolean 
-  }
+  preferences: Partial<UserSettings>
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('user_settings')
-      .upsert({
-        user_id: userId,
-        theme: preferences.theme,
-        notifications_enabled: preferences.notifications_enabled
-      }, { onConflict: 'user_id' });
-    
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    
+      .update(preferences)
+      .eq('user_id', userId);
+
+    if (error) throw error;
     return { success: true };
   } catch (error: any) {
+    console.error('Error updating user preferences:', error);
     return { success: false, error: error.message };
   }
 };
