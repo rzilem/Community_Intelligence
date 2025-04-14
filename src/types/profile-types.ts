@@ -1,4 +1,3 @@
-
 import type { Database } from '@/integrations/supabase/types';
 
 // User profile related types
@@ -14,6 +13,7 @@ export type Profile = {
   phone?: string; 
   created_at?: string;
   updated_at?: string;
+  activeAssociationId?: string; // Added this field
 };
 
 export type UserSettings = {

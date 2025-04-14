@@ -8,25 +8,31 @@ export const bidRequestService = {
     const dbBidRequest = {
       title: bidRequest.title,
       description: bidRequest.description,
-      status: bidRequest.status,
+      status: bidRequest.status || 'draft',
       association_id: bidRequest.associationId,
       created_by: bidRequest.createdBy,
       assigned_to: bidRequest.assignedTo,
       due_date: bidRequest.dueDate,
       budget: bidRequest.budget,
       category: bidRequest.category,
-      visibility: bidRequest.visibility,
+      visibility: bidRequest.visibility || 'private',
       image_url: bidRequest.imageUrl,
-      attachments: bidRequest.attachments
+      attachments: bidRequest.attachments || []
     };
 
+    console.log('Creating bid request with data:', dbBidRequest);
+
+    // Use raw SQL insert since the table is not in the type definitions yet
     const { data, error } = await supabase
       .from('bid_requests')
       .insert(dbBidRequest)
-      .select()
+      .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating bid request:', error);
+      throw error;
+    }
     
     // Convert snake_case back to camelCase for frontend
     return {
@@ -49,6 +55,9 @@ export const bidRequestService = {
   },
 
   async getBidRequests(associationId: string): Promise<BidRequestWithVendors[]> {
+    console.log('Fetching bid requests for association:', associationId);
+    
+    // Use raw SQL query since the table is not in the type definitions yet
     const { data, error } = await supabase
       .from('bid_requests')
       .select(`
@@ -70,7 +79,12 @@ export const bidRequestService = {
       `)
       .eq('association_id', associationId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching bid requests:', error);
+      throw error;
+    }
+    
+    console.log('Fetched bid requests:', data);
     
     // Convert snake_case to camelCase
     return data.map(item => ({
@@ -94,6 +108,7 @@ export const bidRequestService = {
   },
 
   async getBidRequestById(id: string): Promise<BidRequestWithVendors> {
+    // Use raw SQL query since the table is not in the type definitions yet
     const { data, error } = await supabase
       .from('bid_requests')
       .select(`
@@ -116,7 +131,10 @@ export const bidRequestService = {
       .eq('id', id)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching bid request by ID:', error);
+      throw error;
+    }
     
     // Get vendors for this bid request
     const { data: vendorData, error: vendorError } = await supabase
@@ -132,7 +150,10 @@ export const bidRequestService = {
       `)
       .eq('bid_request_id', id);
 
-    if (vendorError) throw vendorError;
+    if (vendorError) {
+      console.error('Error fetching bid request vendors:', vendorError);
+      throw vendorError;
+    }
     
     // Convert snake_case to camelCase
     const vendors = vendorData.map(item => ({
@@ -170,19 +191,23 @@ export const bidRequestService = {
     const dbVendor = {
       bid_request_id: bidRequestVendor.bidRequestId,
       vendor_id: bidRequestVendor.vendorId,
-      status: bidRequestVendor.status,
+      status: bidRequestVendor.status || 'invited',
       quote_amount: bidRequestVendor.quoteAmount,
       quote_details: bidRequestVendor.quoteDetails,
       submitted_at: bidRequestVendor.submittedAt
     };
 
+    // Use raw SQL query since the table is not in the type definitions yet
     const { data, error } = await supabase
       .from('bid_request_vendors')
       .insert(dbVendor)
-      .select()
+      .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error adding vendor to bid request:', error);
+      throw error;
+    }
     
     // Convert snake_case back to camelCase
     return {
@@ -201,15 +226,22 @@ export const bidRequestService = {
     const fileName = `${bidRequestId}.${fileExt}`;
     const filePath = `${fileName}`;
 
+    console.log('Uploading file:', file.name, 'to path:', filePath);
+
     const { error: uploadError } = await supabase.storage
       .from('bid-request-files')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('Error uploading bid request image:', uploadError);
+      throw uploadError;
+    }
 
     const { data: { publicUrl } } = supabase.storage
       .from('bid-request-files')
       .getPublicUrl(filePath);
+
+    console.log('File uploaded, public URL:', publicUrl);
 
     // Update bid request with image URL
     await supabase
@@ -221,12 +253,19 @@ export const bidRequestService = {
   },
 
   async filterEligibleVendors(associationId: string): Promise<any[]> {
+    console.log('Filtering eligible vendors for association:', associationId);
+    
     const { data, error } = await supabase
       .from('vendors')
       .select('*')
       .eq('include_in_bids', true);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error filtering eligible vendors:', error);
+      throw error;
+    }
+    
+    console.log('Filtered eligible vendors:', data);
     return data;
   }
 };

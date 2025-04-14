@@ -15,7 +15,7 @@ const BidRequestList: React.FC<BidRequestListProps> = ({ bidRequests }) => {
       case 'draft': return 'secondary';
       case 'open': return 'default';
       case 'closed': return 'destructive';
-      case 'awarded': return 'secondary';
+      case 'awarded': return 'outline';
       default: return 'secondary';
     }
   };
