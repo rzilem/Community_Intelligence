@@ -384,6 +384,112 @@ export type Database = {
         }
         Relationships: []
       }
+      bid_request_vendors: {
+        Row: {
+          bid_request_id: string
+          created_at: string
+          id: string
+          quote_amount: number | null
+          quote_details: Json | null
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          bid_request_id: string
+          created_at?: string
+          id?: string
+          quote_amount?: number | null
+          quote_details?: Json | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          bid_request_id?: string
+          created_at?: string
+          id?: string
+          quote_amount?: number | null
+          quote_details?: Json | null
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_request_vendors_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_requests: {
+        Row: {
+          assigned_to: string | null
+          association_id: string
+          attachments: Json | null
+          budget: number | null
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          image_url: string | null
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          association_id: string
+          attachments?: Json | null
+          budget?: number | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          image_url?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          association_id?: string
+          attachments?: Json | null
+          budget?: number | null
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          image_url?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_requests_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           amenity_id: string | null

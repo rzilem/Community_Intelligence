@@ -25,7 +25,7 @@ export const bidRequestService = {
     const { data, error } = await supabase
       .from('bid_requests')
       .insert(dbBidRequest)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -58,11 +58,7 @@ export const bidRequestService = {
     
     const { data, error } = await supabase
       .from('bid_requests')
-      .select(`
-        id, title, description, status, association_id, created_by, assigned_to,
-        created_at, updated_at, due_date, budget, category, visibility,
-        image_url, attachments
-      `)
+      .select('*')
       .eq('association_id', associationId);
 
     if (error) {
@@ -97,11 +93,7 @@ export const bidRequestService = {
     // Fetch bid request
     const { data: requestData, error: requestError } = await supabase
       .from('bid_requests')
-      .select(`
-        id, title, description, status, association_id, created_by, assigned_to,
-        created_at, updated_at, due_date, budget, category, visibility,
-        image_url, attachments
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -113,10 +105,7 @@ export const bidRequestService = {
     // Get vendors for this bid request
     const { data: vendorData, error: vendorError } = await supabase
       .from('bid_request_vendors')
-      .select(`
-        id, bid_request_id, vendor_id, status, quote_amount,
-        quote_details, submitted_at
-      `)
+      .select('*')
       .eq('bid_request_id', id);
 
     if (vendorError) {
@@ -169,7 +158,7 @@ export const bidRequestService = {
     const { data, error } = await supabase
       .from('bid_request_vendors')
       .insert(dbVendor)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
