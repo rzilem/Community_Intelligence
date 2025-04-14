@@ -5,22 +5,29 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
-  GripVertical, Calendar, Plus 
+  GripVertical, Calendar, Plus, MoreHorizontal, Edit, Trash2
 } from 'lucide-react';
 import { OnboardingStage, OnboardingTask } from '@/types/onboarding-types';
 import TasksList from './TasksList';
 import AddTaskDialog from './AddTaskDialog';
+import EditStageDialog from './EditStageDialog';
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
 import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 interface StageCardProps {
   stage: OnboardingStage;
   tasks: OnboardingTask[];
+  onStageUpdated: () => void;
+  onStageDeleted: () => void;
 }
 
-const StageCard = ({ stage, tasks }: StageCardProps) => {
+const StageCard = ({ stage, tasks, onStageUpdated, onStageDeleted }: StageCardProps) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskFormData, setTaskFormData] = useState({
     name: '',
     description: '',
@@ -29,7 +36,7 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
     task_type: 'team' as 'client' | 'team'
   });
 
-  const { createTask } = useOnboardingTemplates();
+  const { createTask, updateStage, deleteStage } = useOnboardingTemplates();
 
   const handleTaskInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -64,6 +71,7 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
         task_type: 'team'
       });
       setTaskDialogOpen(false);
+      onStageUpdated();
       toast.success('Task added successfully');
     } catch (error) {
       console.error('Error adding task:', error);
@@ -71,9 +79,21 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
     }
   };
 
+  const handleDeleteStage = async () => {
+    try {
+      await deleteStage(stage.id);
+      setDeleteDialogOpen(false);
+      onStageDeleted();
+      toast.success('Stage deleted successfully');
+    } catch (error) {
+      console.error('Error deleting stage:', error);
+      toast.error('Failed to delete stage');
+    }
+  };
+
   return (
     <Card>
-      <CardHeader className="cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <CardHeader className="cursor-pointer relative" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <GripVertical className="h-5 w-5 text-muted-foreground mr-2" />
@@ -87,6 +107,38 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
             <div className="text-sm text-muted-foreground">
               {tasks.length} tasks
             </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost" 
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={(e) => {
+                  e.stopPropagation();
+                  setStageDialogOpen(true);
+                }}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Stage
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Stage
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Button
               variant="ghost" 
               size="sm"
@@ -104,7 +156,7 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
       
       {isExpanded && (
         <CardContent>
-          <TasksList tasks={tasks} />
+          <TasksList tasks={tasks} onTaskUpdated={onStageUpdated} />
         </CardContent>
       )}
 
@@ -116,6 +168,28 @@ const StageCard = ({ stage, tasks }: StageCardProps) => {
         onInputChange={handleTaskInputChange}
         onSubmit={handleAddTask}
       />
+
+      <EditStageDialog
+        open={stageDialogOpen}
+        onOpenChange={setStageDialogOpen}
+        stage={stage}
+        onSubmit={onStageUpdated}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Stage</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the "{stage.name}" stage? This action will also delete all tasks associated with this stage and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground" onClick={handleDeleteStage}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

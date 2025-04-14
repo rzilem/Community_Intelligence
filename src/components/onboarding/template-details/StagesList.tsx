@@ -9,10 +9,12 @@ import StageCard from './StageCard';
 interface StagesListProps {
   stages: OnboardingStage[];
   tasks: Record<string, OnboardingTask[]>;
+  onStageUpdated: () => void;
+  onStageDeleted: () => void;
   onAddStageClick: () => void;
 }
 
-const StagesList = ({ stages, tasks, onAddStageClick }: StagesListProps) => {
+const StagesList = ({ stages, tasks, onStageUpdated, onStageDeleted, onAddStageClick }: StagesListProps) => {
   if (stages.length === 0) {
     return (
       <Card>
@@ -40,6 +42,8 @@ const StagesList = ({ stages, tasks, onAddStageClick }: StagesListProps) => {
           key={stage.id}
           stage={stage}
           tasks={tasks[stage.id] || []}
+          onStageUpdated={onStageUpdated}
+          onStageDeleted={onStageDeleted}
         />
       ))}
     </div>

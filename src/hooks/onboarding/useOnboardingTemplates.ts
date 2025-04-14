@@ -112,6 +112,61 @@ export const useOnboardingTemplates = () => {
     }
   };
   
+  // Update a stage
+  const updateStage = async ({ id, data }: { id: string; data: Partial<OnboardingStage> }): Promise<OnboardingStage> => {
+    try {
+      const { data: updatedStage, error } = await supabase
+        .from('onboarding_stages')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        toast.error(`Error updating stage: ${error.message}`);
+        throw error;
+      }
+      
+      toast.success('Stage updated successfully');
+      return updatedStage;
+    } catch (error) {
+      console.error('Error updating stage:', error);
+      throw error;
+    }
+  };
+  
+  // Delete a stage
+  const deleteStage = async (id: string): Promise<void> => {
+    try {
+      // First, delete all tasks associated with the stage
+      const { error: tasksDeletionError } = await supabase
+        .from('onboarding_tasks')
+        .delete()
+        .eq('stage_id', id);
+      
+      if (tasksDeletionError) {
+        toast.error(`Error deleting stage tasks: ${tasksDeletionError.message}`);
+        throw tasksDeletionError;
+      }
+      
+      // Then delete the stage itself
+      const { error } = await supabase
+        .from('onboarding_stages')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        toast.error(`Error deleting stage: ${error.message}`);
+        throw error;
+      }
+      
+      toast.success('Stage deleted successfully');
+    } catch (error) {
+      console.error('Error deleting stage:', error);
+      throw error;
+    }
+  };
+  
   // Create a new task
   const createTask = async (task: Omit<OnboardingTask, 'id' | 'created_at' | 'updated_at'>): Promise<OnboardingTask> => {
     try {
@@ -139,6 +194,55 @@ export const useOnboardingTemplates = () => {
       throw error;
     }
   };
+  
+  // Update a task
+  const updateTask = async ({ id, data }: { id: string; data: Partial<OnboardingTask> }): Promise<OnboardingTask> => {
+    try {
+      const { data: updatedTask, error } = await supabase
+        .from('onboarding_tasks')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        toast.error(`Error updating task: ${error.message}`);
+        throw error;
+      }
+      
+      // Type cast to ensure task_type is of the correct type
+      const typedData = {
+        ...updatedTask,
+        task_type: updatedTask.task_type as 'client' | 'team'
+      };
+      
+      toast.success('Task updated successfully');
+      return typedData;
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+  };
+  
+  // Delete a task
+  const deleteTask = async (id: string): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('onboarding_tasks')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        toast.error(`Error deleting task: ${error.message}`);
+        throw error;
+      }
+      
+      toast.success('Task deleted successfully');
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  };
 
   return {
     templates,
@@ -153,7 +257,11 @@ export const useOnboardingTemplates = () => {
     getTemplateStages,
     getStageTasks,
     createStage,
+    updateStage,
+    deleteStage,
     createTask,
+    updateTask,
+    deleteTask,
     refreshTemplates: refetch
   };
 };

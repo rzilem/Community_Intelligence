@@ -109,6 +109,20 @@ const TemplateDetails = () => {
     }));
   };
 
+  const handleTemplateUpdated = () => {
+    refreshTemplates().then(() => {
+      loadTemplateData();
+    });
+  };
+
+  const handleStageUpdated = () => {
+    loadTemplateData();
+  };
+
+  const handleStageDeleted = () => {
+    loadTemplateData();
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-64">
       <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -129,7 +143,10 @@ const TemplateDetails = () => {
         >
           <ChevronLeft className="h-4 w-4 mr-1" /> Back
         </Button>
-        <TemplateDetailHeader template={template} />
+        <TemplateDetailHeader 
+          template={template}
+          onTemplateUpdated={handleTemplateUpdated}
+        />
       </div>
 
       <TemplateInfoCard template={template} stages={stages} />
@@ -149,6 +166,8 @@ const TemplateDetails = () => {
       <StagesList 
         stages={stages}
         tasks={tasksByStage}
+        onStageUpdated={handleStageUpdated}
+        onStageDeleted={handleStageDeleted}
         onAddStageClick={() => setStageDialogOpen(true)}
       />
 
