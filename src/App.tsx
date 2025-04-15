@@ -1,39 +1,44 @@
 
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
-import { AuthProvider } from "./contexts/auth";
-import { AppRouter } from "./routes";
+import { useEffect } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import { router } from '@/routes';
+import AuthProvider from './contexts/auth/AuthProvider';
+import { Toaster as SonnerToaster } from 'sonner';
+import { useSystemSetting } from '@/hooks/settings/use-system-settings';
+import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
+import { AppearanceSettings } from '@/types/settings-types';
 
-// Create the query client outside of the component
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60 * 1000, // 1 minute
-      retry: 1,
-    },
-  },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false
+    }
+  }
 });
 
-const App = () => {
+function App() {
+  // Load appearance settings
+  const { data: appearanceSettings } = useSystemSetting<AppearanceSettings>('appearance');
+  
+  // Apply appearance settings on app load
+  useEffect(() => {
+    if (appearanceSettings) {
+      applyAppearanceSettings(appearanceSettings);
+    }
+  }, [appearanceSettings]);
+
   return (
-    <BrowserRouter>
-      <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <AppRouter />
-            </TooltipProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </React.StrictMode>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+        <SonnerToaster position="top-right" />
+      </AuthProvider>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;

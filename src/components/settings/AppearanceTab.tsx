@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppearanceSettings } from '@/types/settings-types';
 import ThemeSettingsCard from '@/components/settings/appearance/ThemeSettingsCard';
 import ColorSchemeSettingsCard from '@/components/settings/appearance/ColorSchemeSettingsCard';
@@ -13,6 +13,30 @@ interface AppearanceTabProps {
 }
 
 const AppearanceTab: React.FC<AppearanceTabProps> = ({ settings, onChange }) => {
+  // Apply color scheme
+  useEffect(() => {
+    document.documentElement.setAttribute('data-color-scheme', settings.colorScheme);
+  }, [settings.colorScheme]);
+  
+  // Apply density
+  useEffect(() => {
+    document.documentElement.setAttribute('data-density', settings.density);
+  }, [settings.density]);
+  
+  // Apply font scale
+  useEffect(() => {
+    document.documentElement.style.setProperty('--font-scale', settings.fontScale.toString());
+  }, [settings.fontScale]);
+  
+  // Apply animations setting
+  useEffect(() => {
+    if (!settings.animationsEnabled) {
+      document.documentElement.classList.add('no-animations');
+    } else {
+      document.documentElement.classList.remove('no-animations');
+    }
+  }, [settings.animationsEnabled]);
+  
   return (
     <div className="space-y-6">
       <ThemeSettingsCard 

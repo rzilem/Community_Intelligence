@@ -1,72 +1,79 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { SystemSettings } from '@/types/settings-types';
+import { toast } from 'sonner';
 
-// Helper function to check if user is admin
-export const isUserAdmin = async (): Promise<boolean> => {
+// Function to save system settings to Supabase
+export const saveSystemSettings = async (settings: SystemSettings): Promise<void> => {
   try {
+    // Check if user is admin first
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) throw new Error("User not authenticated");
     
-    const { data } = await supabase
+    const { data: userRole } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single();
       
-    return data?.role === 'admin';
+    if (userRole?.role !== 'admin') {
+      throw new Error("Only administrators can update system settings");
+    }
+    
+    // Update each settings category separately to ensure proper database structure
+    for (const category of ['appearance', 'notifications', 'security', 'preferences', 'integrations'] as const) {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: category,
+          value: settings[category],
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'key'
+        });
+        
+      if (error) throw error;
+    }
+    
+    console.log("Successfully saved all system settings");
   } catch (error) {
-    console.error('Error checking admin status:', error);
-    return false;
+    console.error("Error saving system settings:", error);
+    throw error;
   }
 };
 
-// Function to save system settings
-export const saveSystemSettings = async (
-  settings: SystemSettings
-): Promise<void> => {
-  // Get the user session and user ID properly
-  const { data: userData } = await supabase.auth.getUser();
-  const userId = userData.user?.id;
-  
-  if (!userId) {
-    throw new Error("You must be logged in to update system settings");
-  }
-  
-  // Get the user's profile to check if they're an admin
-  const { data: profileData } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single();
-
-  if (profileData?.role !== 'admin') {
-    throw new Error("Only administrators can update system settings");
-  }
-  
-  // Save all settings that have changed
-  const savePromises = Object.keys(settings).map(async (key) => {
-    const settingKey = key as keyof SystemSettings;
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cahergndkwfqltxyikyr.supabase.co';
-    
-    // Fix: Explicitly convert symbol to string
-    const settingKeyStr = String(settingKey);
-    
-    // Call the settings edge function with the full URL
-    const response = await fetch(`${supabaseUrl}/functions/v1/settings/${settingKeyStr}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-      },
-      body: JSON.stringify(settings[settingKey]),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Response parsing error' }));
-      throw new Error(errorData.error || `Failed to save ${String(settingKey)} settings`);
+// Function to apply appearance settings to the DOM
+export const applyAppearanceSettings = (appearance: SystemSettings['appearance']) => {
+  // Apply theme (light, dark, system)
+  if (appearance.theme === 'light') {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+  } else if (appearance.theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  } else {
+    // System theme
+    localStorage.removeItem('theme');
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  });
+  }
   
-  await Promise.all(savePromises);
+  // Apply color scheme
+  document.documentElement.style.setProperty('--color-scheme', appearance.colorScheme);
+  
+  // Apply font scale
+  document.documentElement.style.setProperty('--font-scale', appearance.fontScale.toString());
+  
+  // Apply density
+  document.documentElement.setAttribute('data-density', appearance.density);
+  
+  // Apply animations setting
+  if (!appearance.animationsEnabled) {
+    document.documentElement.classList.add('no-animations');
+  } else {
+    document.documentElement.classList.remove('no-animations');
+  }
 };
