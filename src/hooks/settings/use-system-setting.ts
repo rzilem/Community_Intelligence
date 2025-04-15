@@ -35,8 +35,8 @@ export const useSystemSetting = <T>(key: SettingKey): SystemSettingResult<T> => 
     }
   });
 
-  // We need to return a SystemSettingResult with all properties from UseQueryResult
-  // While ensuring data is always defined even if the query hasn't completed
+  // Create a new object that extends all properties from useQuery result
+  // while ensuring data is always defined
   return {
     ...result,
     data: result.data ?? (defaultSettings[key] as unknown) as T,

@@ -10,7 +10,7 @@ import { getIntegrationsData, formatDate } from './integration/integrations-data
 import { Card, CardContent } from '@/components/ui/card';
 
 const IntegrationsTab = () => {
-  const { data: integrationSettings, isPending } = useSystemSetting<IntegrationSettings>('integrations');
+  const { data: integrationSettings, isLoading } = useSystemSetting<IntegrationSettings>('integrations');
   const { mutate: updateIntegrationSettings, isPending: isMutating } = useUpdateSystemSetting<IntegrationSettings>('integrations');
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -131,7 +131,7 @@ const IntegrationsTab = () => {
     }
   ];
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

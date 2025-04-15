@@ -47,8 +47,8 @@ export const defaultSettings: SystemSettings = {
   }
 };
 
-// Use composition to ensure it has all properties from UseQueryResult
-export interface SystemSettingResult<T> extends UseQueryResult<T> {
-  // Override the data property to ensure it's always defined
+// Define SystemSettingResult as a type that has all properties from UseQueryResult
+export type SystemSettingResult<T> = UseQueryResult<T> & {
+  // Ensure data is always defined (override the optional data property from UseQueryResult)
   data: T;
-}
+};
