@@ -80,20 +80,35 @@ serve(async (req) => {
         })
       });
 
-      if (!openaiResponse.ok) {
-        const errorData = await openaiResponse.json();
-        console.error("OpenAI API error:", errorData);
-        
+      const responseText = await openaiResponse.text();
+      
+      // Try to parse the response as JSON
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("Error parsing OpenAI response:", responseText);
         return new Response(JSON.stringify({
           success: false,
-          error: errorData.error?.message || "Error connecting to OpenAI API"
+          error: `Invalid response from OpenAI: ${responseText.substring(0, 100)}...`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 502,
         });
       }
 
-      const result = await openaiResponse.json();
+      if (!openaiResponse.ok) {
+        console.error("OpenAI API error:", result);
+        
+        return new Response(JSON.stringify({
+          success: false,
+          error: result.error?.message || "Error connecting to OpenAI API"
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 502,
+        });
+      }
+
       const response = result.choices[0].message.content.trim();
 
       return new Response(JSON.stringify({

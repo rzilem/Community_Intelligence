@@ -24,6 +24,8 @@ const TestOpenAIButton = () => {
         throw new Error('No response received from OpenAI test function');
       }
       
+      console.log("Test OpenAI response:", data);
+      
       if (data.success) {
         toast.success(`Connection successful! Response: "${data.response}" using model ${data.model}`);
       } else {
