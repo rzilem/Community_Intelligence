@@ -41,6 +41,15 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
 }) => {
   const selectedField = systemFields.find(field => field.value === selectedValue);
   
+  const handleSelect = (value: string) => {
+    // Close the popover first
+    setIsOpen(false);
+    // Then update the mapping with a small delay to ensure UI updates properly
+    setTimeout(() => {
+      onMappingChange(column, value);
+    }, 10);
+  };
+  
   return (
     <div className="flex flex-col space-y-1">
       <div className="grid grid-cols-12 gap-2">
@@ -69,7 +78,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
+            <PopoverContent className="w-full p-0" align="start">
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
                 <CommandEmpty>No field found.</CommandEmpty>
@@ -79,9 +88,8 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                       <CommandItem
                         key={field.value}
                         value={field.value}
-                        onSelect={(currentValue) => {
-                          onMappingChange(column, currentValue);
-                        }}
+                        onSelect={handleSelect}
+                        className="cursor-pointer"
                       >
                         {field.label}
                         <Check

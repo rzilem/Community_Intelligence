@@ -53,11 +53,15 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   }, [associationId, importType, setMappings]);
   
   const handleMappingChange = (column: string, field: string) => {
-    console.log(`Mapping changed: ${column} -> ${field}`);
-    setMappings(prev => ({
-      ...prev,
-      [column]: field
-    }));
+    console.log(`Mapping changed in modal: ${column} -> ${field}`);
+    setMappings(prev => {
+      const updated = {
+        ...prev,
+        [column]: field
+      };
+      console.log("Updated mappings:", updated);
+      return updated;
+    });
   };
 
   const handleConfirm = () => {

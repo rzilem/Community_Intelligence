@@ -31,6 +31,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
   const handleMappingChange = (column: string, field: string) => {
+    console.log(`Manual mapping change: ${column} -> ${field}`);
     onMappingChange(column, field);
     setOpenState(prev => ({
       ...prev,
@@ -49,26 +50,19 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     const newSuggestions = generateSuggestions();
     
     // Create a copy of the current mappings to avoid direct state mutation
-    const updatedMappings = { ...mappings };
     let updateCount = 0;
     
     // Apply mapping suggestions that meet confidence threshold
     Object.entries(newSuggestions).forEach(([column, suggestion]) => {
       // Apply the mapping only if it meets confidence threshold AND doesn't already have a mapping
       if (suggestion.confidence >= 0.6 && !mappings[column]) {
-        updatedMappings[column] = suggestion.fieldValue;
+        console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
+        onMappingChange(column, suggestion.fieldValue);
         updateCount++;
       }
     });
     
-    // Update all mappings at once by calling onMappingChange for each new mapping
     if (updateCount > 0) {
-      Object.entries(updatedMappings).forEach(([column, field]) => {
-        if (field && !mappings[column]) {
-          onMappingChange(column, field);
-        }
-      });
-      
       toast.success(`Auto-mapped ${updateCount} columns successfully`);
     } else {
       toast.info("No additional columns could be automatically mapped");
