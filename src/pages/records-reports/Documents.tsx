@@ -1,39 +1,47 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import { useResponsive } from '@/hooks/use-responsive';
 import DocumentContent from '@/components/documents/DocumentContent';
 import { useAuth } from '@/contexts/auth';
 import { useDocuments, useDocumentOperations } from '@/hooks/documents';
 import { toast } from 'sonner';
 import { Document } from '@/types/document-types';
+import { Button } from '@/components/ui/button';
+import { saveAs } from 'file-saver';
 
 const Documents = () => {
   const { isMobile } = useResponsive();
   const { currentAssociation } = useAuth();
   const [category, setCategory] = useState<string | null>(null);
   
-  const { data: documents = [], isLoading } = useDocuments({
+  const { documents, isLoading } = useDocuments({
     associationId: currentAssociation?.id,
     category: category
   });
   
-  const { handleViewDocument, handleDownloadDocument, handleDeleteDocument } = useDocumentOperations();
+  const { deleteDocument } = useDocumentOperations();
   
-  // Handlers for DocumentContent component
+  // Implement document handling functions
   const onViewDocument = (doc: Document) => {
-    handleViewDocument(doc);
+    window.open(doc.url, '_blank');
   };
   
   const onDownloadDocument = (doc: Document) => {
-    handleDownloadDocument(doc);
+    // Use file-saver to download the document
+    saveAs(doc.url, doc.name);
     toast.success('Document downloaded successfully');
   };
   
   const onDeleteDocument = (doc: Document) => {
-    handleDeleteDocument(doc.id).then(() => {
-      toast.success('Document deleted successfully');
+    deleteDocument.mutate(doc, {
+      onSuccess: () => {
+        toast.success('Document deleted successfully');
+      },
+      onError: (error) => {
+        toast.error(`Failed to delete document: ${error.message}`);
+      }
     });
   };
   
@@ -42,6 +50,12 @@ const Documents = () => {
       title="Documents" 
       icon={<FileText className="h-8 w-8" />}
       description="Access and manage community documents and files."
+      actions={
+        <Button size="sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Upload Document
+        </Button>
+      }
     >
       <div className={isMobile ? 'p-0' : ''}>
         <DocumentContent 

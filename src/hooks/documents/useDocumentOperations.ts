@@ -54,7 +54,6 @@ export function useDocumentOperations() {
           uploaded_by: user.id,
           is_public: false,
           is_archived: false,
-          // Using uploaded_date as it's defined in the database schema
           uploaded_date: new Date().toISOString()
         })
         .select()
