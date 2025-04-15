@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -7,6 +6,7 @@ import { IntegrationSettings } from '@/types/settings-types';
 import IntegrationCard from './integration/IntegrationCard';
 import IntegrationConfigDialog from './integration/IntegrationConfigDialog';
 import { getIntegrationsData, formatDate } from './integration/integrations-data';
+import { Card, CardContent } from '@/components/ui/card';
 
 const IntegrationsTab = () => {
   const { data: integrationSettings, isLoading } = useSystemSetting<IntegrationSettings>('integrations');
@@ -16,7 +16,6 @@ const IntegrationsTab = () => {
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
   const [openAIModel, setOpenAIModel] = useState<string>('gpt-4o-mini');
 
-  // Get connected integrations from settings
   const connectedIntegrations = integrationSettings?.integrationSettings || {};
 
   const handleConfigureIntegration = (name: string) => {
@@ -24,7 +23,6 @@ const IntegrationsTab = () => {
     const integrationConfig = connectedIntegrations[name] || {};
     setConfigFields({...integrationConfig});
     
-    // Set OpenAI model if available
     if (name === 'OpenAI' && integrationConfig.model) {
       setOpenAIModel(integrationConfig.model);
     } else {
@@ -36,7 +34,6 @@ const IntegrationsTab = () => {
 
   const handleConnectIntegration = (name: string) => {
     setSelectedIntegration(name);
-    // Set default config fields based on integration type
     let defaultFields: {[key: string]: string} = {};
     
     if (name === 'Stripe') {
@@ -54,14 +51,11 @@ const IntegrationsTab = () => {
   };
 
   const handleDisconnectIntegration = (name: string) => {
-    // Create a copy of the current integration settings
     const updatedSettings = { ...integrationSettings };
     
-    // Remove the integration
     if (updatedSettings.integrationSettings[name]) {
       delete updatedSettings.integrationSettings[name];
       
-      // Update in the database
       updateIntegrationSettings(updatedSettings);
       toast.success(`${name} has been disconnected`);
     }
@@ -76,7 +70,6 @@ const IntegrationsTab = () => {
 
   const handleSaveConfig = () => {
     if (selectedIntegration) {
-      // Create a copy of the current integration settings
       const updatedSettings = { 
         ...integrationSettings,
         integrationSettings: {
@@ -84,7 +77,6 @@ const IntegrationsTab = () => {
         }
       };
       
-      // Add additional fields based on integration type
       if (selectedIntegration === 'OpenAI') {
         updatedSettings.integrationSettings[selectedIntegration] = {
           ...configFields,
@@ -100,21 +92,18 @@ const IntegrationsTab = () => {
       
       console.log("Saving integration settings:", JSON.stringify(updatedSettings));
       
-      // Update in the database
       updateIntegrationSettings(updatedSettings);
       setConfigDialogOpen(false);
       toast.success(`${selectedIntegration} configuration saved`);
     }
   };
 
-  // Get integration data and add runtime information
   const integrationsData = getIntegrationsData().map(integration => ({
     ...integration,
     status: (connectedIntegrations[integration.name] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
     configDate: connectedIntegrations[integration.name]?.configDate
   }));
 
-  // Add coming soon integrations
   const integrations = [
     ...integrationsData.filter(i => i.name !== 'Eleven Labs' && i.name !== 'X.AI'),
     {
@@ -166,7 +155,6 @@ const IntegrationsTab = () => {
         ))}
       </div>
 
-      {/* Configuration Dialog */}
       <IntegrationConfigDialog
         open={configDialogOpen}
         onOpenChange={setConfigDialogOpen}
