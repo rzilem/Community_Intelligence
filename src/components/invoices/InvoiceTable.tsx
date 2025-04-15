@@ -1,15 +1,16 @@
 
 import React from 'react';
-import { Eye, CheckSquare, X, FileText } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import TooltipButton from '@/components/ui/tooltip-button';
-import { Skeleton } from '@/components/ui/skeleton';
-import InvoiceStatusBadge from './InvoiceStatusBadge';
+import { Button } from '@/components/ui/button';
+import { Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
+import InvoiceStatusBadge from './InvoiceStatusBadge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
-  isLoading: boolean;
+  isLoading?: boolean;
   onViewInvoice: (id: string) => void;
   onApproveInvoice?: (id: string) => void;
   onRejectInvoice?: (id: string) => void;
@@ -17,113 +18,154 @@ interface InvoiceTableProps {
 
 const InvoiceTable: React.FC<InvoiceTableProps> = ({
   invoices,
-  isLoading,
+  isLoading = false,
   onViewInvoice,
   onApproveInvoice,
   onRejectInvoice,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="w-full py-10 text-center text-gray-500">
+        Loading invoices...
+      </div>
+    );
+  }
+
+  if (invoices.length === 0) {
+    return (
+      <div className="w-full py-10 text-center text-gray-500">
+        No invoices found. Add invoices or adjust your filters.
+      </div>
+    );
+  }
+
+  // Helper function to check if a field was likely AI-extracted
+  const isAIAssisted = (invoice: Invoice, field: keyof Invoice) => {
+    if (!invoice.html_content) return false;
+    
+    // If the invoice has HTML content but the specific field is filled,
+    // it likely means it was extracted using either rules or AI
+    return !!invoice[field] && field !== 'html_content';
+  };
+
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Invoice #</TableHead>
             <TableHead>Vendor</TableHead>
             <TableHead>HOA</TableHead>
-            <TableHead>Invoice Date</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead className="text-right">Amount</TableHead>
             <TableHead>Due Date</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Source</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading ? (
-            Array(5).fill(0).map((_, i) => (
-              <TableRow key={i}>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-              </TableRow>
-            ))
-          ) : invoices.length > 0 ? (
-            invoices.map((invoice) => (
-              <TableRow key={invoice.id} className="cursor-pointer hover:bg-muted/50">
-                <TableCell className="font-medium" onClick={() => onViewInvoice(invoice.id)}>
+          {invoices.map((invoice) => (
+            <TableRow key={invoice.id}>
+              <TableCell>
+                <div className="flex items-center">
                   {invoice.invoice_number}
-                </TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>{invoice.vendor}</TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>{invoice.association_name || 'N/A'}</TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>{invoice.invoice_date}</TableCell>
-                <TableCell className="text-right" onClick={() => onViewInvoice(invoice.id)}>
-                  ${Number(invoice.amount).toFixed(2)}
-                </TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>{invoice.due_date}</TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>
-                  <InvoiceStatusBadge status={invoice.status} />
-                </TableCell>
-                <TableCell onClick={() => onViewInvoice(invoice.id)}>
-                  {invoice.source_document ? (
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-1 text-blue-500" />
-                      <span className="text-xs text-gray-600">{invoice.source_document.length > 15 
-                        ? `${invoice.source_document.substring(0, 12)}...` 
-                        : invoice.source_document}</span>
-                    </div>
-                  ) : (
-                    <span className="text-xs text-gray-500">Email</span>
+                  {isAIAssisted(invoice, 'invoice_number') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <TooltipButton 
-                      size="sm" 
-                      variant="ghost" 
-                      tooltip="View invoice details"
-                      onClick={() => onViewInvoice(invoice.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </TooltipButton>
-                    {invoice.status === 'pending' && onApproveInvoice && onRejectInvoice && (
-                      <>
-                        <TooltipButton 
-                          size="sm" 
-                          variant="outline" 
-                          className="border-green-500 text-green-500 hover:bg-green-50" 
-                          tooltip="Approve this invoice"
-                          onClick={() => onApproveInvoice(invoice.id)}
-                        >
-                          <CheckSquare className="h-4 w-4" />
-                        </TooltipButton>
-                        <TooltipButton 
-                          size="sm" 
-                          variant="outline" 
-                          className="border-red-500 text-red-500 hover:bg-red-50" 
-                          tooltip="Reject this invoice"
-                          onClick={() => onRejectInvoice(invoice.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </TooltipButton>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={9} className="text-center py-4 text-gray-500">
-                No invoices found that match your filters.
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  {invoice.vendor}
+                  {isAIAssisted(invoice, 'vendor') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>{invoice.association_name || 'Not assigned'}</TableCell>
+              <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end">
+                  {formatCurrency(invoice.amount)}
+                  {isAIAssisted(invoice, 'amount') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  {new Date(invoice.due_date).toLocaleDateString()}
+                  {isAIAssisted(invoice, 'due_date') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <InvoiceStatusBadge status={invoice.status} />
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
+                  <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  {invoice.status === 'pending' && onApproveInvoice && (
+                    <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </Button>
+                  )}
+                  {invoice.status === 'pending' && onRejectInvoice && (
+                    <Button variant="ghost" size="icon" onClick={() => onRejectInvoice(invoice.id)}>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>

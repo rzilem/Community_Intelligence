@@ -9,6 +9,7 @@ import {
   extractTextFromDoc, 
   getDocumentType 
 } from "../utils/document-parser.ts";
+import { analyzeInvoiceWithAI } from "./ai-analyzer.ts";
 
 export async function processInvoiceEmail(emailData: any) {
   console.log("Processing invoice email data");
@@ -98,6 +99,30 @@ export async function processInvoiceEmail(emailData: any) {
     
     // Merge all extracted information into the invoice object
     Object.assign(invoice, vendorInfo, invoiceDetails, associationInfo);
+
+    // NEW: Use AI to analyze and enhance extraction if we have enough content
+    if (content && content.length > 100) {
+      try {
+        console.log("Using AI to enhance invoice data extraction");
+        const aiExtractedData = await analyzeInvoiceWithAI(content, subject, from);
+        
+        if (aiExtractedData) {
+          console.log("AI extraction successful, merging data");
+          
+          // Only override fields that are empty or use AI data if it's more complete
+          Object.keys(aiExtractedData).forEach(key => {
+            if (!invoice[key] || 
+                (typeof aiExtractedData[key] === 'string' && 
+                 aiExtractedData[key].length > (invoice[key]?.length || 0))) {
+              invoice[key] = aiExtractedData[key];
+            }
+          });
+        }
+      } catch (aiError) {
+        console.error("AI extraction failed, continuing with rule-based extraction:", aiError);
+        // Continue with the already extracted data
+      }
+    }
 
     // If we processed an attachment, add the filename to the description
     if (processedAttachment) {
