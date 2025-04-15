@@ -30,7 +30,7 @@ export const processorService = {
         tableName = 'assessments';
         // Make sure property_id is properly formatted for financial records
         processedData.forEach(row => {
-          if (row.association) delete row.association; // Remove association name as it's not in the schema
+          if ('association' in row) delete row.association; // Remove association name as it's not in the schema
           if (!row.association_id) row.association_id = associationId; // Ensure association_id is set
         });
         break;
@@ -145,16 +145,17 @@ export const processorService = {
           
           // For assessments (financial data), ensure proper fields
           if (tableName === 'assessments') {
-            delete copy.association; // Remove association name field
-            delete copy.property_address; // Remove property_address as it's not in schema
-            delete copy.owner_name; // Remove owner_name as it's not in schema
-            delete copy.owner_email; // Remove owner_email as it's not in schema
-            delete copy.owner_phone; // Remove owner_phone as it's not in schema
-            delete copy.type; // Not in schema
-            delete copy.amount_paid; // Not in schema
-            delete copy.balance; // Not in schema
-            delete copy.gl_account; // Not in schema
-            delete copy.payment_method; // Not in schema
+            // Only delete properties if they exist in the object
+            if ('association' in copy) delete copy.association;
+            if ('property_address' in copy) delete copy.property_address;
+            if ('owner_name' in copy) delete copy.owner_name;
+            if ('owner_email' in copy) delete copy.owner_email;
+            if ('owner_phone' in copy) delete copy.owner_phone;
+            if ('type' in copy) delete copy.type;
+            if ('amount_paid' in copy) delete copy.amount_paid;
+            if ('balance' in copy) delete copy.balance;
+            if ('gl_account' in copy) delete copy.gl_account;
+            if ('payment_method' in copy) delete copy.payment_method;
             
             // Make sure association_id is set
             if (!copy.association_id) copy.association_id = associationId;
