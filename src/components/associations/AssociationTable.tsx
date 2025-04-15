@@ -19,6 +19,24 @@ import {
 } from '@/components/ui/alert-dialog';
 import AssociationEditDialog from './AssociationEditDialog';
 import { LoadingState } from '@/components/ui/loading-state';
+import ColumnSelector from '@/components/table/ColumnSelector';
+
+export const associationTableColumns = [
+  { id: 'name', label: 'Association Name' },
+  { id: 'property_type', label: 'Type' },
+  { id: 'location', label: 'Location' },
+  { id: 'contact_email', label: 'Contact' },
+  { id: 'status', label: 'Status' },
+  { id: 'total_units', label: 'Units' },
+  { id: 'phone', label: 'Phone' },
+  { id: 'created_at', label: 'Created' },
+  { id: 'founded_date', label: 'Founded' },
+  { id: 'insurance_expiration', label: 'Insurance Exp.' },
+  { id: 'fire_inspection_due', label: 'Fire Insp. Due' },
+  { id: 'actions', label: 'Actions' }
+];
+
+const defaultColumns = ['name', 'property_type', 'location', 'contact_email', 'status', 'actions'];
 
 interface AssociationTableProps {
   associations: Association[];
@@ -42,6 +60,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAssociation, setSelectedAssociation] = useState<Association | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(defaultColumns);
 
   const handleEditClick = (association: Association) => {
     setSelectedAssociation(association);
@@ -71,33 +90,68 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     return selectedAssociations.some(a => a.id === association.id);
   };
 
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };
+
   if (isLoading) {
     return <LoadingState variant="skeleton" count={3} />;
   }
   
+  // Reorder columns function
+  const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
+    const orderedColumns = [...visibleColumns];
+    const [removed] = orderedColumns.splice(sourceIndex, 1);
+    orderedColumns.splice(destinationIndex, 0, removed);
+    setVisibleColumns(orderedColumns);
+  };
+
+  // Set local storage with column preferences
+  const handleColumnsChange = (columns: string[]) => {
+    setVisibleColumns(columns);
+    localStorage.setItem('associationTableColumns', JSON.stringify(columns));
+  };
+  
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <ColumnSelector
+          columns={associationTableColumns}
+          selectedColumns={visibleColumns}
+          onChange={handleColumnsChange}
+          onReorder={handleReorderColumns}
+          className="mb-2"
+        />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {onToggleSelect && (
+              {onToggleSelect && visibleColumns.some(col => col === 'select') && (
                 <TableHead className="w-[50px]">
                   <span className="sr-only">Select</span>
                 </TableHead>
               )}
-              <TableHead>Association Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              {visibleColumns.includes('name') && <TableHead>Association Name</TableHead>}
+              {visibleColumns.includes('property_type') && <TableHead>Type</TableHead>}
+              {visibleColumns.includes('location') && <TableHead>Location</TableHead>}
+              {visibleColumns.includes('contact_email') && <TableHead>Contact</TableHead>}
+              {visibleColumns.includes('total_units') && <TableHead>Units</TableHead>}
+              {visibleColumns.includes('phone') && <TableHead>Phone</TableHead>}
+              {visibleColumns.includes('created_at') && <TableHead>Created</TableHead>}
+              {visibleColumns.includes('founded_date') && <TableHead>Founded</TableHead>}
+              {visibleColumns.includes('insurance_expiration') && <TableHead>Insurance Exp.</TableHead>}
+              {visibleColumns.includes('fire_inspection_due') && <TableHead>Fire Insp. Due</TableHead>}
+              {visibleColumns.includes('status') && <TableHead>Status</TableHead>}
+              {visibleColumns.includes('actions') && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {associations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={onToggleSelect ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={visibleColumns.length + (onToggleSelect ? 1 : 0)} className="text-center py-8 text-muted-foreground">
                   No associations found
                 </TableCell>
               </TableRow>
@@ -107,7 +161,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                   key={association.id}
                   className={isSelected(association) ? "bg-muted/50" : ""}
                 >
-                  {onToggleSelect && (
+                  {onToggleSelect && visibleColumns.includes('select') && (
                     <TableCell>
                       <Checkbox 
                         checked={isSelected(association)}
@@ -116,54 +170,84 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                       />
                     </TableCell>
                   )}
-                  <TableCell>
-                    {onViewProfile ? (
-                      <button 
-                        onClick={() => onViewProfile(association.id)} 
-                        className="font-medium hover:underline text-left"
-                      >
-                        {association.name}
-                      </button>
-                    ) : (
-                      <Link to={`/system/associations/${association.id}`} className="font-medium hover:underline">
-                        {association.name}
-                      </Link>
-                    )}
-                  </TableCell>
-                  <TableCell>{association.property_type || 'HOA'}</TableCell>
-                  <TableCell>
-                    {association.city && association.state 
-                      ? `${association.city}, ${association.state}`
-                      : association.address || 'No location data'}
-                  </TableCell>
-                  <TableCell>{association.contact_email || 'No contact info'}</TableCell>
-                  <TableCell>
-                    {!association.is_archived ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Active</Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-50">Inactive</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <TooltipButton
-                        size="icon"
-                        variant="ghost"
-                        tooltip="Edit Association"
-                        onClick={() => handleEditClick(association)}
-                      >
-                        <PencilLine className="h-4 w-4" />
-                      </TooltipButton>
-                      <TooltipButton
-                        size="icon"
-                        variant="ghost"
-                        tooltip="Delete Association"
-                        onClick={() => handleDeleteClick(association)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </TooltipButton>
-                    </div>
-                  </TableCell>
+                  {visibleColumns.includes('name') && (
+                    <TableCell>
+                      {onViewProfile ? (
+                        <button 
+                          onClick={() => onViewProfile(association.id)} 
+                          className="font-medium hover:underline text-left"
+                        >
+                          {association.name}
+                        </button>
+                      ) : (
+                        <Link to={`/system/associations/${association.id}`} className="font-medium hover:underline">
+                          {association.name}
+                        </Link>
+                      )}
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes('property_type') && (
+                    <TableCell>{association.property_type || 'HOA'}</TableCell>
+                  )}
+                  {visibleColumns.includes('location') && (
+                    <TableCell>
+                      {association.city && association.state 
+                        ? `${association.city}, ${association.state}`
+                        : association.address || 'No location data'}
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes('contact_email') && (
+                    <TableCell>{association.contact_email || 'No contact info'}</TableCell>
+                  )}
+                  {visibleColumns.includes('total_units') && (
+                    <TableCell>{association.total_units || 'N/A'}</TableCell>
+                  )}
+                  {visibleColumns.includes('phone') && (
+                    <TableCell>{association.phone || 'N/A'}</TableCell>
+                  )}
+                  {visibleColumns.includes('created_at') && (
+                    <TableCell>{formatDate(association.created_at)}</TableCell>
+                  )}
+                  {visibleColumns.includes('founded_date') && (
+                    <TableCell>{association.founded_date || 'N/A'}</TableCell>
+                  )}
+                  {visibleColumns.includes('insurance_expiration') && (
+                    <TableCell>{association.insurance_expiration || 'N/A'}</TableCell>
+                  )}
+                  {visibleColumns.includes('fire_inspection_due') && (
+                    <TableCell>{association.fire_inspection_due || 'N/A'}</TableCell>
+                  )}
+                  {visibleColumns.includes('status') && (
+                    <TableCell>
+                      {!association.is_archived ? (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Active</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-50 text-gray-700 hover:bg-gray-50">Inactive</Badge>
+                      )}
+                    </TableCell>
+                  )}
+                  {visibleColumns.includes('actions') && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <TooltipButton
+                          size="icon"
+                          variant="ghost"
+                          tooltip="Edit Association"
+                          onClick={() => handleEditClick(association)}
+                        >
+                          <PencilLine className="h-4 w-4" />
+                        </TooltipButton>
+                        <TooltipButton
+                          size="icon"
+                          variant="ghost"
+                          tooltip="Delete Association"
+                          onClick={() => handleDeleteClick(association)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </TooltipButton>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
