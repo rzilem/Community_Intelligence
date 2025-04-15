@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Link, Link2, ExternalLink } from 'lucide-react';
+import { Search, Link, Link2, ExternalLink, FileText } from 'lucide-react';
 import { Document } from '@/types/document-types';
 import { ResaleDocumentLink } from '@/types/resale-types';
 import { Input } from '@/components/ui/input';
