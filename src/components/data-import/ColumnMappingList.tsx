@@ -30,9 +30,10 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     generateSuggestions 
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
-  // Generate suggestions when component mounts or data changes
+  // Make sure we have the system fields loaded before generating suggestions
   useEffect(() => {
     if (fileColumns.length > 0 && systemFields.length > 0 && previewData.length > 0) {
+      console.log("Generating suggestions on ColumnMappingList mount with", systemFields.length, "system fields");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, previewData, generateSuggestions]);
@@ -54,18 +55,42 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   };
   
   const handleAutoMapColumns = () => {
+    console.log("Auto-mapping columns with system fields:", systemFields);
     const newSuggestions = generateSuggestions();
     
-    // Create a copy of the current mappings to avoid direct state mutation
+    // Track updates for toast message
     let updateCount = 0;
     
-    // Apply mapping suggestions that meet confidence threshold
-    Object.entries(newSuggestions).forEach(([column, suggestion]) => {
-      // Apply the mapping if it meets confidence threshold
-      if (suggestion.confidence >= 0.6) {
+    // Create a list of unmapped columns
+    const unmappedColumns = fileColumns.filter(column => !mappings[column]);
+    
+    // Apply mapping suggestions for unmapped columns
+    unmappedColumns.forEach(column => {
+      const suggestion = newSuggestions[column];
+      if (suggestion && suggestion.confidence >= 0.6) {
         console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
         onMappingChange(column, suggestion.fieldValue);
         updateCount++;
+      } 
+      // For city, state, zip - try to set them directly even with lower confidence
+      else if (column.toLowerCase() === 'city') {
+        const cityField = systemFields.find(f => f.value === 'city');
+        if (cityField) {
+          onMappingChange(column, 'city');
+          updateCount++;
+        }
+      } else if (column.toLowerCase() === 'state') {
+        const stateField = systemFields.find(f => f.value === 'state');
+        if (stateField) {
+          onMappingChange(column, 'state');
+          updateCount++;
+        }
+      } else if (column.toLowerCase() === 'zip') {
+        const zipField = systemFields.find(f => f.value === 'zip');
+        if (zipField) {
+          onMappingChange(column, 'zip');
+          updateCount++;
+        }
       }
     });
     
@@ -78,7 +103,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
 
   // Ensure we have a valid systemFields array
   const safeSystemFields = Array.isArray(systemFields) ? systemFields : [];
-
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">

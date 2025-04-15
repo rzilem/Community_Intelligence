@@ -17,6 +17,7 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ColumnMappingFieldProps {
   column: string;
@@ -60,10 +61,19 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
         <div className="col-span-4">
           <div className="text-sm font-medium">{column}</div>
           {suggestion && !selectedValue && confidence >= 0.6 && (
-            <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer" onClick={handleSuggestionApply}>
-              <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-              <span className="hover:underline">Suggested: {suggestion}</span>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer" onClick={handleSuggestionApply}>
+                    <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+                    <span className="hover:underline">Suggested: {systemFields.find(f => f.value === suggestion)?.label || suggestion}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to apply this suggestion</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         
@@ -77,7 +87,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 className="w-full justify-between"
               >
                 {selectedValue
-                  ? selectedField?.label || "Select field..."
+                  ? systemFields.find(f => f.value === selectedValue)?.label || "Select field..."
                   : "Select field..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>

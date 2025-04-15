@@ -144,27 +144,41 @@ export const aiMappingService = {
     systemFields: MappingOption[],
     sampleData: any[]
   ): Record<string, { fieldValue: string; confidence: number }> => {
-    console.log("Generating mapping suggestions for", fileColumns.length, "columns");
+    console.log("Generating mapping suggestions for", fileColumns.length, "columns and", systemFields.length, "system fields");
     const suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
     
-    // Add special handling for common columns
-    const commonMappings = {
-      'city': 'property.city',
-      'state': 'property.state',
-      'zip': 'property.zip',
-      'zipcode': 'property.zip',
-      'postal': 'property.zip',
-      'postal_code': 'property.zip'
+    // Direct mapping for common fields (regardless of confidence)
+    const directMappings: Record<string, string> = {
+      'city': 'city',
+      'state': 'state',
+      'zip': 'zip',
+      'zipcode': 'zip',
+      'postal': 'zip',
+      'postal_code': 'zip',
+      'name': 'name',
+      'address': 'address',
+      'email': 'contact_email',
+      'contact_email': 'contact_email',
+      'phone': 'phone',
+      'phone_number': 'phone',
+      'telephone': 'phone'
     };
     
     for (const column of fileColumns) {
       let bestMatch = { field: '', score: 0 };
       const lowerColumn = column.toLowerCase();
       
-      // Check for direct mapping in common fields
-      if (commonMappings[lowerColumn]) {
-        bestMatch = { field: commonMappings[lowerColumn], score: 1.0 };
-      } else {
+      // Check for direct mapping
+      if (directMappings[lowerColumn]) {
+        // Make sure the system field exists before mapping
+        const fieldExists = systemFields.some(f => f.value === directMappings[lowerColumn]);
+        if (fieldExists) {
+          bestMatch = { field: directMappings[lowerColumn], score: 1.0 };
+        }
+      } 
+      
+      // If no direct mapping, try other matching methods
+      if (!bestMatch.field) {
         // Get sample data for this column
         const columnData = sampleData.map(row => row[column]);
         const dataAnalysis = analyzeColumnData(columnData);
@@ -194,11 +208,11 @@ export const aiMappingService = {
             similarityScore += 0.3;
           }
           
-          // Special case for city, state, zip fields
-          if ((lowerColumn === 'city' && field.value.includes('city')) || 
-              (lowerColumn === 'state' && field.value.includes('state')) || 
-              (lowerColumn === 'zip' && (field.value.includes('zip') || field.value.includes('postal')))) {
-            similarityScore += 0.5;
+          // Special case boost for city, state, zip fields
+          if ((lowerColumn === 'city' && field.value === 'city') || 
+              (lowerColumn === 'state' && field.value === 'state') || 
+              ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal') && field.value === 'zip')) {
+            similarityScore = 1.0; // Maximum confidence for these
           }
           
           // Cap score at 1.0

@@ -13,6 +13,7 @@ export const useAIMappingSuggestions = (
 
   // Auto-generate suggestions on mount if we have all required data
   const generateSuggestions = useCallback(() => {
+    console.log("Generating suggestions with:", fileColumns.length, "columns and", systemFields.length, "system fields");
     setIsGenerating(true);
     try {
       // Use the AI mapping service to generate suggestions
@@ -35,6 +36,7 @@ export const useAIMappingSuggestions = (
   // Generate suggestions when component mounts
   useEffect(() => {
     if (fileColumns.length > 0 && systemFields.length > 0 && sampleData.length > 0) {
+      console.log("Auto-generating suggestions on mount");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, sampleData, generateSuggestions]);

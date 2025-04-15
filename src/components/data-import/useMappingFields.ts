@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { MappingOption } from './types/mapping-types';
 
@@ -30,17 +29,23 @@ export const useMappingFields = (
   
   // Load appropriate system fields based on importType
   useEffect(() => {
+    console.log("Loading system fields for import type:", importType);
     switch (importType) {
       case 'associations':
         setSystemFields([
           { value: 'name', label: 'Association Name' },
           { value: 'address', label: 'Street Address' },
-          { value: 'contact_email', label: 'Contact Email' }
+          { value: 'city', label: 'City' },
+          { value: 'state', label: 'State' },
+          { value: 'zip', label: 'Zip Code' },
+          { value: 'phone', label: 'Phone Number' },
+          { value: 'contact_email', label: 'Contact Email' },
+          { value: 'property_type', label: 'Property Type' },
+          { value: 'total_units', label: 'Total Units' }
         ]);
         break;
       case 'properties_owners':
         setSystemFields([
-          // Property fields
           { value: 'property.address', label: 'Property: Street Address' },
           { value: 'property.unit_number', label: 'Property: Unit Number' },
           { value: 'property.city', label: 'Property: City' },
@@ -50,7 +55,6 @@ export const useMappingFields = (
           { value: 'property.bedrooms', label: 'Property: Bedrooms' },
           { value: 'property.bathrooms', label: 'Property: Bathrooms' },
           { value: 'property.property_type', label: 'Property: Type' },
-          // Owner fields
           { value: 'owner.first_name', label: 'Owner: First Name' },
           { value: 'owner.last_name', label: 'Owner: Last Name' },
           { value: 'owner.email', label: 'Owner: Email Address' },
@@ -132,19 +136,29 @@ export const useMappingFields = (
     columns.forEach(column => {
       const lowerColumn = column.toLowerCase();
       
-      // Try to find a match
-      const match = systemFields.find(field => 
-        lowerColumn.includes(field.value.split('.').pop() || '') || 
-        field.label.toLowerCase().includes(lowerColumn) ||
-        lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
-        lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')
-      );
-      
-      if (match) {
-        initialMappings[column] = match.value;
+      // Handle common mappings directly
+      if (lowerColumn === 'city' || lowerColumn === 'town') {
+        initialMappings[column] = 'city';
+      } else if (lowerColumn === 'state' || lowerColumn === 'province' || lowerColumn === 'region') {
+        initialMappings[column] = 'state';
+      } else if (lowerColumn.includes('zip') || lowerColumn.includes('postal') || lowerColumn === 'zip_code') {
+        initialMappings[column] = 'zip';
+      } else {
+        // Try to find a match for other fields
+        const match = systemFields.find(field => 
+          lowerColumn.includes(field.value.split('.').pop() || '') || 
+          field.label.toLowerCase().includes(lowerColumn) ||
+          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
+          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')
+        );
+        
+        if (match) {
+          initialMappings[column] = match.value;
+        }
       }
     });
     
+    console.log("Auto-mapped fields:", initialMappings);
     setMappings(initialMappings);
   };
 
