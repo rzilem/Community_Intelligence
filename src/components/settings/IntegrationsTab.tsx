@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const IntegrationsTab = () => {
   const { data: integrationSettings, isLoading } = useSystemSetting<IntegrationSettings>('integrations');
-  const { mutate: updateIntegrationSettings, isPending: isMutating } = useUpdateSystemSetting<IntegrationSettings>('integrations');
+  const { mutate: updateIntegrationSettings, isPending } = useUpdateSystemSetting<IntegrationSettings>('integrations');
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
@@ -180,7 +180,7 @@ const IntegrationsTab = () => {
         onOpenAIModelChange={setOpenAIModel}
         onSave={handleSaveConfig}
         hasOpenAIKey={!!connectedIntegrations[selectedIntegration as string]?.apiKey}
-        isPending={isMutating}
+        isPending={isPending}
       />
     </div>
   );

@@ -1,10 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Check, Moon, Sun, Laptop } from 'lucide-react';
 import { ThemeOption } from '@/types/settings-types';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/hooks/settings/use-theme';
 
 interface ThemeSelectorProps {
   value: ThemeOption;
@@ -12,9 +11,6 @@ interface ThemeSelectorProps {
 }
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ value, onChange }) => {
-  // Use our theme hook to apply theme changes
-  useTheme(value);
-  
   const themes: { value: ThemeOption; label: string; icon: React.ReactNode; description: string }[] = [
     {
       value: 'light',

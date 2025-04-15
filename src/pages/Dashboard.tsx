@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
@@ -42,52 +43,54 @@ const Dashboard = () => {
   );
 
   return (
-    <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
-      <DashboardHeader 
-        associationName={currentAssociation?.name} 
-        notificationCount={stats?.notificationCount || 0}
-      />
+    <AppLayout>
+      <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
+        <DashboardHeader 
+          associationName={currentAssociation?.name} 
+          notificationCount={stats?.notificationCount || 0}
+        />
 
-      <DashboardStatsSection 
-        stats={stats} 
-        associationName={currentAssociation?.name} 
-        loading={loading} 
-      />
-      
-      <QuickActionWidgets />
-      
-      {/* AI Analysis Section */}
-      <div className="bg-blue-50 rounded-lg p-6">
-        <AIAnalysisSection issues={issues} />
+        <DashboardStatsSection 
+          stats={stats} 
+          associationName={currentAssociation?.name} 
+          loading={loading} 
+        />
+        
+        <QuickActionWidgets />
+        
+        {/* AI Analysis Section */}
+        <div className="bg-blue-50 rounded-lg p-6">
+          <AIAnalysisSection issues={issues} />
+        </div>
+
+        {/* Community Intelligence AI */}
+        <AiQueryInput />
+        
+        {user?.role === 'treasurer' ? (
+          getContentForRole()
+        ) : (
+          <Tabs defaultValue="calendar" className="space-y-4">
+            <TabsList className={isMobile ? 'w-full' : ''}>
+              <TabsTrigger value="calendar" className={isMobile ? 'flex-1' : ''}>Calendar</TabsTrigger>
+              <TabsTrigger value="activity" className={isMobile ? 'flex-1' : ''}>Recent Activity</TabsTrigger>
+              <TabsTrigger value="messages" className={isMobile ? 'flex-1' : ''}>Messages</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="calendar" className="space-y-4">
+              <CalendarTab />
+            </TabsContent>
+            
+            <TabsContent value="activity">
+              {getActivityContent()}
+            </TabsContent>
+            
+            <TabsContent value="messages">
+              {getMessagesContent()}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
-
-      {/* Community Intelligence AI */}
-      <AiQueryInput />
-      
-      {user?.role === 'treasurer' ? (
-        getContentForRole()
-      ) : (
-        <Tabs defaultValue="calendar" className="space-y-4">
-          <TabsList className={isMobile ? 'w-full' : ''}>
-            <TabsTrigger value="calendar" className={isMobile ? 'flex-1' : ''}>Calendar</TabsTrigger>
-            <TabsTrigger value="activity" className={isMobile ? 'flex-1' : ''}>Recent Activity</TabsTrigger>
-            <TabsTrigger value="messages" className={isMobile ? 'flex-1' : ''}>Messages</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="calendar" className="space-y-4">
-            <CalendarTab />
-          </TabsContent>
-          
-          <TabsContent value="activity">
-            {getActivityContent()}
-          </TabsContent>
-          
-          <TabsContent value="messages">
-            {getMessagesContent()}
-          </TabsContent>
-        </Tabs>
-      )}
-    </div>
+    </AppLayout>
   );
 };
 

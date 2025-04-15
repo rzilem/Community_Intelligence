@@ -7,7 +7,6 @@ import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Permissions from '@/pages/system/Permissions';
 import UserProfile from '@/pages/user/UserProfile';
-import { AppLayout } from '@/components/layout/AppLayout';
 
 export const mainRoutes = [
   {
@@ -16,7 +15,7 @@ export const mainRoutes = [
   },
   {
     path: '/dashboard',
-    element: <AppLayout><Dashboard /></AppLayout>
+    element: <Dashboard />
   },
   {
     path: '/properties',
@@ -32,11 +31,11 @@ export const mainRoutes = [
   },
   {
     path: '/system/permissions',
-    element: <AppLayout><Permissions /></AppLayout>
+    element: <Permissions />
   },
   {
     path: '/user/profile',
-    element: <AppLayout><UserProfile /></AppLayout>
+    element: <UserProfile />
   },
   {
     path: '/auth',

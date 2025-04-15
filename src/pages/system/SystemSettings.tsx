@@ -16,7 +16,7 @@ import SystemSettingsTabs from '@/components/settings/SystemSettingsTabs';
 import SystemSettingsSkeleton from '@/components/settings/SystemSettingsSkeleton';
 import SystemSettingsSaveButton from '@/components/settings/SystemSettingsSaveButton';
 import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
-import { saveSystemSettings, applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
+import { saveSystemSettings } from '@/hooks/settings/use-system-settings-helpers';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
@@ -32,13 +32,6 @@ const SystemSettings = () => {
       setUnsavedSettings(settings);
     }
   }, [isLoading, settings]);
-
-  // Apply appearance settings immediately for preview
-  useEffect(() => {
-    if (unsavedSettings.appearance) {
-      applyAppearanceSettings(unsavedSettings.appearance);
-    }
-  }, [unsavedSettings.appearance]);
 
   const handleAppearanceChange = (appearanceSettings: Partial<AppearanceSettings>) => {
     setUnsavedSettings(prev => ({
@@ -72,10 +65,6 @@ const SystemSettings = () => {
     try {
       setIsSaving(true);
       await saveSystemSettings(unsavedSettings);
-      
-      // Apply appearance settings after successful save
-      applyAppearanceSettings(unsavedSettings.appearance);
-      
       toast.success("System settings saved successfully!");
     } catch (error) {
       console.error("Error saving settings:", error);
