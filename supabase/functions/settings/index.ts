@@ -100,7 +100,7 @@ serve(async (req) => {
         
         console.log(`Successfully updated setting '${action}'`);
         
-        return new Response(JSON.stringify(data), {
+        return new Response(JSON.stringify({ success: true, data }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200,
         });
