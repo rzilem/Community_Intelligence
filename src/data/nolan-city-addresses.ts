@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 
@@ -18,7 +19,66 @@ const streets = [
 // Define property types
 const propertyTypes = ["Single Family", "Townhome", "Condo", "Villa"];
 
-// Generate 532 addresses
+// Define common last names for random owner generation
+const lastNames = [
+  "Smith", "Johnson", "Williams", "Jones", "Brown", "Davis", "Miller", "Wilson", "Moore", "Taylor",
+  "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Garcia", "Martinez", "Robinson",
+  "Clark", "Rodriguez", "Lewis", "Lee", "Walker", "Hall", "Allen", "Young", "Hernandez", "King",
+  "Wright", "Lopez", "Hill", "Scott", "Green", "Adams", "Baker", "Gonzalez", "Nelson", "Carter"
+];
+
+// Define common first names for random owner generation
+const firstNames = [
+  "James", "John", "Robert", "Michael", "William", "David", "Richard", "Joseph", "Thomas", "Charles",
+  "Mary", "Patricia", "Jennifer", "Linda", "Elizabeth", "Barbara", "Susan", "Jessica", "Sarah", "Karen",
+  "Christopher", "Daniel", "Matthew", "Anthony", "Mark", "Donald", "Steven", "Paul", "Andrew", "Joshua",
+  "Nancy", "Lisa", "Betty", "Margaret", "Sandra", "Ashley", "Kimberly", "Emily", "Donna", "Michelle"
+];
+
+// Email domains for random email generation
+const emailDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"];
+
+// Generate a random phone number in the format (XXX) XXX-XXXX
+const generatePhoneNumber = () => {
+  const areaCode = 512; // Austin area code
+  const prefix = 100 + Math.floor(Math.random() * 900);
+  const lineNumber = 1000 + Math.floor(Math.random() * 9000);
+  return `(${areaCode}) ${prefix}-${lineNumber}`;
+};
+
+// Generate a random email based on first and last name
+const generateEmail = (firstName, lastName) => {
+  const domainIndex = Math.floor(Math.random() * emailDomains.length);
+  // Add a random number to ensure uniqueness
+  const randomNum = Math.floor(Math.random() * 100);
+  return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomNum}@${emailDomains[domainIndex]}`;
+};
+
+// Generate a random date within the past 5 years
+const generateMoveInDate = () => {
+  const now = new Date();
+  const yearsAgo = new Date();
+  yearsAgo.setFullYear(now.getFullYear() - 5);
+  
+  // Random date between 5 years ago and now
+  const randomTimestamp = yearsAgo.getTime() + Math.random() * (now.getTime() - yearsAgo.getTime());
+  const date = new Date(randomTimestamp);
+  
+  return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+};
+
+// Generate a random emergency contact
+const generateEmergencyContact = () => {
+  const relationTypes = ["Spouse", "Parent", "Sibling", "Child", "Friend"];
+  const relationIndex = Math.floor(Math.random() * relationTypes.length);
+  const firstNameIndex = Math.floor(Math.random() * firstNames.length);
+  const lastNameIndex = Math.floor(Math.random() * lastNames.length);
+  const phone = generatePhoneNumber();
+  
+  return `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]} (${relationTypes[relationIndex]}): ${phone}`;
+};
+
+// Generate 532 addresses with owner information
 export const generateAddresses = () => {
   const addresses = [];
   
@@ -99,7 +159,21 @@ export const generateAddresses = () => {
         ? `${houseNumber} ${street}, Unit ${unitNumber}` 
         : `${houseNumber} ${street}`;
       
+      // Generate owner information
+      const ownerFirstNameIndex = Math.floor(Math.random() * firstNames.length);
+      const ownerLastNameIndex = Math.floor(Math.random() * lastNames.length);
+      const ownerFirstName = firstNames[ownerFirstNameIndex];
+      const ownerLastName = lastNames[ownerLastNameIndex];
+      const ownerEmail = generateEmail(ownerFirstName, ownerLastName);
+      const ownerPhone = generatePhoneNumber();
+      const moveInDate = generateMoveInDate();
+      const emergencyContact = generateEmergencyContact();
+      
+      // 10% chance of having a co-owner (for properties that commonly have multiple owners)
+      const hasCoOwner = Math.random() < 0.1;
+      
       addresses.push({
+        // Property data
         address: address,
         unit_number: unitNumber || null,
         city: "Austin",
@@ -108,7 +182,25 @@ export const generateAddresses = () => {
         property_type: propertyType,
         square_feet: squareFeet,
         bedrooms: bedrooms,
-        bathrooms: bathrooms
+        bathrooms: bathrooms,
+        
+        // Primary owner data
+        owner_first_name: ownerFirstName,
+        owner_last_name: ownerLastName,
+        owner_email: ownerEmail,
+        owner_phone: ownerPhone,
+        owner_is_primary: true,
+        owner_move_in_date: moveInDate,
+        owner_emergency_contact: emergencyContact,
+        
+        // Include co-owner data if applicable (for families, partners, etc.)
+        co_owner_first_name: hasCoOwner ? firstNames[Math.floor(Math.random() * firstNames.length)] : null,
+        co_owner_last_name: hasCoOwner ? ownerLastName : null, // Usually shares the same last name
+        co_owner_email: hasCoOwner ? generateEmail(firstNames[Math.floor(Math.random() * firstNames.length)], ownerLastName) : null,
+        co_owner_phone: hasCoOwner ? generatePhoneNumber() : null,
+        co_owner_is_primary: false,
+        co_owner_move_in_date: hasCoOwner ? moveInDate : null, // Same move-in date as primary owner
+        co_owner_emergency_contact: hasCoOwner ? generateEmergencyContact() : null
       });
       
       count++;
@@ -124,12 +216,12 @@ export const exportAddressesAsCSV = () => {
   const addresses = generateAddresses();
   const worksheet = XLSX.utils.json_to_sheet(addresses);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Nolan City Addresses");
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Nolan City Properties & Owners");
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
   // Save file
-  saveAs(blob, `nolan-city-addresses-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  saveAs(blob, `nolan-city-properties-and-owners-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
