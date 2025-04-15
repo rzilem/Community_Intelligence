@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { ImportResult } from '@/types/import-types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
+import { saveAs } from 'file-saver';
 
 interface ImportResultsTableProps {
   results: ImportResult;
@@ -19,6 +21,50 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
   if (!results) {
     return null;
   }
+
+  const handleDownloadReport = () => {
+    try {
+      // Create CSV content
+      let csvContent = "Import Results Report\n";
+      csvContent += `Total Records: ${results.totalProcessed}\n`;
+      csvContent += `Successfully Imported: ${results.successfulImports}\n`;
+      csvContent += `Failed Imports: ${results.failedImports}\n`;
+      
+      if (results.job_id) {
+        csvContent += `Job ID: ${results.job_id}\n`;
+      }
+      
+      csvContent += "\nDetails:\n";
+      csvContent += "Status,Message\n";
+      
+      if (results.details && results.details.length > 0) {
+        results.details.forEach(detail => {
+          // Escape commas in message to prevent CSV format issues
+          const message = detail.message.replace(/,/g, ' -');
+          csvContent += `${detail.status},${message}\n`;
+        });
+      } else {
+        csvContent += "No detailed information available\n";
+      }
+      
+      // Create a Blob with the CSV content
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+      
+      // Generate filename with current date and time
+      const date = new Date();
+      const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      const formattedTime = `${date.getHours().toString().padStart(2, '0')}-${date.getMinutes().toString().padStart(2, '0')}`;
+      const filename = `import-results-${formattedDate}-${formattedTime}.csv`;
+      
+      // Save the file
+      saveAs(blob, filename);
+      
+      toast.success("Report downloaded successfully");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.error("Failed to download the report");
+    }
+  };
 
   return (
     <Card>
@@ -122,7 +168,7 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
                   </Link>
                 </Button>
               )}
-              <Button variant="outline">
+              <Button variant="outline" onClick={handleDownloadReport}>
                 <Download className="h-4 w-4 mr-2" /> Download Results Report
               </Button>
             </div>
