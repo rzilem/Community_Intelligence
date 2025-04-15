@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssociations } from '@/hooks/associations';
 import AssociationTable from '@/components/associations/AssociationTable';
-import AssociationStats from '@/components/associations/AssociationStats';
 import { Association } from '@/types/association-types';
 
 const Associations = () => {
@@ -114,8 +113,6 @@ const Associations = () => {
             </Tabs>
           </CardContent>
         </Card>
-        
-        <AssociationStats associations={associationsArray} isLoading={isLoading} />
       </div>
     </AppLayout>
   );
