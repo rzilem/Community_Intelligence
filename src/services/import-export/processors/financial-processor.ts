@@ -12,8 +12,17 @@ export const financialProcessor = {
     let failedImports = 0;
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
     
+    // First, fetch or create assessment types for this association
+    const assessmentTypeMap = await getOrCreateAssessmentTypes(associationId, processedData);
+    
     // Prepare data for import
     const preparedData = processedData.map(row => {
+      // Get the assessment type ID from our map using the name
+      let assessmentTypeId = null;
+      if (row.assessment_type && assessmentTypeMap[row.assessment_type]) {
+        assessmentTypeId = assessmentTypeMap[row.assessment_type];
+      }
+      
       // Create a new object with only the fields that exist in the schema
       return {
         property_id: row.property_id,
@@ -22,8 +31,7 @@ export const financialProcessor = {
         paid: row.paid || false,
         payment_date: row.payment_date,
         late_fee: row.late_fee,
-        assessment_type_id: row.assessment_type_id
-        // Explicitly not including association_id as it doesn't exist in the schema
+        assessment_type_id: assessmentTypeId
       };
     });
     
@@ -87,3 +95,69 @@ export const financialProcessor = {
     };
   }
 };
+
+// Helper function to get or create assessment types
+async function getOrCreateAssessmentTypes(
+  associationId: string, 
+  data: Record<string, any>[]
+): Promise<Record<string, string>> {
+  try {
+    // Extract unique assessment type names from the data
+    const assessmentTypeNames = new Set<string>();
+    data.forEach(row => {
+      if (row.assessment_type && typeof row.assessment_type === 'string') {
+        assessmentTypeNames.add(row.assessment_type);
+      }
+    });
+    
+    // If no assessment types found, return empty map
+    if (assessmentTypeNames.size === 0) {
+      return {};
+    }
+    
+    // Fetch existing assessment types for this association
+    const { data: existingTypes } = await supabase
+      .from('assessment_types')
+      .select('id, name')
+      .eq('association_id', associationId);
+    
+    // Create a map of existing types
+    const typeMap: Record<string, string> = {};
+    if (existingTypes) {
+      existingTypes.forEach((type: any) => {
+        typeMap[type.name.toLowerCase()] = type.id;
+      });
+    }
+    
+    // Create new assessment types for any that don't exist
+    const typesToCreate: Array<{ name: string, association_id: string }> = [];
+    assessmentTypeNames.forEach(typeName => {
+      if (!typeMap[typeName.toLowerCase()]) {
+        typesToCreate.push({
+          name: typeName,
+          association_id: associationId
+        });
+      }
+    });
+    
+    // If there are types to create, insert them
+    if (typesToCreate.length > 0) {
+      const { data: newTypes } = await supabase
+        .from('assessment_types')
+        .insert(typesToCreate)
+        .select('id, name');
+      
+      // Add new types to the map
+      if (newTypes) {
+        newTypes.forEach((type: any) => {
+          typeMap[type.name.toLowerCase()] = type.id;
+        });
+      }
+    }
+    
+    return typeMap;
+  } catch (error) {
+    console.error('Error getting or creating assessment types:', error);
+    return {};
+  }
+}
