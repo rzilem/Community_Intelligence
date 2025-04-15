@@ -72,6 +72,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Transactions & Payments', path: '/accounting/transactions-payments', icon: CreditCard },
         { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
         { name: 'Budget Planning', path: '/accounting/budget-planning', icon: PiggyBank },
+        { name: 'Financial Report Mapping', path: '/accounting/financial-report-mapping', icon: FileBarChart },
       ]
     });
   }
