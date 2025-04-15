@@ -28,7 +28,7 @@ function AppContent() {
   const { applyAppearanceSettings } = require('@/hooks/settings/use-system-settings-helpers');
   
   // Load appearance settings
-  const { data: appearanceSettings } = useSystemSetting<AppearanceSettings>('appearance');
+  const appearanceSettings = useSystemSetting<AppearanceSettings>('appearance').data;
   
   // Apply appearance settings on app load
   useEffect(() => {
