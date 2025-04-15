@@ -3,9 +3,9 @@ import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import Associations from "@/pages/Associations";
 import Homeowners from "@/pages/Homeowners";
-import HomeownerRequests from "@/pages/HomeownerRequests";
+import HomeownerRequestsPage from "@/pages/homeowners/HomeownerRequestsPage";
 import Compliance from "@/pages/Compliance";
-import BidRequests from "@/pages/BidRequests";
+import BidRequests from "@/pages/community-management/BidRequests";
 
 // Community Management Routes
 export const communityManagementRoutes: RouteObject[] = [
@@ -19,7 +19,7 @@ export const communityManagementRoutes: RouteObject[] = [
   },
   {
     path: "/community-management/homeowner-requests",
-    element: <RequireAuth><HomeownerRequests /></RequireAuth>
+    element: <RequireAuth><HomeownerRequestsPage /></RequireAuth>
   },
   {
     path: "/compliance",
