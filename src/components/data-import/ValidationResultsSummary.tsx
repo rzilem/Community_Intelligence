@@ -1,15 +1,20 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ValidationSummary } from './types/mapping-types';
+import { ValidationResult } from '@/types/import-types';
 
 interface ValidationResultsSummaryProps {
-  validationResults: ValidationSummary;
+  validationResults: ValidationResult;
+  className?: string;
 }
 
-const ValidationResultsSummary: React.FC<ValidationResultsSummaryProps> = ({ validationResults }) => {
+const ValidationResultsSummary: React.FC<ValidationResultsSummaryProps> = ({ validationResults, className }) => {
+  if (!validationResults) {
+    return null; // Return null if validationResults is undefined
+  }
+  
   return (
-    <div className="bg-muted/30 p-4 rounded-md mb-4">
+    <div className={`bg-muted/30 p-4 rounded-md mb-4 ${className || ''}`}>
       <h3 className="font-medium mb-2">Validation Results:</h3>
       <div className="flex flex-wrap gap-3 mb-3">
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -27,7 +32,7 @@ const ValidationResultsSummary: React.FC<ValidationResultsSummaryProps> = ({ val
         )}
       </div>
       
-      {validationResults.issues.length > 0 && (
+      {validationResults.issues && validationResults.issues.length > 0 && (
         <div className="text-sm text-muted-foreground">
           <p className="mb-1">Issues found:</p>
           <ul className="list-disc pl-5 space-y-1">

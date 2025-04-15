@@ -150,7 +150,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           
           <TabsContent value="preview">
             {validationResults && (
-              <ValidationResultsSummary results={validationResults} className="mb-4" />
+              <ValidationResultsSummary validationResults={validationResults} className="mb-4" />
             )}
             
             <div className="border rounded-md overflow-hidden">

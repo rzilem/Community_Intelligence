@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, AlertCircle, RefreshCw, Download, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, RefreshCw, Download, ExternalLink, ChevronsUpDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
