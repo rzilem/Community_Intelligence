@@ -1,13 +1,13 @@
 
-import React, { useEffect } from 'react';
-import ImportDataForm from './ImportDataForm';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import FileUploader from './FileUploader';
+import DataTypeSelector from './DataTypeSelector';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
 import { ImportResult } from '@/types/import-types';
-import { Button } from '@/components/ui/button';
-import { FileSpreadsheet, Upload } from 'lucide-react';
-import AssociationSelector from '@/components/associations/AssociationSelector';
-import { toast } from 'sonner';
+import NolanCityAddressGenerator from './NolanCityAddressGenerator';
 
 interface ImportTabContentProps {
   associationId: string;
@@ -28,96 +28,58 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   isImporting,
   onFileUpload,
   onImportAnother,
-  onAssociationChange,
+  onAssociationChange
 }) => {
-  // When the component mounts, check if we have a file but no association
-  useEffect(() => {
-    if (importFile && !associationId) {
-      toast.warning("Please select an association to proceed");
-    }
-  }, [importFile, associationId]);
-
-  const handleProceedWithImport = () => {
-    if (!associationId) {
-      toast.error("Please select an association before proceeding");
-      return;
-    }
-    
-    if (importFile) {
-      console.log('Proceeding with import:', importFile.name, 'Association:', associationId);
-      onFileUpload(importFile, [], importFile.name.split('.').pop() || '');
-    } else {
-      toast.error("No file selected");
-    }
-  };
-
   return (
-    <div className="space-y-4">
-      {!importFile && !importResults && (
-        <ImportDataForm 
-          onFileUpload={onFileUpload}
-          associationId={associationId}
-          onAssociationChange={onAssociationChange}
-        />
-      )}
-
-      {isValidating && (
-        <LoadingIndicator message="Validating your data, please wait..." />
-      )}
-
-      {isImporting && (
-        <LoadingIndicator message="Importing your data, please wait..." />
-      )}
-
-      {importFile && !isValidating && !importResults && (
-        <div className="flex flex-col items-center space-y-4">
-          <div className="flex items-center justify-between border rounded-md p-3 bg-muted/30 w-full">
-            <div className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm truncate max-w-[200px]">{importFile.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {(importFile.size / 1024 / 1024).toFixed(2)} MB
-              </span>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              type="button"
-              onClick={onImportAnother}
-            >
-              Remove
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {!importResults ? (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Import Data</CardTitle>
+              <CardDescription>
+                Upload property, owner, or financial data to import into your association
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <AssociationSelector
+                  value={associationId}
+                  onChange={onAssociationChange}
+                  label="Select Association"
+                  placeholder="Choose an association"
+                  required
+                />
+                
+                <DataTypeSelector 
+                  disabledImportTypes={!associationId ? ['all'] : []}
+                  onSelectType={(type) => {
+                    if (importFile) {
+                      onFileUpload(importFile, [], type);
+                    }
+                  }}
+                />
+                
+                <FileUploader 
+                  onFileUpload={onFileUpload}
+                  disabled={!associationId}
+                />
+                
+                {(isValidating || isImporting) && (
+                  <LoadingIndicator 
+                    text={isValidating ? "Validating data..." : "Importing data..."}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="w-full p-4 border rounded-md bg-muted/10">
-            <h3 className="text-sm font-medium mb-2">Select Association</h3>
-            <AssociationSelector 
-              onAssociationChange={onAssociationChange}
-              className="w-full"
-            />
-            {!associationId && (
-              <p className="text-xs text-amber-500 mt-2">
-                Please select an association to continue
-              </p>
-            )}
-          </div>
-          
-          <Button 
-            onClick={handleProceedWithImport}
-            className="w-full"
-            disabled={!associationId}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {associationId ? "Proceed with Import" : "Select an Association First"}
-          </Button>
-        </div>
-      )}
-
-      {importResults && (
+          <NolanCityAddressGenerator />
+        </>
+      ) : (
         <ImportResultsTable 
           results={importResults}
           onImportAnother={onImportAnother}
-          associationId={associationId}
         />
       )}
     </div>
