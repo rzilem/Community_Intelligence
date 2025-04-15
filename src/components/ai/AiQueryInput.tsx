@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useAiAssistant } from '@/hooks/ai/useAiAssistant';
-import { ReactMarkdown } from 'react-markdown';
+import ReactMarkdown from 'react-markdown';
 
 interface AiQueryInputProps {
   onQuery?: (query: string) => Promise<void>;
