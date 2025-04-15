@@ -58,16 +58,19 @@ const OperationsDashboard = () => {
     toast.info("Preparing export...");
     
     setTimeout(() => {
-      // Create CSV data
+      // Create CSV data with the correct properties from timeSeriesData
       const csvData = [
         // CSV Headers
-        ['Date', 'Open Items', 'Closed Items', 'Total Items'],
-        // Sample data rows
+        ['Month', 'Invoices', 'ARC Requests', 'Gate Requests', 'Pool Requests', 'General Inquiries', 'Total'],
+        // Data rows with the correct properties
         ...timeSeriesData.map(item => [
-          item.date,
-          item.openItems,
-          item.closedItems,
-          item.openItems + item.closedItems
+          item.month,
+          item.invoices,
+          item.arcRequests,
+          item.gateRequests,
+          item.poolRequests,
+          item.generalInquiries,
+          item.invoices + item.arcRequests + item.gateRequests + item.poolRequests + item.generalInquiries
         ])
       ];
       
