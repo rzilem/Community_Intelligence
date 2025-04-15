@@ -149,7 +149,7 @@ const CustomDataGenerator: React.FC = () => {
           <Slider
             id="record-count"
             min={10}
-            max={1000}
+            max={5000}
             step={10}
             value={[recordCount]}
             onValueChange={(value) => setRecordCount(value[0])}
