@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users, Search, Plus, Columns } from 'lucide-react';
@@ -5,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-import { mockHomeowners } from './homeowner-data';
 import {
   Table,
   TableBody,
@@ -27,12 +27,16 @@ import { useHomeownerColumns } from './hooks/useHomeownerColumns';
 import { formatDate } from '@/lib/date-utils';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAssociation, setFilterAssociation] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [residents, setResidents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
 
@@ -54,6 +58,95 @@ const HomeownerListPage = () => {
     }
   }, [associationsError]);
 
+  // Fetch residents data
+  useEffect(() => {
+    const fetchResidents = async () => {
+      try {
+        setLoading(true);
+        
+        // Get properties for all associations
+        const { data: properties, error: propertiesError } = await supabase
+          .from('properties')
+          .select('*');
+          
+        if (propertiesError) {
+          console.error('Error fetching properties:', propertiesError);
+          toast.error('Failed to load properties');
+          setLoading(false);
+          return;
+        }
+        
+        if (!properties || properties.length === 0) {
+          setLoading(false);
+          return;
+        }
+        
+        // Get all property IDs
+        const propertyIds = properties.map(p => p.id);
+        
+        // Fetch all residents
+        const { data: residentsData, error: residentsError } = await supabase
+          .from('residents')
+          .select(`
+            *,
+            properties:property_id (
+              id,
+              address,
+              unit_number,
+              association_id
+            )
+          `)
+          .in('property_id', propertyIds);
+        
+        if (residentsError) {
+          console.error('Error fetching residents:', residentsError);
+          toast.error('Failed to load residents');
+          setLoading(false);
+          return;
+        }
+        
+        // Create association name lookup
+        const associationsMap = associations.reduce((map, assoc) => {
+          map[assoc.id] = assoc.name;
+          return map;
+        }, {});
+        
+        // Map the results
+        const formattedResidents = (residentsData || []).map(resident => {
+          const property = resident.properties;
+          const associationId = property?.association_id;
+          
+          return {
+            id: resident.id,
+            name: resident.name || 'Unknown',
+            email: resident.email || '',
+            phone: resident.phone || '',
+            propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
+            type: resident.resident_type,
+            status: resident.move_out_date ? 'inactive' : 'active',
+            moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
+            moveOutDate: resident.move_out_date,
+            association: associationId || '',
+            associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
+            lastPayment: null,
+            closingDate: null,
+          };
+        });
+        
+        setResidents(formattedResidents);
+      } catch (error) {
+        console.error('Error loading residents:', error);
+        toast.error('Failed to load residents');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (associations.length > 0) {
+      fetchResidents();
+    }
+  }, [associations]);
+
   // Extract just the street address part (without city, state, zip)
   const extractStreetAddress = (fullAddress: string | undefined) => {
     if (!fullAddress) return '';
@@ -63,7 +156,7 @@ const HomeownerListPage = () => {
     return parts[0]?.trim() || fullAddress;
   };
 
-  const filteredHomeowners = mockHomeowners.filter(homeowner => {
+  const filteredHomeowners = residents.filter(homeowner => {
     const matchesSearch = 
       homeowner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       homeowner.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -138,7 +231,7 @@ const HomeownerListPage = () => {
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="owner">Owner</SelectItem>
                     <SelectItem value="tenant">Tenant</SelectItem>
-                    <SelectItem value="family-member">Family Member</SelectItem>
+                    <SelectItem value="family">Family Member</SelectItem>
                   </SelectContent>
                 </Select>
                 
@@ -167,7 +260,21 @@ const HomeownerListPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredHomeowners.length === 0 ? (
+                  {loading ? (
+                    // Loading state
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <TableRow key={`loading-${index}`}>
+                        {visibleColumnIds.includes('name') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
+                        {visibleColumnIds.includes('email') && <TableCell><Skeleton className="h-5 w-40" /></TableCell>}
+                        {visibleColumnIds.includes('propertyAddress') && <TableCell><Skeleton className="h-5 w-48" /></TableCell>}
+                        {visibleColumnIds.includes('association') && <TableCell><Skeleton className="h-5 w-36" /></TableCell>}
+                        {visibleColumnIds.includes('status') && <TableCell><Skeleton className="h-5 w-20" /></TableCell>}
+                        {visibleColumnIds.includes('type') && <TableCell><Skeleton className="h-5 w-20" /></TableCell>}
+                        {visibleColumnIds.includes('lastPaymentDate') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
+                        {visibleColumnIds.includes('closingDate') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
+                      </TableRow>
+                    ))
+                  ) : filteredHomeowners.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
                         No homeowners found matching your search.
@@ -201,7 +308,7 @@ const HomeownerListPage = () => {
                         )}
                         {visibleColumnIds.includes('association') && (
                           <TableCell className="text-muted-foreground truncate max-w-[200px]">
-                            {homeowner.association}
+                            {homeowner.associationName}
                           </TableCell>
                         )}
                         {visibleColumnIds.includes('status') && (
@@ -216,7 +323,10 @@ const HomeownerListPage = () => {
                         )}
                         {visibleColumnIds.includes('type') && (
                           <TableCell>
-                            {homeowner.type === 'owner' ? 'Owner' : homeowner.type}
+                            {homeowner.type === 'owner' ? 'Owner' : 
+                             homeowner.type === 'tenant' ? 'Tenant' : 
+                             homeowner.type === 'family' ? 'Family Member' : 
+                             homeowner.type}
                           </TableCell>
                         )}
                         {visibleColumnIds.includes('lastPaymentDate') && (
@@ -242,7 +352,7 @@ const HomeownerListPage = () => {
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Showing {filteredHomeowners.length} of {mockHomeowners.length} owners
+                Showing {filteredHomeowners.length} of {residents.length} owners
               </p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled>Previous</Button>
