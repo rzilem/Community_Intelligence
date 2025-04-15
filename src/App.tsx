@@ -1,16 +1,23 @@
 
 import { useEffect } from 'react';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { mainRoutes } from '@/routes';
-import { AuthProvider } from './contexts/auth/AuthProvider';
+import { router } from '@/routes';
+import AuthProvider from './contexts/auth/AuthProvider';
 import { Toaster as SonnerToaster } from 'sonner';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
 import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
 import { AppearanceSettings } from '@/types/settings-types';
 
-// Create the router with all the routes from mainRoutes
-const router = createBrowserRouter(mainRoutes);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false
+    }
+  }
+});
 
 function App() {
   // Load appearance settings
@@ -24,11 +31,13 @@ function App() {
   }, [appearanceSettings]);
 
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-      <SonnerToaster position="top-right" />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+        <SonnerToaster position="top-right" />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -22,14 +22,11 @@ export const saveSystemSettings = async (settings: SystemSettings): Promise<void
     
     // Update each settings category separately to ensure proper database structure
     for (const category of ['appearance', 'notifications', 'security', 'preferences', 'integrations'] as const) {
-      // Convert settings to JSON-compatible format before storing
-      const settingValue = JSON.parse(JSON.stringify(settings[category]));
-      
       const { error } = await supabase
         .from('system_settings')
         .upsert({
           key: category,
-          value: settingValue,
+          value: settings[category],
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'key'
@@ -65,7 +62,7 @@ export const applyAppearanceSettings = (appearance: SystemSettings['appearance']
   }
   
   // Apply color scheme
-  document.documentElement.setAttribute('data-color-scheme', appearance.colorScheme);
+  document.documentElement.style.setProperty('--color-scheme', appearance.colorScheme);
   
   // Apply font scale
   document.documentElement.style.setProperty('--font-scale', appearance.fontScale.toString());
