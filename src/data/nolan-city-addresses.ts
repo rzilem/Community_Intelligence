@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import { MaintenanceRequest } from '@/types/maintenance-types';
@@ -620,7 +621,7 @@ export const exportAddressesAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file with the community name (fixing the filename issue)
+  // Save file with the community name
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-properties-and-owners-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -641,7 +642,7 @@ export const exportMaintenanceRequestsAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file with the community name (fixing the filename issue)
+  // Save file with the community name
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-maintenance-requests-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -662,7 +663,7 @@ export const exportComplianceIssuesAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file with the community name (fixing the filename issue)
+  // Save file with the community name
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-compliance-issues-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -683,7 +684,7 @@ export const exportFinancialRecordsAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file with the community name (fixing the filename issue)
+  // Save file with the community name
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-financial-records-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
