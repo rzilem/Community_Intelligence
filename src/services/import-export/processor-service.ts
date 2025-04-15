@@ -27,6 +27,7 @@ export const processorService = {
         tableName = 'associations';
         break;
       case 'financial':
+        // For financial data, use the assessments table but modify the data structure
         tableName = 'assessments';
         // Make sure property_id is properly formatted for financial records
         processedData.forEach(row => {
@@ -157,8 +158,9 @@ export const processorService = {
             if ('gl_account' in copy) delete copy.gl_account;
             if ('payment_method' in copy) delete copy.payment_method;
             
-            // Make sure association_id is set
-            if (!copy.association_id) copy.association_id = associationId;
+            // Make sure association_id is NOT included for assessments table since it appears to be missing
+            // from the schema based on the error message
+            delete copy.association_id;
           }
           
           return copy;

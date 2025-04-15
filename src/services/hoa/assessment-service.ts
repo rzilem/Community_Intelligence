@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Assessment, AssessmentType } from '@/types/app-types';
 import { toast } from 'sonner';
@@ -26,6 +25,7 @@ export const fetchAssessmentsByProperty = async (propertyId: string): Promise<As
     late_fee: assessment.late_fee,
     created_at: assessment.created_at,
     updated_at: assessment.updated_at
+    // Removed association_id since it doesn't exist in the schema
   }));
 };
 

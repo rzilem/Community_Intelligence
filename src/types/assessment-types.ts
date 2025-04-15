@@ -11,6 +11,7 @@ export type Assessment = {
   assessment_type_id?: string;
   created_at?: string;
   updated_at?: string;
+  // Removing association_id since it appears to not exist in the schema
 };
 
 export type AssessmentType = {
