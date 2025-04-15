@@ -129,5 +129,20 @@
   .sidebar-gradient {
     @apply bg-gradient-to-br from-sidebar via-hoa-blue-700 to-hoa-blue-800;
   }
+  
+  .blue-silver-gradient {
+    @apply bg-gradient-to-r from-hoa-blue-600 to-hoa-blue-400;
+  }
+  
+  .blue-green-gradient {
+    @apply bg-gradient-to-r from-hoa-blue-500 to-hoa-teal-500;
+  }
+  
+  .soft-blue-gradient {
+    @apply bg-gradient-to-br from-hoa-blue-50 to-hoa-blue-100;
+  }
+  
+  .soft-teal-gradient {
+    @apply bg-gradient-to-br from-hoa-teal-50 to-hoa-teal-100;
+  }
 }
-

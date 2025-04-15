@@ -11,11 +11,11 @@ interface ColorSchemeSelectorProps {
 
 const ColorSchemeSelector: React.FC<ColorSchemeSelectorProps> = ({ value, onChange }) => {
   const colorSchemes: { value: ColorScheme; label: string; color: string }[] = [
-    { value: 'default', label: 'Default', color: 'bg-blue-600' },
-    { value: 'blue', label: 'Blue', color: 'bg-blue-500' },
-    { value: 'purple', label: 'Purple', color: 'bg-purple-500' },
-    { value: 'green', label: 'Green', color: 'bg-green-500' },
-    { value: 'orange', label: 'Orange', color: 'bg-orange-500' }
+    { value: 'default', label: 'Default Blue', color: 'bg-hoa-blue-600' },
+    { value: 'blue', label: 'Royal Blue', color: 'bg-blue-700' },
+    { value: 'teal', label: 'Teal', color: 'bg-hoa-teal' },
+    { value: 'slate', label: 'Slate', color: 'bg-slate-600' },
+    { value: 'cyan', label: 'Cyan', color: 'bg-cyan-600' }
   ];
 
   return (
