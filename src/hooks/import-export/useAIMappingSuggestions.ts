@@ -11,9 +11,15 @@ export const useAIMappingSuggestions = (
   const [suggestions, setSuggestions] = useState<Record<string, { fieldValue: string; confidence: number }>>({});
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Auto-generate suggestions on mount if we have all required data
+  // Generate suggestions function
   const generateSuggestions = useCallback(() => {
     console.log("Generating suggestions with:", fileColumns.length, "columns and", systemFields.length, "system fields");
+    
+    if (fileColumns.length === 0 || systemFields.length === 0) {
+      console.log("Missing required data for generating suggestions");
+      return {};
+    }
+    
     setIsGenerating(true);
     try {
       // Use the AI mapping service to generate suggestions
@@ -33,10 +39,10 @@ export const useAIMappingSuggestions = (
     }
   }, [fileColumns, systemFields, sampleData]);
 
-  // Generate suggestions when component mounts
+  // Generate suggestions when component mounts or when data changes
   useEffect(() => {
     if (fileColumns.length > 0 && systemFields.length > 0 && sampleData.length > 0) {
-      console.log("Auto-generating suggestions on mount");
+      console.log("Auto-generating suggestions based on updated data");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, sampleData, generateSuggestions]);

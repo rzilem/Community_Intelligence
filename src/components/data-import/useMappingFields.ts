@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { MappingOption } from './types/mapping-types';
 
@@ -136,21 +137,35 @@ export const useMappingFields = (
     columns.forEach(column => {
       const lowerColumn = column.toLowerCase();
       
-      // Handle common mappings directly
-      if (lowerColumn === 'city' || lowerColumn === 'town') {
-        initialMappings[column] = 'city';
-      } else if (lowerColumn === 'state' || lowerColumn === 'province' || lowerColumn === 'region') {
-        initialMappings[column] = 'state';
-      } else if (lowerColumn.includes('zip') || lowerColumn.includes('postal') || lowerColumn === 'zip_code') {
-        initialMappings[column] = 'zip';
-      } else {
-        // Try to find a match for other fields
-        const match = systemFields.find(field => 
-          lowerColumn.includes(field.value.split('.').pop() || '') || 
-          field.label.toLowerCase().includes(lowerColumn) ||
-          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.value.replace(/[^a-z0-9]/gi, '') ||
-          lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '')
-        );
+      // Handle common mappings directly based on the available system fields
+      if (lowerColumn === 'city') {
+        // Check if we have city or property.city in our system fields
+        const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
+        if (cityField) {
+          initialMappings[column] = cityField.value;
+        }
+      } 
+      else if (lowerColumn === 'state') {
+        const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
+        if (stateField) {
+          initialMappings[column] = stateField.value;
+        }
+      } 
+      else if (lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code') {
+        const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
+        if (zipField) {
+          initialMappings[column] = zipField.value;
+        }
+      } 
+      else {
+        // Try to find a match for other fields based on the actual field values
+        const match = systemFields.find(field => {
+          const fieldKey = field.value.split('.').pop() || field.value;
+          return lowerColumn.includes(fieldKey) || 
+                 field.label.toLowerCase().includes(lowerColumn) ||
+                 lowerColumn.replace(/[^a-z0-9]/gi, '') === fieldKey.replace(/[^a-z0-9]/gi, '') ||
+                 lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '');
+        });
         
         if (match) {
           initialMappings[column] = match.value;

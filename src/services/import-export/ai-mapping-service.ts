@@ -164,16 +164,41 @@ export const aiMappingService = {
       'telephone': 'phone'
     };
     
+    // First check for exact city, state, zip matches and apply directly
+    const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
+    const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
+    const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
+    
     for (const column of fileColumns) {
       let bestMatch = { field: '', score: 0 };
       const lowerColumn = column.toLowerCase();
       
+      // Special handling for city, state, zip
+      if (lowerColumn === 'city' && cityField) {
+        bestMatch = { field: cityField.value, score: 1.0 };
+      } else if (lowerColumn === 'state' && stateField) {
+        bestMatch = { field: stateField.value, score: 1.0 };
+      } else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal' || lowerColumn === 'postal_code') && zipField) {
+        bestMatch = { field: zipField.value, score: 1.0 };
+      } 
       // Check for direct mapping
-      if (directMappings[lowerColumn]) {
+      else if (directMappings[lowerColumn]) {
         // Make sure the system field exists before mapping
-        const fieldExists = systemFields.some(f => f.value === directMappings[lowerColumn]);
+        const fieldExists = systemFields.some(f => 
+          f.value === directMappings[lowerColumn] || 
+          f.value.endsWith('.' + directMappings[lowerColumn])
+        );
+        
         if (fieldExists) {
-          bestMatch = { field: directMappings[lowerColumn], score: 1.0 };
+          // Find the matching field
+          const matchingField = systemFields.find(f => 
+            f.value === directMappings[lowerColumn] || 
+            f.value.endsWith('.' + directMappings[lowerColumn])
+          );
+          
+          if (matchingField) {
+            bestMatch = { field: matchingField.value, score: 1.0 };
+          }
         }
       } 
       
@@ -185,13 +210,18 @@ export const aiMappingService = {
         
         // Check each system field for a match with this column
         for (const field of systemFields) {
+          // Skip already mapped fields to avoid duplication
+          if (Object.values(suggestions).some(s => s.fieldValue === field.value)) {
+            continue;
+          }
+          
           // Calculate string similarity score between column name and field label/value
           const labelSimilarity = getStringSimilarity(column, field.label);
-          const valueSimilarity = getStringSimilarity(column, field.value);
+          const valueSimilarity = getStringSimilarity(column, field.value.split('.').pop() || field.value);
           let similarityScore = Math.max(labelSimilarity, valueSimilarity);
           
           // Check for semantic similarity
-          if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value)) {
+          if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value.split('.').pop() || field.value)) {
             similarityScore += 0.2;
           }
           
@@ -203,16 +233,9 @@ export const aiMappingService = {
           } else if (dataAnalysis.type === 'date' && (field.value.includes('date') || field.label.toLowerCase().includes('date'))) {
             similarityScore += 0.3;
           } else if (dataAnalysis.type === 'address' && 
-                    (field.value.includes('address') || field.value === 'street' || 
+                    (field.value.includes('address') || field.value.endsWith('street') || 
                      field.label.toLowerCase().includes('address'))) {
             similarityScore += 0.3;
-          }
-          
-          // Special case boost for city, state, zip fields
-          if ((lowerColumn === 'city' && field.value === 'city') || 
-              (lowerColumn === 'state' && field.value === 'state') || 
-              ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal') && field.value === 'zip')) {
-            similarityScore = 1.0; // Maximum confidence for these
           }
           
           // Cap score at 1.0

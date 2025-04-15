@@ -55,6 +55,14 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
     }
   };
   
+  // Check if this is a city, state, or zip column for special handling
+  const isSpecialColumn = column.toLowerCase() === 'city' || 
+                          column.toLowerCase() === 'state' || 
+                          column.toLowerCase() === 'zip' ||
+                          column.toLowerCase() === 'zipcode' ||
+                          column.toLowerCase() === 'postal' ||
+                          column.toLowerCase() === 'postal_code';
+  
   return (
     <div className="flex flex-col space-y-1">
       <div className="grid grid-cols-12 gap-2">
@@ -84,7 +92,10 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={isOpen}
-                className="w-full justify-between"
+                className={cn(
+                  "w-full justify-between",
+                  isSpecialColumn && !selectedValue ? "border-amber-400 ring-1 ring-amber-400" : ""
+                )}
               >
                 {selectedValue
                   ? systemFields.find(f => f.value === selectedValue)?.label || "Select field..."

@@ -64,31 +64,33 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     // Create a list of unmapped columns
     const unmappedColumns = fileColumns.filter(column => !mappings[column]);
     
-    // Apply mapping suggestions for unmapped columns
+    // First, find city, state, zip fields directly if they exist
+    const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
+    const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
+    const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
+    
     unmappedColumns.forEach(column => {
-      const suggestion = newSuggestions[column];
-      if (suggestion && suggestion.confidence >= 0.6) {
-        console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
-        onMappingChange(column, suggestion.fieldValue);
+      const lowerColumn = column.toLowerCase();
+      
+      // Direct mapping for city, state, zip - higher priority
+      if (lowerColumn === 'city' && cityField) {
+        onMappingChange(column, cityField.value);
         updateCount++;
       } 
-      // For city, state, zip - try to set them directly even with lower confidence
-      else if (column.toLowerCase() === 'city') {
-        const cityField = systemFields.find(f => f.value === 'city');
-        if (cityField) {
-          onMappingChange(column, 'city');
-          updateCount++;
-        }
-      } else if (column.toLowerCase() === 'state') {
-        const stateField = systemFields.find(f => f.value === 'state');
-        if (stateField) {
-          onMappingChange(column, 'state');
-          updateCount++;
-        }
-      } else if (column.toLowerCase() === 'zip') {
-        const zipField = systemFields.find(f => f.value === 'zip');
-        if (zipField) {
-          onMappingChange(column, 'zip');
+      else if (lowerColumn === 'state' && stateField) {
+        onMappingChange(column, stateField.value);
+        updateCount++;
+      } 
+      else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code' || lowerColumn === 'postal') && zipField) {
+        onMappingChange(column, zipField.value);
+        updateCount++;
+      }
+      // For other columns, use AI suggestion if confidence is high enough
+      else {
+        const suggestion = newSuggestions[column];
+        if (suggestion && suggestion.confidence >= 0.6) {
+          console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
+          onMappingChange(column, suggestion.fieldValue);
           updateCount++;
         }
       }
