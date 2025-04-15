@@ -21,6 +21,10 @@ interface ResidentContentProps {
   associations: any[];
   residents: any[];
   filteredResidents: any[];
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const ResidentContent: React.FC<ResidentContentProps> = ({
@@ -35,7 +39,11 @@ const ResidentContent: React.FC<ResidentContentProps> = ({
   setFilterType,
   associations,
   residents,
-  filteredResidents
+  filteredResidents,
+  currentPage,
+  pageSize,
+  onPageChange,
+  onPageSizeChange
 }) => {
   // Count residents with invalid associations
   const invalidAssociationCount = residents.filter(
@@ -87,6 +95,10 @@ const ResidentContent: React.FC<ResidentContentProps> = ({
           loading={loading}
           residents={filteredResidents}
           totalCount={residents.length}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
         />
       </CardContent>
     </Card>

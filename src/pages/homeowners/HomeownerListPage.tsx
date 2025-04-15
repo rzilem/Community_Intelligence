@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,8 @@ import HomeownerTable from './components/HomeownerTable';
 const HomeownerListPage = () => {
   const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   
   const {
     residents,
@@ -40,6 +42,11 @@ const HomeownerListPage = () => {
     extractStreetAddress
   } = useHomeownerFilters(residents);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterAssociation, filterStatus, filterType]);
+
   // Count residents with invalid associations
   const invalidAssociationCount = residents.filter(
     resident => !resident.hasValidAssociation
@@ -54,6 +61,20 @@ const HomeownerListPage = () => {
   const handleRetry = () => {
     setError(null);
     fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of the table when changing pages
+    window.scrollTo({
+      top: document.getElementById('homeowner-table-top')?.offsetTop || 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   return (
@@ -120,6 +141,7 @@ const HomeownerListPage = () => {
               reorderColumns={reorderColumns}
             />
             
+            <div id="homeowner-table-top"></div>
             <HomeownerTable
               loading={loading}
               filteredHomeowners={filteredHomeowners}
@@ -128,6 +150,10 @@ const HomeownerListPage = () => {
               allResidentsCount={residents.length}
               error={error}
               onRetry={handleRetry}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           </CardContent>
         </Card>

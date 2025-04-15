@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-utils';
-import { Button } from '@/components/ui/button';
 import { LoadingState } from '@/components/ui/loading-state';
+import HomeownerPagination from './HomeownerPagination';
 
 interface HomeownerTableProps {
   loading: boolean;
@@ -22,6 +22,10 @@ interface HomeownerTableProps {
   allResidentsCount: number;
   error: string | null;
   onRetry: () => void;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const HomeownerTable: React.FC<HomeownerTableProps> = ({
@@ -31,9 +35,19 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
   extractStreetAddress,
   allResidentsCount,
   error,
-  onRetry
+  onRetry,
+  currentPage,
+  pageSize,
+  onPageChange,
+  onPageSizeChange
 }) => {
   const navigate = useNavigate();
+
+  // Calculate pagination
+  const totalPages = Math.max(1, Math.ceil(filteredHomeowners.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredHomeowners.length);
+  const paginatedHomeowners = filteredHomeowners.slice(startIndex, endIndex);
 
   if (loading) {
     return <LoadingState text="Loading owners..." />;
@@ -56,7 +70,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredHomeowners.length === 0 ? (
+            {paginatedHomeowners.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
                   {allResidentsCount > 0 
@@ -65,7 +79,7 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredHomeowners.map(homeowner => (
+              paginatedHomeowners.map(homeowner => (
                 <TableRow key={homeowner.id} className="group">
                   {visibleColumnIds.includes('name') && (
                     <TableCell className="font-medium">
@@ -134,15 +148,15 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
         </Table>
       </div>
       
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredHomeowners.length} of {allResidentsCount} owners
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled>Previous</Button>
-          <Button variant="outline" size="sm" disabled>Next</Button>
-        </div>
-      </div>
+      <HomeownerPagination
+        filteredCount={paginatedHomeowners.length}
+        totalCount={allResidentsCount}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+      />
     </>
   );
 };

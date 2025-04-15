@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,6 +10,9 @@ import { useResidentFilters } from './hooks/useResidentFilters';
 
 const ResidentListPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  
   const { residents, loading, associations, fetchResidentsData } = useResidentsData();
   const { 
     searchTerm, 
@@ -23,11 +26,30 @@ const ResidentListPage = () => {
     filteredResidents 
   } = useResidentFilters(residents);
   
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterAssociation, filterStatus, filterType]);
+  
   const handleAddSuccess = (newOwner) => {
     setIsAddDialogOpen(false);
     toast.success('Owner added successfully');
     // Immediately reload the resident list to show the new owner
     fetchResidentsData();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of the table when changing pages
+    window.scrollTo({
+      top: document.getElementById('resident-table-top')?.offsetTop || 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   return (
@@ -46,6 +68,7 @@ const ResidentListPage = () => {
           />
         </div>
 
+        <div id="resident-table-top"></div>
         <ResidentContent
           loading={loading}
           searchTerm={searchTerm}
@@ -59,6 +82,10 @@ const ResidentListPage = () => {
           associations={associations}
           residents={residents}
           filteredResidents={filteredResidents}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       </div>
     </AppLayout>
