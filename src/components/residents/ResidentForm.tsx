@@ -170,10 +170,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         />
         
         <PropertySelect
-          properties={filteredProperties}
-          selectedPropertyId={selectedPropertyId}
+          associationId={selectedAssociationId}
+          propertyId={selectedPropertyId}
           onChange={(value) => setValue('property_id', value)}
-          loading={loading}
         />
         
         <ResidentCheckboxField

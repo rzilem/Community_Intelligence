@@ -78,6 +78,7 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({
   };
 
   const handleDownloadVersion = (url: string, fileName: string) => {
+    // Create a temporary anchor element for download
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', fileName);
