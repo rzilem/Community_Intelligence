@@ -28,6 +28,11 @@ export const processorService = {
         break;
       case 'financial':
         tableName = 'assessments';
+        // Make sure property_id is properly formatted for financial records
+        processedData.forEach(row => {
+          if (row.association) delete row.association; // Remove association name as it's not in the schema
+          if (!row.association_id) row.association_id = associationId; // Ensure association_id is set
+        });
         break;
       case 'compliance':
         tableName = 'compliance_issues';
@@ -137,6 +142,24 @@ export const processorService = {
             if ('first_name' in copy) delete copy.first_name;
             if ('last_name' in copy) delete copy.last_name;
           }
+          
+          // For assessments (financial data), ensure proper fields
+          if (tableName === 'assessments') {
+            delete copy.association; // Remove association name field
+            delete copy.property_address; // Remove property_address as it's not in schema
+            delete copy.owner_name; // Remove owner_name as it's not in schema
+            delete copy.owner_email; // Remove owner_email as it's not in schema
+            delete copy.owner_phone; // Remove owner_phone as it's not in schema
+            delete copy.type; // Not in schema
+            delete copy.amount_paid; // Not in schema
+            delete copy.balance; // Not in schema
+            delete copy.gl_account; // Not in schema
+            delete copy.payment_method; // Not in schema
+            
+            // Make sure association_id is set
+            if (!copy.association_id) copy.association_id = associationId;
+          }
+          
           return copy;
         });
         

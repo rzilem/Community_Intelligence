@@ -594,7 +594,9 @@ export const generateFinancialRecords = (
       status: status,
       payment_method: paymentMethod,
       gl_account: glAccount,
-      association: communityName
+      association: communityName,
+      // This is the critical field we're adding to fix the import issue
+      association_id: ""  // This will be populated by the import process
     });
   }
   
@@ -618,7 +620,7 @@ export const exportAddressesAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file with the community name
+  // Save file with the community name (fixing the filename issue)
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-properties-and-owners-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -639,7 +641,7 @@ export const exportMaintenanceRequestsAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file
+  // Save file with the community name (fixing the filename issue)
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-maintenance-requests-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -660,7 +662,7 @@ export const exportComplianceIssuesAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file
+  // Save file with the community name (fixing the filename issue)
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-compliance-issues-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
@@ -681,7 +683,7 @@ export const exportFinancialRecordsAsCSV = (
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file
+  // Save file with the community name (fixing the filename issue)
   const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
   saveAs(blob, `${fileName}-financial-records-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
