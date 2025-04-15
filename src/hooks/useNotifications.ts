@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
@@ -5,6 +6,7 @@ import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeowne
 import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface SectionNotifications {
   [key: string]: number;
@@ -26,9 +28,8 @@ export const useNotifications = () => {
   const [sectionCounts, setSectionCounts] = useState<SectionNotifications>({});
   const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const { toast } = useToast();
   
-  const { unreadLeadsCount, leads, markAllAsRead: markAllLeadsAsRead } = useLeadNotifications();
+  const { unreadLeadsCount, recentLeads = [], markAllAsRead: markAllLeadsAsRead } = useLeadNotifications();
   const { unreadInvoicesCount, markAllAsRead: markAllInvoicesAsRead } = useInvoiceNotifications();
   const { unreadRequestsCount, markAllAsRead: markAllRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markAllEventsAsRead } = useResaleEventNotifications();
@@ -40,8 +41,7 @@ export const useNotifications = () => {
         .on('broadcast', { event: 'new-notification' }, (payload) => {
           const newNotification = payload.payload as NotificationItem;
           
-          toast({
-            title: newNotification.title,
+          toast(newNotification.title, {
             description: newNotification.description,
             action: newNotification.route ? {
               label: "View",
@@ -61,25 +61,23 @@ export const useNotifications = () => {
         supabase.removeChannel(channel);
       };
     }
-  }, [isSubscribed, toast]);
+  }, [isSubscribed]);
   
   useEffect(() => {
-    const combinedNotifications: NotificationItem[] = [
-      ...(leads || []).map(lead => ({
-        id: lead.id,
-        type: 'lead' as const,
-        title: `New lead: ${lead.name || lead.email}`,
-        description: `${lead.source || 'Website'} - ${lead.status}`,
-        timestamp: new Date(lead.created_at),
-        read: false,
-        resourceId: lead.id,
-        resourceType: 'lead',
-        route: `/lead-management/leads/${lead.id}`
-      }))
-    ];
+    const leadNotifications: NotificationItem[] = recentLeads.map(lead => ({
+      id: lead.id,
+      type: 'lead',
+      title: `New lead: ${lead.name || lead.email}`,
+      description: `${lead.source || 'Website'} - ${lead.status}`,
+      timestamp: new Date(lead.created_at),
+      read: false,
+      resourceId: lead.id,
+      resourceType: 'lead',
+      route: `/lead-management/leads/${lead.id}`
+    }));
     
-    setAllNotifications(combinedNotifications);
-  }, [leads]);
+    setAllNotifications(prev => [...leadNotifications, ...prev]);
+  }, [recentLeads]);
   
   useEffect(() => {
     const counts: SectionNotifications = {
