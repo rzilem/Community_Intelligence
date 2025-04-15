@@ -20,38 +20,24 @@ const QuickActionWidgets: React.FC = () => {
   const actions: ActionItem[] = [
     {
       title: "Schedule Event",
-      icon: <Calendar className="h-5 w-5" />,
+      icon: <Calendar className="h-5 w-5 text-hoa-blue-600" />,
       description: "Create a new calendar event",
       path: "/calendar/new",
-      color: "bg-hoa-blue-100 text-hoa-blue-700"
-    },
-    {
-      title: "New Request",
-      icon: <FilePlus className="h-5 w-5" />,
-      description: "Submit a homeowner request",
-      path: "/community-management/homeowner-requests/new",
-      color: "bg-hoa-teal-100 text-hoa-teal-700"
+      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     },
     {
       title: "Send Message",
-      icon: <MessageSquarePlus className="h-5 w-5" />,
+      icon: <MessageSquarePlus className="h-5 w-5 text-hoa-blue-600" />,
       description: "Send a new communication",
       path: "/communications/messaging",
-      color: "bg-hoa-blue-100 text-hoa-blue-600"
+      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     },
     {
-      title: "Run Report",
-      icon: <FileText className="h-5 w-5" />,
-      description: "Generate a new report",
-      path: "/records-reports/reports",
-      color: "bg-hoa-teal-100 text-hoa-teal-700"
-    },
-    {
-      title: "Schedule Maintenance",
-      icon: <AlarmClock className="h-5 w-5" />,
-      description: "Create maintenance task",
-      path: "/operations/maintenance/new",
-      color: "bg-hoa-blue-100 text-hoa-blue-600"
+      title: "Calendar",
+      icon: <AlarmClock className="h-5 w-5 text-hoa-blue-600" />,
+      description: "View calendar events",
+      path: "/calendar",
+      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     }
   ];
   
@@ -68,11 +54,14 @@ const QuickActionWidgets: React.FC = () => {
         </button>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-3 gap-4">
         {actions.map((action, index) => (
           <button
             key={index}
-            className={`flex flex-col items-center justify-center p-3 rounded-lg border shadow-sm hover:shadow-md transition-all ${action.color} h-[100px]`}
+            className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all 
+              ${action.color} 
+              hover:shadow-md hover:border-hoa-blue-500 
+              focus:outline-none focus:ring-2 focus:ring-hoa-blue-300`}
             onClick={() => navigate(action.path)}
           >
             <div className="mb-2">{action.icon}</div>
