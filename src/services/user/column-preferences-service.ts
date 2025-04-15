@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { UserSettings } from '@/types/profile-types';
 
 /**
  * Save column preferences for a specific view for a user
