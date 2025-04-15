@@ -50,6 +50,8 @@ export const processorService = {
         // Ensure residents have resident_type set to 'owner'
         processedData.forEach(row => {
           row.resident_type = 'owner';
+          // Remove any association_id which might cause issues if the column doesn't exist
+          delete row.association_id;
         });
         break;
       default:
@@ -58,7 +60,7 @@ export const processorService = {
     
     await jobService.updateImportJobStatus(jobId, 'validating');
     
-    const batchSize = 50;
+    const batchSize = 25; // Reduced from 50 to improve reliability
     let successfulImports = 0;
     let failedImports = 0;
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
@@ -69,6 +71,12 @@ export const processorService = {
       if (dataType === 'associations') {
         return { ...row };
       }
+      
+      // For residents table, don't add association_id as it might not exist in schema
+      if (dataType === 'owners') {
+        return { ...row };
+      }
+      
       // Add association_id to all other tables if not already present
       if (!row.association_id) {
         return { ...row, association_id: associationId };
@@ -107,9 +115,19 @@ export const processorService = {
           continue;
         }
         
+        // Create a safer insert without potentially problematic columns
+        const sanitizedBatch = batch.map(item => {
+          const copy = { ...item };
+          // Remove any fields that might cause schema issues
+          if (tableName === 'residents') {
+            delete copy.association_id;
+          }
+          return copy;
+        });
+        
         const { data: insertedData, error } = await supabase
           .from(tableName as any)
-          .insert(batch as any)
+          .insert(sanitizedBatch as any)
           .select('id');
         
         if (error) {
@@ -166,11 +184,11 @@ function validateRequiredFields(tableName: string, data: Record<string, any>[]):
   if (!data || data.length === 0) return [];
   
   const requiredFields: Record<string, string[]> = {
-    properties: ['address', 'property_type', 'association_id'],
+    properties: ['address', 'property_type'],
     residents: ['property_id', 'resident_type'],
     associations: ['name'],
     assessments: ['property_id', 'amount', 'due_date'],
-    compliance_issues: ['property_id', 'violation_type', 'status', 'association_id'],
+    compliance_issues: ['property_id', 'violation_type', 'status'],
     maintenance_requests: ['property_id', 'title', 'description', 'status', 'priority']
   };
   
@@ -240,41 +258,60 @@ async function processPropertiesOwnersImport(
       };
     }
     
-    console.log(`Inserting ${propertyData.length} properties`);
+    // Split property data into smaller batches for processing
+    const propertyBatchSize = 25;
+    let propertySuccessCount = 0;
+    const insertedProperties = [];
     
-    // Insert properties
-    const { data: insertedProperties, error: propertyError } = await supabase
-      .from('properties')
-      .insert(propertyData)
-      .select('id, address, unit_number');
-    
-    if (propertyError) {
-      console.error('Error importing properties:', propertyError);
-      failedImports += processedData.length;
-      details.push({
-        status: 'error', 
-        message: `Failed to import properties: ${propertyError.message || 'Database error'}`
-      });
+    for (let i = 0; i < propertyData.length; i += propertyBatchSize) {
+      const batch = propertyData.slice(i, i + propertyBatchSize);
+      console.log(`Inserting property batch ${Math.floor(i/propertyBatchSize) + 1} (${batch.length} records)`);
       
-      await jobService.updateImportJobStatus(jobId, 'failed', {
-        processed: processedData.length,
-        succeeded: 0,
-        failed: failedImports,
-        errorDetails: { details }
-      });
+      try {
+        const { data: batchResult, error: propertyError } = await supabase
+          .from('properties')
+          .insert(batch)
+          .select('id, address, unit_number');
+          
+        if (propertyError) {
+          console.error('Error importing property batch:', propertyError);
+          failedImports += batch.length;
+          details.push({
+            status: 'error',
+            message: `Failed to import property batch: ${propertyError.message || 'Database error'}`
+          });
+        } else if (batchResult && batchResult.length > 0) {
+          propertySuccessCount += batchResult.length;
+          insertedProperties.push(...batchResult);
+          details.push({
+            status: 'success',
+            message: `Imported ${batchResult.length} properties successfully (batch ${Math.floor(i/propertyBatchSize) + 1})`
+          });
+        }
+      } catch (err) {
+        console.error('Error in property batch processing:', err);
+        failedImports += batch.length;
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        details.push({
+          status: 'error',
+          message: `Failed to import property batch: ${errorMessage}`
+        });
+      }
       
-      return {
-        success: false,
-        successfulImports: 0,
-        failedImports,
-        details
-      };
+      // Update job status after each batch
+      await jobService.updateImportJobStatus(jobId, 'processing', {
+        processed: i + batch.length,
+        succeeded: propertySuccessCount,
+        failed: failedImports
+      });
     }
     
-    if (!insertedProperties || insertedProperties.length === 0) {
+    successfulPropertyImports = propertySuccessCount;
+    
+    if (insertedProperties.length === 0) {
       details.push({
         status: 'warning',
-        message: 'No properties were imported'
+        message: 'No properties were successfully imported'
       });
       
       await jobService.updateImportJobStatus(jobId, 'failed', {
@@ -292,21 +329,17 @@ async function processPropertiesOwnersImport(
       };
     }
     
-    successfulPropertyImports = insertedProperties.length;
-    details.push({
-      status: 'success',
-      message: `Imported ${insertedProperties.length} properties successfully`
-    });
-    
     // Now prepare owner data with the property IDs
     const ownerData = [];
     for (let i = 0; i < processedData.length; i++) {
-      if (insertedProperties[i]) {
+      const matchingProperty = i < insertedProperties.length ? insertedProperties[i] : null;
+      
+      if (matchingProperty) {
         const row = processedData[i];
         // Only add owner if first name or last name exists
         if (row.first_name || row.last_name) {
           ownerData.push({
-            property_id: insertedProperties[i].id,
+            property_id: matchingProperty.id,
             resident_type: 'owner',
             name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
             first_name: row.first_name,
@@ -315,36 +348,61 @@ async function processPropertiesOwnersImport(
             phone: row.phone,
             move_in_date: row.move_in_date,
             is_primary: row.is_primary === 'true' || row.is_primary === true,
-            emergency_contact: row.emergency_contact,
-            association_id: associationId
+            emergency_contact: row.emergency_contact
+            // Intentionally omitting association_id
           });
         }
       }
     }
     
     if (ownerData.length > 0) {
-      console.log(`Inserting ${ownerData.length} owners`);
+      // Process owners in smaller batches
+      const ownerBatchSize = 25;
+      let ownerSuccessCount = 0;
       
-      // Insert owners
-      const { data: insertedOwners, error: ownerError } = await supabase
-        .from('residents')
-        .insert(ownerData)
-        .select('id');
-      
-      if (ownerError) {
-        console.error('Error importing owners:', ownerError);
-        details.push({
-          status: 'error',
-          message: `Failed to import owners: ${ownerError.message || 'Database error'}`
-        });
-        failedImports += ownerData.length;
-      } else if (insertedOwners) {
-        successfulOwnerImports = insertedOwners.length;
-        details.push({
-          status: 'success',
-          message: `Imported ${insertedOwners.length} owners successfully`
+      for (let i = 0; i < ownerData.length; i += ownerBatchSize) {
+        const batch = ownerData.slice(i, i + ownerBatchSize);
+        console.log(`Inserting owner batch ${Math.floor(i/ownerBatchSize) + 1} (${batch.length} records)`);
+        
+        try {
+          const { data: batchResult, error: ownerError } = await supabase
+            .from('residents')
+            .insert(batch)
+            .select('id');
+            
+          if (ownerError) {
+            console.error('Error importing owner batch:', ownerError);
+            failedImports += batch.length;
+            details.push({
+              status: 'error',
+              message: `Failed to import owner batch: ${ownerError.message || 'Database error'}`
+            });
+          } else if (batchResult && batchResult.length > 0) {
+            ownerSuccessCount += batchResult.length;
+            details.push({
+              status: 'success',
+              message: `Imported ${batchResult.length} owners successfully (batch ${Math.floor(i/ownerBatchSize) + 1})`
+            });
+          }
+        } catch (err) {
+          console.error('Error in owner batch processing:', err);
+          failedImports += batch.length;
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          details.push({
+            status: 'error',
+            message: `Failed to import owner batch: ${errorMessage}`
+          });
+        }
+        
+        // Update job status after each batch
+        await jobService.updateImportJobStatus(jobId, 'processing', {
+          processed: propertyData.length + i + batch.length,
+          succeeded: successfulPropertyImports + ownerSuccessCount,
+          failed: failedImports
         });
       }
+      
+      successfulOwnerImports = ownerSuccessCount;
     } else {
       details.push({
         status: 'warning',
@@ -352,14 +410,14 @@ async function processPropertiesOwnersImport(
       });
     }
     
-    await jobService.updateImportJobStatus(jobId, 'completed', {
+    await jobService.updateImportJobStatus(jobId, successfulPropertyImports > 0 ? 'completed' : 'failed', {
       processed: processedData.length,
       succeeded: successfulPropertyImports + successfulOwnerImports,
       failed: failedImports
     });
     
     return {
-      success: failedImports === 0,
+      success: failedImports === 0 && (successfulPropertyImports > 0 || successfulOwnerImports > 0),
       successfulImports: successfulPropertyImports + successfulOwnerImports,
       failedImports,
       details
