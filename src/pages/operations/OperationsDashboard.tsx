@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BarChart, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 
 const OperationsDashboard = () => {
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   
   const [filters, setFilters] = useState<OperationsDashboardFilters>({
     timeRange: 'Last 30 Days',
@@ -31,15 +33,60 @@ const OperationsDashboard = () => {
     distributionData, 
     officeMetricsData, 
     requestTypesData, 
-    loading 
+    loading,
+    refreshData 
   } = useOperationsData(filters);
 
-  const handleRefresh = () => {
-    toast.success("Dashboard data refreshed");
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    toast.info("Refreshing dashboard data...");
+    
+    try {
+      // Attempt to reload data
+      await refreshData();
+      setLastRefreshed(new Date());
+      toast.success("Dashboard data refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast.error("Failed to refresh data. Please try again.");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleExport = () => {
-    toast.success("Dashboard data exported");
+    toast.info("Preparing export...");
+    
+    setTimeout(() => {
+      // Create CSV data
+      const csvData = [
+        // CSV Headers
+        ['Date', 'Open Items', 'Closed Items', 'Total Items'],
+        // Sample data rows
+        ...timeSeriesData.map(item => [
+          item.date,
+          item.openItems,
+          item.closedItems,
+          item.openItems + item.closedItems
+        ])
+      ];
+      
+      // Convert to CSV string
+      const csvContent = csvData.map(row => row.join(',')).join('\n');
+      
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `operations-dashboard-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      toast.success("Dashboard data exported successfully");
+    }, 1000);
   };
 
   const tabs = ['Overview', 'Requests', 'Invoices', 'Team Performance', 'CI Insights'];
@@ -56,15 +103,17 @@ const OperationsDashboard = () => {
             size="sm" 
             className="flex items-center gap-2"
             onClick={handleRefresh}
+            disabled={isRefreshing}
           >
-            <RefreshCw className="h-4 w-4" /> 
-            Refresh
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} /> 
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             className="flex items-center gap-2"
             onClick={handleExport}
+            disabled={isRefreshing || loading}
           >
             <Download className="h-4 w-4" /> 
             Export
@@ -73,6 +122,12 @@ const OperationsDashboard = () => {
       }
     >
       <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            Last refreshed: {lastRefreshed.toLocaleTimeString()}
+          </p>
+        </div>
+        
         <DashboardFilters 
           filters={filters} 
           onFilterChange={handleFilterChange} 

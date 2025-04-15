@@ -1,69 +1,123 @@
 
 import { useState, useEffect } from 'react';
-import { 
-  OperationsTimeSeriesData, 
-  RequestDistributionData, 
-  OfficeMetricsData,
-  RequestTypeData,
-  OperationsDashboardFilters
-} from '@/types/operations-types';
-import { getMonthsRange, getRandomInt } from '@/lib/utils';
+import { OperationsDashboardFilters } from '@/types/operations-types';
+
+export interface TimeSeriesItem {
+  date: string;
+  openItems: number;
+  closedItems: number;
+}
+
+export interface DistributionItem {
+  name: string;
+  value: number;
+}
+
+export interface OfficeMetric {
+  office: string;
+  pending: number;
+  inProgress: number;
+  completed: number;
+}
+
+export interface RequestTypeItem {
+  name: string;
+  value: number;
+}
 
 export const useOperationsData = (filters: OperationsDashboardFilters) => {
-  const [timeSeriesData, setTimeSeriesData] = useState<OperationsTimeSeriesData[]>([]);
-  const [distributionData, setDistributionData] = useState<RequestDistributionData[]>([]);
-  const [officeMetricsData, setOfficeMetricsData] = useState<OfficeMetricsData[]>([]);
-  const [requestTypesData, setRequestTypesData] = useState<RequestTypeData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesItem[]>([]);
+  const [distributionData, setDistributionData] = useState<DistributionItem[]>([]);
+  const [officeMetricsData, setOfficeMetricsData] = useState<OfficeMetric[]>([]);
+  const [requestTypesData, setRequestTypesData] = useState<RequestTypeItem[]>([]);
 
-  useEffect(() => {
+  // Function to generate mock time series data
+  const generateTimeSeriesData = () => {
+    const days = filters.timeRange === 'Last 30 Days' ? 30 : 
+                filters.timeRange === 'Last 90 Days' ? 90 : 7;
+    
+    return Array.from({ length: days }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - i - 1));
+      return {
+        date: date.toISOString().split('T')[0],
+        openItems: Math.floor(Math.random() * 50) + 20,
+        closedItems: Math.floor(Math.random() * 30) + 10
+      };
+    });
+  };
+
+  // Function to generate mock distribution data
+  const generateDistributionData = () => {
+    return [
+      { name: 'Maintenance', value: Math.floor(Math.random() * 50) + 30 },
+      { name: 'Compliance', value: Math.floor(Math.random() * 40) + 20 },
+      { name: 'Accounting', value: Math.floor(Math.random() * 30) + 15 },
+      { name: 'Admin', value: Math.floor(Math.random() * 20) + 10 }
+    ];
+  };
+
+  // Function to generate mock office metrics
+  const generateOfficeMetricsData = () => {
+    const offices = filters.office === 'All Offices' 
+      ? ['North Region', 'South Region', 'East Region', 'West Region'] 
+      : [filters.office];
+    
+    return offices.map(office => ({
+      office,
+      pending: Math.floor(Math.random() * 30) + 5,
+      inProgress: Math.floor(Math.random() * 25) + 10,
+      completed: Math.floor(Math.random() * 40) + 30
+    }));
+  };
+
+  // Function to generate mock request types data
+  const generateRequestTypesData = () => {
+    return [
+      { name: 'Repairs', value: Math.floor(Math.random() * 40) + 30 },
+      { name: 'Inspections', value: Math.floor(Math.random() * 30) + 20 },
+      { name: 'Approvals', value: Math.floor(Math.random() * 25) + 15 },
+      { name: 'Complaints', value: Math.floor(Math.random() * 20) + 10 },
+      { name: 'Other', value: Math.floor(Math.random() * 15) + 5 }
+    ];
+  };
+
+  // Function to load all data
+  const loadData = async () => {
     setLoading(true);
     
-    // Simulate API call with setTimeout
-    const timer = setTimeout(() => {
-      // Generate time series data
-      const months = getMonthsRange(7); // Last 7 months
-      const generatedTimeSeriesData = months.map(month => ({
-        month,
-        invoices: getRandomInt(30, 80),
-        arcRequests: getRandomInt(20, 40),
-        gateRequests: getRandomInt(25, 50),
-        poolRequests: getRandomInt(20, 40),
-        generalInquiries: getRandomInt(40, 60)
-      }));
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // Generate distribution data
-      const generatedDistributionData = [
-        { type: 'Single-Family', percentage: 45, color: '#0088FE' },
-        { type: 'Condos', percentage: 30, color: '#00C49F' },
-        { type: 'Townhomes', percentage: 15, color: '#FFBB28' },
-        { type: 'Mixed-Use', percentage: 10, color: '#FF8042' }
-      ];
-      
-      // Generate office metrics data
-      const generatedOfficeMetricsData = [
-        { office: 'Austin', openRequests: getRandomInt(130, 180), color: '#8884d8' },
-        { office: 'Round Rock', openRequests: getRandomInt(100, 140), color: '#82ca9d' }
-      ];
-      
-      // Generate request types data
-      const generatedRequestTypesData = [
-        { type: 'Invoices', count: 125, percentage: 40, color: '#8884d8' },
-        { type: 'ARC Requests', count: 98, percentage: 25, color: '#82ca9d' },
-        { type: 'Gate Requests', count: 65, percentage: 15, color: '#ffc658' },
-        { type: 'Pool Requests', count: 48, percentage: 12, color: '#ff8042' },
-        { type: 'General', count: 32, percentage: 8, color: '#0088fe' }
-      ];
-      
-      setTimeSeriesData(generatedTimeSeriesData);
-      setDistributionData(generatedDistributionData);
-      setOfficeMetricsData(generatedOfficeMetricsData);
-      setRequestTypesData(generatedRequestTypesData);
+      setTimeSeriesData(generateTimeSeriesData());
+      setDistributionData(generateDistributionData());
+      setOfficeMetricsData(generateOfficeMetricsData());
+      setRequestTypesData(generateRequestTypesData());
+    } catch (error) {
+      console.error('Error loading operations data:', error);
+    } finally {
       setLoading(false);
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, [filters]);
+    }
+  };
+
+  // Function to refresh data, exposed to components
+  const refreshData = async () => {
+    await loadData();
+  };
   
-  return { timeSeriesData, distributionData, officeMetricsData, requestTypesData, loading };
+  // Load data on mount and when filters change
+  useEffect(() => {
+    loadData();
+  }, [filters.timeRange, filters.portfolio, filters.office]);
+  
+  return {
+    loading,
+    timeSeriesData,
+    distributionData,
+    officeMetricsData,
+    requestTypesData,
+    refreshData
+  };
 };
