@@ -4,7 +4,7 @@ import ColumnMappingField from './ColumnMappingField';
 import { MappingOption } from './types/mapping-types';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
-import { useAIMappingSuggestions } from './hooks/useAIMappingSuggestions';
+import { useAIMappingSuggestions } from '@/hooks/import-export/useAIMappingSuggestions';
 import { toast } from 'sonner';
 
 interface ColumnMappingListProps {

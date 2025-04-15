@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { MappingOption } from '../components/data-import/types/mapping-types';
+import { MappingOption } from '@/components/data-import/types/mapping-types';
 import { aiMappingService } from '@/services/import-export/ai-mapping-service';
 
 export const useAIMappingSuggestions = (
