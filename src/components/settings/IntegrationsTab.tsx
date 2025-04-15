@@ -42,7 +42,7 @@ const IntegrationsTab = () => {
     } else if (name === 'Google Maps') {
       defaultFields = { apiKey: '' };
     } else if (name === 'OpenAI') {
-      defaultFields = { apiKey: '', model: 'gpt-4o-mini' };
+      defaultFields = { apiKey: '' };
     } else if (name === 'Plaid') {
       defaultFields = { clientId: '', secret: '' };
     }
@@ -78,11 +78,12 @@ const IntegrationsTab = () => {
   const handleSaveConfig = () => {
     if (selectedIntegration) {
       const updatedSettings = { 
-        ...integrationSettings,
-        integrationSettings: {
-          ...integrationSettings?.integrationSettings || {},
-        }
+        ...integrationSettings || { integrationSettings: {} },
       };
+      
+      if (!updatedSettings.integrationSettings) {
+        updatedSettings.integrationSettings = {};
+      }
       
       if (selectedIntegration === 'OpenAI') {
         updatedSettings.integrationSettings[selectedIntegration] = {
@@ -105,8 +106,8 @@ const IntegrationsTab = () => {
           toast.success(`${selectedIntegration} configuration saved`);
         },
         onError: (error) => {
-          toast.error(`Failed to save configuration: ${error.message}`);
           console.error("Save error:", error);
+          toast.error(`Failed to save configuration: ${error.message || 'Unknown error'}`);
         }
       });
     }

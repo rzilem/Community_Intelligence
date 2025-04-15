@@ -36,9 +36,16 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
 }) => {
   if (!selectedIntegration) return null;
   
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isPending) {
+      e.preventDefault();
+      onSave();
+    }
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={(newOpen) => !isPending && onOpenChange(newOpen)}>
+      <DialogContent onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {selectedIntegration} Configuration
@@ -62,6 +69,7 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
                 onChange={(e) => onConfigFieldChange(field, e.target.value)}
                 className="col-span-3"
                 disabled={isPending}
+                autoComplete="off"
               />
             </div>
           ))}
@@ -97,7 +105,7 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button onClick={onSave} disabled={isPending}>
+            <Button onClick={onSave} disabled={isPending || (selectedIntegration === 'OpenAI' && !configFields.apiKey)}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

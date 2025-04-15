@@ -91,8 +91,7 @@ serve(async (req) => {
               updated_at: new Date().toISOString()
             }, {
               onConflict: 'key'
-            })
-            .select();
+            });
             
           if (error) {
             console.error("Error updating settings:", error);
@@ -101,7 +100,8 @@ serve(async (req) => {
           
           console.log(`Successfully updated setting '${action}'`);
           
-          return new Response(JSON.stringify({ success: true, data }), {
+          // Return a valid JSON response
+          return new Response(JSON.stringify({ success: true }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
