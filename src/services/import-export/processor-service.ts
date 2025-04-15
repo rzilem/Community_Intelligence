@@ -42,6 +42,16 @@ export const processorService = {
           row.hasInsurance = row.hasInsurance === 'true' || row.hasInsurance === true || false;
         });
         break;
+      case 'properties':
+        tableName = 'properties';
+        break;
+      case 'owners':
+        tableName = 'residents';
+        // Ensure residents have resident_type set to 'owner'
+        processedData.forEach(row => {
+          row.resident_type = 'owner';
+        });
+        break;
       default:
         tableName = dataType;
     }
@@ -66,11 +76,37 @@ export const processorService = {
       return { ...row };
     });
     
+    console.log(`Processing ${finalProcessedData.length} records for import to ${tableName}`);
+    
     for (let i = 0; i < finalProcessedData.length; i += batchSize) {
       const batch = finalProcessedData.slice(i, i + batchSize);
       
       try {
-        console.log(`Importing batch to ${tableName}:`, batch);
+        console.log(`Importing batch ${Math.floor(i/batchSize) + 1} to ${tableName} (${batch.length} records)`);
+        
+        // Validate the batch data
+        if (!Array.isArray(batch) || batch.length === 0) {
+          console.error('Empty or invalid batch data');
+          failedImports += batch.length;
+          details.push({
+            status: 'error',
+            message: `Failed to import batch: Invalid data format`
+          });
+          continue;
+        }
+        
+        // Check if batch data contains required properties for the table
+        const missingRequiredFields = validateRequiredFields(tableName, batch);
+        if (missingRequiredFields.length > 0) {
+          console.error(`Missing required fields: ${missingRequiredFields.join(', ')}`);
+          failedImports += batch.length;
+          details.push({
+            status: 'error',
+            message: `Failed to import batch: Missing required fields: ${missingRequiredFields.join(', ')}`
+          });
+          continue;
+        }
+        
         const { data: insertedData, error } = await supabase
           .from(tableName as any)
           .insert(batch as any)
@@ -81,7 +117,7 @@ export const processorService = {
           failedImports += batch.length;
           details.push({
             status: 'error',
-            message: `Failed to import ${batch.length} records: ${error.message}`
+            message: `Failed to import ${batch.length} records: ${error.message || 'Database error'}`
           });
         } else if (insertedData) {
           successfulImports += insertedData.length;
@@ -93,9 +129,10 @@ export const processorService = {
       } catch (e) {
         console.error(`Error in batch import:`, e);
         failedImports += batch.length;
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
         details.push({
           status: 'error',
-          message: `Failed to import ${batch.length} records: ${e instanceof Error ? e.message : 'Unknown error'}`
+          message: `Failed to import ${batch.length} records: ${errorMessage}`
         });
       }
       
@@ -106,6 +143,15 @@ export const processorService = {
       });
     }
     
+    // Update job status to completed or failed
+    const finalStatus = failedImports === 0 ? 'completed' : 'failed';
+    await jobService.updateImportJobStatus(jobId, finalStatus, {
+      processed: processedData.length,
+      succeeded: successfulImports,
+      failed: failedImports,
+      errorDetails: failedImports > 0 ? { details } : undefined
+    });
+    
     return {
       success: failedImports === 0,
       successfulImports,
@@ -114,6 +160,26 @@ export const processorService = {
     };
   }
 };
+
+// Helper function to validate required fields
+function validateRequiredFields(tableName: string, data: Record<string, any>[]): string[] {
+  if (!data || data.length === 0) return [];
+  
+  const requiredFields: Record<string, string[]> = {
+    properties: ['address', 'property_type', 'association_id'],
+    residents: ['property_id', 'resident_type'],
+    associations: ['name'],
+    assessments: ['property_id', 'amount', 'due_date'],
+    compliance_issues: ['property_id', 'violation_type', 'status', 'association_id'],
+    maintenance_requests: ['property_id', 'title', 'description', 'status', 'priority']
+  };
+  
+  const fields = requiredFields[tableName as keyof typeof requiredFields] || [];
+  
+  // Check the first row to see if required fields are present
+  const firstRow = data[0];
+  return fields.filter(field => !firstRow.hasOwnProperty(field) || firstRow[field] === undefined || firstRow[field] === null);
+}
 
 // Helper function to process combined properties and owners import
 async function processPropertiesOwnersImport(
@@ -126,6 +192,7 @@ async function processPropertiesOwnersImport(
   failedImports: number;
   details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>;
 }> {
+  console.log(`Processing properties_owners import with ${processedData.length} records`);
   await jobService.updateImportJobStatus(jobId, 'validating');
   
   let successfulPropertyImports = 0;
@@ -133,23 +200,48 @@ async function processPropertiesOwnersImport(
   let failedImports = 0;
   const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
 
-  // First, process all properties
-  const propertyData = processedData.map(row => {
-    return {
-      address: row.address,
-      unit_number: row.unit_number,
-      property_type: row.property_type,
-      city: row.city,
-      state: row.state,
-      zip: row.zip,
-      square_feet: row.square_feet,
-      bedrooms: row.bedrooms,
-      bathrooms: row.bathrooms,
-      association_id: associationId
-    };
-  });
-
   try {
+    // First, process all properties
+    const propertyData = processedData.map(row => {
+      return {
+        address: row.address,
+        unit_number: row.unit_number,
+        property_type: row.property_type || 'residential', // Default to residential if not specified
+        city: row.city,
+        state: row.state,
+        zip: row.zip,
+        square_feet: row.square_feet,
+        bedrooms: row.bedrooms,
+        bathrooms: row.bathrooms,
+        association_id: associationId
+      };
+    });
+
+    // Check if we have valid property data
+    if (!propertyData.length || !propertyData[0].address) {
+      details.push({
+        status: 'error',
+        message: 'No valid property data found in the import file'
+      });
+      failedImports = processedData.length;
+      
+      await jobService.updateImportJobStatus(jobId, 'failed', {
+        processed: processedData.length,
+        succeeded: 0,
+        failed: failedImports,
+        errorDetails: { details }
+      });
+      
+      return {
+        success: false,
+        successfulImports: 0,
+        failedImports,
+        details
+      };
+    }
+    
+    console.log(`Inserting ${propertyData.length} properties`);
+    
     // Insert properties
     const { data: insertedProperties, error: propertyError } = await supabase
       .from('properties')
@@ -161,7 +253,14 @@ async function processPropertiesOwnersImport(
       failedImports += processedData.length;
       details.push({
         status: 'error', 
-        message: `Failed to import properties: ${propertyError.message}`
+        message: `Failed to import properties: ${propertyError.message || 'Database error'}`
+      });
+      
+      await jobService.updateImportJobStatus(jobId, 'failed', {
+        processed: processedData.length,
+        succeeded: 0,
+        failed: failedImports,
+        errorDetails: { details }
       });
       
       return {
@@ -177,6 +276,14 @@ async function processPropertiesOwnersImport(
         status: 'warning',
         message: 'No properties were imported'
       });
+      
+      await jobService.updateImportJobStatus(jobId, 'failed', {
+        processed: processedData.length,
+        succeeded: 0,
+        failed: processedData.length,
+        errorDetails: { details }
+      });
+      
       return {
         success: false,
         successfulImports: 0,
@@ -208,13 +315,16 @@ async function processPropertiesOwnersImport(
             phone: row.phone,
             move_in_date: row.move_in_date,
             is_primary: row.is_primary === 'true' || row.is_primary === true,
-            emergency_contact: row.emergency_contact
+            emergency_contact: row.emergency_contact,
+            association_id: associationId
           });
         }
       }
     }
     
     if (ownerData.length > 0) {
+      console.log(`Inserting ${ownerData.length} owners`);
+      
       // Insert owners
       const { data: insertedOwners, error: ownerError } = await supabase
         .from('residents')
@@ -225,7 +335,7 @@ async function processPropertiesOwnersImport(
         console.error('Error importing owners:', ownerError);
         details.push({
           status: 'error',
-          message: `Failed to import owners: ${ownerError.message}`
+          message: `Failed to import owners: ${ownerError.message || 'Database error'}`
         });
         failedImports += ownerData.length;
       } else if (insertedOwners) {
@@ -258,16 +368,17 @@ async function processPropertiesOwnersImport(
     console.error('Error in properties_owners import:', e);
     failedImports += processedData.length;
     
+    const errorMessage = e instanceof Error ? e.message : 'Unknown error';
     details.push({
       status: 'error',
-      message: `Failed to import data: ${e instanceof Error ? e.message : 'Unknown error'}`
+      message: `Failed to import data: ${errorMessage}`
     });
     
     await jobService.updateImportJobStatus(jobId, 'failed', {
       processed: processedData.length,
       succeeded: 0,
       failed: failedImports,
-      errorDetails: { message: e instanceof Error ? e.message : 'Unknown error' }
+      errorDetails: { message: errorMessage }
     });
     
     return {

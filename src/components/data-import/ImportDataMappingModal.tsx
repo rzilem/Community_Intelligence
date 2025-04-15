@@ -1,125 +1,177 @@
 
-import React, { useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { dataImportService } from '@/services/import-export';
-import { useMappingFields } from './useMappingFields';
-import ValidationResultsSummary from './ValidationResultsSummary';
-import DataPreviewTable from './DataPreviewTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Check } from 'lucide-react';
 import ColumnMappingList from './ColumnMappingList';
-import { ValidationSummary } from './types/mapping-types';
-import { toast } from 'sonner';
+import DataPreviewTable from './DataPreviewTable';
+import ValidationResultsSummary from './ValidationResultsSummary';
+import { ValidationResult } from '@/types/import-types';
+import { useMappingFields } from './useMappingFields';
 
 interface ImportDataMappingModalProps {
   importType: string;
   fileData: any[];
   associationId: string;
+  validationResults?: ValidationResult;
   onClose: () => void;
   onConfirm: (mappings: Record<string, string>) => void;
-  validationResults?: ValidationSummary;
 }
 
 const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   importType,
   fileData,
   associationId,
+  validationResults,
   onClose,
-  onConfirm,
-  validationResults
+  onConfirm
 }) => {
-  const { 
-    fileColumns, 
-    systemFields, 
-    mappings, 
-    setMappings, 
-    previewData 
+  const {
+    fileColumns,
+    systemFields,
+    mappings,
+    setMappings,
+    previewData
   } = useMappingFields(importType, fileData, associationId);
   
-  useEffect(() => {
-    // Load saved mappings if available
-    const loadSavedMappings = async () => {
-      try {
-        const savedMappings = await dataImportService.getImportMapping(associationId, importType);
-        if (savedMappings) {
-          console.log("Loaded saved mappings:", savedMappings);
-          setMappings(savedMappings);
-        }
-      } catch (error) {
-        console.error("Error loading saved mappings:", error);
-      }
-    };
-    
-    if (associationId && importType) {
-      loadSavedMappings();
+  const [activeTab, setActiveTab] = useState('mapping');
+  const [hasAllRequiredMappings, setHasAllRequiredMappings] = useState(false);
+  
+  // Define required fields based on import type
+  const getRequiredFields = () => {
+    switch (importType) {
+      case 'properties':
+        return ['address', 'property_type'];
+      case 'owners':
+        return ['property_id', 'first_name', 'last_name'];
+      case 'properties_owners':
+        return ['address', 'property_type'];
+      case 'financial':
+        return ['property_id', 'amount', 'due_date'];
+      case 'compliance':
+        return ['property_id', 'violation_type'];
+      case 'maintenance':
+        return ['property_id', 'title', 'description'];
+      default:
+        return [];
     }
-  }, [associationId, importType, setMappings]);
+  };
+  
+  // Check if all required fields are mapped
+  useEffect(() => {
+    const requiredFields = getRequiredFields();
+    const mappedFields = Object.values(mappings);
+    
+    // For properties_owners, we have a special case
+    if (importType === 'properties_owners') {
+      const requiredPropertyFields = ['address', 'property_type'].every(field => 
+        mappedFields.includes(field) || mappedFields.includes(`property.${field}`)
+      );
+      
+      const requiredOwnerFields = ['first_name', 'last_name'].every(field => 
+        mappedFields.includes(field) || mappedFields.includes(`owner.${field}`)
+      );
+      
+      setHasAllRequiredMappings(requiredPropertyFields && (fileColumns.length === 0 || requiredOwnerFields));
+    } else {
+      // For other import types
+      const allRequiredFieldsMapped = requiredFields.every(field => {
+        return mappedFields.includes(field);
+      });
+      
+      setHasAllRequiredMappings(allRequiredFieldsMapped || requiredFields.length === 0);
+    }
+  }, [mappings, importType, fileColumns.length]);
   
   const handleMappingChange = (column: string, field: string) => {
-    console.log(`Mapping changed in modal: ${column} -> ${field}`);
-    setMappings(prev => {
-      const updated = {
-        ...prev,
-        [column]: field
-      };
-      console.log("Updated mappings:", updated);
-      return updated;
-    });
+    setMappings(prev => ({
+      ...prev,
+      [column]: field
+    }));
   };
-
+  
   const handleConfirm = () => {
-    console.log('Confirming mappings:', mappings);
-    
-    // Count how many columns are actually mapped
-    const mappedCount = Object.values(mappings).filter(Boolean).length;
-    if (mappedCount === 0) {
-      toast.error("Please map at least one column before importing");
-      return;
-    }
-    
     onConfirm(mappings);
   };
-
-  // Ensure we have valid arrays
-  const safeFileColumns = Array.isArray(fileColumns) ? fileColumns : [];
-  const safeSystemFields = Array.isArray(systemFields) ? systemFields : [];
-  const safePreviewData = Array.isArray(previewData) ? previewData : [];
-
+  
   return (
-    <Dialog open={true} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl">
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Map Import Columns</DialogTitle>
-          <DialogDescription>
-            Match columns from your file to the corresponding system fields.
-            Unmapped columns will be ignored during import.
-          </DialogDescription>
+          <DialogTitle>Map Your Data</DialogTitle>
         </DialogHeader>
         
-        {validationResults && (
-          <ValidationResultsSummary validationResults={validationResults} />
+        {importType && (
+          <div className="mb-4">
+            <div className="text-sm font-medium text-muted-foreground mb-2">Selected Import Type:</div>
+            <div className="bg-muted p-2 rounded-md inline-block font-medium">
+              {importType.charAt(0).toUpperCase() + importType.slice(1).replace('_', ' & ')}
+            </div>
+          </div>
         )}
         
-        <div className="py-4 max-h-[60vh] overflow-y-auto">
-          {/* Data Preview */}
-          <DataPreviewTable 
-            fileColumns={safeFileColumns} 
-            previewData={safePreviewData} 
-            totalRows={Array.isArray(fileData) ? fileData.length : 0} 
-          />
+        {validationResults && !validationResults.valid && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Validation Issues</AlertTitle>
+            <AlertDescription>
+              Your data has {validationResults.invalidRows} issues that should be reviewed.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {!hasAllRequiredMappings && (
+          <Alert variant="warning" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Missing Required Mappings</AlertTitle>
+            <AlertDescription>
+              Please map all required fields for {importType}: {getRequiredFields().join(', ')}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-2 w-[400px]">
+            <TabsTrigger value="mapping">Field Mapping</TabsTrigger>
+            <TabsTrigger value="preview">Data Preview</TabsTrigger>
+          </TabsList>
           
-          {/* Column Mappings */}
-          <ColumnMappingList 
-            fileColumns={safeFileColumns}
-            systemFields={safeSystemFields}
-            mappings={mappings}
-            onMappingChange={handleMappingChange}
-            previewData={safePreviewData}
-          />
-        </div>
-
+          <TabsContent value="mapping" className="space-y-4 pt-4">
+            <ColumnMappingList
+              fileColumns={fileColumns}
+              systemFields={systemFields}
+              mappings={mappings}
+              onMappingChange={handleMappingChange}
+              previewData={previewData}
+            />
+          </TabsContent>
+          
+          <TabsContent value="preview">
+            {validationResults && (
+              <ValidationResultsSummary results={validationResults} className="mb-4" />
+            )}
+            
+            <div className="border rounded-md overflow-hidden">
+              <DataPreviewTable
+                data={previewData.slice(0, 5)}
+                highlightedColumns={Object.keys(mappings)}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
+        
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm}>Confirm and Import</Button>
+          <Button 
+            onClick={handleConfirm} 
+            disabled={!hasAllRequiredMappings}
+            className="gap-1"
+          >
+            <Check className="h-4 w-4" />
+            Confirm & Import
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

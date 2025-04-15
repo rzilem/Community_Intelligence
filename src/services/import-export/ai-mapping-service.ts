@@ -1,280 +1,180 @@
 
-import { MappingOption } from '@/components/data-import/types/mapping-types';
-
-// Simple similarity scoring between strings
-const getStringSimilarity = (str1: string, str2: string): number => {
-  const s1 = str1.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const s2 = str2.toLowerCase().replace(/[^a-z0-9]/g, '');
-  
-  // Check for exact match after normalization
-  if (s1 === s2) return 1;
-  
-  // Check if one is contained in the other
-  if (s1.includes(s2) || s2.includes(s1)) {
-    const ratio = Math.min(s1.length, s2.length) / Math.max(s1.length, s2.length);
-    return 0.7 * ratio + 0.3; // Boost the score a bit
-  }
-  
-  // Calculate edit distance-based similarity for more advanced matching
-  const maxLen = Math.max(s1.length, s2.length);
-  if (maxLen === 0) return 1; // Both strings are empty
-  
-  let matchCount = 0;
-  for (let i = 0; i < Math.min(s1.length, s2.length); i++) {
-    if (s1[i] === s2[i]) matchCount++;
-  }
-  
-  return matchCount / maxLen;
-};
-
-// Check if strings are semantically similar (common naming patterns)
-const areSemanticallySimilar = (col: string, field: string): boolean => {
-  const semanticPairs = [
-    ['name', 'firstName'], ['name', 'lastName'], ['name', 'fullName'],
-    ['address', 'street'], ['address', 'addressLine'], ['address', 'streetAddress'],
-    ['city', 'town'], ['city', 'municipality'], 
-    ['state', 'province'], ['state', 'region'], 
-    ['zip', 'postalCode'], ['zip', 'zipCode'], ['zip', 'postal'],
-    ['email', 'emailAddress'], ['phone', 'phoneNumber'], ['telephone', 'phoneNumber'],
-    ['unit', 'apartment'], ['unit', 'unitNumber'], ['property', 'unit'],
-    ['owner', 'resident'], ['owner', 'homeowner'], ['date', 'timestamp'],
-    ['is_primary', 'primary'], ['primary', 'main'], ['co_owner', 'owner']
-  ];
-  
-  const normalizedCol = col.toLowerCase();
-  const normalizedField = field.toLowerCase();
-  
-  return semanticPairs.some(([a, b]) => 
-    (normalizedCol.includes(a) && normalizedField.includes(b)) || 
-    (normalizedCol.includes(b) && normalizedField.includes(a))
-  );
-};
-
-// Analyze sample data to determine data types and patterns
-const analyzeColumnData = (columnData: any[]): {
-  type: 'text' | 'number' | 'date' | 'boolean' | 'email' | 'phone' | 'address' | 'unknown';
-  confidence: number;
-} => {
-  if (!columnData || columnData.length === 0) {
-    return { type: 'unknown', confidence: 0 };
-  }
-  
-  // Remove null/undefined values
-  const cleanData = columnData.filter(val => val !== null && val !== undefined && val !== '');
-  
-  if (cleanData.length === 0) {
-    return { type: 'unknown', confidence: 0 };
-  }
-  
-  // Check data patterns
-  let numberCount = 0;
-  let dateCount = 0;
-  let boolCount = 0;
-  let emailCount = 0;
-  let phoneCount = 0;
-  let addressCount = 0;
-  
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const phoneRegex = /^[\d\+\-\(\)\s]{7,15}$/;
-  const dateRegex = /^\d{1,4}[-\/\.]\d{1,2}[-\/\.]\d{1,4}$|^\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4}$/;
-  const addressIndicators = ['street', 'ave', 'road', 'blvd', 'dr', 'lane', 'way', 'circle', 'apt', 'unit', '#'];
-  const booleanValues = ['true', 'false', 'yes', 'no', '0', '1', 'y', 'n', 't', 'f'];
-  
-  for (const val of cleanData) {
-    const strVal = String(val).trim().toLowerCase();
-    
-    // Check if number
-    if (!isNaN(Number(strVal)) && strVal !== '') {
-      numberCount++;
-    }
-    
-    // Check if date
-    if (dateRegex.test(strVal) || !isNaN(Date.parse(strVal))) {
-      dateCount++;
-    }
-    
-    // Check if boolean
-    if (booleanValues.includes(strVal.toLowerCase())) {
-      boolCount++;
-    }
-    
-    // Check if email
-    if (emailRegex.test(strVal)) {
-      emailCount++;
-    }
-    
-    // Check if phone
-    if (phoneRegex.test(strVal)) {
-      phoneCount++;
-    }
-    
-    // Check for address indicators
-    if (addressIndicators.some(indicator => strVal.toLowerCase().includes(indicator))) {
-      addressCount++;
-    }
-  }
-  
-  const total = cleanData.length;
-  
-  // Determine most likely type based on highest percentage
-  const metrics = [
-    { type: 'number', count: numberCount },
-    { type: 'date', count: dateCount },
-    { type: 'boolean', count: boolCount },
-    { type: 'email', count: emailCount },
-    { type: 'phone', count: phoneCount },
-    { type: 'address', count: addressCount },
-  ];
-  
-  const highestMatch = metrics.reduce((prev, current) => 
-    (current.count > prev.count) ? current : prev, { type: 'text', count: 0 });
-  
-  // Calculate confidence score
-  const confidence = highestMatch.count / total;
-  
-  // Default to text if no strong match
-  return {
-    type: confidence > 0.5 ? highestMatch.type as any : 'text',
-    confidence
-  };
-};
-
+/**
+ * Service for AI-powered mapping suggestions
+ */
 export const aiMappingService = {
-  // Generate mapping suggestions based on column names and sample data
   generateMappingSuggestions: (
     fileColumns: string[],
-    systemFields: MappingOption[],
+    systemFields: { label: string; value: string }[],
     sampleData: any[]
   ): Record<string, { fieldValue: string; confidence: number }> => {
-    console.log("Generating mapping suggestions for", fileColumns.length, "columns and", systemFields.length, "system fields");
     const suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
     
-    // Direct mapping for common fields (regardless of confidence)
-    const directMappings: Record<string, string> = {
-      'city': 'city',
-      'state': 'state',
-      'zip': 'zip',
-      'zipcode': 'zip',
-      'postal': 'zip',
-      'postal_code': 'zip',
-      'name': 'name',
-      'address': 'address',
-      'email': 'contact_email',
-      'contact_email': 'contact_email',
-      'phone': 'phone',
-      'phone_number': 'phone',
-      'telephone': 'phone',
-      'is_primary': 'is_primary',
-      'primary': 'is_primary',
-      'co_owner_is_primary': 'owner.is_primary'
-    };
+    if (!fileColumns.length || !systemFields.length || !sampleData.length) {
+      console.log("Missing data required for generating suggestions");
+      return suggestions;
+    }
     
-    // First check for exact city, state, zip matches and apply directly
-    const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
-    const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
-    const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
-    const isPrimaryField = systemFields.find(f => f.value === 'is_primary' || f.value === 'owner.is_primary');
+    console.log("Generating mapping suggestions for", fileColumns.length, "columns");
     
-    for (const column of fileColumns) {
-      let bestMatch = { field: '', score: 0 };
+    // Special case handlers for common fields
+    const specialCaseHandler = (
+      column: string
+    ): { field: string; confidence: number } | null => {
       const lowerColumn = column.toLowerCase();
       
-      // Special handling for city, state, zip
-      if (lowerColumn === 'city' && cityField) {
-        bestMatch = { field: cityField.value, score: 1.0 };
-      } else if (lowerColumn === 'state' && stateField) {
-        bestMatch = { field: stateField.value, score: 1.0 };
-      } else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal' || lowerColumn === 'postal_code') && zipField) {
-        bestMatch = { field: zipField.value, score: 1.0 };
-      } 
-      // Special handling for co_owner_is_primary and is_primary
-      else if ((lowerColumn === 'co_owner_is_primary' || lowerColumn === 'is_primary' || lowerColumn === 'primary') && isPrimaryField) {
-        bestMatch = { field: isPrimaryField.value, score: 1.0 };
-      }
-      // Check for direct mapping
-      else if (directMappings[lowerColumn]) {
-        // Make sure the system field exists before mapping
-        const fieldExists = systemFields.some(f => 
-          f.value === directMappings[lowerColumn] || 
-          f.value.endsWith('.' + directMappings[lowerColumn])
+      // Handle address fields
+      if (['address', 'street_address', 'street', 'property_address'].includes(lowerColumn)) {
+        const addressField = systemFields.find(f => 
+          f.value === 'address' || 
+          f.value === 'property.address'
         );
+        if (addressField) return { field: addressField.value, confidence: 0.95 };
+      }
+      
+      // Handle city field
+      if (['city', 'town', 'municipality'].includes(lowerColumn)) {
+        const cityField = systemFields.find(f => 
+          f.value === 'city' || 
+          f.value === 'property.city'
+        );
+        if (cityField) return { field: cityField.value, confidence: 0.95 };
+      }
+      
+      // Handle state field
+      if (['state', 'province', 'region'].includes(lowerColumn)) {
+        const stateField = systemFields.find(f => 
+          f.value === 'state' || 
+          f.value === 'property.state'
+        );
+        if (stateField) return { field: stateField.value, confidence: 0.95 };
+      }
+      
+      // Handle zip code field
+      if (['zip', 'zipcode', 'postal_code', 'postal'].includes(lowerColumn)) {
+        const zipField = systemFields.find(f => 
+          f.value === 'zip' || 
+          f.value === 'property.zip'
+        );
+        if (zipField) return { field: zipField.value, confidence: 0.95 };
+      }
+      
+      // Handle name fields
+      if (['first_name', 'firstname', 'first'].includes(lowerColumn)) {
+        const firstNameField = systemFields.find(f => 
+          f.value === 'first_name' || 
+          f.value === 'owner.first_name'
+        );
+        if (firstNameField) return { field: firstNameField.value, confidence: 0.95 };
+      }
+      
+      if (['last_name', 'lastname', 'last', 'surname'].includes(lowerColumn)) {
+        const lastNameField = systemFields.find(f => 
+          f.value === 'last_name' || 
+          f.value === 'owner.last_name'
+        );
+        if (lastNameField) return { field: lastNameField.value, confidence: 0.95 };
+      }
+      
+      // Handle email
+      if (['email', 'email_address', 'mail'].includes(lowerColumn)) {
+        const emailField = systemFields.find(f => 
+          f.value === 'email' || 
+          f.value === 'owner.email' ||
+          f.value === 'contact_email'
+        );
+        if (emailField) return { field: emailField.value, confidence: 0.95 };
+      }
+      
+      // Handle phone
+      if (['phone', 'phone_number', 'telephone', 'contact_number'].includes(lowerColumn)) {
+        const phoneField = systemFields.find(f => 
+          f.value === 'phone' || 
+          f.value === 'owner.phone'
+        );
+        if (phoneField) return { field: phoneField.value, confidence: 0.95 };
+      }
+      
+      // Handle boolean fields (is_primary)
+      if (['is_primary', 'primary', 'co_owner_is_primary', 'is_primary_owner'].includes(lowerColumn)) {
+        const primaryField = systemFields.find(f => 
+          f.value === 'is_primary' || 
+          f.value === 'owner.is_primary'
+        );
+        if (primaryField) return { field: primaryField.value, confidence: 0.95 };
+      }
+      
+      return null;
+    };
+
+    // For each file column, find the best matching system field
+    for (const column of fileColumns) {
+      // First try special case handler
+      const specialCase = specialCaseHandler(column);
+      if (specialCase) {
+        suggestions[column] = {
+          fieldValue: specialCase.field,
+          confidence: specialCase.confidence
+        };
+        continue;
+      }
+      
+      // Calculate semantic similarity for each system field
+      const lowerColumn = column.toLowerCase();
+      let bestMatch = null;
+      let highestScore = 0;
+      
+      for (const field of systemFields) {
+        // Get field name without parent object (e.g. "property.address" -> "address")
+        const fieldName = field.value.split('.').pop() || field.value;
+        const fieldLabel = field.label.toLowerCase();
         
-        if (fieldExists) {
-          // Find the matching field
-          const matchingField = systemFields.find(f => 
-            f.value === directMappings[lowerColumn] || 
-            f.value.endsWith('.' + directMappings[lowerColumn])
-          );
+        // Calculate simple similarity score
+        let score = 0;
+        
+        // Exact match
+        if (lowerColumn === fieldName) {
+          score = 1.0;
+        }
+        // Field name is contained in column name
+        else if (lowerColumn.includes(fieldName)) {
+          score = 0.9;
+        }
+        // Column name is contained in field name
+        else if (fieldName.includes(lowerColumn)) {
+          score = 0.8;
+        }
+        // Column name is similar to field label
+        else if (fieldLabel.includes(lowerColumn) || lowerColumn.includes(fieldLabel)) {
+          score = 0.7;
+        }
+        // Check for partial matches after removing non-alphanumeric chars
+        else {
+          const cleanColumn = lowerColumn.replace(/[^a-z0-9]/gi, '');
+          const cleanField = fieldName.replace(/[^a-z0-9]/gi, '');
           
-          if (matchingField) {
-            bestMatch = { field: matchingField.value, score: 1.0 };
+          if (cleanColumn === cleanField) {
+            score = 0.6;
+          } else if (cleanColumn.includes(cleanField) || cleanField.includes(cleanColumn)) {
+            score = 0.5;
           }
         }
-      } 
-      
-      // If no direct mapping, try other matching methods
-      if (!bestMatch.field) {
-        // Get sample data for this column
-        const columnData = sampleData.map(row => row[column]);
-        const dataAnalysis = analyzeColumnData(columnData);
         
-        // Check each system field for a match with this column
-        for (const field of systemFields) {
-          // Skip already mapped fields to avoid duplication
-          if (Object.values(suggestions).some(s => s.fieldValue === field.value)) {
-            continue;
-          }
-          
-          // Calculate string similarity score between column name and field label/value
-          const labelSimilarity = getStringSimilarity(column, field.label);
-          const valueSimilarity = getStringSimilarity(column, field.value.split('.').pop() || field.value);
-          let similarityScore = Math.max(labelSimilarity, valueSimilarity);
-          
-          // Check for semantic similarity
-          if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value.split('.').pop() || field.value)) {
-            similarityScore += 0.2;
-          }
-          
-          // Boost score based on data type matches
-          if (dataAnalysis.type === 'email' && (field.value.includes('email') || field.label.toLowerCase().includes('email'))) {
-            similarityScore += 0.3;
-          } else if (dataAnalysis.type === 'phone' && (field.value.includes('phone') || field.label.toLowerCase().includes('phone'))) {
-            similarityScore += 0.3;
-          } else if (dataAnalysis.type === 'date' && (field.value.includes('date') || field.label.toLowerCase().includes('date'))) {
-            similarityScore += 0.3;
-          } else if (dataAnalysis.type === 'address' && 
-                    (field.value.includes('address') || field.value.endsWith('street') || 
-                     field.label.toLowerCase().includes('address'))) {
-            similarityScore += 0.3;
-          } else if (dataAnalysis.type === 'boolean' && (field.value.includes('is_') || field.label.toLowerCase().includes('is '))) {
-            similarityScore += 0.3;
-          }
-          
-          // Special boost for likely co_owner_is_primary field match
-          if (lowerColumn.includes('primary') && field.value.includes('is_primary')) {
-            similarityScore += 0.3;
-          }
-          
-          // Cap score at 1.0
-          similarityScore = Math.min(similarityScore, 1.0);
-          
-          // Update best match if this score is higher
-          if (similarityScore > bestMatch.score) {
-            bestMatch = { field: field.value, score: similarityScore };
-          }
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = field.value;
         }
       }
       
-      // Only suggest matches with reasonable confidence
-      if (bestMatch.score >= 0.4) {
-        suggestions[column] = { 
-          fieldValue: bestMatch.field, 
-          confidence: bestMatch.score 
+      if (bestMatch && highestScore > 0.4) {
+        suggestions[column] = {
+          fieldValue: bestMatch,
+          confidence: highestScore
         };
       }
     }
     
-    console.log("Generated suggestions for", Object.keys(suggestions).length, "columns");
+    console.log("Generated mapping suggestions:", suggestions);
     return suggestions;
   }
 };

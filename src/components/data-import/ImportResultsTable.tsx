@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { ImportResult } from '@/types/import-types';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ImportResultsTableProps {
   results: ImportResult;
@@ -61,7 +62,7 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
                 {results.details.map((detail, index) => (
                   <TableRow key={index}>
                     <TableCell>
-                      <Badge variant={detail.status === 'success' ? 'default' : 'destructive'}>
+                      <Badge variant={detail.status === 'success' ? 'default' : detail.status === 'warning' ? 'outline' : 'destructive'}>
                         {detail.status === 'success' ? (
                           <CheckCircle className="h-3 w-3 mr-1" />
                         ) : (
@@ -77,6 +78,27 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
             </Table>
           </div>
 
+          {results.job_id && (
+            <Collapsible className="border rounded p-4">
+              <CollapsibleTrigger asChild>
+                <div className="flex items-center justify-between cursor-pointer">
+                  <div className="font-medium">View Job Details</div>
+                  <Button variant="ghost" size="sm">
+                    <ChevronsUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-2">
+                <div className="text-sm">
+                  <div><strong>Job ID:</strong> {results.job_id}</div>
+                  <div><strong>Total Processed:</strong> {results.totalProcessed}</div>
+                  <div><strong>Successful:</strong> {results.successfulImports}</div>
+                  <div><strong>Failed:</strong> {results.failedImports}</div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button variant="outline" onClick={onImportAnother}>
               <RefreshCw className="h-4 w-4 mr-2" /> Import Another File
@@ -85,7 +107,7 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
               {results.job_id && (
                 <Button variant="outline" asChild>
                   <Link to={`/system/import-jobs/${results.job_id}`}>
-                    <ExternalLink className="h-4 w-4 mr-2" /> View Job Details
+                    <ExternalLink className="h-4 w-4 mr-2" /> View Full Details
                   </Link>
                 </Button>
               )}

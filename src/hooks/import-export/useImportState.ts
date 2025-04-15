@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ValidationResult, ImportResult } from '@/types/import-types';
-import { dataImportService, validationService } from '@/services/import-export';
+import { dataImportService } from '@/services/import-export';
+import { validationService } from '@/services/import-export/validation-service';
 import { toast } from 'sonner';
 
 export function useImportState() {
@@ -71,6 +72,19 @@ export function useImportState() {
     setShowMappingModal(false);
     setIsImporting(true);
     
+    // Validate that we have the required mappings
+    const requiredMappings = getRequiredMappings(importType);
+    const mappedFields = Object.values(mappings);
+    
+    const missingMappings = requiredMappings.filter(field => !mappedFields.includes(field));
+    
+    if (missingMappings.length > 0) {
+      toast.error(`Missing required field mappings: ${missingMappings.join(', ')}`);
+      setIsImporting(false);
+      setShowMappingModal(true);
+      return;
+    }
+    
     try {
       const results = await dataImportService.importData({
         associationId: selectedAssociationId,
@@ -108,6 +122,28 @@ export function useImportState() {
       return errorResults;
     } finally {
       setIsImporting(false);
+    }
+  };
+  
+  // Helper function to get required mappings based on import type
+  const getRequiredMappings = (type: string): string[] => {
+    switch (type) {
+      case 'properties':
+        return ['address', 'property_type'];
+      case 'owners':
+        return ['first_name', 'last_name', 'property_id'];
+      case 'properties_owners':
+        return ['property.address', 'property.property_type'];
+      case 'financial':
+        return ['property_id', 'amount', 'due_date'];
+      case 'compliance':
+        return ['property_id', 'violation_type'];
+      case 'maintenance':
+        return ['property_id', 'title', 'description'];
+      case 'associations':
+        return ['name'];
+      default:
+        return [];
     }
   };
 
