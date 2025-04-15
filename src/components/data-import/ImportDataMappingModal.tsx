@@ -53,6 +53,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   }, [associationId, importType, setMappings]);
   
   const handleMappingChange = (column: string, field: string) => {
+    console.log(`Mapping changed: ${column} -> ${field}`);
     setMappings(prev => ({
       ...prev,
       [column]: field
@@ -60,6 +61,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   };
 
   const handleConfirm = () => {
+    console.log('Confirming mappings:', mappings);
     onConfirm(mappings);
   };
 

@@ -122,6 +122,7 @@ export const aiMappingService = {
     systemFields: MappingOption[],
     sampleData: any[]
   ): Record<string, { fieldValue: string; confidence: number }> => {
+    console.log("Generating mapping suggestions for", fileColumns.length, "columns");
     const suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
     
     for (const column of fileColumns) {
@@ -168,6 +169,7 @@ export const aiMappingService = {
       }
     }
     
+    console.log("Generated suggestions for", Object.keys(suggestions).length, "columns");
     return suggestions;
   }
 };
