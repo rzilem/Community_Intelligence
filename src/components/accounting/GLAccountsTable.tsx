@@ -15,16 +15,20 @@ interface GLAccountsTableProps {
   accounts: GLAccount[];
   searchTerm: string;
   accountType: string;
+  visibleColumns: ColumnKey[];
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
+  onColumnChange: (columns: string[]) => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   accounts,
   searchTerm,
   accountType,
+  visibleColumns,
   onSearchChange,
-  onAccountTypeChange
+  onAccountTypeChange,
+  onColumnChange
 }) => {
   const columnOptions = [
     { id: 'code', label: 'Code' },
@@ -37,6 +41,12 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
     visibleColumnIds, 
     updateVisibleColumns
   } = useUserColumns(columnOptions, 'gl-accounts-table');
+
+  // Use visibleColumns passed from the parent component
+  const handleColumnChange = (columns: string[]) => {
+    updateVisibleColumns(columns);
+    onColumnChange(columns);
+  };
 
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = account.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -75,8 +85,8 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
           
           <ColumnSelector 
             columns={columnOptions} 
-            selectedColumns={visibleColumnIds} 
-            onChange={updateVisibleColumns} 
+            selectedColumns={visibleColumns} 
+            onChange={handleColumnChange} 
           />
           
           <Button variant="outline">
@@ -93,7 +103,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumnIds.includes('code') && (
+              {visibleColumns.includes('code') && (
                 <TableHead className="w-[100px]">
                   <div className="flex items-center">
                     Code
@@ -101,7 +111,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumnIds.includes('description') && (
+              {visibleColumns.includes('description') && (
                 <TableHead>
                   <div className="flex items-center">
                     Description
@@ -109,7 +119,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumnIds.includes('type') && (
+              {visibleColumns.includes('type') && (
                 <TableHead>
                   <div className="flex items-center">
                     GL Type
@@ -117,7 +127,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumnIds.includes('category') && (
+              {visibleColumns.includes('category') && (
                 <TableHead>
                   <div className="flex items-center">
                     Category
@@ -131,23 +141,23 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
           <TableBody>
             {filteredAccounts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumnIds.length + 1} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground">
                   No accounts found matching your search.
                 </TableCell>
               </TableRow>
             ) : (
               filteredAccounts.map((account) => (
                 <TableRow key={account.code}>
-                  {visibleColumnIds.includes('code') && (
+                  {visibleColumns.includes('code') && (
                     <TableCell className="font-medium">{account.code}</TableCell>
                   )}
-                  {visibleColumnIds.includes('description') && (
+                  {visibleColumns.includes('description') && (
                     <TableCell>{account.description}</TableCell>
                   )}
-                  {visibleColumnIds.includes('type') && (
+                  {visibleColumns.includes('type') && (
                     <TableCell>{account.type}</TableCell>
                   )}
-                  {visibleColumnIds.includes('category') && (
+                  {visibleColumns.includes('category') && (
                     <TableCell>{account.category}</TableCell>
                   )}
                   <TableCell className="text-right">
