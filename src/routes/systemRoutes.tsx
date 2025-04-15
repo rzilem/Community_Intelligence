@@ -10,6 +10,7 @@ import AssociationProfile from "@/pages/system/AssociationProfile";
 import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
+import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
@@ -40,6 +41,10 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/data",
     element: <RequireAuth><DataImportExport /></RequireAuth>
+  },
+  {
+    path: "/system/financial-report-mapping",
+    element: <RequireAuth><FinancialReportMapping /></RequireAuth>
   },
   {
     path: "/system/associations",

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   LayoutDashboard,
@@ -72,7 +73,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Transactions & Payments', path: '/accounting/transactions-payments', icon: CreditCard },
         { name: 'GL Accounts', path: '/accounting/gl-accounts', icon: Database },
         { name: 'Budget Planning', path: '/accounting/budget-planning', icon: PiggyBank },
-        { name: 'Financial Report Mapping', path: '/accounting/financial-report-mapping', icon: FileBarChart },
       ]
     });
   }
@@ -154,6 +154,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Settings', path: '/system/settings', icon: SlidersHorizontal },
         { name: 'Email Workflows', path: '/system/email-workflows', icon: MailCheck },
         { name: 'Data Import & Export', path: '/system/import-export', icon: Download },
+        { name: 'Financial Report Mapping', path: '/system/financial-report-mapping', icon: FileBarChart },
         { name: 'Workflow Schedule', path: '/system/workflow-schedule', icon: Clock },
         { name: 'Associations', path: '/system/associations', icon: Network },
         { name: 'Permissions', path: '/system/permissions', icon: Shield },
