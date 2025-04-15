@@ -29,6 +29,8 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +39,7 @@ const HomeownerListPage = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [residents, setResidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
 
@@ -63,28 +66,47 @@ const HomeownerListPage = () => {
     const fetchResidents = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Get properties for all associations
+        // Get associations the user has access to
+        const associationIds = filterAssociation === 'all' 
+          ? associations.map(a => a.id)
+          : [filterAssociation];
+          
+        if (associationIds.length === 0) {
+          console.log('No associations found for user');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Fetching properties for associations:', associationIds);
+        
+        // Get properties for these associations
         const { data: properties, error: propertiesError } = await supabase
           .from('properties')
-          .select('*');
+          .select('*')
+          .in('association_id', associationIds);
           
         if (propertiesError) {
           console.error('Error fetching properties:', propertiesError);
+          setError('Failed to load properties');
           toast.error('Failed to load properties');
           setLoading(false);
           return;
         }
         
         if (!properties || properties.length === 0) {
+          console.log('No properties found for associations:', associationIds);
           setLoading(false);
+          setResidents([]);
           return;
         }
         
         // Get all property IDs
         const propertyIds = properties.map(p => p.id);
+        console.log(`Found ${propertyIds.length} properties`);
         
-        // Fetch all residents
+        // Fetch all residents for these properties
         const { data: residentsData, error: residentsError } = await supabase
           .from('residents')
           .select(`
@@ -100,10 +122,13 @@ const HomeownerListPage = () => {
         
         if (residentsError) {
           console.error('Error fetching residents:', residentsError);
+          setError('Failed to load residents');
           toast.error('Failed to load residents');
           setLoading(false);
           return;
         }
+        
+        console.log(`Found ${residentsData?.length || 0} residents`);
         
         // Create association name lookup
         const associationsMap = associations.reduce((map, assoc) => {
@@ -130,12 +155,14 @@ const HomeownerListPage = () => {
             associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
             lastPayment: null,
             closingDate: null,
+            hasValidAssociation: !!associationsMap[associationId]
           };
         });
         
         setResidents(formattedResidents);
       } catch (error) {
         console.error('Error loading residents:', error);
+        setError('Failed to load residents data');
         toast.error('Failed to load residents');
       } finally {
         setLoading(false);
@@ -145,7 +172,12 @@ const HomeownerListPage = () => {
     if (associations.length > 0) {
       fetchResidents();
     }
-  }, [associations]);
+  }, [associations, filterAssociation]);
+
+  // Count residents with invalid associations
+  const invalidAssociationCount = residents.filter(
+    resident => !resident.hasValidAssociation
+  ).length;
 
   // Extract just the street address part (without city, state, zip)
   const extractStreetAddress = (fullAddress: string | undefined) => {
@@ -187,6 +219,25 @@ const HomeownerListPage = () => {
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-2">Owner Management</h2>
             <p className="text-muted-foreground mb-6">View and manage all owners across your community associations.</p>
+            
+            {invalidAssociationCount > 0 && (
+              <Alert className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Association Issues Detected</AlertTitle>
+                <AlertDescription>
+                  {invalidAssociationCount} owners have invalid or missing association assignments. 
+                  Please use the import tools to fix these data issues.
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            {error && (
+              <Alert className="mb-6" variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             
             <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center mb-6 gap-4">
               <div className="relative flex-1 max-w-sm">
