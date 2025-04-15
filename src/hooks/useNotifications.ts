@@ -4,7 +4,6 @@ import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotification
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
 import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
 import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
-import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
