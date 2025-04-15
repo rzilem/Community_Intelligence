@@ -31,6 +31,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +77,7 @@ const HomeownerListPage = () => {
         if (associationIds.length === 0) {
           console.log('No associations found for user');
           setLoading(false);
+          setResidents([]);
           return;
         }
         
@@ -106,60 +108,66 @@ const HomeownerListPage = () => {
         const propertyIds = properties.map(p => p.id);
         console.log(`Found ${propertyIds.length} properties`);
         
-        // Fetch all residents for these properties
-        const { data: residentsData, error: residentsError } = await supabase
-          .from('residents')
-          .select(`
-            *,
-            properties:property_id (
-              id,
-              address,
-              unit_number,
-              association_id
-            )
-          `)
-          .in('property_id', propertyIds);
-        
-        if (residentsError) {
-          console.error('Error fetching residents:', residentsError);
-          setError('Failed to load residents');
-          toast.error('Failed to load residents');
-          setLoading(false);
-          return;
-        }
-        
-        console.log(`Found ${residentsData?.length || 0} residents`);
-        
-        // Create association name lookup
-        const associationsMap = associations.reduce((map, assoc) => {
-          map[assoc.id] = assoc.name;
-          return map;
-        }, {});
-        
-        // Map the results
-        const formattedResidents = (residentsData || []).map(resident => {
-          const property = resident.properties;
-          const associationId = property?.association_id;
+        // Fetch all residents for these properties with error handling
+        try {
+          const { data: residentsData, error: residentsError } = await supabase
+            .from('residents')
+            .select(`
+              *,
+              properties:property_id (
+                id,
+                address,
+                unit_number,
+                association_id
+              )
+            `)
+            .in('property_id', propertyIds);
           
-          return {
-            id: resident.id,
-            name: resident.name || 'Unknown',
-            email: resident.email || '',
-            phone: resident.phone || '',
-            propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
-            type: resident.resident_type,
-            status: resident.move_out_date ? 'inactive' : 'active',
-            moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
-            moveOutDate: resident.move_out_date,
-            association: associationId || '',
-            associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
-            lastPayment: null,
-            closingDate: null,
-            hasValidAssociation: !!associationsMap[associationId]
-          };
-        });
-        
-        setResidents(formattedResidents);
+          if (residentsError) {
+            console.error('Error fetching residents:', residentsError);
+            setError('Failed to load residents');
+            toast.error('Failed to load residents: ' + residentsError.message);
+            setLoading(false);
+            return;
+          }
+          
+          console.log(`Found ${residentsData?.length || 0} residents`);
+          
+          // Create association name lookup
+          const associationsMap = associations.reduce((map, assoc) => {
+            map[assoc.id] = assoc.name;
+            return map;
+          }, {});
+          
+          // Map the results
+          const formattedResidents = (residentsData || []).map(resident => {
+            const property = resident.properties;
+            const associationId = property?.association_id;
+            
+            return {
+              id: resident.id,
+              name: resident.name || 'Unknown',
+              email: resident.email || '',
+              phone: resident.phone || '',
+              propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
+              type: resident.resident_type,
+              status: resident.move_out_date ? 'inactive' : 'active',
+              moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
+              moveOutDate: resident.move_out_date,
+              association: associationId || '',
+              associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
+              lastPayment: null,
+              closingDate: null,
+              hasValidAssociation: !!associationsMap[associationId]
+            };
+          });
+          
+          setResidents(formattedResidents);
+        } catch (err) {
+          console.error('Unexpected error fetching residents:', err);
+          setError('An unexpected error occurred while loading residents');
+          toast.error('Unexpected error loading residents');
+        }
       } catch (error) {
         console.error('Error loading residents:', error);
         setError('Failed to load residents data');
@@ -169,10 +177,13 @@ const HomeownerListPage = () => {
       }
     };
 
-    if (associations.length > 0) {
+    if (associations && associations.length > 0) {
       fetchResidents();
+    } else if (!isLoadingAssociations) {
+      setLoading(false);
+      setResidents([]);
     }
-  }, [associations, filterAssociation]);
+  }, [associations, filterAssociation, isLoadingAssociations]);
 
   // Count residents with invalid associations
   const invalidAssociationCount = residents.filter(
@@ -200,6 +211,17 @@ const HomeownerListPage = () => {
     
     return matchesSearch && matchesAssociation && matchesStatus && matchesType;
   });
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    // This will trigger the useEffect to fetch residents again
+    const timer = setTimeout(() => {
+      // Empty dependency arrays don't trigger re-renders, so we need to manually trigger it
+      setFilterAssociation(prev => prev === 'all' ? 'all_refresh' : 'all');
+    }, 100);
+    return () => clearTimeout(timer);
+  };
 
   return (
     <AppLayout>
@@ -235,7 +257,17 @@ const HomeownerListPage = () => {
               <Alert className="mb-6" variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="ml-4"
+                    onClick={handleRetry}
+                  >
+                    Retry
+                  </Button>
+                </AlertDescription>
               </Alert>
             )}
             
@@ -296,110 +328,100 @@ const HomeownerListPage = () => {
               </div>
             </div>
             
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {visibleColumnIds.includes('name') && <TableHead>Name</TableHead>}
-                    {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
-                    {visibleColumnIds.includes('propertyAddress') && <TableHead>Street Address</TableHead>}
-                    {visibleColumnIds.includes('association') && <TableHead>Association</TableHead>}
-                    {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
-                    {visibleColumnIds.includes('type') && <TableHead>Type</TableHead>}
-                    {visibleColumnIds.includes('lastPaymentDate') && <TableHead>Last Payment Date</TableHead>}
-                    {visibleColumnIds.includes('closingDate') && <TableHead>Closing Date</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    // Loading state
-                    Array.from({ length: 5 }).map((_, index) => (
-                      <TableRow key={`loading-${index}`}>
-                        {visibleColumnIds.includes('name') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
-                        {visibleColumnIds.includes('email') && <TableCell><Skeleton className="h-5 w-40" /></TableCell>}
-                        {visibleColumnIds.includes('propertyAddress') && <TableCell><Skeleton className="h-5 w-48" /></TableCell>}
-                        {visibleColumnIds.includes('association') && <TableCell><Skeleton className="h-5 w-36" /></TableCell>}
-                        {visibleColumnIds.includes('status') && <TableCell><Skeleton className="h-5 w-20" /></TableCell>}
-                        {visibleColumnIds.includes('type') && <TableCell><Skeleton className="h-5 w-20" /></TableCell>}
-                        {visibleColumnIds.includes('lastPaymentDate') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
-                        {visibleColumnIds.includes('closingDate') && <TableCell><Skeleton className="h-5 w-32" /></TableCell>}
-                      </TableRow>
-                    ))
-                  ) : filteredHomeowners.length === 0 ? (
+            {loading ? (
+              <LoadingState text="Loading owners..." />
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
-                        No homeowners found matching your search.
-                      </TableCell>
+                      {visibleColumnIds.includes('name') && <TableHead>Name</TableHead>}
+                      {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
+                      {visibleColumnIds.includes('propertyAddress') && <TableHead>Street Address</TableHead>}
+                      {visibleColumnIds.includes('association') && <TableHead>Association</TableHead>}
+                      {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
+                      {visibleColumnIds.includes('type') && <TableHead>Type</TableHead>}
+                      {visibleColumnIds.includes('lastPaymentDate') && <TableHead>Last Payment Date</TableHead>}
+                      {visibleColumnIds.includes('closingDate') && <TableHead>Closing Date</TableHead>}
                     </TableRow>
-                  ) : (
-                    filteredHomeowners.map(homeowner => (
-                      <TableRow key={homeowner.id} className="group">
-                        {visibleColumnIds.includes('name') && (
-                          <TableCell className="font-medium">
-                            <span 
-                              className="cursor-pointer hover:text-primary hover:underline"
-                              onClick={() => navigate(`/homeowners/${homeowner.id}`)}
-                            >
-                              {homeowner.name}
-                            </span>
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('email') && (
-                          <TableCell>{homeowner.email}</TableCell>
-                        )}
-                        {visibleColumnIds.includes('propertyAddress') && (
-                          <TableCell>
-                            <span 
-                              className="cursor-pointer hover:text-primary hover:underline"
-                              onClick={() => navigate(`/homeowners/${homeowner.id}`)}
-                            >
-                              {extractStreetAddress(homeowner.propertyAddress)}
-                            </span>
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('association') && (
-                          <TableCell className="text-muted-foreground truncate max-w-[200px]">
-                            {homeowner.associationName}
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('status') && (
-                          <TableCell>
-                            <Badge 
-                              variant={homeowner.status === 'active' ? 'default' : 'outline'} 
-                              className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
-                            >
-                              {homeowner.status === 'active' ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('type') && (
-                          <TableCell>
-                            {homeowner.type === 'owner' ? 'Owner' : 
-                             homeowner.type === 'tenant' ? 'Tenant' : 
-                             homeowner.type === 'family' ? 'Family Member' : 
-                             homeowner.type}
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('lastPaymentDate') && (
-                          <TableCell>
-                            {homeowner.lastPayment ? 
-                              formatDate(homeowner.lastPayment.date) : 
-                              '-'}
-                          </TableCell>
-                        )}
-                        {visibleColumnIds.includes('closingDate') && (
-                          <TableCell>
-                            {homeowner.closingDate ? 
-                              formatDate(homeowner.closingDate) : 
-                              '-'}
-                          </TableCell>
-                        )}
+                  </TableHeader>
+                  <TableBody>
+                    {filteredHomeowners.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
+                          No homeowners found matching your search.
+                        </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ) : (
+                      filteredHomeowners.map(homeowner => (
+                        <TableRow key={homeowner.id} className="group">
+                          {visibleColumnIds.includes('name') && (
+                            <TableCell className="font-medium">
+                              <span 
+                                className="cursor-pointer hover:text-primary hover:underline"
+                                onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                              >
+                                {homeowner.name}
+                              </span>
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('email') && (
+                            <TableCell>{homeowner.email}</TableCell>
+                          )}
+                          {visibleColumnIds.includes('propertyAddress') && (
+                            <TableCell>
+                              <span 
+                                className="cursor-pointer hover:text-primary hover:underline"
+                                onClick={() => navigate(`/homeowners/${homeowner.id}`)}
+                              >
+                                {extractStreetAddress(homeowner.propertyAddress)}
+                              </span>
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('association') && (
+                            <TableCell className="text-muted-foreground truncate max-w-[200px]">
+                              {homeowner.associationName}
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('status') && (
+                            <TableCell>
+                              <Badge 
+                                variant={homeowner.status === 'active' ? 'default' : 'outline'} 
+                                className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
+                              >
+                                {homeowner.status === 'active' ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('type') && (
+                            <TableCell>
+                              {homeowner.type === 'owner' ? 'Owner' : 
+                               homeowner.type === 'tenant' ? 'Tenant' : 
+                               homeowner.type === 'family' ? 'Family Member' : 
+                               homeowner.type}
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('lastPaymentDate') && (
+                            <TableCell>
+                              {homeowner.lastPayment ? 
+                                formatDate(homeowner.lastPayment.date) : 
+                                '-'}
+                            </TableCell>
+                          )}
+                          {visibleColumnIds.includes('closingDate') && (
+                            <TableCell>
+                              {homeowner.closingDate ? 
+                                formatDate(homeowner.closingDate) : 
+                                '-'}
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
             
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
