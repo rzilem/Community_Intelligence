@@ -70,10 +70,16 @@ const HomeownerListPage = () => {
         setError(null);
         
         // Get associations the user has access to
-        const associationIds = filterAssociation === 'all' 
-          ? associations.map(a => a.id)
-          : [filterAssociation];
-          
+        let associationIds: string[] = [];
+        
+        if (filterAssociation === 'all') {
+          associationIds = associations.map((a: any) => a.id);
+          console.log('Fetching for all accessible associations:', associationIds);
+        } else {
+          associationIds = [filterAssociation];
+          console.log('Fetching for specific association:', filterAssociation);
+        }
+        
         if (associationIds.length === 0) {
           console.log('No associations found for user');
           setLoading(false);
@@ -81,9 +87,9 @@ const HomeownerListPage = () => {
           return;
         }
         
+        // First, get all properties for these associations
         console.log('Fetching properties for associations:', associationIds);
         
-        // Get properties for these associations
         const { data: properties, error: propertiesError } = await supabase
           .from('properties')
           .select('*')
@@ -91,11 +97,12 @@ const HomeownerListPage = () => {
           
         if (propertiesError) {
           console.error('Error fetching properties:', propertiesError);
-          setError('Failed to load properties');
-          toast.error('Failed to load properties');
+          setError('Failed to load properties: ' + propertiesError.message);
           setLoading(false);
           return;
         }
+        
+        console.log(`Found ${properties?.length || 0} properties`);
         
         if (!properties || properties.length === 0) {
           console.log('No properties found for associations:', associationIds);
@@ -106,82 +113,74 @@ const HomeownerListPage = () => {
         
         // Get all property IDs
         const propertyIds = properties.map(p => p.id);
-        console.log(`Found ${propertyIds.length} properties`);
         
-        // Fetch all residents for these properties with error handling
-        try {
-          const { data: residentsData, error: residentsError } = await supabase
-            .from('residents')
-            .select(`
-              *,
-              properties:property_id (
-                id,
-                address,
-                unit_number,
-                association_id
-              )
-            `)
-            .in('property_id', propertyIds);
-          
-          if (residentsError) {
-            console.error('Error fetching residents:', residentsError);
-            setError('Failed to load residents');
-            toast.error('Failed to load residents: ' + residentsError.message);
-            setLoading(false);
-            return;
-          }
-          
-          console.log(`Found ${residentsData?.length || 0} residents`);
-          
-          // Create association name lookup
-          const associationsMap = associations.reduce((map, assoc) => {
-            map[assoc.id] = assoc.name;
-            return map;
-          }, {});
-          
-          // Map the results
-          const formattedResidents = (residentsData || []).map(resident => {
-            const property = resident.properties;
-            const associationId = property?.association_id;
-            
-            return {
-              id: resident.id,
-              name: resident.name || 'Unknown',
-              email: resident.email || '',
-              phone: resident.phone || '',
-              propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
-              type: resident.resident_type,
-              status: resident.move_out_date ? 'inactive' : 'active',
-              moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
-              moveOutDate: resident.move_out_date,
-              association: associationId || '',
-              associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
-              lastPayment: null,
-              closingDate: null,
-              hasValidAssociation: !!associationsMap[associationId]
-            };
-          });
-          
-          setResidents(formattedResidents);
-        } catch (err) {
-          console.error('Unexpected error fetching residents:', err);
-          setError('An unexpected error occurred while loading residents');
-          toast.error('Unexpected error loading residents');
+        // Fetch all residents for these properties
+        console.log(`Fetching residents for ${propertyIds.length} properties`);
+        
+        const { data: residentsData, error: residentsError } = await supabase
+          .from('residents')
+          .select(`
+            *,
+            properties:property_id (
+              id,
+              address,
+              unit_number,
+              association_id
+            )
+          `)
+          .in('property_id', propertyIds);
+        
+        if (residentsError) {
+          console.error('Error fetching residents:', residentsError);
+          setError('Failed to load residents: ' + residentsError.message);
+          setLoading(false);
+          return;
         }
-      } catch (error) {
+        
+        console.log(`Found ${residentsData?.length || 0} residents`);
+        
+        // Create association name lookup
+        const associationsMap = associations.reduce((map: any, assoc: any) => {
+          map[assoc.id] = assoc.name;
+          return map;
+        }, {});
+        
+        // Map the results
+        const formattedResidents = (residentsData || []).map(resident => {
+          const property = resident.properties;
+          const associationId = property?.association_id;
+          
+          return {
+            id: resident.id,
+            name: resident.name || 'Unknown',
+            email: resident.email || '',
+            phone: resident.phone || '',
+            propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
+            type: resident.resident_type,
+            status: resident.move_out_date ? 'inactive' : 'active',
+            moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
+            moveOutDate: resident.move_out_date,
+            association: associationId || '',
+            associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
+            lastPayment: null,
+            closingDate: null,
+            hasValidAssociation: !!associationsMap[associationId]
+          };
+        });
+        
+        console.log('Formatted residents:', formattedResidents);
+        setResidents(formattedResidents);
+      } catch (error: any) {
         console.error('Error loading residents:', error);
-        setError('Failed to load residents data');
+        setError('Failed to load residents data: ' + (error?.message || 'Unknown error'));
         toast.error('Failed to load residents');
       } finally {
         setLoading(false);
       }
     };
 
-    if (associations && associations.length > 0) {
+    if (!isLoadingAssociations) {
       fetchResidents();
-    } else if (!isLoadingAssociations) {
-      setLoading(false);
-      setResidents([]);
     }
   }, [associations, filterAssociation, isLoadingAssociations]);
 
@@ -217,8 +216,11 @@ const HomeownerListPage = () => {
     setLoading(true);
     // This will trigger the useEffect to fetch residents again
     const timer = setTimeout(() => {
-      // Empty dependency arrays don't trigger re-renders, so we need to manually trigger it
-      setFilterAssociation(prev => prev === 'all' ? 'all_refresh' : 'all');
+      // Force a refresh by toggling association filter
+      setFilterAssociation(prev => {
+        // Toggle between 'all' and something else to force a refresh
+        return prev === 'all' ? 'temp_refresh_trigger' : 'all';
+      });
     }, 100);
     return () => clearTimeout(timer);
   };
@@ -289,7 +291,7 @@ const HomeownerListPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Associations</SelectItem>
-                    {associations.map(assoc => (
+                    {associations.map((assoc: any) => (
                       <SelectItem key={assoc.id} value={assoc.id}>{assoc.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -349,7 +351,9 @@ const HomeownerListPage = () => {
                     {filteredHomeowners.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
-                          No homeowners found matching your search.
+                          {residents.length > 0 
+                            ? "No homeowners found matching your search criteria."
+                            : "No homeowners found. Try selecting a different association or importing homeowner data."}
                         </TableCell>
                       </TableRow>
                     ) : (
