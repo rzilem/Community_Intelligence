@@ -1,20 +1,37 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export const useResidentFilters = (residents: any[]) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterAssociation, setFilterAssociation] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
+  const [filterAssociation, setFilterAssociation] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterType, setFilterType] = useState('');
 
+  // Filter residents based on current filter settings
   const filteredResidents = useMemo(() => {
     return residents.filter(resident => {
-      const matchesSearch = resident.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         (resident.email && resident.email.toLowerCase().includes(searchTerm.toLowerCase())) || 
-                         resident.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesAssociation = filterAssociation === 'all' || resident.association === filterAssociation;
-      const matchesStatus = filterStatus === 'all' || resident.status === filterStatus;
-      const matchesType = filterType === 'all' || resident.type === filterType;
+      // Search term filter
+      const matchesSearch = 
+        searchTerm === '' || 
+        resident.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resident.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        resident.propertyAddress?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Association filter
+      const matchesAssociation = 
+        filterAssociation === '' || 
+        resident.association === filterAssociation;
+
+      // Status filter
+      const matchesStatus = 
+        filterStatus === '' || 
+        resident.status === filterStatus;
+
+      // Type filter
+      const matchesType = 
+        filterType === '' || 
+        resident.type === filterType;
+
       return matchesSearch && matchesAssociation && matchesStatus && matchesType;
     });
   }, [residents, searchTerm, filterAssociation, filterStatus, filterType]);

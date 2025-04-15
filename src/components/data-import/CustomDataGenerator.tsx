@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Settings } from 'lucide-react';
 import { exportAddressesAsCSV } from '@/data/nolan-city-addresses';
@@ -27,6 +27,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 const dataTypes = [
   { value: 'properties_owners', label: 'Properties & Owners' },
@@ -53,6 +54,25 @@ const CustomDataGenerator: React.FC = () => {
   const [city, setCity] = useState('Austin');
   const [state, setState] = useState('TX');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
+  const [customNameEnabled, setCustomNameEnabled] = useState(true);
+  
+  // Function to handle association selection
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+    setCustomNameEnabled(false);
+  };
+  
+  // Update association name when an association is selected
+  useEffect(() => {
+    if (selectedAssociationId) {
+      // Find the association name from the DOM
+      const associationElement = document.querySelector(`[data-value="${selectedAssociationId}"]`);
+      if (associationElement) {
+        setAssociationName(associationElement.textContent || 'Selected Association');
+      }
+    }
+  }, [selectedAssociationId]);
   
   const handleGenerateData = () => {
     setIsGenerating(true);
@@ -97,19 +117,33 @@ const CustomDataGenerator: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="association-name">Association Name</Label>
-            <Input 
-              id="association-name" 
-              value={associationName} 
-              onChange={(e) => setAssociationName(e.target.value)}
-              placeholder="Enter association name"
+            <Label>Association</Label>
+            <AssociationSelector 
+              onAssociationChange={handleAssociationChange}
+              label={false}
+              className="mb-2"
             />
+            
+            <div className="flex items-center gap-2 mt-2">
+              <Label htmlFor="custom-name" className="text-sm">Or use custom name:</Label>
+              <Input 
+                id="custom-name" 
+                value={associationName} 
+                onChange={(e) => {
+                  setAssociationName(e.target.value);
+                  setCustomNameEnabled(true);
+                  setSelectedAssociationId('');
+                }}
+                disabled={!customNameEnabled}
+                placeholder="Enter association name"
+              />
+            </div>
           </div>
         </div>
         
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <Label htmlFor="record-count">Number of Records: {recordCount}</Label>
+            <Label htmlFor="record-count">Number of Records</Label>
             <span className="text-sm text-muted-foreground">{recordCount}</span>
           </div>
           <Slider
