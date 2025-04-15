@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Building, Search, PlusCircle, Download } from 'lucide-react';
+import { Building, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -74,12 +73,9 @@ const BankAccounts: React.FC = () => {
   const handleAssociationChange = (associationId: string) => {
     console.log('Association changed to:', associationId);
     setSelectedAssociationId(associationId);
-    // In a real implementation, we would fetch bank accounts for this association
-    // For now, we'll just use the mock data
   };
 
   const handleAddAccount = (data: Partial<BankAccount>) => {
-    // In a real implementation, we'd call an API with the selected association ID
     const newAccount: BankAccount = {
       id: Date.now().toString(),
       name: data.name || '',
@@ -114,7 +110,7 @@ const BankAccounts: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
             <div className="relative w-full md:w-72">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -124,7 +120,7 @@ const BankAccounts: React.FC = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
               <Select value={accountTypeFilter} onValueChange={setAccountTypeFilter}>
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Types" />
@@ -138,7 +134,7 @@ const BankAccounts: React.FC = () => {
                 </SelectContent>
               </Select>
 
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => console.log('Export functionality')}>
                 <Download className="h-4 w-4 mr-2" /> Export
               </Button>
 
