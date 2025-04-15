@@ -5,6 +5,7 @@ import {
   Calendar, FilePlus, MessageSquarePlus, 
   FileText, AlarmClock, BarChart2
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ActionItem {
   title: string;
@@ -41,13 +42,23 @@ const QuickActionWidgets: React.FC = () => {
     }
   ];
   
+  const handleActionClick = (path: string, title: string) => {
+    navigate(path);
+    toast.success(`Navigating to ${title}`);
+  };
+  
+  const handleViewAllActions = () => {
+    // You can implement a modal or navigate to an "all actions" page
+    toast.info("View all actions feature coming soon");
+  };
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Quick Actions</h3>
         <button 
           className="text-sm text-hoa-blue-600 hover:text-hoa-blue-800 flex items-center"
-          onClick={() => console.log('Show all actions')}
+          onClick={handleViewAllActions}
         >
           <span className="mr-1">All Actions</span>
           <BarChart2 className="h-4 w-4" />
@@ -62,7 +73,8 @@ const QuickActionWidgets: React.FC = () => {
               ${action.color} 
               hover:shadow-md hover:border-hoa-blue-500 
               focus:outline-none focus:ring-2 focus:ring-hoa-blue-300`}
-            onClick={() => navigate(action.path)}
+            onClick={() => handleActionClick(action.path, action.title)}
+            aria-label={action.description}
           >
             <div className="mb-2">{action.icon}</div>
             <span className="text-sm font-medium">{action.title}</span>
