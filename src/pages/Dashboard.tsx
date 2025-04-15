@@ -54,6 +54,9 @@ const Dashboard = () => {
         />
         
         <QuickActionWidgets />
+        
+        {/* AI Query Input moved above the tabs/calendar */}
+        <AiQueryInput />
 
         {user?.role === 'treasurer' ? (
           getContentForRole()
@@ -78,8 +81,6 @@ const Dashboard = () => {
             </TabsContent>
           </Tabs>
         )}
-
-        <AiQueryInput />
       </div>
     </AppLayout>
   );

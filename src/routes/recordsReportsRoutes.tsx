@@ -1,27 +1,20 @@
 
-import { RouteObject } from "react-router-dom";
-import { RequireAuth } from "@/components/auth/RequireAuth";
-import RecordsReports from "@/pages/records-reports/RecordsReports";
-import Documents from "@/pages/records-reports/Documents";
-import ReportsPage from "@/pages/records-reports/ReportsPage";
-import Reports from "@/pages/Reports";
+import React from 'react';
+import RecordsReports from '@/pages/records-reports/RecordsReports';
+import Documents from '@/pages/records-reports/Documents';
+import ReportsPage from '@/pages/records-reports/ReportsPage';
 
-// Records & Reports Routes
-export const recordsReportsRoutes: RouteObject[] = [
+export const recordsReportsRoutes = [
   {
-    path: "/records-reports",
-    element: <RequireAuth><RecordsReports /></RequireAuth>
+    path: '/records-reports',
+    element: <RecordsReports />
   },
   {
-    path: "/records-reports/documents",
-    element: <RequireAuth><Documents /></RequireAuth>
+    path: '/records-reports/documents',
+    element: <Documents />
   },
   {
-    path: "/records-reports/reports",
-    element: <RequireAuth><Reports /></RequireAuth>
-  },
-  {
-    path: "/records-reports/reports-basic",
-    element: <RequireAuth><ReportsPage /></RequireAuth>
+    path: '/records-reports/reports',
+    element: <ReportsPage />
   }
 ];

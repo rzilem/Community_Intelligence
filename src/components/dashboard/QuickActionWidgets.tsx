@@ -23,7 +23,7 @@ const QuickActionWidgets: React.FC = () => {
       title: "Schedule Event",
       icon: <Calendar className="h-5 w-5 text-hoa-blue-600" />,
       description: "Create a new calendar event",
-      path: "/calendar/new",
+      path: "/operations/calendar",
       color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     },
     {
@@ -34,10 +34,24 @@ const QuickActionWidgets: React.FC = () => {
       color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     },
     {
-      title: "Calendar",
+      title: "View Calendar",
       icon: <AlarmClock className="h-5 w-5 text-hoa-blue-600" />,
       description: "View calendar events",
-      path: "/calendar",
+      path: "/operations/calendar",
+      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
+    },
+    {
+      title: "Create Report",
+      icon: <FileText className="h-5 w-5 text-hoa-blue-600" />,
+      description: "Generate a new report",
+      path: "/records-reports/reports",
+      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
+    },
+    {
+      title: "New Document",
+      icon: <FilePlus className="h-5 w-5 text-hoa-blue-600" />,
+      description: "Upload a new document",
+      path: "/records-reports/documents",
       color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
     }
   ];
@@ -65,7 +79,7 @@ const QuickActionWidgets: React.FC = () => {
         </button>
       </div>
       
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-5 gap-3">
         {actions.map((action, index) => (
           <button
             key={index}
