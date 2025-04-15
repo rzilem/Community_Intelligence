@@ -96,14 +96,19 @@ const NotificationCenter: React.FC = () => {
           </div>
         </div>
         
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full justify-start px-4 pt-2 pb-0">
-            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-            <TabsTrigger value="invoice" className="text-xs">Invoices</TabsTrigger>
-            <TabsTrigger value="lead" className="text-xs">Leads</TabsTrigger>
-            <TabsTrigger value="request" className="text-xs">Requests</TabsTrigger>
-            <TabsTrigger value="event" className="text-xs">Events</TabsTrigger>
-            <TabsTrigger value="message" className="text-xs">Messages</TabsTrigger>
+        <Tabs 
+          defaultValue="all" 
+          value={activeTab} 
+          onValueChange={setActiveTab} 
+          className="w-full"
+        >
+          <TabsList className="w-full justify-start px-4 pt-2 pb-0 overflow-x-auto">
+            <TabsTrigger value="all" className="text-xs shrink-0">All</TabsTrigger>
+            <TabsTrigger value="invoice" className="text-xs shrink-0">Invoices</TabsTrigger>
+            <TabsTrigger value="lead" className="text-xs shrink-0">Leads</TabsTrigger>
+            <TabsTrigger value="request" className="text-xs shrink-0">Requests</TabsTrigger>
+            <TabsTrigger value="event" className="text-xs shrink-0">Events</TabsTrigger>
+            <TabsTrigger value="message" className="text-xs shrink-0">Messages</TabsTrigger>
           </TabsList>
           
           <TabsContent value={activeTab} className="mt-0">
