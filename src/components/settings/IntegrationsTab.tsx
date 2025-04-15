@@ -10,8 +10,8 @@ import { getIntegrationsData, formatDate } from './integration/integrations-data
 import { Card, CardContent } from '@/components/ui/card';
 
 const IntegrationsTab = () => {
-  const { data: integrationSettings, isLoading } = useSystemSetting<IntegrationSettings>('integrations');
-  const { mutate: updateIntegrationSettings, isPending } = useUpdateSystemSetting<IntegrationSettings>('integrations');
+  const { data: integrationSettings, isPending } = useSystemSetting<IntegrationSettings>('integrations');
+  const { mutate: updateIntegrationSettings, isPending: isMutating } = useUpdateSystemSetting<IntegrationSettings>('integrations');
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
@@ -131,7 +131,7 @@ const IntegrationsTab = () => {
     }
   ];
 
-  if (isLoading) {
+  if (isPending) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -180,7 +180,7 @@ const IntegrationsTab = () => {
         onOpenAIModelChange={setOpenAIModel}
         onSave={handleSaveConfig}
         hasOpenAIKey={!!connectedIntegrations[selectedIntegration as string]?.apiKey}
-        isPending={isPending}
+        isPending={isMutating}
       />
     </div>
   );
