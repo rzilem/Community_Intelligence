@@ -58,14 +58,14 @@ const Dashboard = () => {
         
         <QuickActionWidgets />
         
-        {/* AI Query Input */}
-        <AiQueryInput />
-        
         {/* AI Analysis Section */}
         <div className="bg-blue-50 rounded-lg p-6">
           <AIAnalysisSection issues={issues} />
         </div>
 
+        {/* Community Intelligence AI */}
+        <AiQueryInput />
+        
         {user?.role === 'treasurer' ? (
           getContentForRole()
         ) : (
