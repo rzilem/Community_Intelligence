@@ -92,6 +92,20 @@ const CustomDataGenerator: React.FC = () => {
     }
   };
   
+  // Handle direct input of record count
+  const handleRecordCountInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value)) {
+      if (value < 1) {
+        setRecordCount(1);
+      } else if (value > 5000) {
+        setRecordCount(5000);
+      } else {
+        setRecordCount(value);
+      }
+    }
+  };
+  
   return (
     <Card>
       <CardHeader>
@@ -144,13 +158,23 @@ const CustomDataGenerator: React.FC = () => {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Label htmlFor="record-count">Number of Records</Label>
-            <span className="text-sm text-muted-foreground">{recordCount}</span>
+            <div className="flex items-center space-x-2">
+              <Input
+                type="number"
+                min="1"
+                max="5000"
+                className="w-20 text-right"
+                value={recordCount}
+                onChange={handleRecordCountInput}
+              />
+              <span className="text-sm text-muted-foreground">of 5000</span>
+            </div>
           </div>
           <Slider
             id="record-count"
-            min={10}
+            min={1}
             max={5000}
-            step={10}
+            step={1}
             value={[recordCount]}
             onValueChange={(value) => setRecordCount(value[0])}
           />
