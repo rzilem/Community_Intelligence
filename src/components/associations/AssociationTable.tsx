@@ -27,6 +27,7 @@ interface AssociationTableProps {
   onDelete?: (id: string) => void;
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
+  onViewProfile?: (id: string) => void;
 }
 
 const AssociationTable: React.FC<AssociationTableProps> = ({ 
@@ -35,7 +36,8 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   onEdit,
   onDelete,
   onToggleSelect,
-  selectedAssociations = []
+  selectedAssociations = [],
+  onViewProfile
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -115,9 +117,18 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                     </TableCell>
                   )}
                   <TableCell>
-                    <Link to={`/system/associations/${association.id}`} className="font-medium hover:underline">
-                      {association.name}
-                    </Link>
+                    {onViewProfile ? (
+                      <button 
+                        onClick={() => onViewProfile(association.id)} 
+                        className="font-medium hover:underline text-left"
+                      >
+                        {association.name}
+                      </button>
+                    ) : (
+                      <Link to={`/system/associations/${association.id}`} className="font-medium hover:underline">
+                        {association.name}
+                      </Link>
+                    )}
                   </TableCell>
                   <TableCell>{association.property_type || 'HOA'}</TableCell>
                   <TableCell>

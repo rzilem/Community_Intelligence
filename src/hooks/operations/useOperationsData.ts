@@ -1,49 +1,37 @@
 
 import { useState, useEffect } from 'react';
-import { OperationsDashboardFilters } from '@/types/operations-types';
-
-export interface TimeSeriesItem {
-  date: string;
-  openItems: number;
-  closedItems: number;
-}
-
-export interface DistributionItem {
-  name: string;
-  value: number;
-}
-
-export interface OfficeMetric {
-  office: string;
-  pending: number;
-  inProgress: number;
-  completed: number;
-}
-
-export interface RequestTypeItem {
-  name: string;
-  value: number;
-}
+import { 
+  OperationsDashboardFilters, 
+  OperationsTimeSeriesData, 
+  RequestDistributionData, 
+  OfficeMetricsData, 
+  RequestTypeData 
+} from '@/types/operations-types';
 
 export const useOperationsData = (filters: OperationsDashboardFilters) => {
   const [loading, setLoading] = useState(true);
-  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesItem[]>([]);
-  const [distributionData, setDistributionData] = useState<DistributionItem[]>([]);
-  const [officeMetricsData, setOfficeMetricsData] = useState<OfficeMetric[]>([]);
-  const [requestTypesData, setRequestTypesData] = useState<RequestTypeItem[]>([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<OperationsTimeSeriesData[]>([]);
+  const [distributionData, setDistributionData] = useState<RequestDistributionData[]>([]);
+  const [officeMetricsData, setOfficeMetricsData] = useState<OfficeMetricsData[]>([]);
+  const [requestTypesData, setRequestTypesData] = useState<RequestTypeData[]>([]);
 
   // Function to generate mock time series data
   const generateTimeSeriesData = () => {
-    const days = filters.timeRange === 'Last 30 Days' ? 30 : 
-                filters.timeRange === 'Last 90 Days' ? 90 : 7;
+    const days = filters.timeRange === 'Last 30 Days' ? 6 : 
+                filters.timeRange === 'Last 90 Days' ? 9 : 3;
     
     return Array.from({ length: days }, (_, i) => {
       const date = new Date();
-      date.setDate(date.getDate() - (days - i - 1));
+      date.setMonth(date.getMonth() - (days - i - 1));
+      const month = date.toLocaleString('default', { month: 'short' });
+      
       return {
-        date: date.toISOString().split('T')[0],
-        openItems: Math.floor(Math.random() * 50) + 20,
-        closedItems: Math.floor(Math.random() * 30) + 10
+        month,
+        invoices: Math.floor(Math.random() * 50) + 20,
+        arcRequests: Math.floor(Math.random() * 40) + 15,
+        gateRequests: Math.floor(Math.random() * 30) + 10,
+        poolRequests: Math.floor(Math.random() * 25) + 5,
+        generalInquiries: Math.floor(Math.random() * 35) + 10
       };
     });
   };
@@ -51,10 +39,10 @@ export const useOperationsData = (filters: OperationsDashboardFilters) => {
   // Function to generate mock distribution data
   const generateDistributionData = () => {
     return [
-      { name: 'Maintenance', value: Math.floor(Math.random() * 50) + 30 },
-      { name: 'Compliance', value: Math.floor(Math.random() * 40) + 20 },
-      { name: 'Accounting', value: Math.floor(Math.random() * 30) + 15 },
-      { name: 'Admin', value: Math.floor(Math.random() * 20) + 10 }
+      { type: 'Single-Family', percentage: 45, color: '#8884d8' },
+      { type: 'Condos', percentage: 25, color: '#82ca9d' },
+      { type: 'Townhomes', percentage: 20, color: '#ffc658' },
+      { type: 'Mixed Use', percentage: 10, color: '#ff8042' }
     ];
   };
 
@@ -66,20 +54,21 @@ export const useOperationsData = (filters: OperationsDashboardFilters) => {
     
     return offices.map(office => ({
       office,
-      pending: Math.floor(Math.random() * 30) + 5,
-      inProgress: Math.floor(Math.random() * 25) + 10,
-      completed: Math.floor(Math.random() * 40) + 30
+      openRequests: Math.floor(Math.random() * 100) + 20,
+      color: office === 'North Region' ? '#8884d8' : 
+             office === 'South Region' ? '#82ca9d' : 
+             office === 'East Region' ? '#ffc658' : '#ff8042'
     }));
   };
 
   // Function to generate mock request types data
   const generateRequestTypesData = () => {
     return [
-      { name: 'Repairs', value: Math.floor(Math.random() * 40) + 30 },
-      { name: 'Inspections', value: Math.floor(Math.random() * 30) + 20 },
-      { name: 'Approvals', value: Math.floor(Math.random() * 25) + 15 },
-      { name: 'Complaints', value: Math.floor(Math.random() * 20) + 10 },
-      { name: 'Other', value: Math.floor(Math.random() * 15) + 5 }
+      { type: 'Repairs', count: 125, percentage: 35, color: '#8884d8' },
+      { type: 'Inspections', count: 85, percentage: 25, color: '#82ca9d' },
+      { type: 'Approvals', count: 65, percentage: 20, color: '#ffc658' },
+      { type: 'Complaints', count: 45, percentage: 15, color: '#ff8042' },
+      { type: 'Other', count: 25, percentage: 5, color: '#666' }
     ];
   };
 
