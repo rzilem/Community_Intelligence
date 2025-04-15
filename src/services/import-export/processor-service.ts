@@ -132,8 +132,10 @@ export const processorService = {
           // Remove any fields that might cause schema issues
           if (tableName === 'residents') {
             delete copy.association_id;
-            delete copy.first_name;
-            delete copy.last_name;
+            
+            // Only attempt to delete these properties if they exist
+            if ('first_name' in copy) delete copy.first_name;
+            if ('last_name' in copy) delete copy.last_name;
           }
           return copy;
         });
