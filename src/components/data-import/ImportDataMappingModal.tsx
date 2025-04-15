@@ -15,14 +15,14 @@ interface ImportDataMappingModalProps {
   importType: string;
   fileData: any[];
   associationId: string;
-  validationResults?: ValidationResult;
+  validationResults?: ValidationResult | null;
   onClose: () => void;
   onConfirm: (mappings: Record<string, string>) => void;
 }
 
 const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   importType,
-  fileData,
+  fileData = [],
   associationId,
   validationResults,
   onClose,
@@ -61,6 +61,11 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   
   // Check if all required fields are mapped
   useEffect(() => {
+    if (!mappings) {
+      setHasAllRequiredMappings(false);
+      return;
+    }
+
     const requiredFields = getRequiredFields();
     const mappedFields = Object.values(mappings);
     
@@ -70,7 +75,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
         mappedFields.includes(field) || mappedFields.includes(`property.${field}`)
       );
       
-      const requiredOwnerFields = ['first_name', 'last_name'].every(field => 
+      const requiredOwnerFields = ['first_name', 'last_name'].some(field => 
         mappedFields.includes(field) || mappedFields.includes(`owner.${field}`)
       );
       
@@ -117,7 +122,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Validation Issues</AlertTitle>
             <AlertDescription>
-              Your data has {validationResults.invalidRows} issues that should be reviewed.
+              Your data has {validationResults.invalidRows || 0} issues that should be reviewed.
             </AlertDescription>
           </Alert>
         )}
@@ -149,9 +154,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           </TabsContent>
           
           <TabsContent value="preview">
-            {validationResults && (
-              <ValidationResultsSummary validationResults={validationResults} className="mb-4" />
-            )}
+            <ValidationResultsSummary validationResults={validationResults} className="mb-4" />
             
             <div className="border rounded-md overflow-hidden">
               <DataPreviewTable

@@ -44,6 +44,18 @@ export function useImportState() {
     setIsValidating(true);
     
     try {
+      if (!parsedData || !Array.isArray(parsedData) || parsedData.length === 0) {
+        toast.error('No valid data found to validate');
+        return {
+          valid: false,
+          totalRows: 0,
+          validRows: 0,
+          invalidRows: 0,
+          warnings: 0,
+          issues: []
+        };
+      }
+      
       toast.info(`Validating ${parsedData.length} rows of data...`);
       const results = await validationService.validateData(parsedData, type);
       console.log('Validation results:', results);
@@ -61,6 +73,22 @@ export function useImportState() {
     } catch (error) {
       console.error('Error validating data:', error);
       toast.error('Failed to validate the uploaded data');
+      
+      // Set validation results to a failed state
+      const errorResults = {
+        valid: false,
+        totalRows: parsedData?.length || 0,
+        validRows: 0,
+        invalidRows: parsedData?.length || 0,
+        warnings: 0,
+        issues: [{
+          row: 0,
+          field: 'general',
+          issue: `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`
+        }]
+      };
+      
+      setValidationResults(errorResults);
       throw error;
     } finally {
       setIsValidating(false);
@@ -86,6 +114,10 @@ export function useImportState() {
     }
     
     try {
+      if (!importData || importData.length === 0) {
+        throw new Error('No data to import');
+      }
+      
       const results = await dataImportService.importData({
         associationId: selectedAssociationId,
         dataType: importType,
@@ -110,9 +142,9 @@ export function useImportState() {
       
       const errorResults = {
         success: false,
-        totalProcessed: importData.length,
+        totalProcessed: importData?.length || 0,
         successfulImports: 0,
-        failedImports: importData.length,
+        failedImports: importData?.length || 0,
         details: [
           { status: 'error' as const, message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
         ]

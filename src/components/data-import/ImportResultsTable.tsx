@@ -16,6 +16,10 @@ interface ImportResultsTableProps {
 }
 
 const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImportAnother, associationId }) => {
+  if (!results) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -59,7 +63,7 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {results.details.map((detail, index) => (
+                {results.details && results.details.map((detail, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Badge variant={detail.status === 'success' ? 'default' : detail.status === 'warning' ? 'outline' : 'destructive'}>
@@ -74,6 +78,13 @@ const ImportResultsTable: React.FC<ImportResultsTableProps> = ({ results, onImpo
                     <TableCell>{detail.message}</TableCell>
                   </TableRow>
                 ))}
+                {(!results.details || results.details.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center py-4 text-muted-foreground">
+                      No detailed information available
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

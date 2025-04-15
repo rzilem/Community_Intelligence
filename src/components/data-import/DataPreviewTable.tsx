@@ -8,8 +8,9 @@ export interface DataPreviewTableProps {
   highlightedColumns?: string[];
 }
 
-const DataPreviewTable: React.FC<DataPreviewTableProps> = ({ data, highlightedColumns = [] }) => {
-  if (!data || data.length === 0) {
+const DataPreviewTable: React.FC<DataPreviewTableProps> = ({ data = [], highlightedColumns = [] }) => {
+  // Handle case where data is undefined or not an array
+  if (!data || !Array.isArray(data) || data.length === 0) {
     return <div className="p-4 text-center text-muted-foreground">No data to preview</div>;
   }
 
@@ -17,10 +18,17 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({ data, highlightedCo
   const columnNames = React.useMemo(() => {
     const columns = new Set<string>();
     data.forEach(row => {
-      Object.keys(row).forEach(key => columns.add(key));
+      if (row && typeof row === 'object') {
+        Object.keys(row).forEach(key => columns.add(key));
+      }
     });
     return Array.from(columns);
   }, [data]);
+
+  // If no columns are found after processing, show empty state
+  if (columnNames.length === 0) {
+    return <div className="p-4 text-center text-muted-foreground">No valid columns found in data</div>;
+  }
 
   return (
     <Table>
@@ -54,7 +62,7 @@ const DataPreviewTable: React.FC<DataPreviewTableProps> = ({ data, highlightedCo
                     : ''
                 )}
               >
-                {row[column] !== undefined ? String(row[column]) : ''}
+                {row && row[column] !== undefined ? String(row[column]) : ''}
               </TableCell>
             ))}
           </TableRow>

@@ -4,45 +4,54 @@ import { Badge } from '@/components/ui/badge';
 import { ValidationResult } from '@/types/import-types';
 
 interface ValidationResultsSummaryProps {
-  validationResults: ValidationResult;
+  validationResults: ValidationResult | null | undefined;
   className?: string;
 }
 
 const ValidationResultsSummary: React.FC<ValidationResultsSummaryProps> = ({ validationResults, className }) => {
-  if (!validationResults) {
-    return null; // Return null if validationResults is undefined
+  // If validationResults is undefined, null, or doesn't have required properties, return null
+  if (!validationResults || typeof validationResults !== 'object') {
+    return null;
   }
+  
+  // Ensure all required properties exist with defaults if they're undefined
+  const {
+    validRows = 0,
+    warnings = 0,
+    invalidRows = 0,
+    issues = []
+  } = validationResults;
   
   return (
     <div className={`bg-muted/30 p-4 rounded-md mb-4 ${className || ''}`}>
       <h3 className="font-medium mb-2">Validation Results:</h3>
       <div className="flex flex-wrap gap-3 mb-3">
         <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-          {validationResults.validRows} valid rows
+          {validRows} valid rows
         </Badge>
-        {validationResults.warnings > 0 && (
+        {warnings > 0 && (
           <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-            {validationResults.warnings} warnings
+            {warnings} warnings
           </Badge>
         )}
-        {validationResults.invalidRows > 0 && (
+        {invalidRows > 0 && (
           <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-            {validationResults.invalidRows} invalid rows
+            {invalidRows} invalid rows
           </Badge>
         )}
       </div>
       
-      {validationResults.issues && validationResults.issues.length > 0 && (
+      {issues && issues.length > 0 && (
         <div className="text-sm text-muted-foreground">
           <p className="mb-1">Issues found:</p>
           <ul className="list-disc pl-5 space-y-1">
-            {validationResults.issues.slice(0, 5).map((issue, i) => (
+            {issues.slice(0, 5).map((issue, i) => (
               <li key={i}>
                 Row {issue.row}: {issue.issue} in field "{issue.field}"
               </li>
             ))}
-            {validationResults.issues.length > 5 && (
-              <li>...and {validationResults.issues.length - 5} more issues</li>
+            {issues.length > 5 && (
+              <li>...and {issues.length - 5} more issues</li>
             )}
           </ul>
         </div>
