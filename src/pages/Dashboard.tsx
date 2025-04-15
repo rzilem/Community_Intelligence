@@ -8,6 +8,7 @@ import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { useAdminAccess } from '@/hooks/dashboard/useAdminAccess';
 import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleContent';
 import { useResponsive } from '@/hooks/use-responsive';
+import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
@@ -15,12 +16,14 @@ import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import CalendarTab from '@/components/dashboard/CalendarTab';
 import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
+import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
 import { Profile } from '@/types/profile-types';
 
 const Dashboard = () => {
   const { currentAssociation, user } = useAuth();
   const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
+  const { issues, loading: issuesLoading } = useAIIssues();
   
   useAdminAccess(user?.id);
   
@@ -55,8 +58,13 @@ const Dashboard = () => {
         
         <QuickActionWidgets />
         
-        {/* AI Query Input moved above the tabs/calendar */}
+        {/* AI Query Input */}
         <AiQueryInput />
+        
+        {/* AI Analysis Section */}
+        <div className="bg-blue-50 rounded-lg p-6">
+          <AIAnalysisSection issues={issues} />
+        </div>
 
         {user?.role === 'treasurer' ? (
           getContentForRole()
