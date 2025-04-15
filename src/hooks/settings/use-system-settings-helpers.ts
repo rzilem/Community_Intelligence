@@ -49,8 +49,11 @@ export const saveSystemSettings = async (
     const settingKey = key as keyof SystemSettings;
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cahergndkwfqltxyikyr.supabase.co';
     
+    // Fix: Explicitly convert symbol to string
+    const settingKeyStr = String(settingKey);
+    
     // Call the settings edge function with the full URL
-    const response = await fetch(`${supabaseUrl}/functions/v1/settings/${settingKey}`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/settings/${settingKeyStr}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -61,7 +64,7 @@ export const saveSystemSettings = async (
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Response parsing error' }));
-      throw new Error(errorData.error || `Failed to save ${settingKey} settings`);
+      throw new Error(errorData.error || `Failed to save ${String(settingKey)} settings`);
     }
   });
   
