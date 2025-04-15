@@ -2,6 +2,7 @@
 import React from 'react';
 import { Resident } from './resident-types';
 import StandaloneResidentCard from './StandaloneResidentCard';
+import { EmptyResidentsState } from '@/components/residents/content/EmptyResidentsState';
 
 interface ResidentGridProps {
   residents: Resident[];
@@ -9,11 +10,7 @@ interface ResidentGridProps {
 
 const ResidentGrid: React.FC<ResidentGridProps> = ({ residents }) => {
   if (residents.length === 0) {
-    return (
-      <div className="text-center py-6 text-muted-foreground">
-        No residents found matching your search.
-      </div>
-    );
+    return <EmptyResidentsState />;
   }
 
   return (
