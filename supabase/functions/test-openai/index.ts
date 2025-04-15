@@ -18,6 +18,18 @@ serve(async (req) => {
     // Create a Supabase client to fetch the OpenAI API key
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase URL or service key");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Server configuration error"
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch the OpenAI API key from system settings
@@ -56,56 +68,73 @@ serve(async (req) => {
 
     console.log("Testing OpenAI connection with model:", model);
 
-    // Test the OpenAI API
+    // Test the OpenAI API with a simple request
     try {
+      const requestBody = JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful assistant for a homeowners association management system.'
+          },
+          {
+            role: 'user',
+            content: 'Say "Connection successful" and nothing else.'
+          }
+        ],
+        max_tokens: 50
+      });
+
+      console.log("Sending request to OpenAI with body:", requestBody);
+      
       const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful assistant for a homeowners association management system.'
-            },
-            {
-              role: 'user',
-              content: 'Say "Connection successful" and nothing else.'
-            }
-          ],
-          max_tokens: 50
-        })
+        body: requestBody
       });
 
+      // Get the response as text first so we can log it if there's a parsing error
       const responseText = await openaiResponse.text();
+      console.log("Raw OpenAI response:", responseText);
       
       // Try to parse the response as JSON
       let result;
       try {
         result = JSON.parse(responseText);
       } catch (parseError) {
-        console.error("Error parsing OpenAI response:", responseText);
+        console.error("Error parsing OpenAI response:", parseError, responseText);
         return new Response(JSON.stringify({
           success: false,
           error: `Invalid response from OpenAI: ${responseText.substring(0, 100)}...`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 502,
+          status: 200, // Return 200 instead of 502 to avoid edge function error
         });
       }
 
       if (!openaiResponse.ok) {
-        console.error("OpenAI API error:", result);
+        console.error("OpenAI API error status:", openaiResponse.status, result);
         
         return new Response(JSON.stringify({
           success: false,
-          error: result.error?.message || "Error connecting to OpenAI API"
+          error: result.error?.message || `Error connecting to OpenAI API: ${openaiResponse.status}`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 502,
+          status: 200, // Return 200 instead of 502 to avoid edge function error
+        });
+      }
+
+      if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+        console.error("Unexpected OpenAI response structure:", result);
+        return new Response(JSON.stringify({
+          success: false,
+          error: "Unexpected response structure from OpenAI"
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200, // Return 200 instead of 502 to avoid edge function error
         });
       }
 
@@ -126,7 +155,7 @@ serve(async (req) => {
         error: openaiError.message || "Error connecting to OpenAI API"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 502,
+        status: 200, // Return 200 instead of 502 to avoid edge function error
       });
     }
   } catch (error) {
@@ -137,7 +166,7 @@ serve(async (req) => {
       error: error.message || "An unexpected error occurred"
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 200, // Return 200 instead of 502 to avoid edge function error
     });
   }
 });

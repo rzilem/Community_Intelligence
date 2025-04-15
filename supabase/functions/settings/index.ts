@@ -100,14 +100,18 @@ serve(async (req) => {
           
           console.log(`Successfully updated setting '${action}'`);
           
-          // Return a valid JSON response
-          return new Response(JSON.stringify({ success: true }), {
+          // Return a valid JSON response with success status
+          return new Response(JSON.stringify({ 
+            success: true,
+            message: "Settings updated successfully" 
+          }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
         } catch (parseError) {
           console.error("Error parsing request JSON:", parseError);
           return new Response(JSON.stringify({ 
+            success: false,
             error: 'Invalid JSON in request body' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -119,6 +123,7 @@ serve(async (req) => {
     
     // If we reached this point, the request was not handled
     return new Response(JSON.stringify({ 
+      success: false,
       error: 'Not found or method not allowed' 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -129,6 +134,7 @@ serve(async (req) => {
     console.error('Error processing request:', error);
     
     return new Response(JSON.stringify({ 
+      success: false,
       error: error.message || 'An unexpected error occurred' 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
