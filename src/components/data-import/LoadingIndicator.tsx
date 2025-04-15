@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 interface LoadingIndicatorProps {
   message: string;
@@ -9,16 +8,10 @@ interface LoadingIndicatorProps {
 
 const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ message }) => {
   return (
-    <Card>
-      <CardContent className="py-6">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="animate-spin">
-            <RefreshCw className="h-8 w-8 text-primary" />
-          </div>
-          <p>{message}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex flex-col items-center justify-center p-6 bg-muted/20 rounded-md">
+      <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
   );
 };
 

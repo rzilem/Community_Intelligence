@@ -44,16 +44,13 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
             <CardContent>
               <div className="space-y-6">
                 <AssociationSelector
-                  value={associationId}
-                  onChange={onAssociationChange}
+                  initialAssociationId={associationId}
+                  onAssociationChange={onAssociationChange}
                   label="Select Association"
-                  placeholder="Choose an association"
-                  required
                 />
                 
                 <DataTypeSelector 
-                  disabledImportTypes={!associationId ? ['all'] : []}
-                  onSelectType={(type) => {
+                  onChange={(type) => {
                     if (importFile) {
                       onFileUpload(importFile, [], type);
                     }
@@ -61,13 +58,17 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 />
                 
                 <FileUploader 
-                  onFileUpload={onFileUpload}
-                  disabled={!associationId}
+                  onFileSelected={(file) => {
+                    if (file && associationId) {
+                      onFileUpload(file, [], '');
+                    }
+                  }}
+                  selectedFile={importFile}
                 />
                 
                 {(isValidating || isImporting) && (
                   <LoadingIndicator 
-                    text={isValidating ? "Validating data..." : "Importing data..."}
+                    message={isValidating ? "Validating data..." : "Importing data..."}
                   />
                 )}
               </div>
@@ -80,6 +81,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
         <ImportResultsTable 
           results={importResults}
           onImportAnother={onImportAnother}
+          associationId={associationId}
         />
       )}
     </div>
