@@ -45,11 +45,15 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Associations</SelectItem>
-          {associations.map((assoc) => (
-            <SelectItem key={assoc.id} value={assoc.id}>
-              {assoc.name}
-            </SelectItem>
-          ))}
+          {associations && associations.length > 0 ? (
+            associations.map((assoc) => (
+              <SelectItem key={assoc.id} value={assoc.id}>
+                {assoc.name}
+              </SelectItem>
+            ))
+          ) : (
+            <SelectItem value="none" disabled>No associations available</SelectItem>
+          )}
         </SelectContent>
       </Select>
       

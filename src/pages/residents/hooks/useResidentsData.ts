@@ -26,16 +26,34 @@ export const useResidentsData = () => {
         return;
       }
       
-      setAssociations(userAssociations || []);
-      
+      // If there's no error but also no data, fetch directly from associations table
       if (!userAssociations || userAssociations.length === 0) {
+        const { data: directAssociations, error: directError } = await supabase
+          .from('associations')
+          .select('id, name')
+          .eq('is_archived', false)
+          .order('name');
+        
+        if (directError) {
+          console.error('Error fetching associations directly:', directError);
+          toast.error('Failed to load associations');
+          setLoading(false);
+          return;
+        }
+        
+        setAssociations(directAssociations || []);
+      } else {
+        setAssociations(userAssociations || []);
+      }
+      
+      const associationIds = associations.map(a => a.id);
+      console.log('User has access to associations:', associationIds);
+      
+      if (associationIds.length === 0) {
         console.log('No associations found for user');
         setLoading(false);
         return;
       }
-      
-      const associationIds = userAssociations.map(a => a.id);
-      console.log('User has access to associations:', associationIds);
       
       // Then get properties for these associations
       const { data: properties, error: propertiesError } = await supabase
@@ -81,7 +99,7 @@ export const useResidentsData = () => {
       }
       
       // Create association name lookup
-      const associationsMap = userAssociations.reduce((map, assoc) => {
+      const associationsMap = associations.reduce((map, assoc) => {
         map[assoc.id] = assoc.name;
         return map;
       }, {});

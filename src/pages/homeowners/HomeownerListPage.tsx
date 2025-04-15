@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Users, Search, Plus, Columns } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,6 +25,8 @@ import {
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { useHomeownerColumns } from './hooks/useHomeownerColumns';
 import { formatDate } from '@/lib/date-utils';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { toast } from 'sonner';
 
 const HomeownerListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +35,24 @@ const HomeownerListPage = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
+
+  // Fetch associations from Supabase
+  const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery(
+    'associations',
+    {
+      select: 'id, name',
+      filter: [{ column: 'is_archived', operator: 'eq', value: false }],
+      order: { column: 'name', ascending: true }
+    }
+  );
+
+  // Show error toast if associations failed to load
+  useEffect(() => {
+    if (associationsError) {
+      console.error("Error loading associations:", associationsError);
+      toast.error("Failed to load associations");
+    }
+  }, [associationsError]);
 
   // Extract just the street address part (without city, state, zip)
   const extractStreetAddress = (fullAddress: string | undefined) => {
@@ -94,7 +113,9 @@ const HomeownerListPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Associations</SelectItem>
-                    {/* Add association options here */}
+                    {associations.map(assoc => (
+                      <SelectItem key={assoc.id} value={assoc.id}>{assoc.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 
