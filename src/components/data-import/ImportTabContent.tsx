@@ -8,6 +8,7 @@ import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
 import { ImportResult } from '@/types/import-types';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
+import { toast } from 'sonner';
 
 interface ImportTabContentProps {
   associationId: string;
@@ -31,6 +32,27 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   onAssociationChange
 }) => {
   const [selectedType, setSelectedType] = React.useState('associations');
+
+  const handleStartImport = async () => {
+    if (!importFile) {
+      toast.error("Please select a file to import");
+      return;
+    }
+    
+    if (!associationId) {
+      toast.error("Please select an association first");
+      return;
+    }
+    
+    try {
+      // Call the file upload handler with empty parsed data array
+      // The handler will parse the file
+      onFileUpload(importFile, [], selectedType);
+    } catch (error) {
+      console.error('Error starting import process:', error);
+      toast.error("Failed to start the import process");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -63,11 +85,13 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 
                 <FileUploader 
                   onFileSelected={(file) => {
-                    if (file && associationId) {
+                    if (file) {
+                      // Just set the file, don't start import immediately
                       onFileUpload(file, [], selectedType);
                     }
                   }}
                   selectedFile={importFile}
+                  onSubmit={handleStartImport}
                 />
                 
                 {(isValidating || isImporting) && (

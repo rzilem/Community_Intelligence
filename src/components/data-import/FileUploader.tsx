@@ -1,15 +1,20 @@
 
 import React, { useRef, useState } from 'react';
-import { Upload, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileSpreadsheet, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 interface FileUploaderProps {
   onFileSelected: (file: File) => void;
   selectedFile: File | null;
+  onSubmit?: () => void;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, selectedFile }) => {
+const FileUploader: React.FC<FileUploaderProps> = ({ 
+  onFileSelected, 
+  selectedFile,
+  onSubmit 
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,22 +89,36 @@ const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelected, selectedFil
         </div>
       </div>
       {selectedFile && (
-        <div className="flex items-center justify-between border rounded-md p-3 bg-muted/30">
-          <div className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-            </span>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border rounded-md p-3 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm truncate max-w-[200px]">{selectedFile.name}</span>
+              <span className="text-xs text-muted-foreground">
+                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              type="button"
+              onClick={() => onFileSelected(null as any)}
+            >
+              Remove
+            </Button>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            type="button"
-            onClick={() => onFileSelected(null as any)}
-          >
-            Remove
-          </Button>
+          
+          {/* Added submit button when a file is selected */}
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={onSubmit}
+              className="flex items-center gap-2"
+            >
+              Proceed with Import
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
