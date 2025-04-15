@@ -7,19 +7,20 @@ import { useAuth } from '@/contexts/auth';
 import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
 import { useAdminAccess } from '@/hooks/dashboard/useAdminAccess';
 import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleContent';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useResponsive } from '@/hooks/use-responsive';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import CalendarTab from '@/components/dashboard/CalendarTab';
+import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
 import { Profile } from '@/types/profile-types';
 
 const Dashboard = () => {
   const { currentAssociation, user } = useAuth();
   const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
-  const isMobile = useIsMobile();
+  const { isTablet, isMobile } = useResponsive();
   
   useAdminAccess(user?.id);
   
@@ -51,6 +52,8 @@ const Dashboard = () => {
           associationName={currentAssociation?.name} 
           loading={loading} 
         />
+        
+        <QuickActionWidgets />
 
         {user?.role === 'treasurer' ? (
           getContentForRole()
