@@ -50,7 +50,7 @@ export const useLeadNotifications = () => {
 
   return {
     unreadLeadsCount,
-    recentLeads,
+    recentLeads,  // Make sure to include recentLeads in the return object
     markAllAsRead
   };
 };
