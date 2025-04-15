@@ -2,8 +2,9 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Plus } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   associationName?: string;
@@ -14,6 +15,14 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   associationName,
   notificationCount = 0,
 }) => {
+  const navigate = useNavigate();
+
+  const handleViewAllNotifications = () => {
+    // Navigate to the notifications page
+    navigate('/notifications');
+    toast.success('Navigating to notifications page');
+  };
+
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
       <div>
@@ -35,6 +44,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </TooltipButton>
         <TooltipButton
           tooltip="View all notifications"
+          onClick={handleViewAllNotifications}
         >
           View All <Badge>{notificationCount}</Badge>
         </TooltipButton>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { PropertyUI } from '@/types/property-types';
 import { Badge } from '@/components/ui/badge';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -41,6 +42,22 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
   
   const navigateToAssociation = (associationId: string) => {
     navigate(`/system/associations/${associationId}`);
+  };
+
+  const handleViewProperty = (propertyId: string) => {
+    navigate(`/properties/${propertyId}`);
+    toast.success('Viewing property details');
+  };
+
+  const handleEditProperty = (propertyId: string) => {
+    navigate(`/properties/${propertyId}/edit`);
+    toast.success('Editing property');
+  };
+
+  const handleAssignOwner = (propertyId: string) => {
+    // Navigate to residents page with property preselected for assignment
+    navigate(`/residents/new?propertyId=${propertyId}`);
+    toast.success('Assign an owner to this property');
   };
 
   return (
@@ -92,14 +109,29 @@ export const PropertyTable: React.FC<PropertyTableProps> = ({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    <TooltipButton size="sm" variant="ghost" tooltip="View property details">
+                    <TooltipButton 
+                      size="sm" 
+                      variant="ghost" 
+                      tooltip="View property details"
+                      onClick={() => handleViewProperty(property.id)}
+                    >
                       View
                     </TooltipButton>
-                    <TooltipButton size="sm" variant="outline" tooltip="Edit property information">
+                    <TooltipButton 
+                      size="sm" 
+                      variant="outline" 
+                      tooltip="Edit property information"
+                      onClick={() => handleEditProperty(property.id)}
+                    >
                       Edit
                     </TooltipButton>
                     {!property.ownerName && (
-                      <TooltipButton size="sm" variant="outline" tooltip="Assign an owner" onClick={() => navigate('/residents')}>
+                      <TooltipButton 
+                        size="sm" 
+                        variant="outline" 
+                        tooltip="Assign an owner" 
+                        onClick={() => handleAssignOwner(property.id)}
+                      >
                         Assign Owner
                       </TooltipButton>
                     )}
