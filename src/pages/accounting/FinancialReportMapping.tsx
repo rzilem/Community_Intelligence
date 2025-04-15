@@ -247,9 +247,11 @@ const FinancialReportMapping = () => {
                             className="hidden"
                             onChange={handleFileChange}
                           />
-                          <Button as="span">
-                            <FileUp className="h-4 w-4 mr-2" />
-                            Select File
+                          <Button asChild>
+                            <span>
+                              <FileUp className="h-4 w-4 mr-2" />
+                              Select File
+                            </span>
                           </Button>
                         </label>
                       </div>

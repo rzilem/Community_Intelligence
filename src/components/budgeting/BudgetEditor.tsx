@@ -15,7 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatCurrency } from '@/lib/utils';
 import { GLAccount, GLAccountGroup, BudgetEntry, BudgetPrediction } from '@/types/accounting-types';
 import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BudgetEditorProps {
   glAccountGroups: GLAccountGroup[];
@@ -96,22 +96,27 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({
     if (!prediction) return null;
     
     return (
-      <Tooltip content={
-        <div className="max-w-xs">
-          <p className="font-medium">AI Suggestion: {formatCurrency(prediction.suggestedAmount)}</p>
-          <p className="text-xs text-muted-foreground mt-1">{prediction.reasoning}</p>
-          <p className="text-xs mt-2">Confidence: {(prediction.confidence * 100).toFixed(0)}%</p>
-        </div>
-      }>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="h-6 w-6 p-0 ml-1"
-          onClick={() => onApplyAISuggestion && onApplyAISuggestion(prediction)}
-        >
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-        </Button>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-6 w-6 p-0 ml-1"
+              onClick={() => onApplyAISuggestion && onApplyAISuggestion(prediction)}
+            >
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="max-w-xs">
+              <p className="font-medium">AI Suggestion: {formatCurrency(prediction.suggestedAmount)}</p>
+              <p className="text-xs text-muted-foreground mt-1">{prediction.reasoning}</p>
+              <p className="text-xs mt-2">Confidence: {(prediction.confidence * 100).toFixed(0)}%</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
