@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TestOpenAIButton from '../TestOpenAIButton';
 import OpenAIHelp from '../OpenAIHelp';
+import { Loader2 } from 'lucide-react';
 
 interface IntegrationConfigDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface IntegrationConfigDialogProps {
   onOpenAIModelChange: (value: string) => void;
   onSave: () => void;
   hasOpenAIKey: boolean;
+  isPending?: boolean;
 }
 
 const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
@@ -29,7 +31,8 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
   openAIModel,
   onOpenAIModelChange,
   onSave,
-  hasOpenAIKey
+  hasOpenAIKey,
+  isPending = false
 }) => {
   if (!selectedIntegration) return null;
   
@@ -58,6 +61,7 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
                 value={configFields[field]}
                 onChange={(e) => onConfigFieldChange(field, e.target.value)}
                 className="col-span-3"
+                disabled={isPending}
               />
             </div>
           ))}
@@ -71,6 +75,7 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
               <Select 
                 value={openAIModel} 
                 onValueChange={onOpenAIModelChange}
+                disabled={isPending}
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select model" />
@@ -89,11 +94,18 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
             <TestOpenAIButton />
           )}
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button onClick={onSave}>
-              Save
+            <Button onClick={onSave} disabled={isPending}>
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
             </Button>
           </div>
         </DialogFooter>

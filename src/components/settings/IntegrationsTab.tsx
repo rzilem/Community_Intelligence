@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -10,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const IntegrationsTab = () => {
   const { data: integrationSettings, isLoading } = useSystemSetting<IntegrationSettings>('integrations');
-  const { mutate: updateIntegrationSettings } = useUpdateSystemSetting<IntegrationSettings>('integrations');
+  const { mutate: updateIntegrationSettings, isPending } = useUpdateSystemSetting<IntegrationSettings>('integrations');
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
@@ -56,8 +57,14 @@ const IntegrationsTab = () => {
     if (updatedSettings.integrationSettings[name]) {
       delete updatedSettings.integrationSettings[name];
       
-      updateIntegrationSettings(updatedSettings);
-      toast.success(`${name} has been disconnected`);
+      updateIntegrationSettings(updatedSettings, {
+        onSuccess: () => {
+          toast.success(`${name} has been disconnected`);
+        },
+        onError: (error) => {
+          toast.error(`Failed to disconnect ${name}: ${error.message}`);
+        }
+      });
     }
   };
 
@@ -92,9 +99,16 @@ const IntegrationsTab = () => {
       
       console.log("Saving integration settings:", JSON.stringify(updatedSettings));
       
-      updateIntegrationSettings(updatedSettings);
-      setConfigDialogOpen(false);
-      toast.success(`${selectedIntegration} configuration saved`);
+      updateIntegrationSettings(updatedSettings, {
+        onSuccess: () => {
+          setConfigDialogOpen(false);
+          toast.success(`${selectedIntegration} configuration saved`);
+        },
+        onError: (error) => {
+          toast.error(`Failed to save configuration: ${error.message}`);
+          console.error("Save error:", error);
+        }
+      });
     }
   };
 
@@ -165,6 +179,7 @@ const IntegrationsTab = () => {
         onOpenAIModelChange={setOpenAIModel}
         onSave={handleSaveConfig}
         hasOpenAIKey={!!connectedIntegrations[selectedIntegration as string]?.apiKey}
+        isPending={isPending}
       />
     </div>
   );

@@ -16,11 +16,12 @@ const TestOpenAIButton = () => {
       const { data, error } = await supabase.functions.invoke('test-openai');
       
       if (error) {
+        console.error("Error invoking test-openai function:", error);
         throw new Error(error.message || 'Error testing OpenAI connection');
       }
       
       if (data.success) {
-        toast.success(`Connection successful! Response: "${data.response}"`);
+        toast.success(`Connection successful! Response: "${data.response}" using model ${data.model}`);
       } else {
         toast.error(`Connection failed: ${data.error}`);
       }

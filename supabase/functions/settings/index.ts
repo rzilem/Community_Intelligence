@@ -77,33 +77,43 @@ serve(async (req) => {
     } 
     else if (req.method === 'POST' || req.method === 'PUT') {
       if (action) {
-        // Parse the request body
-        const requestData = await req.json();
-        console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
-        
-        // Update the setting
-        const { data, error } = await supabase
-          .from('system_settings')
-          .upsert({ 
-            key: action, 
-            value: requestData,
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'key'
-          })
-          .select();
+        try {
+          // Parse the request body
+          const requestData = await req.json();
+          console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
           
-        if (error) {
-          console.error("Error updating settings:", error);
-          throw error;
+          // Update the setting
+          const { data, error } = await supabase
+            .from('system_settings')
+            .upsert({ 
+              key: action, 
+              value: requestData,
+              updated_at: new Date().toISOString()
+            }, {
+              onConflict: 'key'
+            })
+            .select();
+            
+          if (error) {
+            console.error("Error updating settings:", error);
+            throw error;
+          }
+          
+          console.log(`Successfully updated setting '${action}'`);
+          
+          return new Response(JSON.stringify({ success: true, data }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          });
+        } catch (parseError) {
+          console.error("Error parsing request JSON:", parseError);
+          return new Response(JSON.stringify({ 
+            error: 'Invalid JSON in request body' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          });
         }
-        
-        console.log(`Successfully updated setting '${action}'`);
-        
-        return new Response(JSON.stringify({ success: true, data }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        });
       }
     }
     

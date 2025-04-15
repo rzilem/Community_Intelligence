@@ -38,7 +38,8 @@ serve(async (req) => {
       });
     }
 
-    const integrationSettings = settingsData.value.integrationSettings || {};
+    // Extract the OpenAI config data
+    const integrationSettings = settingsData?.value?.integrationSettings || {};
     const openAIConfig = integrationSettings.OpenAI || {};
     const apiKey = openAIConfig.apiKey;
     const model = openAIConfig.model || 'gpt-4o-mini';
@@ -53,54 +54,66 @@ serve(async (req) => {
       });
     }
 
-    // Test the OpenAI API
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful assistant for a homeowners association management system.'
-          },
-          {
-            role: 'user',
-            content: 'Say "Connection successful" and nothing else.'
-          }
-        ],
-        max_tokens: 50
-      })
-    });
+    console.log("Testing OpenAI connection with model:", model);
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
-      console.error("OpenAI API error:", errorData);
-      
+    // Test the OpenAI API
+    try {
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful assistant for a homeowners association management system.'
+            },
+            {
+              role: 'user',
+              content: 'Say "Connection successful" and nothing else.'
+            }
+          ],
+          max_tokens: 50
+        })
+      });
+
+      if (!openaiResponse.ok) {
+        const errorData = await openaiResponse.json();
+        console.error("OpenAI API error:", errorData);
+        
+        return new Response(JSON.stringify({
+          success: false,
+          error: errorData.error?.message || "Error connecting to OpenAI API"
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 502,
+        });
+      }
+
+      const result = await openaiResponse.json();
+      const response = result.choices[0].message.content.trim();
+
+      return new Response(JSON.stringify({
+        success: true,
+        response: response,
+        model: model
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    } catch (openaiError) {
+      console.error("Error calling OpenAI:", openaiError);
       return new Response(JSON.stringify({
         success: false,
-        error: errorData.error?.message || "Error connecting to OpenAI API"
+        error: openaiError.message || "Error connecting to OpenAI API"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 502,
       });
     }
-
-    const result = await openaiResponse.json();
-    const response = result.choices[0].message.content.trim();
-
-    return new Response(JSON.stringify({
-      success: true,
-      response: response,
-      model: model
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
-
   } catch (error) {
     console.error("Unexpected error:", error);
     
