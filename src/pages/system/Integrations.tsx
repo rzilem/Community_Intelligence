@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Puzzle, CreditCard, Map, LightningBolt, Wallet, Mic, BarChart3, Home } from 'lucide-react';
+import { Puzzle, CreditCard, Map, Zap, Wallet, Mic, BarChart3, Home, ShoppingBag } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -47,7 +47,7 @@ const Integrations = () => {
       name: 'OpenAI',
       status: 'available' as const,
       description: 'Power AI capabilities throughout the platform with OpenAI integration',
-      icon: <LightningBolt className="h-6 w-6 text-purple-500" />,
+      icon: <Zap className="h-6 w-6 text-purple-500" />,
     },
     {
       name: 'Plaid',

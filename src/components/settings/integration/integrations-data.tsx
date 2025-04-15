@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LightningBolt, CreditCard, Map, Wallet, Mic, BarChart3 } from 'lucide-react';
+import { Zap, CreditCard, Map, Wallet, Mic, BarChart3 } from 'lucide-react';
 
 export interface IntegrationData {
   name: string;
@@ -14,7 +14,7 @@ export const getIntegrationsData = (): IntegrationData[] => [
   {
     name: 'OpenAI',
     description: 'Power AI capabilities throughout the platform with OpenAI integration',
-    icon: <LightningBolt className="h-6 w-6 text-purple-500" />,
+    icon: <Zap className="h-6 w-6 text-purple-500" />,
     configFields: ['apiKey', 'model']
   },
   {
