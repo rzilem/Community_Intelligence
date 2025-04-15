@@ -15,6 +15,7 @@ interface AssociationTabsProps {
   onDelete: (id: string) => void;
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
+  onViewProfile?: (id: string) => void;
 }
 
 const AssociationTabs: React.FC<AssociationTabsProps> = ({
@@ -26,7 +27,8 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
   onEdit,
   onDelete,
   onToggleSelect,
-  selectedAssociations = []
+  selectedAssociations = [],
+  onViewProfile
 }) => {
   return (
     <Tabs defaultValue="active" className="w-full">
@@ -69,6 +71,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onDelete={onDelete}
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
+              onViewProfile={onViewProfile}
             />
           </TabsContent>
           
@@ -80,6 +83,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onDelete={onDelete}
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
+              onViewProfile={onViewProfile}
             />
           </TabsContent>
           
@@ -91,6 +95,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onDelete={onDelete}
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
+              onViewProfile={onViewProfile}
             />
           </TabsContent>
         </>

@@ -51,10 +51,10 @@ const System = () => {
       link: '/system/email-workflows'
     },
     {
-      title: 'Data Import & Export',
-      icon: <Download className="h-5 w-5" />,
-      description: 'Import and export data in various formats (CSV, Excel, JSON).',
-      link: '/system/import-export'
+      title: 'Data Management',
+      icon: <Database className="h-5 w-5" />,
+      description: 'Manage associations, import and export data in various formats.',
+      link: '/system/data-management'
     },
     {
       title: 'Financial Report Mapping',
@@ -67,12 +67,6 @@ const System = () => {
       icon: <Workflow className="h-5 w-5" />,
       description: 'View and configure scheduled system processes and automations.',
       link: '/system/workflow-schedule'
-    },
-    {
-      title: 'Associations',
-      icon: <Network className="h-5 w-5" />,
-      description: 'Manage HOAs, communities, and their relationships within the platform.',
-      link: '/system/associations'
     },
     {
       title: 'Permissions',
