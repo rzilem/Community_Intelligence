@@ -60,8 +60,6 @@ export const useCalendarEventMutations = () => {
       color: newEvent.color || getDefaultColorForType(newEvent.type)
     };
 
-    console.log("Creating event:", eventToSave);
-
     // Save to Supabase
     createEvent(eventToSave, {
       onSuccess: () => {

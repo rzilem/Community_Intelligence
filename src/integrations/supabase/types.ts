@@ -496,10 +496,12 @@ export type Database = {
           booked_by: string | null
           color: string | null
           created_at: string
+          description: string | null
           end_time: string
           event_type: string
           hoa_id: string
           id: string
+          location: string | null
           start_time: string
           title: string
           updated_at: string
@@ -510,10 +512,12 @@ export type Database = {
           booked_by?: string | null
           color?: string | null
           created_at?: string
+          description?: string | null
           end_time: string
           event_type: string
           hoa_id: string
           id?: string
+          location?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -524,10 +528,12 @@ export type Database = {
           booked_by?: string | null
           color?: string | null
           created_at?: string
+          description?: string | null
           end_time?: string
           event_type?: string
           hoa_id?: string
           id?: string
+          location?: string | null
           start_time?: string
           title?: string
           updated_at?: string
