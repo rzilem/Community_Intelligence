@@ -1,51 +1,32 @@
 
-import React from 'react';
-import { RequireAuth } from '@/components/auth/RequireAuth';
-import CommunityManagement from '@/pages/community-management/CommunityManagement';
-import CreateBidRequest from '@/pages/community-management/CreateBidRequest';
-import HomeownerRequestsQueue from '@/pages/community-management/HomeownerRequestsQueue';
-import BidRequests from '@/pages/community-management/BidRequests';
-import ProposalRequest from '@/pages/community-management/ProposalRequest';
+import { RouteObject } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import Associations from "@/pages/Associations";
+import Homeowners from "@/pages/Homeowners";
+import HomeownerRequests from "@/pages/HomeownerRequests";
+import Compliance from "@/pages/Compliance";
+import BidRequests from "@/pages/BidRequests";
 
-export const communityManagementRoutes = [
+// Community Management Routes
+export const communityManagementRoutes: RouteObject[] = [
   {
-    path: '/community-management',
-    element: (
-      <RequireAuth>
-        <CommunityManagement />
-      </RequireAuth>
-    ),
+    path: "/associations",
+    element: <RequireAuth><Associations /></RequireAuth>
   },
   {
-    path: '/community-management/homeowner-requests',
-    element: (
-      <RequireAuth>
-        <HomeownerRequestsQueue />
-      </RequireAuth>
-    ),
+    path: "/homeowners",
+    element: <RequireAuth><Homeowners /></RequireAuth>
   },
   {
-    path: '/community-management/create-bid-request',
-    element: (
-      <RequireAuth>
-        <CreateBidRequest />
-      </RequireAuth>
-    ),
+    path: "/community-management/homeowner-requests",
+    element: <RequireAuth><HomeownerRequests /></RequireAuth>
   },
   {
-    path: '/community-management/proposal-request',
-    element: (
-      <RequireAuth>
-        <ProposalRequest />
-      </RequireAuth>
-    ),
+    path: "/compliance",
+    element: <RequireAuth><Compliance /></RequireAuth>
   },
   {
-    path: '/bid-requests',
-    element: (
-      <RequireAuth>
-        <BidRequests />
-      </RequireAuth>
-    ),
+    path: "/bid-requests",
+    element: <RequireAuth><BidRequests /></RequireAuth>
   }
 ];
