@@ -23,9 +23,9 @@ const queryClient = new QueryClient({
 
 // Create AppContent component to use hooks after QueryClientProvider is available
 function AppContent() {
-  // Import these only inside the component to ensure QueryClient is available
-  const { useSystemSetting } = require('@/hooks/settings/use-system-settings');
-  const { applyAppearanceSettings } = require('@/hooks/settings/use-system-settings-helpers');
+  // Import these directly (not using require)
+  import { useSystemSetting } from '@/hooks/settings/use-system-settings';
+  import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
   
   // Load appearance settings
   const appearanceSettings = useSystemSetting<AppearanceSettings>('appearance').data;
