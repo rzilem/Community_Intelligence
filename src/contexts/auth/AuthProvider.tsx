@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { Profile } from '@/types/app-types';
@@ -15,14 +14,14 @@ import {
 import { fetchUserProfile } from '@/services/user-service';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userAssociations, setUserAssociations] = useState<UserAssociation[]>([]);
-  const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [userRole, setUserRole] = React.useState<string | null>(null);
+  const [userAssociations, setUserAssociations] = React.useState<UserAssociation[]>([]);
+  const [currentAssociation, setCurrentAssociation] = React.useState<Association | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

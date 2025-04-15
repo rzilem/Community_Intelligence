@@ -23,13 +23,13 @@ const App = () => {
     <BrowserRouter>
       <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <TooltipProvider>
+          <TooltipProvider>
+            <AuthProvider>
               <Toaster />
               <Sonner />
               <AppRouter />
-            </TooltipProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </TooltipProvider>
         </QueryClientProvider>
       </React.StrictMode>
     </BrowserRouter>
