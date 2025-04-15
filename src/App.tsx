@@ -9,6 +9,7 @@ import { Toaster as SonnerToaster } from 'sonner';
 import { AppearanceSettings } from '@/types/settings-types';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
 import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Create router
 const router = createBrowserRouter(mainRoutes);
@@ -36,11 +37,13 @@ function AppContent() {
   }, [appearanceSettings]);
 
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-      <Toaster />
-      <SonnerToaster position="top-right" />
-    </AuthProvider>
+    <TooltipProvider>
+      <AuthProvider>
+        <RouterProvider router={router} />
+        <Toaster />
+        <SonnerToaster position="top-right" />
+      </AuthProvider>
+    </TooltipProvider>
   );
 }
 

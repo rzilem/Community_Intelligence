@@ -16,7 +16,7 @@ import {
   PauseCircle
 } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 
 interface ActiveWorkflowCardProps {
   workflow: Workflow;
@@ -101,52 +101,58 @@ const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
 
           <div className="grid grid-cols-2 gap-2 mb-2">
             {workflow.status === 'active' && onPauseWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onPauseWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                  >
-                    <PauseCircle className="h-4 w-4 mr-2" />
-                    Pause
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Pause this workflow</TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => onPauseWorkflow(workflow.id)} 
+                      variant="outline"
+                      size="sm"
+                    >
+                      <PauseCircle className="h-4 w-4 mr-2" />
+                      Pause
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Pause this workflow</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             
             {workflow.status === 'inactive' && onResumeWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onResumeWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                  >
-                    <PlayCircle className="h-4 w-4 mr-2" />
-                    Resume
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Resume this workflow</TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => onResumeWorkflow(workflow.id)} 
+                      variant="outline"
+                      size="sm"
+                    >
+                      <PlayCircle className="h-4 w-4 mr-2" />
+                      Resume
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Resume this workflow</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
 
             {onCancelWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onCancelWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel this workflow</TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      onClick={() => onCancelWorkflow(workflow.id)} 
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Cancel this workflow</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
 
