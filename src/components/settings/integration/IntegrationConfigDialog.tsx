@@ -42,10 +42,21 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
       onSave();
     }
   };
+
+  const isValidConfig = () => {
+    if (selectedIntegration === 'OpenAI') {
+      return !!configFields.apiKey && !!openAIModel;
+    }
+    
+    // For other integrations, check that all fields have values
+    return Object.keys(configFields)
+      .filter(field => field !== 'configDate' && field !== 'model')
+      .every(field => !!configFields[field]);
+  };
   
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !isPending && onOpenChange(newOpen)}>
-      <DialogContent onKeyDown={handleKeyDown}>
+      <DialogContent onKeyDown={handleKeyDown} className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {selectedIntegration} Configuration
@@ -53,6 +64,11 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
           </DialogTitle>
           <DialogDescription>
             Enter the required information to {hasOpenAIKey ? 'update' : 'connect'} {selectedIntegration}.
+            {selectedIntegration === 'OpenAI' && (
+              <div className="mt-1 text-xs text-amber-600">
+                This requires a valid OpenAI API key. See <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="underline hover:text-amber-700">OpenAI API Keys</a>.
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
         
@@ -65,11 +81,12 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
               <Input
                 id={field}
                 type={field.toLowerCase().includes('key') || field.toLowerCase().includes('secret') ? 'password' : 'text'}
-                value={configFields[field]}
+                value={configFields[field] || ''}
                 onChange={(e) => onConfigFieldChange(field, e.target.value)}
                 className="col-span-3"
                 disabled={isPending}
                 autoComplete="off"
+                placeholder={`Enter ${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}`}
               />
             </div>
           ))}
@@ -105,7 +122,7 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button onClick={onSave} disabled={isPending || (selectedIntegration === 'OpenAI' && !configFields.apiKey)}>
+            <Button onClick={onSave} disabled={isPending || !isValidConfig()}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

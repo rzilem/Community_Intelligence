@@ -15,6 +15,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Settings function called with URL:", req.url);
+    
     // Create a Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -37,7 +39,10 @@ serve(async (req) => {
           .from('system_settings')
           .select('key, value');
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching all settings:", error);
+          throw error;
+        }
         
         // Transform the result into a more usable format
         const settings = {};
@@ -60,12 +65,14 @@ serve(async (req) => {
           
         if (error) {
           if (error.code === 'PGRST116') {
+            console.log(`Setting '${action}' not found, returning default empty value`);
             // Not found, return default empty value
             return new Response(JSON.stringify({ value: {} }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200, // Changed from 404 to 200 to avoid client errors
+              status: 200,
             });
           }
+          console.error(`Error fetching setting '${action}':`, error);
           throw error;
         }
         
@@ -95,7 +102,13 @@ serve(async (req) => {
             
           if (error) {
             console.error("Error updating settings:", error);
-            throw error;
+            return new Response(JSON.stringify({ 
+              success: false,
+              error: `Database error: ${error.message}` 
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
           }
           
           console.log(`Successfully updated setting '${action}'`);
@@ -112,22 +125,24 @@ serve(async (req) => {
           console.error("Error parsing request JSON:", parseError);
           return new Response(JSON.stringify({ 
             success: false,
-            error: 'Invalid JSON in request body' 
+            error: 'Invalid JSON in request body: ' + (parseError.message || 'Unknown parsing error')
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200, // Changed from 400 to 200 to avoid client errors
+            status: 200,
           });
         }
       }
     }
     
     // If we reached this point, the request was not handled
+    console.log("Request not handled:", req.method, action);
     return new Response(JSON.stringify({ 
       success: false,
-      error: 'Not found or method not allowed' 
+      error: 'Not found or method not allowed',
+      details: { method: req.method, action }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Changed from 404 to 200 to avoid client errors
+      status: 200,
     });
     
   } catch (error) {
@@ -135,10 +150,11 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message || 'An unexpected error occurred' 
+      error: error.message || 'An unexpected error occurred',
+      stack: error.stack
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Changed from 500 to 200 to avoid client errors
+      status: 200,
     });
   }
 });

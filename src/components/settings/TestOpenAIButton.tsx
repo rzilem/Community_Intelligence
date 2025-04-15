@@ -13,23 +13,25 @@ const TestOpenAIButton = () => {
       setIsLoading(true);
       toast.info("Testing OpenAI connection...");
       
+      console.log("Invoking test-openai function");
       const { data, error } = await supabase.functions.invoke('test-openai');
+      
+      console.log("Test OpenAI response:", data);
       
       if (error) {
         console.error("Error invoking test-openai function:", error);
-        throw new Error(error.message || 'Error testing OpenAI connection');
+        throw new Error(error.message || 'Error connecting to OpenAI test service');
       }
       
       if (!data) {
         throw new Error('No response received from OpenAI test function');
       }
       
-      console.log("Test OpenAI response:", data);
-      
       if (data.success) {
         toast.success(`Connection successful! Response: "${data.response}" using model ${data.model}`);
       } else {
-        toast.error(`Connection failed: ${data.error}`);
+        console.error("OpenAI connection failed:", data.error, data);
+        toast.error(`Connection failed: ${data.error || 'Unknown error'}`);
       }
       
     } catch (err) {
