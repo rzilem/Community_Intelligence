@@ -30,6 +30,8 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   onImportAnother,
   onAssociationChange
 }) => {
+  const [selectedType, setSelectedType] = React.useState('associations');
+
   return (
     <div className="space-y-6">
       {!importResults ? (
@@ -50,7 +52,9 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 />
                 
                 <DataTypeSelector 
+                  value={selectedType}
                   onChange={(type) => {
+                    setSelectedType(type);
                     if (importFile) {
                       onFileUpload(importFile, [], type);
                     }
@@ -60,7 +64,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 <FileUploader 
                   onFileSelected={(file) => {
                     if (file && associationId) {
-                      onFileUpload(file, [], '');
+                      onFileUpload(file, [], selectedType);
                     }
                   }}
                   selectedFile={importFile}
