@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Settings, User, Bell, Shield, Palette, Smartphone, Globe, Mail } from 'lucide-react';
@@ -19,7 +18,7 @@ const SettingsPage = () => {
     lastName: profile?.last_name || '',
     email: user?.email || '',
     jobTitle: profile?.job_title || '',
-    phone: profile?.phone || '',
+    phone: profile?.phone_number || '',
   });
 
   const [notificationSettings, setNotificationSettings] = useState({

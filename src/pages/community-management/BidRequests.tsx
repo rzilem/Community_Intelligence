@@ -12,8 +12,8 @@ import BidRequestList from '@/components/bid-requests/BidRequestList';
 const BidRequests: React.FC = () => {
   const [bidRequests, setBidRequests] = useState<BidRequestWithVendors[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, profile } = useAuth();
-  const associationId = profile?.activeAssociationId || '';
+  const { user, profile, currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id || '';
   const navigate = useNavigate();
 
   useEffect(() => {

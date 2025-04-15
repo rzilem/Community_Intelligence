@@ -39,8 +39,8 @@ const CreateBidRequest: React.FC = () => {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { user, profile } = useAuth();
-  const associationId = profile?.activeAssociationId || '';
+  const { user, profile, currentAssociation } = useAuth();
+  const associationId = currentAssociation?.id || '';
   const navigate = useNavigate();
 
   // Auto-save draft every 30 seconds if modified

@@ -17,7 +17,7 @@ export const saveUserColumnPreferences = async (
       .eq('user_id', userId)
       .single();
     
-    let columnPreferences = {};
+    let columnPreferences: Record<string, string[]> = {};
     
     if (settings) {
       // Merge with existing column preferences if they exist

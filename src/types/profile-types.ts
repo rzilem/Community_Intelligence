@@ -5,8 +5,11 @@ export interface Profile {
   last_name?: string;
   email?: string;
   phone_number?: string;
+  phone?: string; // Backward compatibility
   profile_image_url?: string;
   role: string;
+  job_title?: string;
+  activeAssociationId?: string;
   created_at?: string;
   updated_at?: string;
 }
