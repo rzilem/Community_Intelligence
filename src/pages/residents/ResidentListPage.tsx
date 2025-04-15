@@ -13,7 +13,15 @@ const ResidentListPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   
-  const { residents, loading, associations, fetchResidentsData } = useResidentsData();
+  const { 
+    residents, 
+    loading, 
+    associations, 
+    fetchResidentsData, 
+    exportResidentsAsCSV, 
+    exportResidentsAsPDF 
+  } = useResidentsData();
+  
   const { 
     searchTerm, 
     setSearchTerm, 
@@ -65,6 +73,8 @@ const ResidentListPage = () => {
             isAddDialogOpen={isAddDialogOpen}
             setIsAddDialogOpen={setIsAddDialogOpen}
             onAddSuccess={handleAddSuccess}
+            onExportCSV={exportResidentsAsCSV}
+            onExportPDF={exportResidentsAsPDF}
           />
         </div>
 
