@@ -6,7 +6,7 @@ import { SettingKey, defaultSettings, SystemSettingResult } from './settings-hoo
 
 // Fetch a specific setting by key
 export const useSystemSetting = <T>(key: SettingKey): SystemSettingResult<T> => {
-  const { data, isLoading, error } = useQuery({
+  const result = useQuery({
     queryKey: ['systemSettings', key],
     queryFn: async (): Promise<T> => {
       try {
@@ -35,9 +35,10 @@ export const useSystemSetting = <T>(key: SettingKey): SystemSettingResult<T> => 
     }
   });
 
+  // We need to return a SystemSettingResult with all properties from UseQueryResult
+  // While ensuring data is always defined even if the query hasn't completed
   return {
-    data: data || (defaultSettings[key] as unknown) as T,
-    isLoading,
-    error
-  };
+    ...result,
+    data: result.data ?? (defaultSettings[key] as unknown) as T,
+  } as SystemSettingResult<T>;
 };
