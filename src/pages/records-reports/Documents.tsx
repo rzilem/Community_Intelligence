@@ -12,6 +12,7 @@ import DocumentFilters from '@/components/documents/DocumentFilters';
 import DocumentHeader from '@/components/documents/DocumentHeader';
 import DocumentContent from '@/components/documents/DocumentContent';
 import DocumentDialogs from '@/components/documents/DocumentDialogs';
+import { toast } from 'sonner';
 
 const Documents = () => {
   // State
@@ -68,7 +69,10 @@ const Documents = () => {
   };
 
   const handleUpload = (file: File, category: string, description: string) => {
-    if (!selectedAssociationId) return;
+    if (!selectedAssociationId) {
+      toast.error('Please select an association first');
+      return;
+    }
     
     uploadDocument.mutate({
       file,
@@ -79,12 +83,19 @@ const Documents = () => {
       onSuccess: () => {
         setIsUploadDialogOpen(false);
         refetchDocuments();
+        toast.success('Document uploaded successfully');
+      },
+      onError: (error) => {
+        toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
   };
 
   const handleCreateCategory = (name: string) => {
-    if (!selectedAssociationId) return;
+    if (!selectedAssociationId) {
+      toast.error('Please select an association first');
+      return;
+    }
     
     createCategory.mutate({
       name,
@@ -93,6 +104,10 @@ const Documents = () => {
       onSuccess: () => {
         setIsCategoryDialogOpen(false);
         refetchCategories();
+        toast.success('Category created successfully');
+      },
+      onError: (error) => {
+        toast.error(`Failed to create category: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
   };
@@ -111,11 +126,17 @@ const Documents = () => {
   };
 
   const handleDeleteDocument = (doc: Document) => {
-    deleteDocument.mutate(doc, {
-      onSuccess: () => {
-        refetchDocuments();
-      }
-    });
+    if (confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+      deleteDocument.mutate(doc, {
+        onSuccess: () => {
+          refetchDocuments();
+          toast.success('Document deleted successfully');
+        },
+        onError: (error) => {
+          toast.error(`Delete failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      });
+    }
   };
 
   const isLoading = documentsLoading || categoriesLoading;
@@ -152,7 +173,13 @@ const Documents = () => {
                     onTabChange={setActiveTab}
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
-                    onUploadClick={() => setIsUploadDialogOpen(true)}
+                    onUploadClick={() => {
+                      if (!selectedAssociationId) {
+                        toast.error('Please select an association first');
+                        return;
+                      }
+                      setIsUploadDialogOpen(true);
+                    }}
                     isUploadDisabled={!selectedAssociationId}
                   />
 
@@ -179,6 +206,7 @@ const Documents = () => {
         onCreateCategory={handleCreateCategory}
         categories={categories || []}
         isUploading={uploadDocument.isPending}
+        isCreatingCategory={createCategory.isPending}
       />
     </PageTemplate>
   );

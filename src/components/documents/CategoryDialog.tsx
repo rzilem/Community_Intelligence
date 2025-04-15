@@ -19,12 +19,14 @@ interface CategoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (name: string) => void;
+  isLoading?: boolean;
 }
 
 const CategoryDialog: React.FC<CategoryDialogProps> = ({
   isOpen,
   onClose,
-  onSubmit
+  onSubmit,
+  isLoading = false
 }) => {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -42,7 +44,7 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Category</DialogTitle>
+          <DialogTitle>Create Document Category</DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -58,6 +60,7 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
                       id="name"
                       placeholder="Enter category name"
                       {...field}
+                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
@@ -66,11 +69,11 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({
             />
             
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit">
-                Create
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Creating...' : 'Create Category'}
               </Button>
             </div>
           </form>

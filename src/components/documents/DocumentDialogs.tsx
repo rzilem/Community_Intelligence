@@ -13,6 +13,7 @@ interface DocumentDialogsProps {
   onCreateCategory: (name: string) => void;
   categories: DocumentCategory[];
   isUploading: boolean;
+  isCreatingCategory?: boolean;
 }
 
 const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
@@ -23,7 +24,8 @@ const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
   onUpload,
   onCreateCategory,
   categories,
-  isUploading
+  isUploading,
+  isCreatingCategory = false
 }) => {
   return (
     <>
@@ -41,6 +43,7 @@ const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
         isOpen={isCategoryDialogOpen}
         onClose={onCloseCategoryDialog}
         onSubmit={onCreateCategory}
+        isLoading={isCreatingCategory}
       />
     </>
   );
