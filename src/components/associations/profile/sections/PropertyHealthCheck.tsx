@@ -146,7 +146,7 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
           {(unitsVsProperties !== 0 || propertiesWithoutOwners !== 0) && (
             <div className="pt-2">
               <Button asChild className="w-full">
-                <Link to="/system/data-import-export">
+                <Link to="/system/import-export">
                   <FileUp className="h-4 w-4 mr-2" />
                   Import Properties & Owners
                 </Link>

@@ -53,7 +53,7 @@ export const AssociationStats: React.FC<AssociationStatsProps> = ({ association 
           <AlertTitle>Data Discrepancy Detected</AlertTitle>
           <AlertDescription>
             This association has {association.total_units} units but only {propertyCount} properties. 
-            You should <Link to="/system/data-import-export" className="underline font-medium">import property data</Link> or 
+            You should <Link to="/system/import-export" className="underline font-medium">import property data</Link> or 
             update the unit count to match.
           </AlertDescription>
         </Alert>
@@ -129,7 +129,7 @@ export const AssociationStats: React.FC<AssociationStatsProps> = ({ association 
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                 <Button className="flex items-center gap-2" asChild>
-                  <Link to="/system/data-import-export">
+                  <Link to="/system/import-export">
                     <Users2 className="h-4 w-4" />
                     <span>Import Properties</span>
                   </Link>
