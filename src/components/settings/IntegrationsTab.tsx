@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useSystemSetting, useUpdateSystemSetting } from '@/hooks/settings/use-system-settings';
@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import TestOpenAIButton from './TestOpenAIButton';
+import OpenAIHelp from './OpenAIHelp';
 
 interface IntegrationCardProps { 
   name: string; 
@@ -19,6 +22,7 @@ interface IntegrationCardProps {
   onConfigure?: () => void;
   onDisconnect?: () => void;
   onConnect?: () => void;
+  configDate?: string;
 }
 
 const IntegrationCard: React.FC<IntegrationCardProps> = ({ 
@@ -28,7 +32,8 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
   icon,
   onConfigure,
   onDisconnect,
-  onConnect 
+  onConnect,
+  configDate
 }) => {
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -43,6 +48,10 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground mt-2">{description}</p>
+        
+        {status === 'connected' && configDate && (
+          <p className="text-xs text-muted-foreground mt-1">Last configured: {configDate}</p>
+        )}
         
         {status !== 'coming-soon' && (
           <div className="mt-4 flex justify-end space-x-2">
@@ -74,13 +83,23 @@ const IntegrationsTab = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<string | null>(null);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
+  const [openAIModel, setOpenAIModel] = useState<string>('gpt-4o-mini');
 
   // Get connected integrations from settings
   const connectedIntegrations = integrationSettings?.integrationSettings || {};
 
   const handleConfigureIntegration = (name: string) => {
     setSelectedIntegration(name);
-    setConfigFields(connectedIntegrations[name] || {});
+    const integrationConfig = connectedIntegrations[name] || {};
+    setConfigFields({...integrationConfig});
+    
+    // Set OpenAI model if available
+    if (name === 'OpenAI' && integrationConfig.model) {
+      setOpenAIModel(integrationConfig.model);
+    } else {
+      setOpenAIModel('gpt-4o-mini');
+    }
+    
     setConfigDialogOpen(true);
   };
 
@@ -94,7 +113,7 @@ const IntegrationsTab = () => {
     } else if (name === 'Google Maps') {
       defaultFields = { apiKey: '' };
     } else if (name === 'OpenAI') {
-      defaultFields = { apiKey: '' };
+      defaultFields = { apiKey: '', model: 'gpt-4o-mini' };
     } else if (name === 'Plaid') {
       defaultFields = { clientId: '', secret: '' };
     }
@@ -124,9 +143,22 @@ const IntegrationsTab = () => {
         ...integrationSettings,
         integrationSettings: {
           ...integrationSettings.integrationSettings,
-          [selectedIntegration]: configFields
         }
       };
+      
+      // Add additional fields based on integration type
+      if (selectedIntegration === 'OpenAI') {
+        updatedSettings.integrationSettings[selectedIntegration] = {
+          ...configFields,
+          model: openAIModel,
+          configDate: new Date().toISOString()
+        };
+      } else {
+        updatedSettings.integrationSettings[selectedIntegration] = {
+          ...configFields,
+          configDate: new Date().toISOString()
+        };
+      }
       
       // Update in the database
       updateIntegrationSettings(updatedSettings);
@@ -135,34 +167,53 @@ const IntegrationsTab = () => {
     }
   };
 
+  const formatDate = (dateString?: string): string => {
+    if (!dateString) return 'Unknown';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
   const integrations = [
+    {
+      name: 'OpenAI',
+      status: (connectedIntegrations['OpenAI'] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
+      description: 'Power AI capabilities throughout the platform with OpenAI integration',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-purple-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+      configFields: ['apiKey', 'model'],
+      configDate: connectedIntegrations['OpenAI']?.configDate
+    },
     {
       name: 'Stripe',
       status: (connectedIntegrations['Stripe'] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
       description: 'Process payments for assessments and fees through Stripe',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-blue-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
-      configFields: ['apiKey', 'webhookSecret']
+      configFields: ['apiKey', 'webhookSecret'],
+      configDate: connectedIntegrations['Stripe']?.configDate
     },
     {
       name: 'Google Maps',
       status: (connectedIntegrations['Google Maps'] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
       description: 'Display and manage property locations with Google Maps integration',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-green-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
-      configFields: ['apiKey']
-    },
-    {
-      name: 'OpenAI',
-      status: (connectedIntegrations['OpenAI'] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
-      description: 'Power AI capabilities throughout the platform with OpenAI integration',
-      icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-purple-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
-      configFields: ['apiKey']
+      configFields: ['apiKey'],
+      configDate: connectedIntegrations['Google Maps']?.configDate
     },
     {
       name: 'Plaid',
       status: (connectedIntegrations['Plaid'] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
       description: 'Link and manage bank accounts securely with Plaid',
       icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="h-6 w-6 text-teal-500"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>,
-      configFields: ['clientId', 'secret']
+      configFields: ['clientId', 'secret'],
+      configDate: connectedIntegrations['Plaid']?.configDate
     },
     {
       name: 'Eleven Labs',
@@ -214,6 +265,7 @@ const IntegrationsTab = () => {
             onConfigure={() => handleConfigureIntegration(integration.name)}
             onDisconnect={() => handleDisconnectIntegration(integration.name)}
             onConnect={() => handleConnectIntegration(integration.name)}
+            configDate={integration.configDate ? formatDate(integration.configDate) : undefined}
           />
         ))}
       </div>
@@ -222,14 +274,17 @@ const IntegrationsTab = () => {
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{selectedIntegration} Configuration</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              {selectedIntegration} Configuration
+              {selectedIntegration === 'OpenAI' && <OpenAIHelp />}
+            </DialogTitle>
             <DialogDescription>
               Enter the required information to {connectedIntegrations[selectedIntegration as string] ? 'update' : 'connect'} {selectedIntegration}.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
-            {Object.keys(configFields).map((field) => (
+            {Object.keys(configFields).filter(field => field !== 'configDate' && field !== 'model').map((field) => (
               <div key={field} className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor={field} className="text-right">
                   {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
@@ -243,15 +298,41 @@ const IntegrationsTab = () => {
                 />
               </div>
             ))}
+            
+            {/* Special field for OpenAI model selection */}
+            {selectedIntegration === 'OpenAI' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="model" className="text-right">
+                  Model
+                </Label>
+                <Select 
+                  value={openAIModel} 
+                  onValueChange={setOpenAIModel}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
+                    <SelectItem value="gpt-4o">GPT-4o (Powerful)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveConfig}>
-              Save
-            </Button>
+          <DialogFooter className="flex items-center justify-between sm:justify-between">
+            {selectedIntegration === 'OpenAI' && connectedIntegrations['OpenAI']?.apiKey && (
+              <TestOpenAIButton />
+            )}
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveConfig}>
+                Save
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

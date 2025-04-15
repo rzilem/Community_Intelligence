@@ -39,8 +39,13 @@ export interface SecuritySettings {
   ipWhitelist: string[];
 }
 
+export interface IntegrationConfig {
+  [key: string]: string;
+  configDate?: string;
+}
+
 export interface IntegrationSettings {
-  integrationSettings: Record<string, any>;
+  integrationSettings: Record<string, IntegrationConfig>;
 }
 
 export interface SystemSettings {
