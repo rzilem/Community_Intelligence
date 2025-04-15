@@ -38,19 +38,19 @@ export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
         </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <Mail className="h-4 w-4 mr-2" />
-          {email}
+          {email || 'No email available'}
         </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <Phone className="h-4 w-4 mr-2" />
-          {phone}
+          {phone || 'No phone available'}
         </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <Calendar className="h-4 w-4 mr-2" />
-          Move in: {formatDate(moveInDate)}
+          Move in: {moveInDate ? formatDate(moveInDate) : 'N/A'}
         </div>
         <div className="flex items-center text-sm text-muted-foreground">
           <MapPin className="h-4 w-4 mr-2" />
-          {`${property} • ${unit}`}
+          {property ? `${property}${unit ? ` • ${unit}` : ''}` : 'No address available'}
         </div>
       </div>
       <Card className="rounded-lg">
@@ -72,9 +72,9 @@ export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
                 Last Contact
               </div>
               <div className="ml-6 text-sm space-y-1">
-                <p>Called: {lastContact.called}</p>
-                <p>Office Visit: {lastContact.visit}</p>
-                <p>Email: {lastContact.email}</p>
+                <p>Called: {lastContact.called || 'N/A'}</p>
+                <p>Office Visit: {lastContact.visit || 'N/A'}</p>
+                <p>Email: {lastContact.email || 'N/A'}</p>
               </div>
             </div>
           </div>

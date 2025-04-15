@@ -45,7 +45,9 @@ export const saveUserColumnPreferences = async (
         .from('user_settings')
         .insert({
           user_id: userId,
-          column_preferences: columnPreferences
+          column_preferences: columnPreferences,
+          theme: 'system',
+          notifications_enabled: true
         });
       
       if (error) throw error;

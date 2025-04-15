@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
 import { toast } from 'sonner';
 import { mockHomeowners } from '@/pages/homeowners/homeowner-data';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useHomeownerData = (homeownerId: string) => {
   const [homeowner, setHomeowner] = useState<Homeowner>({
@@ -32,52 +33,125 @@ export const useHomeownerData = (homeownerId: string) => {
     const fetchHomeowner = async () => {
       setLoading(true);
       try {
-        // First check if the homeowner exists in the mockHomeowners data
-        const foundHomeowner = mockHomeowners.find(h => h.id === homeownerId);
-        
-        if (foundHomeowner) {
-          // Convert the mockHomeowners data to match Homeowner type
+        // First, try to fetch resident data from the database
+        const { data: residentData, error: residentError } = await supabase
+          .from('residents')
+          .select(`
+            *,
+            property:properties(
+              id, 
+              address, 
+              unit_number, 
+              city, 
+              state, 
+              zip
+            ),
+            user:user_id(
+              profile:profiles(
+                id,
+                first_name,
+                last_name,
+                email,
+                phone_number,
+                profile_image_url
+              )
+            )
+          `)
+          .eq('id', homeownerId)
+          .single();
+
+        if (residentError) {
+          console.warn(`Error fetching resident data: ${residentError.message}`);
+          
+          // Check if the homeowner exists in the mockHomeowners data as fallback
+          const foundHomeowner = mockHomeowners.find(h => h.id === homeownerId);
+          
+          if (foundHomeowner) {
+            // Convert the mockHomeowners data to match Homeowner type
+            const convertedHomeowner: Homeowner = {
+              id: foundHomeowner.id,
+              name: foundHomeowner.name,
+              email: foundHomeowner.email,
+              phone: foundHomeowner.phone || '',
+              moveInDate: foundHomeowner.moveInDate,
+              property: foundHomeowner.property || foundHomeowner.propertyAddress || '',
+              unit: foundHomeowner.unit || foundHomeowner.unitNumber || '',
+              balance: foundHomeowner.balance || 0,
+              tags: foundHomeowner.tags || [],
+              violations: foundHomeowner.violations || [],
+              lastContact: {
+                called: foundHomeowner.lastContact?.called || '',
+                visit: foundHomeowner.lastContact?.visit || '',
+                email: foundHomeowner.lastContact?.email || ''
+              },
+              status: foundHomeowner.status,
+              avatarUrl: foundHomeowner.avatarUrl || '',
+              notes: (foundHomeowner.notes || []).map(note => ({
+                type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
+                author: note.author || '',
+                content: note.content || '',
+                date: note.date || ''
+              })),
+              // Add additional fields for compatibility
+              type: foundHomeowner.type,
+              propertyId: foundHomeowner.propertyId,
+              propertyAddress: foundHomeowner.propertyAddress,
+              association: foundHomeowner.association,
+              moveOutDate: foundHomeowner.moveOutDate,
+              lastPayment: foundHomeowner.lastPayment,
+              aclStartDate: foundHomeowner.aclStartDate
+            };
+            
+            setHomeowner(convertedHomeowner);
+          } else {
+            console.warn(`Homeowner with id ${homeownerId} not found, using empty data`);
+            // If not found in mock data either, just use the ID
+            setHomeowner(prevState => ({...prevState, id: homeownerId}));
+          }
+        } else if (residentData) {
+          // Build the homeowner object from the database data
+          const propertyAddress = residentData.property ? 
+            `${residentData.property.address || ''} ${residentData.property.unit_number || ''}`.trim() : '';
+          
+          let fullName = residentData.name || '';
+          if (!fullName && residentData.user?.profile) {
+            fullName = `${residentData.user.profile.first_name || ''} ${residentData.user.profile.last_name || ''}`.trim();
+          }
+          
+          const email = residentData.email || residentData.user?.profile?.email || '';
+          const phone = residentData.phone || residentData.user?.profile?.phone_number || '';
+          const avatarUrl = residentData.user?.profile?.profile_image_url || '';
+          
           const convertedHomeowner: Homeowner = {
-            id: foundHomeowner.id,
-            name: foundHomeowner.name,
-            email: foundHomeowner.email,
-            phone: foundHomeowner.phone || '',
-            moveInDate: foundHomeowner.moveInDate,
-            property: foundHomeowner.property || foundHomeowner.propertyAddress || '',
-            unit: foundHomeowner.unit || foundHomeowner.unitNumber || '',
-            balance: foundHomeowner.balance || 0,
-            tags: foundHomeowner.tags || [],
-            violations: foundHomeowner.violations || [],
+            id: residentData.id,
+            name: fullName,
+            email: email,
+            phone: phone,
+            moveInDate: residentData.move_in_date || '',
+            moveOutDate: residentData.move_out_date || '',
+            property: propertyAddress,
+            propertyId: residentData.property_id || '',
+            unit: residentData.property?.unit_number || '',
+            balance: 0, // Would need to fetch from assessments table
+            tags: [],
+            violations: [], // Would need to fetch from compliance_issues table
             lastContact: {
-              called: foundHomeowner.lastContact?.called || '',
-              visit: foundHomeowner.lastContact?.visit || '',
-              email: foundHomeowner.lastContact?.email || ''
+              called: '',
+              visit: '',
+              email: ''
             },
-            status: foundHomeowner.status,
-            avatarUrl: foundHomeowner.avatarUrl || '',
-            notes: (foundHomeowner.notes || []).map(note => ({
-              type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
-              author: note.author || '',
-              content: note.content || '',
-              date: note.date || ''
-            })),
-            // Add additional fields for compatibility
-            type: foundHomeowner.type,
-            propertyId: foundHomeowner.propertyId,
-            propertyAddress: foundHomeowner.propertyAddress,
-            association: foundHomeowner.association,
-            moveOutDate: foundHomeowner.moveOutDate,
-            lastPayment: foundHomeowner.lastPayment,
-            aclStartDate: foundHomeowner.aclStartDate
+            status: residentData.move_out_date ? 'inactive' : 'active',
+            avatarUrl: avatarUrl,
+            notes: [],
+            type: residentData.resident_type,
+            propertyAddress: propertyAddress,
+            association: '', // Would need to join with association table
           };
           
           setHomeowner(convertedHomeowner);
-        } else {
-          // If not found in mock data, use mock data for now
-          console.warn(`Homeowner with id ${homeownerId} not found, using mock data instead`);
-          // Here we'd normally show an error or fallback, but for demo we'll show mock data
-          setHomeowner(prevState => ({...prevState, id: homeownerId}));
+          console.log('Loaded homeowner data from database:', convertedHomeowner);
         }
+        
         setLoading(false);
       } catch (err) {
         console.error("Error fetching homeowner data:", err);
@@ -101,15 +175,34 @@ export const useHomeownerData = (homeownerId: string) => {
 
   const updateHomeownerData = async (updatedData: Partial<Homeowner>) => {
     try {
-      // For mock data, we'll just update the state
-      // In a real app, we would make an API call here
+      // For residents table, we'll update the data in the database
+      if (homeowner.id) {
+        const updateData: any = {};
+        
+        // Map the homeowner fields to resident fields
+        if (updatedData.name) updateData.name = updatedData.name;
+        if (updatedData.email) updateData.email = updatedData.email;
+        if (updatedData.phone) updateData.phone = updatedData.phone;
+        if (updatedData.moveInDate) updateData.move_in_date = updatedData.moveInDate;
+        if (updatedData.moveOutDate) updateData.move_out_date = updatedData.moveOutDate;
+        
+        // Update in database
+        const { error } = await supabase
+          .from('residents')
+          .update(updateData)
+          .eq('id', homeowner.id);
+          
+        if (error) {
+          console.error("Error updating resident in database:", error);
+          throw new Error('Failed to update resident data in database');
+        }
+      }
+      
+      // Update local state
       setHomeowner(prev => ({
         ...prev,
         ...updatedData
       }));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       return true;
     } catch (err) {
