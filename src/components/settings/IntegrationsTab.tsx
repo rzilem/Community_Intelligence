@@ -142,7 +142,7 @@ const IntegrationsTab = () => {
       const updatedSettings = { 
         ...integrationSettings,
         integrationSettings: {
-          ...integrationSettings.integrationSettings,
+          ...integrationSettings?.integrationSettings || {},
         }
       };
       
@@ -159,6 +159,8 @@ const IntegrationsTab = () => {
           configDate: new Date().toISOString()
         };
       }
+      
+      console.log("Saving integration settings:", JSON.stringify(updatedSettings));
       
       // Update in the database
       updateIntegrationSettings(updatedSettings);

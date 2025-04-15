@@ -20,6 +20,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
+    console.log("Fetching OpenAI settings from database...");
+    
     // Get the OpenAI API key from system settings
     const { data: settings, error: settingsError } = await supabase
       .from('system_settings')
@@ -28,15 +30,21 @@ serve(async (req) => {
       .single();
       
     if (settingsError) {
+      console.error("Settings fetch error:", settingsError);
       throw new Error(`Failed to fetch OpenAI settings: ${settingsError.message}`);
     }
+    
+    console.log("Settings data retrieved:", JSON.stringify(settings));
     
     const integrations = settings?.value?.integrationSettings || {};
     const openAIConfig = integrations['OpenAI'];
     
     if (!openAIConfig || !openAIConfig.apiKey) {
+      console.error("No OpenAI configuration found");
       throw new Error('OpenAI API key not configured');
     }
+    
+    console.log("OpenAI config found, attempting API call...");
     
     // Attempt to call OpenAI API with a simple request
     const openAIModel = openAIConfig.model || 'gpt-4o-mini';
@@ -65,8 +73,11 @@ serve(async (req) => {
     const data = await response.json();
     
     if (data.error) {
+      console.error("OpenAI API error:", data.error);
       throw new Error(`OpenAI API error: ${data.error.message}`);
     }
+    
+    console.log("OpenAI response successful");
     
     return new Response(JSON.stringify({
       success: true,
