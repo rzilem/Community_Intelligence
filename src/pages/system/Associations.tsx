@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Network, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +8,6 @@ import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from '@/contexts/auth';
 import { useAssociationsList, useAssociationMutations } from '@/hooks/associations';
-import AssociationStats from '@/components/associations/AssociationStats';
 import PageTemplate from '@/components/layout/PageTemplate';
 import AssociationToolbar from '@/components/associations/AssociationToolbar';
 import AssociationTabs from '@/components/associations/AssociationTabs';
@@ -45,7 +43,6 @@ const Associations = () => {
     isDeleting
   } = useAssociationMutations();
   
-  // Ensure associations is an array
   const associationsArray = Array.isArray(associations) ? associations : [];
   
   const filteredAssociations = associationsArray.filter(
@@ -56,11 +53,9 @@ const Associations = () => {
   const activeAssociations = filteredAssociations.filter(a => !a.is_archived);
   const inactiveAssociations = filteredAssociations.filter(a => a.is_archived);
   
-  // Handle saving a new association
   const handleSaveAssociation = (data: AssociationFormData) => {
-    // Map form data to the expected Association format
     const newAssociation = {
-      name: data.name, // Ensure name is provided as a required field
+      name: data.name,
       property_type: data.type,
       total_units: data.units,
       city: data.city,
@@ -75,19 +70,16 @@ const Associations = () => {
     showSuccessNotification(`Association "${data.name}" created successfully`);
   };
   
-  // Handle editing an existing association
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
     updateAssociation({ id, data });
     showSuccessNotification("Association updated successfully");
   };
   
-  // Handle deleting an association
   const handleDeleteAssociation = (id: string) => {
     deleteAssociation(id);
     showSuccessNotification("Association archived successfully");
   };
 
-  // Handle bulk actions
   const handleBulkArchive = (ids: string[]) => {
     Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: true } })))
       .then(() => {
@@ -115,7 +107,6 @@ const Associations = () => {
   const showSuccessNotification = (message: string) => {
     setSuccessMessage(message);
     setShowSuccessAnimation(true);
-    // Also show a toast for users who might dismiss the animation quickly
     toast.success(message);
   };
   
@@ -246,8 +237,6 @@ const Associations = () => {
           )}
         </CardContent>
       </Card>
-      
-      <AssociationStats associations={associationsArray} isLoading={isLoading} />
     </PageTemplate>
   );
 };
