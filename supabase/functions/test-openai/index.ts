@@ -26,7 +26,7 @@ serve(async (req) => {
         error: "Server configuration error"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 200, // Always return 200 to avoid edge function errors
       });
     }
     
@@ -46,7 +46,7 @@ serve(async (req) => {
         error: "Failed to retrieve OpenAI API key"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 200, // Always return 200 to avoid edge function errors
       });
     }
 
@@ -62,7 +62,7 @@ serve(async (req) => {
         error: "No OpenAI API key configured"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 200, // Always return 200 to avoid edge function errors
       });
     }
 
@@ -111,7 +111,7 @@ serve(async (req) => {
           error: `Invalid response from OpenAI: ${responseText.substring(0, 100)}...`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200, // Return 200 instead of 502 to avoid edge function error
+          status: 200, // Always return 200 to avoid edge function errors
         });
       }
 
@@ -123,7 +123,7 @@ serve(async (req) => {
           error: result.error?.message || `Error connecting to OpenAI API: ${openaiResponse.status}`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200, // Return 200 instead of 502 to avoid edge function error
+          status: 200, // Always return 200 to avoid edge function errors
         });
       }
 
@@ -134,7 +134,7 @@ serve(async (req) => {
           error: "Unexpected response structure from OpenAI"
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200, // Return 200 instead of 502 to avoid edge function error
+          status: 200, // Always return 200 to avoid edge function errors
         });
       }
 
@@ -155,7 +155,7 @@ serve(async (req) => {
         error: openaiError.message || "Error connecting to OpenAI API"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // Return 200 instead of 502 to avoid edge function error
+        status: 200, // Always return 200 to avoid edge function errors
       });
     }
   } catch (error) {
@@ -166,7 +166,7 @@ serve(async (req) => {
       error: error.message || "An unexpected error occurred"
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Return 200 instead of 502 to avoid edge function error
+      status: 200, // Always return 200 to avoid edge function errors
     });
   }
 });
