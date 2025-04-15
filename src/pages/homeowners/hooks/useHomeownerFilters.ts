@@ -16,10 +16,15 @@ export const useHomeownerFilters = (residents: any[]) => {
   };
 
   const filteredHomeowners = useMemo(() => {
+    // If no search term and all filters are set to 'all', return all residents
+    if (!searchTerm && filterAssociation === 'all' && filterStatus === 'all' && filterType === 'all') {
+      return residents;
+    }
+    
     return residents.filter(homeowner => {
-      const matchesSearch = 
-        homeowner.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        homeowner.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = !searchTerm || 
+        homeowner.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        homeowner.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (homeowner.propertyAddress && homeowner.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase()));
         
       const matchesAssociation = filterAssociation === 'all' || homeowner.association === filterAssociation;
@@ -43,4 +48,3 @@ export const useHomeownerFilters = (residents: any[]) => {
     extractStreetAddress
   };
 };
-
