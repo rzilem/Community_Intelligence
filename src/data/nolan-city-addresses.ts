@@ -78,15 +78,21 @@ const generateEmergencyContact = () => {
   return `${firstNames[firstNameIndex]} ${lastNames[lastNameIndex]} (${relationTypes[relationIndex]}): ${phone}`;
 };
 
-// Generate 532 addresses with owner information
-export const generateAddresses = () => {
+// Generate addresses with owner information
+export const generateAddresses = (
+  count = 532, 
+  communityName = "Nolan City",
+  zipCode = "78724",
+  city = "Austin",
+  state = "TX"
+) => {
   const addresses = [];
   
-  // Count to ensure we get exactly 532 addresses
-  let count = 0;
+  // Count to ensure we get exactly the requested number of addresses
+  let addressCount = 0;
   
   // Generate addresses for each street
-  for (let i = 0; count < 532; i++) {
+  for (let i = 0; addressCount < count; i++) {
     const streetIndex = i % streets.length;
     const street = streets[streetIndex];
     
@@ -94,9 +100,9 @@ export const generateAddresses = () => {
     // More houses on boulevards and drives, fewer on courts and places
     let housesOnStreet = street.includes("Drive") || street.includes("Boulevard") ? 80 : 40;
     
-    // Adjust to get exactly 532 addresses
-    if (count + housesOnStreet > 532) {
-      housesOnStreet = 532 - count;
+    // Adjust to get exactly the requested number of addresses
+    if (addressCount + housesOnStreet > count) {
+      housesOnStreet = count - addressCount;
     }
     
     // Generate houses for this street
@@ -176,9 +182,9 @@ export const generateAddresses = () => {
         // Property data
         address: address,
         unit_number: unitNumber || null,
-        city: "Austin",
-        state: "TX",
-        zip: "78724",
+        city: city,
+        state: state,
+        zip: zipCode,
         property_type: propertyType,
         square_feet: squareFeet,
         bedrooms: bedrooms,
@@ -203,8 +209,8 @@ export const generateAddresses = () => {
         co_owner_emergency_contact: hasCoOwner ? generateEmergencyContact() : null
       });
       
-      count++;
-      if (count >= 532) break;
+      addressCount++;
+      if (addressCount >= count) break;
     }
   }
   
@@ -212,16 +218,23 @@ export const generateAddresses = () => {
 };
 
 // Function to export addresses as CSV
-export const exportAddressesAsCSV = () => {
-  const addresses = generateAddresses();
+export const exportAddressesAsCSV = (
+  count = 532, 
+  communityName = "Nolan City",
+  zipCode = "78724",
+  city = "Austin",
+  state = "TX"
+) => {
+  const addresses = generateAddresses(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(addresses);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Nolan City Properties & Owners");
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Properties & Owners`);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
   const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   
-  // Save file
-  saveAs(blob, `nolan-city-properties-and-owners-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  // Save file with the community name
+  const fileName = communityName.toLowerCase().replace(/\s+/g, '-');
+  saveAs(blob, `${fileName}-properties-and-owners-${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
