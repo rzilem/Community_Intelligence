@@ -96,22 +96,67 @@ const NotificationCenter: React.FC = () => {
           </div>
         </div>
         
-        <Tabs 
-          defaultValue="all" 
-          value={activeTab} 
-          onValueChange={setActiveTab} 
-          className="w-full"
-        >
-          <TabsList className="w-full justify-start px-4 pt-2 pb-0 overflow-x-auto">
-            <TabsTrigger value="all" className="text-xs shrink-0">All</TabsTrigger>
-            <TabsTrigger value="invoice" className="text-xs shrink-0">Invoices</TabsTrigger>
-            <TabsTrigger value="lead" className="text-xs shrink-0">Leads</TabsTrigger>
-            <TabsTrigger value="request" className="text-xs shrink-0">Requests</TabsTrigger>
-            <TabsTrigger value="event" className="text-xs shrink-0">Events</TabsTrigger>
-            <TabsTrigger value="message" className="text-xs shrink-0">Messages</TabsTrigger>
-          </TabsList>
+        <div className="flex h-[350px]">
+          <div className="w-1/4 border-r py-2 bg-gray-50">
+            <div className="flex flex-col space-y-1 px-2">
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'all' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('all')}
+              >
+                All
+              </button>
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'invoice' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('invoice')}
+              >
+                Invoices
+              </button>
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'lead' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('lead')}
+              >
+                Leads
+              </button>
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'request' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('request')}
+              >
+                Requests
+              </button>
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'event' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('event')}
+              >
+                Events
+              </button>
+              <button 
+                className={cn(
+                  "text-left text-xs py-1.5 px-2 rounded-md w-full",
+                  activeTab === 'message' ? "bg-blue-50 text-blue-700 font-medium" : "hover:bg-gray-100"
+                )}
+                onClick={() => setActiveTab('message')}
+              >
+                Messages
+              </button>
+            </div>
+          </div>
           
-          <TabsContent value={activeTab} className="mt-0">
+          <div className="w-3/4">
             <ScrollArea className="h-[350px]">
               {allNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-8 text-gray-500">
@@ -170,8 +215,8 @@ const NotificationCenter: React.FC = () => {
                 </div>
               )}
             </ScrollArea>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );
