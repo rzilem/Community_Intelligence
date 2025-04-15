@@ -10,17 +10,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface ResidentActionsProps {
   isAddDialogOpen: boolean;
   setIsAddDialogOpen: (open: boolean) => void;
   onAddSuccess: (newOwner: any) => void;
+  onExportCSV: () => void;
+  onExportPDF: () => void;
 }
 
 const ResidentActions: React.FC<ResidentActionsProps> = ({
   isAddDialogOpen,
   setIsAddDialogOpen,
-  onAddSuccess
+  onAddSuccess,
+  onExportCSV,
+  onExportPDF
 }) => {
   const navigate = useNavigate();
   
@@ -28,26 +33,33 @@ const ResidentActions: React.FC<ResidentActionsProps> = ({
     <div className="flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline">
+          <TooltipButton variant="outline" tooltip="Export resident data">
             <Download className="h-4 w-4 mr-2" />
             Export
-          </Button>
+          </TooltipButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem>Export Owners CSV</DropdownMenuItem>
-          <DropdownMenuItem>Export Owners PDF</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportCSV}>Export Owners CSV</DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportPDF}>Export Owners PDF</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Button variant="outline" onClick={() => navigate('/system/data-import-export')}>
+      <TooltipButton 
+        variant="outline" 
+        onClick={() => navigate('/system/data-management')} 
+        tooltip="Go to data management page"
+      >
         <Upload className="h-4 w-4 mr-2" />
         Import/Export
-      </Button>
+      </TooltipButton>
       
-      <Button onClick={() => setIsAddDialogOpen(true)}>
+      <TooltipButton 
+        onClick={() => setIsAddDialogOpen(true)}
+        tooltip="Add a new resident"
+      >
         <Plus className="h-4 w-4 mr-2" />
         Add Owner
-      </Button>
+      </TooltipButton>
       
       <ResidentDialog
         open={isAddDialogOpen}

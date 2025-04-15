@@ -1,27 +1,53 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import HomeownerPagination from '@/pages/homeowners/components/HomeownerPagination';
 
 interface ResidentTableProps {
   loading: boolean;
   residents: any[];
-  totalCount: number;
-  currentPage: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number) => void;
+  totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 const ResidentTable: React.FC<ResidentTableProps> = ({
   loading,
   residents,
-  totalCount,
-  currentPage,
-  pageSize,
-  onPageChange,
-  onPageSizeChange
+  totalCount: externalTotalCount,
+  currentPage: externalCurrentPage,
+  pageSize: externalPageSize,
+  onPageChange: externalOnPageChange,
+  onPageSizeChange: externalOnPageSizeChange
 }) => {
+  // Internal state for pagination if not controlled externally
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const [internalPageSize, setInternalPageSize] = useState(10);
+  
+  // Use either external props or internal state
+  const currentPage = externalCurrentPage || internalCurrentPage;
+  const pageSize = externalPageSize || internalPageSize;
+  const totalCount = externalTotalCount || residents.length;
+  
+  // Handlers that call external handlers if provided, otherwise update internal state
+  const handlePageChange = (page: number) => {
+    if (externalOnPageChange) {
+      externalOnPageChange(page);
+    } else {
+      setInternalCurrentPage(page);
+    }
+  };
+  
+  const handlePageSizeChange = (size: number) => {
+    if (externalOnPageSizeChange) {
+      externalOnPageSizeChange(size);
+    } else {
+      setInternalPageSize(size);
+    }
+  };
+  
   // Calculate pagination values
   const startIdx = (currentPage - 1) * pageSize;
   const endIdx = Math.min(startIdx + pageSize, residents.length);
@@ -95,8 +121,8 @@ const ResidentTable: React.FC<ResidentTableProps> = ({
         currentPage={currentPage}
         totalPages={totalPages}
         pageSize={pageSize}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
       />
     </div>
   );
