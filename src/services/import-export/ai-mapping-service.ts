@@ -12,7 +12,7 @@ const getStringSimilarity = (str1: string, str2: string): number => {
   // Check if one is contained in the other
   if (s1.includes(s2) || s2.includes(s1)) {
     const ratio = Math.min(s1.length, s2.length) / Math.max(s1.length, s2.length);
-    return 0.7 * ratio;
+    return 0.7 * ratio + 0.3; // Boost the score a bit
   }
   
   // Calculate edit distance-based similarity for more advanced matching
@@ -25,6 +25,26 @@ const getStringSimilarity = (str1: string, str2: string): number => {
   }
   
   return matchCount / maxLen;
+};
+
+// Check if strings are semantically similar (common naming patterns)
+const areSemanticallySimilar = (col: string, field: string): boolean => {
+  const semanticPairs = [
+    ['name', 'firstName'], ['name', 'lastName'], ['name', 'fullName'],
+    ['address', 'street'], ['address', 'addressLine'], ['address', 'streetAddress'],
+    ['city', 'town'], ['state', 'province'], ['zip', 'postalCode'], ['zip', 'zipCode'],
+    ['email', 'emailAddress'], ['phone', 'phoneNumber'], ['telephone', 'phoneNumber'],
+    ['unit', 'apartment'], ['unit', 'unitNumber'], ['property', 'unit'],
+    ['owner', 'resident'], ['owner', 'homeowner'], ['date', 'timestamp']
+  ];
+  
+  const normalizedCol = col.toLowerCase();
+  const normalizedField = field.toLowerCase();
+  
+  return semanticPairs.some(([a, b]) => 
+    (normalizedCol.includes(a) && normalizedField.includes(b)) || 
+    (normalizedCol.includes(b) && normalizedField.includes(a))
+  );
 };
 
 // Analyze sample data to determine data types and patterns
@@ -139,15 +159,21 @@ export const aiMappingService = {
         const valueSimilarity = getStringSimilarity(column, field.value);
         let similarityScore = Math.max(labelSimilarity, valueSimilarity);
         
+        // Check for semantic similarity
+        if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value)) {
+          similarityScore += 0.2;
+        }
+        
         // Boost score based on data type matches
-        if (dataAnalysis.type === 'email' && field.value.includes('email')) {
+        if (dataAnalysis.type === 'email' && (field.value.includes('email') || field.label.toLowerCase().includes('email'))) {
           similarityScore += 0.3;
-        } else if (dataAnalysis.type === 'phone' && field.value.includes('phone')) {
+        } else if (dataAnalysis.type === 'phone' && (field.value.includes('phone') || field.label.toLowerCase().includes('phone'))) {
           similarityScore += 0.3;
-        } else if (dataAnalysis.type === 'date' && field.value.includes('date')) {
+        } else if (dataAnalysis.type === 'date' && (field.value.includes('date') || field.label.toLowerCase().includes('date'))) {
           similarityScore += 0.3;
         } else if (dataAnalysis.type === 'address' && 
-                  (field.value.includes('address') || field.value === 'street')) {
+                  (field.value.includes('address') || field.value === 'street' || 
+                   field.label.toLowerCase().includes('address'))) {
           similarityScore += 0.3;
         }
         

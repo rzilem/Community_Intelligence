@@ -6,7 +6,7 @@ import {
   PopoverContent
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown, SparklesIcon } from 'lucide-react';
+import { Check, ChevronsUpDown, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MappingOption } from './types/mapping-types';
 import {
@@ -42,12 +42,16 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
   const selectedField = systemFields.find(field => field.value === selectedValue);
   
   const handleSelect = (value: string) => {
-    // Close the popover first
+    console.log(`Field selection for ${column}: ${value}`);
+    onMappingChange(column, value);
     setIsOpen(false);
-    // Then update the mapping with a small delay to ensure UI updates properly
-    setTimeout(() => {
-      onMappingChange(column, value);
-    }, 10);
+  };
+
+  const handleSuggestionApply = () => {
+    if (suggestion) {
+      console.log(`Applying suggestion for ${column}: ${suggestion}`);
+      onMappingChange(column, suggestion);
+    }
   };
   
   return (
@@ -56,9 +60,9 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
         <div className="col-span-4">
           <div className="text-sm font-medium">{column}</div>
           {suggestion && !selectedValue && confidence >= 0.7 && (
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <SparklesIcon className="h-3 w-3 mr-1 text-amber-500" />
-              <span>Suggested: {suggestion}</span>
+            <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer" onClick={handleSuggestionApply}>
+              <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
+              <span className="hover:underline">Suggested: {suggestion}</span>
             </div>
           )}
         </div>
@@ -78,7 +82,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
+            <PopoverContent className="w-full p-0" align="start" sideOffset={4}>
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
                 <CommandEmpty>No field found.</CommandEmpty>

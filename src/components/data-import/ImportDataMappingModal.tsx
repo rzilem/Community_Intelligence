@@ -8,6 +8,7 @@ import ValidationResultsSummary from './ValidationResultsSummary';
 import DataPreviewTable from './DataPreviewTable';
 import ColumnMappingList from './ColumnMappingList';
 import { ValidationSummary } from './types/mapping-types';
+import { toast } from 'sonner';
 
 interface ImportDataMappingModalProps {
   importType: string;
@@ -40,6 +41,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
       try {
         const savedMappings = await dataImportService.getImportMapping(associationId, importType);
         if (savedMappings) {
+          console.log("Loaded saved mappings:", savedMappings);
           setMappings(savedMappings);
         }
       } catch (error) {
@@ -66,6 +68,14 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
 
   const handleConfirm = () => {
     console.log('Confirming mappings:', mappings);
+    
+    // Count how many columns are actually mapped
+    const mappedCount = Object.values(mappings).filter(Boolean).length;
+    if (mappedCount === 0) {
+      toast.error("Please map at least one column before importing");
+      return;
+    }
+    
     onConfirm(mappings);
   };
 
