@@ -47,9 +47,20 @@ export const processorService = {
         break;
       case 'owners':
         tableName = 'residents';
-        // Ensure residents have resident_type set to 'owner'
+        // Handle first_name/last_name fields correctly for the residents table
         processedData.forEach(row => {
+          // Set resident_type to 'owner'
           row.resident_type = 'owner';
+          
+          // If we have first_name and last_name, combine them into the name field
+          if (row.first_name || row.last_name) {
+            row.name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+          }
+          
+          // Remove first_name and last_name as they don't exist in the schema
+          delete row.first_name;
+          delete row.last_name;
+          
           // Remove any association_id which might cause issues if the column doesn't exist
           delete row.association_id;
         });
@@ -121,6 +132,8 @@ export const processorService = {
           // Remove any fields that might cause schema issues
           if (tableName === 'residents') {
             delete copy.association_id;
+            delete copy.first_name;
+            delete copy.last_name;
           }
           return copy;
         });
@@ -338,18 +351,19 @@ async function processPropertiesOwnersImport(
         const row = processedData[i];
         // Only add owner if first name or last name exists
         if (row.first_name || row.last_name) {
+          // Combine first_name and last_name into name field since residents table has name, not first_name/last_name
+          const name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+          
           ownerData.push({
             property_id: matchingProperty.id,
             resident_type: 'owner',
-            name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-            first_name: row.first_name,
-            last_name: row.last_name,
+            name: name, // Use combined name format
             email: row.email,
             phone: row.phone,
             move_in_date: row.move_in_date,
             is_primary: row.is_primary === 'true' || row.is_primary === true,
             emergency_contact: row.emergency_contact
-            // Intentionally omitting association_id
+            // Intentionally omitting first_name, last_name, and association_id
           });
         }
       }
