@@ -1,30 +1,8 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { AlertTriangle, Clock, FileText, ListChecks, PiggyBank } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger
-} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-
-// Type for critical issues
-interface CriticalIssue {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  type: 'expired' | 'pending' | 'missing' | 'overdue' | 'payment';
-  actionOptions: string[];
-}
+import { CriticalIssue, CriticalIssueItem } from './CriticalIssueItem';
 
 // Mock data for issues
 const MOCK_ISSUES: Record<string, CriticalIssue[]> = {
@@ -74,70 +52,6 @@ const MOCK_ISSUES: Record<string, CriticalIssue[]> = {
       actionOptions: ['Send Reminder', 'Process Payment', 'Apply Late Fee']
     }
   ]
-};
-
-interface CriticalIssueItemProps {
-  issue: CriticalIssue;
-  onResolve: (issueId: string, action: string) => void;
-}
-
-const CriticalIssueItem: React.FC<CriticalIssueItemProps> = ({ issue, onResolve }) => {
-  const IconComponent = () => {
-    switch (issue.type) {
-      case 'expired': return <Clock className="h-4 w-4 text-amber-500" />;
-      case 'pending': return <AlertTriangle className="h-4 w-4 text-blue-500" />;
-      case 'missing': return <FileText className="h-4 w-4 text-red-500" />;
-      case 'overdue': return <Clock className="h-4 w-4 text-red-500" />;
-      case 'payment': return <PiggyBank className="h-4 w-4 text-green-500" />;
-      default: return <AlertTriangle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-
-  return (
-    <div className="flex items-center justify-between border-b py-2">
-      <div className="flex items-start gap-2">
-        <div className="pt-0.5">
-          <IconComponent />
-        </div>
-        <div>
-          <h4 className="text-sm font-medium">{issue.title}</h4>
-          <p className="text-xs text-muted-foreground">{issue.description}</p>
-        </div>
-      </div>
-      
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button size="sm" variant="outline" className="ml-2 h-8">
-            Fix Issue
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{issue.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {issue.description}
-              <div className="mt-4 font-medium">How would you like to address this issue?</div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-2 py-4">
-            {issue.actionOptions.map((action) => (
-              <Button 
-                key={action} 
-                variant="outline" 
-                className="w-full justify-start text-left"
-                onClick={() => onResolve(issue.id, action)}
-              >
-                {action}
-              </Button>
-            ))}
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
 };
 
 const CriticalInfoTabs: React.FC = () => {

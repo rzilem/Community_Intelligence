@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AssociationAIIssue } from '@/types/association-types';
+import { AIIssue } from '@/components/dashboard/AIAnalysisSection';
 import { AIFixDialog } from '@/components/ai/AIFixDialog';
 import { useAIFixOptions, AIIssueType } from '@/hooks/ai/useAIFixOptions';
 
 interface AIIssueCardProps {
-  issue: AssociationAIIssue;
+  issue: AIIssue;
 }
 
 export const AIIssueCard: React.FC<AIIssueCardProps> = ({ issue }) => {
