@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ButtonProps as RadixButtonProps } from '@/components/ui/button';
 
 interface TooltipButtonProps extends Omit<RadixButtonProps, 'asChild'> {
@@ -24,18 +24,16 @@ export const TooltipButton: React.FC<TooltipButtonProps> = ({
   ...props
 }) => {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <Button className={cn(className)} variant={variant} asChild={asChild} {...props}>
-            {children}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side={tooltipSide}>
-          <p>{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={300}>
+      <TooltipTrigger asChild>
+        <Button className={cn(className)} variant={variant} asChild={asChild} {...props}>
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side={tooltipSide}>
+        <p>{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
