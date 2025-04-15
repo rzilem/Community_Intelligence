@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Search, Plus, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const DocsCenterTemplates = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,10 +34,10 @@ const DocsCenterTemplates = () => {
           />
         </div>
         
-        <Button>
+        <TooltipButton tooltip="Create a new resale template">
           <Plus className="mr-2 h-4 w-4" />
           New Template
-        </Button>
+        </TooltipButton>
       </div>
       
       <Card>
@@ -76,9 +76,15 @@ const DocsCenterTemplates = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
-                      <Button variant="ghost" size="sm">Edit</Button>
-                      <Button variant="ghost" size="sm">Duplicate</Button>
+                      <TooltipButton variant="ghost" size="sm" tooltip="View template details">
+                        View
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Edit template">
+                        Edit
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Duplicate template">
+                        Duplicate
+                      </TooltipButton>
                     </TableCell>
                   </TableRow>
                 ))

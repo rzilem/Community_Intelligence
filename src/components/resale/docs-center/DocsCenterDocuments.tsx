@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Search, Plus, Link2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import LinkDocumentsDialog from '@/components/resale/LinkDocumentsDialog';
 import { useAssociations } from '@/hooks/associations';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const DocsCenterDocuments = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,15 +55,20 @@ const DocsCenterDocuments = () => {
             </SelectContent>
           </Select>
           
-          <Button onClick={() => setIsLinkDialogOpen(true)}>
+          <TooltipButton 
+            onClick={() => setIsLinkDialogOpen(true)}
+            tooltip="Link documents from the association repository"
+          >
             <Link2 className="mr-2 h-4 w-4" />
             Link Association Documents
-          </Button>
+          </TooltipButton>
           
-          <Button>
+          <TooltipButton
+            tooltip="Upload a new document to the resale documents library"
+          >
             <Plus className="mr-2 h-4 w-4" />
             Add Document
-          </Button>
+          </TooltipButton>
         </div>
       </div>
       
@@ -94,8 +99,12 @@ const DocsCenterDocuments = () => {
                     <TableCell>{doc.lastUpdated}</TableCell>
                     <TableCell>{doc.status}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
-                      <Button variant="ghost" size="sm">Edit</Button>
+                      <TooltipButton variant="ghost" size="sm" tooltip="View document details">
+                        View
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Edit document properties">
+                        Edit
+                      </TooltipButton>
                     </TableCell>
                   </TableRow>
                 ))

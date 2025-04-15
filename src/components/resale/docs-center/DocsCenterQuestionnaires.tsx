@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Search, Plus, FileText, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const DocsCenterQuestionnaires = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,14 +55,14 @@ const DocsCenterQuestionnaires = () => {
         </div>
         
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <TooltipButton variant="outline" tooltip="Download a questionnaire template">
             <Download className="mr-2 h-4 w-4" />
             Download Template
-          </Button>
-          <Button>
+          </TooltipButton>
+          <TooltipButton tooltip="Create a new lender questionnaire">
             <Plus className="mr-2 h-4 w-4" />
             New Questionnaire
-          </Button>
+          </TooltipButton>
         </div>
       </div>
       
@@ -102,9 +102,15 @@ const DocsCenterQuestionnaires = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
-                      <Button variant="ghost" size="sm">Edit</Button>
-                      <Button variant="ghost" size="sm">Download</Button>
+                      <TooltipButton variant="ghost" size="sm" tooltip="View questionnaire details">
+                        View
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Edit questionnaire">
+                        Edit
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Download questionnaire">
+                        Download
+                      </TooltipButton>
                     </TableCell>
                   </TableRow>
                 ))

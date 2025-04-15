@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Document } from '@/types/document-types';
 import { ResaleDocumentLink } from '@/types/resale-types';
 import DocumentLinkingTable from './DocumentLinkingTable';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface LinkDocumentsDialogProps {
   isOpen: boolean;
@@ -119,12 +119,12 @@ const LinkDocumentsDialog: React.FC<LinkDocumentsDialogProps> = ({
         </div>
 
         <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <TooltipButton variant="outline" onClick={onClose} disabled={isLoading} tooltip="Close without saving changes">
             Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          </TooltipButton>
+          <TooltipButton onClick={handleSave} disabled={isLoading} tooltip="Save document link changes">
             {isLoading ? "Saving..." : "Save Links"}
-          </Button>
+          </TooltipButton>
         </div>
       </DialogContent>
     </Dialog>

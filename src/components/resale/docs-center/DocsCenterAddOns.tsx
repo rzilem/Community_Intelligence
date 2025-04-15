@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Search, Plus, Book, Map, Package, Boxes } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const DocsCenterAddOns = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,10 +87,10 @@ const DocsCenterAddOns = () => {
           />
         </div>
         
-        <Button>
+        <TooltipButton tooltip="Create a new add-on product for resale orders">
           <Plus className="mr-2 h-4 w-4" />
           New Add-on Product
-        </Button>
+        </TooltipButton>
       </div>
       
       <Card>
@@ -129,9 +129,15 @@ const DocsCenterAddOns = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">View</Button>
-                      <Button variant="ghost" size="sm">Edit</Button>
-                      <Button variant="ghost" size="sm">Preview</Button>
+                      <TooltipButton variant="ghost" size="sm" tooltip="View product details">
+                        View
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Edit product">
+                        Edit
+                      </TooltipButton>
+                      <TooltipButton variant="ghost" size="sm" tooltip="Preview product">
+                        Preview
+                      </TooltipButton>
                     </TableCell>
                   </TableRow>
                 ))

@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { FileText, Search, Link, Link2, ExternalLink } from 'lucide-react';
+import { Search, Link, Link2, ExternalLink } from 'lucide-react';
 import { Document } from '@/types/document-types';
 import { ResaleDocumentLink } from '@/types/resale-types';
 import { Input } from '@/components/ui/input';
 import { formatBytes } from '@/lib/utils';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface DocumentLinkingTableProps {
   documents: Document[];
@@ -98,9 +98,9 @@ const DocumentLinkingTable: React.FC<DocumentLinkingTableProps> = ({
                   <TableCell>{doc.category || 'general'}</TableCell>
                   <TableCell>{formatBytes(doc.file_size)}</TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => onViewDocument(doc)}>
+                    <TooltipButton variant="ghost" size="sm" onClick={() => onViewDocument(doc)} tooltip="View document in new tab">
                       <ExternalLink className="h-4 w-4" />
-                    </Button>
+                    </TooltipButton>
                   </TableCell>
                 </TableRow>
               ))

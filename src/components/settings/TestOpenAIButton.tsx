@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const TestOpenAIButton = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,11 +43,12 @@ const TestOpenAIButton = () => {
   };
 
   return (
-    <Button 
+    <TooltipButton 
       variant="secondary" 
       size="sm" 
       onClick={handleTestConnection}
       disabled={isLoading}
+      tooltip="Test the OpenAI API connection using your current API key"
     >
       {isLoading ? (
         <>
@@ -57,7 +58,7 @@ const TestOpenAIButton = () => {
       ) : (
         'Test Connection'
       )}
-    </Button>
+    </TooltipButton>
   );
 };
 
