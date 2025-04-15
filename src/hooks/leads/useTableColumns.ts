@@ -1,5 +1,7 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Lead } from '@/types/lead-types';
+import { useUserColumns } from '@/hooks/useUserColumns';
 
 export type LeadColumn = {
   id: string;
@@ -11,7 +13,7 @@ export type LeadColumn = {
 
 export const useTableColumns = (
   columnDefinitions: LeadColumn[] = [], 
-  localStorageKey?: string
+  viewId: string = 'leads-table'
 ) => {
   const defaultColumns: LeadColumn[] = columnDefinitions.length > 0 ? columnDefinitions : [
     { id: 'name', label: 'Name', accessorKey: 'name' },
@@ -27,45 +29,23 @@ export const useTableColumns = (
     { id: 'created_at', label: 'Created', accessorKey: 'created_at' }
   ];
   
-  const defaultVisibleIds = columnDefinitions.length > 0 
-    ? columnDefinitions
-        .filter(col => col.defaultVisible !== false)
-        .map(col => col.id)
-    : [
-        'name', 'association_name', 'association_type', 'number_of_units', 
-        'email', 'city', 'phone', 'status', 'source', 'created_at'
-      ];
-
   const [columns] = useState<LeadColumn[]>(defaultColumns);
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(defaultVisibleIds);
-
-  const updateVisibleColumns = (columnIds: string[]) => {
-    setVisibleColumnIds(columnIds);
-    if (localStorageKey) {
-      localStorage.setItem(localStorageKey, JSON.stringify(columnIds));
-    }
-  };
-
-  const reorderColumns = (startIndex: number, endIndex: number) => {
-    const result = Array.from(visibleColumnIds);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-    setVisibleColumnIds(result);
-    if (localStorageKey) {
-      localStorage.setItem(localStorageKey, JSON.stringify(result));
-    }
-  };
-
-  const resetToDefaults = () => {
-    setVisibleColumnIds(defaultVisibleIds);
-    if (localStorageKey) {
-      localStorage.removeItem(localStorageKey);
-    }
-  };
+  
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults,
+    loading 
+  } = useUserColumns(
+    defaultColumns, 
+    viewId
+  );
 
   return {
     columns,
     visibleColumnIds,
+    loading,
     updateVisibleColumns,
     reorderColumns,
     resetToDefaults,

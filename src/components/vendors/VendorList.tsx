@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Vendor } from "@/types/vendor-types";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import ColumnSelector from "@/components/table/ColumnSelector";
+import { useUserColumns } from "@/hooks/useUserColumns";
 
 interface VendorListProps {
   vendors: Vendor[];
@@ -14,10 +15,6 @@ interface VendorListProps {
 type ColumnKey = 'name' | 'contactPerson' | 'email' | 'phone' | 'category' | 'status' | 'lastInvoice' | 'rating';
 
 const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
-  const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>([
-    'name', 'contactPerson', 'email', 'phone', 'category', 'status', 'lastInvoice', 'rating'
-  ]);
-
   const columnOptions = [
     { id: 'name', label: 'Vendor Name' },
     { id: 'contactPerson', label: 'Contact Person' },
@@ -29,48 +26,50 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
     { id: 'rating', label: 'Rating' }
   ];
 
-  const handleColumnChange = (selectedColumns: string[]) => {
-    setVisibleColumns(selectedColumns as ColumnKey[]);
-  };
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns,
+    loading
+  } = useUserColumns(columnOptions, 'vendor-list');
 
   return (
     <>
       <div className="flex justify-end mb-4">
         <ColumnSelector 
           columns={columnOptions} 
-          selectedColumns={visibleColumns} 
-          onChange={handleColumnChange} 
+          selectedColumns={visibleColumnIds} 
+          onChange={updateVisibleColumns} 
         />
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('name') && <TableHead>Vendor Name</TableHead>}
-              {visibleColumns.includes('contactPerson') && <TableHead>Contact Person</TableHead>}
-              {visibleColumns.includes('email') && <TableHead>Email</TableHead>}
-              {visibleColumns.includes('phone') && <TableHead>Phone</TableHead>}
-              {visibleColumns.includes('category') && <TableHead>Category</TableHead>}
-              {visibleColumns.includes('status') && <TableHead>Status</TableHead>}
-              {visibleColumns.includes('lastInvoice') && <TableHead>Last Invoice</TableHead>}
-              {visibleColumns.includes('rating') && <TableHead>Rating</TableHead>}
+              {visibleColumnIds.includes('name') && <TableHead>Vendor Name</TableHead>}
+              {visibleColumnIds.includes('contactPerson') && <TableHead>Contact Person</TableHead>}
+              {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
+              {visibleColumnIds.includes('phone') && <TableHead>Phone</TableHead>}
+              {visibleColumnIds.includes('category') && <TableHead>Category</TableHead>}
+              {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
+              {visibleColumnIds.includes('lastInvoice') && <TableHead>Last Invoice</TableHead>}
+              {visibleColumnIds.includes('rating') && <TableHead>Rating</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {vendors.map((vendor) => (
               <TableRow key={vendor.id}>
-                {visibleColumns.includes('name') && (
+                {visibleColumnIds.includes('name') && (
                   <TableCell className="font-medium">
                     <Link to={`/operations/vendors/${vendor.id}`} className="hover:underline text-blue-600">
                       {vendor.name}
                     </Link>
                   </TableCell>
                 )}
-                {visibleColumns.includes('contactPerson') && <TableCell>{vendor.contactPerson || "-"}</TableCell>}
-                {visibleColumns.includes('email') && <TableCell>{vendor.email || "-"}</TableCell>}
-                {visibleColumns.includes('phone') && <TableCell>{vendor.phone || "-"}</TableCell>}
-                {visibleColumns.includes('category') && <TableCell>{vendor.category || "-"}</TableCell>}
-                {visibleColumns.includes('status') && (
+                {visibleColumnIds.includes('contactPerson') && <TableCell>{vendor.contactPerson || "-"}</TableCell>}
+                {visibleColumnIds.includes('email') && <TableCell>{vendor.email || "-"}</TableCell>}
+                {visibleColumnIds.includes('phone') && <TableCell>{vendor.phone || "-"}</TableCell>}
+                {visibleColumnIds.includes('category') && <TableCell>{vendor.category || "-"}</TableCell>}
+                {visibleColumnIds.includes('status') && (
                   <TableCell>
                     <Badge 
                       variant={vendor.status === "active" ? "default" : "secondary"}
@@ -80,8 +79,8 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                     </Badge>
                   </TableCell>
                 )}
-                {visibleColumns.includes('lastInvoice') && <TableCell>{vendor.lastInvoice || "N/A"}</TableCell>}
-                {visibleColumns.includes('rating') && (
+                {visibleColumnIds.includes('lastInvoice') && <TableCell>{vendor.lastInvoice || "N/A"}</TableCell>}
+                {visibleColumnIds.includes('rating') && (
                   <TableCell>
                     <div className="flex items-center">
                       {vendor.rating !== undefined ? (

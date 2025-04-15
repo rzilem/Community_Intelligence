@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useUserColumns } from '@/hooks/useUserColumns';
 
 export type HomeownerColumn = {
   id: string;
@@ -7,7 +8,7 @@ export type HomeownerColumn = {
   defaultVisible?: boolean;
 };
 
-export const useHomeownerColumns = (localStorageKey: string = 'homeowner-columns') => {
+export const useHomeownerColumns = (viewId: string = 'homeowner-columns') => {
   const defaultColumns: HomeownerColumn[] = [
     { id: 'name', label: 'Name' },
     { id: 'email', label: 'Email' },
@@ -19,38 +20,23 @@ export const useHomeownerColumns = (localStorageKey: string = 'homeowner-columns
     { id: 'closingDate', label: 'Closing Date' }
   ];
   
-  const defaultVisibleIds = defaultColumns.map(col => col.id);
-
-  // Initialize with saved columns from localStorage or defaults
-  const getSavedColumns = () => {
-    const saved = localStorage.getItem(localStorageKey);
-    return saved ? JSON.parse(saved) : defaultVisibleIds;
-  };
-
   const [columns] = useState<HomeownerColumn[]>(defaultColumns);
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(getSavedColumns());
-
-  const updateVisibleColumns = (columnIds: string[]) => {
-    setVisibleColumnIds(columnIds);
-    localStorage.setItem(localStorageKey, JSON.stringify(columnIds));
-  };
-
-  const reorderColumns = (startIndex: number, endIndex: number) => {
-    const result = Array.from(visibleColumnIds);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-    setVisibleColumnIds(result);
-    localStorage.setItem(localStorageKey, JSON.stringify(result));
-  };
-
-  const resetToDefaults = () => {
-    setVisibleColumnIds(defaultVisibleIds);
-    localStorage.removeItem(localStorageKey);
-  };
+  
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults,
+    loading 
+  } = useUserColumns(
+    defaultColumns, 
+    viewId
+  );
 
   return {
     columns,
     visibleColumnIds,
+    loading,
     updateVisibleColumns,
     reorderColumns,
     resetToDefaults,

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { GLAccount } from '@/types/accounting-types';
+import { useUserColumns } from '@/hooks/useUserColumns';
 
 type ColumnKey = 'code' | 'description' | 'type' | 'category';
 
@@ -14,20 +15,16 @@ interface GLAccountsTableProps {
   accounts: GLAccount[];
   searchTerm: string;
   accountType: string;
-  visibleColumns: ColumnKey[];
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
-  onColumnChange: (columns: string[]) => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   accounts,
   searchTerm,
   accountType,
-  visibleColumns,
   onSearchChange,
-  onAccountTypeChange,
-  onColumnChange
+  onAccountTypeChange
 }) => {
   const columnOptions = [
     { id: 'code', label: 'Code' },
@@ -35,6 +32,11 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
     { id: 'type', label: 'GL Type' },
     { id: 'category', label: 'Category' }
   ];
+
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns
+  } = useUserColumns(columnOptions, 'gl-accounts-table');
 
   const filteredAccounts = accounts.filter(account => {
     const matchesSearch = account.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -73,8 +75,8 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
           
           <ColumnSelector 
             columns={columnOptions} 
-            selectedColumns={visibleColumns} 
-            onChange={onColumnChange} 
+            selectedColumns={visibleColumnIds} 
+            onChange={updateVisibleColumns} 
           />
           
           <Button variant="outline">
@@ -91,7 +93,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes('code') && (
+              {visibleColumnIds.includes('code') && (
                 <TableHead className="w-[100px]">
                   <div className="flex items-center">
                     Code
@@ -99,7 +101,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumns.includes('description') && (
+              {visibleColumnIds.includes('description') && (
                 <TableHead>
                   <div className="flex items-center">
                     Description
@@ -107,7 +109,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumns.includes('type') && (
+              {visibleColumnIds.includes('type') && (
                 <TableHead>
                   <div className="flex items-center">
                     GL Type
@@ -115,7 +117,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumns.includes('category') && (
+              {visibleColumnIds.includes('category') && (
                 <TableHead>
                   <div className="flex items-center">
                     Category
@@ -129,23 +131,23 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
           <TableBody>
             {filteredAccounts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={visibleColumnIds.length + 1} className="text-center py-6 text-muted-foreground">
                   No accounts found matching your search.
                 </TableCell>
               </TableRow>
             ) : (
               filteredAccounts.map((account) => (
                 <TableRow key={account.code}>
-                  {visibleColumns.includes('code') && (
+                  {visibleColumnIds.includes('code') && (
                     <TableCell className="font-medium">{account.code}</TableCell>
                   )}
-                  {visibleColumns.includes('description') && (
+                  {visibleColumnIds.includes('description') && (
                     <TableCell>{account.description}</TableCell>
                   )}
-                  {visibleColumns.includes('type') && (
+                  {visibleColumnIds.includes('type') && (
                     <TableCell>{account.type}</TableCell>
                   )}
-                  {visibleColumns.includes('category') && (
+                  {visibleColumnIds.includes('category') && (
                     <TableCell>{account.category}</TableCell>
                   )}
                   <TableCell className="text-right">
