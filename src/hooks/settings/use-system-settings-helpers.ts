@@ -22,12 +22,14 @@ export const saveSystemSettings = async (settings: SystemSettings): Promise<void
     
     // Update each settings category separately to ensure proper database structure
     for (const category of ['appearance', 'notifications', 'security', 'preferences', 'integrations'] as const) {
+      // Serialize the settings to proper JSON format to satisfy the database type requirements
+      const serializedValue = JSON.stringify(settings[category]);
+      
       const { error } = await supabase
         .from('system_settings')
         .upsert({
           key: category,
-          value: settings[category],
-          updated_at: new Date().toISOString()
+          value: JSON.parse(serializedValue) // Parse back to object to ensure proper JSON structure
         }, {
           onConflict: 'key'
         });

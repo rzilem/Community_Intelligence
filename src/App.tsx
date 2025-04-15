@@ -6,13 +6,12 @@ import { Toaster } from '@/components/ui/toaster';
 import { mainRoutes } from '@/routes';
 import { AuthProvider } from './contexts/auth/AuthProvider';
 import { Toaster as SonnerToaster } from 'sonner';
-import { useSystemSetting } from '@/hooks/settings/use-system-settings';
-import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
 import { AppearanceSettings } from '@/types/settings-types';
 
 // Create router
 const router = createBrowserRouter(mainRoutes);
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -22,7 +21,12 @@ const queryClient = new QueryClient({
   }
 });
 
-function App() {
+// Create AppContent component to use hooks after QueryClientProvider is available
+function AppContent() {
+  // Import these only inside the component to ensure QueryClient is available
+  const { useSystemSetting } = require('@/hooks/settings/use-system-settings');
+  const { applyAppearanceSettings } = require('@/hooks/settings/use-system-settings-helpers');
+  
   // Load appearance settings
   const { data: appearanceSettings } = useSystemSetting<AppearanceSettings>('appearance');
   
@@ -34,12 +38,18 @@ function App() {
   }, [appearanceSettings]);
 
   return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+      <Toaster />
+      <SonnerToaster position="top-right" />
+    </AuthProvider>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-        <Toaster />
-        <SonnerToaster position="top-right" />
-      </AuthProvider>
+      <AppContent />
     </QueryClientProvider>
   );
 }
