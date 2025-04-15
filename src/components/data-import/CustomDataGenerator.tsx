@@ -2,7 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Settings } from 'lucide-react';
-import { exportAddressesAsCSV } from '@/data/nolan-city-addresses';
+import { 
+  exportAddressesAsCSV, 
+  exportMaintenanceRequestsAsCSV,
+  exportComplianceIssuesAsCSV,
+  exportFinancialRecordsAsCSV
+} from '@/data/nolan-city-addresses';
 import { toast } from 'sonner';
 import {
   Card,
@@ -79,11 +84,26 @@ const CustomDataGenerator: React.FC = () => {
     toast.info(`Preparing ${recordCount} records for ${associationName}...`);
     
     try {
-      // Currently only using the existing Nolan City generator
-      // In the future, this would be enhanced to use all parameters
-      exportAddressesAsCSV(recordCount, associationName, zipCode, city, state);
+      // Generate data based on the selected data type
+      switch(dataType) {
+        case 'properties_owners':
+        case 'residents':
+          exportAddressesAsCSV(recordCount, associationName, zipCode, city, state);
+          break;
+        case 'maintenance':
+          exportMaintenanceRequestsAsCSV(recordCount, associationName, zipCode, city, state);
+          break;
+        case 'compliance':
+          exportComplianceIssuesAsCSV(recordCount, associationName, zipCode, city, state);
+          break;
+        case 'financial':
+          exportFinancialRecordsAsCSV(recordCount, associationName, zipCode, city, state);
+          break;
+        default:
+          exportAddressesAsCSV(recordCount, associationName, zipCode, city, state);
+      }
       
-      toast.success(`${dataType} data generated successfully for ${associationName}!`);
+      toast.success(`${dataType.replace('_', ' ')} data generated successfully for ${associationName}!`);
     } catch (error) {
       console.error("Error generating data:", error);
       toast.error("Failed to generate data");
