@@ -64,26 +64,44 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     // Create a list of unmapped columns
     const unmappedColumns = fileColumns.filter(column => !mappings[column]);
     
-    // First, find city, state, zip fields directly if they exist
-    const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
-    const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
-    const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
-    
+    // First, handle special fields with direct mapping
     unmappedColumns.forEach(column => {
       const lowerColumn = column.toLowerCase();
       
+      // Special handling for co_owner_is_primary
+      if (lowerColumn === 'co_owner_is_primary') {
+        const primaryField = systemFields.find(f => 
+          f.value === 'is_primary' || 
+          f.value === 'owner.is_primary'
+        );
+        if (primaryField) {
+          onMappingChange(column, primaryField.value);
+          updateCount++;
+          return;
+        }
+      }
+      
       // Direct mapping for city, state, zip - higher priority
-      if (lowerColumn === 'city' && cityField) {
-        onMappingChange(column, cityField.value);
-        updateCount++;
+      if (lowerColumn === 'city') {
+        const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
+        if (cityField) {
+          onMappingChange(column, cityField.value);
+          updateCount++;
+        }
       } 
-      else if (lowerColumn === 'state' && stateField) {
-        onMappingChange(column, stateField.value);
-        updateCount++;
+      else if (lowerColumn === 'state') {
+        const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
+        if (stateField) {
+          onMappingChange(column, stateField.value);
+          updateCount++;
+        }
       } 
-      else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code' || lowerColumn === 'postal') && zipField) {
-        onMappingChange(column, zipField.value);
-        updateCount++;
+      else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code' || lowerColumn === 'postal')) {
+        const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
+        if (zipField) {
+          onMappingChange(column, zipField.value);
+          updateCount++;
+        }
       }
       // For other columns, use AI suggestion if confidence is high enough
       else {

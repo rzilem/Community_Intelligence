@@ -137,8 +137,18 @@ export const useMappingFields = (
     columns.forEach(column => {
       const lowerColumn = column.toLowerCase();
       
+      // Special handling for co_owner_is_primary
+      if (lowerColumn === 'co_owner_is_primary') {
+        const primaryField = systemFields.find(f => 
+          f.value === 'is_primary' || 
+          f.value === 'owner.is_primary'
+        );
+        if (primaryField) {
+          initialMappings[column] = primaryField.value;
+        }
+      }
       // Handle common mappings directly based on the available system fields
-      if (lowerColumn === 'city') {
+      else if (lowerColumn === 'city') {
         // Check if we have city or property.city in our system fields
         const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
         if (cityField) {

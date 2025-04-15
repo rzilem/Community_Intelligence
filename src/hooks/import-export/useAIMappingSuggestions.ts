@@ -29,6 +29,7 @@ export const useAIMappingSuggestions = (
         sampleData
       );
       
+      console.log("Generated suggestions:", results);
       setSuggestions(results);
       return results;
     } catch (error) {

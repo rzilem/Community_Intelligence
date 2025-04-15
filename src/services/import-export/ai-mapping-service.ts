@@ -37,7 +37,8 @@ const areSemanticallySimilar = (col: string, field: string): boolean => {
     ['zip', 'postalCode'], ['zip', 'zipCode'], ['zip', 'postal'],
     ['email', 'emailAddress'], ['phone', 'phoneNumber'], ['telephone', 'phoneNumber'],
     ['unit', 'apartment'], ['unit', 'unitNumber'], ['property', 'unit'],
-    ['owner', 'resident'], ['owner', 'homeowner'], ['date', 'timestamp']
+    ['owner', 'resident'], ['owner', 'homeowner'], ['date', 'timestamp'],
+    ['is_primary', 'primary'], ['primary', 'main'], ['co_owner', 'owner']
   ];
   
   const normalizedCol = col.toLowerCase();
@@ -77,9 +78,10 @@ const analyzeColumnData = (columnData: any[]): {
   const phoneRegex = /^[\d\+\-\(\)\s]{7,15}$/;
   const dateRegex = /^\d{1,4}[-\/\.]\d{1,2}[-\/\.]\d{1,4}$|^\d{1,2}[-\/\.]\d{1,2}[-\/\.]\d{2,4}$/;
   const addressIndicators = ['street', 'ave', 'road', 'blvd', 'dr', 'lane', 'way', 'circle', 'apt', 'unit', '#'];
+  const booleanValues = ['true', 'false', 'yes', 'no', '0', '1', 'y', 'n', 't', 'f'];
   
   for (const val of cleanData) {
-    const strVal = String(val).trim();
+    const strVal = String(val).trim().toLowerCase();
     
     // Check if number
     if (!isNaN(Number(strVal)) && strVal !== '') {
@@ -92,7 +94,7 @@ const analyzeColumnData = (columnData: any[]): {
     }
     
     // Check if boolean
-    if (['true', 'false', 'yes', 'no', '0', '1', 'y', 'n', 't', 'f'].includes(strVal.toLowerCase())) {
+    if (booleanValues.includes(strVal.toLowerCase())) {
       boolCount++;
     }
     
@@ -161,13 +163,17 @@ export const aiMappingService = {
       'contact_email': 'contact_email',
       'phone': 'phone',
       'phone_number': 'phone',
-      'telephone': 'phone'
+      'telephone': 'phone',
+      'is_primary': 'is_primary',
+      'primary': 'is_primary',
+      'co_owner_is_primary': 'owner.is_primary'
     };
     
     // First check for exact city, state, zip matches and apply directly
     const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
     const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
     const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
+    const isPrimaryField = systemFields.find(f => f.value === 'is_primary' || f.value === 'owner.is_primary');
     
     for (const column of fileColumns) {
       let bestMatch = { field: '', score: 0 };
@@ -181,6 +187,10 @@ export const aiMappingService = {
       } else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal' || lowerColumn === 'postal_code') && zipField) {
         bestMatch = { field: zipField.value, score: 1.0 };
       } 
+      // Special handling for co_owner_is_primary and is_primary
+      else if ((lowerColumn === 'co_owner_is_primary' || lowerColumn === 'is_primary' || lowerColumn === 'primary') && isPrimaryField) {
+        bestMatch = { field: isPrimaryField.value, score: 1.0 };
+      }
       // Check for direct mapping
       else if (directMappings[lowerColumn]) {
         // Make sure the system field exists before mapping
@@ -235,6 +245,13 @@ export const aiMappingService = {
           } else if (dataAnalysis.type === 'address' && 
                     (field.value.includes('address') || field.value.endsWith('street') || 
                      field.label.toLowerCase().includes('address'))) {
+            similarityScore += 0.3;
+          } else if (dataAnalysis.type === 'boolean' && (field.value.includes('is_') || field.label.toLowerCase().includes('is '))) {
+            similarityScore += 0.3;
+          }
+          
+          // Special boost for likely co_owner_is_primary field match
+          if (lowerColumn.includes('primary') && field.value.includes('is_primary')) {
             similarityScore += 0.3;
           }
           
