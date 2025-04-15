@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MappingOption } from '@/components/data-import/types/mapping-types';
 import { aiMappingService } from '@/services/import-export/ai-mapping-service';
 
@@ -12,13 +12,7 @@ export const useAIMappingSuggestions = (
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Auto-generate suggestions on mount if we have all required data
-  useEffect(() => {
-    if (fileColumns.length > 0 && systemFields.length > 0 && sampleData.length > 0) {
-      generateSuggestions();
-    }
-  }, [fileColumns, systemFields, sampleData]);
-
-  const generateSuggestions = () => {
+  const generateSuggestions = useCallback(() => {
     setIsGenerating(true);
     try {
       // Use the AI mapping service to generate suggestions
@@ -36,7 +30,14 @@ export const useAIMappingSuggestions = (
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [fileColumns, systemFields, sampleData]);
+
+  // Generate suggestions when component mounts
+  useEffect(() => {
+    if (fileColumns.length > 0 && systemFields.length > 0 && sampleData.length > 0) {
+      generateSuggestions();
+    }
+  }, [fileColumns, systemFields, sampleData, generateSuggestions]);
 
   return {
     suggestions,

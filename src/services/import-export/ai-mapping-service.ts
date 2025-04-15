@@ -32,7 +32,9 @@ const areSemanticallySimilar = (col: string, field: string): boolean => {
   const semanticPairs = [
     ['name', 'firstName'], ['name', 'lastName'], ['name', 'fullName'],
     ['address', 'street'], ['address', 'addressLine'], ['address', 'streetAddress'],
-    ['city', 'town'], ['state', 'province'], ['zip', 'postalCode'], ['zip', 'zipCode'],
+    ['city', 'town'], ['city', 'municipality'], 
+    ['state', 'province'], ['state', 'region'], 
+    ['zip', 'postalCode'], ['zip', 'zipCode'], ['zip', 'postal'],
     ['email', 'emailAddress'], ['phone', 'phoneNumber'], ['telephone', 'phoneNumber'],
     ['unit', 'apartment'], ['unit', 'unitNumber'], ['property', 'unit'],
     ['owner', 'resident'], ['owner', 'homeowner'], ['date', 'timestamp']
@@ -145,44 +147,67 @@ export const aiMappingService = {
     console.log("Generating mapping suggestions for", fileColumns.length, "columns");
     const suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
     
+    // Add special handling for common columns
+    const commonMappings = {
+      'city': 'property.city',
+      'state': 'property.state',
+      'zip': 'property.zip',
+      'zipcode': 'property.zip',
+      'postal': 'property.zip',
+      'postal_code': 'property.zip'
+    };
+    
     for (const column of fileColumns) {
       let bestMatch = { field: '', score: 0 };
+      const lowerColumn = column.toLowerCase();
       
-      // Get sample data for this column
-      const columnData = sampleData.map(row => row[column]);
-      const dataAnalysis = analyzeColumnData(columnData);
-      
-      // Check each system field for a match with this column
-      for (const field of systemFields) {
-        // Calculate string similarity score between column name and field label/value
-        const labelSimilarity = getStringSimilarity(column, field.label);
-        const valueSimilarity = getStringSimilarity(column, field.value);
-        let similarityScore = Math.max(labelSimilarity, valueSimilarity);
+      // Check for direct mapping in common fields
+      if (commonMappings[lowerColumn]) {
+        bestMatch = { field: commonMappings[lowerColumn], score: 1.0 };
+      } else {
+        // Get sample data for this column
+        const columnData = sampleData.map(row => row[column]);
+        const dataAnalysis = analyzeColumnData(columnData);
         
-        // Check for semantic similarity
-        if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value)) {
-          similarityScore += 0.2;
-        }
-        
-        // Boost score based on data type matches
-        if (dataAnalysis.type === 'email' && (field.value.includes('email') || field.label.toLowerCase().includes('email'))) {
-          similarityScore += 0.3;
-        } else if (dataAnalysis.type === 'phone' && (field.value.includes('phone') || field.label.toLowerCase().includes('phone'))) {
-          similarityScore += 0.3;
-        } else if (dataAnalysis.type === 'date' && (field.value.includes('date') || field.label.toLowerCase().includes('date'))) {
-          similarityScore += 0.3;
-        } else if (dataAnalysis.type === 'address' && 
-                  (field.value.includes('address') || field.value === 'street' || 
-                   field.label.toLowerCase().includes('address'))) {
-          similarityScore += 0.3;
-        }
-        
-        // Cap score at 1.0
-        similarityScore = Math.min(similarityScore, 1.0);
-        
-        // Update best match if this score is higher
-        if (similarityScore > bestMatch.score) {
-          bestMatch = { field: field.value, score: similarityScore };
+        // Check each system field for a match with this column
+        for (const field of systemFields) {
+          // Calculate string similarity score between column name and field label/value
+          const labelSimilarity = getStringSimilarity(column, field.label);
+          const valueSimilarity = getStringSimilarity(column, field.value);
+          let similarityScore = Math.max(labelSimilarity, valueSimilarity);
+          
+          // Check for semantic similarity
+          if (areSemanticallySimilar(column, field.label) || areSemanticallySimilar(column, field.value)) {
+            similarityScore += 0.2;
+          }
+          
+          // Boost score based on data type matches
+          if (dataAnalysis.type === 'email' && (field.value.includes('email') || field.label.toLowerCase().includes('email'))) {
+            similarityScore += 0.3;
+          } else if (dataAnalysis.type === 'phone' && (field.value.includes('phone') || field.label.toLowerCase().includes('phone'))) {
+            similarityScore += 0.3;
+          } else if (dataAnalysis.type === 'date' && (field.value.includes('date') || field.label.toLowerCase().includes('date'))) {
+            similarityScore += 0.3;
+          } else if (dataAnalysis.type === 'address' && 
+                    (field.value.includes('address') || field.value === 'street' || 
+                     field.label.toLowerCase().includes('address'))) {
+            similarityScore += 0.3;
+          }
+          
+          // Special case for city, state, zip fields
+          if ((lowerColumn === 'city' && field.value.includes('city')) || 
+              (lowerColumn === 'state' && field.value.includes('state')) || 
+              (lowerColumn === 'zip' && (field.value.includes('zip') || field.value.includes('postal')))) {
+            similarityScore += 0.5;
+          }
+          
+          // Cap score at 1.0
+          similarityScore = Math.min(similarityScore, 1.0);
+          
+          // Update best match if this score is higher
+          if (similarityScore > bestMatch.score) {
+            bestMatch = { field: field.value, score: similarityScore };
+          }
         }
       }
       

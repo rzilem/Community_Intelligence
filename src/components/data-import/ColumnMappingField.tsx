@@ -59,7 +59,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
       <div className="grid grid-cols-12 gap-2">
         <div className="col-span-4">
           <div className="text-sm font-medium">{column}</div>
-          {suggestion && !selectedValue && confidence >= 0.7 && (
+          {suggestion && !selectedValue && confidence >= 0.6 && (
             <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer" onClick={handleSuggestionApply}>
               <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
               <span className="hover:underline">Suggested: {suggestion}</span>
@@ -82,20 +82,20 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start" sideOffset={4}>
+            <PopoverContent className="w-full p-0 z-50" align="start" sideOffset={4}>
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
                 <CommandEmpty>No field found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandList>
+                  <CommandList className="max-h-[300px] overflow-y-auto">
                     {Array.isArray(systemFields) && systemFields.map((field) => (
                       <CommandItem
                         key={field.value}
                         value={field.value}
-                        onSelect={handleSelect}
-                        className="cursor-pointer"
+                        onSelect={() => handleSelect(field.value)}
+                        className="cursor-pointer flex items-center justify-between"
                       >
-                        {field.label}
+                        <span>{field.label}</span>
                         <Check
                           className={cn(
                             "ml-auto h-4 w-4",

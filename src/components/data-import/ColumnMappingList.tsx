@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ColumnMappingField from './ColumnMappingField';
 import { MappingOption } from './types/mapping-types';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,13 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     generateSuggestions 
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
+  // Generate suggestions when component mounts or data changes
+  useEffect(() => {
+    if (fileColumns.length > 0 && systemFields.length > 0 && previewData.length > 0) {
+      generateSuggestions();
+    }
+  }, [fileColumns, systemFields, previewData, generateSuggestions]);
+
   const handleMappingChange = (column: string, field: string) => {
     console.log(`Manual mapping change: ${column} -> ${field}`);
     onMappingChange(column, field);
@@ -54,8 +61,8 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     
     // Apply mapping suggestions that meet confidence threshold
     Object.entries(newSuggestions).forEach(([column, suggestion]) => {
-      // Apply the mapping only if it meets confidence threshold AND doesn't already have a mapping
-      if (suggestion.confidence >= 0.6 && !mappings[column]) {
+      // Apply the mapping if it meets confidence threshold
+      if (suggestion.confidence >= 0.6) {
         console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
         onMappingChange(column, suggestion.fieldValue);
         updateCount++;
@@ -94,7 +101,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
           column={column}
           systemFields={safeSystemFields}
           selectedValue={mappings[column] || ''}
-          onMappingChange={handleMappingChange}
+          onMappingChange={(col, field) => handleMappingChange(col, field)}
           isOpen={!!openState[column]}
           setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
           suggestion={suggestions[column]?.fieldValue || ''}
