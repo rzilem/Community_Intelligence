@@ -215,14 +215,8 @@ const HomeownerListPage = () => {
     setError(null);
     setLoading(true);
     // This will trigger the useEffect to fetch residents again
-    const timer = setTimeout(() => {
-      // Force a refresh by toggling association filter
-      setFilterAssociation(prev => {
-        // Toggle between 'all' and something else to force a refresh
-        return prev === 'all' ? 'temp_refresh_trigger' : 'all';
-      });
-    }, 100);
-    return () => clearTimeout(timer);
+    // A simple way to force a refresh without using the problematic temp_refresh_trigger
+    setFilterAssociation('all');
   };
 
   return (
