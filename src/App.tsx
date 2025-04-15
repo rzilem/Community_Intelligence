@@ -1,14 +1,17 @@
 
 import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { router } from '@/routes';
-import AuthProvider from './contexts/auth/AuthProvider';
+import { mainRoutes } from '@/routes';
+import { AuthProvider } from './contexts/auth/AuthProvider';
 import { Toaster as SonnerToaster } from 'sonner';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
 import { applyAppearanceSettings } from '@/hooks/settings/use-system-settings-helpers';
 import { AppearanceSettings } from '@/types/settings-types';
+
+// Create router
+const router = createBrowserRouter(mainRoutes);
 
 const queryClient = new QueryClient({
   defaultOptions: {
