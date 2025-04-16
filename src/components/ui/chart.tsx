@@ -16,6 +16,80 @@ import {
   Line
 } from 'recharts';
 
+// Chart container component
+interface ChartContainerProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export const ChartContainer: React.FC<ChartContainerProps> = ({
+  children,
+  className = '',
+}) => {
+  return (
+    <div className={`w-full h-full ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+// Chart tooltip component
+interface ChartTooltipProps {
+  children: React.ReactNode;
+  visible?: boolean;
+  className?: string;
+}
+
+export const ChartTooltip: React.FC<ChartTooltipProps> = ({
+  children,
+  visible = false,
+  className = '',
+}) => {
+  if (!visible) return null;
+  
+  return (
+    <div className={`absolute z-50 p-2 bg-white rounded-md shadow-md border border-gray-200 ${className}`}>
+      {children}
+    </div>
+  );
+};
+
+// Chart tooltip content component
+interface ChartTooltipContentProps {
+  label?: string;
+  payload?: Array<{
+    name?: string;
+    value?: number | string;
+    color?: string;
+  }>;
+  formatter?: (value: number | string) => string;
+  className?: string;
+}
+
+export const ChartTooltipContent: React.FC<ChartTooltipContentProps> = ({
+  label,
+  payload = [],
+  formatter = (value) => `${value}`,
+  className = '',
+}) => {
+  return (
+    <div className={`flex flex-col gap-1 ${className}`}>
+      {label && <div className="font-medium">{label}</div>}
+      {payload.map((entry, index) => (
+        <div key={`tooltip-item-${index}`} className="flex items-center gap-2">
+          {entry.color && (
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: entry.color }}
+            />
+          )}
+          <span>{entry.name}: {formatter(entry.value || 0)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Bar Chart Component
 interface BarChartProps {
   data: any[];
