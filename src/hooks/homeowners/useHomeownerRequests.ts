@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,7 +64,26 @@ export const useHomeownerRequests = () => {
         console.log('First request sample:', data[0]);
       }
       
-      setManualRequests(data || []);
+      // Properly cast the data to ensure it matches the HomeownerRequest type
+      const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        status: item.status as HomeownerRequestStatus,
+        priority: item.priority as HomeownerRequestPriority,
+        type: item.type as HomeownerRequestType,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        resident_id: item.resident_id,
+        property_id: item.property_id,
+        association_id: item.association_id,
+        assigned_to: item.assigned_to,
+        resolved_at: item.resolved_at,
+        html_content: item.html_content,
+        tracking_number: item.tracking_number
+      }));
+      
+      setManualRequests(typedRequests);
     } catch (err: any) {
       console.error('Error in fetchRequests:', err);
       setError(err);

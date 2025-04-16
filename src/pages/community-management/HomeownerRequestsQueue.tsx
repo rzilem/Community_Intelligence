@@ -32,13 +32,12 @@ const HomeownerRequestsQueue = () => {
     setType,
     lastRefreshed,
     handleRefresh,
-    homeownerRequests,
-    refetch
+    homeownerRequests
   } = useHomeownerRequests();
 
   const handleFormSuccess = () => {
     setOpen(false);
-    refetch();
+    handleRefresh(); // Use handleRefresh instead of refetch
     toast.success('Request created successfully');
   };
 

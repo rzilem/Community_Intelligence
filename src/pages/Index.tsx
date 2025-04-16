@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
+import HeroSection from '@/components/marketing/HeroSection';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -41,20 +42,37 @@ const Index = () => {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">HOA Management Made Simple</h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Community Intelligence helps HOA managers and board members streamline operations,
-            improve communication, and make data-driven decisions.
-          </p>
-          <div className="flex justify-center gap-4">
-            <Link to="/auth?tab=login">
-              <Button size="lg">Get Started</Button>
-            </Link>
-            <Link to="/auth?tab=signup">
-              <Button variant="outline" size="lg">Sign Up</Button>
-            </Link>
+      <main className="flex-1">
+        <HeroSection />
+        
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-bold mb-6">Manage Your HOA with Confidence</h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Community Intelligence provides all the tools you need to efficiently manage homeowners associations,
+              from resident communication to maintenance requests and financial tracking.
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-12">
+              <div className="p-6 border rounded-lg shadow-sm">
+                <h3 className="text-xl font-semibold mb-3">Resident Management</h3>
+                <p>Keep track of all residents and their information in one centralized location.</p>
+              </div>
+              <div className="p-6 border rounded-lg shadow-sm">
+                <h3 className="text-xl font-semibold mb-3">Request Tracking</h3>
+                <p>Efficiently track and respond to homeowner requests and maintenance issues.</p>
+              </div>
+              <div className="p-6 border rounded-lg shadow-sm">
+                <h3 className="text-xl font-semibold mb-3">Financial Management</h3>
+                <p>Track assessments, payments, and manage your association's finances.</p>
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Link to="/auth?tab=signup">
+                <Button size="lg">Get Started Today</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </main>
