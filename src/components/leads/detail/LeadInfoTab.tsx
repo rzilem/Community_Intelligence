@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
@@ -19,6 +18,10 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
   cleanedCity, 
   zipCode 
 }) => {
+  const fullAddress = formattedStreetAddress && cleanedCity && lead.state && zipCode
+    ? `${formattedStreetAddress}, ${cleanedCity}, ${lead.state} ${zipCode}`
+    : formattedStreetAddress || 'N/A';
+
   return (
     <ScrollArea className="h-[75vh]">
       <div className="space-y-6 p-4">
@@ -81,9 +84,9 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
         <div className="space-y-4">
           <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Address</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
-            <div className="text-muted-foreground font-bold">Street Address:</div>
+            <div className="text-muted-foreground font-bold">Address:</div>
             <div className="col-span-2 text-left">
-              {formattedStreetAddress || 'N/A'}
+              {fullAddress}
               {formattedStreetAddress && (
                 <a 
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedStreetAddress)}`}
@@ -95,22 +98,6 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
                 </a>
               )}
             </div>
-            
-            {lead.address_line2 && (
-              <>
-                <div className="text-muted-foreground font-bold">Address Line 2:</div>
-                <div className="col-span-2 text-left">{lead.address_line2}</div>
-              </>
-            )}
-            
-            <div className="text-muted-foreground font-bold">City:</div>
-            <div className="col-span-2 text-left">{cleanedCity || 'N/A'}</div>
-            
-            <div className="text-muted-foreground font-bold">State:</div>
-            <div className="col-span-2 text-left">{lead.state || 'N/A'}</div>
-            
-            <div className="text-muted-foreground font-bold">ZIP:</div>
-            <div className="col-span-2 text-left">{zipCode || 'N/A'}</div>
           </div>
         </div>
         
