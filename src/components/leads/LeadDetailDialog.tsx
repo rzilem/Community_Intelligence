@@ -8,7 +8,7 @@ import LeadInfoTab from './detail/LeadInfoTab';
 import LeadOriginalEmailTab from './detail/LeadOriginalEmailTab';
 import LeadNotesTab from './detail/LeadNotesTab';
 import LeadAttachmentsTab from './detail/LeadAttachmentsTab';
-import { getFormattedLeadAddressData } from './detail/address-utils';
+import { getFormattedLeadAddressData } from './detail/address-utils/data-utils';
 import { Paperclip } from 'lucide-react';
 
 interface LeadDetailDialogProps {
@@ -24,6 +24,12 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
   
   // Get formatted address data using utility function
   const addressData = getFormattedLeadAddressData(lead);
+  
+  // Placeholder function for notes since we can't save in dialog view
+  const handleNotesUpdate = (notes: string) => {
+    console.log('Notes update in dialog view:', notes);
+    // In real implementation, this would call an API to update notes
+  };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,7 +64,10 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
           </TabsContent>
           
           <TabsContent value="notes" className="flex-1 overflow-hidden">
-            <LeadNotesTab lead={lead} />
+            <LeadNotesTab 
+              lead={lead}
+              onSaveNotes={handleNotesUpdate}  
+            />
           </TabsContent>
           
           <TabsContent value="attachments" className="flex-1 overflow-hidden">

@@ -6,7 +6,7 @@ import LeadInfoTab from './LeadInfoTab';
 import LeadOriginalEmailTab from './LeadOriginalEmailTab';
 import LeadNotesTab from './LeadNotesTab';
 import LeadAttachmentsTab from './LeadAttachmentsTab';
-import { getFormattedLeadAddressData } from './address-utils';
+import { getFormattedLeadAddressData } from './address-utils/data-utils';
 import { Paperclip } from 'lucide-react';
 
 interface LeadDetailTabsProps {
@@ -54,7 +54,7 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({
       <TabsContent value="notes" className="flex-1 overflow-hidden">
         <LeadNotesTab 
           lead={lead} 
-          onSaveNotes={onSaveNotes} 
+          onSaveNotes={onSaveNotes}
         />
       </TabsContent>
       
