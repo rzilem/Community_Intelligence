@@ -1924,6 +1924,54 @@ export type Database = {
           },
         ]
       }
+      resale_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          id: string
+          location: string | null
+          property: string | null
+          start_time: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          id?: string
+          location?: string | null
+          property?: string | null
+          start_time: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          location?: string | null
+          property?: string | null
+          start_time?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       residents: {
         Row: {
           created_at: string

@@ -15,6 +15,7 @@ export function useSupabaseQuery<T = any>(
     order,
     single = false,
     onSuccess,
+    onError,
   } = options;
 
   const queryKey = [table, select, filter, limit, order, single];
@@ -68,7 +69,14 @@ export function useSupabaseQuery<T = any>(
         
         if (error) {
           console.error(`Error fetching from ${table}:`, error);
-          showErrorToast('fetching', table, error);
+          
+          // Use custom error handler if provided, otherwise show toast
+          if (onError) {
+            onError(error);
+          } else {
+            showErrorToast('fetching', table, error);
+          }
+          
           throw error;
         }
         
@@ -82,7 +90,14 @@ export function useSupabaseQuery<T = any>(
       
       if (error) {
         console.error(`Error fetching from ${table}:`, error);
-        showErrorToast('fetching', table, error);
+        
+        // Use custom error handler if provided, otherwise show toast
+        if (onError) {
+          onError(error);
+        } else {
+          showErrorToast('fetching', table, error);
+        }
+        
         throw error;
       }
       
@@ -92,7 +107,9 @@ export function useSupabaseQuery<T = any>(
     },
     enabled: enabled,
     meta: {
-      onSuccess
+      onSuccess,
+      onError
     },
+    retry: false,  // Don't retry if the query fails to avoid spamming the console with errors
   });
 }
