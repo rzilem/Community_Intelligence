@@ -49,34 +49,34 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
               <div className="space-y-6 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <h3 className="font-medium text-lg border-b pb-1 mb-2">Association Information</h3>
+                    <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Association Information</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-muted-foreground font-bold">Association Name:</div>
-                      <div>{lead.association_name || 'N/A'}</div>
+                      <div className="font-semibold">{lead.association_name || 'N/A'}</div>
                       
                       <div className="text-muted-foreground font-bold">Association Type:</div>
-                      <div>{lead.association_type || 'N/A'}</div>
+                      <div className="font-semibold">{lead.association_type || 'N/A'}</div>
                       
                       <div className="text-muted-foreground font-bold">Number of Units:</div>
-                      <div>{lead.number_of_units || 'N/A'}</div>
+                      <div className="font-semibold">{lead.number_of_units || 'N/A'}</div>
                       
                       <div className="text-muted-foreground font-bold">Current Management:</div>
-                      <div>{lead.current_management || 'N/A'}</div>
+                      <div className="font-semibold">{lead.current_management || 'N/A'}</div>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
-                    <h3 className="font-medium text-lg border-b pb-1 mb-2">Contact Information</h3>
+                    <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Contact Information</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-muted-foreground font-bold">Name:</div>
-                      <div>{lead.name}</div>
+                      <div className="font-semibold">{lead.name}</div>
                       
                       <div className="text-muted-foreground font-bold">Email:</div>
                       <div>
                         {lead.email ? (
                           <a 
                             href={`mailto:${lead.email}`} 
-                            className="text-blue-600 hover:underline flex items-center gap-1 font-bold"
+                            className="text-blue-600 hover:underline flex items-center gap-1"
                           >
                             {lead.email}
                             <Mail size={14} />
@@ -89,7 +89,7 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                         {lead.phone ? (
                           <a 
                             href={`tel:${lead.phone}`} 
-                            className="text-blue-600 hover:underline flex items-center gap-1 font-bold"
+                            className="text-blue-600 hover:underline flex items-center gap-1"
                           >
                             {lead.phone}
                             <Phone size={14} />
@@ -98,16 +98,16 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                       </div>
                       
                       <div className="text-muted-foreground font-bold">Company:</div>
-                      <div>{lead.company || 'N/A'}</div>
+                      <div className="font-semibold">{lead.company || 'N/A'}</div>
                     </div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-lg border-b pb-1 mb-2">Address</h3>
+                  <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Address</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
                     <div className="text-muted-foreground font-bold">Street Address:</div>
-                    <div className="col-span-2 text-left">
+                    <div className="col-span-2 text-left font-semibold">
                       {formattedStreetAddress || 'N/A'}
                       {formattedStreetAddress && (
                         <a 
@@ -124,23 +124,23 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                     {lead.address_line2 && (
                       <>
                         <div className="text-muted-foreground font-bold">Address Line 2:</div>
-                        <div className="col-span-2 text-left">{lead.address_line2}</div>
+                        <div className="col-span-2 text-left font-semibold">{lead.address_line2}</div>
                       </>
                     )}
                     
                     <div className="text-muted-foreground font-bold">City:</div>
-                    <div className="col-span-2 text-left">{cleanedCity || 'N/A'}</div>
+                    <div className="col-span-2 text-left font-semibold">{cleanedCity || 'N/A'}</div>
                     
                     <div className="text-muted-foreground font-bold">State:</div>
-                    <div className="col-span-2 text-left">{lead.state || 'N/A'}</div>
+                    <div className="col-span-2 text-left font-semibold">{lead.state || 'N/A'}</div>
                     
                     <div className="text-muted-foreground font-bold">ZIP:</div>
-                    <div className="col-span-2 text-left">{zipCode || 'N/A'}</div>
+                    <div className="col-span-2 text-left font-semibold">{zipCode || 'N/A'}</div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-lg border-b pb-1 mb-2">Lead Information</h3>
+                  <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Lead Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     <div className="text-muted-foreground font-bold">Source:</div>
                     <div>{lead.source}</div>
