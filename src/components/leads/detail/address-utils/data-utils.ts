@@ -1,8 +1,8 @@
+
 import { Lead } from '@/types/lead-types';
-import { formatStreetAddress } from './format-utils';
+import { formatStreetAddress, formatFullAddress } from './format-utils';
 import { extractCity } from './city-utils';
 import { extractZipCode } from './zip-utils';
-import { formatFullAddress } from './format-utils';
 
 /**
  * Prepares all formatted address data for a lead
