@@ -9,39 +9,40 @@ export const useResidentNotes = (residentId: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchNotes = async () => {
-      setLoading(true);
-      try {
-        if (!residentId) {
-          setNotes([]);
-          setLoading(false);
-          return;
-        }
-
-        const { data: notesData, error: notesError } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('parent_id', residentId)
-          .eq('parent_type', 'resident')
-          .order('created_at', { ascending: false });
-          
-        if (notesError) {
-          console.error('Error fetching resident notes:', notesError);
-          setError('Failed to fetch notes');
-        } else {
-          // Convert database comments to NoteType format
-          const formattedNotes: NoteType[] = notesData?.map(formatCommentAsNote) || [];
-          setNotes(formattedNotes);
-        }
-      } catch (err) {
-        console.error('Error fetching resident notes:', err);
-        setError('Failed to fetch notes');
-      } finally {
+  const fetchNotes = async () => {
+    setLoading(true);
+    try {
+      if (!residentId) {
+        setNotes([]);
         setLoading(false);
+        return;
       }
-    };
 
+      const { data: notesData, error: notesError } = await supabase
+        .from('comments')
+        .select('*')
+        .eq('parent_id', residentId)
+        .eq('parent_type', 'resident')
+        .order('created_at', { ascending: false });
+        
+      if (notesError) {
+        console.error('Error fetching resident notes:', notesError);
+        setError('Failed to fetch notes');
+      } else {
+        // Convert database comments to NoteType format
+        const formattedNotes: NoteType[] = notesData?.map(formatCommentAsNote) || [];
+        console.log('Fetched notes:', formattedNotes);
+        setNotes(formattedNotes);
+      }
+    } catch (err) {
+      console.error('Error fetching resident notes:', err);
+      setError('Failed to fetch notes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchNotes();
   }, [residentId]);
 
@@ -55,7 +56,7 @@ export const useResidentNotes = (residentId: string) => {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
       
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('comments')
         .insert({
           parent_id: residentId,
@@ -63,20 +64,18 @@ export const useResidentNotes = (residentId: string) => {
           user_id: userId || null,
           user_name: noteData.author,
           content: noteData.type === 'system' ? `[SYSTEM] ${noteData.content}` : noteData.content,
-        });
+        })
+        .select();
         
       if (error) {
         console.error("Error adding note to database:", error);
         throw new Error('Failed to add note to database');
       }
       
-      // Add note to local state
-      const newNote: NoteType = {
-        ...noteData,
-        date: new Date().toLocaleString()
-      };
+      console.log("Note added successfully:", data);
       
-      setNotes(prev => [newNote, ...prev]);
+      // Refresh notes from database
+      await fetchNotes();
       
       return true;
     } catch (err) {
@@ -89,6 +88,7 @@ export const useResidentNotes = (residentId: string) => {
     notes,
     loading,
     error,
-    addNote
+    addNote,
+    fetchNotes
   };
 };

@@ -50,9 +50,9 @@ export const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
       
       // Safely access user profile data, handling the case where it might not exist
       if (user && 'profile' in user) {
-        const userProfile = (user.profile as Profile) || {};
-        const firstName = userProfile.first_name || '';
-        const lastName = userProfile.last_name || '';
+        const userProfile = (user.profile as Profile);
+        const firstName = userProfile?.first_name || '';
+        const lastName = userProfile?.last_name || '';
         
         if (firstName || lastName) {
           authorName = `${firstName} ${lastName}`.trim();

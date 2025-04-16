@@ -4,6 +4,7 @@ import { Homeowner } from '@/components/homeowners/detail/types';
 import { useResidentData } from './resident/useResidentData';
 import { useResidentNotes } from './resident/useResidentNotes';
 import { useResidentImage } from './resident/useResidentImage';
+import { NoteType } from '@/components/homeowners/detail/types';
 
 export const useHomeownerData = (homeownerId: string) => {
   const {
@@ -17,13 +18,14 @@ export const useHomeownerData = (homeownerId: string) => {
     notes,
     loading: notesLoading,
     error: notesError,
-    addNote
+    addNote,
+    fetchNotes
   } = useResidentNotes(homeownerId);
 
   const { avatarUrl, updateResidentImage } = useResidentImage();
 
   // Combine the data from the separate hooks
-  const [homeowner, setHomeowner] = useState<Homeowner>(resident);
+  const [homeowner, setHomeowner] = useState<Homeowner>({} as Homeowner);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +51,16 @@ export const useHomeownerData = (homeownerId: string) => {
   }, [resident, notes, residentLoading, notesLoading, residentError, notesError]);
 
   const addHomeownerNote = async (noteData: Omit<NoteType, 'date'>) => {
-    return addNote(noteData);
+    try {
+      const result = await addNote(noteData);
+      // Force a refresh of the notes after adding a new one
+      await fetchNotes();
+      console.log("Note added and refreshed");
+      return result;
+    } catch (error) {
+      console.error("Error in addHomeownerNote:", error);
+      throw error;
+    }
   };
 
   const updateHomeownerImage = (newUrl: string) => {
@@ -69,6 +80,3 @@ export const useHomeownerData = (homeownerId: string) => {
     addHomeownerNote
   };
 };
-
-// Need to import NoteType for the addHomeownerNote function parameter
-import { NoteType } from '@/components/homeowners/detail/types';
