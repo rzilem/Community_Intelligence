@@ -20,7 +20,7 @@ export const useHomeownerData = (homeownerId: string) => {
     addNote
   } = useResidentNotes(homeownerId);
 
-  const { updateResidentImage } = useResidentImage();
+  const { avatarUrl, updateResidentImage } = useResidentImage();
 
   // Combine the data from the separate hooks
   const [homeowner, setHomeowner] = useState<Homeowner>(resident);
@@ -50,6 +50,14 @@ export const useHomeownerData = (homeownerId: string) => {
 
   const addHomeownerNote = async (noteData: Omit<NoteType, 'date'>) => {
     return addNote(noteData);
+  };
+
+  const updateHomeownerImage = (newUrl: string) => {
+    updateResidentImage(newUrl);
+  };
+
+  const updateHomeownerData = async (data: Partial<Homeowner>) => {
+    return updateResidentData(data);
   };
 
   return {

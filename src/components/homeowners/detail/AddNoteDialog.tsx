@@ -1,20 +1,19 @@
-import React from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+
+import React, { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { NoteType } from '@/components/homeowners/detail/types';
-import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
-import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { NoteType } from './types';
 import { useAuth } from '@/contexts/auth/useAuth';
-
-const noteFormSchema = z.object({
-  content: z.string().min(1, 'Note content is required'),
-});
-
-type NoteFormValues = z.infer<typeof noteFormSchema>;
+import { toast } from 'sonner';
 
 interface AddNoteDialogProps {
   isOpen: boolean;
@@ -29,76 +28,89 @@ export const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
   onAddNote,
   homeownerId
 }) => {
+  const [noteContent, setNoteContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
-  const form = useForm<NoteFormValues>({
-    resolver: zodResolver(noteFormSchema),
-    defaultValues: {
-      content: '',
-    },
-  });
 
-  const handleSubmit = async (values: NoteFormValues) => {
+  const handleSubmit = async () => {
+    if (!noteContent.trim()) {
+      toast.error('Note content cannot be empty');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      if (onAddNote) {
-        // Get user display name from user object, handling missing properties safely
-        let authorName = 'Staff Member';
-        
-        if (user) {
-          // Check if user has first_name and last_name properties directly
-          if (user.first_name && user.last_name) {
-            authorName = `${user.first_name} ${user.last_name}`;
-          } 
-          // Otherwise check if there's a profile object with these properties
-          else if (user.email) {
-            authorName = user.email;
+      if (!homeownerId) {
+        throw new Error('Homeowner ID is required');
+      }
+
+      // Determine author name from user if available
+      let authorName = 'Staff';
+      if (user) {
+        // Check if user has a profile with name fields
+        if (user.profile) {
+          const hasFirstName = !!user.profile.first_name;
+          const hasLastName = !!user.profile.last_name;
+          
+          if (hasFirstName || hasLastName) {
+            authorName = `${user.profile.first_name || ''} ${user.profile.last_name || ''}`.trim();
           }
         }
-        
-        const note: Omit<NoteType, 'date'> = {
-          type: 'manual',
-          author: authorName,
-          content: values.content,
-        };
-        
-        await onAddNote(note);
-        toast.success('Note added successfully');
-        form.reset();
-        onClose();
-      } else {
-        console.error('onAddNote function not provided');
-        toast.error('Unable to add note. Please try again.');
       }
+
+      const noteData: Omit<NoteType, 'date'> = {
+        type: 'manual',
+        author: authorName,
+        content: noteContent
+      };
+
+      if (onAddNote) {
+        await onAddNote(noteData);
+      }
+
+      // Clear the form and close dialog
+      setNoteContent('');
+      onClose();
+      toast.success('Note added successfully');
     } catch (error) {
       console.error('Error adding note:', error);
       toast.error('Failed to add note');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Note</DialogTitle>
+          <DialogDescription>
+            Add a note about this homeowner. Notes are visible to all staff members.
+          </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormFieldTextarea
-              form={form}
-              name="content"
-              label="Note Content"
-              placeholder="Enter your note here..."
-              rows={5}
-            />
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                Add Note
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+
+        <div className="py-4">
+          <Label htmlFor="note-content" className="mb-2 block">
+            Note Content
+          </Label>
+          <Textarea
+            id="note-content"
+            value={noteContent}
+            onChange={(e) => setNoteContent(e.target.value)}
+            placeholder="Enter note details here..."
+            className="min-h-[150px]"
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !noteContent.trim()}>
+            {isSubmitting ? 'Adding...' : 'Add Note'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
