@@ -42,7 +42,9 @@ export function extractLocationInfo(content: string): LocationInfo {
     const cityPatterns = [
       /[Cc]ity[:\s]*([^,\n<]+)/,
       /[Ll]ocation[:\s]*([^,\n<]+)/,
-      /[Tt]own[:\s]*([^,\n<]+)/
+      /[Tt]own[:\s]*([^,\n<]+)/,
+      // Add pattern specifically for Pflugerville
+      /\b(Pflugerville)\b/i
     ];
     
     for (const pattern of cityPatterns) {
@@ -73,7 +75,8 @@ export function extractLocationInfo(content: string): LocationInfo {
     const texasCities = [
       'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 'Arlington', 'Corpus Christi',
       'Plano', 'Laredo', 'Lubbock', 'Garland', 'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville',
-      'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock'
+      'McKinney', 'Frisco', 'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock',
+      'Pflugerville' // Add Pflugerville to the list of Texas cities
     ];
     
     if (texasCities.some(city => result.city && result.city.includes(city))) {

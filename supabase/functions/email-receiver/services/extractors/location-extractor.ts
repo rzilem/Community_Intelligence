@@ -38,6 +38,14 @@ export function extractLocationInformation(content: string) {
     // Special case for "TrailAuin" to "Austin"
     if (lead.city === 'TrailAuin' || lead.city.includes('Trail') && lead.city.includes('Auin')) {
       lead.city = 'Austin';
+    } else if (lead.city === 'Tex') {
+      // Check for Pflugerville in content
+      if (content.toLowerCase().includes('pflugerville')) {
+        lead.city = 'Pflugerville';
+      } else {
+        // Remove "Tex" as it's likely a partial from "Texas"
+        lead.city = '';
+      }
     } else {
       // Remove any street numbers or common street name components
       lead.city = lead.city
@@ -51,6 +59,11 @@ export function extractLocationInformation(content: string) {
         lead.city = 'Austin';
       }
     }
+  }
+  
+  // Special case for Pflugerville if not already set
+  if ((!lead.city || lead.city === 'Tex') && content.toLowerCase().includes('pflugerville')) {
+    lead.city = 'Pflugerville';
   }
   
   return lead;

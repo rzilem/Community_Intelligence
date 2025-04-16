@@ -25,6 +25,11 @@ export function extractCityFromAddress(address: string): string {
     return 'Austin';
   }
   
+  // Check for Pflugerville explicitly
+  if (address.toLowerCase().includes('pflugerville')) {
+    return 'Pflugerville';
+  }
+  
   // Try to extract city from common patterns
   // Pattern: anything between a comma and state abbreviation
   const cityStatePattern = /,\s*([^,]+?)\s*,?\s*[A-Z]{2}\s+\d{5}/i;
@@ -38,11 +43,16 @@ export function extractCityFromAddress(address: string): string {
       return 'Austin';
     }
     
+    // Don't return "Tex" as a city name (likely part of "Texas")
+    if (extractedCity === 'Tex') {
+      return '';
+    }
+    
     return extractedCity;
   }
   
   // If no match found with the above pattern, try another common pattern
-  const cityPattern = /\b(Austin|Dallas|Houston|San Antonio|Fort Worth|El Paso|Arlington|Corpus Christi|Plano|Laredo|Lubbock|Garland|Irving|Amarillo|Grand Prairie|Brownsville|McKinney|Frisco|Pasadena|Killeen|Waco|Denton|New Braunfels|Round Rock|Dripping Springs|Colorado Springs)\b/i;
+  const cityPattern = /\b(Austin|Dallas|Houston|San Antonio|Fort Worth|El Paso|Arlington|Corpus Christi|Plano|Laredo|Lubbock|Garland|Irving|Amarillo|Grand Prairie|Brownsville|McKinney|Frisco|Pasadena|Killeen|Waco|Denton|New Braunfels|Round Rock|Dripping Springs|Colorado Springs|Pflugerville)\b/i;
   const cityMatch = address.match(cityPattern);
   
   if (cityMatch && cityMatch[1]) {
