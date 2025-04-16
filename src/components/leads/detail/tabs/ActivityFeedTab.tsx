@@ -1,14 +1,15 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { MailIcon, PhoneIcon, CalendarIcon, MessageSquareIcon, ClockIcon, PlusIcon, UserIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react';
-import { formatDate } from '@/lib/date-utils';
+import { MailIcon, PhoneIcon, CalendarIcon, MessageSquareIcon, CheckCircleIcon, UserIcon, XCircleIcon } from 'lucide-react';
 import { Lead } from '@/types/lead-types';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from 'sonner';
+
+// Import components
+import NotesSection from './activity/NotesSection';
+import CommunicationsList from './activity/CommunicationsList';
+import HistoryList from './activity/HistoryList';
+import ActionButtons from './activity/ActionButtons';
 
 interface ActivityFeedTabProps {
   lead: Lead;
@@ -16,8 +17,6 @@ interface ActivityFeedTabProps {
 }
 
 const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ lead, onSaveNotes }) => {
-  const [newNote, setNewNote] = useState('');
-  
   // Communication history - placeholder data
   const communications = [
     { 
@@ -81,98 +80,15 @@ const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ lead, onSaveNotes }) 
     }
   ];
 
-  const getCommunicationIcon = (type: string) => {
-    switch (type) {
-      case 'email':
-        return <MailIcon className="h-5 w-5 text-blue-500" />;
-      case 'call':
-        return <PhoneIcon className="h-5 w-5 text-green-500" />;
-      case 'message':
-        return <MessageSquareIcon className="h-5 w-5 text-purple-500" />;
-      case 'meeting':
-        return <CalendarIcon className="h-5 w-5 text-orange-500" />;
-      default:
-        return <MessageSquareIcon className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const handleAddNote = () => {
-    if (newNote.trim()) {
-      onSaveNotes(lead.notes ? `${lead.notes}\n\n${new Date().toLocaleString()}: ${newNote}` : `${new Date().toLocaleString()}: ${newNote}`);
-      setNewNote('');
-      toast.success('Note added successfully');
-    } else {
-      toast.error('Note cannot be empty');
-    }
-  };
-
-  // Render action buttons for adding new communications
-  const renderActionButtons = () => (
-    <div className="flex flex-wrap gap-2">
-      <Button variant="outline" className="flex items-center gap-2">
-        <MailIcon className="h-4 w-4" />
-        Send Email
-      </Button>
-      <Button variant="outline" className="flex items-center gap-2">
-        <CalendarIcon className="h-4 w-4" />
-        Schedule Meeting
-      </Button>
-    </div>
-  );
-
-  // Render a communication item
-  const renderCommunicationItem = (comm: any) => (
-    <div key={comm.id} className="border rounded-md overflow-hidden mb-4">
-      <div className="flex items-center justify-between bg-muted/30 p-3 border-b">
-        <div className="flex items-center gap-3">
-          <div className="bg-white p-2 rounded-full">
-            {getCommunicationIcon(comm.type)}
-          </div>
-          <div>
-            <h4 className="font-medium">{comm.subject}</h4>
-            <p className="text-sm text-muted-foreground">
-              {formatDate(comm.date)}
-            </p>
-          </div>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {comm.type === 'email' ? (
-            <span>From: {comm.from} To: {comm.to}</span>
-          ) : (
-            <span>Between {comm.from} and {comm.to}</span>
-          )}
-        </div>
-      </div>
-      <div className="p-4">
-        <p className="text-sm">{comm.content}</p>
-      </div>
-    </div>
-  );
-
   return (
     <Card>
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium">Activity Feed</h3>
-          {renderActionButtons()}
+          <ActionButtons />
         </div>
         
-        <div className="mb-6">
-          <div className="border rounded-md p-4 mb-4">
-            <label htmlFor="new-note" className="block text-sm font-medium mb-2">Leave a Note</label>
-            <Textarea 
-              id="new-note"
-              placeholder="Type your note here..." 
-              value={newNote} 
-              onChange={(e) => setNewNote(e.target.value)}
-              className="mb-3 min-h-[100px]"
-            />
-            <Button onClick={handleAddNote} className="flex items-center gap-2">
-              <PlusIcon className="h-4 w-4" />
-              Add Note
-            </Button>
-          </div>
-        </div>
+        <NotesSection lead={lead} onSaveNotes={onSaveNotes} />
         
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
@@ -195,43 +111,18 @@ const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ lead, onSaveNotes }) 
                     </div>
                   </div>
                   <div className="p-4">
-                    <ScrollArea className="h-[200px]">
-                      <div className="whitespace-pre-wrap">{lead.notes}</div>
-                    </ScrollArea>
+                    <div className="whitespace-pre-wrap">{lead.notes}</div>
                   </div>
                 </div>
               )}
               
-              {communications.map(renderCommunicationItem)}
-              
-              {historyItems.map((item) => (
-                <div key={item.id} className="flex items-start p-3 border rounded-md bg-muted/20">
-                  <div className="bg-muted rounded-full p-2 mr-3">
-                    {item.icon}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <p className="font-medium">{item.action}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(item.timestamp).toLocaleString()}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">By: {item.user}</p>
-                  </div>
-                </div>
-              ))}
+              <CommunicationsList communications={communications} />
+              <HistoryList historyItems={historyItems} />
             </div>
           </TabsContent>
           
           <TabsContent value="communication">
-            <div className="space-y-4">
-              {communications.length > 0 ? 
-                communications.map(renderCommunicationItem) : 
-                <p className="text-muted-foreground text-center py-8">
-                  No communication history available for this lead.
-                </p>
-              }
-            </div>
+            <CommunicationsList communications={communications} />
           </TabsContent>
           
           <TabsContent value="notes">
@@ -243,29 +134,7 @@ const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ lead, onSaveNotes }) 
           </TabsContent>
           
           <TabsContent value="history">
-            <div className="space-y-4">
-              {historyItems.length > 0 ? 
-                historyItems.map((item) => (
-                  <div key={item.id} className="flex items-start p-3 border rounded-md bg-muted/20">
-                    <div className="bg-muted rounded-full p-2 mr-3">
-                      {item.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <p className="font-medium">{item.action}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(item.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                      <p className="text-sm text-muted-foreground">By: {item.user}</p>
-                    </div>
-                  </div>
-                )) : 
-                <p className="text-muted-foreground text-center py-8">
-                  No history records available for this lead.
-                </p>
-              }
-            </div>
+            <HistoryList historyItems={historyItems} />
           </TabsContent>
         </Tabs>
       </CardContent>
