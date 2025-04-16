@@ -19,5 +19,18 @@ export function extractAdditionalInformation(content: string) {
     lead.additional_requirements = additionalInfo.notes;
   }
   
+  // Check if we've inadvertently captured 'scope of services' as a name
+  // This guards against issues where RFP section headers are misidentified as names
+  if (lead.name && (
+    lead.name.toLowerCase().includes("scope of services") || 
+    lead.name.toLowerCase().includes("rfp") ||
+    lead.name.toLowerCase().includes("request for proposal")
+  )) {
+    console.log("Detected scope of services text in name, removing");
+    lead.name = "";
+    lead.first_name = "";
+    lead.last_name = "";
+  }
+  
   return lead;
 }

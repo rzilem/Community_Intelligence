@@ -9,7 +9,11 @@ export {
   isValidEmail 
 } from './email-extractors.ts';
 
-export { extractNameFromHeader } from './name-extractors.ts';
+export { 
+  extractNameFromHeader,
+  extractNameFromContent
+} from './name-extractors.ts';
+
 export { extractContactInfo } from './contact-info-extractors.ts';
 export { extractCompanyInfo } from './company-extractors.ts';
 export { extractCityFromAddress, cleanStreetAddress } from './address-extractors.ts';
