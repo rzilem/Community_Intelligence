@@ -3,13 +3,41 @@ import React from 'react';
 import { Lead } from '@/types/lead-types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { createGoogleMapsLink } from '../address-utils';
-import { extractCity } from '../address-utils';
+import { getFormattedLeadAddressData } from '../lead-detail-utils';
 
 interface LeadDetailsTabProps {
   lead: Lead;
 }
 
 const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
+  const { formattedStreetAddress } = getFormattedLeadAddressData(lead);
+  
+  // Format address with proper spacing
+  const formatAddress = () => {
+    let address = '';
+    
+    if (lead.street_address) {
+      address += lead.street_address;
+    }
+    
+    if (lead.city || lead.state || lead.zip) {
+      // Add proper spacing between street and city/state/zip
+      address += ', ';
+      
+      if (lead.city) address += lead.city;
+      if (lead.state) {
+        if (lead.city) address += ', ';
+        address += lead.state;
+      }
+      if (lead.zip) {
+        if (lead.city || lead.state) address += ' ';
+        address += lead.zip;
+      }
+    }
+    
+    return address;
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-6">
@@ -53,53 +81,6 @@ const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
         
         <Card>
           <CardHeader>
-            <CardTitle>Address</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">Street</dt>
-                <dd>
-                  {lead.street_address ? (
-                    <a 
-                      href={createGoogleMapsLink(lead.street_address)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {lead.street_address}
-                    </a>
-                  ) : (
-                    'Not provided'
-                  )}
-                </dd>
-              </div>
-              {lead.address_line2 && (
-                <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Address Line 2</dt>
-                  <dd>{lead.address_line2}</dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">City</dt>
-                <dd>{extractCity(lead.city, lead.street_address) || 'Not provided'}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">State</dt>
-                <dd>{lead.state || 'Not provided'}</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-muted-foreground">ZIP</dt>
-                <dd>{lead.zip || 'Not provided'}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
             <CardTitle>Lead Information</CardTitle>
           </CardHeader>
           <CardContent>
@@ -133,7 +114,9 @@ const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
             </dl>
           </CardContent>
         </Card>
-        
+      </div>
+      
+      <div>
         <Card>
           <CardHeader>
             <CardTitle>Association Information</CardTitle>
@@ -155,6 +138,30 @@ const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
               <div>
                 <dt className="text-sm font-medium text-muted-foreground">Current Management</dt>
                 <dd>{lead.current_management || 'Not provided'}</dd>
+              </div>
+              
+              {/* Combined address information */}
+              <div className="pt-4 border-t mt-2">
+                <dt className="text-sm font-medium text-muted-foreground">Address</dt>
+                <dd className="mt-1">
+                  {formatAddress() ? (
+                    <div>
+                      {formatAddress()}
+                      {lead.street_address && (
+                        <a 
+                          href={createGoogleMapsLink(lead.street_address)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-3 text-blue-600 hover:underline"
+                        >
+                          Map It
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    'Not provided'
+                  )}
+                </dd>
               </div>
             </dl>
           </CardContent>
