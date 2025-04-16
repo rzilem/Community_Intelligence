@@ -45,6 +45,10 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   const handleEditLead = (lead: Lead) => {
     navigate(`/lead-management/leads/${lead.id}`);
   };
+
+  const handleRowClick = (lead: Lead) => {
+    navigate(`/lead-management/leads/${lead.id}`);
+  };
   
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading leads...</div>;
@@ -85,13 +89,17 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
               </TableRow>
             ) : (
               leads.map(lead => (
-                <TableRow key={lead.id}>
+                <TableRow 
+                  key={lead.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleRowClick(lead)}
+                >
                   {visibleColumnIds.map(columnId => (
                     <TableCell key={`${lead.id}-${columnId}`}>
                       {renderLeadTableCell(lead, columnId, columns)}
                     </TableCell>
                   ))}
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">

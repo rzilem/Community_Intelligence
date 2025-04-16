@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { User, Building2, Calendar, FileText, ChevronLeft, UserPlus, Paperclip } from 'lucide-react';
+import { User, Building2, Calendar, FileText, ChevronLeft, UserPlus, Paperclip, MessageSquare, Clock } from 'lucide-react';
 import { Lead } from '@/types/lead-types';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
 import { useOnboardingProjects } from '@/hooks/onboarding/useOnboardingProjects';
 import AttachmentsTab from './tabs/AttachmentsTab';
+import LeadNotesTab from './detail/LeadNotesTab';
+import { extractCity, createGoogleMapsLink } from './detail/address-utils';
 
 const LeadDetailPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
@@ -83,6 +86,27 @@ const LeadDetailPage = () => {
       toast.success(`Lead status updated to ${newStatus}`);
     } catch (error: any) {
       toast.error(`Error updating status: ${error.message}`);
+    }
+  };
+
+  const handleSaveNotes = async (notes: string) => {
+    if (!lead) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leads' as any)
+        .update({ 
+          notes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id);
+        
+      if (error) throw error;
+      
+      setLead(prev => prev ? { ...prev, notes } : null);
+      toast.success('Notes updated successfully');
+    } catch (error: any) {
+      toast.error(`Error updating notes: ${error.message}`);
     }
   };
 
@@ -251,6 +275,14 @@ const LeadDetailPage = () => {
               <Calendar className="h-4 w-4" />
               Communication
             </TabsTrigger>
+            <TabsTrigger value="notes" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Notes
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              History
+            </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Documents
@@ -274,6 +306,18 @@ const LeadDetailPage = () => {
                         <dt className="text-sm font-medium text-muted-foreground">Full Name</dt>
                         <dd>{lead.name}</dd>
                       </div>
+                      {lead.first_name && (
+                        <div>
+                          <dt className="text-sm font-medium text-muted-foreground">First Name</dt>
+                          <dd>{lead.first_name}</dd>
+                        </div>
+                      )}
+                      {lead.last_name && (
+                        <div>
+                          <dt className="text-sm font-medium text-muted-foreground">Last Name</dt>
+                          <dd>{lead.last_name}</dd>
+                        </div>
+                      )}
                       <div>
                         <dt className="text-sm font-medium text-muted-foreground">Email</dt>
                         <dd>{lead.email}</dd>
@@ -298,7 +342,20 @@ const LeadDetailPage = () => {
                     <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
                       <div>
                         <dt className="text-sm font-medium text-muted-foreground">Street</dt>
-                        <dd>{lead.street_address || 'Not provided'}</dd>
+                        <dd>
+                          {lead.street_address ? (
+                            <a 
+                              href={createGoogleMapsLink(lead.street_address)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {lead.street_address}
+                            </a>
+                          ) : (
+                            'Not provided'
+                          )}
+                        </dd>
                       </div>
                       {lead.address_line2 && (
                         <div>
@@ -308,7 +365,7 @@ const LeadDetailPage = () => {
                       )}
                       <div>
                         <dt className="text-sm font-medium text-muted-foreground">City</dt>
-                        <dd>{lead.city || 'Not provided'}</dd>
+                        <dd>{extractCity(lead.city, lead.street_address) || 'Not provided'}</dd>
                       </div>
                       <div>
                         <dt className="text-sm font-medium text-muted-foreground">State</dt>
@@ -344,6 +401,18 @@ const LeadDetailPage = () => {
                         <dt className="text-sm font-medium text-muted-foreground">Created</dt>
                         <dd>{new Date(lead.created_at).toLocaleDateString()}</dd>
                       </div>
+                      
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Last Updated</dt>
+                        <dd>{new Date(lead.updated_at).toLocaleDateString()}</dd>
+                      </div>
+                      
+                      {lead.tracking_number && (
+                        <div>
+                          <dt className="text-sm font-medium text-muted-foreground">Tracking Number</dt>
+                          <dd>{lead.tracking_number}</dd>
+                        </div>
+                      )}
                     </dl>
                   </CardContent>
                 </Card>
@@ -425,6 +494,35 @@ const LeadDetailPage = () => {
               <CardContent className="p-6">
                 <p className="text-muted-foreground text-center py-8">
                   Communication history will be displayed here.
+                </p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="notes" className="mt-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Notes</CardTitle>
+                <Button onClick={() => {
+                  const notes = prompt('Enter notes:', lead.notes || '');
+                  if (notes !== null) {
+                    handleSaveNotes(notes);
+                  }
+                }}>
+                  Edit Notes
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <LeadNotesTab lead={lead} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="history" className="mt-6">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-muted-foreground text-center py-8">
+                  Lead history and tracking will be displayed here.
                 </p>
               </CardContent>
             </Card>
