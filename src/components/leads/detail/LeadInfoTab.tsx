@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
@@ -18,6 +17,18 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
   cleanedCity, 
   zipCode 
 }) => {
+  // Helper function to format name (prioritize full name)
+  const formatName = (lead: Lead) => {
+    // If full name exists, use it
+    if (lead.name) return lead.name;
+    
+    // If no full name, construct from first and last name
+    const firstName = lead.first_name || '';
+    const lastName = lead.last_name || '';
+    
+    return (firstName + ' ' + lastName).trim() || 'N/A';
+  };
+
   return (
     <ScrollArea className="h-[75vh]">
       <div className="space-y-6 p-4">
@@ -43,7 +54,7 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
             <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Contact Information</h3>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-muted-foreground font-bold">Name:</div>
-              <div>{lead.name}</div>
+              <div>{formatName(lead)}</div>
               
               <div className="text-muted-foreground font-bold">Email:</div>
               <div>
