@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -41,7 +40,6 @@ const LeadDetailPage = () => {
         .single();
 
       if (error) throw error;
-      // Use type assertion to safely convert the data
       setLead(data as unknown as Lead);
     } catch (error: any) {
       toast.error(`Error loading lead: ${error.message}`);
@@ -81,7 +79,6 @@ const LeadDetailPage = () => {
         
       if (error) throw error;
       
-      // Update local state
       setLead(prev => prev ? { ...prev, status: newStatus } : null);
       toast.success(`Lead status updated to ${newStatus}`);
     } catch (error: any) {
@@ -182,7 +179,6 @@ const LeadDetailPage = () => {
       }
     >
       <div className="space-y-6">
-        {/* Status and actions bar */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
@@ -354,24 +350,41 @@ const LeadDetailPage = () => {
                 
                 <Card>
                   <CardHeader>
+                    <CardTitle>Association Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Association Name</dt>
+                        <dd>{lead.association_name || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Association Type</dt>
+                        <dd>{lead.association_type || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Number of Units</dt>
+                        <dd>{lead.number_of_units || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Current Management</dt>
+                        <dd>{lead.current_management || 'Not provided'}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
                     <CardTitle>Additional Requirements</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="whitespace-pre-wrap">
                       {lead.additional_requirements 
                         ? lead.additional_requirements 
+                        : lead.html_content 
+                        ? 'See original email for additional information.'
                         : 'No additional requirements specified.'}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="whitespace-pre-wrap">
-                      {lead.notes || 'No notes available for this lead.'}
                     </div>
                   </CardContent>
                 </Card>

@@ -62,5 +62,6 @@ export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
   { id: 'first_name', label: 'First Name', accessorKey: 'first_name', defaultVisible: false },
   { id: 'last_name', label: 'Last Name', accessorKey: 'last_name', defaultVisible: false },
   { id: 'additional_requirements', label: 'Additional Requirements', accessorKey: 'additional_requirements', defaultVisible: false },
+  { id: 'html_content', label: 'Original Email', accessorKey: 'html_content', defaultVisible: false },
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
 ];
