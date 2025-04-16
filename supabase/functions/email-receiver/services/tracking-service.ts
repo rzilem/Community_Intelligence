@@ -58,7 +58,8 @@ export async function registerCommunication(
         tracking_number: trackingNumber,
         communication_type: type,
         metadata,
-        received_at: new Date().toISOString()
+        received_at: new Date().toISOString(),
+        status: 'received'
       });
     
     if (error) {

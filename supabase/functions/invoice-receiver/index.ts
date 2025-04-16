@@ -110,7 +110,7 @@ serve(async (req) => {
           status: 201 
         }
       );
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error("Database error creating invoice:", dbError);
       return new Response(
         JSON.stringify({ 
@@ -125,7 +125,7 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error handling invoice email:", error);
     return new Response(
       JSON.stringify({ 

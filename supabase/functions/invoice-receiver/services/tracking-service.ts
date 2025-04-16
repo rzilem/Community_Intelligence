@@ -26,18 +26,17 @@ export async function getNextTrackingNumber(): Promise<string> {
     }
     
     // Format the tracking number with leading zeros to ensure consistent length
-    // e.g., 42 becomes CI-000042
+    // Format with INV prefix for Invoices
     const paddedNumber = data.toString().padStart(6, '0');
-    const trackingNumber = `CI-${paddedNumber}`;
+    const trackingNumber = `INV-${paddedNumber}`;
     
     console.log(`Generated new tracking number: ${trackingNumber}`);
     return trackingNumber;
   } catch (error) {
     console.error("Error in getNextTrackingNumber:", error);
     // Fallback in case of database error - generate a timestamp-based ID
-    // Not ideal but prevents system failure
     const timestamp = Date.now();
-    const fallbackId = `CI-ERR-${timestamp}`;
+    const fallbackId = `INV-ERR-${timestamp}`;
     console.log(`Using fallback tracking number due to error: ${fallbackId}`);
     return fallbackId;
   }
@@ -58,7 +57,8 @@ export async function registerCommunication(
         tracking_number: trackingNumber,
         communication_type: type,
         metadata,
-        received_at: new Date().toISOString()
+        received_at: new Date().toISOString(),
+        status: 'received'
       });
     
     if (error) {

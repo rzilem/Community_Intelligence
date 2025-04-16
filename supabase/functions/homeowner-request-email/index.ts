@@ -38,9 +38,41 @@ serve(async (req) => {
       }
     }
     
+    // Validate we have at least some data to work with
+    if (!emailData || (typeof emailData === 'object' && Object.keys(emailData).length === 0)) {
+      console.error("Empty email data received");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Empty email data", 
+          details: "The email webhook payload was empty or invalid" 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400 
+        }
+      );
+    }
+    
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
     console.log("Normalized email data:", JSON.stringify(normalizedEmailData, null, 2));
+
+    // Check if we have either HTML content, text content, or subject (minimum required to process)
+    if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
+      console.error("Email missing required content");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Missing required content", 
+          details: "Email must contain HTML, text content, or at least a subject" 
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 422 
+        }
+      );
+    }
 
     // Generate a tracking number for this communication
     const trackingNumber = await getNextTrackingNumber();
@@ -52,18 +84,34 @@ serve(async (req) => {
     const requestData = await extractRequestData(normalizedEmailData, trackingNumber);
 
     // Insert homeowner request into the database
-    const request = await createHomeownerRequest(requestData);
+    try {
+      const request = await createHomeownerRequest(requestData);
 
-    console.log("Homeowner request created successfully:", request);
+      console.log("Homeowner request created successfully:", request);
 
-    return new Response(
-      JSON.stringify({ success: true, message: "Homeowner request created", request }),
-      { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200 
-      }
-    );
-  } catch (error) {
+      return new Response(
+        JSON.stringify({ success: true, message: "Homeowner request created", request }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200 
+        }
+      );
+    } catch (dbError: any) {
+      console.error("Database error creating homeowner request:", dbError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Database error", 
+          details: dbError.message,
+          extracted_data: requestData || {}
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500 
+        }
+      );
+    }
+  } catch (error: any) {
     console.error("Error handling homeowner request email:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
