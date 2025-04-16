@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Proposal, ProposalAttachment, ProposalAnalytics } from '@/types/proposal-types';
 import { toast } from 'sonner';
@@ -66,19 +67,22 @@ export const useProposals = (leadId?: string) => {
 
   const createProposalMutation = useMutation({
     mutationFn: async (proposalData: Partial<Proposal>) => {
+      // Extract analytics to store in analytics_data
+      const { analytics, ...rest } = proposalData;
+      
       // 1. Insert the proposal
       const { data: proposal, error } = await supabase
         .from('proposals')
         .insert({
-          lead_id: proposalData.lead_id,
-          template_id: proposalData.template_id,
-          name: proposalData.name,
-          status: proposalData.status || 'draft',
-          content: proposalData.content || '',
-          amount: proposalData.amount || 0,
-          signature_required: proposalData.signature_required || false,
-          sections: proposalData.sections || [],
-          analytics_data: {
+          lead_id: rest.lead_id,
+          template_id: rest.template_id,
+          name: rest.name,
+          status: rest.status || 'draft',
+          content: rest.content || '',
+          amount: rest.amount || 0,
+          signature_required: rest.signature_required || false,
+          sections: rest.sections || [],
+          analytics_data: analytics || {
             views: 0,
             view_count_by_section: {}
           }
@@ -121,7 +125,7 @@ export const useProposals = (leadId?: string) => {
       return {
         ...createdProposal,
         attachments: proposalData.attachments || [],
-        analytics: {
+        analytics: createdProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}
         }
@@ -208,7 +212,7 @@ export const useProposals = (leadId?: string) => {
       return {
         ...proposal,
         attachments: proposalData.attachments || [],
-        analytics: analytics || proposal.analytics_data
+        analytics: proposal.analytics_data || {}
       } as Proposal;
     },
     onSuccess: () => {
@@ -242,16 +246,36 @@ export const useProposals = (leadId?: string) => {
 
   const updateAnalyticsMutation = useMutation({
     mutationFn: async ({ proposalId, analyticsData }: { proposalId: string, analyticsData: Partial<ProposalAnalytics> }) => {
+      // Get the current proposal first to combine analytics
+      const { data: currentProposal, error: fetchError } = await supabase
+        .from('proposals')
+        .select('*')
+        .eq('id', proposalId)
+        .single();
+        
+      if (fetchError) throw new Error(fetchError.message);
+      
+      // Combine existing analytics with new data
+      const currentAnalytics = currentProposal.analytics_data || {
+        views: 0,
+        view_count_by_section: {}
+      };
+      
+      const updatedAnalytics = {
+        ...currentAnalytics,
+        ...analyticsData
+      };
+      
       // Update the analytics_data field directly on the proposal
       const { error } = await supabase
         .from('proposals')
         .update({
-          analytics_data: analyticsData
+          analytics_data: updatedAnalytics
         })
         .eq('id', proposalId);
         
       if (error) throw new Error(error.message);
-      return { proposalId, analyticsData };
+      return { proposalId, analyticsData: updatedAnalytics };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
@@ -339,6 +363,7 @@ export const useProposals = (leadId?: string) => {
         console.error('Error fetching attachments:', attachmentsError);
       }
       
+      // Convert from database representation to our application model
       return {
         ...(proposal as any),
         attachments: attachments || [],
@@ -398,8 +423,10 @@ export const useProposals = (leadId?: string) => {
         let mostViewedSection = '';
         
         Object.entries(updatedAnalytics.view_count_by_section).forEach(([section, count]) => {
-          if (count > maxViews) {
-            maxViews = count;
+          // Type assertion for count which might be unknown
+          const countNum = count as number;
+          if (countNum > maxViews) {
+            maxViews = countNum;
             mostViewedSection = section;
           }
         });

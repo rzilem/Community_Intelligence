@@ -41,7 +41,7 @@ const ClientPortal: React.FC = () => {
         if (proposalData.status === 'sent') {
           const updatedProposal = {
             ...proposalData,
-            status: 'viewed',
+            status: 'viewed' as 'viewed', // Type assertion here
             viewed_date: new Date().toISOString(),
             analytics: {
               ...(proposalData.analytics || {}),
@@ -56,7 +56,7 @@ const ClientPortal: React.FC = () => {
             data: updatedProposal
           });
           
-          setProposal(updatedProposal);
+          setProposal(updatedProposal as Proposal); // Type assertion here
         } else {
           setProposal(proposalData);
         }
@@ -83,7 +83,7 @@ const ClientPortal: React.FC = () => {
     try {
       const updatedProposal = {
         ...proposal,
-        status: 'accepted',
+        status: 'accepted' as 'accepted', // Type assertion here
         responded_date: new Date().toISOString()
       };
       
@@ -93,7 +93,7 @@ const ClientPortal: React.FC = () => {
       });
       
       toast.success('Proposal accepted successfully');
-      setProposal(updatedProposal);
+      setProposal(updatedProposal as Proposal); // Type assertion here
     } catch (error: any) {
       toast.error(`Error accepting proposal: ${error.message}`);
     }
@@ -105,7 +105,7 @@ const ClientPortal: React.FC = () => {
     try {
       const updatedProposal = {
         ...proposal,
-        status: 'rejected',
+        status: 'rejected' as 'rejected', // Type assertion here
         responded_date: new Date().toISOString()
       };
       
@@ -115,7 +115,7 @@ const ClientPortal: React.FC = () => {
       });
       
       toast.success('Proposal declined');
-      setProposal(updatedProposal);
+      setProposal(updatedProposal as Proposal); // Type assertion here
     } catch (error: any) {
       toast.error(`Error declining proposal: ${error.message}`);
     }

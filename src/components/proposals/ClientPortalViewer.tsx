@@ -279,7 +279,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
               
               <TabsContent value="videos" className="mt-0">
                 <ProposalVideoSection 
-                  videos={proposal.videos || demoVideos}
+                  videos={(proposal.videos || demoVideos) as ProposalVideo[]}
                 />
               </TabsContent>
             </CardContent>

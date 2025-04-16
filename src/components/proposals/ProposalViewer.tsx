@@ -21,7 +21,7 @@ import {
   Video,
   BellDot
 } from 'lucide-react';
-import { Proposal, ProposalFollowUp } from '@/types/proposal-types';
+import { Proposal, ProposalFollowUp, ProposalVideo } from '@/types/proposal-types';
 import ProposalAnalyticsDashboard from './analytics/ProposalAnalyticsDashboard';
 import ClientPortalLinkGenerator from './ClientPortalLinkGenerator';
 import CostCalculator from './interactive-calculator/CostCalculator';
@@ -114,7 +114,6 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
     }
   };
 
-  // Mock data for demo purposes (in a real app these would come from the database)
   const demoCalculator = {
     id: '1',
     proposal_id: proposal.id,
@@ -169,7 +168,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
     updated_at: new Date().toISOString()
   };
   
-  const demoVideos = [
+  const demoVideos: ProposalVideo[] = [
     {
       id: 'v1',
       proposal_id: proposal.id,
@@ -178,7 +177,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 184,
-      type: 'testimonial' as 'testimonial',
+      type: 'testimonial',
       created_at: new Date().toISOString()
     },
     {
@@ -189,7 +188,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 156,
-      type: 'team_intro' as 'team_intro',
+      type: 'team_intro',
       created_at: new Date().toISOString()
     },
     {
@@ -200,7 +199,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 210,
-      type: 'property_tour' as 'property_tour',
+      type: 'property_tour',
       created_at: new Date().toISOString()
     }
   ];
@@ -345,14 +344,14 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
           
           <TabsContent value="videos" className="mt-0">
             <ProposalVideoSection 
-              videos={proposal.videos || demoVideos} 
+              videos={(proposal.videos || demoVideos) as ProposalVideo[]} 
             />
           </TabsContent>
           
           <TabsContent value="follow-ups" className="mt-0">
             <FollowUpManager 
               proposal={proposal}
-              followUps={proposal.follow_ups || demoFollowUps}
+              followUps={(proposal.follow_ups || demoFollowUps) as ProposalFollowUp[]}
               onAddFollowUp={handleAddFollowUp}
               onDeleteFollowUp={handleDeleteFollowUp}
             />
