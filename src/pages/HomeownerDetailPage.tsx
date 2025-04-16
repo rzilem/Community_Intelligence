@@ -68,6 +68,9 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
+  // Default last contact value if homeowner data is missing
+  const lastContactValue = homeowner?.lastContact || '';
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
@@ -99,7 +102,7 @@ const HomeownerDetailPage: React.FC = () => {
                 property={homeowner?.property}
                 unit={homeowner?.unit}
                 balance={homeowner?.balance}
-                lastContact={homeowner?.lastContact}
+                lastContact={lastContactValue}
               />
             )}
           </div>

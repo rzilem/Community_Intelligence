@@ -19,6 +19,14 @@ export function formatDate(dateString: string): string {
 }
 
 /**
+ * Format a date string as relative time (e.g., "2 days ago")
+ * This is an alias for getRelativeTime for better naming consistency
+ */
+export function formatRelativeDate(dateString: string): string {
+  return getRelativeTime(dateString);
+}
+
+/**
  * Get relative time (e.g., "2 days ago")
  */
 export function getRelativeTime(dateString: string): string {

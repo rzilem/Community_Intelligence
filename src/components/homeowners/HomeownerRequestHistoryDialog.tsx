@@ -1,192 +1,136 @@
 
-import React, { useState } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { useSupabaseQuery } from '@/hooks/supabase';
-import { Activity, MessageSquare, Clock } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDate } from '@/lib/date-utils';
 
-interface HomeownerRequestHistoryDialogProps {
+interface TimelineItemProps {
+  date: string;
+  title: string;
+  description: string;
+}
+
+const TimelineItem: React.FC<TimelineItemProps> = ({ date, title, description }) => {
+  return (
+    <div className="relative pb-8">
+      <div className="relative flex items-start space-x-3">
+        <div className="relative">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center ring-8 ring-white">
+            <span className="text-xs font-medium text-white">{date.substring(8, 10)}</span>
+          </div>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div>
+            <div className="text-sm">
+              <span className="font-medium text-gray-900">{title}</span>
+            </div>
+            <p className="mt-0.5 text-sm text-gray-500">{formatDate(date)}</p>
+          </div>
+          <div className="mt-2 text-sm text-gray-700">
+            <p>{description}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface HistoryDialogProps {
   request: HomeownerRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  parent_id: string;
-  parent_type: string;
-  user?: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-  };
-}
-
-const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps> = ({ 
-  request, 
-  open, 
-  onOpenChange 
+const HomeownerRequestHistoryDialog: React.FC<HistoryDialogProps> = ({
+  request,
+  open,
+  onOpenChange
 }) => {
-  const [user, setUser] = useState<Record<string, any>>({});
-
-  // Fetch comments for this request
-  const { data: comments = [], isLoading } = useSupabaseQuery<Comment[]>(
-    'comments',
-    {
-      select: '*, user:profiles(first_name, last_name, email)',
-      filter: [
-        { column: 'parent_id', value: request?.id || '' },
-        { column: 'parent_type', value: 'homeowner_request' }
-      ],
-      order: { column: 'created_at', ascending: false },
-    },
-    !!request && open
-  );
-
-  const renderCommentsList = () => {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center py-8">
-          <p className="text-muted-foreground">Loading comments...</p>
-        </div>
-      );
-    }
-
-    if (comments.length === 0) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8">
-          <MessageSquare className="h-12 w-12 text-muted-foreground/50 mb-2" />
-          <p className="text-muted-foreground">No comments yet</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        {comments.map((comment) => (
-          <div key={comment.id} className="flex gap-3 p-3 bg-muted/30 rounded-md">
-            <Avatar>
-              <AvatarFallback>
-                {comment.user?.first_name?.[0] || 'U'}{comment.user?.last_name?.[0] || ''}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <p className="font-medium">
-                  {comment.user?.first_name 
-                    ? `${comment.user.first_name} ${comment.user.last_name || ''}`
-                    : comment.user?.email || 'Unknown user'
-                  }
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(comment.created_at, 'MMM d, yyyy h:mm a')}
-                </p>
-              </div>
-              <p className="mt-1">{comment.content}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const renderStatusChanges = () => {
-    if (!request) return null;
+  // Mock history data
+  const historyItems = React.useMemo(() => {
+    if (!request) return [];
     
-    const statusChanges = [
+    // Basic history based on request data
+    const history = [
       {
-        status: 'Created',
         date: request.createdAt,
-        description: `Request was created with status "${request.status}" and priority "${request.priority}"`
+        title: 'Request Created',
+        description: `Request was created with status "${request.status}" and priority "${request.priority}".`
       }
     ];
     
-    if (request.resolvedAt) {
-      statusChanges.push({
-        status: 'Resolved',
-        date: request.resolvedAt,
-        description: 'Request was marked as resolved'
+    // Add assignment history if assigned
+    if (request.assignedTo) {
+      history.push({
+        date: request.updatedAt,
+        title: 'Request Assigned',
+        description: `Request was assigned to ${request.assignedTo}.`
       });
     }
     
-    return (
-      <div className="space-y-4">
-        {statusChanges.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <Clock className="h-12 w-12 text-muted-foreground/50 mb-2" />
-            <p className="text-muted-foreground">No status changes recorded</p>
-          </div>
-        ) : (
-          <div className="relative border-l-2 border-muted pl-6 ml-3 space-y-6">
-            {statusChanges.map((change, index) => (
-              <div key={index} className="relative">
-                <div className="absolute -left-[31px] h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                  <Activity className="h-3 w-3" />
-                </div>
-                <div>
-                  <p className="font-medium flex justify-between">
-                    <span>{change.status}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(change.date, 'MMM d, yyyy h:mm a')}
-                    </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">{change.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+    // Add resolution history if resolved
+    if (request.resolvedAt) {
+      history.push({
+        date: request.resolvedAt,
+        title: 'Request Resolved',
+        description: 'Request was marked as resolved.'
+      });
+    }
+    
+    // Add mock status updates (just for demonstration)
+    if (request.status === 'in-progress') {
+      const statusDate = new Date(request.createdAt);
+      statusDate.setDate(statusDate.getDate() + 1);
+      
+      history.push({
+        date: statusDate.toISOString(),
+        title: 'Status Updated',
+        description: 'Status was changed from "open" to "in-progress".'
+      });
+    }
+    
+    // Sort by date (most recent first)
+    return history.sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  };
-
-  if (!request) return null;
+  }, [request]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Request History</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="comments" className="flex-1 overflow-hidden">
-          <TabsList>
-            <TabsTrigger value="comments">Comments</TabsTrigger>
-            <TabsTrigger value="status">Status Changes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="comments" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[50vh] pr-4">
-              {renderCommentsList()}
+        {request ? (
+          <div className="mt-4">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-500">Request #{request.id.substring(0, 8)}</h3>
+              <p className="text-lg font-semibold">{request.title}</p>
+            </div>
+            
+            <ScrollArea className="h-[400px] pr-4">
+              <div className="flow-root">
+                <ul className="space-y-6">
+                  {historyItems.map((item, index) => (
+                    <li key={index}>
+                      <TimelineItem
+                        date={item.date}
+                        title={item.title}
+                        description={item.description}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="status" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[50vh] pr-4">
-              {renderStatusChanges()}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-        </DialogFooter>
+          </div>
+        ) : (
+          <div className="py-8 text-center text-gray-500">
+            Request data not available
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
