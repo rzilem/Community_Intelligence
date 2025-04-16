@@ -21,7 +21,7 @@ const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({
 
   return (
     <>
-      <div className="flex gap-2 mb-6">
+      <div className="absolute top-4 left-4 z-10">
         <Button 
           variant="outline"
           onClick={() => navigate('/lead-management/dashboard')}
