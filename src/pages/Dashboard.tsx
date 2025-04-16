@@ -20,13 +20,14 @@ import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
 import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
 
 const Dashboard = () => {
-  const { currentAssociation, user, profile, loading } = useAuth();
+  const { currentAssociation, user, profile, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { stats, recentActivity, loading: dataLoading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
   
   console.log('Dashboard rendering, auth state:', { 
+    isAuthenticated: isAuthenticated ? 'yes' : 'no',
     user: user ? 'logged in' : 'not logged in', 
     profile: profile ? 'profile loaded' : 'no profile',
     loading: loading ? 'auth loading' : 'auth loaded',
@@ -36,11 +37,12 @@ const Dashboard = () => {
   useAdminAccess(user?.id);
   
   useEffect(() => {
-    if (!loading && !user) {
+    // Only redirect if we've confirmed the user isn't authenticated
+    if (!loading && !isAuthenticated) {
       console.log('No user detected in Dashboard, redirecting to auth');
       navigate('/auth?tab=login');
     }
-  }, [user, loading, navigate]);
+  }, [isAuthenticated, loading, navigate]);
   
   if (loading) {
     return (
@@ -53,7 +55,7 @@ const Dashboard = () => {
     );
   }
   
-  if (!user) {
+  if (!isAuthenticated) {
     return null; // Will be redirected by useEffect
   }
   

@@ -13,9 +13,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
-  const { user, profile, signOut, userRole } = useAuth();
+  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
 
-  console.log('AppLayout rendering, user:', user ? 'logged in' : 'not logged in');
+  console.log('AppLayout rendering, auth state:', { 
+    isAuthenticated: isAuthenticated ? 'yes' : 'no',
+    user: user ? 'logged in' : 'not logged in', 
+    profile: profile ? 'profile loaded' : 'no profile',
+    currentPath: location.pathname
+  });
 
   useEffect(() => {
     if (isMobile) {
@@ -28,7 +33,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }, [isMobile]);
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const mainNavItems = getFilteredNavItems(userRole);
