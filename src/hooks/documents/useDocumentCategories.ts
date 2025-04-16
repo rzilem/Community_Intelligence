@@ -22,7 +22,18 @@ export function useDocumentCategories({ associationId, enabled = true }: UseCate
 
   useEffect(() => {
     if (error) {
-      toast.error('Failed to load document categories');
+      // Only show the error once if the table doesn't exist yet
+      if (error.code === '42P01' && !localStorage.getItem('document_categories_error_shown')) {
+        toast.error('Document categories functionality is not fully available yet');
+        localStorage.setItem('document_categories_error_shown', 'true');
+        
+        // Clear the error message after 1 hour to allow retrying
+        setTimeout(() => {
+          localStorage.removeItem('document_categories_error_shown');
+        }, 60 * 60 * 1000);
+      } else if (error.code !== '42P01') {
+        toast.error('Failed to load document categories');
+      }
       console.error('Error loading document categories:', error);
     }
   }, [error]);
