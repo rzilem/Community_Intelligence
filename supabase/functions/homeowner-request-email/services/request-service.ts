@@ -1,92 +1,82 @@
 
-export async function createHomeownerRequest(requestData: Record<string, any>) {
+/**
+ * Service to create and manage homeowner requests in the database
+ */
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://cahergndkwfqltxyikyr.supabase.co";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+// Create a Supabase client with the service role key for admin access
+export async function createRequest(requestData: any) {
+  console.log("Creating request with service role client");
+  
+  if (!supabaseServiceKey) {
+    console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+    throw new Error("Configuration error: Missing service role key");
+  }
+  
   try {
-    // Import the createClient function directly in the function
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.1.0");
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
     
-    // Initialize the Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log("Inserting request into homeowner_requests table");
     
-    // Make sure we have the minimum required fields
-    const insertData = {
-      title: requestData.title || "Email Request",
-      description: requestData.description || "No content provided",
-      status: requestData.status || "open",
-      priority: requestData.priority || "medium",
-      type: requestData.type || "general",
-      html_content: requestData.html_content,
-      tracking_number: requestData.tracking_number,
-      created_at: requestData.created_at || new Date().toISOString(),
-      updated_at: requestData.updated_at || new Date().toISOString()
-    };
-    
-    // Only add optional fields if they exist
-    if (requestData.association_id) {
-      insertData.association_id = requestData.association_id;
-    }
-    
-    if (requestData.property_id) {
-      insertData.property_id = requestData.property_id;
-    }
-    
-    if (requestData.resident_id) {
-      insertData.resident_id = requestData.resident_id;
-    }
-    
-    // Log what we're going to insert
-    console.log("Inserting homeowner request:", insertData);
-    
-    // Insert the homeowner request
+    // Insert the request into the database
     const { data, error } = await supabase
       .from("homeowner_requests")
-      .insert(insertData)
-      .select()
-      .single();
+      .insert(requestData)
+      .select();
     
     if (error) {
-      console.error("Error creating homeowner request:", error);
-      throw new Error(`Failed to create homeowner request: ${error.message}`);
+      console.error("Error inserting homeowner request:", error);
+      throw new Error(`Database error: ${error.message}`);
     }
     
-    // If the request had a tracking number, update the communications_log
-    if (requestData.tracking_number) {
-      await updateCommunicationWithRequestId(
-        supabase,
-        requestData.tracking_number,
-        data.id
-      );
+    if (!data || data.length === 0) {
+      console.error("No data returned after insert");
+      throw new Error("Request was created but no data was returned");
     }
     
-    return data;
+    console.log("Request created successfully:", data[0].id);
+    
+    // Log creation in communications_log table for tracking
+    await logCommunication(supabase, data[0].id, requestData.tracking_number);
+    
+    return data[0];
   } catch (error) {
-    console.error("Error in createHomeownerRequest:", error);
+    console.error("Error in createRequest:", error);
     throw error;
   }
 }
 
-async function updateCommunicationWithRequestId(
-  supabase: any,
-  trackingNumber: string,
-  requestId: string
-) {
+async function logCommunication(supabase: any, requestId: string, trackingNumber: string) {
   try {
+    console.log("Logging communication for request:", requestId);
+    
     const { error } = await supabase
       .from("communications_log")
-      .update({ 
+      .insert({
         homeowner_request_id: requestId,
-        status: 'completed',
-        processed_at: new Date().toISOString()
-      })
-      .eq("tracking_number", trackingNumber);
+        communication_type: "email",
+        tracking_number: trackingNumber,
+        status: "processed",
+        processed_at: new Date().toISOString(),
+        metadata: { source: "email_webhook" }
+      });
     
     if (error) {
-      console.error("Error updating communication log:", error);
-      // Non-fatal error, log but don't throw
+      console.error("Error logging communication:", error);
+      // Don't throw here, just log the error
+    } else {
+      console.log("Communication logged successfully");
     }
-  } catch (error) {
-    console.error("Error in updateCommunicationWithRequestId:", error);
-    // Non-fatal error, log but don't throw
+  } catch (logError) {
+    console.error("Error in logCommunication:", logError);
+    // Don't throw here, just log the error
   }
 }

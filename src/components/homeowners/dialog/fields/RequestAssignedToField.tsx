@@ -1,30 +1,48 @@
 
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
-import { 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormControl, 
-  FormMessage 
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
 interface RequestAssignedToFieldProps {
-  form: UseFormReturn<any>;
+  form: any;
 }
 
 const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form }) => {
+  // Mock staff members until we have proper user management
+  const { data: staffMembers = [] } = useSupabaseQuery<any[]>(
+    'profiles',
+    {
+      select: 'id, first_name, last_name, email',
+    }
+  );
+
   return (
     <FormField
       control={form.control}
-      name="assignedTo"
+      name="assigned_to"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Assigned To (User ID)</FormLabel>
-          <FormControl>
-            <Input {...field} placeholder="User ID (optional)" />
-          </FormControl>
+          <FormLabel>Assigned To</FormLabel>
+          <Select
+            onValueChange={field.onChange}
+            defaultValue={field.value}
+            value={field.value}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Select staff member" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="">Unassigned</SelectItem>
+              {staffMembers.map((staff) => (
+                <SelectItem key={staff.id} value={staff.id}>
+                  {staff.first_name} {staff.last_name} ({staff.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <FormMessage />
         </FormItem>
       )}

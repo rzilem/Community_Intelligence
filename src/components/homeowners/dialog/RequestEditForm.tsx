@@ -25,10 +25,10 @@ const formSchema = z.object({
   status: z.enum(['open', 'in-progress', 'resolved', 'closed']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
-  assignedTo: z.string().optional(),
-  associationId: z.string().uuid().optional().nullable(),
-  propertyId: z.string().uuid().optional().nullable(),
-  residentId: z.string().uuid().optional().nullable(),
+  assigned_to: z.string().optional(),
+  association_id: z.string().uuid().optional().nullable(),
+  property_id: z.string().uuid().optional().nullable(),
+  resident_id: z.string().uuid().optional().nullable(),
 });
 
 const RequestEditForm: React.FC<RequestEditFormProps> = ({ 
@@ -45,10 +45,10 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       status: 'open',
       priority: 'medium',
       type: 'general',
-      assignedTo: '',
-      associationId: '',
-      propertyId: '',
-      residentId: '',
+      assigned_to: '',
+      association_id: '',
+      property_id: '',
+      resident_id: '',
     },
   });
 
@@ -60,10 +60,10 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         status: request.status as any,
         priority: request.priority as any,
         type: request.type as any,
-        assignedTo: request.assigned_to || '',
-        associationId: request.association_id || '',
-        propertyId: request.property_id || '',
-        residentId: request.resident_id || '',
+        assigned_to: request.assigned_to || '',
+        association_id: request.association_id || '',
+        property_id: request.property_id || '',
+        resident_id: request.resident_id || '',
       });
     }
   }, [request, form]);

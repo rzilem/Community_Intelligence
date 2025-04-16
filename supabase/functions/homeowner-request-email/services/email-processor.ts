@@ -1,211 +1,117 @@
 
-import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+/**
+ * Service to process email data and extract homeowner request information
+ */
 
-export async function extractRequestData(emailData: any, trackingNumber: string) {
-  console.log("Extracting request data from email");
+export async function processEmailData(emailData: any) {
+  console.log("Processing email for homeowner request extraction");
   
-  // Initialize request with default values
+  // Extract the data we need to create a request
   const requestData: Record<string, any> = {
     title: emailData.subject || "Email Request",
     status: "open",
-    priority: "medium",
-    type: "general",
-    html_content: emailData.html || "",
-    tracking_number: trackingNumber,
+    priority: determinePriority(emailData.subject),
+    type: determineRequestType(emailData.subject, emailData.text, emailData.html),
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    tracking_number: emailData.tracking_number || `REQ-${Date.now()}`,
   };
   
-  try {
-    // Extract content from HTML or fallback to text content
-    let content = emailData.text || "";
+  // Extract email content
+  if (emailData.html) {
+    requestData.html_content = emailData.html;
     
-    if (emailData.html) {
-      try {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(emailData.html, "text/html");
-        if (doc && doc.body) {
-          content = doc.body.textContent || emailData.text || "";
-        }
-      } catch (error) {
-        console.error("Error parsing HTML:", error);
-      }
-    }
-    
-    // Set the description from the content
-    requestData.description = content;
-    
-    // Try to detect request type from subject and content
-    requestData.type = detectRequestType(emailData.subject, content);
-    
-    // Try to detect priority from subject and content
-    requestData.priority = detectPriority(emailData.subject, content);
-    
-    // If the subject is too long, truncate it for the title
-    if (requestData.title.length > 100) {
-      requestData.title = requestData.title.substring(0, 97) + "...";
-    }
-    
-    try {
-      // Try to get default association ID, but don't throw if not found
-      const associationId = await getDefaultAssociationId();
-      if (associationId) {
-        requestData.association_id = associationId;
-        
-        // Only try to get property if we have an association
-        try {
-          const propertyId = await getDefaultPropertyId(associationId);
-          if (propertyId) {
-            requestData.property_id = propertyId;
-          }
-        } catch (propertyError) {
-          console.warn("No default property found, creating request without property reference:", propertyError.message);
-        }
-      }
-    } catch (associationError) {
-      console.warn("No association found, creating request without association reference:", associationError.message);
-      // Since we couldn't find an association, we'll create a special system-level request
-      requestData.title = `[UNASSIGNED] ${requestData.title}`;
-    }
-    
-    console.log("Extracted request data:", requestData);
-    return requestData;
-  } catch (error) {
-    console.error("Error extracting request data:", error);
-    throw new Error(`Failed to extract request data: ${error.message}`);
+    // Extract the first 500 characters of HTML content for description
+    // Strip HTML tags for a clean description
+    let textContent = emailData.html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+      
+    requestData.description = textContent.substring(0, 500);
+  } else if (emailData.text) {
+    requestData.description = emailData.text.substring(0, 500);
+  } else {
+    requestData.description = "Request submitted via email. No content provided.";
   }
+  
+  // Attempt to extract an association ID if present in the subject or email
+  requestData.association_id = extractAssociationId(emailData);
+  
+  // Extract sender information for possible resident matching
+  const senderEmail = extractSenderEmail(emailData.from);
+  if (senderEmail) {
+    requestData.sender_email = senderEmail;
+    
+    // We could look up the resident based on email
+    // This would be done via a database query in a production system
+    // requestData.resident_id = await findResidentByEmail(senderEmail);
+  }
+  
+  console.log("Extracted request data:", requestData);
+  return requestData;
 }
 
-// Simple function to detect request type based on content
-function detectRequestType(subject: string, content: string): string {
-  const combinedText = `${subject} ${content}`.toLowerCase();
+function determinePriority(subject: string): string {
+  if (!subject) return "medium";
   
-  if (combinedText.includes("maintenance") || 
-      combinedText.includes("repair") || 
-      combinedText.includes("broken") ||
-      combinedText.includes("fix") ||
-      combinedText.includes("leak")) {
-    return "maintenance";
-  }
+  subject = subject.toLowerCase();
   
-  if (combinedText.includes("violation") || 
-      combinedText.includes("compliance") || 
-      combinedText.includes("rule") ||
-      combinedText.includes("regulation")) {
-    return "compliance";
-  }
-  
-  if (combinedText.includes("payment") || 
-      combinedText.includes("invoice") || 
-      combinedText.includes("bill") ||
-      combinedText.includes("fee") ||
-      combinedText.includes("dues")) {
-    return "billing";
-  }
-  
-  if (combinedText.includes("pool") || 
-      combinedText.includes("gym") || 
-      combinedText.includes("facility") ||
-      combinedText.includes("amenity") ||
-      combinedText.includes("reservation")) {
-    return "amenity";
-  }
-  
-  return "general";
-}
-
-// Simple function to detect priority based on content
-function detectPriority(subject: string, content: string): string {
-  const combinedText = `${subject} ${content}`.toLowerCase();
-  
-  if (combinedText.includes("urgent") || 
-      combinedText.includes("emergency") || 
-      combinedText.includes("immediate") ||
-      combinedText.includes("asap") ||
-      combinedText.includes("critical")) {
+  if (subject.includes("urgent") || 
+      subject.includes("emergency") || 
+      subject.includes("immediate")) {
     return "urgent";
-  }
-  
-  if (combinedText.includes("high priority") || 
-      combinedText.includes("important") || 
-      combinedText.includes("soon")) {
+  } else if (subject.includes("important") || 
+             subject.includes("high priority")) {
     return "high";
-  }
-  
-  if (combinedText.includes("low priority") || 
-      combinedText.includes("whenever") || 
-      combinedText.includes("no rush")) {
+  } else if (subject.includes("low priority") || 
+             subject.includes("minor")) {
     return "low";
   }
   
   return "medium";
 }
 
-// Modified function to handle the case when no association is found
-async function getDefaultAssociationId(): Promise<string | null> {
-  try {
-    // Import the createClient function directly in the function
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.1.0");
-    
-    // Initialize the Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get the first association
-    const { data, error } = await supabase
-      .from("associations")
-      .select("id")
-      .limit(1);
-    
-    if (error) {
-      console.error("Error getting default association:", error);
-      return null;
-    }
-    
-    if (!data || data.length === 0) {
-      console.warn("No associations found in the database");
-      return null;
-    }
-    
-    return data[0].id;
-  } catch (error) {
-    console.error("Error in getDefaultAssociationId:", error);
-    return null;
+function determineRequestType(subject: string, text: string, html: string): string {
+  const combinedText = `${subject || ""} ${text || ""} ${html || ""}`.toLowerCase();
+  
+  if (combinedText.includes("maintenance") || 
+      combinedText.includes("repair") || 
+      combinedText.includes("broken") ||
+      combinedText.includes("fix")) {
+    return "maintenance";
+  } else if (combinedText.includes("billing") || 
+             combinedText.includes("payment") || 
+             combinedText.includes("invoice") ||
+             combinedText.includes("fee")) {
+    return "billing";
+  } else if (combinedText.includes("compliance") || 
+             combinedText.includes("violation") || 
+             combinedText.includes("rule") ||
+             combinedText.includes("regulation")) {
+    return "compliance";
+  } else if (combinedText.includes("amenity") || 
+             combinedText.includes("pool") || 
+             combinedText.includes("gym") ||
+             combinedText.includes("common area")) {
+    return "amenity";
   }
+  
+  return "general";
 }
 
-// Similar function to get a default property ID - modified to handle no results
-async function getDefaultPropertyId(associationId: string): Promise<string | null> {
-  try {
-    // Import the createClient function directly in the function
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.1.0");
-    
-    // Initialize the Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    
-    // Get the first property for the given association
-    const { data, error } = await supabase
-      .from("properties")
-      .select("id")
-      .eq("association_id", associationId)
-      .limit(1);
-    
-    if (error) {
-      console.error("Error getting default property:", error);
-      return null;
-    }
-    
-    if (!data || data.length === 0) {
-      console.warn("No properties found for this association");
-      return null;
-    }
-    
-    return data[0].id;
-  } catch (error) {
-    console.error("Error in getDefaultPropertyId:", error);
-    return null;
-  }
+function extractSenderEmail(fromHeader: string): string | null {
+  if (!fromHeader) return null;
+  
+  // Simple regex to extract email from From header
+  const emailMatch = fromHeader.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+  return emailMatch ? emailMatch[1] : null;
+}
+
+function extractAssociationId(emailData: any): string | null {
+  // This would normally extract the association ID from the email data
+  // For now, we'll return null and let the application assign it
+  return null;
 }
