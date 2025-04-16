@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog,
@@ -179,7 +178,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 184,
-      type: 'testimonial',
+      type: 'testimonial' as 'testimonial',
       created_at: new Date().toISOString()
     },
     {
@@ -190,7 +189,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 156,
-      type: 'team_intro',
+      type: 'team_intro' as 'team_intro',
       created_at: new Date().toISOString()
     },
     {
@@ -201,7 +200,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 210,
-      type: 'property_tour',
+      type: 'property_tour' as 'property_tour',
       created_at: new Date().toISOString()
     }
   ];
@@ -211,7 +210,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       id: 'f1',
       proposal_id: proposal.id,
       scheduled_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'scheduled',
+      status: 'scheduled' as 'scheduled',
       message_template: 'Hi {client_name}, I wanted to follow up on the proposal we sent for {proposal_name}. Have you had a chance to review it? I\'d be happy to answer any questions you might have.',
       trigger_type: 'days_after_send',
       trigger_days: 3,
@@ -222,7 +221,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       id: 'f2',
       proposal_id: proposal.id,
       scheduled_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'scheduled',
+      status: 'scheduled' as 'scheduled',
       message_template: 'Hi {client_name}, I noticed you viewed our proposal for {proposal_name} but we haven\'t heard back. I\'d love to discuss any questions or concerns you might have about the proposed services.',
       trigger_type: 'days_after_view',
       trigger_days: 2,

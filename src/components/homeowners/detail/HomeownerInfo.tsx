@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { formatDate } from '@/lib/date-utils';
+import { formatDate } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils';
 
 interface HomeownerInfoProps {

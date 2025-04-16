@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Proposal } from '@/types/proposal-types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -40,7 +39,6 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
   const [signatureRef, setSignatureRef] = useState<SignatureCanvas | null>(null);
   const [activeTab, setActiveTab] = useState("proposal");
   
-  // Mock data for demo purposes (in a real app these would come from the database)
   const demoCalculator = {
     id: '1',
     proposal_id: proposal.id,
@@ -104,7 +102,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 184,
-      type: 'testimonial',
+      type: 'testimonial' as 'testimonial',
       created_at: new Date().toISOString()
     },
     {
@@ -115,7 +113,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 156,
-      type: 'team_intro',
+      type: 'team_intro' as 'team_intro',
       created_at: new Date().toISOString()
     },
     {
@@ -126,15 +124,13 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 210,
-      type: 'property_tour',
+      type: 'property_tour' as 'property_tour',
       created_at: new Date().toISOString()
     }
   ];
 
   useEffect(() => {
-    // Track that the client has viewed the proposal
     const trackView = async () => {
-      // In a real implementation, this would call an API to track the view
       console.log('Tracking view for proposal:', proposal.id);
     };
     
@@ -150,7 +146,6 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
     try {
       setIsAccepting(true);
       
-      // If signature is required, get the signature data
       let signatureData = '';
       if (proposal.signature_required && signatureRef) {
         if (signatureRef.isEmpty()) {
@@ -163,11 +158,9 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
           return;
         }
         
-        // Get signature as base64 string
         signatureData = signatureRef.toDataURL('image/png');
       }
       
-      // In a real implementation, you would include the signature data
       await onAccept();
       
       if (proposal.signature_required) {
@@ -320,7 +313,6 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
         </Card>
       </div>
       
-      {/* Signature Dialog */}
       <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
         <DialogContent>
           <DialogHeader>

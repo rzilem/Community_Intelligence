@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Proposal, ProposalAttachment, ProposalAnalytics } from '@/types/proposal-types';
 import { toast } from 'sonner';
@@ -45,22 +44,15 @@ export const useProposals = (leadId?: string) => {
               console.error('Error fetching attachments:', attachmentsError);
             }
             
-            // Fetch analytics if they exist
-            const { data: analytics, error: analyticsError } = await supabase
-              .from('proposal_analytics')
-              .select('*')
-              .eq('proposal_id', proposal.id)
-              .single();
-              
-            if (analyticsError && analyticsError.code !== 'PGRST116') {
-              console.error('Error fetching analytics:', analyticsError);
-            }
-            
-            // Build complete proposal object
+            // Build complete proposal object - instead of fetching from proposal_analytics
+            // which doesn't exist, we'll use analytics data embedded in the proposal or default values
             return {
               ...proposal,
               attachments: attachments || [],
-              analytics: analytics || undefined
+              analytics: proposal.analytics_data || {
+                views: 0,
+                view_count_by_section: {}
+              }
             } as Proposal;
           })
         );
@@ -288,12 +280,14 @@ export const useProposals = (leadId?: string) => {
 
   const updateAnalyticsMutation = useMutation({
     mutationFn: async ({ proposalId, analyticsData }: { proposalId: string, analyticsData: Partial<ProposalAnalytics> }) => {
+      // Instead of updating a separate proposal_analytics table,
+      // we'll update the analytics_data field directly on the proposal
       const { error } = await supabase
-        .from('proposal_analytics')
-        .upsert({
-          proposal_id: proposalId,
-          ...analyticsData
-        });
+        .from('proposals')
+        .update({
+          analytics_data: analyticsData
+        })
+        .eq('id', proposalId);
         
       if (error) throw new Error(error.message);
       return { proposalId, analyticsData };
@@ -384,21 +378,13 @@ export const useProposals = (leadId?: string) => {
         console.error('Error fetching attachments:', attachmentsError);
       }
       
-      // Get analytics
-      const { data: analytics, error: analyticsError } = await supabase
-        .from('proposal_analytics')
-        .select('*')
-        .eq('proposal_id', id)
-        .single();
-        
-      if (analyticsError && analyticsError.code !== 'PGRST116') {
-        console.error('Error fetching analytics:', analyticsError);
-      }
-      
       return {
         ...(proposal as any),
         attachments: attachments || [],
-        analytics: analytics || undefined
+        analytics: proposal.analytics_data || {
+          views: 0,
+          view_count_by_section: {}
+        }
       } as Proposal;
     } catch (err) {
       console.error("Error in getProposal:", err);
@@ -408,22 +394,24 @@ export const useProposals = (leadId?: string) => {
 
   const trackProposalView = useCallback(async (proposalId: string, sectionId?: string): Promise<void> => {
     try {
-      // Get current analytics
-      const { data: currentAnalytics, error: fetchError } = await supabase
-        .from('proposal_analytics')
+      // Get the current proposal
+      const { data: proposal, error: fetchError } = await supabase
+        .from('proposals')
         .select('*')
-        .eq('proposal_id', proposalId)
+        .eq('id', proposalId)
         .single();
         
-      if (fetchError && fetchError.code !== 'PGRST116') {
-        console.error('Error fetching analytics for tracking:', fetchError);
+      if (fetchError) {
+        console.error('Error fetching proposal for tracking:', fetchError);
         return;
       }
       
-      const analytics = currentAnalytics || {
-        proposal_id: proposalId,
+      // Get current analytics data or initialize with defaults
+      const analytics = proposal.analytics_data || {
         views: 0,
-        view_count_by_section: {}
+        view_count_by_section: {},
+        initial_view_date: null,
+        last_view_date: null
       };
       
       // Update analytics
@@ -460,30 +448,24 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      // Update the proposal to 'viewed' status if it's currently 'sent'
-      const { data: proposal, error: proposalError } = await supabase
-        .from('proposals')
-        .select('status')
-        .eq('id', proposalId)
-        .single();
-        
-      if (!proposalError && proposal && proposal.status === 'sent') {
+      // Update the proposal status to 'viewed' if it's currently 'sent'
+      if (proposal.status === 'sent') {
         await supabase
           .from('proposals')
           .update({
             status: 'viewed',
-            viewed_date: new Date().toISOString()
+            viewed_date: new Date().toISOString(),
+            analytics_data: updatedAnalytics
           })
           .eq('id', proposalId);
-      }
-      
-      // Save updated analytics
-      const { error: updateError } = await supabase
-        .from('proposal_analytics')
-        .upsert(updatedAnalytics);
-        
-      if (updateError) {
-        console.error('Error updating analytics from tracking:', updateError);
+      } else {
+        // Otherwise just update the analytics
+        await supabase
+          .from('proposals')
+          .update({
+            analytics_data: updatedAnalytics
+          })
+          .eq('id', proposalId);
       }
     } catch (err) {
       console.error('Error tracking proposal view:', err);
