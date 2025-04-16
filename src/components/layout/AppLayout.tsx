@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -14,6 +14,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
   const { user, profile, signOut, userRole } = useAuth();
+
+  console.log('AppLayout rendering, user:', user ? 'logged in' : 'not logged in');
 
   useEffect(() => {
     if (isMobile) {

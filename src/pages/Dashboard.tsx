@@ -25,15 +25,17 @@ const Dashboard = () => {
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
   
+  console.log('Dashboard rendering, user:', user ? 'logged in' : 'not logged in');
   useAdminAccess(user?.id);
   
   // Convert user to Profile type if needed
-  const userProfile: Profile | undefined = user ? {
+  const userProfile: Profile | null = user ? {
     ...user,
     role: user.role || 'user', // Ensure role is always defined
     created_at: user.created_at || new Date().toISOString(),
-    updated_at: user.updated_at || new Date().toISOString()
-  } as Profile : undefined;
+    updated_at: user.updated_at || new Date().toISOString(),
+    id: user.id
+  } as Profile : null;
   
   const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
     userProfile,

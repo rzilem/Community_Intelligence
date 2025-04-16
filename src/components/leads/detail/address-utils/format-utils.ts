@@ -1,4 +1,3 @@
-
 /**
  * Formats and cleans the street address from a lead
  */
@@ -13,17 +12,20 @@ export function formatStreetAddress(address: string | undefined): string {
 }
 
 /**
- * Cleans and formats the city name from a lead
+ * Cleans a city name by removing any unwanted patterns or formatting issues
  */
-export function cleanCityName(city: string | undefined): string {
-  if (!city) return '';
+export function cleanCityName(cityName: string): string {
+  // Remove any trailing zip or state codes (e.g. "Austin, TX 78701" -> "Austin")
+  let cleaned = cityName.replace(/,\s*[A-Z]{2}.*$/, '');
   
-  // Special case for known issues
-  if (city === 'TrailAuin') {
-    return 'Austin';
-  }
+  // Ensure proper case
+  cleaned = cleaned.trim();
   
-  return city;
+  // Handle special cases
+  if (cleaned.toLowerCase() === 'atx') return 'Austin';
+  if (cleaned.toLowerCase().includes('austin')) return 'Austin';
+  
+  return cleaned;
 }
 
 /**
@@ -72,4 +74,14 @@ export function createGoogleMapsLink(address: string | undefined): string {
   
   // URL encode the address for Google Maps
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
+}
+
+/**
+ * Capitalizes the first letter of a string
+ * @param text The string to capitalize
+ * @returns The capitalized string
+ */
+export function capitalizeFirstLetter(text: string): string {
+  if (!text) return '';
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
 }
