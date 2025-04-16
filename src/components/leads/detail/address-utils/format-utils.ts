@@ -1,7 +1,5 @@
 
-/**
- * Core formatting utilities for addresses
- */
+import { cleanCityName } from './city-utils';
 
 /**
  * Formats and cleans the street address from a lead
@@ -10,8 +8,10 @@ export function formatStreetAddress(address: string | undefined): string {
   if (!address) return '';
   
   return address
-    .replace(/TrailAustin/i, 'Trail Austin')
-    .replace(/Austin,/i, 'Austin, ');
+    .replace(/Dr\.?Austin/i, 'Dr. Austin')  // Add space between Dr. and Austin
+    .replace(/Austin,/i, 'Austin, ')
+    .replace(/Auin, TX \d+/i, '')  // Remove the extraneous Auin, TX text
+    .trim();
 }
 
 /**
@@ -75,3 +75,4 @@ export function createGoogleMapsLink(address: string | undefined): string {
   // URL encode the address for Google Maps
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
 }
+
