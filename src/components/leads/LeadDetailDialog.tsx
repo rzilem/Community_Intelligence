@@ -32,7 +32,7 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Lead Details: {lead.association_name || lead.name}</DialogTitle>
         </DialogHeader>
@@ -45,22 +45,22 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
           </TabsList>
           
           <TabsContent value="details" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[65vh]">
+            <ScrollArea className="h-[70vh]">
               <div className="space-y-4 p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h3 className="font-medium text-lg">Association Information</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="text-muted-foreground">Association Name:</div>
-                      <div>{lead.association_name || 'N/A'}</div>
+                      <div className="text-muted-foreground font-semibold">Association Name:</div>
+                      <div className="font-bold">{lead.association_name || 'N/A'}</div>
                       
-                      <div className="text-muted-foreground">Association Type:</div>
+                      <div className="text-muted-foreground font-semibold">Association Type:</div>
                       <div>{lead.association_type || 'N/A'}</div>
                       
-                      <div className="text-muted-foreground">Number of Units:</div>
+                      <div className="text-muted-foreground font-semibold">Number of Units:</div>
                       <div>{lead.number_of_units || 'N/A'}</div>
                       
-                      <div className="text-muted-foreground">Current Management:</div>
+                      <div className="text-muted-foreground font-semibold">Current Management:</div>
                       <div>{lead.current_management || 'N/A'}</div>
                     </div>
                   </div>
@@ -68,15 +68,15 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                   <div className="space-y-4">
                     <h3 className="font-medium text-lg">Contact Information</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="text-muted-foreground">Name:</div>
-                      <div>{lead.name}</div>
+                      <div className="text-muted-foreground font-semibold">Name:</div>
+                      <div className="font-bold">{lead.name}</div>
                       
-                      <div className="text-muted-foreground">Email:</div>
+                      <div className="text-muted-foreground font-semibold">Email:</div>
                       <div>
                         {lead.email ? (
                           <a 
                             href={`mailto:${lead.email}`} 
-                            className="text-blue-600 hover:underline flex items-center gap-1"
+                            className="text-blue-600 hover:underline flex items-center gap-1 font-bold"
                           >
                             {lead.email}
                             <Mail size={14} />
@@ -84,12 +84,12 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                         ) : 'N/A'}
                       </div>
                       
-                      <div className="text-muted-foreground">Phone:</div>
+                      <div className="text-muted-foreground font-semibold">Phone:</div>
                       <div>
                         {lead.phone ? (
                           <a 
                             href={`tel:${lead.phone}`} 
-                            className="text-blue-600 hover:underline flex items-center gap-1"
+                            className="text-blue-600 hover:underline flex items-center gap-1 font-bold"
                           >
                             {lead.phone}
                             <Phone size={14} />
@@ -97,7 +97,7 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                         ) : 'N/A'}
                       </div>
                       
-                      <div className="text-muted-foreground">Company:</div>
+                      <div className="text-muted-foreground font-semibold">Company:</div>
                       <div>{lead.company || 'N/A'}</div>
                     </div>
                   </div>
@@ -106,7 +106,7 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                 <div className="space-y-4">
                   <h3 className="font-medium text-lg">Address</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
-                    <div className="text-muted-foreground">Street Address:</div>
+                    <div className="text-muted-foreground font-semibold">Street Address:</div>
                     <div className="col-span-2 text-left">
                       {formattedStreetAddress || 'N/A'}
                       {formattedStreetAddress && (
@@ -123,35 +123,35 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
                     
                     {lead.address_line2 && (
                       <>
-                        <div className="text-muted-foreground">Address Line 2:</div>
+                        <div className="text-muted-foreground font-semibold">Address Line 2:</div>
                         <div className="col-span-2 text-left">{lead.address_line2}</div>
                       </>
                     )}
                     
-                    <div className="text-muted-foreground">City:</div>
-                    <div className="col-span-2 text-left">{cleanedCity || 'N/A'}</div>
+                    <div className="text-muted-foreground font-semibold">City:</div>
+                    <div className="col-span-2 text-left font-bold">{cleanedCity || 'N/A'}</div>
                     
-                    <div className="text-muted-foreground">State:</div>
+                    <div className="text-muted-foreground font-semibold">State:</div>
                     <div className="col-span-2 text-left">{lead.state || 'N/A'}</div>
                     
-                    <div className="text-muted-foreground">ZIP:</div>
-                    <div className="col-span-2 text-left">{zipCode || 'N/A'}</div>
+                    <div className="text-muted-foreground font-semibold">ZIP:</div>
+                    <div className="col-span-2 text-left font-bold">{zipCode || 'N/A'}</div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <h3 className="font-medium text-lg">Lead Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div className="text-muted-foreground">Source:</div>
-                    <div>{lead.source}</div>
+                    <div className="text-muted-foreground font-semibold">Source:</div>
+                    <div className="font-bold">{lead.source}</div>
                     
-                    <div className="text-muted-foreground">Status:</div>
-                    <div className="capitalize">{lead.status}</div>
+                    <div className="text-muted-foreground font-semibold">Status:</div>
+                    <div className="capitalize font-bold">{lead.status}</div>
                     
-                    <div className="text-muted-foreground">Created:</div>
+                    <div className="text-muted-foreground font-semibold">Created:</div>
                     <div>{formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}</div>
                     
-                    <div className="text-muted-foreground">Additional Requirements:</div>
+                    <div className="text-muted-foreground font-semibold">Additional Requirements:</div>
                     <div>{lead.additional_requirements || 'N/A'}</div>
                   </div>
                 </div>
