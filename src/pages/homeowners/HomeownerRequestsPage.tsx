@@ -94,6 +94,7 @@ const HomeownerRequestsPage = () => {
         setPriority={setPriority}
         type={type}
         setType={setType}
+        // status and setStatus props are optional now
       />
 
       <Tabs 

@@ -18,12 +18,14 @@ interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({ 
   request, 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onSuccess
 }) => {
   const { mutate: updateRequest, isPending } = useSupabaseUpdate<HomeownerRequest>(
     'homeowner_requests',
@@ -31,6 +33,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       onSuccess: () => {
         toast.success('Request updated successfully');
         onOpenChange(false);
+        if (onSuccess) onSuccess();
       },
     }
   );

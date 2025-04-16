@@ -22,6 +22,7 @@ interface HomeownerRequestCommentDialogProps {
   request: HomeownerRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 const formSchema = z.object({
@@ -31,7 +32,8 @@ const formSchema = z.object({
 const HomeownerRequestCommentDialog: React.FC<HomeownerRequestCommentDialogProps> = ({ 
   request, 
   open, 
-  onOpenChange 
+  onOpenChange,
+  onSuccess
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -47,6 +49,7 @@ const HomeownerRequestCommentDialog: React.FC<HomeownerRequestCommentDialogProps
         toast.success('Comment added successfully');
         form.reset();
         onOpenChange(false);
+        if (onSuccess) onSuccess();
       },
     }
   );

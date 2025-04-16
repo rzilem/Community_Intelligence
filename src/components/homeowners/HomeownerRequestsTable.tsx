@@ -16,39 +16,42 @@ import EmptyRequestsRow from './table/EmptyRequestsRow';
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
-  visibleColumnIds: string[];
+  isLoading?: boolean;
+  error?: Error | null;
+  onViewRequest: (request: HomeownerRequest) => void;
+  onEditRequest: (request: HomeownerRequest) => void;
+  onAddComment: (request: HomeownerRequest) => void;
+  onViewHistory: (request: HomeownerRequest) => void;
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
   requests, 
-  columns, 
-  visibleColumnIds 
+  columns,
+  isLoading,
+  error,
+  onViewRequest,
+  onEditRequest,
+  onAddComment,
+  onViewHistory
 }) => {
-  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  // Use default visible columns if visibleColumnIds is not provided
+  const visibleColumnIds = columns.filter(column => column.defaultVisible).map(column => column.id);
 
-  const handleViewRequest = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsDetailOpen(true);
-  };
+  if (isLoading) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <p className="text-muted-foreground">Loading requests...</p>
+      </div>
+    );
+  }
 
-  const handleEditRequest = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsEditOpen(true);
-  };
-
-  const handleAddComment = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsCommentOpen(true);
-  };
-
-  const handleViewHistory = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsHistoryOpen(true);
-  };
+  if (error) {
+    return (
+      <div className="rounded-md border p-8 text-center">
+        <p className="text-red-500">Error loading requests: {error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-md border">
@@ -66,39 +69,15 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                 key={request.id}
                 request={request}
                 visibleColumnIds={visibleColumnIds}
-                onViewRequest={handleViewRequest}
-                onEditRequest={handleEditRequest}
-                onAddComment={handleAddComment}
-                onViewHistory={handleViewHistory}
+                onViewRequest={onViewRequest}
+                onEditRequest={onEditRequest}
+                onAddComment={onAddComment}
+                onViewHistory={onViewHistory}
               />
             ))
           )}
         </TableBody>
       </Table>
-      
-      <HomeownerRequestDetailDialog 
-        request={selectedRequest} 
-        open={isDetailOpen} 
-        onOpenChange={setIsDetailOpen} 
-      />
-      
-      <HomeownerRequestEditDialog 
-        request={selectedRequest}
-        open={isEditOpen}
-        onOpenChange={setIsEditOpen}
-      />
-      
-      <HomeownerRequestCommentDialog
-        request={selectedRequest}
-        open={isCommentOpen}
-        onOpenChange={setIsCommentOpen}
-      />
-      
-      <HomeownerRequestHistoryDialog
-        request={selectedRequest}
-        open={isHistoryOpen}
-        onOpenChange={setIsHistoryOpen}
-      />
     </div>
   );
 };

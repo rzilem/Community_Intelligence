@@ -8,8 +8,8 @@ import MoreFiltersButton from './filters/MoreFiltersButton';
 interface HomeownerRequestFiltersProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  status: HomeownerRequestStatus | 'all';
-  setStatus: (status: HomeownerRequestStatus | 'all') => void;
+  status?: HomeownerRequestStatus | 'all';
+  setStatus?: (status: HomeownerRequestStatus | 'all') => void;
   priority: HomeownerRequestPriority | 'all';
   setPriority: (priority: HomeownerRequestPriority | 'all') => void;
   type: HomeownerRequestType | 'all';
@@ -19,8 +19,8 @@ interface HomeownerRequestFiltersProps {
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   searchTerm,
   setSearchTerm,
-  status,
-  setStatus,
+  status = 'all',
+  setStatus = () => {},
   priority,
   setPriority,
   type,
