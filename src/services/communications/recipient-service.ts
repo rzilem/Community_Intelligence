@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { RecipientGroup, Resident } from '@/types/communication-types';
+import { RecipientGroup } from '@/types/communication-types';
+import { Resident } from '@/types/resident-types';
 import { Json } from '@/integrations/supabase/types';
 
 export const recipientService = {

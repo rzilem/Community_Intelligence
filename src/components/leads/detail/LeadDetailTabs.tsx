@@ -59,11 +59,14 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({
         </TabsContent>
         
         <TabsContent value="activity" className="mt-6">
-          <ActivityFeedTab lead={lead} onSaveNotes={onSaveNotes} />
+          <ActivityFeedTab 
+            lead={lead} 
+            onSaveNotes={onSaveNotes} 
+          />
         </TabsContent>
         
         <TabsContent value="documents" className="mt-6">
-          <LeadDocumentsTab lead={lead} />
+          <LeadDocumentsTab leadId={lead.id} />
         </TabsContent>
       </Tabs>
     </div>
