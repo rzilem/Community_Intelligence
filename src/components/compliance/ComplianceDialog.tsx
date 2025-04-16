@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { Compliance } from '@/types/compliance-types';
-import { Property } from '@/types/property-types';
+import { Compliance, Property } from '@/types/app-types';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
 import { ComplianceForm } from './ComplianceForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +37,25 @@ export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
           .eq('association_id', currentAssociation.id);
           
         if (error) throw error;
-        setProperties(data as Property[]);
+        
+        // Map to ensure the data conforms to the Property type from app-types.ts
+        const mappedData = (data || []).map(prop => ({
+          id: prop.id,
+          association_id: prop.association_id,
+          address: prop.address,
+          unit_number: prop.unit_number,
+          city: prop.city,
+          state: prop.state,
+          zip: prop.zip,
+          property_type: prop.property_type,
+          bedrooms: prop.bedrooms,
+          bathrooms: prop.bathrooms,
+          square_feet: prop.square_feet,
+          created_at: prop.created_at || new Date().toISOString(),
+          updated_at: prop.updated_at || new Date().toISOString()
+        })) as Property[];
+        
+        setProperties(mappedData);
       } catch (error) {
         console.error('Error fetching properties:', error);
       } finally {

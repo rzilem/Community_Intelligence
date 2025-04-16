@@ -32,6 +32,6 @@ export interface Property {
   square_feet?: number;
   association_id: string;
   unit_number?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string; // Making this required to match app-types.ts
+  updated_at: string; // Making this required to match app-types.ts
 }

@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ResidentWithProfile, Property } from '@/types/app-types';
+import { ResidentWithProfile, Property, ResidentType } from '@/types/app-types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -38,7 +37,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     defaultValues
   });
   
-  const residentType = watch('resident_type');
+  const residentType = watch('resident_type') as ResidentType;
   const isPrimary = watch('is_primary');
   const selectedPropertyId = watch('property_id');
 
@@ -119,7 +118,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         
         <ResidentTypeSelect
           residentType={residentType || 'owner'}
-          onChange={(value) => setValue('resident_type', value)}
+          onChange={(value) => setValue('resident_type', value as ResidentType)}
         />
         
         <PropertySelect

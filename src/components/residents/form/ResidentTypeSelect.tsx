@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResidentSelectField } from './ResidentSelectField';
-import { ResidentType } from '@/types/resident-types';
+import { ResidentType } from '@/types/app-types';
 
 interface ResidentTypeSelectProps {
   residentType: ResidentType;

@@ -51,7 +51,19 @@ export interface ResidentWithProfile {
   move_out_date?: string;
   created_at: string;
   updated_at: string;
-  profile?: Profile;
+  profile?: import('./profile-types').Profile;
+  // Add user property to match expected structure in components
+  user?: {
+    profile?: {
+      id: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      role?: string;
+      phone_number?: string;
+      profile_image_url?: string;
+    }
+  };
 }
 
 export interface Property {
@@ -85,7 +97,7 @@ export interface Compliance {
   updated_at?: string;
 }
 
-export type ResidentType = 'owner' | 'tenant' | 'other';
+export type ResidentType = 'owner' | 'tenant' | 'family' | 'other';
 
 export interface Resident {
   id: string;
