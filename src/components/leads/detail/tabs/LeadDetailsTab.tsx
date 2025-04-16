@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Lead } from '@/types/lead-types';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -10,32 +9,24 @@ interface LeadDetailsTabProps {
 }
 
 const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
-  const { formattedStreetAddress } = getFormattedLeadAddressData(lead);
-  
-  // Format address with proper spacing
+  // Improve address formatting to handle various edge cases
   const formatAddress = () => {
-    let address = '';
+    if (!lead.street_address) return '';
+
+    // Clean up and format street address
+    const streetAddress = lead.street_address.trim();
     
-    if (lead.street_address) {
-      address += lead.street_address;
-    }
-    
-    if (lead.city || lead.state || lead.zip) {
-      // Add proper spacing between street and city/state/zip
-      address += ', ';
-      
-      if (lead.city) address += lead.city;
-      if (lead.state) {
-        if (lead.city) address += ', ';
-        address += lead.state;
-      }
-      if (lead.zip) {
-        if (lead.city || lead.state) address += ' ';
-        address += lead.zip;
-      }
-    }
-    
-    return address;
+    // Combine city, state, and zip with proper spacing
+    const cityStateZip = [
+      lead.city?.trim(),
+      lead.state?.trim(),
+      lead.zip?.trim()
+    ].filter(Boolean).join(', ');
+
+    // Combine street address and city/state/zip
+    return cityStateZip 
+      ? `${streetAddress}, ${cityStateZip}` 
+      : streetAddress;
   };
 
   return (
@@ -145,8 +136,8 @@ const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
                 <dt className="text-sm font-medium text-muted-foreground">Address</dt>
                 <dd className="mt-1">
                   {formatAddress() ? (
-                    <div>
-                      {formatAddress()}
+                    <div className="flex items-center">
+                      <span>{formatAddress()}</span>
                       {lead.street_address && (
                         <a 
                           href={createGoogleMapsLink(lead.street_address)}
