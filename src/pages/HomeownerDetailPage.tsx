@@ -68,8 +68,29 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
-  // Default last contact value if homeowner data is missing
-  const lastContactValue = homeowner?.lastContact || '';
+  // Extract the most recent contact date from the lastContact object
+  // or use an empty string if it's not available
+  const getLastContactString = () => {
+    if (!homeowner?.lastContact) return '';
+    
+    if (typeof homeowner.lastContact === 'string') {
+      return homeowner.lastContact;
+    }
+    
+    // If it's an object with dates, find the most recent one
+    const dates = [
+      homeowner.lastContact.called,
+      homeowner.lastContact.visit,
+      homeowner.lastContact.email
+    ].filter(Boolean);
+    
+    if (dates.length === 0) return '';
+    
+    // Sort dates in descending order and take the first one
+    return dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+  };
+
+  const lastContactValue = getLastContactString();
 
   return (
     <AppLayout>

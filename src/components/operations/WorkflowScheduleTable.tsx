@@ -6,7 +6,7 @@ import { CheckCircle, Clock, XCircle } from 'lucide-react';
 import { formatDate } from '@/lib/date-utils';
 
 // Define workflow schedule item type
-interface WorkflowScheduleItem {
+export interface WorkflowScheduleItem {
   id: string;
   name: string;
   workflowType: string;
@@ -18,11 +18,17 @@ interface WorkflowScheduleItem {
   assignedTo?: string;
 }
 
-interface WorkflowScheduleTableProps {
-  scheduleItems: WorkflowScheduleItem[];
+export interface WorkflowScheduleTableProps {
+  scheduleItems?: WorkflowScheduleItem[];
+  schedules?: any[]; // Allow for the type used in WorkflowSchedule.tsx
+  isLoading?: boolean;
 }
 
-const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ scheduleItems }) => {
+const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ 
+  scheduleItems = [], 
+  schedules = [],
+  isLoading = false 
+}) => {
   // Function to render the status badge
   const renderStatusBadge = (status: WorkflowScheduleItem['status']) => {
     switch (status) {
@@ -59,8 +65,21 @@ const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ scheduleI
     }
   };
 
-  // If no schedule items, show empty state
-  if (!scheduleItems || scheduleItems.length === 0) {
+  // If loading, show loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 text-center border rounded-lg">
+        <Clock className="h-10 w-10 text-gray-400 animate-pulse mb-2" />
+        <h3 className="text-lg font-medium text-gray-900">Loading schedules...</h3>
+      </div>
+    );
+  }
+
+  // Determine which data to use - scheduleItems or schedules based on what's provided
+  const items = scheduleItems.length > 0 ? scheduleItems : schedules;
+
+  // If no items, show empty state
+  if (!items || items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-center border rounded-lg">
         <Clock className="h-10 w-10 text-gray-400 mb-2" />
@@ -71,6 +90,19 @@ const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ scheduleI
       </div>
     );
   }
+
+  // Map the schedules data to the expected format if needed
+  const displayItems = scheduleItems.length > 0 ? scheduleItems : schedules.map(schedule => ({
+    id: schedule.id,
+    name: schedule.name,
+    workflowType: schedule.type,
+    status: mapStatusToWorkflowItemStatus(schedule.status),
+    association: schedule.association || 'All Associations',
+    dueDate: schedule.nextRun || schedule.scheduleDate,
+    startDate: schedule.lastRun || schedule.scheduleDate,
+    endDate: schedule.endRun,
+    assignedTo: schedule.assignedTo || 'System'
+  }));
 
   return (
     <div className="border rounded-md">
@@ -86,7 +118,7 @@ const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ scheduleI
           </TableRow>
         </TableHeader>
         <TableBody>
-          {scheduleItems.map((item) => (
+          {displayItems.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="font-medium">{item.name}</TableCell>
               <TableCell>{item.workflowType}</TableCell>
@@ -101,5 +133,21 @@ const WorkflowScheduleTable: React.FC<WorkflowScheduleTableProps> = ({ scheduleI
     </div>
   );
 };
+
+// Helper function to map status from WorkflowSchedule to WorkflowScheduleItem status
+function mapStatusToWorkflowItemStatus(status: string): WorkflowScheduleItem['status'] {
+  switch (status) {
+    case 'active':
+      return 'in-progress';
+    case 'completed':
+      return 'completed';
+    case 'error':
+      return 'cancelled';
+    case 'paused':
+      return 'pending';
+    default:
+      return 'pending';
+  }
+}
 
 export default WorkflowScheduleTable;
