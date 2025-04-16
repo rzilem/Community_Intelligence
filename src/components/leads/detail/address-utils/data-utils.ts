@@ -12,7 +12,7 @@ export function getFormattedLeadAddressData(lead: Lead) {
   const formattedStreetAddress = formatStreetAddress(streetAddress);
   const city = lead.city || extractCity(undefined, streetAddress);
   const cleanedCity = city; // City is already cleaned in extractCity
-  const zipCode = extractZipCode(lead);
+  const zipCode = lead.zip || extractZipCode(streetAddress || '');
   
   // Format the full address properly, removing any duplicate or incorrect information
   let fullAddress = '';

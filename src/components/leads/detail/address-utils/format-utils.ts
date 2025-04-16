@@ -29,16 +29,44 @@ export function formatStreetAddress(address?: string): string {
     .trim();
 }
 
+/**
+ * Formats a full address from individual components
+ */
+export function formatFullAddress(street: string, city: string, state?: string, zip?: string): string {
+  const parts = [];
+  
+  if (street) parts.push(street);
+  
+  const cityStateZip = [];
+  if (city) cityStateZip.push(city);
+  if (state) cityStateZip.push(state);
+  if (zip) cityStateZip.push(zip);
+  
+  if (cityStateZip.length > 0) {
+    parts.push(cityStateZip.join(', '));
+  }
+  
+  return parts.join(', ');
+}
+
 export function getFormattedLeadAddressData(lead: any): {
   fullAddress: string;
   formattedAddress: string;
   googleMapsUrl: string;
+  formattedStreetAddress: string;
+  cleanedCity: string;
+  zipCode: string;
 } {
   const streetAddress = lead.street_address || '';
   const addressLine2 = lead.address_line2 || '';
   const city = lead.city || '';
   const state = lead.state || '';
   const zip = lead.zip || '';
+  
+  // Create formatted street address
+  const formattedStreetAddress = formatStreetAddress(streetAddress);
+  const cleanedCity = city ? cleanCityName(city) : '';
+  const zipCode = zip || '';
   
   // Create full address for display
   let fullAddress = streetAddress;
@@ -63,6 +91,9 @@ export function getFormattedLeadAddressData(lead: any): {
   return {
     fullAddress,
     formattedAddress,
-    googleMapsUrl
+    googleMapsUrl,
+    formattedStreetAddress,
+    cleanedCity,
+    zipCode
   };
 }

@@ -13,6 +13,9 @@ export {
   createGoogleMapsLink
 };
 
+/**
+ * Create a Google Maps link from an address string
+ */
 export function createGoogleMapsLink(address: string): string {
   if (!address) return '#';
   

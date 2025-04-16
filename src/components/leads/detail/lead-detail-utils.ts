@@ -40,3 +40,23 @@ export function getLeadStatusLabel(status: Lead['status']): string {
   
   return statusMap[status] || status;
 }
+
+/**
+ * Format a lead's name for display, using first_name and last_name if available
+ */
+export function formatLeadName(lead: Lead): string {
+  if (lead.first_name && lead.last_name) {
+    return `${lead.first_name} ${lead.last_name}`;
+  }
+  
+  return lead.name || 'Unknown';
+}
+
+/**
+ * Format additional requirements for display
+ */
+export function formatAdditionalRequirements(requirements?: string): string {
+  if (!requirements) return 'No additional requirements specified.';
+  
+  return requirements;
+}

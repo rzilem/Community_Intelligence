@@ -23,7 +23,7 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
   if (!lead) return null;
   
   // Get formatted address data using utility function
-  const { formattedStreetAddress, cleanedCity, zipCode, fullAddress } = getFormattedLeadAddressData(lead);
+  const addressData = getFormattedLeadAddressData(lead);
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -46,10 +46,10 @@ const LeadDetailDialog: React.FC<LeadDetailDialogProps> = ({ lead, open, onOpenC
           <TabsContent value="details" className="flex-1 overflow-hidden">
             <LeadInfoTab 
               lead={lead} 
-              formattedStreetAddress={formattedStreetAddress}
-              cleanedCity={cleanedCity}
-              zipCode={zipCode}
-              fullAddress={fullAddress}
+              formattedStreetAddress={addressData.formattedStreetAddress}
+              cleanedCity={addressData.cleanedCity}
+              zipCode={addressData.zipCode}
+              fullAddress={addressData.fullAddress}
             />
           </TabsContent>
           
