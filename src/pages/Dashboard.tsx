@@ -74,7 +74,6 @@ const Dashboard = () => {
       <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
         <DashboardHeader 
           associationName={currentAssociation?.name} 
-          notificationCount={stats?.notificationCount || 0}
         />
 
         <DashboardStatsSection 

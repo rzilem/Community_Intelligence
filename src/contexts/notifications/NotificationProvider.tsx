@@ -37,7 +37,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         aggregatedNotifications.push({
           id: `lead-${lead.id}`,
           title: `New Lead: ${lead.name || 'Unnamed Lead'}`,
-          description: lead.property_location || 'No location provided',
+          description: lead.association_name || lead.city || 'No location provided',
           type: 'lead',
           severity: 'info',
           read: false,
