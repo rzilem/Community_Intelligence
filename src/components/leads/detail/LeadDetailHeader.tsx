@@ -2,30 +2,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, UserPlus } from 'lucide-react';
+import { ChevronLeft, Calendar, Landmark, Clock } from 'lucide-react';
 import { Lead } from '@/types/lead-types';
 import LeadStatusBadge from '../LeadStatusBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
 
 interface LeadDetailHeaderProps {
   lead: Lead;
   onStatusChange: (status: Lead['status']) => void;
-  onStartOnboarding: (templateId: string) => void;
-  isCreating: boolean;
 }
 
 const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({ 
   lead, 
-  onStatusChange, 
-  onStartOnboarding,
-  isCreating
+  onStatusChange
 }) => {
   const navigate = useNavigate();
-  const { templates } = useOnboardingTemplates();
-  const [selectedTemplateId, setSelectedTemplateId] = React.useState<string>('');
 
   return (
     <>
@@ -37,104 +29,92 @@ const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({
           <ChevronLeft className="h-4 w-4 mr-2" />
           Back to Leads
         </Button>
-        
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <UserPlus className="h-4 w-4" />
-              Start Onboarding
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Start Onboarding Process</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Select Template</label>
-                  <select
-                    className="w-full px-3 py-2 border rounded-md mt-1"
-                    value={selectedTemplateId}
-                    onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  >
-                    <option value="">Select an onboarding template</option>
-                    {templates.map(template => (
-                      <option key={template.id} value={template.id}>
-                        {template.name}
-                      </option>
-                    ))}
-                  </select>
+      </div>
+
+      <Card className="mb-6 shadow-md border-gray-200 overflow-hidden">
+        <CardContent className="p-0">
+          <div className="bg-gradient-to-r from-blue-50 to-gray-50 p-5 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                {/* Status section */}
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 rounded-full p-2">
+                    <Landmark className="h-5 w-5 text-blue-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Status</p>
+                    <LeadStatusBadge status={lead.status} />
+                  </div>
+                </div>
+                
+                {/* Source section */}
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 rounded-full p-2">
+                    <Calendar className="h-5 w-5 text-green-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Source</p>
+                    <span className="inline-block bg-muted px-2 py-1 rounded-md text-sm font-medium">
+                      {lead.source}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Created section */}
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-100 rounded-full p-2">
+                    <Clock className="h-5 w-5 text-purple-700" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Created</p>
+                    <span className="text-sm font-medium">
+                      {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline">
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => onStartOnboarding(selectedTemplateId)}
-                disabled={!selectedTemplateId || isCreating}
-              >
-                {isCreating ? 'Starting...' : 'Start Process'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row justify-between gap-4 items-start md:items-center">
-            <div className="flex items-center gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Status</p>
-                <LeadStatusBadge status={lead.status} />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Source</p>
-                <span className="inline-block bg-muted px-2 py-1 rounded-md text-sm">
-                  {lead.source}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Created</p>
-                <span className="text-sm">
-                  {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
-                </span>
-              </div>
-            </div>
-            
+          </div>
+          
+          {/* Status buttons with improved styling */}
+          <div className="p-4 bg-white">
+            <p className="text-sm font-medium text-gray-500 mb-3">Update Status:</p>
             <div className="flex flex-wrap gap-2">
               <Button 
                 size="sm" 
                 variant={lead.status === 'new' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('new')}
+                className={lead.status === 'new' ? 'bg-blue-600 hover:bg-blue-700' : ''}
               >New</Button>
               <Button 
                 size="sm" 
                 variant={lead.status === 'contacted' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('contacted')}
+                className={lead.status === 'contacted' ? 'bg-blue-600 hover:bg-blue-700' : ''}
               >Contacted</Button>
               <Button 
                 size="sm" 
                 variant={lead.status === 'qualified' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('qualified')}
+                className={lead.status === 'qualified' ? 'bg-blue-600 hover:bg-blue-700' : ''}
               >Qualified</Button>
               <Button 
                 size="sm" 
                 variant={lead.status === 'proposal' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('proposal')}
+                className={lead.status === 'proposal' ? 'bg-blue-600 hover:bg-blue-700' : ''}
               >Proposal</Button>
               <Button 
                 size="sm" 
                 variant={lead.status === 'converted' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('converted')}
+                className={lead.status === 'converted' ? 'bg-green-600 hover:bg-green-700' : ''}
               >Converted</Button>
               <Button 
                 size="sm" 
                 variant={lead.status === 'lost' ? 'default' : 'outline'}
                 onClick={() => onStatusChange('lost')}
+                className={lead.status === 'lost' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
               >Lost</Button>
             </div>
           </div>

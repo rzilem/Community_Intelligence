@@ -17,14 +17,12 @@ import LeadHistoryTab from './detail/tabs/LeadHistoryTab';
 import LeadDocumentsTab from './detail/tabs/LeadDocumentsTab';
 import LeadNotesTabContainer from './detail/tabs/LeadNotesTabContainer';
 import AttachmentsTab from './tabs/AttachmentsTab';
-import { useOnboardingProjects } from '@/hooks/onboarding/useOnboardingProjects';
 
 const LeadDetailPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
   const navigate = useNavigate();
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
-  const { createProject, isCreating } = useOnboardingProjects();
 
   useEffect(() => {
     if (leadId) {
@@ -50,23 +48,6 @@ const LeadDetailPage = () => {
     }
   };
 
-  const handleStartOnboarding = async (templateId: string) => {
-    if (!lead || !templateId) return;
-    
-    try {
-      await createProject({
-        lead_id: lead.id,
-        template_id: templateId,
-        name: `Onboarding - ${lead.association_name || lead.name}`,
-        status: 'active'
-      });
-      
-      navigate(`/lead-management/onboarding`);
-    } catch (error: any) {
-      toast.error(`Failed to start onboarding: ${error.message}`);
-    }
-  };
-
   const handleStatusChange = async (newStatus: Lead['status']) => {
     if (!lead) return;
     
@@ -83,6 +64,11 @@ const LeadDetailPage = () => {
       
       setLead(prev => prev ? { ...prev, status: newStatus } : null);
       toast.success(`Lead status updated to ${newStatus}`);
+      
+      // If status is changed to 'converted', show a success message about onboarding
+      if (newStatus === 'converted') {
+        toast.success('Onboarding process will be automatically initiated');
+      }
     } catch (error: any) {
       toast.error(`Error updating status: ${error.message}`);
     }
@@ -148,8 +134,6 @@ const LeadDetailPage = () => {
         <LeadDetailHeader
           lead={lead}
           onStatusChange={handleStatusChange}
-          onStartOnboarding={handleStartOnboarding}
-          isCreating={isCreating}
         />
       }
     >
