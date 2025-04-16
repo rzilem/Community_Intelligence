@@ -6,51 +6,7 @@ import LeadStatusBadge from './LeadStatusBadge';
 import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import { ExternalLink } from 'lucide-react';
 import { formatLeadName } from './detail/lead-detail-utils';
-import { cleanCityName, createGoogleMapsLink } from './detail/address-utils';
-
-// Extract and clean city name
-const extractCity = (cityField: string | undefined, address: string | undefined): string => {
-  // If we have a city field directly, clean and use it
-  if (cityField) {
-    // Fix specific issues with city names
-    if (cityField === 'TrailAuin') {
-      return 'Austin';
-    }
-    return cleanCityName(cityField);
-  }
-  
-  if (!address) return '';
-  
-  // Try to extract city with common patterns
-  const cityPattern = /(?:,\s*|\s+)([A-Za-z\s.]+?)(?:,\s*|\s+)(?:[A-Z]{2}|[A-Za-z\s]+)\s+\d{5}/;
-  const match = address.match(cityPattern);
-  
-  if (match && match[1]) {
-    return cleanCityName(match[1].trim());
-  }
-  
-  // Look for common Texas cities
-  const commonTexasCities = [
-    'Austin', 'Dallas', 'Houston', 'San Antonio', 'Fort Worth', 'El Paso', 
-    'Arlington', 'Corpus Christi', 'Plano', 'Laredo', 'Lubbock', 'Garland', 
-    'Irving', 'Amarillo', 'Grand Prairie', 'Brownsville', 'McKinney', 'Frisco', 
-    'Pasadena', 'Killeen', 'Waco', 'Denton', 'New Braunfels', 'Round Rock', 
-    'Dripping Springs', 'Colorado Springs'
-  ];
-  
-  for (const city of commonTexasCities) {
-    if (address.includes(city)) {
-      return city;
-    }
-  }
-  
-  // Special case for TrailAustin variants
-  if (address.includes('Trail') && (address.includes('Austin') || address.includes('Auin'))) {
-    return 'Austin';
-  }
-  
-  return '';
-};
+import { extractCity, createGoogleMapsLink } from './detail/address-utils';
 
 export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadColumn[]) => {
   const column = columns.find(col => col.id === columnId);
@@ -68,7 +24,7 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
   }
   
   if (columnId === 'city') {
-    // Extract and clean the city name
+    // Extract and clean the city name using the utility function
     return extractCity(lead.city, lead.street_address);
   }
   
