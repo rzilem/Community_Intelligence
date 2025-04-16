@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, X, CheckCheck, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -24,7 +22,7 @@ const NotificationCenter: React.FC = () => {
   
   const handleNotificationClick = (notification: NotificationItem) => {
     if (!notification.read) {
-      markAsRead(notification.id, notification.type);
+      markAsRead(notification.id);
     }
     
     if (notification.route) {
@@ -202,7 +200,7 @@ const NotificationCenter: React.FC = () => {
                               className="h-7 w-7 opacity-0 group-hover:opacity-100"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                markAsRead(notification.id, notification.type);
+                                markAsRead(notification.id);
                               }}
                             >
                               <Check className="h-3.5 w-3.5 text-blue-500" />

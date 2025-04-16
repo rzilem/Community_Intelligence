@@ -13,14 +13,27 @@ export type Notification = {
   created_at: string;
 };
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  description?: string;
+  type: 'invoice' | 'lead' | 'request' | 'event' | 'message' | 'info';
+  severity?: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  timestamp: string;
+  route?: string;
+}
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      setAllNotifications([]);
       setLoading(false);
       return;
     }
@@ -61,6 +74,20 @@ export const useNotifications = () => {
         ];
         
         setNotifications(mockNotifications);
+        
+        // Convert to NotificationItems for the notification center
+        const notificationItems: NotificationItem[] = mockNotifications.map(notification => ({
+          id: notification.id,
+          title: notification.title,
+          description: notification.message,
+          type: 'info',
+          severity: notification.type,
+          read: notification.is_read,
+          timestamp: notification.created_at,
+          route: `/notifications/${notification.id}`
+        }));
+        
+        setAllNotifications(notificationItems);
       } catch (error) {
         console.error('Error fetching notifications:', error);
       } finally {
@@ -76,6 +103,10 @@ export const useNotifications = () => {
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
     );
+    
+    setAllNotifications(prev =>
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+    );
   };
 
   const markAllAsRead = async () => {
@@ -83,11 +114,19 @@ export const useNotifications = () => {
     setNotifications(prev => 
       prev.map(n => ({ ...n, is_read: true }))
     );
+    
+    setAllNotifications(prev =>
+      prev.map(n => ({ ...n, read: true }))
+    );
   };
 
   const deleteNotification = async (notificationId: string) => {
     // In a real app, this would update the database
     setNotifications(prev => 
+      prev.filter(n => n.id !== notificationId)
+    );
+    
+    setAllNotifications(prev =>
       prev.filter(n => n.id !== notificationId)
     );
   };
@@ -99,14 +138,22 @@ export const useNotifications = () => {
   const getTotalCount = () => {
     return notifications.length;
   };
+  
+  const getCountForSection = (section: string) => {
+    // In a real app, this would filter by section
+    // For now, just return a random number
+    return Math.floor(Math.random() * 3);
+  };
 
   return {
     notifications,
+    allNotifications,
     loading,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     getUnreadCount,
-    getTotalCount
+    getTotalCount,
+    getCountForSection
   };
 };

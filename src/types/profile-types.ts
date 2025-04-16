@@ -11,3 +11,15 @@ export interface Profile {
   updated_at: string;
   [key: string]: any; // Allow for additional properties
 }
+
+export interface UserSettings {
+  id: string;
+  user_id: string;
+  theme: 'system' | 'light' | 'dark';
+  notifications_enabled: boolean;
+  email_notifications_enabled?: boolean;
+  date_format?: string;
+  time_format?: string;
+  created_at?: string;
+  updated_at?: string;
+}
