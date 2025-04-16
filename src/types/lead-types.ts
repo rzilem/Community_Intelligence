@@ -1,4 +1,14 @@
+
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'converted' | 'lost';
+
+export interface LeadAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  created_at: string;
+}
 
 export interface Lead {
   id: string;
@@ -24,7 +34,7 @@ export interface Lead {
   city?: string;
   state?: string;
   zip?: string;
-  uploaded_files?: any;
+  uploaded_files?: LeadAttachment[] | any;
   additional_requirements?: string;
   html_content?: string;
 }

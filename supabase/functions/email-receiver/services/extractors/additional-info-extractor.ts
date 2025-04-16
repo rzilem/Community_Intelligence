@@ -12,7 +12,11 @@ export function extractAdditionalInformation(content: string) {
   const additionalInfo = extractAdditionalInfo(content);
   console.log("Additional info extracted:", additionalInfo);
   
-  if (additionalInfo.notes) lead.additional_requirements = additionalInfo.notes;
+  if (additionalInfo.notes) {
+    lead.additional_requirements = additionalInfo.notes;
+    // Store the full HTML content to ensure we can display the complete message
+    lead.html_content = content;
+  }
   
   return lead;
 }

@@ -5,7 +5,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { User, Building2, Calendar, FileText, ChevronLeft, UserPlus } from 'lucide-react';
+import { User, Building2, Calendar, FileText, ChevronLeft, UserPlus, Paperclip } from 'lucide-react';
 import { Lead } from '@/types/lead-types';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
 import { useOnboardingProjects } from '@/hooks/onboarding/useOnboardingProjects';
+import AttachmentsTab from './tabs/AttachmentsTab';
 
 const LeadDetailPage = () => {
   const { leadId } = useParams<{ leadId: string }>();
@@ -258,77 +259,124 @@ const LeadDetailPage = () => {
               <FileText className="h-4 w-4" />
               Documents
             </TabsTrigger>
+            <TabsTrigger value="attachments" className="flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              Attachments
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="details" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Full Name</dt>
-                    <dd>{lead.name}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Email</dt>
-                    <dd>{lead.email}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
-                    <dd>{lead.phone || 'Not provided'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Company</dt>
-                    <dd>{lead.company || 'Not provided'}</dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-            
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Address</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">Street</dt>
-                    <dd>{lead.street_address || 'Not provided'}</dd>
-                  </div>
-                  {lead.address_line2 && (
-                    <div>
-                      <dt className="text-sm font-medium text-muted-foreground">Address Line 2</dt>
-                      <dd>{lead.address_line2}</dd>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Full Name</dt>
+                        <dd>{lead.name}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Email</dt>
+                        <dd>{lead.email}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
+                        <dd>{lead.phone || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Company</dt>
+                        <dd>{lead.company || 'Not provided'}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Address</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Street</dt>
+                        <dd>{lead.street_address || 'Not provided'}</dd>
+                      </div>
+                      {lead.address_line2 && (
+                        <div>
+                          <dt className="text-sm font-medium text-muted-foreground">Address Line 2</dt>
+                          <dd>{lead.address_line2}</dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">City</dt>
+                        <dd>{lead.city || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">State</dt>
+                        <dd>{lead.state || 'Not provided'}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">ZIP</dt>
+                        <dd>{lead.zip || 'Not provided'}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Lead Information</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-4">
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Source</dt>
+                        <dd>{lead.source}</dd>
+                      </div>
+                      
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Status</dt>
+                        <dd className="capitalize">{lead.status}</dd>
+                      </div>
+                      
+                      <div>
+                        <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+                        <dd>{new Date(lead.created_at).toLocaleDateString()}</dd>
+                      </div>
+                    </dl>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Additional Requirements</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap">
+                      {lead.additional_requirements 
+                        ? lead.additional_requirements 
+                        : 'No additional requirements specified.'}
                     </div>
-                  )}
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">City</dt>
-                    <dd>{lead.city || 'Not provided'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">State</dt>
-                    <dd>{lead.state || 'Not provided'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">ZIP</dt>
-                    <dd>{lead.zip || 'Not provided'}</dd>
-                  </div>
-                </dl>
-              </CardContent>
-            </Card>
-            
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="whitespace-pre-wrap">
-                  {lead.notes || 'No notes available for this lead.'}
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="whitespace-pre-wrap">
+                      {lead.notes || 'No notes available for this lead.'}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="association" className="mt-6">
@@ -377,6 +425,10 @@ const LeadDetailPage = () => {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="attachments" className="mt-6">
+            <AttachmentsTab lead={lead} />
           </TabsContent>
         </Tabs>
       </div>

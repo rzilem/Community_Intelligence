@@ -3,7 +3,6 @@ import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
 import { ExternalLink, Mail, Phone } from 'lucide-react';
-import { Separator } from "@/components/ui/separator";
 import { formatLeadName, formatAdditionalRequirements } from './lead-detail-utils';
 import { createGoogleMapsLink } from './address-utils';
 
@@ -79,39 +78,43 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
           </div>
         </div>
         
-        <div className="space-y-4">
-          <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Address</h3>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-2">
-            <div className="text-left">
-              {fullAddress}
-              {formattedStreetAddress && (
-                <a 
-                  href={createGoogleMapsLink(formattedStreetAddress)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ml-2 text-blue-600 hover:underline inline-flex items-center"
-                >
-                  Map It <ExternalLink size={14} className="ml-1" />
-                </a>
-              )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Lead Information</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="text-muted-foreground font-bold">Source:</div>
+              <div>{lead.source}</div>
+              
+              <div className="text-muted-foreground font-bold">Status:</div>
+              <div className="capitalize">{lead.status}</div>
+              
+              <div className="text-muted-foreground font-bold">Created:</div>
+              <div>{new Date(lead.created_at).toLocaleDateString()}</div>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Address</h3>
+              <div className="text-left">
+                {fullAddress}
+                {formattedStreetAddress && (
+                  <a 
+                    href={createGoogleMapsLink(formattedStreetAddress)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-blue-600 hover:underline inline-flex items-center"
+                  >
+                    Map It <ExternalLink size={14} className="ml-1" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="space-y-4">
-          <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Lead Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div className="text-muted-foreground font-bold">Source:</div>
-            <div>{lead.source}</div>
-            
-            <div className="text-muted-foreground font-bold">Status:</div>
-            <div className="capitalize">{lead.status}</div>
-            
-            <div className="text-muted-foreground font-bold">Created:</div>
-            <div>{new Date(lead.created_at).toLocaleDateString()}</div>
-            
-            <div className="text-muted-foreground font-bold">Additional Requirements:</div>
-            <div>{formatAdditionalRequirements(lead.additional_requirements)}</div>
+          
+          <div className="space-y-4">
+            <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Additional Requirements</h3>
+            <div className="whitespace-pre-wrap">
+              {formatAdditionalRequirements(lead.additional_requirements)}
+            </div>
           </div>
         </div>
       </div>
