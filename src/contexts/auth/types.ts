@@ -29,3 +29,6 @@ export interface AuthContextType {
   setCurrentAssociation: (association: Association | null) => void;
   refreshProfile: () => Promise<void>;
 }
+
+// Export the Association type for use in other files
+export type { Association };
