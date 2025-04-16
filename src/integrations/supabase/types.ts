@@ -1826,6 +1826,7 @@ export type Database = {
       proposals: {
         Row: {
           amount: number
+          analytics_data: Json | null
           content: string
           created_at: string
           id: string
@@ -1840,6 +1841,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          analytics_data?: Json | null
           content: string
           created_at?: string
           id?: string
@@ -1854,6 +1856,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          analytics_data?: Json | null
           content?: string
           created_at?: string
           id?: string
