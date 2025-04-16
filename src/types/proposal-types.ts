@@ -1,3 +1,4 @@
+
 export interface ProposalTemplate {
   id: string;
   name: string;
@@ -42,7 +43,7 @@ export interface Proposal {
   signed_by?: string;
   signature_data?: string;
   analytics?: ProposalAnalytics;
-  analytics_data?: any; // Add this field for database storage
+  analytics_data?: any; // Added this field for database storage
   interactive_calculator?: InteractiveCostCalculator;
   videos?: ProposalVideo[];
   follow_ups?: ProposalFollowUp[];

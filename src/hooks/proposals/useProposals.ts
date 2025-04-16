@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Proposal, ProposalAttachment, ProposalAnalytics } from '@/types/proposal-types';
 import { toast } from 'sonner';
@@ -255,8 +254,11 @@ export const useProposals = (leadId?: string) => {
         
       if (fetchError) throw new Error(fetchError.message);
       
+      // Type assertion to handle analytics_data
+      const proposal = currentProposal as any;
+      
       // Combine existing analytics with new data
-      const currentAnalytics = currentProposal.analytics_data || {
+      const currentAnalytics = proposal.analytics_data || {
         views: 0,
         view_count_by_section: {}
       };
@@ -364,10 +366,13 @@ export const useProposals = (leadId?: string) => {
       }
       
       // Convert from database representation to our application model
+      // Use type assertion to handle analytics_data
+      const dbProposal = proposal as any;
+      
       return {
-        ...(proposal as any),
+        ...dbProposal,
         attachments: attachments || [],
-        analytics: proposal.analytics_data || {
+        analytics: dbProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}
         }
@@ -392,8 +397,11 @@ export const useProposals = (leadId?: string) => {
         return;
       }
       
+      // Type assertion to handle analytics_data
+      const dbProposal = proposal as any;
+      
       // Get current analytics data or initialize with defaults
-      const analytics = proposal.analytics_data || {
+      const analytics = dbProposal.analytics_data || {
         views: 0,
         view_count_by_section: {},
         initial_view_date: null,
