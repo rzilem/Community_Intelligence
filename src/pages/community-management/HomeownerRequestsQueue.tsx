@@ -32,7 +32,8 @@ const HomeownerRequestsQueue = () => {
     setType,
     lastRefreshed,
     handleRefresh,
-    homeownerRequests
+    homeownerRequests,
+    createDummyRequest
   } = useHomeownerRequests();
 
   const handleFormSuccess = () => {
@@ -77,6 +78,21 @@ const HomeownerRequestsQueue = () => {
           setOpen={setOpen}
           onSuccess={handleFormSuccess}
         />
+
+        {homeownerRequests.length === 0 && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
+            <h3 className="font-medium text-amber-800">No homeowner requests found</h3>
+            <p className="text-amber-700 mt-1">
+              You can create a test request to verify functionality is working correctly.
+            </p>
+            <button 
+              onClick={createDummyRequest}
+              className="mt-2 px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
+            >
+              Create Test Request
+            </button>
+          </div>
+        )}
 
         <Card>
           <CardHeader>
