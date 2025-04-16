@@ -1,133 +1,112 @@
 
 import { useState, useEffect } from 'react';
-import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
-import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
-import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
-import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth';
 
-export interface SectionNotifications {
-  [key: string]: number;
-}
-
-export interface NotificationItem {
+export type Notification = {
   id: string;
-  type: 'invoice' | 'lead' | 'request' | 'event' | 'message' | 'announcement' | 'other';
+  user_id: string;
   title: string;
-  description?: string;
-  timestamp: Date;
-  read: boolean;
-  resourceId?: string;
-  resourceType?: string;
-  route?: string;
-}
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  is_read: boolean;
+  created_at: string;
+};
 
 export const useNotifications = () => {
-  const [sectionCounts, setSectionCounts] = useState<SectionNotifications>({});
-  const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
-  const [isSubscribed, setIsSubscribed] = useState(false);
-  
-  const { unreadLeadsCount, recentLeads = [], markAllAsRead: markAllLeadsAsRead } = useLeadNotifications();
-  const { unreadInvoicesCount, markAllAsRead: markAllInvoicesAsRead } = useInvoiceNotifications();
-  const { unreadRequestsCount, markAllAsRead: markAllRequestsAsRead } = useHomeownerRequestNotifications();
-  const { unreadEventsCount, markAllAsRead: markAllEventsAsRead } = useResaleEventNotifications();
-  
-  useEffect(() => {
-    if (!isSubscribed) {
-      const channel = supabase
-        .channel('notifications')
-        .on('broadcast', { event: 'new-notification' }, (payload) => {
-          const newNotification = payload.payload as NotificationItem;
-          
-          toast(newNotification.title, {
-            description: newNotification.description,
-            action: newNotification.route ? {
-              label: "View",
-              onClick: () => {
-                window.location.href = newNotification.route || '/';
-              }
-            } : undefined
-          });
-          
-          setAllNotifications(prev => [newNotification, ...prev]);
-        })
-        .subscribe();
-      
-      setIsSubscribed(true);
-      
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [isSubscribed]);
-  
-  useEffect(() => {
-    const leadNotifications: NotificationItem[] = recentLeads.map(lead => ({
-      id: lead.id,
-      type: 'lead',
-      title: `New lead: ${lead.name || lead.email}`,
-      description: `${lead.source || 'Website'} - ${lead.status}`,
-      timestamp: new Date(lead.created_at),
-      read: false,
-      resourceId: lead.id,
-      resourceType: 'lead',
-      route: `/lead-management/leads/${lead.id}`
-    }));
-    
-    setAllNotifications(prev => [...leadNotifications, ...prev]);
-  }, [recentLeads]);
-  
-  useEffect(() => {
-    const counts: SectionNotifications = {
-      'lead-management': unreadLeadsCount,
-      'accounting': unreadInvoicesCount,
-      'community-management': unreadRequestsCount,
-      'resale-management': unreadEventsCount,
-      'communications': 3
-    };
-    
-    setSectionCounts(counts);
-  }, [unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount]);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const getCountForSection = (section: string): number => {
-    return sectionCounts[section] || 0;
-  };
-  
-  const getTotalCount = (): number => {
-    return Object.values(sectionCounts).reduce((total, count) => total + count, 0);
-  };
-  
-  const markAllAsRead = () => {
-    markAllLeadsAsRead();
-    markAllInvoicesAsRead();
-    markAllRequestsAsRead();
-    markAllEventsAsRead();
-    
-    setAllNotifications(prev => prev.map(item => ({ ...item, read: true })));
-  };
-  
-  const markAsRead = (id: string, type: string) => {
-    switch (type) {
-      case 'lead':
-        break;
-      case 'invoice':
-        break;
-      default:
-        break;
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setLoading(false);
+      return;
     }
-    
-    setAllNotifications(prev => 
-      prev.map(item => item.id === id ? { ...item, read: true } : item)
+
+    const fetchNotifications = async () => {
+      setLoading(true);
+      try {
+        // This would be a real query to a notifications table
+        // For now, we'll return mock data
+        const mockNotifications: Notification[] = [
+          {
+            id: '1',
+            user_id: user.id,
+            title: 'Payment Received',
+            message: 'Your monthly assessment payment was received.',
+            type: 'success',
+            is_read: false,
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '2',
+            user_id: user.id,
+            title: 'Maintenance Scheduled',
+            message: 'Pool maintenance scheduled for tomorrow.',
+            type: 'info',
+            is_read: false,
+            created_at: new Date().toISOString()
+          },
+          {
+            id: '3',
+            user_id: user.id,
+            title: 'Board Meeting',
+            message: 'Upcoming board meeting on Friday at 7PM.',
+            type: 'info',
+            is_read: true,
+            created_at: new Date().toISOString()
+          }
+        ];
+        
+        setNotifications(mockNotifications);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
+
+  const markAsRead = async (notificationId: string) => {
+    // In a real app, this would update the database
+    setNotifications(prev => 
+      prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
     );
   };
 
+  const markAllAsRead = async () => {
+    // In a real app, this would update the database
+    setNotifications(prev => 
+      prev.map(n => ({ ...n, is_read: true }))
+    );
+  };
+
+  const deleteNotification = async (notificationId: string) => {
+    // In a real app, this would update the database
+    setNotifications(prev => 
+      prev.filter(n => n.id !== notificationId)
+    );
+  };
+
+  const getUnreadCount = () => {
+    return notifications.filter(n => !n.is_read).length;
+  };
+
+  const getTotalCount = () => {
+    return notifications.length;
+  };
+
   return {
-    sectionCounts,
-    getCountForSection,
-    getTotalCount,
-    allNotifications,
+    notifications,
+    loading,
+    markAsRead,
     markAllAsRead,
-    markAsRead
+    deleteNotification,
+    getUnreadCount,
+    getTotalCount
   };
 };

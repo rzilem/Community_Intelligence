@@ -4,7 +4,8 @@ import { Session, User } from '@supabase/supabase-js';
 import { Profile } from '@/types/profile-types';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
-import { Association, UserAssociation } from './types';
+import { Association } from '@/types/association-types';
+import { UserAssociation } from './types';
 import { 
   signInWithEmail, 
   signUpWithEmail, 
@@ -16,57 +17,54 @@ import { fetchUserProfile } from '@/services/user-service';
 import { toast } from 'sonner';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = React.useState<Session | null>(null);
-  const [user, setUser] = React.useState<User | null>(null);
-  const [profile, setProfile] = React.useState<Profile | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  const [isAdmin, setIsAdmin] = React.useState(false);
-  const [userRole, setUserRole] = React.useState<string | null>(null);
-  const [userAssociations, setUserAssociations] = React.useState<UserAssociation[]>([]);
-  const [currentAssociation, setCurrentAssociation] = React.useState<Association | null>(null);
-  const [authError, setAuthError] = React.useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userAssociations, setUserAssociations] = useState<UserAssociation[]>([]);
+  const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('[AuthProvider] Initializing authentication...');
-    try {
-      // First check for an existing session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('[AuthProvider] Initial session check:', session ? 'Session found' : 'No session');
+    
+    // First set up the auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[AuthProvider] Auth state changed:', event, session?.user?.email);
+      
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
         setSession(session);
         setUser(session?.user || null);
-      }).catch(error => {
-        console.error('[AuthProvider] Error fetching initial session:', error);
-        setAuthError('Failed to fetch initial session');
-        setLoading(false);
-      });
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setUserRole(null);
+        setUserAssociations([]);
+        setCurrentAssociation(null);
+      }
+    });
 
-      // Then set up the auth state change listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log('[AuthProvider] Auth state changed:', event, session?.user?.email);
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-          setSession(session);
-          setUser(session?.user || null);
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setIsAdmin(false);
-          setUserRole(null);
-          setUserAssociations([]);
-          setCurrentAssociation(null);
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch (error) {
-      console.error('[AuthProvider] Unexpected error in auth subscription:', error);
-      setAuthError('Authentication service unavailable');
+    // Then check for an existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[AuthProvider] Initial session check:', session ? 'Session found' : 'No session');
+      setSession(session);
+      setUser(session?.user || null);
+    }).catch(error => {
+      console.error('[AuthProvider] Error fetching initial session:', error);
+      setAuthError('Failed to fetch initial session');
       setLoading(false);
-    }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
+  // This effect loads user data when the user changes
   useEffect(() => {
     const loadUserData = async () => {
       if (user) {
@@ -96,6 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               // Add other required Profile fields with defaults
+              email: user.email || '',
+              first_name: user.user_metadata?.first_name || '',
+              last_name: user.user_metadata?.last_name || '',
+              profile_image_url: null
             } as Profile);
           }
         } catch (error) {
@@ -114,10 +116,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
       await signInWithEmail(email, password);
+      return;
     } catch (error) {
       console.error('[AuthProvider] Sign in error:', error);
+      toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -127,19 +134,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userData: { first_name: string, last_name: string }
   ) => {
     try {
+      setLoading(true);
       await signUpWithEmail(email, password, userData);
+      return;
     } catch (error) {
       console.error('[AuthProvider] Sign up error:', error);
+      toast.error(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setLoading(true);
       await signOutUser();
+      return;
     } catch (error) {
       console.error('[AuthProvider] Sign out error:', error);
+      toast.error(`Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

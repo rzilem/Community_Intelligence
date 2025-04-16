@@ -38,7 +38,8 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       console.log('[RequireAuth] User not authenticated, redirecting to login');
       toast.error('Please sign in to access this page');
       navigate('/auth?tab=login', { 
-        state: { from: location.pathname } 
+        state: { from: location.pathname },
+        replace: true // Use replace to avoid building up history stack
       });
       return;
     }
@@ -47,6 +48,13 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     if (requireAssociation && (!userAssociations || userAssociations.length === 0)) {
       console.log('[RequireAuth] User has no HOA associations, redirecting to dashboard');
       toast.error('You need to be associated with an HOA to access this page');
+      navigate('/dashboard');
+      return;
+    }
+
+    if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
+      console.log(`[RequireAuth] User role ${userRole} not in allowed roles, redirecting`);
+      toast.error('You do not have permission to access this page');
       navigate('/dashboard');
       return;
     }

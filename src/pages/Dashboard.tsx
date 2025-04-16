@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
@@ -9,6 +9,7 @@ import { useAdminAccess } from '@/hooks/dashboard/useAdminAccess';
 import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleContent';
 import { useResponsive } from '@/hooks/use-responsive';
 import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
+import { useNavigate } from 'react-router-dom';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
@@ -17,24 +18,52 @@ import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import CalendarTab from '@/components/dashboard/CalendarTab';
 import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
 import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
-import { Profile } from '@/types/profile-types';
 
 const Dashboard = () => {
-  const { currentAssociation, user, profile } = useAuth();
-  const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
+  const { currentAssociation, user, profile, loading } = useAuth();
+  const navigate = useNavigate();
+  const { stats, recentActivity, loading: dataLoading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
   
-  console.log('Dashboard rendering, user:', user ? 'logged in' : 'not logged in', 'profile:', profile);
+  console.log('Dashboard rendering, auth state:', { 
+    user: user ? 'logged in' : 'not logged in', 
+    profile: profile ? 'profile loaded' : 'no profile',
+    loading: loading ? 'auth loading' : 'auth loaded',
+    currentPath: window.location.pathname
+  });
+  
   useAdminAccess(user?.id);
   
-  // Use the profile from auth context instead of converting user
+  useEffect(() => {
+    if (!loading && !user) {
+      console.log('No user detected in Dashboard, redirecting to auth');
+      navigate('/auth?tab=login');
+    }
+  }, [user, loading, navigate]);
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return null; // Will be redirected by useEffect
+  }
+  
+  // Use the profile from auth context
   const userProfile = profile;
   
   const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
     userProfile,
     recentActivity,
-    loading,
+    dataLoading,
     error
   );
 
@@ -49,7 +78,7 @@ const Dashboard = () => {
         <DashboardStatsSection 
           stats={stats} 
           associationName={currentAssociation?.name} 
-          loading={loading} 
+          loading={dataLoading} 
         />
         
         <QuickActionWidgets />
