@@ -1,6 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { RecipientGroup } from '@/types/communication-types';
-import { ResidentWithProfile } from '@/types/app-types';
+import { RecipientGroup, Resident } from '@/types/communication-types';
+import { Json } from '@/integrations/supabase/types';
 
 export const recipientService = {
   // Get recipient groups for an association
@@ -48,13 +49,13 @@ export const recipientService = {
   },
   
   // Get members of a specific recipient group
-  getRecipientsInGroup: async (groupId: string): Promise<ResidentWithProfile[]> => {
+  getRecipientsInGroup: async (groupId: string): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching recipients in group ${groupId}:`, error);
       return [];
@@ -62,13 +63,13 @@ export const recipientService = {
   },
   
   // Get association members by role
-  getAssociationMembersByRole: async (associationId: string, role: string): Promise<ResidentWithProfile[]> => {
+  getAssociationMembersByRole: async (associationId: string, role: string): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching ${role} members for association ${associationId}:`, error);
       return [];
@@ -76,13 +77,13 @@ export const recipientService = {
   },
   
   // Get all residents in an association
-  getAllResidents: async (associationId: string): Promise<ResidentWithProfile[]> => {
+  getAllResidents: async (associationId: string): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching residents for association ${associationId}:`, error);
       return [];
@@ -90,13 +91,13 @@ export const recipientService = {
   },
   
   // Get residents by type (owner, tenant, etc.)
-  getResidentsByType: async (associationId: string, residentType: string): Promise<ResidentWithProfile[]> => {
+  getResidentsByType: async (associationId: string, residentType: string): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching ${residentType} residents for association ${associationId}:`, error);
       return [];
@@ -104,13 +105,13 @@ export const recipientService = {
   },
   
   // Get members by role type
-  getMembersByRoleType: async (associationId: string, roleType: string): Promise<ResidentWithProfile[]> => {
+  getMembersByRoleType: async (associationId: string, roleType: string): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching members with role ${roleType} for association ${associationId}:`, error);
       return [];
@@ -118,13 +119,13 @@ export const recipientService = {
   },
   
   // Get recipients by custom criteria
-  getRecipientsByCustomCriteria: async (associationId: string, criteria: Record<string, any>): Promise<ResidentWithProfile[]> => {
+  getRecipientsByCustomCriteria: async (associationId: string, criteria: Record<string, any>): Promise<Resident[]> => {
     try {
       // For now, return mock data
       return [
         { id: '1', name: 'John Doe', email: 'john@example.com', phone: '123-456-7890' },
         { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '234-567-8901' }
-      ] as ResidentWithProfile[];
+      ] as Resident[];
     } catch (error) {
       console.error(`Error fetching recipients by custom criteria for association ${associationId}:`, error);
       return [];

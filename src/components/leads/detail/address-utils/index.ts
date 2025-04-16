@@ -1,8 +1,7 @@
 
 import { extractCity } from './city-utils';
-import { cleanCityName, formatStreetAddress, formatFullAddress } from './format-utils';
+import { cleanCityName, formatStreetAddress, getFormattedLeadAddressData } from './format-utils';
 import { extractZipCode, extractZipCodeFromText } from './zip-utils';
-import { getFormattedLeadAddressData } from './data-utils';
 
 /**
  * Create a Google Maps link from an address string
@@ -22,7 +21,6 @@ export {
   extractCity,
   cleanCityName,
   formatStreetAddress,
-  formatFullAddress,
   getFormattedLeadAddressData,
   extractZipCode,
   extractZipCodeFromText
