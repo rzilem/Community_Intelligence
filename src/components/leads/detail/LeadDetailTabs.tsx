@@ -8,8 +8,7 @@ import {
   Calendar, 
   FileText, 
   MessageSquare, 
-  Clock, 
-  Paperclip 
+  Clock
 } from 'lucide-react';
 
 import LeadDetailsTab from './tabs/LeadDetailsTab';
@@ -18,7 +17,6 @@ import LeadCommunicationTab from './tabs/LeadCommunicationTab';
 import LeadHistoryTab from './tabs/LeadHistoryTab';
 import LeadDocumentsTab from './tabs/LeadDocumentsTab';
 import LeadNotesTabContainer from './tabs/LeadNotesTabContainer';
-import AttachmentsTab from '../tabs/AttachmentsTab';
 
 interface LeadDetailTabsProps {
   lead: Lead;
@@ -54,10 +52,6 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ lead, onSaveNotes }) =>
             <FileText className="h-4 w-4" />
             Documents
           </TabsTrigger>
-          <TabsTrigger value="attachments" className="flex items-center gap-2">
-            <Paperclip className="h-4 w-4" />
-            Attachments
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="details" className="mt-6">
@@ -82,10 +76,6 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ lead, onSaveNotes }) =>
         
         <TabsContent value="documents" className="mt-6">
           <LeadDocumentsTab />
-        </TabsContent>
-        
-        <TabsContent value="attachments" className="mt-6">
-          <AttachmentsTab lead={lead} />
         </TabsContent>
       </Tabs>
     </div>
