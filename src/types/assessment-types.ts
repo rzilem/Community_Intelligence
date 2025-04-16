@@ -3,15 +3,17 @@
 export type Assessment = {
   id: string;
   property_id: string;
+  association_id: string;
   amount: number;
   due_date: string;
-  paid: boolean;
+  assessment_type: 'monthly' | 'quarterly' | 'annual' | 'special';
+  assessment_type_id?: string; // Added to match the service implementation
+  status: 'paid' | 'unpaid' | 'partial' | 'late';
+  paid?: boolean;
   payment_date?: string;
   late_fee?: number;
-  assessment_type_id?: string;
   created_at?: string;
   updated_at?: string;
-  // Removing association_id since it appears to not exist in the schema
 };
 
 export type AssessmentType = {

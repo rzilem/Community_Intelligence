@@ -1,5 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { Assessment, AssessmentType } from '@/types/app-types';
+import { Assessment, AssessmentType } from '@/types/assessment-types';
 import { toast } from 'sonner';
 
 export const fetchAssessmentsByProperty = async (propertyId: string): Promise<Assessment[]> => {
@@ -17,15 +18,17 @@ export const fetchAssessmentsByProperty = async (propertyId: string): Promise<As
   return (data as any[]).map(assessment => ({
     id: assessment.id,
     property_id: assessment.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     assessment_type_id: assessment.assessment_type_id,
+    assessment_type: "monthly", // Required by type but mapping from DB
     amount: assessment.amount,
     due_date: assessment.due_date,
     paid: assessment.paid,
+    status: assessment.paid ? "paid" : "unpaid", // Derive status from paid field
     payment_date: assessment.payment_date,
     late_fee: assessment.late_fee,
     created_at: assessment.created_at,
     updated_at: assessment.updated_at
-    // Removed association_id since it doesn't exist in the schema
   }));
 };
 
@@ -46,10 +49,13 @@ export const fetchAssessmentById = async (id: string): Promise<Assessment> => {
   return {
     id: assessment.id,
     property_id: assessment.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     assessment_type_id: assessment.assessment_type_id,
+    assessment_type: "monthly", // Required by type but mapping from DB
     amount: assessment.amount,
     due_date: assessment.due_date,
     paid: assessment.paid,
+    status: assessment.paid ? "paid" : "unpaid", // Derive status from paid field
     payment_date: assessment.payment_date,
     late_fee: assessment.late_fee,
     created_at: assessment.created_at,
@@ -60,7 +66,15 @@ export const fetchAssessmentById = async (id: string): Promise<Assessment> => {
 export const createAssessment = async (assessment: Partial<Assessment>): Promise<Assessment> => {
   const { data, error } = await supabase
     .from('assessments' as any)
-    .insert(assessment as any)
+    .insert({
+      property_id: assessment.property_id,
+      assessment_type_id: assessment.assessment_type_id,
+      amount: assessment.amount,
+      due_date: assessment.due_date,
+      paid: assessment.paid,
+      payment_date: assessment.payment_date,
+      late_fee: assessment.late_fee
+    } as any)
     .select()
     .single();
 
@@ -75,10 +89,13 @@ export const createAssessment = async (assessment: Partial<Assessment>): Promise
   return {
     id: newAssessment.id,
     property_id: newAssessment.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     assessment_type_id: newAssessment.assessment_type_id,
+    assessment_type: "monthly", // Required by type but mapping from DB
     amount: newAssessment.amount,
     due_date: newAssessment.due_date,
     paid: newAssessment.paid,
+    status: newAssessment.paid ? "paid" : "unpaid", // Derive status from paid field
     payment_date: newAssessment.payment_date,
     late_fee: newAssessment.late_fee,
     created_at: newAssessment.created_at,
@@ -87,9 +104,20 @@ export const createAssessment = async (assessment: Partial<Assessment>): Promise
 };
 
 export const updateAssessment = async (id: string, assessment: Partial<Assessment>): Promise<Assessment> => {
+  // Create an object that only includes properties that exist in the database schema
+  const dbAssessment = {
+    property_id: assessment.property_id,
+    assessment_type_id: assessment.assessment_type_id,
+    amount: assessment.amount,
+    due_date: assessment.due_date,
+    paid: assessment.paid,
+    payment_date: assessment.payment_date,
+    late_fee: assessment.late_fee
+  };
+
   const { data, error } = await supabase
     .from('assessments' as any)
-    .update(assessment as any)
+    .update(dbAssessment as any)
     .eq('id', id)
     .select()
     .single();
@@ -105,10 +133,13 @@ export const updateAssessment = async (id: string, assessment: Partial<Assessmen
   return {
     id: updatedAssessment.id,
     property_id: updatedAssessment.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     assessment_type_id: updatedAssessment.assessment_type_id,
+    assessment_type: "monthly", // Required by type but mapping from DB
     amount: updatedAssessment.amount,
     due_date: updatedAssessment.due_date,
     paid: updatedAssessment.paid,
+    status: updatedAssessment.paid ? "paid" : "unpaid", // Derive status from paid field
     payment_date: updatedAssessment.payment_date,
     late_fee: updatedAssessment.late_fee,
     created_at: updatedAssessment.created_at,

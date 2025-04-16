@@ -18,6 +18,7 @@ export interface UserSettings {
   theme: 'system' | 'light' | 'dark';
   notifications_enabled: boolean;
   email_notifications_enabled?: boolean;
+  column_preferences?: Record<string, string[]> | null;
   date_format?: string;
   time_format?: string;
   created_at?: string;

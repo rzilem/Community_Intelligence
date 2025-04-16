@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { UserSettings } from '@/types/profile-types';
 
 const preferencesFormSchema = z.object({
-  theme: z.string(),
+  theme: z.enum(['system', 'light', 'dark']), // Use enum to restrict values
   notifications_enabled: z.boolean().default(true),
 });
 
@@ -42,7 +42,7 @@ const UserPreferencesForm: React.FC<UserPreferencesFormProps> = ({ userId }) => 
           
         if (result.data) {
           form.reset({
-            theme: result.data.theme || 'system',
+            theme: (result.data.theme || 'system') as 'system' | 'light' | 'dark',
             notifications_enabled: result.data.notifications_enabled !== false, // default to true
           });
         }
@@ -62,7 +62,7 @@ const UserPreferencesForm: React.FC<UserPreferencesFormProps> = ({ userId }) => 
   
   const handleSubmit = async (values: PreferencesFormValues) => {
     try {
-      const result = await updateUserPreferences(userId, values);
+      const result = await updateUserPreferences(userId, values as Partial<UserSettings>);
       
       if (result.success) {
         toast.success('Preferences updated successfully');

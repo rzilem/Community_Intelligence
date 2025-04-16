@@ -42,6 +42,7 @@ const AssociationProfile = () => {
       description: 'There are 5 invoices awaiting approval for more than 7 days.',
       severity: 'high',
       created_at: '2025-01-15T10:30:00Z',
+      updated_at: '2025-01-15T10:30:00Z',
       status: 'open',
       association_id: id || ''
     },
@@ -51,7 +52,8 @@ const AssociationProfile = () => {
       description: 'SSL certificates for the resident portal will expire in 14 days.',
       severity: 'critical',
       created_at: '2025-01-20T14:45:00Z',
-      status: 'in_progress',
+      updated_at: '2025-01-20T14:45:00Z',
+      status: 'in-progress',
       association_id: id || ''
     },
     {
@@ -60,6 +62,7 @@ const AssociationProfile = () => {
       description: 'Annual compliance notices need to be sent to all homeowners by the end of the month.',
       severity: 'medium',
       created_at: '2025-01-10T09:15:00Z',
+      updated_at: '2025-01-10T09:15:00Z',
       status: 'open',
       association_id: id || ''
     },
@@ -69,6 +72,7 @@ const AssociationProfile = () => {
       description: 'Resident portal logins have decreased by 30% over the past month.',
       severity: 'low',
       created_at: '2025-01-05T16:20:00Z',
+      updated_at: '2025-01-05T16:20:00Z',
       status: 'open',
       association_id: id || ''
     }

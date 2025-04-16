@@ -18,6 +18,7 @@ export const fetchMaintenanceRequestsByProperty = async (propertyId: string): Pr
   return (data as any[]).map(request => ({
     id: request.id,
     property_id: request.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     title: request.title,
     description: request.description,
     status: request.status,
@@ -46,6 +47,7 @@ export const fetchMaintenanceRequestById = async (id: string): Promise<Maintenan
   return {
     id: request.id,
     property_id: request.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     title: request.title,
     description: request.description,
     status: request.status,
@@ -58,9 +60,19 @@ export const fetchMaintenanceRequestById = async (id: string): Promise<Maintenan
 };
 
 export const createMaintenanceRequest = async (request: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> => {
+  // Create a new object with only the fields that exist in the database
+  const dbRequest = {
+    property_id: request.property_id,
+    title: request.title,
+    description: request.description,
+    status: request.status,
+    assigned_to: request.assigned_to,
+    priority: request.priority
+  };
+
   const { data, error } = await supabase
     .from('maintenance_requests' as any)
-    .insert(request as any)
+    .insert(dbRequest as any)
     .select()
     .single();
 
@@ -75,6 +87,7 @@ export const createMaintenanceRequest = async (request: Partial<MaintenanceReque
   return {
     id: newRequest.id,
     property_id: newRequest.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     title: newRequest.title,
     description: newRequest.description,
     status: newRequest.status,
@@ -87,9 +100,20 @@ export const createMaintenanceRequest = async (request: Partial<MaintenanceReque
 };
 
 export const updateMaintenanceRequest = async (id: string, request: Partial<MaintenanceRequest>): Promise<MaintenanceRequest> => {
+  // Create a new object with only the fields that exist in the database
+  const dbRequest = {
+    property_id: request.property_id,
+    title: request.title,
+    description: request.description,
+    status: request.status,
+    assigned_to: request.assigned_to,
+    priority: request.priority,
+    resolved_date: request.resolved_date
+  };
+
   const { data, error } = await supabase
     .from('maintenance_requests' as any)
-    .update(request as any)
+    .update(dbRequest as any)
     .eq('id', id)
     .select()
     .single();
@@ -105,6 +129,7 @@ export const updateMaintenanceRequest = async (id: string, request: Partial<Main
   return {
     id: updatedRequest.id,
     property_id: updatedRequest.property_id,
+    association_id: "placeholder-association-id", // Required by type but not in DB
     title: updatedRequest.title,
     description: updatedRequest.description,
     status: updatedRequest.status,

@@ -13,6 +13,7 @@ export interface Association {
   logo_url?: string | null;
   primary_color?: string | null;
   secondary_color?: string | null;
+  total_units?: number;
   [key: string]: any; // Allow for additional fields
 }
 
