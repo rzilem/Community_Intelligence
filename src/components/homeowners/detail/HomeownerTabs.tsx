@@ -1,20 +1,17 @@
 
 import React, { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { FileText, Search, Plus } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { NoteType } from '@/components/homeowners/detail/types';
-import { TooltipButton } from '@/components/ui/tooltip-button';
-import { AddNoteDialog } from '@/components/homeowners/detail/AddNoteDialog';
+import { Plus } from 'lucide-react';
+import { AddNoteDialog } from './AddNoteDialog';
+import { NoteType } from './types';
 
 interface HomeownerTabsProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   activeNotesTab: string;
   setActiveNotesTab: (tab: string) => void;
-  notes: NoteType[];
+  notes?: NoteType[];
   onAddNote?: (note: Omit<NoteType, 'date'>) => void;
   homeownerId: string;
 }
@@ -24,170 +21,143 @@ export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
   setActiveTab,
   activeNotesTab,
   setActiveNotesTab,
-  notes,
+  notes = [],
   onAddNote,
   homeownerId
 }) => {
-  const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
 
-  const filteredNotes = searchText
-    ? notes.filter(note => 
-        note.content.toLowerCase().includes(searchText.toLowerCase()) ||
-        note.author.toLowerCase().includes(searchText.toLowerCase())
-      )
-    : notes;
+  const manualNotes = notes?.filter(note => note.type === 'manual') || [];
+  const systemNotes = notes?.filter(note => note.type === 'system') || [];
 
-  const displayedNotes = activeNotesTab === 'Manual Notes'
-    ? filteredNotes.filter(note => note.type === 'manual')
-    : filteredNotes.filter(note => note.type === 'system');
+  const handleAddNote = (note: Omit<NoteType, 'date'>) => {
+    if (onAddNote) {
+      onAddNote(note);
+    }
+  };
 
   return (
-    <>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-6 mb-8">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <div className="flex justify-between items-center mb-4">
+        <TabsList>
           <TabsTrigger value="Summary">Summary</TabsTrigger>
-          <TabsTrigger value="Property">Property</TabsTrigger>
-          <TabsTrigger value="Financial">Financial</TabsTrigger>
-          <TabsTrigger value="Communications">Communications</TabsTrigger>
-          <TabsTrigger value="Documents">Documents</TabsTrigger>
           <TabsTrigger value="Notes">Notes</TabsTrigger>
+          <TabsTrigger value="Financial">Financial</TabsTrigger>
+          <TabsTrigger value="Documents">Documents</TabsTrigger>
+          <TabsTrigger value="History">History</TabsTrigger>
         </TabsList>
+        
+        {activeTab === 'Notes' && (
+          <Button size="sm" onClick={() => setIsAddNoteDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Note
+          </Button>
+        )}
+      </div>
 
-        <TabsContent value="Summary">
-          <Card>
-            <CardContent className="p-6 w-full max-w-full min-h-[200px] max-h-[400px] overflow-y-auto">
-              <h2>Homeowner Summary Content</h2>
-              <p>Summary information would appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="Property">
-          <Card>
-            <CardContent className="p-6">
-              <h2>Property Information</h2>
-              <p>Property details would appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="Financial">
-          <Card>
-            <CardContent className="p-6">
-              <h2>Financial Information</h2>
-              <p>Financial details would appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="Communications">
-          <Card>
-            <CardContent className="p-6">
-              <h2>Communications History</h2>
-              <p>Communication logs would appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="Documents">
-          <Card>
-            <CardContent className="p-6">
-              <h2>Homeowner Documents</h2>
-              <p>Document list would appear here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="Notes">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h2 className="text-2xl font-semibold">Notes</h2>
-                  <p className="text-muted-foreground text-sm">Internal notes and activity logs about this homeowner</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search notes..." 
-                      className="pl-9 w-[250px]"
-                      value={searchText}
-                      onChange={(e) => setSearchText(e.target.value)}
-                    />
-                  </div>
-                  <TooltipButton 
-                    tooltip="Add a new note"
-                    onClick={() => setIsAddNoteOpen(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" /> Add Note
-                  </TooltipButton>
-                </div>
-              </div>
+      <TabsContent value="Summary" className="space-y-4">
+        <div className="bg-muted p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Homeowner Summary</h3>
+          <p>This section will contain an overview of the homeowner's information and activity.</p>
+        </div>
+      </TabsContent>
 
-              <div className="border-b mb-6">
-                <div className="flex gap-4">
-                  <button
-                    className={`pb-2 px-1 font-medium text-sm ${
-                      activeNotesTab === 'Manual Notes' 
-                        ? 'border-b-2 border-primary' 
-                        : 'text-muted-foreground'
-                    }`}
-                    onClick={() => setActiveNotesTab('Manual Notes')}
-                  >
-                    Manual Notes
-                  </button>
-                  <button
-                    className={`pb-2 px-1 font-medium text-sm ${
-                      activeNotesTab === 'Activity Log' 
-                        ? 'border-b-2 border-primary' 
-                        : 'text-muted-foreground'
-                    }`}
-                    onClick={() => setActiveNotesTab('Activity Log')}
-                  >
-                    Activity Log
-                  </button>
-                </div>
-              </div>
-
-              {displayedNotes.length === 0 ? (
-                <div className="text-center p-6 border rounded-md">
-                  <p className="text-muted-foreground">
-                    {activeNotesTab === 'Manual Notes' 
-                      ? 'No manual notes yet. Click "Add Note" to create one.'
-                      : 'No system activity logs available.'}
-                  </p>
-                </div>
-              ) : (
+      <TabsContent value="Notes" className="space-y-4">
+        <div className="bg-white border rounded-lg overflow-hidden">
+          <div className="border-b">
+            <div className="flex">
+              <button
+                className={`px-4 py-2 ${activeNotesTab === 'Manual Notes' ? 'bg-primary text-primary-foreground' : 'bg-muted/30 hover:bg-muted/50'}`}
+                onClick={() => setActiveNotesTab('Manual Notes')}
+              >
+                Manual Notes ({manualNotes.length})
+              </button>
+              <button
+                className={`px-4 py-2 ${activeNotesTab === 'System Notes' ? 'bg-primary text-primary-foreground' : 'bg-muted/30 hover:bg-muted/50'}`}
+                onClick={() => setActiveNotesTab('System Notes')}
+              >
+                System Notes ({systemNotes.length})
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-4">
+            {activeNotesTab === 'Manual Notes' ? (
+              manualNotes.length > 0 ? (
                 <div className="space-y-4">
-                  {displayedNotes.map((note, index) => (
-                    <div key={index} className="border rounded-md p-4">
-                      <div className="flex justify-between">
-                        <h3 className="font-semibold">{note.type === 'system' ? 'System' : note.author}</h3>
-                        <span className="text-sm text-muted-foreground">{note.date}</span>
+                  {manualNotes.map((note, index) => (
+                    <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
+                      <div className="flex justify-between items-start">
+                        <p className="font-medium">{note.author}</p>
+                        <span className="text-sm text-gray-500">{new Date(note.date).toLocaleString()}</span>
                       </div>
-                      <p className="mt-2">{note.content}</p>
+                      <p className="mt-1 whitespace-pre-wrap">{note.content}</p>
                     </div>
                   ))}
                 </div>
-              )}
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <p>No manual notes available</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => setIsAddNoteDialogOpen(true)}
+                  >
+                    Add the first note
+                  </Button>
+                </div>
+              )
+            ) : (
+              systemNotes.length > 0 ? (
+                <div className="space-y-4">
+                  {systemNotes.map((note, index) => (
+                    <div key={index} className="border-b pb-4 last:border-0 last:pb-0">
+                      <div className="flex justify-between items-start">
+                        <p className="font-medium text-gray-500">System</p>
+                        <span className="text-sm text-gray-500">{new Date(note.date).toLocaleString()}</span>
+                      </div>
+                      <p className="mt-1 text-gray-600">{note.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <p>No system notes available</p>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      </TabsContent>
 
-              <p className="text-xs text-muted-foreground mt-6">
-                Activity logs are automatically generated and cannot be modified
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <TabsContent value="Financial" className="space-y-4">
+        <div className="bg-muted p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Financial Information</h3>
+          <p>This section will display financial records and history.</p>
+        </div>
+      </TabsContent>
 
-      <AddNoteDialog 
-        isOpen={isAddNoteOpen} 
-        onClose={() => setIsAddNoteOpen(false)} 
-        onAddNote={onAddNote}
+      <TabsContent value="Documents" className="space-y-4">
+        <div className="bg-muted p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Documents</h3>
+          <p>This section will contain uploaded documents and forms.</p>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="History" className="space-y-4">
+        <div className="bg-muted p-6 rounded-lg">
+          <h3 className="text-xl font-semibold mb-4">Activity History</h3>
+          <p>This section will show a timeline of all homeowner activity.</p>
+        </div>
+      </TabsContent>
+
+      <AddNoteDialog
+        isOpen={isAddNoteDialogOpen}
+        onClose={() => setIsAddNoteDialogOpen(false)}
+        onAddNote={handleAddNote}
         homeownerId={homeownerId}
       />
-    </>
+    </Tabs>
   );
 };

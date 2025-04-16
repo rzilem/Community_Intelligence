@@ -19,7 +19,7 @@ const HomeownerDetailPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
   
-  const { homeowner, updateHomeownerImage, updateHomeownerData, addHomeownerNote } = useHomeownerData(id || '');
+  const { homeowner, loading, error, updateHomeownerImage, updateHomeownerData, addHomeownerNote } = useHomeownerData(id || '');
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -52,18 +52,34 @@ const HomeownerDetailPage: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="p-6">Loading homeowner data...</div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="p-6">Error loading homeowner data: {error}</div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-start">
           <div className="space-y-4">
             <HomeownerHeader 
-              id={id || homeowner.id}
-              name={homeowner.name}
-              status={homeowner.status}
-              tags={homeowner.tags}
-              violations={homeowner.violations}
-              avatarUrl={homeowner.avatarUrl}
+              id={id || homeowner?.id || ''}
+              name={homeowner?.name}
+              status={homeowner?.status}
+              tags={homeowner?.tags}
+              violations={homeowner?.violations}
+              avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}
             />
@@ -76,22 +92,22 @@ const HomeownerDetailPage: React.FC = () => {
               />
             ) : (
               <HomeownerInfo 
-                id={homeowner.id}
-                email={homeowner.email}
-                phone={homeowner.phone}
-                moveInDate={homeowner.moveInDate}
-                property={homeowner.property}
-                unit={homeowner.unit}
-                balance={homeowner.balance}
-                lastContact={homeowner.lastContact}
+                id={homeowner?.id}
+                email={homeowner?.email}
+                phone={homeowner?.phone}
+                moveInDate={homeowner?.moveInDate}
+                property={homeowner?.property}
+                unit={homeowner?.unit}
+                balance={homeowner?.balance}
+                lastContact={homeowner?.lastContact}
               />
             )}
           </div>
           
           <div className="ml-6">
             <HomePropertyImage 
-              address={`${homeowner.property} ${homeowner.unit}, Austin, TX`}
-              propertyId={homeowner.id}
+              address={`${homeowner?.property || ''} ${homeowner?.unit || ''}, Austin, TX`}
+              propertyId={homeowner?.id || ''}
             />
           </div>
         </div>
@@ -101,9 +117,9 @@ const HomeownerDetailPage: React.FC = () => {
           setActiveTab={setActiveTab}
           activeNotesTab={activeNotesTab}
           setActiveNotesTab={setActiveNotesTab}
-          notes={homeowner.notes}
+          notes={homeowner?.notes || []}
           onAddNote={handleAddNote}
-          homeownerId={id || homeowner.id}
+          homeownerId={id || homeowner?.id || ''}
         />
       </div>
     </AppLayout>

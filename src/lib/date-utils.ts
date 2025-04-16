@@ -1,64 +1,57 @@
 
-import { format, parseISO, formatDistance, isValid } from 'date-fns';
-
 /**
- * Formats a date string from the server (ISO format) to a readable format
+ * Format a date string to a human-readable format
  */
-export const formatDate = (dateString: string, formatStr: string = 'MMM d, yyyy') => {
+export function formatDate(dateString: string): string {
+  if (!dateString) return '';
+  
   try {
-    // If it's not a string or is falsy, return empty string
-    if (!dateString || typeof dateString !== 'string') return 'N/A';
-    
-    // Parse ISO string and format
-    const date = parseISO(dateString);
-    
-    // Check if the date is valid
-    if (!isValid(date)) {
-      console.warn(`Invalid date: ${dateString}`);
-      return 'Invalid date';
-    }
-    
-    return format(date, formatStr);
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    }).format(date);
   } catch (error) {
-    console.error('Error formatting date:', error, dateString);
-    return 'Invalid date';
+    console.error('Error formatting date:', error);
+    return dateString; // Return original string if formatting fails
   }
-};
+}
 
 /**
- * Formats a date string to a relative format (e.g. "2 days ago")
+ * Get relative time (e.g., "2 days ago")
  */
-export const formatRelativeDate = (dateString: string) => {
+export function getRelativeTime(dateString: string): string {
+  if (!dateString) return '';
+  
   try {
-    if (!dateString || typeof dateString !== 'string') return 'N/A';
-    
-    const date = parseISO(dateString);
-    
-    // Check if the date is valid
-    if (!isValid(date)) {
-      console.warn(`Invalid date: ${dateString}`);
-      return 'Invalid date';
-    }
-    
+    const date = new Date(dateString);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) {
-      return 'Today';
-    } else if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays < 30) {
-      return `${diffDays} days ago`;
-    } else if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30);
-      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
-    } else {
-      const years = Math.floor(diffDays / 365);
-      return `${years} ${years === 1 ? 'year' : 'years'} ago`;
+    if (diffInDays < 1) {
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      if (diffInHours < 1) {
+        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+        return diffInMinutes <= 0 ? 'just now' : `${diffInMinutes} minutes ago`;
+      }
+      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
     }
+    
+    if (diffInDays < 30) {
+      return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+    }
+    
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) {
+      return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'} ago`;
+    }
+    
+    const diffInYears = Math.floor(diffInDays / 365);
+    return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
   } catch (error) {
-    console.error('Error formatting relative date:', error, dateString);
-    return 'Invalid date';
+    console.error('Error getting relative time:', error);
+    return dateString; // Return original string if processing fails
   }
-};
+}

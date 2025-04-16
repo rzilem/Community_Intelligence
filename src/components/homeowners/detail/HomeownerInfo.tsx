@@ -1,22 +1,17 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
 import { formatDate } from '@/lib/date-utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface HomeownerInfoProps {
-  id: string;
-  email: string;
-  phone: string;
-  moveInDate: string;
-  property: string;
-  unit: string;
-  balance: number;
-  lastContact: {
-    called: string;
-    visit: string;
-    email: string;
-  };
+  id?: string;
+  email?: string;
+  phone?: string;
+  moveInDate?: string;
+  property?: string;
+  unit?: string;
+  balance?: number;
+  lastContact?: string;
 }
 
 export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
@@ -30,56 +25,60 @@ export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
   lastContact
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <User className="h-4 w-4 mr-2" />
-          ID: {id}
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Mail className="h-4 w-4 mr-2" />
-          {email || 'No email available'}
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Phone className="h-4 w-4 mr-2" />
-          {phone || 'No phone available'}
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4 mr-2" />
-          Move in: {moveInDate ? formatDate(moveInDate) : 'N/A'}
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <MapPin className="h-4 w-4 mr-2" />
-          {property ? `${property}${unit ? ` • ${unit}` : ''}` : 'No address available'}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="text-gray-500 w-32">Email:</span>
+            <span>{email || 'Not provided'}</span>
+          </div>
+          <div className="flex">
+            <span className="text-gray-500 w-32">Phone:</span>
+            <span>{phone || 'Not provided'}</span>
+          </div>
         </div>
       </div>
-      <Card className="rounded-lg">
-        <CardContent className="p-4 space-y-4">
-          <h3 className="font-medium">Account & Contact Info</h3>
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center text-sm text-red-500">
-                <span className="h-4 w-4 mr-2 flex items-center justify-center">
-                  <span className="h-2.5 w-2.5 rounded-full bg-current"></span>
-                </span>
-                Current Balance
-              </div>
-              <p className="text-red-500 font-semibold ml-6">${balance.toFixed(2)}</p>
-            </div>
-            <div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 mr-2" />
-                Last Contact
-              </div>
-              <div className="ml-6 text-sm space-y-1">
-                <p>Called: {lastContact.called || 'N/A'}</p>
-                <p>Office Visit: {lastContact.visit || 'N/A'}</p>
-                <p>Email: {lastContact.email || 'N/A'}</p>
-              </div>
-            </div>
+      
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Residency</h3>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="text-gray-500 w-32">Property:</span>
+            <span>{property || 'Not assigned'}</span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex">
+            <span className="text-gray-500 w-32">Unit:</span>
+            <span>{unit || 'N/A'}</span>
+          </div>
+          <div className="flex">
+            <span className="text-gray-500 w-32">Move-in Date:</span>
+            <span>{moveInDate ? formatDate(moveInDate) : 'Not recorded'}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Financial</h3>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="text-gray-500 w-32">Current Balance:</span>
+            <span className={balance && balance > 0 ? 'text-red-600 font-medium' : ''}>
+              {balance !== undefined ? formatCurrency(balance) : 'Not available'}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Communication</h3>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="text-gray-500 w-32">Last Contact:</span>
+            <span>{lastContact ? formatDate(lastContact) : 'No recent contact'}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth/useAuth';
 
 interface HomeownerHeaderProps {
   id: string;
-  name: string;
+  name?: string;
   avatarUrl?: string;
   status?: string;
   tags?: string[];
@@ -29,7 +29,9 @@ export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
   const { userRole, isAdmin } = useAuth();
   const [isUploading, setIsUploading] = useState(false);
 
-  const getInitials = (name: string) => {
+  const getInitials = (name?: string) => {
+    if (!name) return '??';
+    
     return name
       .split(' ')
       .map(n => n[0])
@@ -55,7 +57,7 @@ export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
       <div className="relative flex-shrink-0">
         <Avatar className="h-20 w-20">
           {avatarUrl ? (
-            <AvatarImage src={avatarUrl} alt={name} />
+            <AvatarImage src={avatarUrl} alt={name || 'Homeowner'} />
           ) : null}
           <AvatarFallback className="text-lg bg-primary text-primary-foreground">
             {getInitials(name)}
@@ -66,19 +68,19 @@ export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
       <div className="ml-4 flex-grow">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{name}</h2>
+            <h2 className="text-2xl font-bold">{name || 'Unnamed Homeowner'}</h2>
             <div className="flex flex-wrap gap-2 mt-1">
               {status && (
                 <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${getStatusColor(status)}`}>
                   {status}
                 </span>
               )}
-              {tags.map((tag, index) => (
+              {tags && tags.map((tag, index) => (
                 <span key={index} className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
                   {tag}
                 </span>
               ))}
-              {violations.map((violation, index) => (
+              {violations && violations.map((violation, index) => (
                 <span key={index} className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
                   {violation}
                 </span>
