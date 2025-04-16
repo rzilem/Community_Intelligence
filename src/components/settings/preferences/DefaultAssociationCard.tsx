@@ -33,6 +33,7 @@ const DefaultAssociationCard: React.FC<DefaultAssociationCardProps> = ({
             <SelectValue placeholder="Select default association" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="none">No Default</SelectItem>
             <SelectItem value="assoc-1">Oakwood HOA</SelectItem>
             <SelectItem value="assoc-2">Pineview Community</SelectItem>
             <SelectItem value="assoc-3">Lakeshore Estates</SelectItem>

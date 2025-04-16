@@ -34,7 +34,7 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
           <SelectValue placeholder="All Associations" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Associations</SelectItem>
+          <SelectItem value="all">All Associations</SelectItem>
           {associations.map(assoc => (
             <SelectItem key={assoc.id} value={assoc.name}>{assoc.name}</SelectItem>
           ))}
@@ -46,7 +46,7 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Statuses</SelectItem>
+          <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="inactive">Inactive</SelectItem>
           <SelectItem value="pending-approval">Pending Approval</SelectItem>
@@ -58,7 +58,7 @@ const ResidentFilters: React.FC<ResidentFiltersProps> = ({
           <SelectValue placeholder="All Types" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Types</SelectItem>
+          <SelectItem value="all">All Types</SelectItem>
           <SelectItem value="owner">Owner</SelectItem>
           <SelectItem value="tenant">Tenant</SelectItem>
         </SelectContent>

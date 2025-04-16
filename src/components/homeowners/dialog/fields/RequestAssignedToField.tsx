@@ -35,7 +35,7 @@ const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form })
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="">Unassigned</SelectItem>
+              <SelectItem value="unassigned">Unassigned</SelectItem>
               {staffMembers.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
                   {staff.first_name} {staff.last_name} ({staff.email})

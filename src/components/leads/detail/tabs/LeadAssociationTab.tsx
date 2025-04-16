@@ -151,7 +151,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="on-site">On-Site</SelectItem>
                       <SelectItem value="portfolio">Portfolio</SelectItem>
                       <SelectItem value="portfolio-with-staff">Portfolio w/ Staff</SelectItem>
@@ -171,7 +171,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="new-build">New Build</SelectItem>
                       <SelectItem value="existing">Existing</SelectItem>
                     </SelectContent>
@@ -212,7 +212,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="1">1</SelectItem>
                       <SelectItem value="2">2</SelectItem>
                       <SelectItem value="4">4</SelectItem>
@@ -240,7 +240,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="0">0</SelectItem>
                       <SelectItem value="1-3">1-3</SelectItem>
                       <SelectItem value="4-6">4-6</SelectItem>
@@ -303,7 +303,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="0">0</SelectItem>
                       <SelectItem value="1">1</SelectItem>
                       <SelectItem value="2">2</SelectItem>
@@ -331,7 +331,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="yes">Yes</SelectItem>
                       <SelectItem value="no">No</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
@@ -466,7 +466,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="monthly">Monthly</SelectItem>
                       <SelectItem value="quarterly">Quarterly</SelectItem>
                       <SelectItem value="annual">Annual</SelectItem>
@@ -484,7 +484,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="1st">1st of month</SelectItem>
                       <SelectItem value="15th">15th of month</SelectItem>
                       <SelectItem value="last-day">Last day of month</SelectItem>
@@ -529,7 +529,7 @@ const LeadAssociationTab: React.FC<LeadAssociationTabProps> = ({ lead, onAssocia
                       <SelectValue placeholder="--Select--" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">--Select--</SelectItem>
+                      <SelectItem value="none">--Select--</SelectItem>
                       <SelectItem value="A">A - Excellent</SelectItem>
                       <SelectItem value="B">B - Good</SelectItem>
                       <SelectItem value="C">C - Average</SelectItem>
