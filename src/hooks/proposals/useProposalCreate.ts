@@ -1,0 +1,82 @@
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Proposal } from '@/types/proposal-types';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+export const useProposalCreate = (leadId?: string) => {
+  const queryClient = useQueryClient();
+  const queryKey = leadId ? ['proposals', leadId] : ['proposals'];
+
+  const mutation = useMutation({
+    mutationFn: async (proposalData: Partial<Proposal>) => {
+      const { analytics, ...rest } = proposalData;
+      
+      // Convert analytics to JSON-compatible format for storage
+      const analytics_data = analytics ? JSON.parse(JSON.stringify(analytics)) : {
+        views: 0,
+        view_count_by_section: {}
+      };
+      
+      const { data: proposal, error } = await supabase
+        .from('proposals')
+        .insert({
+          ...rest,
+          status: rest.status || 'draft',
+          content: rest.content || '',
+          amount: rest.amount || 0,
+          signature_required: rest.signature_required || false,
+          sections: rest.sections || [],
+          analytics_data
+        })
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      
+      const createdProposal = proposal as Proposal;
+      const proposalId = createdProposal.id;
+      
+      if (!proposalId) {
+        throw new Error('Failed to retrieve ID from created proposal');
+      }
+      
+      if (proposalData.attachments && proposalData.attachments.length > 0) {
+        const attachmentsToInsert = proposalData.attachments.map(attachment => ({
+          proposal_id: proposalId,
+          name: attachment.name,
+          type: attachment.type,
+          url: attachment.url,
+          size: attachment.size || 0,
+          content_type: attachment.content_type
+        }));
+        
+        const { error: attachmentError } = await supabase
+          .from('proposal_attachments')
+          .insert(attachmentsToInsert);
+          
+        if (attachmentError) {
+          console.error('Error inserting attachments:', attachmentError);
+        }
+      }
+      
+      return {
+        ...createdProposal,
+        attachments: proposalData.attachments || [],
+        analytics: createdProposal.analytics_data || {
+          views: 0,
+          view_count_by_section: {}
+        }
+      };
+    },
+    onSuccess: () => {
+      toast.success('Proposal created successfully');
+      queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error) => {
+      toast.error(`Error creating proposal: ${error.message}`);
+    }
+  });
+
+  return mutation.mutate;
+};
