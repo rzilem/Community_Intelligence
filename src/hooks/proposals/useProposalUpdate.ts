@@ -64,6 +64,7 @@ export const useProposalUpdate = (leadId?: string) => {
         }
       }
       
+      // Safely cast back to the proper types
       const proposalWithTypedSections = {
         ...updatedProposal,
         attachments: attachments || [],

@@ -22,10 +22,21 @@ export const useProposalCreate = (leadId?: string) => {
       // Convert sections to JSON-compatible format
       const sectionsJson = sections ? JSON.parse(JSON.stringify(sections)) : [];
       
+      // Ensure required fields are present
+      if (!rest.lead_id && leadId) {
+        rest.lead_id = leadId;
+      }
+      
+      // Ensure name is present
+      if (!rest.name) {
+        throw new Error('Proposal name is required');
+      }
+
       const { data: proposal, error } = await supabase
         .from('proposals')
         .insert({
-          ...rest,
+          lead_id: rest.lead_id,
+          name: rest.name,
           status: rest.status || 'draft',
           content: rest.content || '',
           amount: rest.amount || 0,
@@ -67,7 +78,7 @@ export const useProposalCreate = (leadId?: string) => {
       return {
         ...createdProposal,
         attachments: attachments || [],
-        sections: createdProposal.sections ? (createdProposal.sections as ProposalSection[]) : [],
+        sections: createdProposal.sections ? (createdProposal.sections as unknown as ProposalSection[]) : [],
         analytics: createdProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}
