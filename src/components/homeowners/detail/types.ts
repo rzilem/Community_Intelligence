@@ -26,7 +26,7 @@ export interface Homeowner {
   avatarUrl: string;
   notes: NoteType[];
   // Additional fields from homeowner-types.ts for compatibility
-  type?: 'owner' | 'tenant' | 'family-member';
+  type?: 'owner' | 'tenant' | 'family-member' | 'other';
   propertyId?: string;
   propertyAddress?: string;
   association?: string;

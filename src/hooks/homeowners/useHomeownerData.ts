@@ -45,16 +45,6 @@ export const useHomeownerData = (homeownerId: string) => {
               city, 
               state, 
               zip
-            ),
-            user:user_id(
-              profile:profiles(
-                id,
-                first_name,
-                last_name,
-                email,
-                phone_number,
-                profile_image_url
-              )
             )
           `)
           .eq('id', homeownerId)
@@ -109,18 +99,32 @@ export const useHomeownerData = (homeownerId: string) => {
             setHomeowner(prevState => ({...prevState, id: homeownerId}));
           }
         } else if (residentData) {
+          // Get user profile data in a separate query if needed
+          let profileData = null;
+          if (residentData.user_id) {
+            const { data: userData, error: userError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', residentData.user_id)
+              .single();
+              
+            if (!userError) {
+              profileData = userData;
+            }
+          }
+          
           // Build the homeowner object from the database data
           const propertyAddress = residentData.property ? 
             `${residentData.property.address || ''} ${residentData.property.unit_number || ''}`.trim() : '';
           
           let fullName = residentData.name || '';
-          if (!fullName && residentData.user?.profile) {
-            fullName = `${residentData.user.profile.first_name || ''} ${residentData.user.profile.last_name || ''}`.trim();
+          if (!fullName && profileData) {
+            fullName = `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim();
           }
           
-          const email = residentData.email || residentData.user?.profile?.email || '';
-          const phone = residentData.phone || residentData.user?.profile?.phone_number || '';
-          const avatarUrl = residentData.user?.profile?.profile_image_url || '';
+          const email = residentData.email || (profileData?.email || '');
+          const phone = residentData.phone || (profileData?.phone_number || '');
+          const avatarUrl = profileData?.profile_image_url || '';
           
           const convertedHomeowner: Homeowner = {
             id: residentData.id,
@@ -143,7 +147,7 @@ export const useHomeownerData = (homeownerId: string) => {
             status: residentData.move_out_date ? 'inactive' : 'active',
             avatarUrl: avatarUrl,
             notes: [],
-            type: residentData.resident_type,
+            type: residentData.resident_type as 'owner' | 'tenant' | 'family-member' | undefined,
             propertyAddress: propertyAddress,
             association: '', // Would need to join with association table
           };

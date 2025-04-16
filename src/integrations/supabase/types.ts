@@ -2006,6 +2006,7 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          column_preferences: Json | null
           created_at: string | null
           id: string
           notifications_enabled: boolean | null
@@ -2014,6 +2015,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          column_preferences?: Json | null
           created_at?: string | null
           id?: string
           notifications_enabled?: boolean | null
@@ -2022,6 +2024,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          column_preferences?: Json | null
           created_at?: string | null
           id?: string
           notifications_enabled?: boolean | null
@@ -2199,6 +2202,18 @@ export type Database = {
           zip: string | null
         }[]
       }
+      get_user_settings: {
+        Args: { user_id_param: string }
+        Returns: {
+          column_preferences: Json | null
+          created_at: string | null
+          id: string
+          notifications_enabled: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -2213,6 +2228,15 @@ export type Database = {
           p_temperature?: number
           p_max_tokens?: number
           p_prompt_templates?: Json
+        }
+        Returns: undefined
+      }
+      update_user_settings: {
+        Args: {
+          user_id_param: string
+          theme_param?: string
+          notifications_param?: boolean
+          column_preferences_param?: Json
         }
         Returns: undefined
       }
