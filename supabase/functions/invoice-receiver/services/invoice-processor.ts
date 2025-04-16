@@ -176,6 +176,19 @@ export async function processInvoiceEmail(emailData: any) {
       dueDate.setDate(dueDate.getDate() + 30);
       invoice.due_date = dueDate.toISOString().split('T')[0];
     }
+
+    // Set a default amount if not extracted - IMPORTANT ADDITION
+    if (!invoice.amount) {
+      invoice.amount = 0; // Default to 0 so the validation doesn't fail
+      console.log("No amount could be extracted, setting default value of 0");
+      
+      // Add a note to description about the missing amount
+      if (invoice.description) {
+        invoice.description += "\n\nNOTE: Amount could not be automatically extracted. Please update manually.";
+      } else {
+        invoice.description = "NOTE: Amount could not be automatically extracted. Please update manually.";
+      }
+    }
     
     console.log("Extracted invoice data:", invoice);
     return invoice;

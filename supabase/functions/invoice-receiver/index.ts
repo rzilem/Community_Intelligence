@@ -81,29 +81,29 @@ serve(async (req) => {
     // Process the email to extract invoice information
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
 
-    // Validate extracted invoice data has required fields
-    if (!invoiceData || !invoiceData.vendor || !invoiceData.amount) {
-      console.error("Failed to extract required invoice fields", invoiceData);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Extraction failed", 
-          details: "Could not extract required invoice fields (vendor, amount)",
-          partial_data: invoiceData || {}
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 422 
-        }
-      );
-    }
-
-    // Insert invoice into the database
+    // Always attempt to create the invoice, even with partial data
     try {
       const invoice = await createInvoice(invoiceData);
 
       console.log("Invoice created successfully:", invoice);
 
+      // If we have partial data but created the invoice anyway
+      if (!invoiceData.vendor || invoiceData.vendor === "Unknown Vendor" || !invoiceData.amount || invoiceData.amount === 0) {
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            warning: "Invoice created with partial data", 
+            message: "Invoice was created but may need manual review",
+            invoice: invoice 
+          }),
+          { 
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 201 
+          }
+        );
+      }
+
+      // All data looks good
       return new Response(
         JSON.stringify({ success: true, message: "Invoice created", invoice }),
         { 
