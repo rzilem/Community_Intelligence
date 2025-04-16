@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
 import { NavItemProps } from './types';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotificationContext } from '@/contexts/notifications';
 
 interface SidebarProps {
   isMobile: boolean;
@@ -25,7 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const { getCountForSection } = useNotifications();
+  const { notifications } = useNotificationContext();
   
   useEffect(() => {
     // Initialize active section based on current path
@@ -61,10 +61,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Function to determine whether to show a badge and how many notifications to display
+  // Function to get notification count for a specific section
   const getNotificationCount = (itemPath: string): number => {
     const section = itemPath.replace('/', '');
-    return getCountForSection(section);
+    
+    // Count notifications by type
+    if (section === 'lead-management') {
+      return notifications.filter(n => n.type === 'lead' && !n.read).length;
+    } else if (section === 'accounting') {
+      return notifications.filter(n => n.type === 'invoice' && !n.read).length;
+    } else if (section === 'community-management') {
+      return notifications.filter(n => n.type === 'request' && !n.read).length;
+    } else if (section === 'resale-management') {
+      return notifications.filter(n => n.type === 'event' && !n.read).length;
+    } else if (section === 'communications') {
+      return notifications.filter(n => n.type === 'message' && !n.read).length;
+    }
+    
+    return 0;
   };
 
   return (

@@ -1,5 +1,7 @@
 
 import { extractAdditionalInfo } from "../../utils/additional-extractors.ts";
+import { extractUnitCount } from "../../utils/unit-extractors.ts";
+import { extractNameFromContent } from "../../utils/name-extractors.ts";
 
 /**
  * Extract additional information/notes from the email content
@@ -17,6 +19,24 @@ export function extractAdditionalInformation(content: string) {
   
   if (additionalInfo.notes) {
     lead.additional_requirements = additionalInfo.notes;
+  }
+  
+  // Extract unit count
+  const unitCount = extractUnitCount(content);
+  if (unitCount) {
+    console.log("Extracted unit count:", unitCount);
+    lead.unit_count = unitCount;
+  }
+  
+  // Try to extract name from content if not already set
+  if (!lead.name || lead.name.trim() === "") {
+    const nameInfo = extractNameFromContent(content);
+    if (nameInfo) {
+      console.log("Extracted name from content:", nameInfo);
+      lead.first_name = nameInfo.firstName;
+      lead.last_name = nameInfo.lastName;
+      lead.name = `${nameInfo.firstName} ${nameInfo.lastName}`.trim();
+    }
   }
   
   // Check if we've inadvertently captured 'scope of services' as a name

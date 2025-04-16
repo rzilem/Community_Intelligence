@@ -5,17 +5,17 @@ import { Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { toast } from 'sonner';
+import { useNotificationContext } from '@/contexts/notifications';
 
 interface DashboardHeaderProps {
   associationName?: string;
-  notificationCount?: number;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   associationName,
-  notificationCount = 0,
 }) => {
   const navigate = useNavigate();
+  const { unreadCount } = useNotificationContext();
 
   const handleViewAllNotifications = () => {
     // Navigate to the notifications page
@@ -46,7 +46,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           tooltip="View all notifications"
           onClick={handleViewAllNotifications}
         >
-          View All <Badge>{notificationCount}</Badge>
+          View All <Badge>{unreadCount}</Badge>
         </TooltipButton>
       </div>
     </div>

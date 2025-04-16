@@ -17,3 +17,5 @@ export {
 export { extractContactInfo } from './contact-info-extractors.ts';
 export { extractCompanyInfo } from './company-extractors.ts';
 export { extractCityFromAddress, cleanStreetAddress } from './address-extractors.ts';
+export { extractPhoneNumbers } from './additional-extractors.ts';
+export { extractUnitCount } from './unit-extractors.ts';

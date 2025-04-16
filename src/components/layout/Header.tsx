@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LogOut, Menu, UserCircle, Bell } from 'lucide-react';
+import { LogOut, Menu, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 import NotificationCenter from './NotificationCenter';
-import { useNotifications } from '@/hooks/useNotifications';
 
 interface HeaderProps {
   isMobile: boolean;
@@ -33,8 +32,6 @@ const Header: React.FC<HeaderProps> = ({
   handleSignOut
 }) => {
   const navigate = useNavigate();
-  const { getTotalCount } = useNotifications();
-  const totalNotifications = getTotalCount();
 
   const getUserInitials = (): string => {
     if (!profile) return 'U';
