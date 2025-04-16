@@ -21,17 +21,15 @@ const queryClient = new QueryClient({
 const App = () => {
   return (
     <BrowserRouter>
-      <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <AuthProvider>
-              <Toaster />
-              <Sonner />
-              <AppRouter />
-            </AuthProvider>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <AppRouter />
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 };

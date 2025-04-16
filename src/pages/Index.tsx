@@ -10,10 +10,13 @@ import { useAuth } from '@/contexts/auth';
 const Index = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
+  
+  console.log('Index page loaded, user:', user ? 'logged in' : 'not logged in');
 
   // If user is already authenticated, redirect to dashboard
   React.useEffect(() => {
     if (user && session) {
+      console.log('Redirecting to dashboard');
       navigate('/dashboard');
     }
   }, [user, session, navigate]);

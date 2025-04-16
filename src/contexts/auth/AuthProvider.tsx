@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { Profile } from '@/types/app-types';
+import { Profile } from '@/types/profile-types';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
 import { Association, UserAssociation } from './types';
@@ -69,6 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setCurrentAssociation(associations[0].associations);
             }
           }
+        } catch (error) {
+          console.error('Error loading user data:', error);
         } finally {
           setLoading(false);
         }

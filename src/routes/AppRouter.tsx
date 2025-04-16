@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
@@ -9,7 +10,6 @@ import { operationsRoutes } from './operationsRoutes';
 import { recordsReportsRoutes } from './recordsReportsRoutes';
 import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
-import { useEffect } from 'react';
 
 /**
  * Main application router component that consolidates all routes
@@ -18,7 +18,7 @@ export const AppRouter = () => {
   const location = useLocation();
   
   // Log routing for debugging purposes
-  useEffect(() => {
+  React.useEffect(() => {
     console.log('Route changed:', location.pathname);
   }, [location]);
 
