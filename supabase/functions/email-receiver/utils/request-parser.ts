@@ -2,12 +2,27 @@
 // Process raw multipart form data using native FormData API
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type");
+  
+  // If not multipart form data, try json parsing
   if (!contentType || !contentType.includes("multipart/form-data")) {
-    return await request.json();
+    try {
+      return await request.json();
+    } catch (error) {
+      console.error("Error parsing JSON request:", error);
+      throw new Error(`Not a multipart form or valid JSON: ${contentType}`);
+    }
   }
 
   console.log("Processing multipart form data");
-  const formData = await request.formData();
+  let formData;
+  
+  try {
+    formData = await request.formData();
+  } catch (error) {
+    console.error("Error getting form data:", error);
+    throw new Error(`Failed to process form data: ${error.message}`);
+  }
+  
   const result: Record<string, any> = {};
   
   // Process each form field
@@ -34,15 +49,44 @@ export async function processMultipartFormData(request: Request): Promise<any> {
 export function normalizeEmailData(data: any): any {
   const normalizedData: Record<string, any> = {};
   
+  // Handle cases where data might be null, undefined, or not an object
+  if (!data || typeof data !== 'object') {
+    console.error("Invalid email data format:", data);
+    return {
+      from: "",
+      to: "",
+      subject: "",
+      html: "",
+      text: "",
+      tracking_number: `email-${Date.now()}`
+    };
+  }
+  
+  // CloudMailin specific format handling
+  if (data.headers && typeof data.headers === 'object') {
+    console.log("Detected CloudMailin format with headers object");
+    normalizedData.subject = data.headers.Subject || data.headers.subject || "";
+    normalizedData.from = data.headers.From || data.headers.from || "";
+    normalizedData.to = data.headers.To || data.headers.to || "";
+    
+    // CloudMailin specific structure
+    if (data.plain !== undefined) normalizedData.text = data.plain;
+    if (data.html !== undefined) normalizedData.html = data.html;
+  }
+  
   // Handle different field names for common email properties
-  normalizedData.from = data.from || data.From || data.sender || data.Sender || "";
-  normalizedData.to = data.to || data.To || data.recipient || data.Recipient || "";
-  normalizedData.subject = data.subject || data.Subject || "";
-  normalizedData.html = data.html || data.Html || data.body || data.Body || "";
-  normalizedData.text = data.text || data.Text || data.plain || data.Plain || "";
+  normalizedData.from = normalizedData.from || data.from || data.From || data.sender || data.Sender || "";
+  normalizedData.to = normalizedData.to || data.to || data.To || data.recipient || data.Recipient || "";
+  normalizedData.subject = normalizedData.subject || data.subject || data.Subject || "";
+  normalizedData.html = normalizedData.html || data.html || data.Html || data.body || data.Body || "";
+  normalizedData.text = normalizedData.text || data.text || data.Text || data.plain || data.Plain || "";
   
   // Process attachments from various email services
   normalizedData.attachments = processAttachments(data);
+  
+  // Create a tracking number
+  normalizedData.tracking_number = data.message_id || data.messageId || data.id || 
+    data.envelope?.messageId || `email-${Date.now()}`;
   
   // Add original data for reference
   normalizedData.original = data;
@@ -52,6 +96,9 @@ export function normalizeEmailData(data: any): any {
 
 // Extract and normalize attachments from different email service formats
 function processAttachments(data: any): any[] {
+  // Safely check if data exists
+  if (!data) return [];
+  
   // Initialize with empty array as fallback
   let attachments: any[] = [];
   
@@ -69,6 +116,8 @@ function processAttachments(data: any): any[] {
   
   // Standardize attachment object structure
   return attachments.map(attachment => {
+    if (!attachment) return { filename: "unknown", contentType: "application/octet-stream", content: "", size: 0 };
+    
     const normalized: Record<string, any> = {};
     
     // Extract filename with fallbacks

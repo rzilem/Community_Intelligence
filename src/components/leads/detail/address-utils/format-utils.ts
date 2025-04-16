@@ -1,87 +1,68 @@
+
 /**
- * Formats and cleans the street address from a lead
+ * Utilities for formatting and cleaning address data
  */
-export function formatStreetAddress(address: string | undefined): string {
-  if (!address) return '';
+
+export function cleanCityName(city: string): string {
+  if (!city) return '';
   
-  return address
-    .replace(/Dr\.?Austin/i, 'Dr. Austin')  // Add space between Dr. and Austin
-    .replace(/Austin,/i, 'Austin, ')
-    .replace(/Auin, TX \d+/i, '')  // Remove the extraneous Auin, TX text
+  // Special case for Pflugerville
+  if (city.toLowerCase().includes('pflugerville')) {
+    return 'Pflugerville';
+  }
+  
+  // Fix common issues with extracted city names
+  return city
+    .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '') // Remove prefixes
+    .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy/gi, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
-/**
- * Cleans a city name by removing any unwanted patterns or formatting issues
- */
-export function cleanCityName(cityName: string): string {
-  // Remove any trailing zip or state codes (e.g. "Austin, TX 78701" -> "Austin")
-  let cleaned = cityName.replace(/,\s*[A-Z]{2}.*$/, '');
+export function formatStreetAddress(address?: string): string {
+  if (!address) return '';
   
-  // Ensure proper case
-  cleaned = cleaned.trim();
-  
-  // Handle special cases
-  if (cleaned.toLowerCase() === 'atx') return 'Austin';
-  if (cleaned.toLowerCase().includes('austin')) return 'Austin';
-  
-  return cleaned;
+  // Clean up the address
+  return address
+    .replace(/Map\s*It/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-/**
- * Formats a complete address with proper spacing and punctuation
- * @param streetAddress The street address line
- * @param city The city name
- * @param state The state code (e.g., TX)
- * @param zipCode The ZIP code
- * @returns A properly formatted complete address
- */
-export function formatFullAddress(
-  streetAddress?: string, 
-  city?: string, 
-  state?: string, 
-  zipCode?: string
-): string {
-  if (!streetAddress) return 'N/A';
+export function getFormattedLeadAddressData(lead: any): {
+  fullAddress: string;
+  formattedAddress: string;
+  googleMapsUrl: string;
+} {
+  const streetAddress = lead.street_address || '';
+  const addressLine2 = lead.address_line2 || '';
+  const city = lead.city || '';
+  const state = lead.state || '';
+  const zip = lead.zip || '';
   
-  const formattedStreet = formatStreetAddress(streetAddress);
-  const formattedCity = city ? cleanCityName(city) : '';
+  // Create full address for display
+  let fullAddress = streetAddress;
+  if (addressLine2) fullAddress += `, ${addressLine2}`;
+  if (city || state || zip) {
+    fullAddress += ', ';
+    if (city) fullAddress += `${city}, `;
+    if (state) fullAddress += `${state} `;
+    if (zip) fullAddress += zip;
+  }
   
-  // Build the city, state, zip part only from actual values
-  const cityStateZipParts = [];
+  // Create a clean formatted address for Google Maps
+  let formattedAddress = streetAddress;
+  if (addressLine2) formattedAddress += ` ${addressLine2}`;
+  if (city) formattedAddress += `, ${city}`;
+  if (state) formattedAddress += `, ${state}`;
+  if (zip) formattedAddress += ` ${zip}`;
   
-  if (formattedCity) cityStateZipParts.push(formattedCity);
-  if (state) cityStateZipParts.push(state);
-  if (zipCode) cityStateZipParts.push(zipCode);
+  // Create Google Maps URL
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedAddress)}`;
   
-  const cityStateZip = cityStateZipParts.join(', ')
-    .replace(/, ([A-Z]{2}),/, ', $1 '); // Fix state/zip formatting: "TX, 12345" -> "TX 12345"
-  
-  // Only add the comma separator if we actually have something to append
-  return cityStateZip ? `${formattedStreet}, ${cityStateZip}` : formattedStreet;
-}
-
-/**
- * Creates a Google Maps link from an address string
- * @param address The address to link to on Google Maps
- * @returns A properly formatted Google Maps URL
- */
-export function createGoogleMapsLink(address: string | undefined): string {
-  if (!address) return '#';
-  
-  // Clean up the address by removing "Map It" and similar phrases
-  const cleanAddress = address.replace(/Map\s*It/gi, '').trim();
-  
-  // URL encode the address for Google Maps
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
-}
-
-/**
- * Capitalizes the first letter of a string
- * @param text The string to capitalize
- * @returns The capitalized string
- */
-export function capitalizeFirstLetter(text: string): string {
-  if (!text) return '';
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  return {
+    fullAddress,
+    formattedAddress,
+    googleMapsUrl
+  };
 }

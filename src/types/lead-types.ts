@@ -21,6 +21,7 @@ export interface Lead {
   notes?: string;
   created_at: string;
   updated_at: string;
+  tracking_number?: string;
   
   // Additional fields
   association_name?: string;
@@ -64,4 +65,5 @@ export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
   { id: 'additional_requirements', label: 'Additional Requirements', accessorKey: 'additional_requirements', defaultVisible: false },
   { id: 'html_content', label: 'Original Email', accessorKey: 'html_content', defaultVisible: false },
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
+  { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: false },
 ];

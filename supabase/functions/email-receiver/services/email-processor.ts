@@ -16,7 +16,8 @@ export async function processEmail(emailData: any) {
     source: 'Email',
     status: 'new',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    tracking_number: `email-${Date.now()}`
   };
   
   try {
@@ -198,6 +199,11 @@ export async function processEmail(emailData: any) {
     // For special case like "Colorado StAustin"
     if (lead.city && lead.city.includes('StAustin')) {
       lead.city = 'Austin';
+    }
+    
+    // Special case for Pflugerville
+    if (content.toLowerCase().includes('pflugerville')) {
+      lead.city = 'Pflugerville';
     }
     
     console.log("Extracted lead data:", lead);

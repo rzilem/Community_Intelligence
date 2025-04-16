@@ -6,15 +6,30 @@
 // Process raw multipart form data using native FormData API
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type") || "";
+  
+  // If not multipart form data, try json parsing
   if (!contentType.includes("multipart/form-data")) {
-    throw new Error(`Not a multipart form: ${contentType}`);
+    try {
+      return await request.json();
+    } catch (error) {
+      console.error("Error parsing JSON request:", error);
+      throw new Error(`Not a multipart form or valid JSON: ${contentType}`);
+    }
   }
 
   console.log("Processing multipart form data");
-  const formData = await request.formData();
-  const result: Record<string, any> = {};
+  let formData;
+  
+  try {
+    formData = await request.formData();
+  } catch (error) {
+    console.error("Error getting form data:", error);
+    throw new Error(`Failed to process form data: ${error.message}`);
+  }
   
   console.log("Form data entries:", [...formData.keys()]);
+  
+  const result: Record<string, any> = {};
   
   // Process each form field
   for (const [key, value] of formData.entries()) {
@@ -50,6 +65,19 @@ export function normalizeEmailData(data: any): any {
   console.log("Normalizing email data from format:", 
     typeof data === 'object' ? (Array.isArray(data) ? 'array' : 'object') : typeof data);
   
+  // Handle cases where data might be null, undefined, or not an object
+  if (!data || typeof data !== 'object') {
+    console.error("Invalid email data format:", data);
+    return {
+      from: "",
+      to: "",
+      subject: "",
+      html: "",
+      text: "",
+      tracking_number: `email-${Date.now()}`
+    };
+  }
+  
   const normalizedData: Record<string, any> = {};
   
   // CloudMailin specific format handling
@@ -58,6 +86,10 @@ export function normalizeEmailData(data: any): any {
     normalizedData.subject = data.headers.Subject || data.headers.subject || "";
     normalizedData.from = data.headers.From || data.headers.from || "";
     normalizedData.to = data.headers.To || data.headers.to || "";
+    
+    // CloudMailin specific structure
+    if (data.plain !== undefined) normalizedData.text = data.plain;
+    if (data.html !== undefined) normalizedData.html = data.html;
   }
   
   // Handle different field names for common email properties
@@ -66,12 +98,8 @@ export function normalizeEmailData(data: any): any {
   normalizedData.subject = normalizedData.subject || data.subject || data.Subject || "";
   
   // Content fields
-  normalizedData.html = data.html || data.Html || data.body_html || data.body || data.Body || "";
-  normalizedData.text = data.text || data.Text || data.body_plain || data.plain || data.Plain || "";
-  
-  // If we have CloudMailin specific structure
-  if (data.plain && !normalizedData.text) normalizedData.text = data.plain;
-  if (data.html && !normalizedData.html) normalizedData.html = data.html;
+  normalizedData.html = normalizedData.html || data.html || data.Html || data.body_html || data.body || data.Body || "";
+  normalizedData.text = normalizedData.text || data.text || data.Text || data.body_plain || data.plain || data.Plain || "";
   
   // Create a tracking number from email ID or message ID
   normalizedData.tracking_number = data.message_id || data.messageId || data.id || 

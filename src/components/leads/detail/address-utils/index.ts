@@ -1,7 +1,17 @@
 
 import { extractCity } from './city-utils';
+import { cleanCityName, formatStreetAddress, getFormattedLeadAddressData } from './format-utils';
+import { extractZipCode, extractZipCodeFromText } from './zip-utils';
 
-export { extractCity };
+export { 
+  extractCity,
+  cleanCityName,
+  formatStreetAddress,
+  getFormattedLeadAddressData,
+  extractZipCode,
+  extractZipCodeFromText,
+  createGoogleMapsLink
+};
 
 export function createGoogleMapsLink(address: string): string {
   if (!address) return '#';
