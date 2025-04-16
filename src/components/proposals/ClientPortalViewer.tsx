@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalVideo } from '@/types/proposal-types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -93,7 +93,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
     updated_at: new Date().toISOString()
   };
   
-  const demoVideos = [
+  const demoVideos: ProposalVideo[] = [
     {
       id: 'v1',
       proposal_id: proposal.id,
@@ -102,7 +102,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 184,
-      type: 'testimonial' as 'testimonial',
+      type: 'testimonial',
       created_at: new Date().toISOString()
     },
     {
@@ -113,7 +113,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 156,
-      type: 'team_intro' as 'team_intro',
+      type: 'team_intro',
       created_at: new Date().toISOString()
     },
     {
@@ -124,7 +124,7 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
       duration: 210,
-      type: 'property_tour' as 'property_tour',
+      type: 'property_tour',
       created_at: new Date().toISOString()
     }
   ];

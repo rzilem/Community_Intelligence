@@ -21,7 +21,7 @@ import {
   Video,
   BellDot
 } from 'lucide-react';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalFollowUp } from '@/types/proposal-types';
 import ProposalAnalyticsDashboard from './analytics/ProposalAnalyticsDashboard';
 import ClientPortalLinkGenerator from './ClientPortalLinkGenerator';
 import CostCalculator from './interactive-calculator/CostCalculator';
@@ -205,12 +205,12 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
     }
   ];
   
-  const demoFollowUps = [
+  const demoFollowUps: ProposalFollowUp[] = [
     {
       id: 'f1',
       proposal_id: proposal.id,
       scheduled_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'scheduled' as 'scheduled',
+      status: 'scheduled',
       message_template: 'Hi {client_name}, I wanted to follow up on the proposal we sent for {proposal_name}. Have you had a chance to review it? I\'d be happy to answer any questions you might have.',
       trigger_type: 'days_after_send',
       trigger_days: 3,
@@ -221,7 +221,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
       id: 'f2',
       proposal_id: proposal.id,
       scheduled_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'scheduled' as 'scheduled',
+      status: 'scheduled',
       message_template: 'Hi {client_name}, I noticed you viewed our proposal for {proposal_name} but we haven\'t heard back. I\'d love to discuss any questions or concerns you might have about the proposed services.',
       trigger_type: 'days_after_view',
       trigger_days: 2,

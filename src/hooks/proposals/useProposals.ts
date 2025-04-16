@@ -44,8 +44,7 @@ export const useProposals = (leadId?: string) => {
               console.error('Error fetching attachments:', attachmentsError);
             }
             
-            // Build complete proposal object - instead of fetching from proposal_analytics
-            // which doesn't exist, we'll use analytics data embedded in the proposal or default values
+            // Build complete proposal object - use analytics data embedded in the proposal or default values
             return {
               ...proposal,
               attachments: attachments || [],
@@ -78,7 +77,11 @@ export const useProposals = (leadId?: string) => {
           content: proposalData.content || '',
           amount: proposalData.amount || 0,
           signature_required: proposalData.signature_required || false,
-          sections: proposalData.sections || []
+          sections: proposalData.sections || [],
+          analytics_data: {
+            views: 0,
+            view_count_by_section: {}
+          }
         })
         .select()
         .single();
@@ -112,19 +115,6 @@ export const useProposals = (leadId?: string) => {
           console.error('Error inserting attachments:', attachmentError);
           // Don't throw here, we already have the proposal created
         }
-      }
-      
-      // 3. Initialize analytics
-      const { error: analyticsError } = await supabase
-        .from('proposal_analytics')
-        .insert({
-          proposal_id: proposalId,
-          views: 0,
-          view_count_by_section: {}
-        });
-        
-      if (analyticsError) {
-        console.error('Error initializing analytics:', analyticsError);
       }
       
       // Return a properly typed Proposal object
@@ -169,7 +159,8 @@ export const useProposals = (leadId?: string) => {
           signed_date: proposalData.signed_date,
           signed_by: proposalData.signed_by,
           signature_data: proposalData.signature_data,
-          sections: proposalData.sections
+          sections: proposalData.sections,
+          analytics_data: analytics || proposalData.analytics_data
         })
         .eq('id', id)
         .select()
@@ -213,30 +204,11 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
-      // 3. If analytics exist, update them
-      if (analytics) {
-        const { error: analyticsError } = await supabase
-          .from('proposal_analytics')
-          .upsert({
-            proposal_id: id,
-            views: analytics.views || 0,
-            avg_view_time: analytics.avg_view_time,
-            most_viewed_section: analytics.most_viewed_section,
-            initial_view_date: analytics.initial_view_date,
-            last_view_date: analytics.last_view_date,
-            view_count_by_section: analytics.view_count_by_section || {}
-          });
-          
-        if (analyticsError) {
-          console.error('Error updating analytics:', analyticsError);
-        }
-      }
-      
       // Return a properly typed Proposal object
       return {
         ...proposal,
         attachments: proposalData.attachments || [],
-        analytics: analytics
+        analytics: analytics || proposal.analytics_data
       } as Proposal;
     },
     onSuccess: () => {
@@ -250,16 +222,6 @@ export const useProposals = (leadId?: string) => {
 
   const deleteProposalMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Delete analytics first (dependent on proposal)
-      const { error: analyticsError } = await supabase
-        .from('proposal_analytics')
-        .delete()
-        .eq('proposal_id', id);
-        
-      if (analyticsError) {
-        console.error('Error deleting analytics:', analyticsError);
-      }
-      
       // Delete proposal (attachments will be cascade deleted due to FK constraint)
       const { error } = await supabase
         .from('proposals')
@@ -280,8 +242,7 @@ export const useProposals = (leadId?: string) => {
 
   const updateAnalyticsMutation = useMutation({
     mutationFn: async ({ proposalId, analyticsData }: { proposalId: string, analyticsData: Partial<ProposalAnalytics> }) => {
-      // Instead of updating a separate proposal_analytics table,
-      // we'll update the analytics_data field directly on the proposal
+      // Update the analytics_data field directly on the proposal
       const { error } = await supabase
         .from('proposals')
         .update({
