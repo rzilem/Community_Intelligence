@@ -1,6 +1,4 @@
 
-import { cleanCityName } from './city-utils';
-
 /**
  * Formats and cleans the street address from a lead
  */
@@ -75,4 +73,3 @@ export function createGoogleMapsLink(address: string | undefined): string {
   // URL encode the address for Google Maps
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
 }
-
