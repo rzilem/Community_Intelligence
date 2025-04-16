@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -41,11 +40,23 @@ export const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
   const handleSubmit = async (values: NoteFormValues) => {
     try {
       if (onAddNote) {
+        // Get user display name from user object, handling missing properties safely
+        let authorName = 'Staff Member';
+        
+        if (user) {
+          // Check if user has first_name and last_name properties directly
+          if (user.first_name && user.last_name) {
+            authorName = `${user.first_name} ${user.last_name}`;
+          } 
+          // Otherwise check if there's a profile object with these properties
+          else if (user.email) {
+            authorName = user.email;
+          }
+        }
+        
         const note: Omit<NoteType, 'date'> = {
           type: 'manual',
-          author: user?.profile?.first_name && user?.profile?.last_name 
-            ? `${user.profile.first_name} ${user.profile.last_name}`
-            : user?.email || 'Staff Member',
+          author: authorName,
           content: values.content,
         };
         
