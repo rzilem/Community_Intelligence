@@ -38,6 +38,10 @@ const formatName = (lead: Lead): string => {
 const extractCity = (cityField: string | undefined, address: string | undefined): string => {
   // If we have a city field directly, clean and use it
   if (cityField) {
+    // Fix specific issues with city names
+    if (cityField === 'TrailAuin') {
+      return 'Austin';
+    }
     return cleanCityName(cityField);
   }
   
@@ -66,6 +70,11 @@ const extractCity = (cityField: string | undefined, address: string | undefined)
     }
   }
   
+  // Special case for TrailAustin variants
+  if (address.includes('Trail') && (address.includes('Austin') || address.includes('Auin'))) {
+    return 'Austin';
+  }
+  
   return '';
 };
 
@@ -73,16 +82,26 @@ const extractCity = (cityField: string | undefined, address: string | undefined)
 const cleanCityName = (city: string): string => {
   if (!city) return '';
   
+  // Special case fix for 'TrailAuin' to 'Austin'
+  if (city === 'TrailAuin') {
+    return 'Austin';
+  }
+  
   // Remove any numeric prefixes (like "pug", "rippy", etc.)
   const cleanedCity = city
     .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '')
     // Remove street-related words
-    .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy|St(?=[A-Z])|[\d\s]+[A-Z][a-z]*(?=\s)/gi, '')
+    .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy|St(?=[A-Z])|Trail|Forest|[\d\s]+[A-Z][a-z]*(?=\s)/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
   
   // Handle special case for "Colorado StAustin" -> "Austin"
   if (cleanedCity.includes('StAustin')) {
+    return 'Austin';
+  }
+  
+  // Handle special cases for "TrailAuin" and similar
+  if (cleanedCity === 'Auin') {
     return 'Austin';
   }
   

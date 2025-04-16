@@ -17,18 +17,39 @@ export function extractLocationInformation(content: string) {
   if (locationInfo.state) lead.state = locationInfo.state;
   if (locationInfo.zip) lead.zip = locationInfo.zip;
   
+  // Clean up street address
+  if (lead.street_address) {
+    // Extract ZIP code from address if not already set
+    if (!lead.zip) {
+      const zipMatch = lead.street_address.match(/\b\d{5}\b/);
+      if (zipMatch) {
+        lead.zip = zipMatch[0];
+      }
+    }
+    
+    // Ensure proper spacing between "Trail" and "Austin"
+    lead.street_address = lead.street_address
+      .replace(/TrailAustin/g, 'Trail Austin')
+      .replace(/(\d+)\s*Forest\s*Trail\s*Austin/i, '$1 Forest Trail Austin');
+  }
+  
   // Clean up city data to make sure it's just the city name
   if (lead.city) {
-    // Remove any street numbers or common street name components
-    lead.city = lead.city
-      .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '') // Remove prefixes like "pug rippy"
-      .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-      
-    // Special case for "StAustin"
-    if (lead.city.includes('StAustin')) {
+    // Special case for "TrailAuin" to "Austin"
+    if (lead.city === 'TrailAuin' || lead.city.includes('Trail') && lead.city.includes('Auin')) {
       lead.city = 'Austin';
+    } else {
+      // Remove any street numbers or common street name components
+      lead.city = lead.city
+        .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '') // Remove prefixes like "pug rippy"
+        .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy|Trail|Forest/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+        
+      // Special case for "StAustin"
+      if (lead.city.includes('StAustin')) {
+        lead.city = 'Austin';
+      }
     }
   }
   
