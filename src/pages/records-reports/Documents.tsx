@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus } from 'lucide-react';
@@ -25,7 +24,6 @@ const Documents = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   
-  // Fetch documents and categories
   const { documents, isLoading } = useDocuments({
     associationId: currentAssociation?.id,
     category: category
@@ -35,7 +33,6 @@ const Documents = () => {
     associationId: currentAssociation?.id
   });
   
-  // Get document columns configuration
   const { 
     columns, 
     visibleColumnIds, 
@@ -46,13 +43,11 @@ const Documents = () => {
   
   const { uploadDocument, deleteDocument, createCategory } = useDocumentOperations();
   
-  // Implement document handling functions
   const onViewDocument = (doc: Document) => {
     window.open(doc.url, '_blank');
   };
   
   const onDownloadDocument = (doc: Document) => {
-    // Use file-saver to download the document
     saveAs(doc.url, doc.name);
     toast.success('Document downloaded successfully');
   };
@@ -68,7 +63,6 @@ const Documents = () => {
     });
   };
 
-  // Handle document upload
   const handleUploadDocument = (file: File, category: string, description: string) => {
     if (!currentAssociation?.id) {
       toast.error('Please select an association first');
@@ -90,7 +84,6 @@ const Documents = () => {
     });
   };
 
-  // Handle category creation
   const handleCreateCategory = (name: string) => {
     if (!currentAssociation?.id) {
       toast.error('Please select an association first');
@@ -108,7 +101,6 @@ const Documents = () => {
     });
   };
 
-  // Filter documents based on search term
   const filteredDocuments = documents.filter(doc => 
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -161,7 +153,6 @@ const Documents = () => {
             visibleColumns={visibleColumnIds}
           />
 
-          {/* Document dialogs for upload and category creation */}
           <DocumentDialogs 
             isUploadDialogOpen={isUploadDialogOpen}
             isCategoryDialogOpen={isCategoryDialogOpen}

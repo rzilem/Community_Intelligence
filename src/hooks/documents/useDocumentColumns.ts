@@ -12,7 +12,7 @@ export const useDocumentColumns = (viewId: string = 'document-columns') => {
   const defaultColumns: DocumentColumn[] = [
     { id: 'name', label: 'Document Name', defaultVisible: true },
     { id: 'category', label: 'Category', defaultVisible: true },
-    { id: 'created_at', label: 'Upload Date', defaultVisible: true },
+    { id: 'uploaded_at', label: 'Upload Date', defaultVisible: true },
     { id: 'description', label: 'Description', defaultVisible: true },
     { id: 'file_size', label: 'Size', defaultVisible: true },
     { id: 'file_type', label: 'Type', defaultVisible: false },

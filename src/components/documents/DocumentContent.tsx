@@ -89,7 +89,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
                     <TableCell>{doc.category || 'Uncategorized'}</TableCell>
                   )}
                   {visibleColumns.includes('created_at') && (
-                    <TableCell>{formatDate(doc.created_at)}</TableCell>
+                    <TableCell>{formatDate(doc.uploaded_at)}</TableCell>
                   )}
                   {visibleColumns.includes('description') && (
                     <TableCell className="max-w-xs truncate">
@@ -97,10 +97,10 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
                     </TableCell>
                   )}
                   {visibleColumns.includes('file_size') && (
-                    <TableCell>{formatFileSize(doc.size || 0)}</TableCell>
+                    <TableCell>{formatFileSize(doc.file_size || 0)}</TableCell>
                   )}
                   {visibleColumns.includes('file_type') && (
-                    <TableCell>{doc.type || '-'}</TableCell>
+                    <TableCell>{doc.file_type || '-'}</TableCell>
                   )}
                   {visibleColumns.includes('uploaded_by') && (
                     <TableCell>{doc.uploaded_by || '-'}</TableCell>
