@@ -6,12 +6,16 @@ import FormFieldSelect from '@/components/homeowners/form/FormFieldSelect';
 
 interface RequestAssignmentFieldsProps {
   form: UseFormReturn<any>;
+  optional?: boolean;
 }
 
-const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({ form }) => {
+const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({ 
+  form,
+  optional = false
+}) => {
   // Get selected association ID for filtering properties and residents
-  const selectedAssociationId = form.watch('associationId');
-  const selectedPropertyId = form.watch('propertyId');
+  const selectedAssociationId = form.watch('association_id');
+  const selectedPropertyId = form.watch('property_id');
   
   // Fetch associations for the select dropdown
   const { data: associations = [] } = useSupabaseQuery<any[]>(
@@ -64,45 +68,48 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({ form 
   // Reset propertyId when association changes
   useEffect(() => {
     if (selectedAssociationId) {
-      form.setValue('propertyId', '');
+      form.setValue('property_id', '');
     }
   }, [selectedAssociationId, form]);
 
   // Reset residentId when property changes
   useEffect(() => {
     if (selectedPropertyId) {
-      form.setValue('residentId', '');
+      form.setValue('resident_id', '');
     }
   }, [selectedPropertyId, form]);
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-medium">Assignment</h3>
+      <h3 className="text-base font-medium">Assignment {optional && <span className="text-sm font-normal text-muted-foreground">(Optional)</span>}</h3>
       
       <FormFieldSelect
         form={form}
-        name="associationId"
+        name="association_id"
         label="Association"
         placeholder="Select an association"
         options={associationOptions}
+        required={!optional}
       />
       
       <FormFieldSelect
         form={form}
-        name="propertyId"
+        name="property_id"
         label="Property"
         placeholder={selectedAssociationId ? "Select a property" : "Select an association first"}
         options={propertyOptions}
         disabled={!selectedAssociationId}
+        required={!optional}
       />
       
       <FormFieldSelect
         form={form}
-        name="residentId"
+        name="resident_id"
         label="Resident"
         placeholder={selectedPropertyId ? "Select a resident" : "Select a property first"}
         options={residentOptions}
         disabled={!selectedPropertyId && !selectedAssociationId}
+        required={!optional}
       />
     </div>
   );

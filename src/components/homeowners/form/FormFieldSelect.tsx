@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 import {
   FormField,
   FormItem,
@@ -7,10 +8,15 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UseFormReturn } from 'react-hook-form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-interface SelectOption {
+interface Option {
   value: string;
   label: string;
 }
@@ -20,8 +26,9 @@ interface FormFieldSelectProps {
   name: string;
   label: string;
   placeholder: string;
-  options: SelectOption[];
+  options: Option[];
   disabled?: boolean;
+  required?: boolean;
 }
 
 const FormFieldSelect = ({
@@ -31,6 +38,7 @@ const FormFieldSelect = ({
   placeholder,
   options,
   disabled = false,
+  required = true
 }: FormFieldSelectProps) => {
   return (
     <FormField
@@ -38,11 +46,14 @@ const FormFieldSelect = ({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel>
+            {label}
+            {!required && <span className="text-muted-foreground ml-1 text-sm">(Optional)</span>}
+          </FormLabel>
           <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
             disabled={disabled}
+            onValueChange={field.onChange}
+            value={field.value || ""}
           >
             <FormControl>
               <SelectTrigger>
@@ -50,6 +61,9 @@ const FormFieldSelect = ({
               </SelectTrigger>
             </FormControl>
             <SelectContent>
+              {!required && (
+                <SelectItem value="none">None Selected</SelectItem>
+              )}
               {options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}

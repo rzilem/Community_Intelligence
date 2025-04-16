@@ -16,8 +16,8 @@ const requestSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
-  propertyId: z.string().uuid('Please select a property'),
-  associationId: z.string().uuid('Please select an association'),
+  propertyId: z.string().uuid('Please select a property').optional(),
+  associationId: z.string().uuid('Please select an association').optional(),
 });
 
 type RequestFormValues = z.infer<typeof requestSchema>;
@@ -50,8 +50,8 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
       description: '',
       type: 'maintenance',
       priority: 'medium',
-      propertyId: '',
-      associationId: '',
+      propertyId: undefined,
+      associationId: undefined,
     },
   });
 
@@ -66,16 +66,25 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
 
   const onSubmit = (data: RequestFormValues) => {
     // Make sure we're using the database column names for the API call
-    createRequest({
+    const requestData: any = {
       title: data.title,
       description: data.description,
       type: data.type,
       priority: data.priority,
-      property_id: data.propertyId,
-      association_id: data.associationId,
       status: 'open',
-      // The resident_id will be set automatically to auth.uid() by RLS
-    });
+    };
+    
+    // Only add these fields if they were provided
+    if (data.propertyId) {
+      requestData.property_id = data.propertyId;
+    }
+    
+    if (data.associationId) {
+      requestData.association_id = data.associationId;
+    }
+    
+    // Create the request with only the provided fields
+    createRequest(requestData);
   };
 
   // Get selected association ID for filtering properties
@@ -86,11 +95,18 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <RequestBasicInfoFields form={form} />
         
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md mb-4">
+          <p className="text-amber-800 text-sm">
+            The location fields below are optional. You can create a request without specifying an association or property.
+          </p>
+        </div>
+        
         <RequestLocationFields 
           form={form} 
           associations={associations} 
           properties={properties}
           selectedAssociationId={selectedAssociationId}
+          optional={true}
         />
         
         <FormFieldTextarea

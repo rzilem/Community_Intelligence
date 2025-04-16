@@ -76,7 +76,13 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
           <RequestAssignedToField form={form} />
         </div>
         
-        <RequestAssignmentFields form={form} />
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+          <p className="text-amber-800 text-sm">
+            The assignment fields below are optional. Requests can exist without being associated with specific properties or residents.
+          </p>
+        </div>
+        
+        <RequestAssignmentFields form={form} optional={true} />
         <RequestDescriptionField form={form} />
         
         <DialogFooter>
@@ -94,6 +100,6 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       </form>
     </Form>
   );
-};
+}
 
 export default RequestEditForm;

@@ -26,10 +26,35 @@ export async function createRequest(requestData: any) {
     
     console.log("Inserting request into homeowner_requests table");
     
-    // Insert the request into the database
+    // Clean up requestData to ensure we only include valid fields
+    // This ensures we don't try to insert undefined or null values for fields that require values
+    const cleanRequestData = {
+      title: requestData.title,
+      description: requestData.description,
+      type: requestData.type || 'general',
+      priority: requestData.priority || 'medium',
+      status: requestData.status || 'open',
+      tracking_number: requestData.tracking_number,
+      html_content: requestData.html_content,
+    };
+    
+    // Only add these fields if they actually have values
+    if (requestData.association_id) {
+      cleanRequestData.association_id = requestData.association_id;
+    }
+    
+    if (requestData.property_id) {
+      cleanRequestData.property_id = requestData.property_id;
+    }
+    
+    if (requestData.resident_id) {
+      cleanRequestData.resident_id = requestData.resident_id;
+    }
+    
+    // Insert the request into the database with only valid fields
     const { data, error } = await supabase
       .from("homeowner_requests")
-      .insert(requestData)
+      .insert(cleanRequestData)
       .select();
     
     if (error) {

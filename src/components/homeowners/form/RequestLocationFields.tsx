@@ -8,13 +8,15 @@ interface RequestLocationFieldsProps {
   associations: any[];
   properties: any[];
   selectedAssociationId: string;
+  optional?: boolean;
 }
 
 const RequestLocationFields = ({ 
   form, 
   associations,
   properties,
-  selectedAssociationId
+  selectedAssociationId,
+  optional = false
 }: RequestLocationFieldsProps) => {
   // Filter properties based on selected association
   const filteredProperties = selectedAssociationId 
@@ -36,18 +38,20 @@ const RequestLocationFields = ({
       <FormFieldSelect
         form={form}
         name="associationId"
-        label="Association"
+        label={`Association${optional ? ' (Optional)' : ''}`}
         placeholder="Select association"
         options={associationOptions}
+        required={!optional}
       />
       
       <FormFieldSelect
         form={form}
         name="propertyId"
-        label="Property"
+        label={`Property${optional ? ' (Optional)' : ''}`}
         placeholder={selectedAssociationId ? "Select property" : "Select an association first"}
         options={propertyOptions}
         disabled={!selectedAssociationId}
+        required={!optional}
       />
     </div>
   );

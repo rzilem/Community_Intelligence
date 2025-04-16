@@ -119,24 +119,27 @@ export const useHomeownerRequests = () => {
 
   // Create a dummy request for testing if no requests exist
   const createDummyRequest = async () => {
-    if (!currentAssociation) {
-      toast.error("Please select an association first");
-      return;
-    }
-    
     try {
       setLoading(true);
+      
+      // Create a test request that doesn't require an association
+      const testRequest = {
+        title: 'Test Request',
+        description: 'This is a test homeowner request',
+        status: 'open',
+        priority: 'medium',
+        type: 'general',
+        tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
+      };
+      
+      // If current association exists, attach it to the request
+      if (currentAssociation) {
+        testRequest.association_id = currentAssociation.id;
+      }
+      
       const { data, error } = await supabase
         .from('homeowner_requests')
-        .insert({
-          title: 'Test Request',
-          description: 'This is a test homeowner request',
-          status: 'open',
-          priority: 'medium',
-          type: 'general',
-          association_id: currentAssociation.id,
-          tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
-        })
+        .insert(testRequest)
         .select();
         
       if (error) throw error;
