@@ -6,12 +6,14 @@ import { useResponsive } from '@/hooks/use-responsive';
 import DocumentContent from '@/components/documents/DocumentContent';
 import { useAuth } from '@/contexts/auth';
 import { useDocuments, useDocumentOperations, useDocumentCategories } from '@/hooks/documents';
+import { useDocumentColumns } from '@/hooks/documents/useDocumentColumns';
 import { toast } from 'sonner';
 import { Document } from '@/types/document-types';
 import { Button } from '@/components/ui/button';
 import { saveAs } from 'file-saver';
 import DocumentDialogs from '@/components/documents/DocumentDialogs';
 import DocumentHeader from '@/components/documents/DocumentHeader';
+import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
 import { DocumentTab } from '@/types/document-types';
 
 const Documents = () => {
@@ -32,6 +34,15 @@ const Documents = () => {
   const { categories } = useDocumentCategories({
     associationId: currentAssociation?.id
   });
+  
+  // Get document columns configuration
+  const { 
+    columns, 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults 
+  } = useDocumentColumns();
   
   const { uploadDocument, deleteDocument, createCategory } = useDocumentOperations();
   
@@ -121,14 +132,25 @@ const Documents = () => {
     >
       <div className={isMobile ? 'p-0' : ''}>
         <div className="space-y-4">
-          <DocumentHeader 
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onUploadClick={() => setIsUploadDialogOpen(true)}
-            isUploadDisabled={!currentAssociation}
-          />
+          <div className="flex justify-between items-center">
+            <DocumentHeader 
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onUploadClick={() => setIsUploadDialogOpen(true)}
+              isUploadDisabled={!currentAssociation}
+            />
+            
+            <DocumentColumnSelector
+              columns={columns}
+              selectedColumns={visibleColumnIds}
+              onChange={updateVisibleColumns}
+              onReorder={reorderColumns}
+              resetToDefaults={resetToDefaults}
+              className="ml-2"
+            />
+          </div>
 
           <DocumentContent 
             isLoading={isLoading}
@@ -136,6 +158,7 @@ const Documents = () => {
             onViewDocument={onViewDocument}
             onDownloadDocument={onDownloadDocument}
             onDeleteDocument={onDeleteDocument}
+            visibleColumns={visibleColumnIds}
           />
 
           {/* Document dialogs for upload and category creation */}
