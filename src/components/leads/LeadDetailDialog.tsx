@@ -7,7 +7,7 @@ import { Lead } from '@/types/lead-types';
 import LeadInfoTab from './detail/LeadInfoTab';
 import LeadOriginalEmailTab from './detail/LeadOriginalEmailTab';
 import LeadNotesTab from './detail/LeadNotesTab';
-import { getFormattedLeadAddressData } from './detail/lead-detail-utils';
+import { getFormattedLeadAddressData } from './detail/address-utils';
 
 interface LeadDetailDialogProps {
   lead: Lead | null;

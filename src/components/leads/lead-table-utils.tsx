@@ -6,6 +6,7 @@ import LeadStatusBadge from './LeadStatusBadge';
 import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import { ExternalLink } from 'lucide-react';
 import { formatLeadName } from './detail/lead-detail-utils';
+import { cleanCityName, createGoogleMapsLink } from './detail/address-utils';
 
 // Extract and clean city name
 const extractCity = (cityField: string | undefined, address: string | undefined): string => {
@@ -49,47 +50,6 @@ const extractCity = (cityField: string | undefined, address: string | undefined)
   }
   
   return '';
-};
-
-// Helper function to clean up city names by removing street-related words and prefixes
-const cleanCityName = (city: string): string => {
-  if (!city) return '';
-  
-  // Special case fix for 'TrailAuin' to 'Austin'
-  if (city === 'TrailAuin') {
-    return 'Austin';
-  }
-  
-  // Remove any numeric prefixes (like "pug", "rippy", etc.)
-  const cleanedCity = city
-    .replace(/^\s*([a-zA-Z0-9]+\s+)+/i, '')
-    // Remove street-related words
-    .replace(/\d+|Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Lane|Ln\.?|Drive|Dr\.?|Court|Ct\.?|Circle|Cir\.?|Boulevard|Blvd\.?|Highway|Hwy\.?|Way|Place|Pl\.?|Terrace|Ter\.?|Parkway|Pkwy\.?|Alley|Aly\.?|Creek|Loop|Prairie|Clover|pug|rippy|St(?=[A-Z])|Trail|Forest|[\d\s]+[A-Z][a-z]*(?=\s)/gi, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  // Handle special case for "Colorado StAustin" -> "Austin"
-  if (cleanedCity.includes('StAustin')) {
-    return 'Austin';
-  }
-  
-  // Handle special cases for "TrailAuin" and similar
-  if (cleanedCity === 'Auin') {
-    return 'Austin';
-  }
-  
-  return cleanedCity;
-};
-
-// Create a Google Maps link from an address
-const createGoogleMapsLink = (address: string | undefined): string => {
-  if (!address) return '#';
-  
-  // Clean up the address by removing "Map It" and similar phrases
-  const cleanAddress = address.replace(/Map\s*It/gi, '').trim();
-  
-  // URL encode the address for Google Maps
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanAddress)}`;
 };
 
 export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadColumn[]) => {

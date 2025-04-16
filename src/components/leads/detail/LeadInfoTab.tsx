@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
 import { ExternalLink, Mail, Phone } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
 import { formatLeadName, formatAdditionalRequirements } from './lead-detail-utils';
+import { createGoogleMapsLink } from './address-utils';
 
 interface LeadInfoTabProps {
   lead: Lead;
@@ -18,8 +20,8 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
   cleanedCity, 
   zipCode 
 }) => {
-  const fullAddress = formattedStreetAddress && cleanedCity && lead.state && zipCode
-    ? `${formattedStreetAddress}, ${cleanedCity}, ${lead.state} ${zipCode}`
+  const fullAddress = formattedStreetAddress && (cleanedCity || lead.state || zipCode)
+    ? `${formattedStreetAddress}${cleanedCity || lead.state || zipCode ? ', ' : ''}${cleanedCity || ''}${lead.state ? (cleanedCity ? ', ' : '') + lead.state : ''}${zipCode ? ' ' + zipCode : ''}`
     : formattedStreetAddress || 'N/A';
 
   return (
@@ -83,13 +85,12 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
         
         <div className="space-y-4">
           <h3 className="font-medium text-lg border-b pb-1 mb-2 underline">Address</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-2">
-            <div className="text-muted-foreground font-bold">Address:</div>
-            <div className="col-span-2 text-left">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-2">
+            <div className="text-left">
               {fullAddress}
               {formattedStreetAddress && (
                 <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formattedStreetAddress)}`}
+                  href={createGoogleMapsLink(formattedStreetAddress)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="ml-2 text-blue-600 hover:underline inline-flex items-center"
