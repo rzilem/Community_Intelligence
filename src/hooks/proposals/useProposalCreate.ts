@@ -10,7 +10,7 @@ export const useProposalCreate = (leadId?: string) => {
 
   const mutation = useMutation({
     mutationFn: async (proposalData: Partial<Proposal>) => {
-      const { analytics, ...rest } = proposalData;
+      const { analytics, attachments, sections, ...rest } = proposalData;
       
       // Convert analytics to JSON-compatible format for storage
       const analytics_data = analytics ? JSON.parse(JSON.stringify(analytics)) : {
@@ -26,7 +26,7 @@ export const useProposalCreate = (leadId?: string) => {
           content: rest.content || '',
           amount: rest.amount || 0,
           signature_required: rest.signature_required || false,
-          sections: rest.sections || [],
+          sections: sections || [],
           analytics_data
         })
         .select()
@@ -41,8 +41,8 @@ export const useProposalCreate = (leadId?: string) => {
         throw new Error('Failed to retrieve ID from created proposal');
       }
       
-      if (proposalData.attachments && proposalData.attachments.length > 0) {
-        const attachmentsToInsert = proposalData.attachments.map(attachment => ({
+      if (attachments && attachments.length > 0) {
+        const attachmentsToInsert = attachments.map(attachment => ({
           proposal_id: proposalId,
           name: attachment.name,
           type: attachment.type,
@@ -62,7 +62,8 @@ export const useProposalCreate = (leadId?: string) => {
       
       return {
         ...createdProposal,
-        attachments: proposalData.attachments || [],
+        attachments: attachments || [],
+        sections: sections || [],
         analytics: createdProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}

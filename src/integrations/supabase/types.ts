@@ -1827,13 +1827,19 @@ export type Database = {
         Row: {
           amount: number
           analytics_data: Json | null
+          client_portal_link: string | null
           content: string
           created_at: string
           id: string
           lead_id: string
           name: string
           responded_date: string | null
+          sections: Json | null
           sent_date: string | null
+          signature_data: string | null
+          signature_required: boolean | null
+          signed_by: string | null
+          signed_date: string | null
           status: string
           template_id: string | null
           updated_at: string
@@ -1842,13 +1848,19 @@ export type Database = {
         Insert: {
           amount?: number
           analytics_data?: Json | null
+          client_portal_link?: string | null
           content: string
           created_at?: string
           id?: string
           lead_id: string
           name: string
           responded_date?: string | null
+          sections?: Json | null
           sent_date?: string | null
+          signature_data?: string | null
+          signature_required?: boolean | null
+          signed_by?: string | null
+          signed_date?: string | null
           status?: string
           template_id?: string | null
           updated_at?: string
@@ -1857,13 +1869,19 @@ export type Database = {
         Update: {
           amount?: number
           analytics_data?: Json | null
+          client_portal_link?: string | null
           content?: string
           created_at?: string
           id?: string
           lead_id?: string
           name?: string
           responded_date?: string | null
+          sections?: Json | null
           sent_date?: string | null
+          signature_data?: string | null
+          signature_required?: boolean | null
+          signed_by?: string | null
+          signed_date?: string | null
           status?: string
           template_id?: string | null
           updated_at?: string

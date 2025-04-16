@@ -33,6 +33,7 @@ export const useProposalDetails = () => {
       return {
         ...dbProposal,
         attachments: attachments || [],
+        sections: dbProposal.sections || [],
         analytics: dbProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}

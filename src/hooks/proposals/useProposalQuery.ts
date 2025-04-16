@@ -42,6 +42,7 @@ export const useProposalQuery = (leadId?: string) => {
             return {
               ...proposal,
               attachments: attachments || [],
+              sections: proposal.sections || [],
               analytics: proposal.analytics_data || {
                 views: 0,
                 view_count_by_section: {}
