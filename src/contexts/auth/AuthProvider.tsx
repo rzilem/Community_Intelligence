@@ -27,20 +27,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [authError, setAuthError] = React.useState<string | null>(null);
 
   useEffect(() => {
-    console.log('AuthProvider mounted');
+    console.log('[AuthProvider] Initializing authentication...');
     try {
+      // First check for an existing session
       supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('Initial session check:', session ? 'Session found' : 'No session', session);
+        console.log('[AuthProvider] Initial session check:', session ? 'Session found' : 'No session');
         setSession(session);
         setUser(session?.user || null);
       }).catch(error => {
-        console.error('Error fetching initial session:', error);
+        console.error('[AuthProvider] Error fetching initial session:', error);
         setAuthError('Failed to fetch initial session');
         setLoading(false);
       });
 
+      // Then set up the auth state change listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('[AuthProvider] Auth state changed:', event, session?.user?.email);
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
           setSession(session);
           setUser(session?.user || null);
@@ -59,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subscription.unsubscribe();
       };
     } catch (error) {
-      console.error('Unexpected error in auth subscription:', error);
+      console.error('[AuthProvider] Unexpected error in auth subscription:', error);
       setAuthError('Authentication service unavailable');
       setLoading(false);
     }
@@ -69,27 +71,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadUserData = async () => {
       if (user) {
         try {
-          console.log('Loading user data for:', user.id);
+          console.log('[AuthProvider] Loading user data for:', user.id);
           const profileData = await loadUserProfile(user.id);
           
           if (profileData) {
-            console.log('Profile data loaded:', profileData);
+            console.log('[AuthProvider] Profile data loaded:', profileData);
             setProfile(profileData);
             setIsAdmin(profileData.role === 'admin');
             setUserRole(profileData.role);
             
             const associations = await loadUserAssociations(user.id);
-            console.log('User associations loaded:', associations);
+            console.log('[AuthProvider] User associations loaded:', associations);
             setUserAssociations(associations);
             
             if (associations?.length > 0 && !currentAssociation) {
               setCurrentAssociation(associations[0].associations);
             }
           } else {
-            console.warn('No profile data found for user:', user.id);
+            console.warn('[AuthProvider] No profile data found for user:', user.id);
+            // Create a default profile in memory to prevent errors
+            setProfile({
+              id: user.id,
+              role: 'user',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              // Add other required Profile fields with defaults
+            } as Profile);
           }
         } catch (error) {
-          console.error('Error loading user data:', error);
+          console.error('[AuthProvider] Error loading user data:', error);
           toast.error('Failed to load user profile data');
         } finally {
           setLoading(false);
@@ -106,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signInWithEmail(email, password);
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('[AuthProvider] Sign in error:', error);
       throw error;
     }
   };
@@ -119,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signUpWithEmail(email, password, userData);
     } catch (error) {
-      console.error('Sign up error:', error);
+      console.error('[AuthProvider] Sign up error:', error);
       throw error;
     }
   };
@@ -128,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signOutUser();
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('[AuthProvider] Sign out error:', error);
       throw error;
     }
   };
@@ -136,18 +146,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshProfile = async () => {
     if (user?.id) {
       try {
+        console.log('[AuthProvider] Refreshing profile for user:', user.id);
         const { profile: updatedProfile } = await fetchUserProfile(user.id);
         if (updatedProfile) {
+          console.log('[AuthProvider] Updated profile:', updatedProfile);
           setProfile(updatedProfile);
         }
       } catch (error) {
-        console.error('Error refreshing profile:', error);
+        console.error('[AuthProvider] Error refreshing profile:', error);
         toast.error('Failed to refresh profile');
       }
     }
   };
 
   const isAuthenticated = !!user;
+
+  console.log('[AuthProvider] Current state:', { 
+    isAuthenticated, 
+    userEmail: user?.email,
+    profileLoaded: !!profile,
+    loading
+  });
 
   const contextValue = {
     user,
@@ -166,10 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentAssociation,
     refreshProfile,
   };
-
-  if (authError) {
-    console.error('Auth context error state:', authError);
-  }
 
   return (
     <AuthContext.Provider value={contextValue}>

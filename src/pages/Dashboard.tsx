@@ -20,22 +20,16 @@ import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
 import { Profile } from '@/types/profile-types';
 
 const Dashboard = () => {
-  const { currentAssociation, user } = useAuth();
+  const { currentAssociation, user, profile } = useAuth();
   const { stats, recentActivity, loading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
   
-  console.log('Dashboard rendering, user:', user ? 'logged in' : 'not logged in');
+  console.log('Dashboard rendering, user:', user ? 'logged in' : 'not logged in', 'profile:', profile);
   useAdminAccess(user?.id);
   
-  // Convert user to Profile type if needed
-  const userProfile: Profile | null = user ? {
-    ...user,
-    role: user.role || 'user', // Ensure role is always defined
-    created_at: user.created_at || new Date().toISOString(),
-    updated_at: user.updated_at || new Date().toISOString(),
-    id: user.id
-  } as Profile : null;
+  // Use the profile from auth context instead of converting user
+  const userProfile = profile;
   
   const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
     userProfile,
@@ -68,7 +62,7 @@ const Dashboard = () => {
         {/* Community Intelligence AI */}
         <AiQueryInput />
         
-        {user?.role === 'treasurer' ? (
+        {profile?.role === 'treasurer' ? (
           getContentForRole()
         ) : (
           <Tabs defaultValue="calendar" className="space-y-4">
