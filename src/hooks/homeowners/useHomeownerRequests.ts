@@ -41,7 +41,7 @@ export const useHomeownerRequests = () => {
       
       console.log(`Total homeowner requests in database: ${allRequests?.length || 0}`);
       
-      // If current association exists, filter by it
+      // If current association exists, filter by association
       let query = supabase.from('homeowner_requests').select('*');
       
       if (currentAssociation) {
@@ -122,8 +122,8 @@ export const useHomeownerRequests = () => {
     try {
       setLoading(true);
       
-      // Create a test request that doesn't require an association
-      const testRequest = {
+      // Create a test request that includes association_id when available
+      const testRequest: any = {
         title: 'Test Request',
         description: 'This is a test homeowner request',
         status: 'open',
@@ -132,7 +132,7 @@ export const useHomeownerRequests = () => {
         tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
       };
       
-      // If current association exists, attach it to the request
+      // Only add association_id when it exists
       if (currentAssociation) {
         testRequest.association_id = currentAssociation.id;
       }
