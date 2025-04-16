@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, Image, Video, File, X, Loader2 } from 'lucide-react';
 import { ProposalAttachment } from '@/types/proposal-types';
@@ -21,6 +21,7 @@ const ProposalAttachments: React.FC<ProposalAttachmentsProps> = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const { uploadAttachment } = useProposals();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -46,32 +47,43 @@ const ProposalAttachments: React.FC<ProposalAttachmentsProps> = ({
     }
   };
 
+  const handleBrowseButtonClick = () => {
+    // Programmatically click the file input when the browse button is clicked
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center justify-center border-2 border-dashed rounded-md p-6">
         <Upload className="h-8 w-8 text-gray-400" />
         <p className="mt-2 text-sm text-gray-600">Drag and drop files here, or</p>
-        <label htmlFor="file-upload" className="mt-2">
-          <Button variant="outline" type="button" className="relative" disabled={isUploading}>
-            {isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading...
-              </>
-            ) : (
-              'Browse files'
-            )}
-            <input 
-              id="file-upload" 
-              type="file" 
-              multiple 
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov" 
-              className="sr-only"
-              onChange={handleFileUpload}
-              disabled={isUploading}
-            />
-          </Button>
-        </label>
+        <Button 
+          variant="outline" 
+          type="button" 
+          className="mt-2" 
+          disabled={isUploading}
+          onClick={handleBrowseButtonClick}
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading...
+            </>
+          ) : (
+            'Browse files'
+          )}
+        </Button>
+        <input 
+          ref={fileInputRef}
+          type="file" 
+          multiple 
+          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov" 
+          className="sr-only"
+          onChange={handleFileUpload}
+          disabled={isUploading}
+        />
         <p className="mt-1 text-xs text-gray-500">
           Supported formats: PDF, Word, Images, Videos
         </p>

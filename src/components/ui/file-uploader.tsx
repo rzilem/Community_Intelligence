@@ -2,6 +2,7 @@
 import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface FileUploaderProps {
   onFileSelect: (file: File) => void;
@@ -28,20 +29,23 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   const handleClick = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
     <div className={`flex flex-col space-y-2 ${className}`}>
-      <Button
+      <TooltipButton
         type="button"
         variant="outline"
         onClick={handleClick}
         className="flex items-center w-full"
+        tooltip="Select a file to upload"
       >
         <Upload className="mr-2 h-4 w-4" />
         {selectedFile ? selectedFile.name : label}
-      </Button>
+      </TooltipButton>
       <input
         type="file"
         ref={fileInputRef}
