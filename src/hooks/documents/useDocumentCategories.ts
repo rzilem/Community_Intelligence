@@ -3,6 +3,7 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { DocumentCategory, UseCategoriesParams } from '@/types/document-types';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { PostgrestError } from '@supabase/supabase-js';
 
 export function useDocumentCategories({ associationId, enabled = true }: UseCategoriesParams = {}) {
   const {
@@ -22,8 +23,8 @@ export function useDocumentCategories({ associationId, enabled = true }: UseCate
 
   useEffect(() => {
     if (error) {
-      // Only show the error once if the table doesn't exist yet
-      if (error.code === '42P01' && !localStorage.getItem('document_categories_error_shown')) {
+      // Type guard to check if error has a code property (PostgrestError)
+      if ('code' in error && error.code === '42P01' && !localStorage.getItem('document_categories_error_shown')) {
         toast.error('Document categories functionality is not fully available yet');
         localStorage.setItem('document_categories_error_shown', 'true');
         
@@ -31,7 +32,7 @@ export function useDocumentCategories({ associationId, enabled = true }: UseCate
         setTimeout(() => {
           localStorage.removeItem('document_categories_error_shown');
         }, 60 * 60 * 1000);
-      } else if (error.code !== '42P01') {
+      } else if (!('code' in error) || error.code !== '42P01') {
         toast.error('Failed to load document categories');
       }
       console.error('Error loading document categories:', error);
