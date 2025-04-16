@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Proposal } from '@/types/proposal-types';
 import ProposalAnalyticsDashboard from './analytics/ProposalAnalyticsDashboard';
+import ClientPortalLinkGenerator from './ClientPortalLinkGenerator';
 import { toast } from 'sonner';
 
 interface ProposalViewerProps {
@@ -64,6 +65,10 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
     const demoLink = `https://app.yourcompany.com/p/${proposal.id}`;
     navigator.clipboard.writeText(demoLink);
     toast.success("Shareable link copied to clipboard");
+  };
+
+  const handlePortalLinkGenerated = (link: string) => {
+    toast.success("Client portal link generated successfully");
   };
 
   return (
@@ -136,6 +141,7 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
           <TabsList className="mb-4">
             <TabsTrigger value="preview">Preview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
           </TabsList>
           
           <TabsContent value="preview" className="mt-0">
@@ -149,7 +155,23 @@ const ProposalViewer: React.FC<ProposalViewerProps> = ({
             <ProposalAnalyticsDashboard 
               proposalId={proposal.id} 
               proposalName={proposal.name}
+              analytics={proposal.analytics}
             />
+          </TabsContent>
+          
+          <TabsContent value="client-portal" className="mt-0">
+            <div className="border rounded-md p-6 bg-white">
+              <h3 className="text-lg font-medium mb-4">Client Portal Access</h3>
+              <p className="text-sm text-muted-foreground mb-6">
+                Generate a secure link for your client to view and respond to this proposal online.
+                The client portal offers interactive features and real-time analytics.
+              </p>
+              
+              <ClientPortalLinkGenerator 
+                proposal={proposal}
+                onLinkGenerated={handlePortalLinkGenerated}
+              />
+            </div>
           </TabsContent>
         </Tabs>
         

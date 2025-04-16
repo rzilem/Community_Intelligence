@@ -10,6 +10,7 @@ import OnboardingWizard from "@/pages/lead-management/OnboardingWizard";
 import Templates from "@/pages/lead-management/Templates";
 import LeadDetailPage from "@/components/leads/LeadDetailPage";
 import TemplateDetails from "@/components/onboarding/TemplateDetails";
+import ClientPortal from "@/pages/ClientPortal";
 
 // Lead Management Routes
 export const leadManagementRoutes: RouteObject[] = [
@@ -52,5 +53,10 @@ export const leadManagementRoutes: RouteObject[] = [
   {
     path: "/lead-management/leads/:leadId",
     element: <RequireAuth allowedRoles={['admin', 'manager']}><LeadDetailPage /></RequireAuth>
+  },
+  // Client portal route - no authentication required
+  {
+    path: "/client-portal/proposals/:proposalId",
+    element: <ClientPortal />
   }
 ];

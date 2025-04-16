@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Proposal, ProposalAttachment } from '@/types/proposal-types';
+import { Proposal, ProposalAttachment, ProposalAnalytics } from '@/types/proposal-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallback } from 'react';
@@ -35,6 +35,7 @@ export const useProposals = (leadId?: string) => {
         // Fetch attachments for each proposal
         const proposalsWithAttachments = await Promise.all(
           (data || []).map(async (proposal: any) => {
+            // Fetch attachments
             const { data: attachments, error: attachmentsError } = await supabase
               .from('proposal_attachments')
               .select('*')
@@ -44,9 +45,22 @@ export const useProposals = (leadId?: string) => {
               console.error('Error fetching attachments:', attachmentsError);
             }
             
+            // Fetch analytics if they exist
+            const { data: analytics, error: analyticsError } = await supabase
+              .from('proposal_analytics')
+              .select('*')
+              .eq('proposal_id', proposal.id)
+              .single();
+              
+            if (analyticsError && analyticsError.code !== 'PGRST116') {
+              console.error('Error fetching analytics:', analyticsError);
+            }
+            
+            // Build complete proposal object
             return {
               ...proposal,
-              attachments: attachments || []
+              attachments: attachments || [],
+              analytics: analytics || undefined
             } as Proposal;
           })
         );
@@ -70,7 +84,9 @@ export const useProposals = (leadId?: string) => {
           name: proposalData.name,
           status: proposalData.status || 'draft',
           content: proposalData.content || '',
-          amount: proposalData.amount || 0
+          amount: proposalData.amount || 0,
+          signature_required: proposalData.signature_required || false,
+          sections: proposalData.sections || []
         })
         .select()
         .single();
@@ -106,10 +122,27 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
+      // 3. Initialize analytics
+      const { error: analyticsError } = await supabase
+        .from('proposal_analytics')
+        .insert({
+          proposal_id: proposalId,
+          views: 0,
+          view_count_by_section: {}
+        });
+        
+      if (analyticsError) {
+        console.error('Error initializing analytics:', analyticsError);
+      }
+      
       // Return a properly typed Proposal object
       return {
         ...createdProposal,
-        attachments: proposalData.attachments || []
+        attachments: proposalData.attachments || [],
+        analytics: {
+          views: 0,
+          view_count_by_section: {}
+        }
       } as Proposal;
     },
     onSuccess: () => {
@@ -123,19 +156,28 @@ export const useProposals = (leadId?: string) => {
 
   const updateProposalMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string, data: Partial<Proposal> }) => {
+      // Extract analytics to handle separately
+      const { analytics, ...proposalData } = data;
+      
       // 1. Update the proposal
       const { data: updatedProposal, error } = await supabase
         .from('proposals')
         .update({
-          lead_id: data.lead_id,
-          template_id: data.template_id,
-          name: data.name,
-          status: data.status,
-          content: data.content,
-          amount: data.amount,
-          sent_date: data.sent_date,
-          viewed_date: data.viewed_date,
-          responded_date: data.responded_date
+          lead_id: proposalData.lead_id,
+          template_id: proposalData.template_id,
+          name: proposalData.name,
+          status: proposalData.status,
+          content: proposalData.content,
+          amount: proposalData.amount,
+          sent_date: proposalData.sent_date,
+          viewed_date: proposalData.viewed_date,
+          responded_date: proposalData.responded_date,
+          client_portal_link: proposalData.client_portal_link,
+          signature_required: proposalData.signature_required,
+          signed_date: proposalData.signed_date,
+          signed_by: proposalData.signed_by,
+          signature_data: proposalData.signature_data,
+          sections: proposalData.sections
         })
         .eq('id', id)
         .select()
@@ -147,7 +189,7 @@ export const useProposals = (leadId?: string) => {
       const proposal = updatedProposal as any;
       
       // 2. If attachments exist, handle them
-      if (data.attachments) {
+      if (proposalData.attachments) {
         // First, delete existing attachments
         const { error: deleteError } = await supabase
           .from('proposal_attachments')
@@ -159,8 +201,8 @@ export const useProposals = (leadId?: string) => {
         }
         
         // Then insert new ones
-        if (data.attachments.length > 0) {
-          const attachmentsToInsert = data.attachments.map(attachment => ({
+        if (proposalData.attachments.length > 0) {
+          const attachmentsToInsert = proposalData.attachments.map(attachment => ({
             proposal_id: id,
             name: attachment.name,
             type: attachment.type,
@@ -179,10 +221,30 @@ export const useProposals = (leadId?: string) => {
         }
       }
       
+      // 3. If analytics exist, update them
+      if (analytics) {
+        const { error: analyticsError } = await supabase
+          .from('proposal_analytics')
+          .upsert({
+            proposal_id: id,
+            views: analytics.views || 0,
+            avg_view_time: analytics.avg_view_time,
+            most_viewed_section: analytics.most_viewed_section,
+            initial_view_date: analytics.initial_view_date,
+            last_view_date: analytics.last_view_date,
+            view_count_by_section: analytics.view_count_by_section || {}
+          });
+          
+        if (analyticsError) {
+          console.error('Error updating analytics:', analyticsError);
+        }
+      }
+      
       // Return a properly typed Proposal object
       return {
         ...proposal,
-        attachments: data.attachments || []
+        attachments: proposalData.attachments || [],
+        analytics: analytics
       } as Proposal;
     },
     onSuccess: () => {
@@ -196,6 +258,16 @@ export const useProposals = (leadId?: string) => {
 
   const deleteProposalMutation = useMutation({
     mutationFn: async (id: string) => {
+      // Delete analytics first (dependent on proposal)
+      const { error: analyticsError } = await supabase
+        .from('proposal_analytics')
+        .delete()
+        .eq('proposal_id', id);
+        
+      if (analyticsError) {
+        console.error('Error deleting analytics:', analyticsError);
+      }
+      
       // Delete proposal (attachments will be cascade deleted due to FK constraint)
       const { error } = await supabase
         .from('proposals')
@@ -211,6 +283,26 @@ export const useProposals = (leadId?: string) => {
     },
     onError: (error) => {
       toast.error(`Error deleting proposal: ${error.message}`);
+    }
+  });
+
+  const updateAnalyticsMutation = useMutation({
+    mutationFn: async ({ proposalId, analyticsData }: { proposalId: string, analyticsData: Partial<ProposalAnalytics> }) => {
+      const { error } = await supabase
+        .from('proposal_analytics')
+        .upsert({
+          proposal_id: proposalId,
+          ...analyticsData
+        });
+        
+      if (error) throw new Error(error.message);
+      return { proposalId, analyticsData };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error) => {
+      console.error(`Error updating analytics: ${error.message}`);
     }
   });
 
@@ -292,13 +384,109 @@ export const useProposals = (leadId?: string) => {
         console.error('Error fetching attachments:', attachmentsError);
       }
       
+      // Get analytics
+      const { data: analytics, error: analyticsError } = await supabase
+        .from('proposal_analytics')
+        .select('*')
+        .eq('proposal_id', id)
+        .single();
+        
+      if (analyticsError && analyticsError.code !== 'PGRST116') {
+        console.error('Error fetching analytics:', analyticsError);
+      }
+      
       return {
         ...(proposal as any),
-        attachments: attachments || []
+        attachments: attachments || [],
+        analytics: analytics || undefined
       } as Proposal;
     } catch (err) {
       console.error("Error in getProposal:", err);
       return null;
+    }
+  }, []);
+
+  const trackProposalView = useCallback(async (proposalId: string, sectionId?: string): Promise<void> => {
+    try {
+      // Get current analytics
+      const { data: currentAnalytics, error: fetchError } = await supabase
+        .from('proposal_analytics')
+        .select('*')
+        .eq('proposal_id', proposalId)
+        .single();
+        
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error fetching analytics for tracking:', fetchError);
+        return;
+      }
+      
+      const analytics = currentAnalytics || {
+        proposal_id: proposalId,
+        views: 0,
+        view_count_by_section: {}
+      };
+      
+      // Update analytics
+      const updatedAnalytics = {
+        ...analytics,
+        views: (analytics.views || 0) + 1,
+        last_view_date: new Date().toISOString(),
+        initial_view_date: analytics.initial_view_date || new Date().toISOString()
+      };
+      
+      // If a section was viewed, update section-specific stats
+      if (sectionId) {
+        const viewCountBySection = analytics.view_count_by_section || {};
+        const sectionCount = viewCountBySection[sectionId] || 0;
+        
+        updatedAnalytics.view_count_by_section = {
+          ...viewCountBySection,
+          [sectionId]: sectionCount + 1
+        };
+        
+        // Find most viewed section
+        let maxViews = 0;
+        let mostViewedSection = '';
+        
+        Object.entries(updatedAnalytics.view_count_by_section).forEach(([section, count]) => {
+          if (count > maxViews) {
+            maxViews = count;
+            mostViewedSection = section;
+          }
+        });
+        
+        if (mostViewedSection) {
+          updatedAnalytics.most_viewed_section = mostViewedSection;
+        }
+      }
+      
+      // Update the proposal to 'viewed' status if it's currently 'sent'
+      const { data: proposal, error: proposalError } = await supabase
+        .from('proposals')
+        .select('status')
+        .eq('id', proposalId)
+        .single();
+        
+      if (!proposalError && proposal && proposal.status === 'sent') {
+        await supabase
+          .from('proposals')
+          .update({
+            status: 'viewed',
+            viewed_date: new Date().toISOString()
+          })
+          .eq('id', proposalId);
+      }
+      
+      // Save updated analytics
+      const { error: updateError } = await supabase
+        .from('proposal_analytics')
+        .upsert(updatedAnalytics);
+        
+      if (updateError) {
+        console.error('Error updating analytics from tracking:', updateError);
+      }
+    } catch (err) {
+      console.error('Error tracking proposal view:', err);
     }
   }, []);
 
@@ -309,8 +497,10 @@ export const useProposals = (leadId?: string) => {
     createProposal: createProposalMutation.mutate,
     updateProposal: updateProposalMutation.mutate,
     deleteProposal: deleteProposalMutation.mutate,
+    updateAnalytics: updateAnalyticsMutation.mutate,
     getProposal,
     uploadAttachment,
+    trackProposalView,
     refreshProposals: refetch
   };
 };

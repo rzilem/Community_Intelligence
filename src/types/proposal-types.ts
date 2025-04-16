@@ -25,6 +25,12 @@ export interface Proposal {
   created_at: string;
   updated_at: string;
   sections?: ProposalSection[];
+  client_portal_link?: string;
+  signature_required?: boolean;
+  signed_date?: string;
+  signed_by?: string;
+  signature_data?: string;
+  analytics?: ProposalAnalytics;
 }
 
 export interface ProposalFolder {
@@ -61,4 +67,26 @@ export interface ProposalAnalytics {
   initial_view_date?: string;
   last_view_date?: string;
   view_count_by_section?: Record<string, number>;
+}
+
+export interface ProposalRecommendation {
+  id: string;
+  title: string;
+  description: string;
+  confidence_score: number;
+  category: 'section' | 'pricing' | 'language' | 'structure';
+  content?: string;
+  proposal_id?: string;
+  created_at: string;
+}
+
+export interface ClientPortalSettings {
+  enabled: boolean;
+  custom_domain?: string;
+  logo_url?: string;
+  primary_color?: string;
+  require_signature?: boolean;
+  allow_comments?: boolean;
+  allow_downloads?: boolean;
+  password_protected?: boolean;
 }

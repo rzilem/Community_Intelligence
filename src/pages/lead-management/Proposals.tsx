@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText, Plus, Settings, Filter, SortAsc, SortDesc } from 'lucide-react';
+import { FileText, Plus, Settings, Filter, SortAsc, SortDesc, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import ProposalList from '@/components/proposals/ProposalList';
 import ProposalForm from '@/components/proposals/ProposalForm';
 import ProposalViewer from '@/components/proposals/ProposalViewer';
 import { useProposals } from '@/hooks/proposals/useProposals';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalRecommendation } from '@/types/proposal-types';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -18,12 +18,21 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import AIContentRecommendations from '@/components/proposals/AIContentRecommendations';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 const Proposals = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
   const [leadFilter, setLeadFilter] = useState<string>('all');
+  const [isAIRecommendationsOpen, setIsAIRecommendationsOpen] = useState(false);
   
   const { 
     proposals, 
@@ -97,6 +106,60 @@ const Proposals = () => {
     }
   };
 
+  const handleApplyRecommendation = async (recommendation: ProposalRecommendation) => {
+    if (!currentProposal) return;
+    
+    try {
+      let updatedContent = currentProposal.content;
+      
+      // Logic to apply recommendation based on its category
+      switch (recommendation.category) {
+        case 'section':
+          // Add a new section at the end of the proposal
+          updatedContent += recommendation.content || '';
+          break;
+          
+        case 'pricing':
+          // For pricing recommendations, find and replace pricing section
+          // This is simplified - would need actual DOM manipulation in real app
+          updatedContent += recommendation.content || '';
+          break;
+          
+        case 'language':
+          // For language recommendations, this would be more complex in real app
+          // Just append for demo purposes
+          updatedContent += `<div class="ai-recommendation">${recommendation.content || ''}</div>`;
+          break;
+          
+        default:
+          updatedContent += recommendation.content || '';
+      }
+      
+      await updateProposal({
+        id: currentProposal.id,
+        data: {
+          ...currentProposal,
+          content: updatedContent
+        }
+      });
+      
+      toast.success(`Applied recommendation: ${recommendation.title}`);
+      setIsAIRecommendationsOpen(false);
+      
+      // Update the current proposal in state
+      const updatedProposal = {
+        ...currentProposal,
+        content: updatedContent
+      };
+      setCurrentProposal(updatedProposal);
+      
+      // Refresh proposal list
+      refreshProposals();
+    } catch (error: any) {
+      toast.error(`Error applying recommendation: ${error.message}`);
+    }
+  };
+
   // Calculate some stats for the dashboard
   const totalProposals = proposals.length;
   const pendingProposals = proposals.filter(p => p.status === 'sent' || p.status === 'viewed').length;
@@ -119,6 +182,18 @@ const Proposals = () => {
       description="Create and manage business proposals for potential clients."
       actions={
         <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              if (currentProposal) {
+                setIsAIRecommendationsOpen(true);
+              } else {
+                toast.error("Please select a proposal to get AI recommendations");
+              }
+            }}
+          >
+            <BrainCircuit className="mr-2 h-4 w-4" /> AI Recommendations
+          </Button>
           <Link to="/lead-management/templates">
             <Button variant="outline">
               <Settings className="mr-2 h-4 w-4" /> Manage Templates
@@ -197,6 +272,8 @@ const Proposals = () => {
           onView={handleViewProposal}
           onDelete={handleDeleteProposal}
           onSend={handleSendProposal}
+          onSelect={setCurrentProposal}
+          selectedProposal={currentProposal}
         />
         
         {isFormOpen && (
@@ -216,6 +293,27 @@ const Proposals = () => {
             onSend={() => handleSendProposal(currentProposal)}
           />
         )}
+        
+        <Dialog 
+          open={isAIRecommendationsOpen} 
+          onOpenChange={setIsAIRecommendationsOpen}
+        >
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>AI Content Recommendations</DialogTitle>
+              <DialogDescription>
+                Get intelligent suggestions to improve your proposal based on analytics and successful patterns
+              </DialogDescription>
+            </DialogHeader>
+            
+            {currentProposal && (
+              <AIContentRecommendations 
+                proposal={currentProposal}
+                onApplyRecommendation={handleApplyRecommendation}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTemplate>
   );
