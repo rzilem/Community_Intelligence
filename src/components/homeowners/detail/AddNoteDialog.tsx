@@ -46,13 +46,15 @@ export const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
 
       // Determine author name from user if available
       let authorName = 'Staff';
-      if (user) {
-        const profile = user.profile || {};
-        const hasFirstName = !!profile.first_name;
-        const hasLastName = !!profile.last_name;
+      
+      // Safely access user profile data, handling the case where it might not exist
+      if (user && 'profile' in user) {
+        const userProfile = user.profile || {};
+        const firstName = userProfile.first_name || '';
+        const lastName = userProfile.last_name || '';
         
-        if (hasFirstName || hasLastName) {
-          authorName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+        if (firstName || lastName) {
+          authorName = `${firstName} ${lastName}`.trim();
         }
       }
 
