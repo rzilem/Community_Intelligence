@@ -9,7 +9,8 @@ import { HomeownerTabs } from '@/components/homeowners/detail/HomeownerTabs';
 import { useHomeownerData } from '@/hooks/homeowners/useHomeownerData';
 import HomeownerEditForm from '@/components/homeowners/detail/HomeownerEditForm';
 import { useAuth } from '@/contexts/auth/useAuth';
-import { Homeowner } from '@/components/homeowners/detail/types';
+import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
+import { toast } from 'sonner';
 
 const HomeownerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,7 +19,7 @@ const HomeownerDetailPage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { isAdmin } = useAuth();
   
-  const { homeowner, updateHomeownerImage, updateHomeownerData } = useHomeownerData(id || '');
+  const { homeowner, updateHomeownerImage, updateHomeownerData, addHomeownerNote } = useHomeownerData(id || '');
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -31,6 +32,24 @@ const HomeownerDetailPage: React.FC = () => {
   const handleSaveEdit = async (data: Partial<Homeowner>) => {
     await updateHomeownerData(data);
     setIsEditing(false);
+  };
+
+  const handleAddNote = async (note: Omit<NoteType, 'date'>) => {
+    try {
+      if (!id) {
+        toast.error('Cannot add note: Missing homeowner ID');
+        return;
+      }
+      
+      await addHomeownerNote(note);
+      
+      // Switch to the Notes tab and Manual Notes subtab
+      setActiveTab('Notes');
+      setActiveNotesTab('Manual Notes');
+    } catch (error) {
+      console.error('Error adding note from page component:', error);
+      toast.error('Failed to add note');
+    }
   };
 
   return (
@@ -83,6 +102,8 @@ const HomeownerDetailPage: React.FC = () => {
           activeNotesTab={activeNotesTab}
           setActiveNotesTab={setActiveNotesTab}
           notes={homeowner.notes}
+          onAddNote={handleAddNote}
+          homeownerId={id || homeowner.id}
         />
       </div>
     </AppLayout>

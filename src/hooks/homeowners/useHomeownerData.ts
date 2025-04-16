@@ -89,7 +89,8 @@ export const useHomeownerData = (homeownerId: string) => {
               association: foundHomeowner.association,
               moveOutDate: foundHomeowner.moveOutDate,
               lastPayment: foundHomeowner.lastPayment,
-              aclStartDate: foundHomeowner.aclStartDate
+              aclStartDate: foundHomeowner.aclStartDate,
+              closingDate: foundHomeowner.closingDate
             };
             
             setHomeowner(convertedHomeowner);
@@ -147,10 +148,35 @@ export const useHomeownerData = (homeownerId: string) => {
             status: residentData.move_out_date ? 'inactive' : 'active',
             avatarUrl: avatarUrl,
             notes: [],
-            type: residentData.resident_type as 'owner' | 'tenant' | 'family-member' | undefined,
+            type: residentData.resident_type as any, // Use 'any' to avoid type error
             propertyAddress: propertyAddress,
             association: '', // Would need to join with association table
+            closingDate: ''
           };
+          
+          // Fetch notes for the resident
+          try {
+            const { data: notesData, error: notesError } = await supabase
+              .from('comments')
+              .select('*')
+              .eq('parent_id', residentData.id)
+              .eq('parent_type', 'resident')
+              .order('created_at', { ascending: false });
+              
+            if (!notesError && notesData) {
+              // Convert database comments to NoteType format
+              const notes: NoteType[] = notesData.map(comment => ({
+                type: comment.content.includes('[SYSTEM]') ? 'system' : 'manual',
+                author: comment.content.includes('[SYSTEM]') ? 'System' : comment.user_name || 'Staff',
+                content: comment.content.replace('[SYSTEM]', '').trim(),
+                date: new Date(comment.created_at).toLocaleString()
+              }));
+              
+              convertedHomeowner.notes = notes;
+            }
+          } catch (notesErr) {
+            console.error('Error fetching resident notes:', notesErr);
+          }
           
           setHomeowner(convertedHomeowner);
           console.log('Loaded homeowner data from database:', convertedHomeowner);
@@ -189,6 +215,7 @@ export const useHomeownerData = (homeownerId: string) => {
         if (updatedData.phone) updateData.phone = updatedData.phone;
         if (updatedData.moveInDate) updateData.move_in_date = updatedData.moveInDate;
         if (updatedData.moveOutDate) updateData.move_out_date = updatedData.moveOutDate;
+        if (updatedData.type) updateData.resident_type = updatedData.type;
         
         // Update in database
         const { error } = await supabase
@@ -214,12 +241,57 @@ export const useHomeownerData = (homeownerId: string) => {
       throw new Error('Failed to update homeowner data');
     }
   };
+  
+  const addHomeownerNote = async (noteData: Omit<NoteType, 'date'>) => {
+    try {
+      // First check if we're working with real database data or mock data
+      const isRealData = !!homeowner.id;
+      
+      if (isRealData) {
+        // Add note to the database comments table
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        
+        const { error } = await supabase
+          .from('comments')
+          .insert({
+            parent_id: homeowner.id,
+            parent_type: 'resident',
+            user_id: userId || null,
+            user_name: noteData.author,
+            content: noteData.type === 'system' ? `[SYSTEM] ${noteData.content}` : noteData.content,
+          });
+          
+        if (error) {
+          console.error("Error adding note to database:", error);
+          throw new Error('Failed to add note to database');
+        }
+      }
+      
+      // Add note to local state
+      const newNote: NoteType = {
+        ...noteData,
+        date: new Date().toLocaleString()
+      };
+      
+      setHomeowner(prev => ({
+        ...prev,
+        notes: [newNote, ...prev.notes]
+      }));
+      
+      return true;
+    } catch (err) {
+      console.error("Error adding homeowner note:", err);
+      throw new Error('Failed to add homeowner note');
+    }
+  };
 
   return {
     homeowner,
     loading,
     error,
     updateHomeownerImage,
-    updateHomeownerData
+    updateHomeownerData,
+    addHomeownerNote
   };
 };
