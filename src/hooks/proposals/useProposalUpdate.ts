@@ -1,8 +1,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalSection } from '@/types/proposal-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export interface UpdateProposalParams {
   id: string;
@@ -24,9 +25,9 @@ export const useProposalUpdate = (leadId?: string) => {
         updateData.analytics_data = JSON.parse(JSON.stringify(analytics));
       }
       
-      // Only include sections if they exist
+      // Only include sections if they exist - convert to JSON-compatible format
       if (sections) {
-        updateData.sections = sections;
+        updateData.sections = JSON.parse(JSON.stringify(sections)) as Json;
       }
       
       const { data: updatedProposal, error } = await supabase
@@ -63,15 +64,17 @@ export const useProposalUpdate = (leadId?: string) => {
         }
       }
       
-      return {
+      const proposalWithTypedSections = {
         ...updatedProposal,
         attachments: attachments || [],
-        sections: updatedProposal.sections || [],
+        sections: updatedProposal.sections ? (updatedProposal.sections as unknown as ProposalSection[]) : [],
         analytics: updatedProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}
         }
       } as Proposal;
+      
+      return proposalWithTypedSections;
     },
     onSuccess: () => {
       toast.success('Proposal updated successfully');

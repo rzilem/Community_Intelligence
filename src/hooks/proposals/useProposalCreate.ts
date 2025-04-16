@@ -1,8 +1,9 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalSection } from '@/types/proposal-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Json } from '@/integrations/supabase/types';
 
 export const useProposalCreate = (leadId?: string) => {
   const queryClient = useQueryClient();
@@ -18,6 +19,9 @@ export const useProposalCreate = (leadId?: string) => {
         view_count_by_section: {}
       };
       
+      // Convert sections to JSON-compatible format
+      const sectionsJson = sections ? JSON.parse(JSON.stringify(sections)) : [];
+      
       const { data: proposal, error } = await supabase
         .from('proposals')
         .insert({
@@ -26,7 +30,7 @@ export const useProposalCreate = (leadId?: string) => {
           content: rest.content || '',
           amount: rest.amount || 0,
           signature_required: rest.signature_required || false,
-          sections: sections || [],
+          sections: sectionsJson as Json,
           analytics_data
         })
         .select()
@@ -34,7 +38,7 @@ export const useProposalCreate = (leadId?: string) => {
         
       if (error) throw new Error(error.message);
       
-      const createdProposal = proposal as Proposal;
+      const createdProposal = proposal as any;
       const proposalId = createdProposal.id;
       
       if (!proposalId) {
@@ -63,12 +67,12 @@ export const useProposalCreate = (leadId?: string) => {
       return {
         ...createdProposal,
         attachments: attachments || [],
-        sections: sections || [],
+        sections: createdProposal.sections ? (createdProposal.sections as ProposalSection[]) : [],
         analytics: createdProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}
         }
-      };
+      } as Proposal;
     },
     onSuccess: () => {
       toast.success('Proposal created successfully');

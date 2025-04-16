@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { Proposal } from '@/types/proposal-types';
+import { Proposal, ProposalSection } from '@/types/proposal-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -27,13 +27,18 @@ export const useProposalDetails = () => {
         console.error('Error fetching attachments:', attachmentsError);
       }
       
-      // Use type assertion to handle analytics_data
+      // Cast the proposal to handle typing issues
       const dbProposal = proposal as any;
+      
+      // Safely convert sections data to proper type
+      const typedSections = dbProposal.sections ? 
+        (Array.isArray(dbProposal.sections) ? dbProposal.sections as ProposalSection[] : []) : 
+        [];
       
       return {
         ...dbProposal,
         attachments: attachments || [],
-        sections: dbProposal.sections || [],
+        sections: typedSections,
         analytics: dbProposal.analytics_data || {
           views: 0,
           view_count_by_section: {}

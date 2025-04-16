@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { Proposal, ProposalAttachment } from '@/types/proposal-types';
+import { Proposal, ProposalSection } from '@/types/proposal-types';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useProposalQuery = (leadId?: string) => {
@@ -39,10 +39,15 @@ export const useProposalQuery = (leadId?: string) => {
               console.error('Error fetching attachments:', attachmentsError);
             }
             
+            // Safely convert sections to proper type
+            const typedSections = proposal.sections ? 
+              (Array.isArray(proposal.sections) ? proposal.sections as ProposalSection[] : []) : 
+              [];
+            
             return {
               ...proposal,
               attachments: attachments || [],
-              sections: proposal.sections || [],
+              sections: typedSections,
               analytics: proposal.analytics_data || {
                 views: 0,
                 view_count_by_section: {}
