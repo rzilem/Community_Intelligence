@@ -13,32 +13,20 @@ export function getFormattedLeadAddressData(lead: Lead) {
   const city = lead.city || extractCity(undefined, streetAddress);
   const cleanedCity = city; // City is already cleaned in extractCity
   const zipCode = lead.zip || extractZipCode(streetAddress || '');
+  const state = (lead.state || '').replace(/\.?/g, '');
   
   // Format the full address properly, removing any duplicate or incorrect information
   let fullAddress = '';
   if (formattedStreetAddress) {
-    // Check if the street address already contains city/state information
-    const hasEmbeddedCityState = formattedStreetAddress.includes(', TX') || 
-                                (cleanedCity && formattedStreetAddress.includes(cleanedCity));
+    // Remove variations of 'Map It' and extra text
+    const cleanedStreetAddress = formattedStreetAddress
+      .replace(/\s*Map\s*It\.?/gi, '')
+      .replace(/Tex\.?/gi, '')
+      .trim();
     
-    if (hasEmbeddedCityState) {
-      // If street address already has city/state, just use it as is, possibly adding a ZIP
-      fullAddress = zipCode && !formattedStreetAddress.includes(zipCode) ? 
-                    `${formattedStreetAddress} ${zipCode}` : formattedStreetAddress;
-    } else {
-      // Otherwise use our normal formatting function
-      fullAddress = formatFullAddress(formattedStreetAddress, cleanedCity, lead.state, zipCode);
-    }
+    fullAddress = formatFullAddress(cleanedStreetAddress, cleanedCity, state, zipCode);
   } else {
     fullAddress = 'N/A';
-  }
-  
-  // Remove any duplicate "Map It" text that might be in the address
-  fullAddress = fullAddress.replace(/Map\s*It/gi, '').trim();
-  
-  // Remove any extraneous address pieces that might be tagged on (like "Auin, TX 67713")
-  if (fullAddress.includes('Austin, TX') && fullAddress.includes('Auin, TX')) {
-    fullAddress = fullAddress.replace(/Auin, TX \d+/i, '').trim();
   }
   
   return {

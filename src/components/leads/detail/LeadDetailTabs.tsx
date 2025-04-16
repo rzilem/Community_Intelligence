@@ -1,72 +1,67 @@
 
-import React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Lead } from '@/types/lead-types';
-import { 
-  User, 
-  Building2, 
-  FileText, 
-  Activity
-} from 'lucide-react';
-
-import LeadDetailsTab from './tabs/LeadDetailsTab';
-import LeadAssociationTab from './tabs/LeadAssociationTab';
-import LeadDocumentsTab from './tabs/LeadDocumentsTab';
-import ActivityFeedTab from './tabs/ActivityFeedTab';
+import LeadInfoTab from './LeadInfoTab';
+import LeadOriginalEmailTab from './LeadOriginalEmailTab';
+import LeadNotesTab from './LeadNotesTab';
+import LeadAttachmentsTab from './LeadAttachmentsTab';
+import { getFormattedLeadAddressData } from './address-utils';
+import { Paperclip } from 'lucide-react';
 
 interface LeadDetailTabsProps {
   lead: Lead;
   onSaveNotes: (notes: string) => void;
-  onAssociationUpdate?: (data: Partial<Lead>) => void;
+  onAssociationUpdate: (associationData: Partial<Lead>) => void;
 }
 
 const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ 
   lead, 
-  onSaveNotes,
+  onSaveNotes, 
   onAssociationUpdate 
 }) => {
+  const [activeTab, setActiveTab] = useState('details');
+  
+  // Get formatted address data using utility function
+  const addressData = getFormattedLeadAddressData(lead);
+  
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="details">
-        <TabsList>
-          <TabsTrigger value="details" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Lead Details
-          </TabsTrigger>
-          <TabsTrigger value="association" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Association
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Activity Feed
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Documents
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="details" className="mt-6">
-          <LeadDetailsTab lead={lead} />
-        </TabsContent>
-        
-        <TabsContent value="association" className="mt-6">
-          <LeadAssociationTab 
-            lead={lead} 
-            onAssociationUpdate={onAssociationUpdate} 
-          />
-        </TabsContent>
-        
-        <TabsContent value="activity" className="mt-6">
-          <ActivityFeedTab lead={lead} onSaveNotes={onSaveNotes} />
-        </TabsContent>
-        
-        <TabsContent value="documents" className="mt-6">
-          <LeadDocumentsTab lead={lead} />
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Tabs defaultValue="details" className="flex-1" value={activeTab} onValueChange={setActiveTab}>
+      <TabsList>
+        <TabsTrigger value="details">Lead Information</TabsTrigger>
+        <TabsTrigger value="original">Original Email</TabsTrigger>
+        <TabsTrigger value="notes">Notes</TabsTrigger>
+        <TabsTrigger value="attachments" className="flex items-center gap-1">
+          <Paperclip className="h-4 w-4" />
+          Attachments
+        </TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="details" className="flex-1 overflow-hidden">
+        <LeadInfoTab 
+          lead={lead} 
+          formattedStreetAddress={addressData.formattedStreetAddress}
+          cleanedCity={addressData.cleanedCity}
+          zipCode={addressData.zipCode}
+          fullAddress={addressData.fullAddress}
+        />
+      </TabsContent>
+      
+      <TabsContent value="original" className="flex-1 overflow-hidden">
+        <LeadOriginalEmailTab lead={lead} />
+      </TabsContent>
+      
+      <TabsContent value="notes" className="flex-1 overflow-hidden">
+        <LeadNotesTab 
+          lead={lead} 
+          onSaveNotes={onSaveNotes} 
+        />
+      </TabsContent>
+      
+      <TabsContent value="attachments" className="flex-1 overflow-hidden">
+        <LeadAttachmentsTab lead={lead} />
+      </TabsContent>
+    </Tabs>
   );
 };
 
