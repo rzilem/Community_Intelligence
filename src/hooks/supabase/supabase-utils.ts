@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { PostgrestError } from '@supabase/supabase-js';
 
@@ -73,5 +72,21 @@ export function showErrorToast(
   toast.error(errorMessage, {
     duration: 5000,
     id: `supabase-error-${table}-${operation}`, // Ensure we don't show duplicate toasts
+  });
+}
+
+// Show success toast for Supabase operations
+export function showSuccessToast(
+  operation: 'created' | 'updated' | 'deleted',
+  table: string
+) {
+  const successMessage = 
+    operation === 'created' ? `${table} successfully created` :
+    operation === 'updated' ? `${table} successfully updated` :
+    `${table} successfully deleted`;
+  
+  toast.success(successMessage, {
+    duration: 3000,
+    id: `supabase-success-${table}-${operation}`, // Ensure we don't show duplicate toasts
   });
 }
