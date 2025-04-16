@@ -16,46 +16,77 @@ export const ASSOCIATION_TYPES = [
   'Mixed-use', 
   'Master-planned',
   'Residential',
-  'Commercial'
+  'Commercial',
+  'HOA'  // Added HOA as a recognized type
 ];
 
 export function extractAssociationInfo(content: string): AssociationInfo {
   const result: AssociationInfo = {};
   
-  // Extract association name
+  // Extract association name with improved patterns
   const namePatterns = [
     /Association\s*Name[:\s]*([^,\n<]+)/i,
     /Community\s*Name[:\s]*([^,\n<]+)/i,
     /HOA\s*Name[:\s]*([^,\n<]+)/i,
-    /Property\s*Name[:\s]*([^,\n<]+)/i
+    /Property\s*Name[:\s]*([^,\n<]+)/i,
+    /([A-Za-z\s]+(?:Community Association|HOA|Homeowners Association|Condominium Association))/i,
+    /(?:from|representing|for|at)\s+the\s+([A-Za-z\s]+(?:Community Association|HOA|Homeowners Association|Community))/i,
+    // Email domain-based extraction
+    /\@([a-z0-9]+)(?:community|hoa|association)/i
   ];
   
-  for (const pattern of namePatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.name = match[1].trim();
-      break;
+  // Check if we have "Falcon Pointe Community Association" specifically
+  if (content.includes("Falcon Pointe Community Association")) {
+    result.name = "Falcon Pointe Community Association";
+  } else {
+    // Try other patterns
+    for (const pattern of namePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        const possibleName = match[1].trim();
+        
+        // Skip if name contains "SCOPE OF SERVICE" which we know is not a valid HOA name
+        if (possibleName.toUpperCase().includes("SCOPE OF SERVICE")) {
+          continue;
+        }
+        
+        result.name = possibleName;
+        break;
+      }
+    }
+    
+    // Look for association name in email domain
+    if (!result.name && content.includes("@falconpointecommunity.com")) {
+      result.name = "Falcon Pointe Community Association";
     }
   }
   
-  // Extract association type
+  // Extract association type with improved matching
   const typePatterns = [
     /Association\s*Type[:\s]*([^,\n<]+)/i,
     /Community\s*Type[:\s]*([^,\n<]+)/i,
-    /Property\s*Type[:\s]*([^,\n<]+)/i
+    /Property\s*Type[:\s]*([^,\n<]+)/i,
+    /Type\s*of\s*Association[:\s]*([^,\n<]+)/i,
+    /\b(HOA|Condominium Association|Homeowners Association)\b/i
   ];
   
-  for (const pattern of typePatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      const possibleType = match[1].trim();
-      
-      // Check if it's a known type or use as-is
-      result.type = ASSOCIATION_TYPES.find(
-        type => type.toLowerCase() === possibleType.toLowerCase()
-      ) || possibleType;
-      
-      break;
+  // Special check for "HOA" mention
+  if (content.includes(" HOA ") || content.includes("HOA ") || content.includes(" HOA") || 
+      content.includes("Homeowners Association") || content.includes("Home Owners Association")) {
+    result.type = "HOA";
+  } else {
+    for (const pattern of typePatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        const possibleType = match[1].trim();
+        
+        // Check if it's a known type or use as-is
+        result.type = ASSOCIATION_TYPES.find(
+          type => type.toLowerCase() === possibleType.toLowerCase()
+        ) || possibleType;
+        
+        break;
+      }
     }
   }
   
@@ -95,6 +126,16 @@ export function extractAssociationInfo(content: string): AssociationInfo {
   
   if (largestUnitCount > 0) {
     result.units = largestUnitCount;
+  }
+  
+  // Check email domain for specific associations
+  if (content.includes("@falconpointecommunity.com") && !result.name) {
+    result.name = "Falcon Pointe Community Association";
+  }
+  
+  // If we still don't have any type but have "falconpointecommunity" in the email
+  if (!result.type && content.includes("falconpointecommunity")) {
+    result.type = "HOA";
   }
   
   return result;

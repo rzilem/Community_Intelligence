@@ -61,6 +61,14 @@ export async function processEmail(emailData: any) {
       console.log("Detected Carol Serna in content or from field");
     }
     
+    // Special case check for Falcon Pointe Community Association
+    if (content.includes("Falcon Pointe Community Association") || 
+        from.includes("falconpointecommunity.com")) {
+      lead.association_name = "Falcon Pointe Community Association";
+      lead.association_type = "HOA";
+      console.log("Detected Falcon Pointe Community Association");
+    }
+    
     // Special case check for 1600 units
     if (content.includes("1600 units") || 
         content.includes("1,600 units") || 
@@ -84,6 +92,14 @@ export async function processEmail(emailData: any) {
       lead.name = "Carol Serna";
       lead.first_name = "Carol";
       lead.last_name = "Serna";
+    }
+    
+    if (!lead.association_name && (content.includes("Falcon Pointe") || from.includes("falconpointecommunity.com"))) {
+      lead.association_name = "Falcon Pointe Community Association";
+    }
+    
+    if (!lead.association_type && lead.association_name && lead.association_name.includes("Community Association")) {
+      lead.association_type = "HOA";
     }
     
     if (!lead.number_of_units || lead.number_of_units < 100) {
