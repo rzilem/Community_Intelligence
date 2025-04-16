@@ -18,11 +18,24 @@ export const saveUserColumnPreferences = async (
       .eq('user_id', userId)
       .single();
     
+    // Initialize column preferences with empty object if not exist
     let columnPreferences: Record<string, string[]> = {};
     
-    if (settings) {
-      // Merge with existing column preferences if they exist
-      columnPreferences = settings.column_preferences || {};
+    if (settings && settings.column_preferences) {
+      // Safely parse the column_preferences if it's a JSON value
+      try {
+        // Handle the case where the column preferences is already a proper object
+        if (typeof settings.column_preferences === 'object' && settings.column_preferences !== null) {
+          columnPreferences = settings.column_preferences as Record<string, string[]>;
+        } else {
+          // If it's a string, attempt to parse it
+          columnPreferences = JSON.parse(settings.column_preferences as string);
+        }
+      } catch (e) {
+        console.error('Error parsing column preferences:', e);
+        // If parsing fails, just use an empty object
+        columnPreferences = {};
+      }
     }
     
     // Update the preferences for this specific view
@@ -82,8 +95,25 @@ export const getUserColumnPreferences = async (
       throw error;
     }
     
+    // Process column preferences safely
+    let columnPreferences: Record<string, string[]> = {};
+    if (data?.column_preferences) {
+      try {
+        // Handle the case where it's already an object
+        if (typeof data.column_preferences === 'object' && data.column_preferences !== null) {
+          columnPreferences = data.column_preferences as Record<string, string[]>;
+        } else {
+          // If it's a string, attempt to parse it
+          columnPreferences = JSON.parse(data.column_preferences as string);
+        }
+      } catch (e) {
+        console.error('Error parsing column preferences:', e);
+        columnPreferences = {};
+      }
+    }
+    
     return { 
-      data: data?.column_preferences?.[viewId] || undefined
+      data: columnPreferences[viewId]
     };
   } catch (error: any) {
     console.error('Error fetching user column preferences:', error);

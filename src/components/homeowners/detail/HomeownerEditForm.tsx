@@ -19,7 +19,7 @@ const homeownerFormSchema = z.object({
   unit: z.string().optional(),
   status: z.string().min(1, 'Status is required'),
   moveInDate: z.string().optional(),
-  type: z.enum(['owner', 'tenant', 'family-member']).optional(),
+  type: z.enum(['owner', 'tenant', 'family-member', 'other']).optional(), // Added 'other' to match our types
 });
 
 type HomeownerFormValues = z.infer<typeof homeownerFormSchema>;
@@ -130,6 +130,7 @@ const HomeownerEditForm: React.FC<HomeownerEditFormProps> = ({
                   { value: 'owner', label: 'Owner' },
                   { value: 'tenant', label: 'Tenant' },
                   { value: 'family-member', label: 'Family Member' },
+                  { value: 'other', label: 'Other' }, // Added 'other' option
                 ]}
               />
             </div>
