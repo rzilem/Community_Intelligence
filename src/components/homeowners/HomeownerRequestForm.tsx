@@ -65,6 +65,7 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
   });
 
   const onSubmit = (data: RequestFormValues) => {
+    // Make sure we're using the database column names for the API call
     createRequest({
       title: data.title,
       description: data.description,
@@ -72,6 +73,7 @@ export function HomeownerRequestForm({ onSuccess }: HomeownerRequestFormProps) {
       priority: data.priority,
       property_id: data.propertyId,
       association_id: data.associationId,
+      status: 'open',
       // The resident_id will be set automatically to auth.uid() by RLS
     });
   };

@@ -11,7 +11,6 @@ export const useHomeownerRequests = () => {
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
   // Fetch homeowner requests from Supabase
-  // Fix column name to match database (created_at instead of createdAt)
   const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
@@ -20,12 +19,26 @@ export const useHomeownerRequests = () => {
     }
   );
 
+  // Log any errors to help with debugging
   if (error) {
     console.error('Error fetching homeowner requests:', error);
   }
 
+  // Troubleshooting: Log the data to see what we're getting back
+  useEffect(() => {
+    if (homeownerRequests && homeownerRequests.length > 0) {
+      console.log('Homeowner requests loaded:', homeownerRequests);
+    }
+  }, [homeownerRequests]);
+
   // Filter requests based on search and filter criteria
   const filteredRequests = homeownerRequests.filter(request => {
+    // Safety check for null or undefined values
+    if (!request || !request.title || !request.description) {
+      console.warn('Invalid request data encountered:', request);
+      return false;
+    }
+    
     const matchesSearch = 
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -38,6 +51,7 @@ export const useHomeownerRequests = () => {
   });
 
   const handleRefresh = () => {
+    console.log('Refreshing homeowner requests...');
     refetch();
     setLastRefreshed(new Date());
   };

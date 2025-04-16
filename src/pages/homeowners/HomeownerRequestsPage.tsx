@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,7 @@ const HomeownerRequestsPage = () => {
     HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id)
   );
 
+  // Directly query the homeowner_requests table with error handling
   const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
@@ -37,16 +39,25 @@ const HomeownerRequestsPage = () => {
     markAllAsRead();
   }, []);
 
-  if (error) {
-    console.error('Error fetching homeowner requests:', error);
-  }
+  useEffect(() => {
+    // Debug: Log the data and any errors
+    if (error) {
+      console.error('Error fetching homeowner requests:', error);
+    }
+    if (homeownerRequests && homeownerRequests.length > 0) {
+      console.log('Homeowner requests loaded:', homeownerRequests.length);
+    }
+  }, [homeownerRequests, error]);
 
   const filteredRequests = homeownerRequests.filter(request => {
+    // Safety check to avoid issues with missing properties
+    if (!request || !request.title || !request.description) return false;
+    
     const matchesSearch = 
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = status === 'all' || request.status === status;
+    const matchesStatus = status === 'all' || request.status === activeTab;
     const matchesPriority = priority === 'all' || request.priority === priority;
     const matchesType = type === 'all' || request.type === type;
 
@@ -124,6 +135,14 @@ const HomeownerRequestsPage = () => {
             
             {isLoading ? (
               <div className="py-8 text-center">Loading requests...</div>
+            ) : error ? (
+              <div className="py-8 text-center text-red-500">
+                Error loading requests: {error.message || 'Unknown error'}
+              </div>
+            ) : homeownerRequests.length === 0 ? (
+              <div className="py-8 text-center">
+                No homeowner requests found. Create your first request using the "New Request" button.
+              </div>
             ) : (
               <>
                 <HomeownerRequestsTable 

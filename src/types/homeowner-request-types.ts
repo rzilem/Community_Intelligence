@@ -10,15 +10,23 @@ export interface HomeownerRequest {
   status: HomeownerRequestStatus;
   priority: HomeownerRequestPriority;
   type: HomeownerRequestType;
-  createdAt: string;
-  updatedAt: string;
-  residentId: string;
-  propertyId: string;
-  associationId: string;
-  assignedTo?: string;
-  resolvedAt?: string;
+  created_at: string;  // Match database column name
+  updated_at: string;  // Match database column name
+  resident_id?: string; // Optional to handle null values
+  property_id?: string; // Optional to handle null values
+  association_id?: string; // Optional to handle null values
+  assigned_to?: string;
+  resolved_at?: string;
   html_content?: string; // For original email content
-  tracking_number?: string; // Added tracking number field
+  tracking_number?: string; 
+  
+  // Virtual properties for UI (not in database)
+  createdAt?: string; // Alias for created_at
+  updatedAt?: string; // Alias for updated_at
+  residentId?: string; // Alias for resident_id
+  propertyId?: string; // Alias for property_id
+  associationId?: string; // Alias for association_id
+  resolvedAt?: string; // Alias for resolved_at
 }
 
 export interface HomeownerRequestColumn {
@@ -48,12 +56,12 @@ export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'status', label: 'Status', accessorKey: 'status', defaultVisible: true },
   { id: 'priority', label: 'Priority', accessorKey: 'priority', defaultVisible: true },
   { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: true },
-  { id: 'createdAt', label: 'Created', accessorKey: 'createdAt', defaultVisible: true },
-  { id: 'updatedAt', label: 'Updated', accessorKey: 'updatedAt', defaultVisible: false },
+  { id: 'created_at', label: 'Created', accessorKey: 'created_at', defaultVisible: true },
+  { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
   { id: 'description', label: 'Description', accessorKey: 'description', defaultVisible: false },
-  { id: 'residentId', label: 'Resident', accessorKey: 'residentId', defaultVisible: false },
-  { id: 'propertyId', label: 'Property', accessorKey: 'propertyId', defaultVisible: false },
-  { id: 'associationId', label: 'Association', accessorKey: 'associationId', defaultVisible: false },
-  { id: 'assignedTo', label: 'Assigned To', accessorKey: 'assignedTo', defaultVisible: false },
-  { id: 'resolvedAt', label: 'Resolved At', accessorKey: 'resolvedAt', defaultVisible: false },
+  { id: 'resident_id', label: 'Resident', accessorKey: 'resident_id', defaultVisible: false },
+  { id: 'property_id', label: 'Property', accessorKey: 'property_id', defaultVisible: false },
+  { id: 'association_id', label: 'Association', accessorKey: 'association_id', defaultVisible: false },
+  { id: 'assigned_to', label: 'Assigned To', accessorKey: 'assigned_to', defaultVisible: false },
+  { id: 'resolved_at', label: 'Resolved At', accessorKey: 'resolved_at', defaultVisible: false },
 ];

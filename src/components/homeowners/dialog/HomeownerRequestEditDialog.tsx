@@ -38,24 +38,25 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   const handleSubmit = (values: any) => {
     if (!request) return;
     
+    // Make sure we're using the database column names
     const updatedData: Partial<HomeownerRequest> = {
       title: values.title,
       description: values.description,
       status: values.status,
       priority: values.priority,
       type: values.type,
-      assignedTo: values.assignedTo || null,
-      associationId: values.associationId || null,
-      propertyId: values.propertyId || null,
-      residentId: values.residentId || null,
+      assigned_to: values.assignedTo || null,
+      association_id: values.associationId || null,
+      property_id: values.propertyId || null,
+      resident_id: values.residentId || null,
     };
     
     if (values.status === 'resolved' && request.status !== 'resolved') {
-      updatedData.resolvedAt = new Date().toISOString();
+      updatedData.resolved_at = new Date().toISOString();
     }
     
     if (values.status !== 'resolved' && request.status === 'resolved') {
-      updatedData.resolvedAt = null;
+      updatedData.resolved_at = null;
     }
     
     updateRequest({
