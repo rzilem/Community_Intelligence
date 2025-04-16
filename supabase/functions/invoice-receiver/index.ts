@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     console.log("Received invoice email with content-type:", req.headers.get("content-type"));
+    console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
     
     // Get email data from request - handle both JSON and multipart form data
     let emailData;

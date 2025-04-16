@@ -10,8 +10,14 @@ schemas = ["public", "storage"]
 port = 54322
 
 [functions]
-[functions.settings]
-verify_jwt = true
+[functions.email-receiver]
+verify_jwt = false
+
+[functions.invoice-receiver]
+verify_jwt = false
+
+[functions.homeowner-request-email]
+verify_jwt = false
 
 [auth]
 enabled = true

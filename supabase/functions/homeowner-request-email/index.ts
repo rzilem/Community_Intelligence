@@ -1,10 +1,9 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { corsHeaders } from "./utils/cors-headers.ts";
+import { processEmailData } from "./services/email-processor.ts";
+import { createRequest } from "./services/request-service.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
-import { extractRequestData } from "./services/email-processor.ts";
-import { createHomeownerRequest } from "./services/request-service.ts";
-import { getNextTrackingNumber, registerCommunication } from "./services/tracking-service.ts";
+import { corsHeaders } from "./utils/cors-headers.ts";
 
 // Handle the incoming webhook request
 serve(async (req) => {
@@ -29,7 +28,11 @@ serve(async (req) => {
       } catch (jsonError) {
         console.error("Error parsing request as JSON:", jsonError);
         return new Response(
-          JSON.stringify({ success: false, error: "Invalid request format" }),
+          JSON.stringify({ 
+            success: false, 
+            error: "Invalid request format", 
+            details: `${parseError.message}, then ${jsonError.message}`
+          }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400 
@@ -45,7 +48,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid" 
+          details: "The email webhook payload was empty or invalid"
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -56,7 +59,7 @@ serve(async (req) => {
     
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
-    console.log("Normalized email data:", JSON.stringify(normalizedEmailData, null, 2));
+    console.log("Normalized homeowner request email data:", JSON.stringify(normalizedEmailData, null, 2));
 
     // Check if we have either HTML content, text content, or subject (minimum required to process)
     if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
@@ -65,7 +68,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Missing required content", 
-          details: "Email must contain HTML, text content, or at least a subject" 
+          details: "Email must contain HTML, text content, or at least a subject"
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -74,18 +77,29 @@ serve(async (req) => {
       );
     }
 
-    // Generate a tracking number for this communication
-    const trackingNumber = await getNextTrackingNumber();
-    
-    // Register this communication in the log
-    await registerCommunication(trackingNumber, 'email', normalizedEmailData);
+    // Process the email to extract request information
+    const requestData = await processEmailData(normalizedEmailData);
 
-    // Process the email to extract homeowner request information
-    const requestData = await extractRequestData(normalizedEmailData, trackingNumber);
+    // Validate extracted request data has required fields
+    if (!requestData || !requestData.title) {
+      console.error("Failed to extract required request fields", requestData);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Extraction failed", 
+          details: "Could not extract required homeowner request fields (title)",
+          partial_data: requestData || {}
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 422 
+        }
+      );
+    }
 
-    // Insert homeowner request into the database
+    // Insert request into the database
     try {
-      const request = await createHomeownerRequest(requestData);
+      const request = await createRequest(requestData);
 
       console.log("Homeowner request created successfully:", request);
 
@@ -93,7 +107,7 @@ serve(async (req) => {
         JSON.stringify({ success: true, message: "Homeowner request created", request }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200 
+          status: 201 
         }
       );
     } catch (dbError: any) {
@@ -103,7 +117,7 @@ serve(async (req) => {
           success: false, 
           error: "Database error", 
           details: dbError.message,
-          extracted_data: requestData || {}
+          extracted_data: requestData
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -114,7 +128,11 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error handling homeowner request email:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: "Processing error", 
+        details: error.message
+      }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500 
