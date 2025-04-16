@@ -1,18 +1,16 @@
-
 /**
  * Formats a file size in bytes to a human-readable format
  * @param bytes File size in bytes
  * @returns Formatted file size string
  */
-export function formatFileSize(bytes: number): string {
+export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   
-  const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
   
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-}
+  return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 /**
  * Formats a date string to a human-readable format

@@ -63,7 +63,7 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({
         </TabsContent>
         
         <TabsContent value="documents" className="mt-6">
-          <LeadDocumentsTab />
+          <LeadDocumentsTab lead={lead} />
         </TabsContent>
       </Tabs>
     </div>

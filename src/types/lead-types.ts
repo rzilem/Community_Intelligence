@@ -106,3 +106,16 @@ export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
   { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: false },
 ];
+
+// Add LeadDocument type
+export interface LeadDocument {
+  id: string;
+  lead_id: string;
+  name: string;
+  file_path: string;
+  file_type: string;
+  file_size: number;
+  description?: string;
+  uploaded_by?: string;
+  uploaded_at: string;
+}

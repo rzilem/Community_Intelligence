@@ -6,22 +6,12 @@ import { PlusIcon, FileIcon, ImageIcon, FileTextIcon, FileSpreadsheetIcon, Trash
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Lead } from '@/types/lead-types';
+import { Lead, LeadDocument } from '@/types/lead-types';
 import { formatFileSize } from '@/lib/format-utils';
 import { formatDate } from '@/lib/date-utils';
 
 interface LeadDocumentsTabProps {
   lead?: Lead;
-}
-
-interface LeadDocument {
-  id: string;
-  name: string;
-  file_path: string;
-  file_type: string;
-  file_size: number;
-  description?: string;
-  uploaded_at: string;
 }
 
 const LeadDocumentsTab: React.FC<LeadDocumentsTabProps> = ({ lead }) => {

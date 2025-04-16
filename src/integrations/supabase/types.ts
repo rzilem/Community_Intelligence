@@ -1186,6 +1186,53 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_documents: {
+        Row: {
+          description: string | null
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          lead_id: string
+          name: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          lead_id: string
+          name: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          lead_id?: string
+          name?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_documents_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           additional_requirements: string | null
