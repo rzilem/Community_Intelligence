@@ -159,21 +159,6 @@ const LeadDetailsTab: React.FC<LeadDetailsTabProps> = ({ lead }) => {
             </dl>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Requirements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="whitespace-pre-wrap">
-              {lead.additional_requirements 
-                ? lead.additional_requirements 
-                : lead.html_content 
-                ? 'See original email for additional information.'
-                : 'No additional requirements specified.'}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
