@@ -5,7 +5,7 @@ import { HeroSection } from '@/components/marketing/HeroSection';
 import { FeatureSection } from '@/components/marketing/FeatureSection';
 import { AuthSection } from '@/components/marketing/AuthSection';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 
 const Index = () => {
   const navigate = useNavigate();
