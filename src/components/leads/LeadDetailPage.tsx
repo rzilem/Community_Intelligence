@@ -1,128 +1,26 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { User } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { User, Building2, Calendar, FileText, MessageSquare, Clock, Paperclip } from 'lucide-react';
-import { Lead } from '@/types/lead-types';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-// Import refactored components
+// Import the custom hook and components
+import { useLeadDetail } from '@/hooks/leads/useLeadDetail';
 import LeadDetailHeader from './detail/LeadDetailHeader';
-import LeadDetailsTab from './detail/tabs/LeadDetailsTab';
-import LeadAssociationTab from './detail/tabs/LeadAssociationTab';
-import LeadCommunicationTab from './detail/tabs/LeadCommunicationTab';
-import LeadHistoryTab from './detail/tabs/LeadHistoryTab';
-import LeadDocumentsTab from './detail/tabs/LeadDocumentsTab';
-import LeadNotesTabContainer from './detail/tabs/LeadNotesTabContainer';
-import AttachmentsTab from './tabs/AttachmentsTab';
+import LeadDetailTabs from './detail/LeadDetailTabs';
+import LoadingState from './detail/LoadingState';
+import NotFoundState from './detail/NotFoundState';
 
-const LeadDetailPage = () => {
+const LeadDetailPage: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
-  const navigate = useNavigate();
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (leadId) {
-      fetchLead(leadId);
-    }
-  }, [leadId]);
-
-  const fetchLead = async (id: string) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('leads' as any)
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      setLead(data as unknown as Lead);
-    } catch (error: any) {
-      toast.error(`Error loading lead: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStatusChange = async (newStatus: Lead['status']) => {
-    if (!lead) return;
-    
-    try {
-      const { error } = await supabase
-        .from('leads' as any)
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', lead.id);
-        
-      if (error) throw error;
-      
-      setLead(prev => prev ? { ...prev, status: newStatus } : null);
-      toast.success(`Lead status updated to ${newStatus}`);
-      
-      // If status is changed to 'converted', show a success message about onboarding
-      if (newStatus === 'converted') {
-        toast.success('Onboarding process will be automatically initiated');
-      }
-    } catch (error: any) {
-      toast.error(`Error updating status: ${error.message}`);
-    }
-  };
-
-  const handleSaveNotes = async (notes: string) => {
-    if (!lead) return;
-    
-    try {
-      const { error } = await supabase
-        .from('leads' as any)
-        .update({ 
-          notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', lead.id);
-        
-      if (error) throw error;
-      
-      setLead(prev => prev ? { ...prev, notes } : null);
-      toast.success('Notes updated successfully');
-    } catch (error: any) {
-      toast.error(`Error updating notes: ${error.message}`);
-    }
-  };
+  const { lead, loading, handleStatusChange, handleSaveNotes } = useLeadDetail(leadId);
 
   if (loading) {
-    return (
-      <PageTemplate 
-        title="Lead Details" 
-        icon={<User className="h-8 w-8" />}
-        description="Loading lead information..."
-      >
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      </PageTemplate>
-    );
+    return <LoadingState />;
   }
 
   if (!lead) {
-    return (
-      <PageTemplate 
-        title="Lead Not Found" 
-        icon={<User className="h-8 w-8" />}
-        description="The requested lead could not be found."
-      >
-        <div className="flex justify-center">
-          <button onClick={() => navigate('/lead-management/dashboard')}>
-            Back to Leads
-          </button>
-        </div>
-      </PageTemplate>
-    );
+    return <NotFoundState />;
   }
 
   return (
@@ -137,68 +35,7 @@ const LeadDetailPage = () => {
         />
       }
     >
-      <div className="space-y-6">
-        <Tabs defaultValue="details">
-          <TabsList>
-            <TabsTrigger value="details" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Lead Details
-            </TabsTrigger>
-            <TabsTrigger value="association" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Association
-            </TabsTrigger>
-            <TabsTrigger value="communication" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Communication
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Notes
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              History
-            </TabsTrigger>
-            <TabsTrigger value="documents" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Documents
-            </TabsTrigger>
-            <TabsTrigger value="attachments" className="flex items-center gap-2">
-              <Paperclip className="h-4 w-4" />
-              Attachments
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="mt-6">
-            <LeadDetailsTab lead={lead} />
-          </TabsContent>
-          
-          <TabsContent value="association" className="mt-6">
-            <LeadAssociationTab lead={lead} />
-          </TabsContent>
-          
-          <TabsContent value="communication" className="mt-6">
-            <LeadCommunicationTab />
-          </TabsContent>
-          
-          <TabsContent value="notes" className="mt-6">
-            <LeadNotesTabContainer lead={lead} onSaveNotes={handleSaveNotes} />
-          </TabsContent>
-          
-          <TabsContent value="history" className="mt-6">
-            <LeadHistoryTab />
-          </TabsContent>
-          
-          <TabsContent value="documents" className="mt-6">
-            <LeadDocumentsTab />
-          </TabsContent>
-          
-          <TabsContent value="attachments" className="mt-6">
-            <AttachmentsTab lead={lead} />
-          </TabsContent>
-        </Tabs>
-      </div>
+      <LeadDetailTabs lead={lead} onSaveNotes={handleSaveNotes} />
     </PageTemplate>
   );
 };
