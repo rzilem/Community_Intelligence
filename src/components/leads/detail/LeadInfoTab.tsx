@@ -12,18 +12,14 @@ interface LeadInfoTabProps {
   formattedStreetAddress: string;
   cleanedCity: string;
   zipCode: string;
+  fullAddress: string;
 }
 
 const LeadInfoTab: React.FC<LeadInfoTabProps> = ({ 
   lead, 
-  formattedStreetAddress, 
-  cleanedCity, 
-  zipCode 
+  formattedStreetAddress,
+  fullAddress
 }) => {
-  const fullAddress = formattedStreetAddress && (cleanedCity || lead.state || zipCode)
-    ? `${formattedStreetAddress}${cleanedCity || lead.state || zipCode ? ', ' : ''}${cleanedCity || ''}${lead.state ? (cleanedCity ? ', ' : '') + lead.state : ''}${zipCode ? ' ' + zipCode : ''}`
-    : formattedStreetAddress || 'N/A';
-
   return (
     <ScrollArea className="h-[75vh]">
       <div className="space-y-6 p-4">
