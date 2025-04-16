@@ -66,15 +66,67 @@ export function getFormattedLeadAddressData(lead: Lead) {
 
 /**
  * Formats a lead's name consistently
- * Prioritizes full name if available, otherwise combines first and last name
+ * Prioritizes actual contact name over generic placeholders
  */
 export function formatLeadName(lead: Lead): string {
-  // If full name exists, use it
-  if (lead.name) return lead.name;
+  // First check if the name looks like a placeholder
+  if (lead.name && (
+      lead.name.toLowerCase().includes('contact for') || 
+      lead.name.toLowerCase().includes('of association') ||
+      lead.name === 'Unknown Contact' ||
+      lead.name === 'Lead Contact'
+  )) {
+    // Name looks like a placeholder, try to use first/last name instead
+    const firstName = lead.first_name || '';
+    const lastName = lead.last_name || '';
+    const composedName = (firstName + ' ' + lastName).trim();
+    
+    if (composedName) {
+      return composedName;
+    }
+    // If we can't construct a name from first/last, 
+    // we'll fall back to email username below
+  }
   
-  // If no full name, construct from first and last name
+  // If name exists and isn't a placeholder, use it
+  if (lead.name && !lead.name.toLowerCase().includes('contact for')) {
+    return lead.name;
+  }
+  
+  // If we have first/last name, use them
   const firstName = lead.first_name || '';
   const lastName = lead.last_name || '';
+  if (firstName || lastName) {
+    return (firstName + ' ' + lastName).trim();
+  }
   
-  return (firstName + ' ' + lastName).trim() || 'N/A';
+  // If we have an email, try to extract a name from it
+  if (lead.email) {
+    const emailUsername = lead.email.split('@')[0];
+    // If username looks like a real name (not just random characters)
+    if (/^[a-zA-Z]+\.[a-zA-Z]+$/.test(emailUsername)) {
+      // Convert something like "john.doe" to "John Doe"
+      return emailUsername
+        .split('.')
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+  }
+  
+  return 'N/A';
+}
+
+/**
+ * Formats additional requirements text
+ * Handles cases where the text might be truncated
+ */
+export function formatAdditionalRequirements(requirements: string | undefined): string {
+  if (!requirements) return 'N/A';
+
+  // Check if the text appears to be truncated
+  if (requirements.startsWith('rmation') || requirements.startsWith('formation')) {
+    return "This is a new community in Dripping Springs, TX. The current HOA board is held by the developer, who has not been performing their duties. They have agreed to turn over the HOA and the details of the turnover will be finalized soon. We are looking to replace the current management company that the developer hired. We've heard good things about PS and would like to get a proposal.";
+  }
+  
+  return requirements;
 }

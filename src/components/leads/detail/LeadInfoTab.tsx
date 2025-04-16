@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
 import { ExternalLink, Mail, Phone } from 'lucide-react';
 import { Separator } from "@/components/ui/separator";
-import { formatLeadName } from './lead-detail-utils';
+import { formatLeadName, formatAdditionalRequirements } from './lead-detail-utils';
 
 interface LeadInfoTabProps {
   lead: Lead;
@@ -127,7 +127,7 @@ const LeadInfoTab: React.FC<LeadInfoTabProps> = ({
             <div>{new Date(lead.created_at).toLocaleDateString()}</div>
             
             <div className="text-muted-foreground font-bold">Additional Requirements:</div>
-            <div>{lead.additional_requirements || 'N/A'}</div>
+            <div>{formatAdditionalRequirements(lead.additional_requirements)}</div>
           </div>
         </div>
       </div>
