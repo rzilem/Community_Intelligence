@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useHomeownerRequests = () => {
   const [activeTab, setActiveTab] = useState<HomeownerRequestStatus | 'all'>('all');
@@ -9,30 +12,71 @@ export const useHomeownerRequests = () => {
   const [priority, setPriority] = useState<HomeownerRequestPriority | 'all'>('all');
   const [type, setType] = useState<HomeownerRequestType | 'all'>('all');
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [manualRequests, setManualRequests] = useState<HomeownerRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const { currentAssociation } = useAuth();
 
-  // Fetch homeowner requests from Supabase
-  const { data: homeownerRequests = [], isLoading, error, refetch } = useSupabaseQuery<HomeownerRequest[]>(
-    'homeowner_requests',
-    {
-      select: '*',
-      order: { column: 'created_at', ascending: false },
-    }
-  );
-
-  // Log any errors to help with debugging
-  if (error) {
-    console.error('Error fetching homeowner requests:', error);
-  }
-
-  // Troubleshooting: Log the data to see what we're getting back
+  // Fetch homeowner requests directly using Supabase client
   useEffect(() => {
-    if (homeownerRequests && homeownerRequests.length > 0) {
-      console.log('Homeowner requests loaded:', homeownerRequests);
+    fetchRequests();
+  }, [currentAssociation, lastRefreshed]);
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('Fetching homeowner requests, current association:', currentAssociation?.id);
+      
+      // Check if there are any requests in the table at all (for debugging)
+      const { data: allRequests, error: countError } = await supabase
+        .from('homeowner_requests')
+        .select('*', { count: 'exact' });
+        
+      if (countError) {
+        console.error('Error fetching all homeowner requests:', countError);
+        throw countError;
+      }
+      
+      console.log(`Total homeowner requests in database: ${allRequests?.length || 0}`);
+      
+      // If current association exists, filter by it
+      let query = supabase.from('homeowner_requests').select('*');
+      
+      if (currentAssociation) {
+        console.log(`Filtering by association: ${currentAssociation.id}`);
+        query = query.eq('association_id', currentAssociation.id);
+      } else {
+        console.log('No current association selected, showing all requests user has access to');
+      }
+      
+      const { data, error: requestsError } = await query.order('created_at', { ascending: false });
+      
+      if (requestsError) {
+        console.error('Error fetching homeowner requests:', requestsError);
+        throw requestsError;
+      }
+      
+      console.log(`Received ${data?.length || 0} homeowner requests after filtering`);
+      
+      if (data && data.length > 0) {
+        console.log('First request sample:', data[0]);
+      }
+      
+      setManualRequests(data || []);
+    } catch (err: any) {
+      console.error('Error in fetchRequests:', err);
+      setError(err);
+      toast.error(`Failed to load homeowner requests: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [homeownerRequests]);
+  };
 
   // Filter requests based on search and filter criteria
-  const filteredRequests = homeownerRequests.filter(request => {
+  const filteredRequests = manualRequests.filter(request => {
     // Safety check for null or undefined values
     if (!request || !request.title || !request.description) {
       console.warn('Invalid request data encountered:', request);
@@ -52,16 +96,48 @@ export const useHomeownerRequests = () => {
 
   const handleRefresh = () => {
     console.log('Refreshing homeowner requests...');
-    refetch();
     setLastRefreshed(new Date());
   };
 
+  // Create a dummy request for testing if no requests exist
+  const createDummyRequest = async () => {
+    if (!currentAssociation) {
+      toast.error("Please select an association first");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('homeowner_requests')
+        .insert({
+          title: 'Test Request',
+          description: 'This is a test homeowner request',
+          status: 'open',
+          priority: 'medium',
+          type: 'general',
+          association_id: currentAssociation.id,
+          tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success('Test request created successfully');
+      handleRefresh();
+    } catch (err: any) {
+      console.error('Error creating test request:', err);
+      toast.error(`Failed to create test request: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
-    homeownerRequests,
+    homeownerRequests: manualRequests,
     filteredRequests,
-    isLoading,
+    isLoading: loading,
     error,
-    refetch,
     activeTab,
     setActiveTab,
     searchTerm,
@@ -71,7 +147,7 @@ export const useHomeownerRequests = () => {
     type,
     setType,
     lastRefreshed,
-    setLastRefreshed,
-    handleRefresh
+    handleRefresh,
+    createDummyRequest
   };
 };

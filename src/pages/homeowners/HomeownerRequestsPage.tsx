@@ -10,13 +10,17 @@ import HomeownerRequestHistoryDialog from '@/components/homeowners/HomeownerRequ
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { HOMEOWNER_REQUEST_COLUMNS, HomeownerRequest } from '@/types/homeowner-request-types';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Plus, Bug } from 'lucide-react';
 import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestForm';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
 
 const HomeownerRequestsPage = () => {
+  const { currentAssociation } = useAuth();
   const {
     filteredRequests,
+    homeownerRequests,
     isLoading,
     error,
     activeTab,
@@ -28,7 +32,8 @@ const HomeownerRequestsPage = () => {
     type,
     setType,
     lastRefreshed,
-    handleRefresh
+    handleRefresh,
+    createDummyRequest
   } = useHomeownerRequests();
 
   const [selectedRequest, setSelectedRequest] = React.useState<HomeownerRequest | null>(null);
@@ -37,6 +42,7 @@ const HomeownerRequestsPage = () => {
   const [isCommentOpen, setIsCommentOpen] = React.useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [isNewRequestFormOpen, setIsNewRequestFormOpen] = React.useState(false);
+  const [showDebugInfo, setShowDebugInfo] = React.useState(false);
 
   // Handle view request
   const handleViewRequest = (request: HomeownerRequest) => {
@@ -83,9 +89,36 @@ const HomeownerRequestsPage = () => {
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Refresh
           </Button>
-          <Button onClick={() => setIsNewRequestFormOpen(true)}>New Request</Button>
+          <Button onClick={() => setIsNewRequestFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> New Request
+          </Button>
+          <Button variant="outline" onClick={() => setShowDebugInfo(!showDebugInfo)}>
+            <Bug className="h-4 w-4 mr-2" /> Debug
+          </Button>
+          {process.env.NODE_ENV === 'development' && (
+            <Button variant="outline" onClick={createDummyRequest}>
+              Create Test Request
+            </Button>
+          )}
         </div>
       </div>
+
+      {showDebugInfo && (
+        <Card className="mb-4">
+          <CardContent className="pt-4">
+            <h3 className="font-semibold mb-2">Debug Information</h3>
+            <div className="text-sm space-y-1">
+              <p><strong>Current Association:</strong> {currentAssociation?.id || 'None selected'}</p>
+              <p><strong>Association Name:</strong> {currentAssociation?.name || 'N/A'}</p>
+              <p><strong>Total Requests (unfiltered):</strong> {homeownerRequests.length}</p>
+              <p><strong>Filtered Requests:</strong> {filteredRequests.length}</p>
+              <p><strong>Active Tab:</strong> {activeTab}</p>
+              <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Loaded'}</p>
+              <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <HomeownerRequestFilters 
         searchTerm={searchTerm}
@@ -94,7 +127,6 @@ const HomeownerRequestsPage = () => {
         setPriority={setPriority}
         type={type}
         setType={setType}
-        // status and setStatus props are optional now
       />
 
       <Tabs 
