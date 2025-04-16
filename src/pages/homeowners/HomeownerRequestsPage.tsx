@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HomeownerRequestsTable } from '@/components/homeowners/HomeownerRequestsTable';
-import { HomeownerRequestFilters } from '@/components/homeowners/HomeownerRequestFilters';
-import { HomeownerRequestDetailDialog } from '@/components/homeowners/HomeownerRequestDetailDialog';
-import { HomeownerRequestEditDialog } from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
-import { HomeownerRequestCommentDialog } from '@/components/homeowners/HomeownerRequestCommentDialog';
-import { HomeownerRequestHistoryDialog } from '@/components/homeowners/HomeownerRequestHistoryDialog';
+import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
+import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
+import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
+import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/HomeownerRequestHistoryDialog';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { HOMEOWNER_REQUEST_COLUMNS, HomeownerRequest } from '@/types/homeowner-request-types';
 import { Button } from '@/components/ui/button';
