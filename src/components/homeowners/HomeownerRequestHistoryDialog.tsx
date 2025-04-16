@@ -54,25 +54,25 @@ const HomeownerRequestHistoryDialog: React.FC<HistoryDialogProps> = ({
     // Basic history based on request data
     const history = [
       {
-        date: request.createdAt,
+        date: request.created_at,
         title: 'Request Created',
         description: `Request was created with status "${request.status}" and priority "${request.priority}".`
       }
     ];
     
     // Add assignment history if assigned
-    if (request.assignedTo) {
+    if (request.assigned_to) {
       history.push({
-        date: request.updatedAt,
+        date: request.updated_at,
         title: 'Request Assigned',
-        description: `Request was assigned to ${request.assignedTo}.`
+        description: `Request was assigned to ${request.assigned_to}.`
       });
     }
     
     // Add resolution history if resolved
-    if (request.resolvedAt) {
+    if (request.resolved_at) {
       history.push({
-        date: request.resolvedAt,
+        date: request.resolved_at,
         title: 'Request Resolved',
         description: 'Request was marked as resolved.'
       });
@@ -80,7 +80,7 @@ const HomeownerRequestHistoryDialog: React.FC<HistoryDialogProps> = ({
     
     // Add mock status updates (just for demonstration)
     if (request.status === 'in-progress') {
-      const statusDate = new Date(request.createdAt);
+      const statusDate = new Date(request.created_at);
       statusDate.setDate(statusDate.getDate() + 1);
       
       history.push({

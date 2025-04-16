@@ -60,10 +60,10 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         status: request.status as any,
         priority: request.priority as any,
         type: request.type as any,
-        assignedTo: request.assignedTo || '',
-        associationId: request.associationId || '',
-        propertyId: request.propertyId || '',
-        residentId: request.residentId || '',
+        assignedTo: request.assigned_to || '',
+        associationId: request.association_id || '',
+        propertyId: request.property_id || '',
+        residentId: request.resident_id || '',
       });
     }
   }, [request, form]);

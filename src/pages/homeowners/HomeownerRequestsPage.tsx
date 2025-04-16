@@ -57,7 +57,7 @@ const HomeownerRequestsPage = () => {
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.description.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = status === 'all' || request.status === activeTab;
+    const matchesStatus = status === 'all' || request.status === status;
     const matchesPriority = priority === 'all' || request.priority === priority;
     const matchesType = type === 'all' || request.type === type;
 

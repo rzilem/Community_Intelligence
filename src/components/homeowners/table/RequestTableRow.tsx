@@ -64,22 +64,22 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         return renderStatusBadge(request.status);
       case 'priority':
         return renderPriorityBadge(request.priority);
-      case 'createdAt':
-        return formatDate(request.createdAt);
-      case 'updatedAt':
-        return formatRelativeDate(request.updatedAt);
+      case 'created_at':
+        return formatDate(request.created_at);
+      case 'updated_at':
+        return formatRelativeDate(request.updated_at);
       case 'description':
         return <span className="truncate max-w-[200px] block">{request.description}</span>;
-      case 'residentId':
-        return request.residentId || 'N/A';
-      case 'propertyId':
-        return <span className="truncate max-w-[120px] block">{request.propertyId || 'N/A'}</span>;
-      case 'associationId':
-        return <span className="truncate max-w-[120px] block">{request.associationId || 'N/A'}</span>;
-      case 'assignedTo':
-        return request.assignedTo || 'Unassigned';
-      case 'resolvedAt':
-        return request.resolvedAt ? formatDate(request.resolvedAt) : 'Not resolved';
+      case 'resident_id':
+        return request.resident_id || 'N/A';
+      case 'property_id':
+        return <span className="truncate max-w-[120px] block">{request.property_id || 'N/A'}</span>;
+      case 'association_id':
+        return <span className="truncate max-w-[120px] block">{request.association_id || 'N/A'}</span>;
+      case 'assigned_to':
+        return request.assigned_to || 'Unassigned';
+      case 'resolved_at':
+        return request.resolved_at ? formatDate(request.resolved_at) : 'Not resolved';
       case 'tracking_number':
         return request.tracking_number || 'N/A';
       default:

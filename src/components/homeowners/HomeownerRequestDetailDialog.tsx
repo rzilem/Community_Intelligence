@@ -91,7 +91,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                       <div>{renderPriorityBadge(request.priority)}</div>
                       
                       <div className="text-muted-foreground">Created:</div>
-                      <div>{formatDate(request.createdAt)}</div>
+                      <div>{formatDate(request.created_at)}</div>
                     </div>
                   </div>
                   
@@ -99,16 +99,16 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                     <h3 className="font-medium text-lg">Property Information</h3>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="text-muted-foreground">Property ID:</div>
-                      <div>{request.propertyId}</div>
+                      <div>{request.property_id}</div>
                       
                       <div className="text-muted-foreground">Association ID:</div>
-                      <div>{request.associationId}</div>
+                      <div>{request.association_id}</div>
                       
                       <div className="text-muted-foreground">Resident ID:</div>
-                      <div>{request.residentId || 'N/A'}</div>
+                      <div>{request.resident_id || 'N/A'}</div>
                       
                       <div className="text-muted-foreground">Assigned To:</div>
-                      <div>{request.assignedTo || 'Unassigned'}</div>
+                      <div>{request.assigned_to || 'Unassigned'}</div>
                     </div>
                   </div>
                 </div>
@@ -120,12 +120,12 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                   </div>
                 </div>
                 
-                {request.resolvedAt && (
+                {request.resolved_at && (
                   <div className="space-y-4">
                     <h3 className="font-medium text-lg">Resolution</h3>
                     <div className="grid grid-cols-1 gap-2">
                       <div className="text-muted-foreground">Resolved At:</div>
-                      <div>{formatDate(request.resolvedAt)}</div>
+                      <div>{formatDate(request.resolved_at)}</div>
                     </div>
                   </div>
                 )}
