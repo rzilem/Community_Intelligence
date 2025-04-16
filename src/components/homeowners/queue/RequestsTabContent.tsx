@@ -19,6 +19,23 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   columns, 
   visibleColumnIds 
 }) => {
+  // Mock handlers - these should be passed from parent in a real implementation
+  const handleViewRequest = (request: HomeownerRequest) => {
+    console.log('View request:', request);
+  };
+  
+  const handleEditRequest = (request: HomeownerRequest) => {
+    console.log('Edit request:', request);
+  };
+  
+  const handleAddComment = (request: HomeownerRequest) => {
+    console.log('Add comment:', request);
+  };
+  
+  const handleViewHistory = (request: HomeownerRequest) => {
+    console.log('View history:', request);
+  };
+
   return (
     <TabsContent value={value} className="mt-0">
       {isLoading ? (
@@ -28,6 +45,11 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
           requests={requests} 
           columns={columns}
           visibleColumnIds={visibleColumnIds}
+          isLoading={isLoading}
+          onViewRequest={handleViewRequest}
+          onEditRequest={handleEditRequest}
+          onAddComment={handleAddComment}
+          onViewHistory={handleViewHistory}
         />
       )}
     </TabsContent>

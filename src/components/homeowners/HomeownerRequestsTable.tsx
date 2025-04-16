@@ -16,6 +16,7 @@ import EmptyRequestsRow from './table/EmptyRequestsRow';
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
+  visibleColumnIds?: string[]; // Make this prop optional
   isLoading?: boolean;
   error?: Error | null;
   onViewRequest: (request: HomeownerRequest) => void;
@@ -27,6 +28,7 @@ interface HomeownerRequestsTableProps {
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
   requests, 
   columns,
+  visibleColumnIds: propVisibleColumnIds,
   isLoading,
   error,
   onViewRequest,
@@ -34,8 +36,9 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   onAddComment,
   onViewHistory
 }) => {
-  // Use default visible columns if visibleColumnIds is not provided
-  const visibleColumnIds = columns.filter(column => column.defaultVisible).map(column => column.id);
+  // Use provided visibleColumnIds or default to columns with defaultVisible=true
+  const visibleColumnIds = propVisibleColumnIds || 
+    columns.filter(column => column.defaultVisible).map(column => column.id);
 
   if (isLoading) {
     return (
