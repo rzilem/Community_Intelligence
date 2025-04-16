@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Announcement } from '@/types/communication-types';
+import { Announcement, AnnouncementPriority } from '@/types/communication-types';
+import { toast } from 'sonner';
 
 export const announcementService = {
   // Get announcements for an association
@@ -13,46 +14,72 @@ export const announcementService = {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      
+      // Ensure the data is properly typed
+      return (data || []).map(item => ({
+        ...item,
+        priority: item.priority as AnnouncementPriority
+      })) as Announcement[];
     } catch (error) {
       console.error('Error fetching announcements:', error);
       return [];
     }
   },
-
+  
   // Create a new announcement
-  createAnnouncement: async (announcement: Omit<Announcement, 'id' | 'created_at' | 'updated_at'>): Promise<Announcement | null> => {
+  createAnnouncement: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'>): Promise<Announcement | null> => {
     try {
       const { data, error } = await supabase
         .from('announcements')
-        .insert([announcement])
-        .select();
+        .insert({
+          ...announcementData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
       
       if (error) throw error;
-      return data?.[0] || null;
+      
+      // Ensure the returned data is properly typed
+      return {
+        ...data,
+        priority: data.priority as AnnouncementPriority
+      } as Announcement;
     } catch (error) {
       console.error('Error creating announcement:', error);
-      throw error;
+      toast.error('Failed to create announcement');
+      return null;
     }
   },
-
+  
   // Update an existing announcement
-  updateAnnouncement: async (id: string, updates: Partial<Announcement>): Promise<Announcement | null> => {
+  updateAnnouncement: async (id: string, announcementData: Partial<Announcement>): Promise<Announcement | null> => {
     try {
       const { data, error } = await supabase
         .from('announcements')
-        .update(updates)
+        .update({
+          ...announcementData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
-        .select();
+        .select()
+        .single();
       
       if (error) throw error;
-      return data?.[0] || null;
+      
+      // Ensure the returned data is properly typed
+      return {
+        ...data,
+        priority: data.priority as AnnouncementPriority
+      } as Announcement;
     } catch (error) {
       console.error('Error updating announcement:', error);
-      throw error;
+      toast.error('Failed to update announcement');
+      return null;
     }
   },
-
+  
   // Delete an announcement
   deleteAnnouncement: async (id: string): Promise<boolean> => {
     try {
@@ -65,7 +92,8 @@ export const announcementService = {
       return true;
     } catch (error) {
       console.error('Error deleting announcement:', error);
-      throw error;
+      toast.error('Failed to delete announcement');
+      return false;
     }
   }
 };
