@@ -12,6 +12,7 @@ import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
 import { useSupabaseUpdate } from '@/hooks/supabase';
 import RequestEditForm from './RequestEditForm';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;

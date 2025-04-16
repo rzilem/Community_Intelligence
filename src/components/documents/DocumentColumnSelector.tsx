@@ -26,6 +26,7 @@ const DocumentColumnSelector: React.FC<DocumentColumnSelectorProps> = ({
       selectedColumns={selectedColumns}
       onChange={onChange}
       onReorder={onReorder}
+      resetToDefaults={resetToDefaults}
       className={className}
     />
   );

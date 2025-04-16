@@ -2,9 +2,9 @@
 import React from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Eye, Download, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Document } from '@/types/document-types';
 import { formatBytes } from '@/lib/utils';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface DocumentTableProps {
   documents: Document[];
@@ -51,15 +51,15 @@ const DocumentTable: React.FC<DocumentTableProps> = ({
                 <TableCell>{formatBytes(doc.file_size)}</TableCell>
                 <TableCell>{doc.uploaded_at}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="ghost" size="sm" onClick={() => onView(doc)}>
+                  <TooltipButton variant="ghost" size="sm" onClick={() => onView(doc)} tooltip="View document">
                     <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onDownload(doc)}>
+                  </TooltipButton>
+                  <TooltipButton variant="ghost" size="sm" onClick={() => onDownload(doc)} tooltip="Download document">
                     <Download className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => onDelete(doc)}>
+                  </TooltipButton>
+                  <TooltipButton variant="ghost" size="sm" onClick={() => onDelete(doc)} tooltip="Delete document">
                     <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                  </TooltipButton>
                 </TableCell>
               </TableRow>
             ))

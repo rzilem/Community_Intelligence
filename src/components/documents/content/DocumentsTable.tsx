@@ -2,10 +2,10 @@
 import React from 'react';
 import { Document } from '@/types/document-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Download, History, Eye, Trash2 } from 'lucide-react';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface DocumentsTableProps {
   documents: Document[];
@@ -52,39 +52,43 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({
             </TableCell>
             <TableCell className="text-right">
               <div className="flex justify-end gap-2">
-                <Button 
+                <TooltipButton 
                   variant="outline" 
                   size="sm"
                   onClick={() => onViewDocument(doc)}
+                  tooltip="View document"
                 >
                   <Eye className="h-4 w-4" />
                   <span className="sr-only">View</span>
-                </Button>
-                <Button 
+                </TooltipButton>
+                <TooltipButton 
                   variant="outline" 
                   size="sm"
                   onClick={() => onDownloadDocument(doc)}
+                  tooltip="Download document"
                 >
                   <Download className="h-4 w-4" />
                   <span className="sr-only">Download</span>
-                </Button>
-                <Button 
+                </TooltipButton>
+                <TooltipButton 
                   variant="outline" 
                   size="sm"
                   onClick={() => onOpenVersionHistory(doc)}
+                  tooltip="View version history"
                 >
                   <History className="h-4 w-4" />
                   <span className="sr-only">Version History</span>
-                </Button>
-                <Button 
+                </TooltipButton>
+                <TooltipButton 
                   variant="outline" 
                   size="sm"
                   className="text-destructive hover:text-destructive"
                   onClick={() => onDeleteDocument(doc)}
+                  tooltip="Delete document"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
-                </Button>
+                </TooltipButton>
               </div>
             </TableCell>
           </TableRow>

@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { Columns, GripVertical } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface Column {
   id: string;
@@ -15,6 +15,7 @@ interface ColumnSelectorProps {
   selectedColumns: string[];
   onChange: (selectedColumns: string[]) => void;
   onReorder?: (sourceIndex: number, destinationIndex: number) => void;
+  resetToDefaults?: () => void;
   className?: string;
 }
 
@@ -23,6 +24,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   selectedColumns,
   onChange,
   onReorder,
+  resetToDefaults,
   className
 }) => {
   const [open, setOpen] = useState(false);
@@ -72,10 +74,10 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={className}>
+        <TooltipButton variant="outline" className={className} tooltip="Customize visible columns">
           <Columns className="h-4 w-4 mr-2" />
           Customize Columns
-        </Button>
+        </TooltipButton>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-4" align="end">
         <h3 className="font-medium mb-2">Display Columns</h3>
@@ -112,6 +114,17 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         <div className="text-xs text-muted-foreground mt-4">
           At least one column must be selected
         </div>
+        {resetToDefaults && (
+          <TooltipButton 
+            variant="outline" 
+            size="sm" 
+            className="mt-4 w-full"
+            onClick={resetToDefaults}
+            tooltip="Reset columns to default configuration"
+          >
+            Reset to Defaults
+          </TooltipButton>
+        )}
       </PopoverContent>
     </Popover>
   );

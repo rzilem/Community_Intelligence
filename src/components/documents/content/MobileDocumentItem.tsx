@@ -2,9 +2,9 @@
 import React from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Eye, Download, Clock, Trash2 } from 'lucide-react';
 import { Document } from '@/types/document-types';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface MobileDocumentItemProps {
   doc: Document;
@@ -42,39 +42,43 @@ const MobileDocumentItem: React.FC<MobileDocumentItemProps> = ({
       </div>
       
       <div className="flex space-x-2 pt-2">
-        <Button 
+        <TooltipButton 
           variant="outline" 
           size="sm"
           onClick={() => onViewDocument(doc)}
+          tooltip="View document"
         >
           <Eye className="h-4 w-4 mr-1" />
           View
-        </Button>
-        <Button 
+        </TooltipButton>
+        <TooltipButton 
           variant="outline" 
           size="sm"
           onClick={() => onDownloadDocument(doc)}
+          tooltip="Download document"
         >
           <Download className="h-4 w-4 mr-1" />
           Download
-        </Button>
-        <Button 
+        </TooltipButton>
+        <TooltipButton 
           variant="outline" 
           size="sm"
           onClick={() => onOpenVersionHistory(doc)}
+          tooltip="View version history"
         >
           <Clock className="h-4 w-4 mr-1" />
           History
-        </Button>
-        <Button 
+        </TooltipButton>
+        <TooltipButton 
           variant="outline" 
           size="sm"
           className="text-destructive hover:text-destructive"
           onClick={() => onDeleteDocument(doc)}
+          tooltip="Delete document"
         >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Delete</span>
-        </Button>
+        </TooltipButton>
       </div>
     </div>
   );
