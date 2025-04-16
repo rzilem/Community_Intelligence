@@ -3,16 +3,6 @@ import { extractCity } from './city-utils';
 import { cleanCityName, formatStreetAddress, getFormattedLeadAddressData } from './format-utils';
 import { extractZipCode, extractZipCodeFromText } from './zip-utils';
 
-export { 
-  extractCity,
-  cleanCityName,
-  formatStreetAddress,
-  getFormattedLeadAddressData,
-  extractZipCode,
-  extractZipCodeFromText,
-  createGoogleMapsLink
-};
-
 /**
  * Create a Google Maps link from an address string
  */
@@ -26,3 +16,12 @@ export function createGoogleMapsLink(address: string): string {
   const encodedAddress = encodeURIComponent(cleanAddress);
   return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 }
+
+export { 
+  extractCity,
+  cleanCityName,
+  formatStreetAddress,
+  getFormattedLeadAddressData,
+  extractZipCode,
+  extractZipCodeFromText
+};
