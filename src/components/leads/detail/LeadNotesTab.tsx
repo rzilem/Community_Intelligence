@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Lead } from '@/types/lead-types';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface LeadNotesTabProps {
   lead: Lead;
