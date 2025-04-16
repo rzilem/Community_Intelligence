@@ -85,10 +85,8 @@ const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ lead, onSaveNotes }) 
       <CardContent className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium">Activity Feed</h3>
-          <ActionButtons />
+          <ActionButtons lead={lead} onSaveNotes={onSaveNotes} />
         </div>
-        
-        <NotesSection lead={lead} onSaveNotes={onSaveNotes} />
         
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
