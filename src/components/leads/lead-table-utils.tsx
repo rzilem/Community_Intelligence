@@ -5,34 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import LeadStatusBadge from './LeadStatusBadge';
 import { LeadColumn } from '@/hooks/leads/useTableColumns';
 import { ExternalLink } from 'lucide-react';
-
-// Format a name properly (First Last)
-const formatName = (lead: Lead): string => {
-  // Check if first_name and last_name are available
-  if (lead.first_name || lead.last_name) {
-    return [lead.first_name, lead.last_name].filter(Boolean).join(' ');
-  }
-  
-  // Fall back to the name field
-  if (lead.name && lead.name !== "Lead Contact" && lead.name !== "Unknown Contact") {
-    // Remove "of Association" if present
-    const cleanName = lead.name.replace(/of\s+Association/i, '').trim();
-    
-    // Don't use email usernames as names
-    if (cleanName.includes('@') || /^[a-zA-Z0-9._%+-]+$/.test(cleanName)) {
-      // This looks like an email username, not a real name
-      return '';
-    }
-    
-    // Split into words and capitalize each word
-    return cleanName
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-  }
-  
-  return '';
-};
+import { formatLeadName } from './detail/lead-detail-utils';
 
 // Extract and clean city name
 const extractCity = (cityField: string | undefined, address: string | undefined): string => {
@@ -131,7 +104,7 @@ export const renderLeadTableCell = (lead: Lead, columnId: string, columns: LeadC
   
   // Special formatting for specific columns
   if (columnId === 'name') {
-    return formatName(lead);
+    return formatLeadName(lead);
   }
   
   if (columnId === 'city') {

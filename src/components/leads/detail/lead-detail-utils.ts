@@ -63,3 +63,18 @@ export function getFormattedLeadAddressData(lead: Lead) {
     zipCode
   };
 }
+
+/**
+ * Formats a lead's name consistently
+ * Prioritizes full name if available, otherwise combines first and last name
+ */
+export function formatLeadName(lead: Lead): string {
+  // If full name exists, use it
+  if (lead.name) return lead.name;
+  
+  // If no full name, construct from first and last name
+  const firstName = lead.first_name || '';
+  const lastName = lead.last_name || '';
+  
+  return (firstName + ' ' + lastName).trim() || 'N/A';
+}
