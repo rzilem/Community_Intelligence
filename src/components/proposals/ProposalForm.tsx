@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { Proposal, ProposalTemplate, ProposalAttachment } from '@/types/proposal-types';
+import { Proposal, ProposalTemplate, ProposalAttachment, ProposalSection } from '@/types/proposal-types';
 import { useLeads } from '@/hooks/leads/useLeads';
 import { useProposalTemplates } from '@/hooks/proposals/useProposalTemplates';
 import { 
@@ -17,6 +17,7 @@ import { Loader2 } from 'lucide-react';
 import ProposalContentForm from './ProposalContentForm';
 import ProposalAttachments from './ProposalAttachments';
 import ProposalSettingsForm from './ProposalSettingsForm';
+import ProposalBuilder from './interactive-builder/ProposalBuilder';
 
 interface ProposalFormProps {
   isOpen: boolean;
@@ -39,6 +40,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [attachments, setAttachments] = useState<ProposalAttachment[]>(proposal?.attachments || []);
   const [activeTab, setActiveTab] = useState("content");
+  const [useAdvancedEditor, setUseAdvancedEditor] = useState(false);
+  const [sections, setSections] = useState<ProposalSection[]>(proposal?.sections || []);
 
   const form = useForm({
     defaultValues: {
@@ -57,8 +60,38 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     if (selectedTemplate) {
       form.setValue('content', selectedTemplate.content);
       form.setValue('template_id', selectedTemplate.id);
+      
+      // If we're using the advanced editor, try to parse the template content into sections
+      if (useAdvancedEditor) {
+        try {
+          // This is simplified, in a real app you'd need a more robust parser
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(selectedTemplate.content, 'text/html');
+          const sectionElements = doc.querySelectorAll('section[data-section-id]');
+          
+          if (sectionElements.length > 0) {
+            const parsedSections: ProposalSection[] = Array.from(sectionElements).map((el, index) => {
+              const id = el.getAttribute('data-section-id') || `section-${Date.now()}-${index}`;
+              const title = el.querySelector('h2')?.textContent || 'Untitled Section';
+              const content = el.innerHTML;
+              
+              return {
+                id,
+                title,
+                content,
+                order: index,
+                attachments: []
+              };
+            });
+            
+            setSections(parsedSections);
+          }
+        } catch (error) {
+          console.error('Error parsing template content:', error);
+        }
+      }
     }
-  }, [selectedTemplate, form]);
+  }, [selectedTemplate, form, useAdvancedEditor]);
 
   const handleTemplateChange = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
@@ -70,7 +103,8 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     try {
       const proposalData = {
         ...data,
-        attachments: attachments
+        attachments: attachments,
+        sections: sections
       };
       await onSave(proposalData);
       onClose();
@@ -89,9 +123,14 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
     setAttachments(prev => prev.filter(att => att.id !== id));
   };
 
+  const handleAdvancedContentSave = (content: string, updatedSections: ProposalSection[]) => {
+    form.setValue('content', content);
+    setSections(updatedSections);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{proposal ? 'Edit Proposal' : 'Create New Proposal'}</DialogTitle>
         </DialogHeader>
@@ -105,14 +144,35 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              <TabsContent value="content" className="mt-0">
-                <ProposalContentForm 
-                  leads={leads}
-                  templates={templates}
-                  templatesLoading={templatesLoading}
-                  onTemplateChange={handleTemplateChange}
-                  showLeadSelector={!leadId}
-                />
+              <TabsContent value="content" className="mt-0 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Proposal Content</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setUseAdvancedEditor(!useAdvancedEditor)}
+                  >
+                    {useAdvancedEditor ? 'Switch to Basic Editor' : 'Switch to Advanced Editor'}
+                  </Button>
+                </div>
+                
+                {useAdvancedEditor ? (
+                  <div className="border rounded-md">
+                    <ProposalBuilder
+                      initialContent={form.getValues('content')}
+                      onSave={handleAdvancedContentSave}
+                      proposalId={proposal?.id}
+                    />
+                  </div>
+                ) : (
+                  <ProposalContentForm 
+                    leads={leads}
+                    templates={templates}
+                    templatesLoading={templatesLoading}
+                    onTemplateChange={handleTemplateChange}
+                    showLeadSelector={!leadId}
+                  />
+                )}
               </TabsContent>
               
               <TabsContent value="attachments" className="mt-0">

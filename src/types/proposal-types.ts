@@ -24,6 +24,7 @@ export interface Proposal {
   responded_date?: string;
   created_at: string;
   updated_at: string;
+  sections?: ProposalSection[];
 }
 
 export interface ProposalFolder {
@@ -51,4 +52,13 @@ export interface ProposalSection {
   content: string;
   order: number;
   attachments?: ProposalAttachment[];
+}
+
+export interface ProposalAnalytics {
+  views: number;
+  avg_view_time?: number;
+  most_viewed_section?: string;
+  initial_view_date?: string;
+  last_view_date?: string;
+  view_count_by_section?: Record<string, number>;
 }
