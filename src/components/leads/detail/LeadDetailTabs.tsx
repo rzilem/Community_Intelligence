@@ -17,9 +17,14 @@ import ActivityFeedTab from './tabs/ActivityFeedTab';
 interface LeadDetailTabsProps {
   lead: Lead;
   onSaveNotes: (notes: string) => void;
+  onAssociationUpdate?: (data: Partial<Lead>) => void;
 }
 
-const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ lead, onSaveNotes }) => {
+const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ 
+  lead, 
+  onSaveNotes,
+  onAssociationUpdate 
+}) => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="details">
@@ -47,7 +52,10 @@ const LeadDetailTabs: React.FC<LeadDetailTabsProps> = ({ lead, onSaveNotes }) =>
         </TabsContent>
         
         <TabsContent value="association" className="mt-6">
-          <LeadAssociationTab lead={lead} />
+          <LeadAssociationTab 
+            lead={lead} 
+            onAssociationUpdate={onAssociationUpdate} 
+          />
         </TabsContent>
         
         <TabsContent value="activity" className="mt-6">

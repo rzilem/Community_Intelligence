@@ -79,10 +79,32 @@ export const useLeadDetail = (leadId: string | undefined) => {
     }
   };
 
+  const handleAssociationUpdate = async (associationData: Partial<Lead>) => {
+    if (!lead) return;
+    
+    try {
+      const { error } = await supabase
+        .from('leads' as any)
+        .update({ 
+          ...associationData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', lead.id);
+        
+      if (error) throw error;
+      
+      setLead(prev => prev ? { ...prev, ...associationData } : null);
+      toast.success('Association details updated successfully');
+    } catch (error: any) {
+      toast.error(`Error updating association details: ${error.message}`);
+    }
+  };
+
   return {
     lead,
     loading,
     handleStatusChange,
-    handleSaveNotes
+    handleSaveNotes,
+    handleAssociationUpdate
   };
 };

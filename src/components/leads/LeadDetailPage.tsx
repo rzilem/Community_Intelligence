@@ -13,7 +13,13 @@ import NotFoundState from './detail/NotFoundState';
 
 const LeadDetailPage: React.FC = () => {
   const { leadId } = useParams<{ leadId: string }>();
-  const { lead, loading, handleStatusChange, handleSaveNotes } = useLeadDetail(leadId);
+  const { 
+    lead, 
+    loading, 
+    handleStatusChange, 
+    handleSaveNotes,
+    handleAssociationUpdate
+  } = useLeadDetail(leadId);
 
   if (loading) {
     return <LoadingState />;
@@ -35,7 +41,11 @@ const LeadDetailPage: React.FC = () => {
         />
       }
     >
-      <LeadDetailTabs lead={lead} onSaveNotes={handleSaveNotes} />
+      <LeadDetailTabs 
+        lead={lead} 
+        onSaveNotes={handleSaveNotes}
+        onAssociationUpdate={handleAssociationUpdate}
+      />
     </PageTemplate>
   );
 };

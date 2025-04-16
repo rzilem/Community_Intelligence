@@ -1,4 +1,3 @@
-
 export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'proposal' | 'converted' | 'lost';
 
 export interface LeadAttachment {
@@ -23,11 +22,51 @@ export interface Lead {
   updated_at: string;
   tracking_number?: string;
   
-  // Additional fields
+  // Basic Association Information
   association_name?: string;
   association_type?: string;
   current_management?: string;
   number_of_units?: number;
+  management_type?: string;
+  new_build_or_existing?: 'new-build' | 'existing';
+  
+  // Board & Meeting Information
+  board_members?: string;
+  board_meetings_per_year?: string;
+  annual_meetings_per_year?: string;
+  committee_meetings_per_year?: string;
+  scheduled_meetings?: string;
+  sos_url?: string;
+  
+  // Management Information
+  onsite_management_office?: 'yes' | 'no';
+  regional_visits_per_month?: string;
+  inspections_per_month?: string;
+  has_received_notice?: 'yes' | 'no' | 'pending';
+  previous_management_company?: string;
+  active_projects?: string;
+  
+  // Legal Information
+  collection_attorney?: string;
+  collection_assigned_attorney?: string;
+  current_lawsuits?: string;
+  current_insurance_claims?: string;
+  current_special_assessments?: string;
+  contact_info_legal?: string;
+  contract_link?: string;
+  
+  // Financial Information
+  billing_type?: string;
+  billing_cycle?: string;
+  annual_budget?: string;
+  fein_number?: string;
+  cash_on_hand?: string;
+  financial_grade?: string;
+  reserves?: 'yes' | 'no' | 'partial';
+  insurance_expiration_date?: string;
+  ballpark_on_funds?: string;
+  
+  // Other existing fields
   first_name?: string;
   last_name?: string;
   street_address?: string;
