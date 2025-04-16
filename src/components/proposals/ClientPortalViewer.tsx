@@ -1,32 +1,27 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
 import { Proposal } from '@/types/proposal-types';
-import { 
-  FileText, 
-  Download, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Pencil, 
-  Send, 
-  MessageSquare, 
-  Check 
-} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Check, X, MessageCircle, FileText, Calculator, Video, PenTool } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import SignatureCanvas from 'react-signature-canvas';
+import CostCalculator from './interactive-calculator/CostCalculator';
+import ProposalVideoSection from './video-integration/ProposalVideoSection';
 
 interface ClientPortalViewerProps {
   proposal: Proposal;
   clientName: string;
-  companyName?: string;
-  onAccept?: () => void;
-  onReject?: () => void;
-  onComment?: (comment: string) => void;
+  companyName: string;
+  onAccept: () => Promise<void>;
+  onReject: () => Promise<void>;
+  onComment: (comment: string) => Promise<void>;
 }
 
 const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
@@ -37,239 +32,340 @@ const ClientPortalViewer: React.FC<ClientPortalViewerProps> = ({
   onReject,
   onComment
 }) => {
+  const { toast: uiToast } = useToast();
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [comment, setComment] = useState('');
-  const [showSignature, setShowSignature] = useState(false);
-  const [signature, setSignature] = useState('');
-  const [activeTab, setActiveTab] = useState('proposal');
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
+  const [signatureRef, setSignatureRef] = useState<SignatureCanvas | null>(null);
+  const [activeTab, setActiveTab] = useState("proposal");
   
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLDivElement;
-    const scrolled = target.scrollTop;
-    const maxHeight = target.scrollHeight - target.clientHeight;
-    const progress = (scrolled / maxHeight) * 100;
-    setScrollProgress(progress);
+  // Mock data for demo purposes (in a real app these would come from the database)
+  const demoCalculator = {
+    id: '1',
+    proposal_id: proposal.id,
+    base_price: proposal.amount || 5000,
+    options: [
+      {
+        id: 'opt1',
+        name: 'Premium Management Package',
+        description: 'Enhanced management services including quarterly inspections',
+        price: 1500,
+        selected: false
+      },
+      {
+        id: 'opt2',
+        name: 'Accounting & Financial Services',
+        description: 'Comprehensive financial management and reporting',
+        price: 1200,
+        selected: false,
+        options: [
+          {
+            id: 'opt2-1',
+            name: 'Monthly Financial Reviews',
+            description: 'Additional monthly financial reviews with the board',
+            price: 300,
+            selected: false
+          },
+          {
+            id: 'opt2-2',
+            name: 'Annual Audit Support',
+            description: 'Assistance with annual financial audits',
+            price: 500,
+            selected: false
+          }
+        ]
+      },
+      {
+        id: 'opt3',
+        name: 'Maintenance & Inspections',
+        description: 'Regular property maintenance and inspection services',
+        price: 900,
+        selected: false
+      },
+      {
+        id: 'opt4',
+        name: 'Compliance & Legal Support',
+        description: 'Assistance with legal compliance and documentation',
+        price: 1100,
+        selected: false
+      }
+    ],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
   
-  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSignature(e.target.value);
-  };
-  
-  const handleSendComment = () => {
-    if (!comment.trim()) return;
-    
-    if (onComment) {
-      onComment(comment);
+  const demoVideos = [
+    {
+      id: 'v1',
+      proposal_id: proposal.id,
+      title: 'Client Testimonial - Oakridge Estates',
+      description: 'Hear what the board president at Oakridge Estates has to say about our services',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      duration: 184,
+      type: 'testimonial',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'v2',
+      proposal_id: proposal.id,
+      title: 'Meet Your Management Team',
+      description: 'Introduction to the team that will be managing your property',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      duration: 156,
+      type: 'team_intro',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'v3',
+      proposal_id: proposal.id,
+      title: 'Community Management Walkthrough',
+      description: 'See how our management software works for board members',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      thumbnail_url: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      duration: 210,
+      type: 'property_tour',
+      created_at: new Date().toISOString()
     }
-    setComment('');
-  };
-  
-  const handleAccept = () => {
-    if (proposal.signature_required && !signature) {
-      setShowSignature(true);
+  ];
+
+  useEffect(() => {
+    // Track that the client has viewed the proposal
+    const trackView = async () => {
+      // In a real implementation, this would call an API to track the view
+      console.log('Tracking view for proposal:', proposal.id);
+    };
+    
+    trackView();
+  }, [proposal.id]);
+
+  const handleAccept = async () => {
+    if (proposal.signature_required && !isSignatureDialogOpen) {
+      setIsSignatureDialogOpen(true);
       return;
     }
     
-    if (onAccept) {
-      onAccept();
+    try {
+      setIsAccepting(true);
+      
+      // If signature is required, get the signature data
+      let signatureData = '';
+      if (proposal.signature_required && signatureRef) {
+        if (signatureRef.isEmpty()) {
+          uiToast({
+            title: "Signature Required",
+            description: "Please sign the document before accepting",
+            variant: "destructive"
+          });
+          setIsAccepting(false);
+          return;
+        }
+        
+        // Get signature as base64 string
+        signatureData = signatureRef.toDataURL('image/png');
+      }
+      
+      // In a real implementation, you would include the signature data
+      await onAccept();
+      
+      if (proposal.signature_required) {
+        setIsSignatureDialogOpen(false);
+      }
+    } catch (error: any) {
+      toast.error(`Error accepting proposal: ${error.message}`);
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      setIsRejecting(true);
+      await onReject();
+    } catch (error: any) {
+      toast.error(`Error declining proposal: ${error.message}`);
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  const handleSendComment = async () => {
+    if (!comment.trim()) return;
+    
+    try {
+      await onComment(comment);
+      setComment('');
+      uiToast({
+        title: "Comment Sent",
+        description: "Your comment has been sent successfully"
+      });
+    } catch (error: any) {
+      uiToast({
+        title: "Error",
+        description: `Failed to send comment: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const clearSignature = () => {
+    if (signatureRef) {
+      signatureRef.clear();
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">{proposal.name}</h1>
-            <p className="text-muted-foreground">Prepared for {clientName} {companyName && `at ${companyName}`}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Secure Portal
-            </Badge>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-          </div>
-        </div>
-      </header>
-      
-      {/* Progress bar */}
-      <div className="h-1 w-full bg-gray-100">
-        <div 
-          className="h-full bg-blue-500 transition-all" 
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
-      
-      <div className="flex flex-1 overflow-hidden">
-        {/* Main content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="flex flex-col flex-1 overflow-hidden"
-          >
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container max-w-6xl mx-auto">
+        <Card className="border-t-4 border-t-primary mb-8">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-2xl">{proposal.name}</CardTitle>
+                <CardDescription>
+                  Proposal for {clientName} | {companyName}
+                </CardDescription>
+              </div>
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  className="border-green-500 text-green-600 hover:bg-green-50"
+                  onClick={() => proposal.signature_required ? setIsSignatureDialogOpen(true) : handleAccept()}
+                  disabled={isAccepting || isRejecting}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Accept
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-red-500 text-red-600 hover:bg-red-50"
+                  onClick={handleReject}
+                  disabled={isAccepting || isRejecting}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Decline
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          <Tabs defaultValue="proposal" value={activeTab} onValueChange={setActiveTab}>
             <div className="px-6 pt-4">
-              <TabsList>
-                <TabsTrigger value="proposal">
+              <TabsList className="w-full">
+                <TabsTrigger value="proposal" className="flex-1">
                   <FileText className="h-4 w-4 mr-2" />
                   Proposal
                 </TabsTrigger>
-                <TabsTrigger value="attachments">
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Attachments
+                <TabsTrigger value="calculator" className="flex-1">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Cost Calculator
+                </TabsTrigger>
+                <TabsTrigger value="videos" className="flex-1">
+                  <Video className="h-4 w-4 mr-2" />
+                  Videos
                 </TabsTrigger>
               </TabsList>
             </div>
             
-            <TabsContent 
-              value="proposal" 
-              className="flex-1 overflow-hidden px-6 pt-4 pb-6"
-            >
-              <Card className="flex flex-col h-full">
-                <ScrollArea className="flex-1" onScroll={handleScroll}>
-                  <div 
-                    className="p-8"
-                    dangerouslySetInnerHTML={{ __html: proposal.content }}
-                  />
-                </ScrollArea>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent 
-              value="attachments" 
-              className="flex-1 overflow-auto px-6 pt-4 pb-6"
-            >
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle>Attachments</CardTitle>
-                  <CardDescription>
-                    Documents and files related to this proposal
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {proposal.attachments && proposal.attachments.length > 0 ? (
-                    <div className="space-y-4">
-                      {proposal.attachments.map((attachment) => (
-                        <div key={attachment.id} className="flex items-center justify-between p-3 border rounded-md">
-                          <div className="flex items-center">
-                            <div className="mr-3">
-                              {attachment.type === 'image' && <img src={attachment.url} alt={attachment.name} className="w-12 h-12 object-cover rounded" />}
-                              {attachment.type === 'pdf' && <FileText className="h-12 w-12 text-red-500" />}
-                              {attachment.type === 'document' && <FileText className="h-12 w-12 text-blue-500" />}
-                              {attachment.type === 'video' && <FileText className="h-12 w-12 text-purple-500" />}
-                            </div>
-                            <div>
-                              <p className="font-medium">{attachment.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {(attachment.size && attachment.size > 1024 * 1024) 
-                                  ? `${(attachment.size / (1024 * 1024)).toFixed(1)} MB` 
-                                  : (attachment.size ? `${(attachment.size / 1024).toFixed(0)} KB` : 'Unknown size')}
-                              </p>
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="sm">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-10 text-center">
-                      <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">No attachments added to this proposal</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <CardContent className="pt-4">
+              <TabsContent value="proposal" className="mt-0">
+                <div 
+                  className="border rounded-md p-8 bg-white min-h-[60vh]"
+                  dangerouslySetInnerHTML={{ __html: proposal.content }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="calculator" className="mt-0">
+                <CostCalculator
+                  calculator={proposal.interactive_calculator || demoCalculator}
+                  readOnly={false}
+                />
+              </TabsContent>
+              
+              <TabsContent value="videos" className="mt-0">
+                <ProposalVideoSection 
+                  videos={proposal.videos || demoVideos}
+                />
+              </TabsContent>
+            </CardContent>
           </Tabs>
           
-          {/* Action footer */}
-          <div className="bg-white border-t p-4">
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                Take action on this proposal
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={onReject}>
-                  <ThumbsDown className="h-4 w-4 mr-2" />
-                  Decline
+          <Separator />
+          
+          <CardFooter className="flex flex-col pt-6">
+            <div className="w-full">
+              <Label htmlFor="comment">Send a Comment</Label>
+              <div className="flex mt-2">
+                <Textarea 
+                  id="comment"
+                  placeholder="Ask a question or provide feedback..."
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  className="flex-1 rounded-r-none"
+                />
+                <Button 
+                  variant="default" 
+                  className="rounded-l-none"
+                  onClick={handleSendComment}
+                  disabled={!comment.trim()}
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Send
                 </Button>
-                <Button onClick={handleAccept}>
-                  <ThumbsUp className="h-4 w-4 mr-2" />
-                  Accept Proposal
-                </Button>
               </div>
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+      
+      {/* Signature Dialog */}
+      <Dialog open={isSignatureDialogOpen} onOpenChange={setIsSignatureDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign to Accept Proposal</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Please sign below to accept the proposal.
+            </p>
+            
+            <div className="border rounded-md">
+              <SignatureCanvas
+                ref={(ref) => setSignatureRef(ref)}
+                penColor="black"
+                canvasProps={{
+                  className: "w-full h-64 signature-canvas"
+                }}
+              />
             </div>
             
-            {showSignature && (
-              <div className="mt-4 p-4 border rounded-md bg-gray-50">
-                <h3 className="font-medium mb-2">Please sign to accept this proposal</h3>
-                <div className="space-y-2">
-                  <input 
-                    type="text" 
-                    value={signature} 
-                    onChange={handleSignatureChange} 
-                    placeholder="Type your full name to sign" 
-                    className="w-full p-2 border rounded-md"
-                  />
-                  <Button 
-                    onClick={onAccept} 
-                    disabled={!signature}
-                    className="w-full"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Sign & Accept
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Sidebar */}
-        <div className="w-80 border-l bg-white flex flex-col overflow-hidden">
-          <div className="p-4 border-b">
-            <h2 className="font-medium">Comments & Questions</h2>
-          </div>
-          
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {/* Sample comments - in a real app these would come from an API */}
-              <div className="p-3 bg-blue-50 rounded-md">
-                <div className="flex justify-between items-start mb-1">
-                  <span className="font-medium text-sm">Support Team</span>
-                  <span className="text-xs text-muted-foreground">2 days ago</span>
-                </div>
-                <p className="text-sm">
-                  Thank you for reviewing our proposal. Please let us know if you have any questions!
-                </p>
-              </div>
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={clearSignature}>
+                Clear
+              </Button>
             </div>
-          </ScrollArea>
-          
-          <div className="p-4 border-t mt-auto">
-            <Textarea 
-              placeholder="Add a comment or question..." 
-              className="mb-2 resize-none"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-            <Button 
-              className="w-full" 
-              onClick={handleSendComment}
-              disabled={!comment.trim()}
-            >
-              <Send className="h-4 w-4 mr-2" />
-              Send Comment
-            </Button>
           </div>
-        </div>
-      </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsSignatureDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAccept}
+              disabled={isAccepting}
+            >
+              <PenTool className="h-4 w-4 mr-2" />
+              {isAccepting ? 'Processing...' : 'Sign & Accept'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

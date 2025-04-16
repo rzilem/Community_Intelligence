@@ -8,6 +8,18 @@ export interface ProposalTemplate {
   attachments?: ProposalAttachment[];
   created_at: string;
   updated_at: string;
+  version?: number;
+  version_history?: TemplateVersion[];
+}
+
+export interface TemplateVersion {
+  id: string;
+  template_id: string;
+  version_number: number;
+  content: string;
+  created_at: string;
+  created_by?: string;
+  change_notes?: string;
 }
 
 export interface Proposal {
@@ -31,6 +43,9 @@ export interface Proposal {
   signed_by?: string;
   signature_data?: string;
   analytics?: ProposalAnalytics;
+  interactive_calculator?: InteractiveCostCalculator;
+  videos?: ProposalVideo[];
+  follow_ups?: ProposalFollowUp[];
 }
 
 export interface ProposalFolder {
@@ -89,4 +104,47 @@ export interface ClientPortalSettings {
   allow_comments?: boolean;
   allow_downloads?: boolean;
   password_protected?: boolean;
+}
+
+export interface InteractiveCostCalculator {
+  id: string;
+  proposal_id: string;
+  base_price: number;
+  options: CostCalculatorOption[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CostCalculatorOption {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  selected?: boolean;
+  options?: CostCalculatorOption[];
+}
+
+export interface ProposalVideo {
+  id: string;
+  proposal_id: string;
+  title: string;
+  description?: string;
+  url: string;
+  thumbnail_url?: string;
+  duration?: number;
+  type: 'testimonial' | 'property_tour' | 'team_intro' | 'other';
+  created_at: string;
+}
+
+export interface ProposalFollowUp {
+  id: string;
+  proposal_id: string;
+  scheduled_date: string;
+  sent_date?: string;
+  status: 'scheduled' | 'sent' | 'cancelled';
+  message_template: string;
+  trigger_type: 'days_after_send' | 'days_after_view' | 'no_activity' | 'manual';
+  trigger_days: number;
+  created_at: string;
+  updated_at: string;
 }
