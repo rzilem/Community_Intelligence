@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { NoteType } from './types';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { toast } from 'sonner';
+import { Profile } from '@/types/profile-types';
 
 interface AddNoteDialogProps {
   isOpen: boolean;
@@ -49,7 +50,7 @@ export const AddNoteDialog: React.FC<AddNoteDialogProps> = ({
       
       // Safely access user profile data, handling the case where it might not exist
       if (user && 'profile' in user) {
-        const userProfile = user.profile || {};
+        const userProfile = (user.profile as Profile) || {};
         const firstName = userProfile.first_name || '';
         const lastName = userProfile.last_name || '';
         
