@@ -20,7 +20,7 @@ const LeadCommunicationTab: React.FC = () => {
       id: 2, 
       type: 'call',
       subject: 'Initial consultation call',
-      content: 'Discussed the client's needs and provided an overview of our services...',
+      content: 'Discussed the client\'s needs and provided an overview of our services...',
       date: '2025-04-16T10:15:00Z',
       from: 'John Doe',
       to: 'Lead Contact'
@@ -124,3 +124,4 @@ const LeadCommunicationTab: React.FC = () => {
 };
 
 export default LeadCommunicationTab;
+
