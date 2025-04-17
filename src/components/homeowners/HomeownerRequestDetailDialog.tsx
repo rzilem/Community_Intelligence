@@ -28,6 +28,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   onOpenChange 
 }) => {
   const [activeTab, setActiveTab] = useState('request-information');
+  const [fullscreenEmail, setFullscreenEmail] = useState(false);
 
   if (!request) return null;
 
@@ -82,7 +83,11 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             </TabsContent>
             
             <TabsContent value="original-email">
-              <OriginalEmailTab htmlContent={request.html_content} />
+              <OriginalEmailTab 
+                htmlContent={request.html_content} 
+                fullscreenEmail={fullscreenEmail}
+                setFullscreenEmail={setFullscreenEmail}
+              />
             </TabsContent>
             
             <TabsContent value="comments">
