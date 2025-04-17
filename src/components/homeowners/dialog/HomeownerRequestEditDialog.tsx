@@ -144,7 +144,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-6xl w-[95%] flex flex-col max-h-[95vh]">
+      <ResponsiveDialogContent className="max-w-7xl w-[95%] flex flex-col max-h-[95vh]">
         <RequestDialogHeader 
           title={request.title}
           trackingNumber={request.tracking_number}
