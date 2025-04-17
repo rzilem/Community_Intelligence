@@ -114,11 +114,11 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   };
 
   return (
-    <tr className="hover:bg-muted/50 border-b">
+    <tr className="hover:bg-muted/50">
       {visibleColumnIds.map((columnId) => (
         <td 
           key={columnId} 
-          className="py-2 px-4 border-r border-border/20 last:border-r-0"
+          className="py-2 px-4 last:border-r-0"
         >
           {renderCell(columnId)}
         </td>

@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { HomeownerRequestColumn } from '@/types/homeowner-request-types';
 
 interface RequestTableHeaderProps {
@@ -17,7 +16,7 @@ const RequestTableHeader: React.FC<RequestTableHeaderProps> = ({ columns, visibl
           return column ? (
             <th 
               key={columnId} 
-              className="py-3 px-4 text-left font-medium text-sm text-muted-foreground border-r border-border/20 last:border-r-0"
+              className="py-3 px-4 text-left font-medium text-sm text-muted-foreground last:border-r-0"
             >
               {column.label}
             </th>
