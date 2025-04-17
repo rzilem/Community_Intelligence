@@ -26,8 +26,7 @@ const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form })
           <FormLabel>Assigned To</FormLabel>
           <Select
             onValueChange={field.onChange}
-            defaultValue={field.value}
-            value={field.value}
+            value={field.value || "unassigned"}
           >
             <FormControl>
               <SelectTrigger>

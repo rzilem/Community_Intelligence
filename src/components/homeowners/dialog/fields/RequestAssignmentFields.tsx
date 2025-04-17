@@ -33,10 +33,13 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     'properties',
     {
       select: 'id, address, unit_number, association_id',
-      filter: selectedAssociationId ? [{ column: 'association_id', value: selectedAssociationId }] : [],
+      filter: selectedAssociationId && selectedAssociationId !== 'unassigned' 
+        ? [{ column: 'association_id', value: selectedAssociationId }] 
+        : [],
       order: { column: 'address', ascending: true },
     },
-    !!selectedAssociationId
+    // Only execute query if we have a valid association ID
+    !!(selectedAssociationId && selectedAssociationId !== 'unassigned')
   );
 
   // Fetch residents for the select dropdown
@@ -44,12 +47,16 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     'residents',
     {
       select: 'id, name, email, property_id',
-      filter: selectedPropertyId 
+      filter: selectedPropertyId && selectedPropertyId !== 'unassigned'
         ? [{ column: 'property_id', value: selectedPropertyId }]
-        : (selectedAssociationId ? [] : []),
+        : (selectedAssociationId && selectedAssociationId !== 'unassigned' ? [] : []),
       order: { column: 'name', ascending: true },
     },
-    !!selectedPropertyId || !!selectedAssociationId
+    // Only execute query if we have a valid property ID or association ID
+    !!(
+      (selectedPropertyId && selectedPropertyId !== 'unassigned') || 
+      (selectedAssociationId && selectedAssociationId !== 'unassigned')
+    )
   );
 
   const associationOptions = associations.map(association => ({
@@ -70,14 +77,24 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
   // Reset propertyId when association changes
   useEffect(() => {
     if (selectedAssociationId) {
-      form.setValue('property_id', '');
+      if (selectedAssociationId === 'unassigned') {
+        form.setValue('property_id', 'unassigned');
+      } else {
+        // Only reset if it's a valid association change
+        form.setValue('property_id', 'unassigned');
+      }
     }
   }, [selectedAssociationId, form]);
 
   // Reset residentId when property changes
   useEffect(() => {
     if (selectedPropertyId) {
-      form.setValue('resident_id', '');
+      if (selectedPropertyId === 'unassigned') {
+        form.setValue('resident_id', 'unassigned');
+      } else {
+        // Only reset if it's a valid property change
+        form.setValue('resident_id', 'unassigned');
+      }
     }
   }, [selectedPropertyId, form]);
 
@@ -102,9 +119,13 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         form={form}
         name="property_id"
         label="Property"
-        placeholder={selectedAssociationId ? "Select a property" : "Select an association first"}
+        placeholder={
+          selectedAssociationId && selectedAssociationId !== 'unassigned' 
+            ? "Select a property" 
+            : "Select an association first"
+        }
         options={propertyOptions}
-        disabled={!selectedAssociationId}
+        disabled={!selectedAssociationId || selectedAssociationId === 'unassigned'}
         required={!optional}
       />
       
@@ -112,9 +133,16 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         form={form}
         name="resident_id"
         label="Resident"
-        placeholder={selectedPropertyId ? "Select a resident" : "Select a property first"}
+        placeholder={
+          selectedPropertyId && selectedPropertyId !== 'unassigned' 
+            ? "Select a resident" 
+            : "Select a property first"
+        }
         options={residentOptions}
-        disabled={!selectedPropertyId && !selectedAssociationId}
+        disabled={
+          (!selectedPropertyId || selectedPropertyId === 'unassigned') && 
+          (!selectedAssociationId || selectedAssociationId === 'unassigned')
+        }
         required={!optional}
       />
     </div>

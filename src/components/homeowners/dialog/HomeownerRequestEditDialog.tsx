@@ -41,19 +41,29 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
     
     console.log('Submitting form values:', values);
     
-    // Make sure we're using the database column names
+    // Make sure we're using the database column names and handle empty values properly
     const updatedData: Partial<HomeownerRequest> = {
       title: values.title,
       description: values.description,
       status: values.status,
       priority: values.priority,
       type: values.type,
-      // Use the correct field names that match database columns
+      // Handle unassigned values by setting them to null for the database
       assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
-      association_id: values.association_id === 'unassigned' ? null : values.association_id || null,
-      property_id: values.property_id === 'unassigned' ? null : values.property_id || null,
-      resident_id: values.resident_id === 'unassigned' ? null : values.resident_id || null,
     };
+    
+    // Only include these fields if they have valid values to prevent integrity errors
+    if (values.association_id && values.association_id !== 'unassigned') {
+      updatedData.association_id = values.association_id;
+    }
+    
+    if (values.property_id && values.property_id !== 'unassigned') {
+      updatedData.property_id = values.property_id;
+    }
+    
+    if (values.resident_id && values.resident_id !== 'unassigned') {
+      updatedData.resident_id = values.resident_id;
+    }
     
     console.log('Transformed data for update:', updatedData);
     

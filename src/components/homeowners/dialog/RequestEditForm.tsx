@@ -48,15 +48,15 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       priority: 'medium',
       type: 'general',
       assigned_to: 'unassigned',
-      association_id: '',
-      property_id: '',
-      resident_id: '',
+      association_id: 'unassigned',
+      property_id: 'unassigned',
+      resident_id: 'unassigned',
     },
   });
 
   useEffect(() => {
     if (request) {
-      // Use consistent field names that match database columns
+      // Use consistent field names that match database columns and handle null values
       form.reset({
         title: request.title,
         description: request.description,
@@ -64,9 +64,9 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         priority: request.priority as any,
         type: request.type as any,
         assigned_to: request.assigned_to || 'unassigned',
-        association_id: request.association_id || '',
-        property_id: request.property_id || '',
-        resident_id: request.resident_id || '',
+        association_id: request.association_id || 'unassigned',
+        property_id: request.property_id || 'unassigned',
+        resident_id: request.resident_id || 'unassigned',
       });
     }
   }, [request, form]);
