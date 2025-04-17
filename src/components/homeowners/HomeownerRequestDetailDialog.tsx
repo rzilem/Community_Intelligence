@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -16,6 +15,7 @@ import { formatDate } from '@/lib/date-utils';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
