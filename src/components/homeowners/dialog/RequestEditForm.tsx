@@ -16,7 +16,6 @@ interface RequestEditFormProps {
   onSubmit: (values: any) => void;
   isPending: boolean;
   onCancel: () => void;
-  compact?: boolean;
 }
 
 const formSchema = z.object({
@@ -36,8 +35,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
   request, 
   onSubmit, 
   isPending,
-  onCancel,
-  compact = false
+  onCancel
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,32 +52,6 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       note: '',
     },
   });
-
-  if (compact) {
-    return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="bg-slate-50 p-3 rounded-md">
-            <h3 className="text-sm font-medium text-slate-700 mb-2">Add Note & Submit Changes</h3>
-            <RequestNoteField form={form} compact={true} />
-            <div className="flex justify-end space-x-2 mt-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                size="sm"
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending} size="sm">
-                {isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
-    );
-  }
 
   return (
     <Form {...form}>
