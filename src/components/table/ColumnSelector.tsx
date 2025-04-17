@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Columns, GripVertical } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -32,7 +32,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
 
   // Update local state when selectedColumns prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalSelectedColumns(selectedColumns);
   }, [selectedColumns]);
 
@@ -50,7 +50,6 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     onChange(updatedColumns);
   };
 
-  // Drag and drop handlers
   const handleDragStart = (index: number) => {
     setDraggedItem(index);
   };
@@ -71,10 +70,21 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     setDraggedItem(null);
   };
 
+  const handleResetClick = () => {
+    if (resetToDefaults) {
+      resetToDefaults();
+      setOpen(false);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <TooltipButton variant="outline" className={className} tooltip="Customize visible columns">
+        <TooltipButton 
+          variant="outline" 
+          className={className} 
+          tooltip="Customize visible columns"
+        >
           <Columns className="h-4 w-4 mr-2" />
           Customize Columns
         </TooltipButton>
@@ -82,7 +92,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       <PopoverContent className="w-64 p-4" align="end">
         <h3 className="font-medium mb-2">Display Columns</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          Drag to reorder columns
+          {onReorder ? "Drag to reorder columns" : "Select columns to display"}
         </p>
         <div className="space-y-1 max-h-[300px] overflow-auto">
           {columns.map((column, index) => (
@@ -94,9 +104,11 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
             >
-              <div className="flex items-center justify-center">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-              </div>
+              {onReorder && (
+                <div className="flex items-center justify-center">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
               <Checkbox 
                 id={`column-${column.id}`}
                 checked={localSelectedColumns.includes(column.id)}
@@ -119,7 +131,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             variant="outline" 
             size="sm" 
             className="mt-4 w-full"
-            onClick={resetToDefaults}
+            onClick={handleResetClick}
             tooltip="Reset columns to default configuration"
           >
             Reset to Defaults
