@@ -115,6 +115,25 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
             {request.created_at ? formatRelativeDate(request.created_at) : 'Unknown'}
           </div>
         );
+      case 'email':
+        const emailMatch = request.html_content?.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+        return (
+          <div className="text-sm">
+            {emailMatch ? emailMatch[0] : 'No email found'}
+          </div>
+        );
+      case 'property_id':
+        return (
+          <div className="text-sm">
+            {request.property_id || 'Not assigned'}
+          </div>
+        );
+      case 'association_id':
+        return (
+          <div className="text-sm">
+            {request.association_id || 'Not assigned'}
+          </div>
+        );
       default:
         return <div>-</div>;
     }
