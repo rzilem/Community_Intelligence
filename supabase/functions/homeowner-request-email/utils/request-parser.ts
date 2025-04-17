@@ -3,6 +3,31 @@
  * Functions for parsing and normalizing email webhook data
  */
 
+// Extract tracking number from email subject or body
+export function extractTrackingNumber(subject?: string, body?: string): string | null {
+  // Default tracking number format
+  let trackingNumberRegex = /\b(HOR-\d{6})\b/i;
+  
+  // Try to find tracking number in subject
+  if (subject) {
+    const subjectMatch = subject.match(trackingNumberRegex);
+    if (subjectMatch && subjectMatch[1]) {
+      return subjectMatch[1];
+    }
+  }
+  
+  // Try to find tracking number in body
+  if (body) {
+    const bodyMatch = body.match(trackingNumberRegex);
+    if (bodyMatch && bodyMatch[1]) {
+      return bodyMatch[1];
+    }
+  }
+  
+  // Generate a new tracking number if none found
+  return `HOR-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+}
+
 // Process raw multipart form data using native FormData API
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type") || "";
@@ -205,5 +230,5 @@ function processAttachments(data: any): any[] {
     console.log(`Processed attachment: ${normalized.filename} (${normalized.contentType}, ${normalized.size} bytes)`);
     
     return normalized;
-  }).filter(Boolean);
+  }).filter(Boolean) as any[];
 }
