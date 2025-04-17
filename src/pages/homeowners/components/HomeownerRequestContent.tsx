@@ -3,8 +3,8 @@ import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
-import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
 import { useUserColumns } from '@/hooks/useUserColumns';
+import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
 
 const HomeownerRequestContent = ({
   filteredRequests,
@@ -20,7 +20,6 @@ const HomeownerRequestContent = ({
   setType
 }) => {
   const { visibleColumnIds } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests');
-  const [selectedRequest, setSelectedRequest] = React.useState(null);
 
   return (
     <>
@@ -35,7 +34,7 @@ const HomeownerRequestContent = ({
 
       <Tabs 
         value={activeTab} 
-        onValueChange={(value) => setActiveTab(value)}
+        onValueChange={setActiveTab}
         className="mt-6"
       >
         <TabsContent value={activeTab}>
@@ -45,10 +44,6 @@ const HomeownerRequestContent = ({
             error={error}
             columns={HOMEOWNER_REQUEST_COLUMNS}
             visibleColumnIds={visibleColumnIds}
-            onViewRequest={setSelectedRequest}
-            onEditRequest={setSelectedRequest}
-            onAddComment={setSelectedRequest}
-            onViewHistory={setSelectedRequest}
           />
         </TabsContent>
       </Tabs>
