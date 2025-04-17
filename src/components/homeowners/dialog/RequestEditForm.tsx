@@ -1,19 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
-import { DialogFooter } from '@/components/ui/dialog';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import RequestBasicFields from './fields/RequestBasicFields';
-import RequestDescriptionField from './fields/RequestDescriptionField';
-import RequestAssignedToField from './fields/RequestAssignedToField';
 import RequestAssignmentFields from './fields/RequestAssignmentFields';
 import RequestNoteField from './fields/RequestNoteField';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import ResponsiveContainer from '@/components/layout/ResponsiveContainer';
 
 interface RequestEditFormProps {
   request: HomeownerRequest | null;
@@ -44,106 +40,70 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      description: '',
-      status: 'open',
-      priority: 'medium',
-      type: 'general',
-      assigned_to: 'unassigned',
-      association_id: 'unassigned',
-      property_id: 'unassigned',
-      resident_id: 'unassigned',
+      title: request?.title || '',
+      description: request?.description || '',
+      status: request?.status || 'open',
+      priority: request?.priority || 'medium',
+      type: request?.type || 'general',
+      assigned_to: request?.assigned_to || 'unassigned',
+      association_id: request?.association_id || 'unassigned',
+      property_id: request?.property_id || 'unassigned',
+      resident_id: request?.resident_id || 'unassigned',
       note: '',
     },
   });
 
-  useEffect(() => {
-    if (request) {
-      form.reset({
-        title: request.title,
-        description: request.description,
-        status: request.status as any,
-        priority: request.priority as any,
-        type: request.type as any,
-        assigned_to: request.assigned_to || 'unassigned',
-        association_id: request.association_id || 'unassigned',
-        property_id: request.property_id || 'unassigned',
-        resident_id: request.resident_id || 'unassigned',
-        note: '',
-      });
-    }
-  }, [request, form]);
-
-  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log('Form values before submission:', values);
-    onSubmit(values);
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">Basic Information</CardTitle>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Basic Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <RequestBasicFields form={form} />
-              </div>
+              <RequestBasicFields form={form} />
             </CardContent>
           </Card>
-          
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">Assignment</CardTitle>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Assignment</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <RequestAssignedToField form={form} />
-                <RequestAssignmentFields form={form} optional={true} inline={true} />
-              </div>
+              <RequestAssignmentFields form={form} optional={true} />
             </CardContent>
           </Card>
-          
-          <Card className="lg:col-span-1">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md">Description & Notes</CardTitle>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Add Note</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <RequestDescriptionField form={form} />
-                <RequestNoteField form={form} />
-              </div>
+              <RequestNoteField form={form} />
             </CardContent>
           </Card>
         </div>
-        
-        <DialogFooter>
-          <ResponsiveContainer 
-            className="w-full flex items-center justify-between"
-            mobileClassName="flex-col space-y-2"
-            desktopClassName="flex-row space-x-2"
-          >
-            <div className="text-sm text-muted-foreground">
-              {request?.tracking_number && (
-                <span>Tracking #: {request.tracking_number}</span>
-              )}
-            </div>
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          </ResponsiveContainer>
-        </DialogFooter>
+
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-muted-foreground">
+            {request?.tracking_number && (
+              <span>Tracking #: {request.tracking_number}</span>
+            )}
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
       </form>
     </Form>
   );
