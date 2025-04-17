@@ -46,7 +46,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     if (!description) return 'No description provided';
     
     const lines = description.split('\n');
-    const truncated = lines.slice(0, 2).join('\n');
+    const truncated = lines.slice(0, 2).join(' ');
+    
     return lines.length > 2 ? `${truncated}...` : truncated;
   };
 
