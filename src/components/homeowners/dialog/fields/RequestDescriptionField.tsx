@@ -4,7 +4,6 @@ import { UseFormReturn } from 'react-hook-form';
 import { 
   FormField, 
   FormItem, 
-  FormLabel, 
   FormControl, 
   FormMessage 
 } from '@/components/ui/form';
@@ -20,13 +19,12 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
       control={form.control}
       name="description"
       render={({ field }) => (
-        <FormItem>
-          <FormLabel>Description</FormLabel>
+        <FormItem className="h-full">
           <FormControl>
             <Textarea 
               {...field} 
               placeholder="Request description" 
-              className="min-h-32"
+              className="min-h-[200px] h-full resize-none"
             />
           </FormControl>
           <FormMessage />

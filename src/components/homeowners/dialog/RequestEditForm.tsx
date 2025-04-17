@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -10,6 +11,8 @@ import RequestBasicFields from './fields/RequestBasicFields';
 import RequestDescriptionField from './fields/RequestDescriptionField';
 import RequestAssignedToField from './fields/RequestAssignedToField';
 import RequestAssignmentFields from './fields/RequestAssignmentFields';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ResponsiveContainer from '@/components/layout/ResponsiveContainer';
 
 interface RequestEditFormProps {
   request: HomeownerRequest | null;
@@ -69,34 +72,72 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <RequestBasicFields form={form} />
-            <RequestAssignedToField form={form} />
-          </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Left column - Basic information */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-md">Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <RequestBasicFields form={form} />
+              </div>
+            </CardContent>
+          </Card>
           
-          <div className="space-y-4">
-            <RequestAssignmentFields form={form} optional={true} />
-            <RequestDescriptionField form={form} />
-          </div>
+          {/* Middle column - Assignment */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-md">Assignment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <RequestAssignedToField form={form} />
+                <RequestAssignmentFields form={form} optional={true} inline={true} />
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Right column - Description */}
+          <Card className="lg:col-span-1">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-md">Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RequestDescriptionField form={form} />
+            </CardContent>
+          </Card>
         </div>
         
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
+          <ResponsiveContainer 
+            className="w-full flex items-center justify-between"
+            mobileClassName="flex-col space-y-2"
+            desktopClassName="flex-row space-x-2"
           >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? 'Saving...' : 'Save Changes'}
-          </Button>
+            <div className="text-sm text-muted-foreground">
+              {request?.tracking_number && (
+                <span>Tracking #: {request.tracking_number}</span>
+              )}
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </ResponsiveContainer>
         </DialogFooter>
       </form>
     </Form>
   );
-}
+};
 
 export default RequestEditForm;

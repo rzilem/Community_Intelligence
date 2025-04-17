@@ -7,11 +7,13 @@ import FormFieldSelect from '@/components/homeowners/form/FormFieldSelect';
 interface RequestAssignmentFieldsProps {
   form: UseFormReturn<any>;
   optional?: boolean;
+  inline?: boolean;
 }
 
 const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({ 
   form,
-  optional = false
+  optional = false,
+  inline = false
 }) => {
   // Get selected association ID for filtering properties and residents
   const selectedAssociationId = form.watch('association_id');
@@ -80,8 +82,12 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
   }, [selectedPropertyId, form]);
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-base font-medium">Assignment {optional && <span className="text-sm font-normal text-muted-foreground">(Optional)</span>}</h3>
+    <div className={inline ? "space-y-2" : "space-y-4"}>
+      {!inline && (
+        <h3 className="text-base font-medium">
+          {optional && <span className="text-sm font-normal text-muted-foreground">(Optional)</span>}
+        </h3>
+      )}
       
       <FormFieldSelect
         form={form}

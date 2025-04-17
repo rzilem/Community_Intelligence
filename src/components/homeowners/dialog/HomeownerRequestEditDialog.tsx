@@ -1,11 +1,11 @@
+
 import React from 'react';
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
+  ResponsiveDialog,
+  ResponsiveDialogContent, 
+  ResponsiveDialogHeader, 
+  ResponsiveDialogTitle
+} from '@/components/ui/responsive-dialog';
 import { Button } from '@/components/ui/button';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
@@ -46,10 +46,10 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       status: values.status,
       priority: values.priority,
       type: values.type,
-      assigned_to: values.assignedTo || null,
-      association_id: values.associationId || null,
-      property_id: values.propertyId || null,
-      resident_id: values.residentId || null,
+      assigned_to: values.assigned_to || null,
+      association_id: values.association_id || null,
+      property_id: values.property_id || null,
+      resident_id: values.resident_id || null,
     };
     
     if (values.status === 'resolved' && request.status !== 'resolved') {
@@ -67,11 +67,11 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[90%]">
-        <DialogHeader>
-          <DialogTitle>Edit Request</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-5xl w-[95%]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Edit Request</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         
         <RequestEditForm 
           request={request} 
@@ -79,8 +79,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
           isPending={isPending}
           onCancel={() => onOpenChange(false)}
         />
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 };
 
