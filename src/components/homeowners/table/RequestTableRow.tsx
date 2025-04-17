@@ -37,7 +37,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         <Badge variant={
           value === 'open' ? 'default' : 
           value === 'in-progress' ? 'secondary' : 
-          value === 'resolved' ? 'success' : 
+          value === 'resolved' ? 'secondary' : 
           'outline'
         }>
           {String(value)}
