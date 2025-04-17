@@ -152,6 +152,7 @@ const HomeownerRequestsPage = () => {
         className="mt-6"
       >
         <TabsList className="mb-4">
+          <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="open">Open</TabsTrigger>
           <TabsTrigger value="in-progress">In Progress</TabsTrigger>
