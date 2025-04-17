@@ -19,7 +19,7 @@ export const useResidentFromEmail = (htmlContent: string | undefined, directEmai
         !e.toLowerCase().includes('no-reply'));
       
       // Use the first filtered email, or if none are left, use the first email found
-      email = filteredEmails.length > 0 ? filteredEmails[0] : null;
+      email = filteredEmails.length > 0 ? filteredEmails[0] : emailMatches[0];
       
       if (email) {
         console.log('Found usable email in HTML content:', email);
@@ -27,7 +27,7 @@ export const useResidentFromEmail = (htmlContent: string | undefined, directEmai
     }
   }
   
-  // Query resident data if we found an email
+  // First, try exact email match
   const { data: residents = [] } = useSupabaseQuery(
     'residents',
     {
@@ -37,19 +37,48 @@ export const useResidentFromEmail = (htmlContent: string | undefined, directEmai
     !!email
   );
 
+  // If no resident found with exact match, try case-insensitive match
+  const { data: caseInsensitiveResidents = [] } = useSupabaseQuery(
+    'residents',
+    {
+      select: 'id, name, property_id, email',
+      filter: (email && residents.length === 0) ? [{ column: 'email', operator: 'ilike', value: `%${email}%` }] : undefined,
+    },
+    !!(email && residents.length === 0)
+  );
+
+  // Combine results, prioritizing exact matches
+  const allResidents = [...residents, ...caseInsensitiveResidents];
+  
   // Get the first resident if any exist
-  const resident = residents && residents.length > 0 ? residents[0] : null;
+  const resident = allResidents && allResidents.length > 0 ? allResidents[0] : null;
 
   // Query property data if we found a resident
   const { data: property } = useSupabaseQuery(
     'properties',
     {
-      select: 'address, unit_number',
+      select: 'id, address, unit_number, association_id',
       filter: [{ column: 'id', value: resident?.property_id }],
       single: true
     },
     !!resident?.property_id
   );
+  
+  // Also fetch association data if we have a property
+  const { data: association } = useSupabaseQuery(
+    'associations',
+    {
+      select: 'id, name',
+      filter: property?.association_id ? [{ column: 'id', value: property.association_id }] : undefined,
+      single: true
+    },
+    !!property?.association_id
+  );
 
-  return { resident, property, email };
+  return { 
+    resident, 
+    property, 
+    email,
+    association 
+  };
 };

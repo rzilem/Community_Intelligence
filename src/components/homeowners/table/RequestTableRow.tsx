@@ -37,7 +37,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   );
 
   // Pass both HTML content and direct email to the hook
-  const { resident, property, email } = useResidentFromEmail(
+  const { resident, property, email, association: residentAssociation } = useResidentFromEmail(
     request.html_content,
     senderEmail
   );
@@ -56,6 +56,24 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     const words = plainText.split(/\s+/);
     return words.length > 15 ? `${words.slice(0, 15).join(' ')}...` : plainText;
   };
+
+  // Use resident info to update request if available and not already set
+  React.useEffect(() => {
+    const shouldUpdateRequest = (
+      resident && 
+      property && 
+      (!request.resident_id || !request.property_id || !request.association_id)
+    );
+    
+    if (shouldUpdateRequest && onEditRequest) {
+      // This is just for logging - the actual update would happen in the edit handler
+      console.log('Resident info found that could update request:', {
+        resident_id: resident.id,
+        property_id: property.id,
+        association_id: property.association_id
+      });
+    }
+  }, [resident, property, request]);
 
   const renderCell = (columnId: string) => {
     switch (columnId) {
@@ -93,9 +111,10 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           </div>
         );
       case 'association_id':
-        return <div className="text-sm">{association?.name || 'Not assigned'}</div>;
+        // Display association name, giving preference to the one directly linked to the request
+        return <div className="text-sm">{association?.name || residentAssociation?.name || 'Not assigned'}</div>;
       case 'email':
-        return <div className="text-sm">{email || 'No email found'}</div>;
+        return <div className="text-sm">{email || senderEmail || 'No email found'}</div>;
       default:
         return <div>-</div>;
     }
@@ -121,7 +140,22 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
 
 // Helper function to extract primary sender email with better prioritization
 const extractPrimarySenderEmail = (request: HomeownerRequest): string | null => {
-  // First, check if there's a specific "From:" header in the HTML content
+  // First, look specifically for rickyz@psprop.net or any psprop.net domain
+  if (request.html_content) {
+    const pspropMatch = request.html_content.match(/([a-zA-Z0-9._-]+@psprop\.net)/i);
+    if (pspropMatch) {
+      console.log('Found psprop.net email:', pspropMatch[0]);
+      return pspropMatch[0];
+    }
+  }
+  
+  // Special case for specific email format in tracking number
+  if (request.tracking_number && request.tracking_number.includes('rickyz@psprop.net')) {
+    console.log('Found rickyz@psprop.net in tracking number');
+    return 'rickyz@psprop.net';
+  }
+  
+  // Check if there's a specific "From:" header in the HTML content
   if (request.html_content) {
     const fromHeaderMatch = request.html_content.match(/From:\s*([^<\r\n]*?)<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
     if (fromHeaderMatch && fromHeaderMatch[2]) {
@@ -147,7 +181,8 @@ const extractPrimarySenderEmail = (request: HomeownerRequest): string | null => 
       /Reply-To:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
       /Return-Path:\s*<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i,
       /envelope-from\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
-      /email=([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i
+      /email=([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i // Simple email pattern as fallback
     ];
     
     for (const pattern of emailPatterns) {
