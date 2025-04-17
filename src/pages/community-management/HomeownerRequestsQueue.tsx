@@ -18,7 +18,7 @@ import { InfoIcon, Bug, Plus, RefreshCw, Loader2 } from 'lucide-react';
 
 const HomeownerRequestsQueue = () => {
   const [open, setOpen] = useState(false);
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   
   const {
@@ -39,6 +39,17 @@ const HomeownerRequestsQueue = () => {
     error
   } = useHomeownerRequests();
   
+  // Load column preferences from localStorage on component mount
+  useEffect(() => {
+    const savedColumns = localStorage.getItem('homeownerRequestColumns');
+    if (savedColumns) {
+      setVisibleColumnIds(JSON.parse(savedColumns));
+    } else {
+      // Default to columns marked as defaultVisible
+      setVisibleColumnIds(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
+    }
+  }, []);
+  
   const handleFormSuccess = () => {
     setOpen(false);
     handleRefresh();
@@ -50,25 +61,26 @@ const HomeownerRequestsQueue = () => {
   };
   
   const handleColumnChange = (selectedColumnIds: string[]) => {
+    console.log("Column selection changed:", selectedColumnIds);
     setVisibleColumnIds(selectedColumnIds);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(selectedColumnIds));
   };
   
   const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
+    console.log("Reordering columns:", sourceIndex, "to", destinationIndex);
     const newVisibleColumns = [...visibleColumnIds];
     const [removed] = newVisibleColumns.splice(sourceIndex, 1);
     newVisibleColumns.splice(destinationIndex, 0, removed);
     setVisibleColumnIds(newVisibleColumns);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(newVisibleColumns));
   };
-
-  // Load column preferences from localStorage on component mount
-  useEffect(() => {
-    const savedColumns = localStorage.getItem('homeownerRequestColumns');
-    if (savedColumns) {
-      setVisibleColumnIds(JSON.parse(savedColumns));
-    }
-  }, []);
+  
+  const handleResetColumns = () => {
+    console.log("Resetting columns to default");
+    const defaultColumns = HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id);
+    setVisibleColumnIds(defaultColumns);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(defaultColumns));
+  };
   
   return <AppLayout>
       <div className="p-6 space-y-6">
@@ -111,6 +123,7 @@ const HomeownerRequestsQueue = () => {
                 <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Done'}</p>
                 <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
                 <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleTimeString()}</p>
+                <p><strong>Visible Columns:</strong> {visibleColumnIds.join(', ')}</p>
                 <div className="mt-2">
                   <Button 
                     variant="secondary" 
@@ -139,7 +152,13 @@ const HomeownerRequestsQueue = () => {
 
         <Card>
           <CardHeader>
-            <RequestsCardHeader visibleColumnIds={visibleColumnIds} columns={HOMEOWNER_REQUEST_COLUMNS} onColumnChange={handleColumnChange} onReorderColumns={handleReorderColumns} />
+            <RequestsCardHeader 
+              visibleColumnIds={visibleColumnIds} 
+              columns={HOMEOWNER_REQUEST_COLUMNS} 
+              onColumnChange={handleColumnChange} 
+              onReorderColumns={handleReorderColumns}
+              onResetColumns={handleResetColumns} 
+            />
           </CardHeader>
           <CardContent>
             <Tabs defaultValue={activeTab} onValueChange={value => setActiveTab(value as any)}>

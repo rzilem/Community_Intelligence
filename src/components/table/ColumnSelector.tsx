@@ -4,6 +4,7 @@ import { Columns, GripVertical } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
 
 interface Column {
   id: string;
@@ -97,12 +98,13 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         <div className="space-y-1 max-h-[300px] overflow-auto">
           {columns.map((column, index) => (
             <div 
-              key={`column-item-${column.id}`}
+              key={column.id}
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
               draggable={onReorder !== undefined}
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
+              onClick={() => handleColumnToggle(column.id)}
             >
               {onReorder && (
                 <div className="flex items-center justify-center cursor-grab">
@@ -113,11 +115,11 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 id={`column-${column.id}`}
                 checked={localSelectedColumns.includes(column.id)}
                 onCheckedChange={() => handleColumnToggle(column.id)}
+                onClick={(e) => e.stopPropagation()}
               />
               <label 
                 htmlFor={`column-${column.id}`}
                 className="text-sm leading-none flex-1 cursor-pointer"
-                onClick={() => handleColumnToggle(column.id)}
               >
                 {column.label}
               </label>
@@ -128,15 +130,14 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           At least one column must be selected
         </div>
         {resetToDefaults && (
-          <TooltipButton 
+          <Button 
             variant="outline" 
             size="sm" 
             className="mt-4 w-full"
             onClick={handleResetClick}
-            tooltip="Reset columns to default configuration"
           >
             Reset to Defaults
-          </TooltipButton>
+          </Button>
         )}
       </PopoverContent>
     </Popover>

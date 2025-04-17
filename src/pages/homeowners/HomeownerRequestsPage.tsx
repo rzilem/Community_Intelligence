@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
@@ -36,12 +36,42 @@ const HomeownerRequestsPage = () => {
     createDummyRequest
   } = useHomeownerRequests();
 
-  const { 
-    visibleColumnIds, 
-    updateVisibleColumns, 
-    reorderColumns, 
-    resetToDefaults 
-  } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests-page');
+  // Setup visibleColumnIds state
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
+  
+  // Load column preferences from localStorage on component mount
+  useEffect(() => {
+    const savedColumns = localStorage.getItem('homeownerRequestColumns');
+    if (savedColumns) {
+      setVisibleColumnIds(JSON.parse(savedColumns));
+    } else {
+      // Default to columns marked as defaultVisible
+      setVisibleColumnIds(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
+    }
+  }, []);
+
+  const updateVisibleColumns = (columnIds: string[]) => {
+    console.log("Updating visible columns:", columnIds);
+    setVisibleColumnIds(columnIds);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(columnIds));
+  };
+
+  const reorderColumns = (startIndex: number, endIndex: number) => {
+    console.log("Reordering columns:", startIndex, "to", endIndex);
+    const result = Array.from(visibleColumnIds);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    
+    setVisibleColumnIds(result);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(result));
+  };
+
+  const resetToDefaults = () => {
+    console.log("Resetting columns to default");
+    const defaultColumns = HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id);
+    setVisibleColumnIds(defaultColumns);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(defaultColumns));
+  };
 
   const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -76,6 +106,8 @@ const HomeownerRequestsPage = () => {
     toast.success("Request created successfully!");
     handleRefresh();
   };
+
+  console.log("HomeownerRequestsPage rendering with visibleColumnIds:", visibleColumnIds);
 
   return (
     <div className="container mx-auto px-4 py-8">

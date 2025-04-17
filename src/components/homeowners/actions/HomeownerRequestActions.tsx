@@ -32,6 +32,14 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
   onColumnReorder,
   onColumnReset,
 }) => {
+  console.log("HomeownerRequestActions rendering with columns:", columns.length);
+  console.log("Selected columns:", selectedColumns);
+
+  const handleColumnChange = (newSelectedColumns: string[]) => {
+    console.log("Column change in HomeownerRequestActions:", newSelectedColumns);
+    onColumnChange(newSelectedColumns);
+  };
+
   return (
     <div className="flex items-center gap-2">
       <Button onClick={onNewRequest}>
@@ -62,7 +70,7 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
       <HomeownerRequestsColumnSelector
         columns={columns}
         selectedColumns={selectedColumns}
-        onChange={onColumnChange}
+        onChange={handleColumnChange}
         onReorder={onColumnReorder}
         onResetDefault={onColumnReset}
       />

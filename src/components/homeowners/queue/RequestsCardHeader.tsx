@@ -19,6 +19,9 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
   onReorderColumns,
   onResetColumns
 }) => {
+  console.log("RequestsCardHeader rendering with columns:", columns.length);
+  console.log("Visible column IDs:", visibleColumnIds);
+  
   return (
     <div className="flex justify-between items-center">
       <CardTitle>Request Queue</CardTitle>
