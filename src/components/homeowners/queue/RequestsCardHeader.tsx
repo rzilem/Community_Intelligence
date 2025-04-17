@@ -22,6 +22,11 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
   console.log("RequestsCardHeader rendering with columns:", columns.length);
   console.log("Visible column IDs:", visibleColumnIds);
   
+  const handleColumnChange = (newColumnIds: string[]) => {
+    console.log("Column change in RequestsCardHeader:", newColumnIds);
+    onColumnChange(newColumnIds);
+  };
+  
   return (
     <div className="flex justify-between items-center">
       <CardTitle>Request Queue</CardTitle>
@@ -29,7 +34,7 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
         <HomeownerRequestsColumnSelector
           columns={columns}
           selectedColumns={visibleColumnIds}
-          onChange={onColumnChange}
+          onChange={handleColumnChange}
           onReorder={onReorderColumns}
           onResetDefault={onResetColumns}
         />

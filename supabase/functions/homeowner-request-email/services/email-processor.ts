@@ -2,6 +2,18 @@
 /**
  * Service to process email data and extract homeowner request information
  */
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://cahergndkwfqltxyikyr.supabase.co";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+// Create a Supabase client with the service role key for admin access
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 
 export async function processEmailData(emailData: any) {
   console.log("Processing email for homeowner request extraction");
@@ -45,12 +57,34 @@ export async function processEmailData(emailData: any) {
   if (senderEmail) {
     requestData.sender_email = senderEmail;
     console.log("Extracted sender email:", senderEmail);
+    
+    // Try to match the email with an existing resident
+    const residentInfo = await findResidentByEmail(senderEmail);
+    if (residentInfo) {
+      console.log("Found matching resident:", residentInfo.id);
+      requestData.resident_id = residentInfo.id;
+      
+      // If the resident has a property, also associate the request with that property
+      if (residentInfo.property_id) {
+        console.log("Associating request with property:", residentInfo.property_id);
+        requestData.property_id = residentInfo.property_id;
+        
+        // If the property belongs to an association, associate the request with that association
+        if (residentInfo.association_id) {
+          console.log("Associating request with association:", residentInfo.association_id);
+          requestData.association_id = residentInfo.association_id;
+        }
+      }
+    } else {
+      console.log("No matching resident found for email:", senderEmail);
+    }
   }
   
-  // IMPORTANT: Always set the default association ID
-  // This ensures all requests are visible in the queue
-  requestData.association_id = "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Default to Reeceville COA
-  console.log("Using association ID:", requestData.association_id);
+  // Default association ID if not set by resident lookup
+  if (!requestData.association_id) {
+    requestData.association_id = "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Default to Reeceville COA
+    console.log("Using default association ID:", requestData.association_id);
+  }
   
   // Handle attachments if present
   if (emailData.attachments && emailData.attachments.length > 0) {
@@ -72,6 +106,84 @@ export async function processEmailData(emailData: any) {
   
   console.log("Extracted request data:", JSON.stringify(requestData, null, 2));
   return requestData;
+}
+
+/**
+ * Lookup a resident by email and return their information
+ */
+async function findResidentByEmail(email: string) {
+  try {
+    // First, look for a direct match in the residents table
+    const { data: directMatch, error: directError } = await supabase
+      .from('residents')
+      .select('id, property_id, email')
+      .eq('email', email)
+      .single();
+      
+    if (directMatch) {
+      console.log("Found direct resident match:", directMatch);
+      
+      // Get the property information to find the association
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .select('association_id')
+        .eq('id', directMatch.property_id)
+        .single();
+        
+      return {
+        ...directMatch,
+        association_id: property?.association_id
+      };
+    }
+    
+    // If no direct match, check profiles with associations
+    const { data: profileMatch, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('email', email)
+      .single();
+      
+    if (profileMatch) {
+      console.log("Found user profile match:", profileMatch);
+      
+      // Check if the user is associated with any associations
+      const { data: associations, error: assocError } = await supabase
+        .from('association_users')
+        .select('association_id')
+        .eq('user_id', profileMatch.id)
+        .limit(1);
+        
+      if (associations && associations.length > 0) {
+        console.log("User has association:", associations[0].association_id);
+        
+        // Check if the user is a resident
+        const { data: residents, error: residentError } = await supabase
+          .from('residents')
+          .select('id, property_id')
+          .eq('user_id', profileMatch.id)
+          .limit(1);
+          
+        if (residents && residents.length > 0) {
+          return {
+            id: residents[0].id,
+            property_id: residents[0].property_id,
+            association_id: associations[0].association_id
+          };
+        }
+        
+        // If not a resident but has association, just return the association
+        return { 
+          association_id: associations[0].association_id 
+        };
+      }
+    }
+    
+    // No match found
+    return null;
+  } catch (error) {
+    console.error("Error looking up resident by email:", error);
+    return null;
+  }
 }
 
 /**
@@ -158,9 +270,4 @@ function extractSenderEmail(fromHeader: string): string | null {
   // Simple regex to extract email from From header
   const emailMatch = fromHeader.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
   return emailMatch ? emailMatch[1] : null;
-}
-
-function extractAssociationId(emailData: any): string | null {
-  // Always return a default association ID to ensure requests appear in the queue
-  return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Reeceville COA
 }

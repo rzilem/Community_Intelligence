@@ -20,6 +20,9 @@ const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorP
   onResetDefault,
   className = "ml-2"
 }) => {
+  console.log("HomeownerRequestsColumnSelector rendering with", columns.length, "columns");
+  console.log("Selected columns:", selectedColumns);
+  
   return (
     <ColumnSelector
       columns={columns}

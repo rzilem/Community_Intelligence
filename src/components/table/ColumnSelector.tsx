@@ -34,19 +34,27 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
   // Update local state when selectedColumns prop changes
   useEffect(() => {
+    console.log("ColumnSelector: selectedColumns changed to:", selectedColumns);
     setLocalSelectedColumns(selectedColumns);
   }, [selectedColumns]);
 
-  const handleColumnToggle = (columnId: string) => {
+  const handleColumnToggle = (columnId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    
+    console.log("Toggling column:", columnId);
     const updatedColumns = localSelectedColumns.includes(columnId)
       ? localSelectedColumns.filter(id => id !== columnId)
       : [...localSelectedColumns, columnId];
 
     // Ensure at least one column is selected
     if (updatedColumns.length === 0) {
+      console.log("Cannot deselect all columns");
       return;
     }
 
+    console.log("New selected columns:", updatedColumns);
     setLocalSelectedColumns(updatedColumns);
     onChange(updatedColumns);
   };
@@ -73,6 +81,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
   const handleResetClick = () => {
     if (resetToDefaults) {
+      console.log("Resetting to default columns");
       resetToDefaults();
       setOpen(false);
     }
@@ -104,7 +113,6 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
-              onClick={() => handleColumnToggle(column.id)}
             >
               {onReorder && (
                 <div className="flex items-center justify-center cursor-grab">
@@ -120,6 +128,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               <label 
                 htmlFor={`column-${column.id}`}
                 className="text-sm leading-none flex-1 cursor-pointer"
+                onClick={(e) => handleColumnToggle(column.id, e)}
               >
                 {column.label}
               </label>

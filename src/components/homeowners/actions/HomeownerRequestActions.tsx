@@ -41,7 +41,7 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 flex-wrap">
       <Button onClick={onNewRequest}>
         <PlusCircle className="h-4 w-4 mr-2" />
         New Request
@@ -73,6 +73,7 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
         onChange={handleColumnChange}
         onReorder={onColumnReorder}
         onResetDefault={onColumnReset}
+        className="ml-0"
       />
     </div>
   );
