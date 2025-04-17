@@ -58,6 +58,16 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     setDraggedIndex(null);
   };
 
+  // Filter only valid columns that exist in the columns array
+  const validSelectedColumns = selectedColumns.filter(
+    columnId => columns.some(col => col.id === columnId)
+  );
+
+  // Get full column objects for selected columns to display them
+  const selectedColumnObjects = validSelectedColumns.map(
+    columnId => columns.find(col => col.id === columnId)
+  ).filter(Boolean) as Column[];
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -72,8 +82,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           {onReorder ? "Drag to reorder columns" : "Select columns to display"}
         </p>
         <div className="space-y-1 max-h-[300px] overflow-auto">
-          {selectedColumns.map((columnId, index) => {
-            const column = columns.find(col => col.id === columnId);
+          {selectedColumnObjects.map((column, index) => {
             if (!column) return null;
             
             return (
@@ -91,7 +100,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   </div>
                 )}
                 <Checkbox 
-                  checked={selectedColumns.includes(column.id)}
+                  checked={validSelectedColumns.includes(column.id)}
                   onCheckedChange={() => handleColumnToggle(column.id)}
                   id={`column-${column.id}`}
                 />
@@ -105,6 +114,33 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             );
           })}
         </div>
+
+        <div className="border-t pt-2 mt-2">
+          <p className="text-xs text-muted-foreground mb-2">Available Columns</p>
+          <div className="space-y-1 max-h-[150px] overflow-auto">
+            {columns
+              .filter(column => !validSelectedColumns.includes(column.id))
+              .map(column => (
+                <div 
+                  key={column.id}
+                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
+                >
+                  <Checkbox 
+                    checked={false}
+                    onCheckedChange={() => handleColumnToggle(column.id)}
+                    id={`column-${column.id}`}
+                  />
+                  <label 
+                    htmlFor={`column-${column.id}`}
+                    className="text-sm leading-none flex-1 cursor-pointer"
+                  >
+                    {column.label}
+                  </label>
+                </div>
+              ))}
+          </div>
+        </div>
+        
         {resetToDefaults && (
           <Button 
             variant="outline" 

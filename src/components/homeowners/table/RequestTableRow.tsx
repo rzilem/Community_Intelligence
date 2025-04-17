@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit } from 'lucide-react';
+import { formatRelativeDate } from '@/lib/date-utils';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -59,40 +61,45 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     return formatDescription(request.description);
   };
 
+  // Render cell based on column ID
+  const renderCell = (columnId: string) => {
+    switch (columnId) {
+      case 'priority':
+        return (
+          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
+        );
+      case 'title':
+        return <div className="text-sm font-medium">{request.title || 'Untitled Request'}</div>;
+      case 'type':
+        return <div className="text-sm">{request.type}</div>;
+      case 'status':
+        return (
+          <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
+        );
+      case 'description':
+        return <div className="text-sm text-muted-foreground">{getDescription()}</div>;
+      case 'tracking_number':
+        return (
+          <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>
+        );
+      case 'created_at':
+        return (
+          <div className="text-sm text-muted-foreground">
+            {request.created_at ? formatRelativeDate(request.created_at) : 'Unknown'}
+          </div>
+        );
+      default:
+        return <div>-</div>;
+    }
+  };
+
   return (
     <tr className="hover:bg-muted/50 border-b">
-      {visibleColumnIds.includes('type') && (
-        <td className="py-2 px-4">
-          <div className="text-sm">{request.type}</div>
+      {visibleColumnIds.map((columnId) => (
+        <td key={columnId} className="py-2 px-4">
+          {renderCell(columnId)}
         </td>
-      )}
-
-      {visibleColumnIds.includes('status') && (
-        <td className="py-2 px-4">
-          <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('priority') && (
-        <td className="py-2 px-4">
-          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('tracking_number') && (
-        <td className="py-2 px-4">
-          <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('created_at') && (
-        <td className="py-2 px-4">
-          <div className="text-sm text-muted-foreground">
-            {request.created_at ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true }) : 'Unknown'}
-          </div>
-        </td>
-      )}
-
+      ))}
       <td className="py-2 px-4">
         <div className="flex items-center space-x-2">
           <Button 

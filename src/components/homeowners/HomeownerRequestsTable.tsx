@@ -5,6 +5,7 @@ import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
 import EmptyRequestsRow from './table/EmptyRequestsRow';
 import HomeownerRequestPagination from './HomeownerRequestPagination';
+import { Table, TableBody } from '@/components/ui/table';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
@@ -53,10 +54,10 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto">
-        <table className="w-full">
+      <div className="overflow-x-auto border rounded-md">
+        <Table>
           <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
-          <tbody>
+          <TableBody>
             {paginatedRequests.length === 0 ? (
               <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
             ) : (
@@ -71,8 +72,8 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                 />
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       
       {requests.length > 0 && (
