@@ -56,6 +56,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
 
   useEffect(() => {
     if (request) {
+      // Use consistent field names that match database columns
       form.reset({
         title: request.title,
         description: request.description,
@@ -70,9 +71,14 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
     }
   }, [request, form]);
 
+  const handleFormSubmit = (values: z.infer<typeof formSchema>) => {
+    console.log('Form values before submission:', values);
+    onSubmit(values);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left column - Basic information */}
           <Card className="lg:col-span-1">

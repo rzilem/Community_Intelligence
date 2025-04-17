@@ -39,6 +39,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   const handleSubmit = (values: any) => {
     if (!request) return;
     
+    console.log('Submitting form values:', values);
+    
     // Make sure we're using the database column names
     const updatedData: Partial<HomeownerRequest> = {
       title: values.title,
@@ -46,11 +48,14 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       status: values.status,
       priority: values.priority,
       type: values.type,
+      // Use the correct field names that match database columns
       assigned_to: values.assigned_to || null,
       association_id: values.association_id || null,
       property_id: values.property_id || null,
       resident_id: values.resident_id || null,
     };
+    
+    console.log('Transformed data for update:', updatedData);
     
     if (values.status === 'resolved' && request.status !== 'resolved') {
       updatedData.resolved_at = new Date().toISOString();

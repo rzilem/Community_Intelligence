@@ -62,7 +62,7 @@ const FormFieldSelect = ({
             </FormControl>
             <SelectContent>
               {!required && (
-                <SelectItem value="none">None Selected</SelectItem>
+                <SelectItem value="">None Selected</SelectItem>
               )}
               {options.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
