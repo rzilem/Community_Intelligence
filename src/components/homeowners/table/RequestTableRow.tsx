@@ -45,18 +45,21 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   const formatDescription = (description: string) => {
     if (!description) return 'No description provided';
     
-    const lines = description.split('\n');
-    const truncated = lines.slice(0, 2).join(' ');
+    // Create a temporary div to handle both HTML and plain text
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = description;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
     
-    return lines.length > 2 ? `${truncated}...` : truncated;
+    // Split into lines and handle truncation
+    const lines = plainText.replace(/\s+/g, ' ').split(/\s+/);
+    const truncated = lines.slice(0, 15).join(' '); // Increase to 15 words for more context
+    
+    return lines.length > 15 ? `${truncated}...` : truncated;
   };
 
   const getDescription = () => {
     if (request.html_content) {
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = request.html_content;
-      const plainText = tempDiv.textContent || tempDiv.innerText || '';
-      return formatDescription(plainText);
+      return formatDescription(request.html_content);
     }
     
     return formatDescription(request.description);
