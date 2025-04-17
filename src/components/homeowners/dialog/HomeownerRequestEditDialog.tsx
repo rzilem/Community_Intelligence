@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -17,7 +18,6 @@ import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
 import AttachmentsTab from './tabs/AttachmentsTab';
 import RequestDialogHeader from './edit/RequestDialogHeader';
 import RequestDialogTabs from './edit/RequestDialogTabs';
-import RequestDetailsSection from './edit/RequestDetailsSection';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -152,7 +152,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-6 pt-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '40vh' }}>
+          <div className="p-6 pt-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '50vh' }}>
             <RequestDialogTabs activeTab={activeTab} setActiveTab={setActiveTab}>
               <TabsContent value="details">
                 <DetailsTab request={request} processedDescription={processedDescription} />
@@ -176,7 +176,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             </RequestDialogTabs>
           </div>
 
-          <div className="p-6 border-t bg-background flex-shrink-0">
+          <div className="p-6 border-t bg-background flex-shrink-0 h-auto">
             <RequestEditForm 
               request={request} 
               onSubmit={handleSubmit} 
