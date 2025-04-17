@@ -76,3 +76,10 @@ port = 54328
 # Port to check for functions readiness. You can leave this empty to use the same port as the
 # functions serve port.
 port = 54328
+
+# Disable JWT verification for our email receiver functions
+[functions.homeowner-request-email]
+verify_jwt = false
+
+[functions.email-receiver]
+verify_jwt = false
