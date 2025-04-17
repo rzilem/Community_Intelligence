@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import FormFieldSelect from '@/components/homeowners/form/FormFieldSelect';
@@ -20,7 +20,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
   const selectedPropertyId = form.watch('property_id');
   
   // Fetch associations for the select dropdown
-  const { data: associations = [] } = useSupabaseQuery<any[]>(
+  const { data: associations = [], isLoading: isLoadingAssociations } = useSupabaseQuery<any[]>(
     'associations',
     {
       select: 'id, name',
@@ -29,13 +29,13 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
   );
 
   // Fetch properties for the select dropdown
-  const { data: properties = [] } = useSupabaseQuery<any[]>(
+  const { data: properties = [], isLoading: isLoadingProperties } = useSupabaseQuery<any[]>(
     'properties',
     {
       select: 'id, address, unit_number, association_id',
       filter: selectedAssociationId && selectedAssociationId !== 'unassigned' 
         ? [{ column: 'association_id', value: selectedAssociationId }] 
-        : [],
+        : undefined,
       order: { column: 'address', ascending: true },
     },
     // Only execute query if we have a valid association ID
@@ -43,20 +43,17 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
   );
 
   // Fetch residents for the select dropdown
-  const { data: residents = [] } = useSupabaseQuery<any[]>(
+  const { data: residents = [], isLoading: isLoadingResidents } = useSupabaseQuery<any[]>(
     'residents',
     {
       select: 'id, name, email, property_id',
       filter: selectedPropertyId && selectedPropertyId !== 'unassigned'
         ? [{ column: 'property_id', value: selectedPropertyId }]
-        : (selectedAssociationId && selectedAssociationId !== 'unassigned' ? [] : []),
+        : undefined,
       order: { column: 'name', ascending: true },
     },
-    // Only execute query if we have a valid property ID or association ID
-    !!(
-      (selectedPropertyId && selectedPropertyId !== 'unassigned') || 
-      (selectedAssociationId && selectedAssociationId !== 'unassigned')
-    )
+    // Only execute query if we have a valid property ID
+    !!(selectedPropertyId && selectedPropertyId !== 'unassigned')
   );
 
   const associationOptions = associations.map(association => ({
@@ -76,25 +73,16 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
 
   // Reset propertyId when association changes
   useEffect(() => {
-    if (selectedAssociationId) {
-      if (selectedAssociationId === 'unassigned') {
-        form.setValue('property_id', 'unassigned');
-      } else {
-        // Only reset if it's a valid association change
-        form.setValue('property_id', 'unassigned');
-      }
+    if (selectedAssociationId === 'unassigned' || selectedAssociationId === undefined) {
+      form.setValue('property_id', 'unassigned');
+      form.setValue('resident_id', 'unassigned');
     }
   }, [selectedAssociationId, form]);
 
   // Reset residentId when property changes
   useEffect(() => {
-    if (selectedPropertyId) {
-      if (selectedPropertyId === 'unassigned') {
-        form.setValue('resident_id', 'unassigned');
-      } else {
-        // Only reset if it's a valid property change
-        form.setValue('resident_id', 'unassigned');
-      }
+    if (selectedPropertyId === 'unassigned' || selectedPropertyId === undefined) {
+      form.setValue('resident_id', 'unassigned');
     }
   }, [selectedPropertyId, form]);
 
@@ -102,7 +90,8 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     <div className={inline ? "space-y-2" : "space-y-4"}>
       {!inline && (
         <h3 className="text-base font-medium">
-          {optional && <span className="text-sm font-normal text-muted-foreground">(Optional)</span>}
+          Assignment Information
+          {optional && <span className="ml-2 text-sm font-normal text-muted-foreground">(Optional)</span>}
         </h3>
       )}
       
@@ -110,7 +99,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         form={form}
         name="association_id"
         label="Association"
-        placeholder="Select an association"
+        placeholder={isLoadingAssociations ? "Loading..." : "Select an association"}
         options={associationOptions}
         required={!optional}
       />
@@ -120,12 +109,14 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         name="property_id"
         label="Property"
         placeholder={
-          selectedAssociationId && selectedAssociationId !== 'unassigned' 
-            ? "Select a property" 
-            : "Select an association first"
+          isLoadingProperties 
+            ? "Loading..." 
+            : (selectedAssociationId && selectedAssociationId !== 'unassigned' 
+                ? "Select a property" 
+                : "Select an association first")
         }
         options={propertyOptions}
-        disabled={!selectedAssociationId || selectedAssociationId === 'unassigned'}
+        disabled={!selectedAssociationId || selectedAssociationId === 'unassigned' || isLoadingProperties}
         required={!optional}
       />
       
@@ -134,14 +125,15 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         name="resident_id"
         label="Resident"
         placeholder={
-          selectedPropertyId && selectedPropertyId !== 'unassigned' 
-            ? "Select a resident" 
-            : "Select a property first"
+          isLoadingResidents
+            ? "Loading..."
+            : (selectedPropertyId && selectedPropertyId !== 'unassigned' 
+                ? "Select a resident" 
+                : "Select a property first")
         }
         options={residentOptions}
         disabled={
-          (!selectedPropertyId || selectedPropertyId === 'unassigned') && 
-          (!selectedAssociationId || selectedAssociationId === 'unassigned')
+          (!selectedPropertyId || selectedPropertyId === 'unassigned' || isLoadingResidents)
         }
         required={!optional}
       />

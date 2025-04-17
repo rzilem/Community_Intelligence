@@ -9,8 +9,8 @@ interface RequestAssignedToFieldProps {
 }
 
 const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form }) => {
-  // Mock staff members until we have proper user management
-  const { data: staffMembers = [] } = useSupabaseQuery<any[]>(
+  // Query staff members from profiles table
+  const { data: staffMembers = [], isLoading } = useSupabaseQuery<any[]>(
     'profiles',
     {
       select: 'id, first_name, last_name, email',
@@ -30,14 +30,14 @@ const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form })
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder="Select staff member" />
+                <SelectValue placeholder={isLoading ? "Loading..." : "Select staff member"} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
               <SelectItem value="unassigned">Unassigned</SelectItem>
               {staffMembers.map((staff) => (
                 <SelectItem key={staff.id} value={staff.id}>
-                  {staff.first_name} {staff.last_name} ({staff.email})
+                  {staff.first_name || ''} {staff.last_name || ''} {staff.email ? `(${staff.email})` : ''}
                 </SelectItem>
               ))}
             </SelectContent>
