@@ -103,7 +103,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-5xl w-[95%]">
+      <ResponsiveDialogContent className="max-w-6xl w-[95%]">
         <ResponsiveDialogHeader className="flex items-start justify-between p-6 pb-2">
           <div className="flex flex-col gap-1">
             <ResponsiveDialogTitle className="text-xl">
