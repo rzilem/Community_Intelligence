@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, MessageSquare, History, Edit } from 'lucide-react';
+import { Eye, MessageSquare, Edit } from 'lucide-react';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -13,7 +12,6 @@ interface RequestTableRowProps {
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
   onAddComment: (request: HomeownerRequest) => void;
-  onViewHistory: (request: HomeownerRequest) => void;
 }
 
 const RequestTableRow: React.FC<RequestTableRowProps> = ({
@@ -22,8 +20,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   visibleColumnIds,
   onViewRequest,
   onEditRequest,
-  onAddComment,
-  onViewHistory
+  onAddComment
 }) => {
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
@@ -74,9 +71,9 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   return (
     <tr className="hover:bg-muted/50 border-b">
       {visibleColumnIds.includes('title') && (
-        <td className="py-2 px-4">
-          <div className="font-medium line-clamp-2">
-            {truncateToTwoLines(request.title, 50)}
+        <td className="py-2 px-4 max-w-[200px]">
+          <div className="font-medium truncate">
+            {request.title}
           </div>
         </td>
       )}
@@ -146,14 +143,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
             title="Add comment"
           >
             <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onViewHistory(request)}
-            title="View history"
-          >
-            <History className="h-4 w-4" />
           </Button>
         </div>
       </td>

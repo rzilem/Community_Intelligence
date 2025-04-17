@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Table, 
@@ -18,7 +17,6 @@ interface HomeownerRequestsTableProps {
   onViewRequest?: (request: HomeownerRequest) => void;
   onEditRequest?: (request: HomeownerRequest) => void;
   onAddComment?: (request: HomeownerRequest) => void;
-  onViewHistory?: (request: HomeownerRequest) => void;
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
@@ -29,8 +27,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   error,
   onViewRequest = () => {},
   onEditRequest = () => {},
-  onAddComment = () => {},
-  onViewHistory = () => {}
+  onAddComment = () => {}
 }) => {
   if (isLoading) {
     return (
@@ -70,7 +67,6 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
                 onViewRequest={onViewRequest}
                 onEditRequest={onEditRequest}
                 onAddComment={onAddComment}
-                onViewHistory={onViewHistory}
               />
             ))
           )}

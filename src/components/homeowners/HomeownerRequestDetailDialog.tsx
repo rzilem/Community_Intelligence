@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -18,6 +17,7 @@ import { toast } from 'sonner';
 import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
 import { StatusBadge } from './history/badges/StatusBadge';
 import { PriorityBadge } from './history/badges/PriorityBadge';
+import HistoryTimeline from './history/HistoryTimeline';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -86,7 +86,6 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
-  // Process the description to ensure HTML entities are properly displayed
   const processedDescription = request.description ? decodeHtmlEntities(request.description) : '';
   
   return (
@@ -117,6 +116,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             <TabsTrigger value="details">Request Information</TabsTrigger>
             <TabsTrigger value="original">Original Email</TabsTrigger>
             <TabsTrigger value="updates">Comments</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
           <TabsContent value="details" className="flex-1 overflow-hidden">
@@ -234,6 +234,14 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                     <div className="text-muted-foreground text-center py-4">No comments available for this request.</div>
                   )}
                 </div>
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="history" className="flex-1 overflow-hidden">
+            <ScrollArea className="h-[60vh]">
+              <div className="p-4">
+                <HistoryTimeline request={request} />
               </div>
             </ScrollArea>
           </TabsContent>
