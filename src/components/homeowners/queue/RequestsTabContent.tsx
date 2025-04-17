@@ -6,7 +6,6 @@ import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-requ
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import { toast } from 'sonner';
 
 interface RequestsTabContentProps {
@@ -28,7 +27,6 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   
   const handleViewRequest = (request: HomeownerRequest) => {
     setSelectedRequest(request);
@@ -43,11 +41,6 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   const handleAddComment = (request: HomeownerRequest) => {
     setSelectedRequest(request);
     setIsCommentOpen(true);
-  };
-  
-  const handleViewHistory = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsHistoryOpen(true);
   };
   
   const handleRequestUpdated = () => {
@@ -69,7 +62,6 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
             onViewRequest={handleViewRequest}
             onEditRequest={handleEditRequest}
             onAddComment={handleAddComment}
-            onViewHistory={handleViewHistory}
           />
           
           {/* Dialogs */}
@@ -91,12 +83,6 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
             open={isCommentOpen}
             onOpenChange={setIsCommentOpen}
             onSuccess={handleRequestUpdated}
-          />
-          
-          <HomeownerRequestHistoryDialog
-            request={selectedRequest}
-            open={isHistoryOpen}
-            onOpenChange={setIsHistoryOpen}
           />
         </>
       )}

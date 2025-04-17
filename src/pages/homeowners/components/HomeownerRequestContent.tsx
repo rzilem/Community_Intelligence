@@ -50,10 +50,6 @@ const HomeownerRequestContent = ({
     console.log('Add comment to request', request.id);
   };
 
-  const handleViewHistory = (request: HomeownerRequest) => {
-    console.log('View history for request', request.id);
-  };
-
   return (
     <>
       <HomeownerRequestFilters 
@@ -80,7 +76,6 @@ const HomeownerRequestContent = ({
             onViewRequest={handleViewRequest}
             onEditRequest={handleEditRequest}
             onAddComment={handleAddComment}
-            onViewHistory={handleViewHistory}
           />
         </TabsContent>
       </Tabs>
