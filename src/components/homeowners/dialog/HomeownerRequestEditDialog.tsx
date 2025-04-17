@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -10,7 +11,6 @@ import { toast } from 'sonner';
 import { useSupabaseUpdate } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/useAuth';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { formatDate } from '@/lib/date-utils';
 import { X } from 'lucide-react';
 import RequestEditForm from './RequestEditForm';
@@ -107,7 +107,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         <ResponsiveDialogHeader className="flex items-start justify-between p-6 pb-2">
           <div className="flex flex-col gap-1">
             <ResponsiveDialogTitle className="text-xl">
-              Request Details: {request.title}
+              Edit Request: {request.title}
             </ResponsiveDialogTitle>
             <div className="text-sm text-muted-foreground">
               Tracking #: {request.tracking_number}
@@ -122,87 +122,66 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
           </button>
         </ResponsiveDialogHeader>
 
-        <Tabs defaultValue="request" className="w-full">
-          <TabsList className="mx-6">
-            <TabsTrigger value="request">Request Information</TabsTrigger>
-            <TabsTrigger value="original">Original Email</TabsTrigger>
-            <TabsTrigger value="comments">Comments</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="request" className="p-6 pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-              <div className="space-y-4">
-                <h3 className="font-medium text-lg">Request Details</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-muted-foreground">Title:</div>
-                  <div>{request.title}</div>
-                  
-                  <div className="text-muted-foreground">Type:</div>
-                  <div className="capitalize">{request.type}</div>
-                  
-                  <div className="text-muted-foreground">Status:</div>
-                  <div>
-                    <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
-                      {request.status}
-                    </span>
-                  </div>
-                  
-                  <div className="text-muted-foreground">Priority:</div>
-                  <div>
-                    <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                      request.priority === 'urgent' ? 'bg-red-50 text-red-700' :
-                      request.priority === 'high' ? 'bg-orange-50 text-orange-700' :
-                      request.priority === 'medium' ? 'bg-yellow-50 text-yellow-700' :
-                      'bg-green-50 text-green-700'
-                    }`}>
-                      {request.priority}
-                    </span>
-                  </div>
-                  
-                  <div className="text-muted-foreground">Created:</div>
-                  <div>{formatDate(request.created_at)}</div>
+        <div className="p-6 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+            <div className="space-y-4">
+              <h3 className="font-medium text-lg">Request Details</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Title:</div>
+                <div>{request.title}</div>
+                
+                <div className="text-muted-foreground">Type:</div>
+                <div className="capitalize">{request.type}</div>
+                
+                <div className="text-muted-foreground">Status:</div>
+                <div>
+                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700">
+                    {request.status}
+                  </span>
                 </div>
-              </div>
-              
-              <div className="space-y-4">
-                <h3 className="font-medium text-lg">Property Information</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-muted-foreground">Property ID:</div>
-                  <div>{request.property_id || 'Not specified'}</div>
-                  
-                  <div className="text-muted-foreground">Association:</div>
-                  <div>{request.association_id || 'Not specified'}</div>
-                  
-                  <div className="text-muted-foreground">Resident ID:</div>
-                  <div>{request.resident_id || 'N/A'}</div>
-                  
-                  <div className="text-muted-foreground">Assigned To:</div>
-                  <div>{request.assigned_to || 'Unassigned'}</div>
+                
+                <div className="text-muted-foreground">Priority:</div>
+                <div>
+                  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                    request.priority === 'urgent' ? 'bg-red-50 text-red-700' :
+                    request.priority === 'high' ? 'bg-orange-50 text-orange-700' :
+                    request.priority === 'medium' ? 'bg-yellow-50 text-yellow-700' :
+                    'bg-green-50 text-green-700'
+                  }`}>
+                    {request.priority}
+                  </span>
                 </div>
+                
+                <div className="text-muted-foreground">Created:</div>
+                <div>{formatDate(request.created_at)}</div>
               </div>
             </div>
+            
+            <div className="space-y-4">
+              <h3 className="font-medium text-lg">Property Information</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Property ID:</div>
+                <div>{request.property_id || 'Not specified'}</div>
+                
+                <div className="text-muted-foreground">Association:</div>
+                <div>{request.association_id || 'Not specified'}</div>
+                
+                <div className="text-muted-foreground">Resident ID:</div>
+                <div>{request.resident_id || 'N/A'}</div>
+                
+                <div className="text-muted-foreground">Assigned To:</div>
+                <div>{request.assigned_to || 'Unassigned'}</div>
+              </div>
+            </div>
+          </div>
 
-            <RequestEditForm 
-              request={request} 
-              onSubmit={handleSubmit} 
-              isPending={isPending}
-              onCancel={() => onOpenChange(false)}
-            />
-          </TabsContent>
-          
-          <TabsContent value="original">
-            {/* Original email content */}
-          </TabsContent>
-          
-          <TabsContent value="comments">
-            {/* Comments content */}
-          </TabsContent>
-          
-          <TabsContent value="history">
-            {/* History content */}
-          </TabsContent>
-        </Tabs>
+          <RequestEditForm 
+            request={request} 
+            onSubmit={handleSubmit} 
+            isPending={isPending}
+            onCancel={() => onOpenChange(false)}
+          />
+        </div>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );
