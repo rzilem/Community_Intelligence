@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
@@ -45,18 +44,12 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   const formatDescription = (description: string) => {
     if (!description) return 'No description provided';
     
-    // Create a temporary div to handle both HTML and plain text
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = description;
     let plainText = tempDiv.textContent || tempDiv.innerText || '';
     
-    // Remove CSS styles often found in emails
     plainText = plainText.replace(/(\w+)\s*{[^}]*}/g, '');
-    
-    // Remove [Image] tags
     plainText = plainText.replace(/\[Image\]/gi, '');
-    
-    // Remove email signatures indicators
     const signatureIndicators = [
       'Thank you,', 'Thanks,', 'Regards,', 'Best regards,', 
       'Sincerely,', 'Cheers,', 'Best wishes,', '--', '---'
@@ -69,17 +62,14 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       }
     }
     
-    // Remove phone numbers and common email content
-    plainText = plainText.replace(/\(\d{3}\)\s*\d{3}-\d{4}/g, ''); // Phone numbers like (512) 555-1234
-    plainText = plainText.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, ''); // Email addresses
-    plainText = plainText.replace(/http[s]?:\/\/\S+/g, ''); // URLs
+    plainText = plainText.replace(/\(\d{3}\)\s*\d{3}-\d{4}/g, '');
+    plainText = plainText.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '');
+    plainText = plainText.replace(/http[s]?:\/\/\S+/g, '');
     
-    // Normalize whitespace
     plainText = plainText.replace(/\s+/g, ' ').trim();
     
-    // Split into words and handle truncation
     const words = plainText.split(/\s+/);
-    const truncated = words.slice(0, 15).join(' '); // Limit to 15 words for context
+    const truncated = words.slice(0, 15).join(' ');
     
     return words.length > 15 ? `${truncated}...` : truncated;
   };
@@ -92,7 +82,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     return formatDescription(request.description);
   };
 
-  // Render cell based on column ID
   const renderCell = (columnId: string) => {
     switch (columnId) {
       case 'priority':
@@ -108,7 +97,14 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
         );
       case 'description':
-        return <div className="text-sm text-muted-foreground">{getDescription()}</div>;
+        return (
+          <div 
+            className="text-sm text-muted-foreground max-w-[200px] truncate" 
+            title={getDescription()}
+          >
+            {getDescription()}
+          </div>
+        );
       case 'tracking_number':
         return (
           <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>
