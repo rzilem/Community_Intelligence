@@ -25,62 +25,83 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
 
   return (
     <ScrollArea className="h-[60vh]">
-      <div className="space-y-4 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">Request Details</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="text-muted-foreground">Title:</div>
-              <div className="font-medium">{request.title}</div>
-              
-              <div className="text-muted-foreground">Type:</div>
-              <div className="capitalize">{request.type}</div>
-              
-              <div className="text-muted-foreground">Status:</div>
-              <div><StatusBadge status={request.status} /></div>
-              
-              <div className="text-muted-foreground">Priority:</div>
-              <div><PriorityBadge priority={request.priority} /></div>
-              
-              <div className="text-muted-foreground">Created:</div>
-              <div>{formatDate(request.created_at)}</div>
-
-              <div className="text-muted-foreground">Tracking Number:</div>
-              <div>{request.tracking_number || 'N/A'}</div>
+      <div className="space-y-6 p-4">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Request Information - Column 1 */}
+          <div className="space-y-3 bg-card rounded-lg border p-4 shadow-sm">
+            <h3 className="font-medium text-base border-b pb-2">Request Details</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Title</span>
+                <span className="text-sm font-medium">{request.title}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Type</span>
+                <span className="text-sm capitalize">{request.type}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <StatusBadge status={request.status} />
+              </div>
             </div>
           </div>
-          
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">Property Information</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="text-muted-foreground">Property ID:</div>
-              <div>{request.property_id || 'Not specified'}</div>
-              
-              <div className="text-muted-foreground">Association:</div>
-              <div>{association?.name || 'Not specified'}</div>
-              
-              <div className="text-muted-foreground">Resident ID:</div>
-              <div>{request.resident_id || 'N/A'}</div>
-              
-              <div className="text-muted-foreground">Assigned To:</div>
-              <div>{request.assigned_to || 'Unassigned'}</div>
+
+          {/* Request Status - Column 2 */}
+          <div className="space-y-3 bg-card rounded-lg border p-4 shadow-sm">
+            <h3 className="font-medium text-base border-b pb-2">Status Information</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Priority</span>
+                <PriorityBadge priority={request.priority} />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Created</span>
+                <span className="text-sm">{formatDate(request.created_at)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Tracking #</span>
+                <span className="text-sm font-mono">{request.tracking_number || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Property Information - Column 3 */}
+          <div className="space-y-3 bg-card rounded-lg border p-4 shadow-sm">
+            <h3 className="font-medium text-base border-b pb-2">Property Information</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Property ID</span>
+                <span className="text-sm font-mono">{request.property_id || 'Not specified'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Association</span>
+                <span className="text-sm">{association?.name || 'Not specified'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Assigned To</span>
+                <span className="text-sm">{request.assigned_to || 'Unassigned'}</span>
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className="space-y-4">
-          <h3 className="font-medium text-lg">Description</h3>
-          <div className="border rounded-md p-4 whitespace-pre-wrap">
+
+        {/* Description Section */}
+        <div className="space-y-3">
+          <h3 className="font-medium text-base">Description</h3>
+          <div className="border rounded-md p-4 whitespace-pre-wrap bg-card text-sm">
             {processedDescription}
           </div>
         </div>
         
+        {/* Resolution Section - Only show if resolved */}
         {request.resolved_at && (
-          <div className="space-y-4">
-            <h3 className="font-medium text-lg">Resolution</h3>
+          <div className="space-y-3">
+            <h3 className="font-medium text-base">Resolution</h3>
             <div className="grid grid-cols-1 gap-2">
-              <div className="text-muted-foreground">Resolved At:</div>
-              <div>{formatDate(request.resolved_at)}</div>
+              <div className="flex items-center justify-between border rounded-md p-4 bg-card">
+                <span className="text-sm text-muted-foreground">Resolved At</span>
+                <span className="text-sm">{formatDate(request.resolved_at)}</span>
+              </div>
             </div>
           </div>
         )}
