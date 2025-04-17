@@ -30,8 +30,14 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
     {
       onSuccess: () => {
         toast.success('Request updated successfully');
+        // Ensure we're properly closing the dialog first before triggering other state changes
         onOpenChange(false);
-        if (onSuccess) onSuccess();
+        // Add a small delay before triggering the onSuccess callback to prevent state conflicts
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 100);
+        }
       },
       showErrorToast: true, // Using the built-in error handling instead of onError
     }

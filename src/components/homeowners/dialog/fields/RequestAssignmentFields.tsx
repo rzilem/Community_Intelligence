@@ -71,18 +71,22 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     label: resident.name || resident.email || `Resident ${resident.id.substring(0, 8)}`,
   }));
 
-  // Reset propertyId when association changes
+  // Reset propertyId when association changes - use setTimeout to prevent state conflicts
   useEffect(() => {
     if (selectedAssociationId === 'unassigned' || selectedAssociationId === undefined) {
-      form.setValue('property_id', 'unassigned');
-      form.setValue('resident_id', 'unassigned');
+      setTimeout(() => {
+        form.setValue('property_id', 'unassigned', { shouldValidate: true });
+        form.setValue('resident_id', 'unassigned', { shouldValidate: true });
+      }, 0);
     }
   }, [selectedAssociationId, form]);
 
-  // Reset residentId when property changes
+  // Reset residentId when property changes - use setTimeout to prevent state conflicts
   useEffect(() => {
     if (selectedPropertyId === 'unassigned' || selectedPropertyId === undefined) {
-      form.setValue('resident_id', 'unassigned');
+      setTimeout(() => {
+        form.setValue('resident_id', 'unassigned', { shouldValidate: true });
+      }, 0);
     }
   }, [selectedPropertyId, form]);
 
@@ -102,6 +106,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         placeholder={isLoadingAssociations ? "Loading..." : "Select an association"}
         options={associationOptions}
         required={!optional}
+        disabled={isLoadingAssociations}
       />
       
       <FormFieldSelect

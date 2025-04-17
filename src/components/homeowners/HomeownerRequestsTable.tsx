@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Table, 
@@ -68,7 +69,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
           ) : (
             requests.map((request) => (
               <RequestTableRow
-                key={request.id}
+                key={`${request.id}-${request.updated_at || 'null'}`}
                 request={request}
                 visibleColumnIds={visibleColumnIds}
                 onViewRequest={onViewRequest}

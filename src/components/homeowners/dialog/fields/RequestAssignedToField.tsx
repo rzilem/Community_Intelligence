@@ -27,6 +27,7 @@ const RequestAssignedToField: React.FC<RequestAssignedToFieldProps> = ({ form })
           <Select
             onValueChange={field.onChange}
             value={field.value || "unassigned"}
+            disabled={isLoading}
           >
             <FormControl>
               <SelectTrigger>
