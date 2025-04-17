@@ -71,10 +71,24 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
-  const decodeHtmlEntities = (text: string): string => {
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
-    return textArea.value;
+  const cleanDescription = (text: string): string => {
+    if (!text) return '';
+    
+    // Create a temporary div to handle both HTML and plain text
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = text;
+    let plainText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    // Remove CSS styling
+    plainText = plainText.replace(/(\w+)\s*{[^}]*}/g, '');
+    
+    // Clean up [Image] placeholders
+    plainText = plainText.replace(/\[Image\]/gi, '');
+    
+    // Remove extra whitespace and normalize
+    plainText = plainText.replace(/\s+/g, ' ').trim();
+    
+    return plainText;
   };
   
   if (!request) return null;
@@ -86,7 +100,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
-  const processedDescription = request.description ? decodeHtmlEntities(request.description) : '';
+  const processedDescription = request.description ? cleanDescription(request.description) : '';
   
   return (
     <Dialog 

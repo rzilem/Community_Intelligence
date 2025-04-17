@@ -48,13 +48,40 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     // Create a temporary div to handle both HTML and plain text
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = description;
-    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+    let plainText = tempDiv.textContent || tempDiv.innerText || '';
     
-    // Split into lines and handle truncation
-    const lines = plainText.replace(/\s+/g, ' ').split(/\s+/);
-    const truncated = lines.slice(0, 15).join(' '); // Increase to 15 words for more context
+    // Remove CSS styles often found in emails
+    plainText = plainText.replace(/(\w+)\s*{[^}]*}/g, '');
     
-    return lines.length > 15 ? `${truncated}...` : truncated;
+    // Remove [Image] tags
+    plainText = plainText.replace(/\[Image\]/gi, '');
+    
+    // Remove email signatures indicators
+    const signatureIndicators = [
+      'Thank you,', 'Thanks,', 'Regards,', 'Best regards,', 
+      'Sincerely,', 'Cheers,', 'Best wishes,', '--', '---'
+    ];
+    
+    for (const indicator of signatureIndicators) {
+      const index = plainText.indexOf(indicator);
+      if (index !== -1) {
+        plainText = plainText.substring(0, index).trim();
+      }
+    }
+    
+    // Remove phone numbers and common email content
+    plainText = plainText.replace(/\(\d{3}\)\s*\d{3}-\d{4}/g, ''); // Phone numbers like (512) 555-1234
+    plainText = plainText.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, ''); // Email addresses
+    plainText = plainText.replace(/http[s]?:\/\/\S+/g, ''); // URLs
+    
+    // Normalize whitespace
+    plainText = plainText.replace(/\s+/g, ' ').trim();
+    
+    // Split into words and handle truncation
+    const words = plainText.split(/\s+/);
+    const truncated = words.slice(0, 15).join(' '); // Limit to 15 words for context
+    
+    return words.length > 15 ? `${truncated}...` : truncated;
   };
 
   const getDescription = () => {
