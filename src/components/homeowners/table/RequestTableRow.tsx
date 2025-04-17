@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Edit } from 'lucide-react';
 import { formatRelativeDate } from '@/lib/date-utils';
+import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -21,6 +22,16 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
+  const { data: association } = useSupabaseQuery(
+    'associations',
+    {
+      select: 'name',
+      filter: [{ column: 'id', value: request.association_id }],
+      single: true
+    },
+    !!request.association_id
+  );
+
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'destructive';
@@ -131,7 +142,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       case 'association_id':
         return (
           <div className="text-sm">
-            {request.association_id || 'Not assigned'}
+            {association?.name || 'Not assigned'}
           </div>
         );
       default:
