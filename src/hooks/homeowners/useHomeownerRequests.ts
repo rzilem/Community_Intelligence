@@ -76,29 +76,26 @@ export const useHomeownerRequests = () => {
         }
       }
       
-      // Main query - either filtered by association or get all requests if no association is selected
+      // Get all requests instead of filtering by association
+      // This approach allows us to show all requests and filter client-side
       let query = supabase.from('homeowner_requests').select('*');
       
-      if (currentAssociation?.id) {
-        console.log(`Filtering by association: ${currentAssociation.id}`);
-        query = query.eq('association_id', currentAssociation.id);
-      } else {
-        console.log('No current association selected, showing all requests user has access to');
-      }
+      // Order by created date, most recent first
+      query = query.order('created_at', { ascending: false });
       
-      const { data, error: requestsError } = await query.order('created_at', { ascending: false });
+      const { data, error: requestsError } = await query;
       
       if (requestsError) {
         console.error('Error fetching homeowner requests:', requestsError);
         throw requestsError;
       }
       
-      console.log(`Received ${data?.length || 0} homeowner requests after filtering`);
+      console.log(`Received ${data?.length || 0} homeowner requests after querying`);
       
       if (data && data.length > 0) {
         console.log('First request sample:', data[0]);
       } else {
-        console.log('No homeowner requests found for the current filters');
+        console.log('No homeowner requests found in the database');
       }
       
       // Properly cast the data to ensure it matches the HomeownerRequest type
@@ -135,7 +132,14 @@ export const useHomeownerRequests = () => {
   };
 
   // Filter requests based on search and filter criteria
+  // Include association filtering at the client side
   const filteredRequests = manualRequests.filter(request => {
+    // First, apply association filter if a current association is selected
+    if (currentAssociation?.id && request.association_id && 
+        request.association_id !== currentAssociation.id) {
+      return false;
+    }
+    
     // Safety check for null or undefined values
     if (!request || !request.title || !request.description) {
       console.warn('Invalid request data encountered:', request);

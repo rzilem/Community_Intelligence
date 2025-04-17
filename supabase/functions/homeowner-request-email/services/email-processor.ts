@@ -1,4 +1,3 @@
-
 /**
  * Service to process email data and extract homeowner request information
  */
@@ -52,9 +51,9 @@ export async function processEmailData(emailData: any) {
     console.log("Extracted sender email:", senderEmail);
   }
   
-  // Attempt to extract an association ID if present in the subject or email
-  // Always set a default association ID if none is found
-  requestData.association_id = extractAssociationId(emailData) || "85bdb4ea-4288-414d-8f17-83b4a33725b8";
+  // IMPORTANT: Always set the default association ID
+  // This ensures all requests are visible in the queue
+  requestData.association_id = "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Default to Reeceville COA
   console.log("Using association ID:", requestData.association_id);
   
   // Handle attachments if present
@@ -136,28 +135,6 @@ function extractSenderEmail(fromHeader: string): string | null {
 }
 
 function extractAssociationId(emailData: any): string | null {
-  // Try to extract from subject
-  const subject = emailData.subject || "";
-  const toHeader = emailData.to || "";
-  const fromHeader = emailData.from || "";
-  const text = emailData.text || "";
-  
-  console.log("Attempting to extract association ID from email data");
-  
-  // For debugging, if this is a test email from specific domains, we can hardcode association ID
-  if (fromHeader.includes("@resend.dev") || 
-      fromHeader.includes("@cloudmailin.net") || 
-      fromHeader.includes("@example.com") ||
-      fromHeader.includes("@gmail.com") ||
-      fromHeader.includes("@psprop.net")) {
-    console.log("Test email detected, using Reeceville COA association ID");
-    // Return the first association ID you want to use for testing
-    return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Reeceville COA
-  }
-  
-  // In a real system, you would need to implement logic to determine the association
-  // based on the email content, domain, recipient address, etc.
-  
-  // This is just a placeholder implementation
-  return null;
+  // Always return a default association ID to ensure requests appear in the queue
+  return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Reeceville COA
 }
