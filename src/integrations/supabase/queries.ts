@@ -10,7 +10,7 @@ export const checkTableAccess = async (tableName: string) => {
     // Instead of using an RPC function, try a simple count query with limit 0
     // This avoids errors but still checks access permissions
     const { count, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*', { count: 'exact', head: true })
       .limit(0);
     

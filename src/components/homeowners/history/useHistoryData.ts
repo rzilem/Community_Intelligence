@@ -34,7 +34,7 @@ export const useHistoryData = (request: HomeownerRequest | null, isDialogOpen: b
       
       // Fetch real history data directly from the table instead of using RPC
       const { data, error } = await supabase
-        .from('history')
+        .from('history' as any)
         .select(`
           *,
           user:user_id (
