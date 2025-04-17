@@ -98,14 +98,14 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           {columns.map((column, index) => (
             <div 
               key={column.id} 
-              className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-move"
+              className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
               draggable={onReorder !== undefined}
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
             >
               {onReorder && (
-                <div className="flex items-center justify-center">
+                <div className="flex items-center justify-center cursor-grab">
                   <GripVertical className="h-4 w-4 text-muted-foreground" />
                 </div>
               )}
@@ -116,7 +116,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               />
               <label 
                 htmlFor={`column-${column.id}`}
-                className="text-sm leading-none flex-1 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm leading-none flex-1 cursor-pointer"
               >
                 {column.label}
               </label>
