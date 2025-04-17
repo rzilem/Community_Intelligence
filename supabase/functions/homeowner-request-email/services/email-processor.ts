@@ -25,7 +25,7 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
   
   // Extract basic info from email
   const { subject, from, text, html } = emailData;
-  const fromEmail = from?.address || from?.email || "";
+  const fromEmail = from?.address || from?.email || extractEmailFromText(from) || "";
   const fromName = from?.name || "";
   
   console.log(`Email from: ${fromName} <${fromEmail}>`);
@@ -84,7 +84,7 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
         .single();
       
       if (error) {
-        console.log(`No resident found with email ${fromEmail}: ${error.message}`);
+        console.log(`No resident found with exact email ${fromEmail}: ${error.message}`);
         
         // Try with a case-insensitive search as a fallback
         const { data: residents, error: insensitiveError } = await supabase
@@ -144,4 +144,13 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
   console.log("Processed request data:", requestData);
   
   return requestData;
+}
+
+// Helper function to extract email from a string
+function extractEmailFromText(text: string): string | null {
+  if (!text) return null;
+  
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i;
+  const match = text.match(emailRegex);
+  return match ? match[1] : null;
 }

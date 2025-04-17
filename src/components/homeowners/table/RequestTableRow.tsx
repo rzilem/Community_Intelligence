@@ -22,8 +22,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
-  // Extract tracking number prefix and email from tracking number if available
-  const trackingDetails = extractTrackingDetails(request.tracking_number);
+  // Extract sender email from tracking number or directly from the 'from' field if available
+  const emailInfo = extractSenderEmail(request);
   
   // Fetch association data
   const { data: association } = useSupabaseQuery(
@@ -39,7 +39,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   // Pass both HTML content and direct email to the hook
   const { resident, property, email } = useResidentFromEmail(
     request.html_content,
-    trackingDetails?.email
+    emailInfo
   );
 
   const getDescription = () => {
@@ -119,14 +119,26 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   );
 };
 
-// Helper function to extract email from tracking number
-const extractTrackingDetails = (trackingNumber?: string) => {
-  if (!trackingNumber) return null;
+// Helper function to extract email from tracking number or from the HTML content
+const extractSenderEmail = (request: HomeownerRequest): string | null => {
+  // If we have a tracking number, try to extract email from it
+  if (request.tracking_number) {
+    // Check if the tracking number contains an email (like "HOR-123456-user@example.com")
+    const emailMatch = request.tracking_number.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+    if (emailMatch) {
+      return emailMatch[1];
+    }
+  }
   
-  // Look for email pattern in tracking number (some tracking numbers may contain email info)
-  const emailMatch = trackingNumber.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+  // If we have HTML content, try to find a "From:" header
+  if (request.html_content) {
+    const fromMatch = request.html_content.match(/From:.*?([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+    if (fromMatch) {
+      return fromMatch[1];
+    }
+  }
   
-  return emailMatch ? { email: emailMatch[1] } : null;
+  return null;
 };
 
 export default RequestTableRow;

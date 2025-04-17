@@ -23,7 +23,7 @@ export const useResidentFromEmail = (htmlContent: string | undefined, directEmai
     'residents',
     {
       select: 'id, name, property_id, email',
-      filter: [{ column: 'email', value: email }],
+      filter: email ? [{ column: 'email', value: email }] : undefined,
     },
     !!email
   );
