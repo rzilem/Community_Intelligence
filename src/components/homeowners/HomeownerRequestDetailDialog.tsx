@@ -71,6 +71,12 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
+  const decodeHtmlEntities = (text: string): string => {
+    const textArea = document.createElement('textarea');
+    textArea.innerHTML = text;
+    return textArea.value;
+  };
+  
   if (!request) return null;
   
   const handleTabChange = (value: string) => {
@@ -79,6 +85,9 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       fetchComments();
     }
   };
+  
+  // Process the description to ensure HTML entities are properly displayed
+  const processedDescription = request.description ? decodeHtmlEntities(request.description) : '';
   
   return (
     <Dialog 
@@ -158,7 +167,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                 <div className="space-y-4">
                   <h3 className="font-medium text-lg">Description</h3>
                   <div className="border rounded-md p-4 whitespace-pre-wrap">
-                    {request.description}
+                    {processedDescription}
                   </div>
                 </div>
                 
@@ -182,12 +191,14 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                   <div className="bg-gray-100 p-2 border-b flex justify-between items-center">
                     <h3 className="font-medium">Original Email Content</h3>
                   </div>
-                  <iframe 
-                    srcDoc={`<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; margin: 20px; }</style></head><body>${request.html_content}</body></html>`}
-                    title="Original Email" 
-                    className="w-full h-full bg-white"
-                    sandbox="allow-same-origin"
-                  />
+                  <div className="w-full h-full overflow-auto">
+                    <iframe 
+                      srcDoc={`<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; margin: 20px; }</style></head><body>${request.html_content}</body></html>`}
+                      title="Original Email" 
+                      className="w-full h-full bg-white"
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="p-8 text-center border rounded-md h-full flex items-center justify-center">

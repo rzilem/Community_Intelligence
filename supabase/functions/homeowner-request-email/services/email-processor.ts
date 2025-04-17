@@ -1,3 +1,4 @@
+
 /**
  * Service to process email data and extract homeowner request information
  */
@@ -26,19 +27,14 @@ export async function processEmailData(emailData: any) {
   
   // Extract email content
   if (emailData.html) {
+    // Store the full HTML content
     requestData.html_content = emailData.html;
     
-    // Extract the first 500 characters of HTML content for description
-    // Strip HTML tags for a clean description
-    let textContent = emailData.html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim();
-      
+    // Extract the text content for the description, properly cleaning it
+    let textContent = cleanHtmlContent(emailData.html);
     requestData.description = textContent.substring(0, 500);
   } else if (emailData.text) {
+    // If only text is available, use it directly
     requestData.description = emailData.text.substring(0, 500);
   } else {
     requestData.description = "Request submitted via email. No content provided.";
@@ -76,6 +72,36 @@ export async function processEmailData(emailData: any) {
   
   console.log("Extracted request data:", JSON.stringify(requestData, null, 2));
   return requestData;
+}
+
+/**
+ * Properly cleans HTML content, handling HTML entities and removing unwanted elements
+ */
+function cleanHtmlContent(htmlContent: string): string {
+  // First remove common email client added elements that we don't want
+  let cleaned = htmlContent
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')  // Remove style tags and content
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove script tags and content
+    .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')     // Remove head section
+    .replace(/<img[^>]*>/gi, '[Image]')               // Replace images with placeholder
+    .replace(/<hr[^>]*>/gi, '---')                    // Replace horizontal rules with dashes
+    .replace(/<br[^>]*>/gi, '\n')                     // Replace <br> with newlines
+    .replace(/<div[^>]*>/gi, '')                      // Remove div opening tags
+    .replace(/<\/div>/gi, '\n')                       // Replace closing divs with newlines
+    .replace(/<p[^>]*>/gi, '')                        // Remove p opening tags
+    .replace(/<\/p>/gi, '\n\n')                       // Replace closing p tags with double newlines
+    .replace(/<[^>]*>/g, ' ')                         // Remove all other tags
+    .replace(/&nbsp;/g, ' ')                          // Replace non-breaking spaces
+    .replace(/&amp;/g, '&')                           // Replace &amp; with &
+    .replace(/&lt;/g, '<')                            // Replace &lt; with <
+    .replace(/&gt;/g, '>')                            // Replace &gt; with >
+    .replace(/&quot;/g, '"')                          // Replace &quot; with "
+    .replace(/&#39;/g, "'")                           // Replace &#39; with '
+    .replace(/\n{3,}/g, '\n\n')                       // Replace 3+ consecutive newlines with 2
+    .replace(/\s{2,}/g, ' ')                          // Replace 2+ consecutive spaces with 1
+    .trim();                                          // Trim whitespace
+  
+  return cleaned;
 }
 
 function determinePriority(subject: string): string {
