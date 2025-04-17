@@ -1,12 +1,14 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, MessageSquare, History, Edit } from 'lucide-react';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
+  columns: HomeownerRequestColumn[]; // Add this property to fix the TypeScript error
   visibleColumnIds: string[];
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
@@ -16,6 +18,7 @@ interface RequestTableRowProps {
 
 const RequestTableRow: React.FC<RequestTableRowProps> = ({
   request,
+  columns, // Make sure to receive it in the component
   visibleColumnIds,
   onViewRequest,
   onEditRequest,
