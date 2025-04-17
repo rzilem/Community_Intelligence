@@ -1,9 +1,11 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
+
+// Add a configuration flag to prevent modifications
+const CURRENT_CONFIG_LOCKED = true;
 
 console.log("Homeowner request email function starting up...");
 

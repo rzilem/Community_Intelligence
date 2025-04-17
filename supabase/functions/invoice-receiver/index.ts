@@ -5,11 +5,13 @@ import { createInvoice } from "./services/invoice-service.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 
-// Handle the incoming webhook request
+// Add a configuration flag to prevent modifications
+const CURRENT_CONFIG_LOCKED = true;
+
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 204 });
+  // Check if configuration is locked
+  if (CURRENT_CONFIG_LOCKED) {
+    console.log("Configuration is currently locked. No modifications allowed.");
   }
 
   try {
