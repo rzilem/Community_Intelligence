@@ -18,7 +18,7 @@ const CommentsTab: React.FC<CommentsTabProps> = ({ comments, loadingComments }) 
           
           {loadingComments ? (
             <div className="text-center py-4">Loading comments...</div>
-          ) : comments.length > 0 ? (
+          ) : comments && comments.length > 0 ? (
             <div className="space-y-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="border rounded-md p-3 bg-gray-50">

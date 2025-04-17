@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -18,6 +19,7 @@ import DetailsTab from '../detail/tabs/DetailsTab';
 import CommentsTab from '../detail/tabs/CommentsTab';
 import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
 import AttachmentsTab from './tabs/AttachmentsTab';
+import { cleanHtmlContent } from '@/lib/format-utils';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -35,6 +37,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   const { user } = useAuth();
   const [activeTab, setActiveTab] = React.useState('edit');
   const [fullscreenEmail, setFullscreenEmail] = React.useState(false);
+  const [comments, setComments] = React.useState([]);
+  const [loadingComments, setLoadingComments] = React.useState(false);
   
   const { mutate: updateRequest, isPending } = useSupabaseUpdate<HomeownerRequest>(
     'homeowner_requests',
@@ -51,6 +55,42 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       showErrorToast: true,
     }
   );
+
+  React.useEffect(() => {
+    if (open && request && activeTab === 'comments') {
+      fetchComments();
+    }
+  }, [open, request, activeTab]);
+
+  const fetchComments = async () => {
+    if (!request) return;
+    
+    try {
+      setLoadingComments(true);
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          user:user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('parent_id', request.id)
+        .eq('parent_type', 'homeowner_request')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setComments(data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
 
   const handleSubmit = async (values: any) => {
     if (!request) return;
@@ -107,6 +147,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   };
 
   if (!request) return null;
+
+  const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -201,11 +243,14 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             </TabsContent>
 
             <TabsContent value="details">
-              <DetailsTab request={request} />
+              <DetailsTab request={request} processedDescription={processedDescription} />
             </TabsContent>
 
             <TabsContent value="comments">
-              <CommentsTab request={request} />
+              <CommentsTab 
+                comments={comments} 
+                loadingComments={loadingComments} 
+              />
             </TabsContent>
 
             <TabsContent value="email">
