@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -7,17 +8,15 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-request-types';
-import { formatDate } from '@/lib/date-utils';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { cleanHtmlContent } from '@/lib/format-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
-import { StatusBadge } from './history/badges/StatusBadge';
-import { PriorityBadge } from './history/badges/PriorityBadge';
 import HistoryTimeline from './history/HistoryTimeline';
+import DetailsTab from './detail/tabs/DetailsTab';
+import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
+import CommentsTab from './detail/tabs/CommentsTab';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -71,28 +70,6 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
-  const cleanDescription = (text: string): string => {
-    if (!text) return '';
-    
-    // Create a temporary div to handle both HTML and plain text
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = text;
-    let plainText = tempDiv.textContent || tempDiv.innerText || '';
-    
-    // Remove CSS styling
-    plainText = plainText.replace(/(\w+)\s*{[^}]*}/g, '');
-    
-    // Clean up [Image] placeholders
-    plainText = plainText.replace(/\[Image\]/gi, '');
-    
-    // Remove extra whitespace and normalize
-    plainText = plainText.replace(/\s+/g, ' ').trim();
-    
-    return plainText;
-  };
-  
-  if (!request) return null;
-  
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === 'updates') {
@@ -100,7 +77,9 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
     }
   };
   
-  const processedDescription = request.description ? cleanDescription(request.description) : '';
+  if (!request) return null;
+  
+  const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
   
   return (
     <Dialog 
@@ -134,122 +113,19 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
           </TabsList>
           
           <TabsContent value="details" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[60vh]">
-              <div className="space-y-4 p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Request Details</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-muted-foreground">Title:</div>
-                      <div className="font-medium">{request.title}</div>
-                      
-                      <div className="text-muted-foreground">Type:</div>
-                      <div className="capitalize">{request.type}</div>
-                      
-                      <div className="text-muted-foreground">Status:</div>
-                      <div><StatusBadge status={request.status} /></div>
-                      
-                      <div className="text-muted-foreground">Priority:</div>
-                      <div><PriorityBadge priority={request.priority} /></div>
-                      
-                      <div className="text-muted-foreground">Created:</div>
-                      <div>{formatDate(request.created_at)}</div>
-
-                      <div className="text-muted-foreground">Tracking Number:</div>
-                      <div>{request.tracking_number || 'N/A'}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Property Information</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-muted-foreground">Property ID:</div>
-                      <div>{request.property_id || 'Not specified'}</div>
-                      
-                      <div className="text-muted-foreground">Association ID:</div>
-                      <div>{request.association_id || 'Not specified'}</div>
-                      
-                      <div className="text-muted-foreground">Resident ID:</div>
-                      <div>{request.resident_id || 'N/A'}</div>
-                      
-                      <div className="text-muted-foreground">Assigned To:</div>
-                      <div>{request.assigned_to || 'Unassigned'}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h3 className="font-medium text-lg">Description</h3>
-                  <div className="border rounded-md p-4 whitespace-pre-wrap">
-                    {processedDescription}
-                  </div>
-                </div>
-                
-                {request.resolved_at && (
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-lg">Resolution</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      <div className="text-muted-foreground">Resolved At:</div>
-                      <div>{formatDate(request.resolved_at)}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+            <DetailsTab request={request} processedDescription={processedDescription} />
           </TabsContent>
           
           <TabsContent value="original" className="flex-1 overflow-hidden">
-            <div className={`${fullscreenEmail ? 'h-[calc(100vh-120px)]' : 'h-[60vh]'} flex flex-col`}>
-              {request.html_content ? (
-                <div className="border rounded-lg flex-1 overflow-hidden">
-                  <div className="bg-gray-100 p-2 border-b flex justify-between items-center">
-                    <h3 className="font-medium">Original Email Content</h3>
-                  </div>
-                  <div className="w-full h-full overflow-auto">
-                    <iframe 
-                      srcDoc={`<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; margin: 20px; }</style></head><body>${request.html_content}</body></html>`}
-                      title="Original Email" 
-                      className="w-full h-full bg-white"
-                      sandbox="allow-same-origin"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="p-8 text-center border rounded-md h-full flex items-center justify-center">
-                  <p className="text-muted-foreground">No HTML content available for this request.</p>
-                </div>
-              )}
-            </div>
+            <OriginalEmailTab 
+              htmlContent={request.html_content}
+              fullscreenEmail={fullscreenEmail}
+              setFullscreenEmail={setFullscreenEmail}
+            />
           </TabsContent>
           
           <TabsContent value="updates" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[60vh]">
-              <div className="p-4">
-                <div className="border rounded-md p-4 space-y-4">
-                  <h3 className="font-medium text-lg mb-4">Comments &amp; Updates</h3>
-                  
-                  {loadingComments ? (
-                    <div className="text-center py-4">Loading comments...</div>
-                  ) : comments.length > 0 ? (
-                    <div className="space-y-4">
-                      {comments.map((comment) => (
-                        <div key={comment.id} className="border rounded-md p-3 bg-gray-50">
-                          <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                            <span className="font-medium">
-                              {comment.user?.first_name} {comment.user?.last_name || ''}
-                            </span>
-                            <span>{formatDate(comment.created_at)}</span>
-                          </div>
-                          <p className="whitespace-pre-wrap">{comment.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-muted-foreground text-center py-4">No comments available for this request.</div>
-                  )}
-                </div>
-              </div>
-            </ScrollArea>
+            <CommentsTab comments={comments} loadingComments={loadingComments} />
           </TabsContent>
           
           <TabsContent value="history" className="flex-1 overflow-hidden">
