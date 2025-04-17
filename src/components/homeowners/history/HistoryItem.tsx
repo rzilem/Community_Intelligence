@@ -1,9 +1,8 @@
 
 import React from 'react';
 import { formatDate } from '@/lib/date-utils';
-import { ArrowRight, FileEdit, User, Clock } from 'lucide-react';
-import { StatusBadge } from './badges/StatusBadge';
-import { PriorityBadge } from './badges/PriorityBadge';
+import { FileEdit, User, Clock } from 'lucide-react';
+import { renderChangeItem } from './utils/historyChangeRenderer';
 
 export interface HistoryItemData {
   id: string;
@@ -25,44 +24,6 @@ interface HistoryItemProps {
 }
 
 const HistoryItem: React.FC<HistoryItemProps> = ({ item }) => {
-  const renderChangeItem = (key: string, value: any) => {
-    if (typeof value === 'object' && value !== null && 'old' in value && 'new' in value) {
-      // Render status changes with badges
-      if (key === 'status') {
-        return (
-          <div className="flex items-center gap-2">
-            <StatusBadge status={value.old} />
-            <ArrowRight className="h-4 w-4 text-gray-400" />
-            <StatusBadge status={value.new} />
-          </div>
-        );
-      }
-      
-      // Render priority changes with badges
-      if (key === 'priority') {
-        return (
-          <div className="flex items-center gap-2">
-            <PriorityBadge priority={value.old} />
-            <ArrowRight className="h-4 w-4 text-gray-400" />
-            <PriorityBadge priority={value.new} />
-          </div>
-        );
-      }
-      
-      // General change renderer
-      return (
-        <div className="flex items-center gap-2">
-          <span className="line-through text-gray-500">{value.old || 'Empty'}</span>
-          <ArrowRight className="h-4 w-4 text-gray-400" />
-          <span>{value.new || 'Empty'}</span>
-        </div>
-      );
-    }
-    
-    // For simple values (creation events)
-    return <span>{value}</span>;
-  };
-  
   const getChangeTypeIcon = (type: string) => {
     switch (type) {
       case 'created':

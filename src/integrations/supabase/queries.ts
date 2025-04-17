@@ -1,4 +1,3 @@
-
 import { supabase } from './client';
 
 /**
@@ -7,16 +6,21 @@ import { supabase } from './client';
  */
 export const checkTableAccess = async (tableName: string) => {
   try {
-    // Use a type cast to bypass TypeScript's strict checking
-    const { data, error } = await supabase
-      .from(tableName as any)
-      .select('count')
-      .limit(1);
-      
-    return { accessible: !error, error };
-  } catch (err) {
-    console.error(`Error checking table '${tableName}':`, err);
-    return { accessible: false, error: err };
+    // Use a function call to check table access to avoid TypeScript errors
+    const { data, error } = await supabase.rpc('check_table_access', {
+      table_name: tableName
+    });
+    
+    return { 
+      accessible: data || false,
+      error
+    };
+  } catch (error) {
+    console.error(`Error checking access to ${tableName} table:`, error);
+    return { 
+      accessible: false, 
+      error: { message: `Could not check access to ${tableName}` } 
+    };
   }
 };
 

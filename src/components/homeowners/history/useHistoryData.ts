@@ -32,25 +32,16 @@ export const useHistoryData = (request: HomeownerRequest | null, isDialogOpen: b
         return;
       }
       
-      // Fetch real history data using a raw query since the table isn't in the type system
-      const { data, error } = await supabase
-        .from('history')
-        .select(`
-          *,
-          user:user_id (
-            first_name,
-            last_name,
-            email
-          )
-        `)
-        .eq('entity_id', request.id)
-        .eq('entity_type', 'homeowner_request')
-        .order('created_at', { ascending: false });
+      // Fetch real history data using an RPC function to avoid TypeScript errors
+      const { data, error } = await supabase.rpc('get_entity_history', {
+        p_entity_id: request.id,
+        p_entity_type: 'homeowner_request'
+      });
         
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Type cast the data as HistoryItem[]
+        // Type cast the data as HistoryItemData[]
         setHistory(data as unknown as HistoryItemData[]);
       } else {
         // Use mock data if no real history exists

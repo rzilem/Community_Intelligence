@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -10,12 +11,13 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-request-types';
-import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date-utils';
 import { Maximize2, Minimize2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
+import { StatusBadge } from './history/badges/StatusBadge';
+import { PriorityBadge } from './history/badges/PriorityBadge';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -71,36 +73,6 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   
   if (!request) return null;
   
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'open':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Open</Badge>;
-      case 'in-progress':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">In Progress</Badge>;
-      case 'resolved':
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Resolved</Badge>;
-      case 'closed':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Closed</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
-  const renderPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'low':
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Low</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Medium</Badge>;
-      case 'high':
-        return <Badge variant="outline" className="bg-orange-100 text-orange-800">High</Badge>;
-      case 'urgent':
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Urgent</Badge>;
-      default:
-        return <Badge>{priority}</Badge>;
-    }
-  };
-
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     if (value === 'updates') {
@@ -152,10 +124,10 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
                       <div className="capitalize">{request.type}</div>
                       
                       <div className="text-muted-foreground">Status:</div>
-                      <div>{renderStatusBadge(request.status)}</div>
+                      <div><StatusBadge status={request.status} /></div>
                       
                       <div className="text-muted-foreground">Priority:</div>
-                      <div>{renderPriorityBadge(request.priority)}</div>
+                      <div><PriorityBadge priority={request.priority} /></div>
                       
                       <div className="text-muted-foreground">Created:</div>
                       <div>{formatDate(request.created_at)}</div>
