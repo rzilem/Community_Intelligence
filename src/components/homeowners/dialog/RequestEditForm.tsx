@@ -28,9 +28,9 @@ const formSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
   assigned_to: z.string().optional(),
-  association_id: z.string().uuid().optional().nullable(),
-  property_id: z.string().uuid().optional().nullable(),
-  resident_id: z.string().uuid().optional().nullable(),
+  association_id: z.string().optional(),
+  property_id: z.string().optional(),
+  resident_id: z.string().optional(),
 });
 
 const RequestEditForm: React.FC<RequestEditFormProps> = ({ 
@@ -47,7 +47,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       status: 'open',
       priority: 'medium',
       type: 'general',
-      assigned_to: '',
+      assigned_to: 'unassigned',
       association_id: '',
       property_id: '',
       resident_id: '',
@@ -63,7 +63,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         status: request.status as any,
         priority: request.priority as any,
         type: request.type as any,
-        assigned_to: request.assigned_to || '',
+        assigned_to: request.assigned_to || 'unassigned',
         association_id: request.association_id || '',
         property_id: request.property_id || '',
         resident_id: request.resident_id || '',

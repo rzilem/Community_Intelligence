@@ -49,10 +49,10 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       priority: values.priority,
       type: values.type,
       // Use the correct field names that match database columns
-      assigned_to: values.assigned_to || null,
-      association_id: values.association_id || null,
-      property_id: values.property_id || null,
-      resident_id: values.resident_id || null,
+      assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
+      association_id: values.association_id === 'unassigned' ? null : values.association_id || null,
+      property_id: values.property_id === 'unassigned' ? null : values.property_id || null,
+      resident_id: values.resident_id === 'unassigned' ? null : values.resident_id || null,
     };
     
     console.log('Transformed data for update:', updatedData);
