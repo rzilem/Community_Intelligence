@@ -50,6 +50,17 @@ export async function processEmailData(emailData: any) {
     // requestData.resident_id = await findResidentByEmail(senderEmail);
   }
   
+  // Handle attachments if present
+  if (emailData.attachments && emailData.attachments.length > 0) {
+    console.log(`Processing ${emailData.attachments.length} attachments`);
+    // Store attachment metadata in the request
+    requestData.attachment_data = emailData.attachments.map((attachment: any) => ({
+      filename: attachment.filename,
+      contentType: attachment.contentType,
+      size: attachment.size
+    }));
+  }
+  
   console.log("Extracted request data:", requestData);
   return requestData;
 }
