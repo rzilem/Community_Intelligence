@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
@@ -62,20 +61,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
 
   return (
     <tr className="hover:bg-muted/50 border-b">
-      {visibleColumnIds.includes('priority') && (
-        <td className="py-2 px-4">
-          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('title') && (
-        <td className="py-2 px-4 max-w-[200px]">
-          <div className="font-medium truncate">
-            {request.title}
-          </div>
-        </td>
-      )}
-
       {visibleColumnIds.includes('type') && (
         <td className="py-2 px-4">
           <div className="text-sm">{request.type}</div>
@@ -88,11 +73,15 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         </td>
       )}
 
-      {visibleColumnIds.includes('description') && (
+      {visibleColumnIds.includes('priority') && (
         <td className="py-2 px-4">
-          <div className="text-sm text-muted-foreground max-w-xl line-clamp-2">
-            {getDescription()}
-          </div>
+          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
+        </td>
+      )}
+
+      {visibleColumnIds.includes('tracking_number') && (
+        <td className="py-2 px-4">
+          <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>
         </td>
       )}
 
@@ -101,12 +90,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           <div className="text-sm text-muted-foreground">
             {request.created_at ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true }) : 'Unknown'}
           </div>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('tracking_number') && (
-        <td className="py-2 px-4">
-          <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>
         </td>
       )}
 

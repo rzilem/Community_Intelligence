@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Columns, GripVertical } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import TooltipButton from '@/components/ui/tooltip-button';
 import { Button } from '@/components/ui/button';
 
 interface Column {
@@ -28,74 +27,41 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   resetToDefaults,
   className
 }) => {
-  const [open, setOpen] = useState(false);
-  const [localSelectedColumns, setLocalSelectedColumns] = useState<string[]>(selectedColumns);
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Update local state when selectedColumns prop changes
-  useEffect(() => {
-    console.log("ColumnSelector: selectedColumns changed to:", selectedColumns);
-    const validColumns = selectedColumns.filter(id => id !== null);
-    setLocalSelectedColumns(validColumns);
-  }, [selectedColumns]);
-
-  const handleColumnToggle = (columnId: string, e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
+  const handleColumnToggle = (columnId: string) => {
+    const updatedColumns = selectedColumns.includes(columnId)
+      ? selectedColumns.filter(id => id !== columnId)
+      : [...selectedColumns, columnId];
     
-    console.log("Toggling column:", columnId);
-    const updatedColumns = localSelectedColumns.includes(columnId)
-      ? localSelectedColumns.filter(id => id !== columnId)
-      : [...localSelectedColumns, columnId];
-
-    // Ensure at least one column is selected
-    if (updatedColumns.length === 0) {
-      console.log("Cannot deselect all columns");
-      return;
+    if (updatedColumns.length > 0) {
+      onChange(updatedColumns);
     }
-
-    console.log("New selected columns:", updatedColumns);
-    setLocalSelectedColumns(updatedColumns);
-    onChange(updatedColumns);
   };
 
-  const handleDragStart = (index: number) => {
-    setDraggedItem(index);
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    if (draggedItem === null || !onReorder) return;
+    if (draggedIndex === null || !onReorder) return;
     
-    const draggedOverItem = index;
-    
-    if (draggedItem === draggedOverItem) return;
-    
-    onReorder(draggedItem, draggedOverItem);
-    setDraggedItem(draggedOverItem);
+    if (draggedIndex !== index) {
+      onReorder(draggedIndex, index);
+      setDraggedIndex(index);
+    }
   };
 
   const handleDragEnd = () => {
-    setDraggedItem(null);
-  };
-
-  const handleResetClick = () => {
-    if (resetToDefaults) {
-      console.log("Resetting to default columns");
-      resetToDefaults();
-      setOpen(false);
-    }
+    setDraggedIndex(null);
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger asChild>
-        <Button 
-          variant="outline" 
-          className={className} 
-          onClick={() => setOpen(true)}
-        >
+        <Button variant="outline" className={className}>
           <Columns className="h-4 w-4 mr-2" />
           Customize Columns
         </Button>
@@ -106,45 +72,45 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           {onReorder ? "Drag to reorder columns" : "Select columns to display"}
         </p>
         <div className="space-y-1 max-h-[300px] overflow-auto">
-          {columns.map((column, index) => (
-            <div 
-              key={column.id}
-              className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
-              draggable={onReorder !== undefined}
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-            >
-              {onReorder && (
-                <div className="flex items-center justify-center cursor-grab">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                </div>
-              )}
-              <Checkbox 
-                id={`column-${column.id}`}
-                checked={localSelectedColumns.includes(column.id)}
-                onCheckedChange={() => handleColumnToggle(column.id)}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <label 
-                htmlFor={`column-${column.id}`}
-                className="text-sm leading-none flex-1 cursor-pointer"
-                onClick={(e) => handleColumnToggle(column.id, e)}
+          {selectedColumns.map((columnId, index) => {
+            const column = columns.find(col => col.id === columnId);
+            if (!column) return null;
+            
+            return (
+              <div 
+                key={column.id}
+                draggable={onReorder !== undefined}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
               >
-                {column.label}
-              </label>
-            </div>
-          ))}
-        </div>
-        <div className="text-xs text-muted-foreground mt-4">
-          At least one column must be selected
+                {onReorder && (
+                  <div className="cursor-grab">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <Checkbox 
+                  checked={selectedColumns.includes(column.id)}
+                  onCheckedChange={() => handleColumnToggle(column.id)}
+                  id={`column-${column.id}`}
+                />
+                <label 
+                  htmlFor={`column-${column.id}`}
+                  className="text-sm leading-none flex-1 cursor-pointer"
+                >
+                  {column.label}
+                </label>
+              </div>
+            );
+          })}
         </div>
         {resetToDefaults && (
           <Button 
             variant="outline" 
             size="sm" 
             className="mt-4 w-full"
-            onClick={handleResetClick}
+            onClick={resetToDefaults}
           >
             Reset to Defaults
           </Button>
