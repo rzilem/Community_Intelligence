@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Dialog, 
@@ -12,7 +11,6 @@ import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
 import { useSupabaseUpdate } from '@/hooks/supabase';
 import RequestEditForm from './RequestEditForm';
-import TooltipButton from '@/components/ui/tooltip-button';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -70,7 +68,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-4xl w-[90%]">
         <DialogHeader>
           <DialogTitle>Edit Request</DialogTitle>
         </DialogHeader>

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -70,20 +69,18 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <RequestBasicFields form={form} />
-          <RequestAssignedToField form={form} />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <RequestBasicFields form={form} />
+            <RequestAssignedToField form={form} />
+          </div>
+          
+          <div className="space-y-4">
+            <RequestAssignmentFields form={form} optional={true} />
+            <RequestDescriptionField form={form} />
+          </div>
         </div>
-        
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-          <p className="text-amber-800 text-sm">
-            The assignment fields below are optional. Requests can exist without being associated with specific properties or residents.
-          </p>
-        </div>
-        
-        <RequestAssignmentFields form={form} optional={true} />
-        <RequestDescriptionField form={form} />
         
         <DialogFooter>
           <Button
