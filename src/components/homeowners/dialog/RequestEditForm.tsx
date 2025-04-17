@@ -11,6 +11,7 @@ import RequestBasicFields from './fields/RequestBasicFields';
 import RequestDescriptionField from './fields/RequestDescriptionField';
 import RequestAssignedToField from './fields/RequestAssignedToField';
 import RequestAssignmentFields from './fields/RequestAssignmentFields';
+import RequestNoteField from './fields/RequestNoteField';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ResponsiveContainer from '@/components/layout/ResponsiveContainer';
 
@@ -31,6 +32,7 @@ const formSchema = z.object({
   association_id: z.string().optional(),
   property_id: z.string().optional(),
   resident_id: z.string().optional(),
+  note: z.string().optional(),
 });
 
 const RequestEditForm: React.FC<RequestEditFormProps> = ({ 
@@ -51,12 +53,12 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
       association_id: 'unassigned',
       property_id: 'unassigned',
       resident_id: 'unassigned',
+      note: '',
     },
   });
 
   useEffect(() => {
     if (request) {
-      // Use consistent field names that match database columns and handle null values
       form.reset({
         title: request.title,
         description: request.description,
@@ -67,6 +69,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         association_id: request.association_id || 'unassigned',
         property_id: request.property_id || 'unassigned',
         resident_id: request.resident_id || 'unassigned',
+        note: '',
       });
     }
   }, [request, form]);
@@ -80,7 +83,6 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Left column - Basic information */}
           <Card className="lg:col-span-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-md">Basic Information</CardTitle>
@@ -92,7 +94,6 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
             </CardContent>
           </Card>
           
-          {/* Middle column - Assignment */}
           <Card className="lg:col-span-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-md">Assignment</CardTitle>
@@ -105,13 +106,15 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
             </CardContent>
           </Card>
           
-          {/* Right column - Description */}
           <Card className="lg:col-span-1">
             <CardHeader className="pb-2">
-              <CardTitle className="text-md">Description</CardTitle>
+              <CardTitle className="text-md">Description & Notes</CardTitle>
             </CardHeader>
             <CardContent>
-              <RequestDescriptionField form={form} />
+              <div className="space-y-4">
+                <RequestDescriptionField form={form} />
+                <RequestNoteField form={form} />
+              </div>
             </CardContent>
           </Card>
         </div>
