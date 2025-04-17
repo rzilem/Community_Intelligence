@@ -30,9 +30,14 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
   
   console.log(`Email from: ${fromName} <${fromEmail}>`);
   
-  // Generate a tracking number or extract from subject/body
-  const tracking_number = extractTrackingNumber(subject, text) || 
+  // Generate a tracking number that includes the sender's email for easier tracking
+  const baseTrackingNumber = extractTrackingNumber(subject, text) || 
     `HOR-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
+  
+  // Include email in tracking number for better identification
+  const tracking_number = fromEmail 
+    ? `${baseTrackingNumber}-${fromEmail}`
+    : baseTrackingNumber;
   
   // Set default priority and type
   let priority = "medium";
@@ -80,30 +85,41 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
       
       if (error) {
         console.log(`No resident found with email ${fromEmail}: ${error.message}`);
-      }
-      
-      if (resident) {
+        
+        // Try with a case-insensitive search as a fallback
+        const { data: residents, error: insensitiveError } = await supabase
+          .from('residents')
+          .select('id, property_id, email')
+          .ilike('email', fromEmail)
+          .limit(1);
+        
+        if (!insensitiveError && residents && residents.length > 0) {
+          console.log(`Found resident with case-insensitive email match: ${residents[0].id}`);
+          resident_id = residents[0].id;
+          property_id = residents[0].property_id;
+        }
+      } else if (resident) {
         console.log(`Found resident: ${resident.id}`);
         resident_id = resident.id;
         property_id = resident.property_id;
+      }
+      
+      // If we have a property, get its association
+      if (property_id) {
+        const { data: property, error: propertyError } = await supabase
+          .from('properties')
+          .select('association_id')
+          .eq('id', property_id)
+          .limit(1)
+          .single();
         
-        // If we have a property, get its association
-        if (property_id) {
-          const { data: property, error: propertyError } = await supabase
-            .from('properties')
-            .select('association_id')
-            .eq('id', property_id)
-            .limit(1)
-            .single();
-          
-          if (propertyError) {
-            console.log(`Error fetching property ${property_id}: ${propertyError.message}`);
-          }
-          
-          if (property) {
-            console.log(`Found association: ${property.association_id}`);
-            association_id = property.association_id;
-          }
+        if (propertyError) {
+          console.log(`Error fetching property ${property_id}: ${propertyError.message}`);
+        }
+        
+        if (property) {
+          console.log(`Found association: ${property.association_id}`);
+          association_id = property.association_id;
         }
       }
     }

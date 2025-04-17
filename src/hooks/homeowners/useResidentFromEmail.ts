@@ -1,19 +1,29 @@
 
 import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 
-export const useResidentFromEmail = (htmlContent: string | undefined) => {
-  // Extract email from HTML content using regex
-  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i;
-  const emailMatch = htmlContent?.match(emailRegex);
-  const email = emailMatch ? emailMatch[1] : null;
-
-  // Query resident data if we found an email, but don't use single: true to avoid errors
+export const useResidentFromEmail = (htmlContent: string | undefined, directEmail?: string | null) => {
+  // First prioritize a direct email if provided, then attempt to extract from HTML content
+  let email = directEmail || null;
+  
+  // Extract email from HTML content using regex only if no direct email was provided
+  if (!email && htmlContent) {
+    // Improved email regex for better matching
+    const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+    const emailMatches = htmlContent.match(emailRegex);
+    
+    // Use the first email match if found
+    if (emailMatches && emailMatches.length > 0) {
+      email = emailMatches[0];
+      console.log('Extracted email from HTML content:', email);
+    }
+  }
+  
+  // Query resident data if we found an email
   const { data: residents = [] } = useSupabaseQuery(
     'residents',
     {
-      select: 'id, name, property_id',
+      select: 'id, name, property_id, email',
       filter: [{ column: 'email', value: email }],
-      // Remove single: true to get all matching residents
     },
     !!email
   );

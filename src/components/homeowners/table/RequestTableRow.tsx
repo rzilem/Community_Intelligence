@@ -22,6 +22,9 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
+  // Extract tracking number prefix and email from tracking number if available
+  const trackingDetails = extractTrackingDetails(request.tracking_number);
+  
   // Fetch association data
   const { data: association } = useSupabaseQuery(
     'associations',
@@ -33,7 +36,11 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     !!request.association_id
   );
 
-  const { resident, property } = useResidentFromEmail(request.html_content);
+  // Pass both HTML content and direct email to the hook
+  const { resident, property, email } = useResidentFromEmail(
+    request.html_content,
+    trackingDetails?.email
+  );
 
   const getDescription = () => {
     if (!request.description && !request.html_content) return 'No description provided';
@@ -87,6 +94,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         );
       case 'association_id':
         return <div className="text-sm">{association?.name || 'Not assigned'}</div>;
+      case 'email':
+        return <div className="text-sm">{email || 'No email found'}</div>;
       default:
         return <div>-</div>;
     }
@@ -108,6 +117,16 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       </td>
     </tr>
   );
+};
+
+// Helper function to extract email from tracking number
+const extractTrackingDetails = (trackingNumber?: string) => {
+  if (!trackingNumber) return null;
+  
+  // Look for email pattern in tracking number (some tracking numbers may contain email info)
+  const emailMatch = trackingNumber.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+  
+  return emailMatch ? { email: emailMatch[1] } : null;
 };
 
 export default RequestTableRow;
