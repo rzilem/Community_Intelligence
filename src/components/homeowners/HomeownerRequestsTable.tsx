@@ -5,10 +5,6 @@ import {
   TableBody
 } from '@/components/ui/table';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
-import HomeownerRequestEditDialog from './dialog/HomeownerRequestEditDialog';
-import HomeownerRequestCommentDialog from './HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
 import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
 import EmptyRequestsRow from './table/EmptyRequestsRow';
@@ -16,7 +12,7 @@ import EmptyRequestsRow from './table/EmptyRequestsRow';
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
-  visibleColumnIds?: string[]; // Make this prop optional
+  visibleColumnIds: string[]; // Make this prop required
   isLoading?: boolean;
   error?: Error | null;
   onViewRequest: (request: HomeownerRequest) => void;
@@ -28,7 +24,7 @@ interface HomeownerRequestsTableProps {
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
   requests, 
   columns,
-  visibleColumnIds: propVisibleColumnIds,
+  visibleColumnIds,
   isLoading,
   error,
   onViewRequest,
@@ -36,10 +32,6 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   onAddComment,
   onViewHistory
 }) => {
-  // Use provided visibleColumnIds or default to columns with defaultVisible=true
-  const visibleColumnIds = propVisibleColumnIds || 
-    columns.filter(column => column.defaultVisible).map(column => column.id);
-
   if (isLoading) {
     return (
       <div className="rounded-md border p-8 text-center">
@@ -65,11 +57,11 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
         />
         <TableBody>
           {requests.length === 0 ? (
-            <EmptyRequestsRow columnsCount={visibleColumnIds.length} />
+            <EmptyRequestsRow columnsCount={visibleColumnIds.length + 1} />
           ) : (
             requests.map((request) => (
               <RequestTableRow
-                key={`${request.id}-${request.updated_at}`}
+                key={request.id}
                 request={request}
                 columns={columns}
                 visibleColumnIds={visibleColumnIds}

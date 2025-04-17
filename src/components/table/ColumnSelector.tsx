@@ -97,7 +97,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         <div className="space-y-1 max-h-[300px] overflow-auto">
           {columns.map((column, index) => (
             <div 
-              key={column.id} 
+              key={`column-item-${column.id}`}
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
               draggable={onReorder !== undefined}
               onDragStart={() => handleDragStart(index)}
@@ -117,6 +117,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               <label 
                 htmlFor={`column-${column.id}`}
                 className="text-sm leading-none flex-1 cursor-pointer"
+                onClick={() => handleColumnToggle(column.id)}
               >
                 {column.label}
               </label>

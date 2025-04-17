@@ -9,6 +9,7 @@ interface HomeownerRequestsColumnSelectorProps {
   onChange: (selectedColumns: string[]) => void;
   onReorder?: (sourceIndex: number, destinationIndex: number) => void;
   onResetDefault?: () => void;
+  className?: string;
 }
 
 const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorProps> = ({
@@ -16,7 +17,8 @@ const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorP
   selectedColumns,
   onChange,
   onReorder,
-  onResetDefault
+  onResetDefault,
+  className = "ml-2"
 }) => {
   return (
     <ColumnSelector
@@ -25,7 +27,7 @@ const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorP
       onChange={onChange}
       onReorder={onReorder}
       resetToDefaults={onResetDefault}
-      className="ml-2"
+      className={className}
     />
   );
 };

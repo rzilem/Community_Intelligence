@@ -2,11 +2,10 @@
 import React from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit2, MessageSquare, History } from 'lucide-react';
+import { Eye, Edit, MessageSquare, Clock } from 'lucide-react';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import { StatusBadge } from '../history/badges/StatusBadge';
-import { PriorityBadge } from '../history/badges/PriorityBadge';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDate } from '@/lib/date-utils';
+import { Badge } from '@/components/ui/badge';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -18,83 +17,90 @@ interface RequestTableRowProps {
   onViewHistory: (request: HomeownerRequest) => void;
 }
 
-const RequestTableRow: React.FC<RequestTableRowProps> = ({ 
-  request, 
+const RequestTableRow: React.FC<RequestTableRowProps> = ({
+  request,
   columns,
-  visibleColumnIds, 
-  onViewRequest, 
+  visibleColumnIds,
+  onViewRequest,
   onEditRequest,
   onAddComment,
   onViewHistory
 }) => {
-  // Function to render cell content based on column id
   const renderCellContent = (columnId: string) => {
-    switch (columnId) {
-      case 'title':
-        return request.title;
-      case 'status':
-        return <StatusBadge status={request.status} />;
-      case 'priority':
-        return <PriorityBadge priority={request.priority} />;
-      case 'type':
-        return request.type;
-      case 'tracking_number':
-        // Fixed: This should display the tracking number, not the description
-        return request.tracking_number || 'N/A';
-      case 'created_at':
-        return request.created_at 
-          ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true }) 
-          : 'N/A';
-      case 'updated_at':
-        return request.updated_at 
-          ? formatDistanceToNow(new Date(request.updated_at), { addSuffix: true }) 
-          : 'N/A';
-      case 'description':
-        // Fixed: This should display the description
-        return (
-          <div className="max-w-xs truncate">
-            {request.description || 'N/A'}
-          </div>
-        );
-      case 'resident_id':
-        return request.resident_id || 'Unassigned';
-      case 'property_id':
-        return request.property_id || 'Unassigned';
-      case 'association_id':
-        return request.association_id || 'Unassigned';
-      case 'assigned_to':
-        return request.assigned_to || 'Unassigned';
-      case 'resolved_at':
-        return request.resolved_at 
-          ? formatDistanceToNow(new Date(request.resolved_at), { addSuffix: true }) 
-          : 'N/A';
-      default:
-        return 'N/A';
+    const column = columns.find(col => col.id === columnId);
+    if (!column) return null;
+    
+    const value = request[column.accessorKey as keyof HomeownerRequest];
+    
+    if (columnId === 'status') {
+      return (
+        <Badge variant={
+          value === 'open' ? 'default' : 
+          value === 'in-progress' ? 'secondary' : 
+          value === 'resolved' ? 'success' : 
+          'outline'
+        }>
+          {String(value)}
+        </Badge>
+      );
     }
+    
+    if (columnId === 'priority') {
+      return (
+        <Badge variant={
+          value === 'urgent' ? 'destructive' : 
+          value === 'high' ? 'destructive' : 
+          value === 'medium' ? 'warning' : 
+          'outline'
+        }>
+          {String(value)}
+        </Badge>
+      );
+    }
+    
+    if (columnId === 'created_at' || columnId === 'updated_at' || columnId === 'resolved_at') {
+      return value ? formatDate(value as string) : '-';
+    }
+    
+    return String(value || '-');
   };
 
   return (
-    <TableRow key={request.id}>
-      {visibleColumnIds.map((columnId) => (
-        <TableCell key={columnId}>
+    <TableRow className="group">
+      {visibleColumnIds.map(columnId => (
+        <TableCell key={`${request.id}-${columnId}`}>
           {renderCellContent(columnId)}
         </TableCell>
       ))}
-      
-      {/* Actions cell always visible */}
       <TableCell className="text-right">
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onViewRequest(request)}>
+        <div className="flex justify-end items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewRequest(request)}
+          >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onEditRequest(request)}>
-            <Edit2 className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEditRequest(request)}
+          >
+            <Edit className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onAddComment(request)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onAddComment(request)}
+          >
             <MessageSquare className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => onViewHistory(request)}>
-            <History className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewHistory(request)}
+          >
+            <Clock className="h-4 w-4" />
           </Button>
         </div>
       </TableCell>
