@@ -32,7 +32,7 @@ const typeOptions = [
   { value: 'amenity', label: 'Amenity' }
 ];
 
-const HomeownerRequestFilters = ({
+const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   searchTerm,
   setSearchTerm,
   priority,
@@ -41,7 +41,7 @@ const HomeownerRequestFilters = ({
   setType,
   status,
   setStatus
-}: HomeownerRequestFiltersProps) => {
+}) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
       <FilterSearchInput 
@@ -52,7 +52,7 @@ const HomeownerRequestFilters = ({
       <div className="flex gap-2">
         <FilterSelect
           value={priority}
-          onChange={(value) => setPriority(value)}
+          onChange={setPriority}
           options={priorityOptions}
           placeholder="Priority"
           label="Priority"
@@ -60,7 +60,7 @@ const HomeownerRequestFilters = ({
         
         <FilterSelect
           value={type}
-          onChange={(value) => setType(value)}
+          onChange={setType}
           options={typeOptions}
           placeholder="Type"
           label="Type"

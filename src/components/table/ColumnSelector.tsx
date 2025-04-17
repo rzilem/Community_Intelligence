@@ -35,7 +35,8 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   // Update local state when selectedColumns prop changes
   useEffect(() => {
     console.log("ColumnSelector: selectedColumns changed to:", selectedColumns);
-    setLocalSelectedColumns(selectedColumns);
+    const validColumns = selectedColumns.filter(id => id !== null);
+    setLocalSelectedColumns(validColumns);
   }, [selectedColumns]);
 
   const handleColumnToggle = (columnId: string, e?: React.MouseEvent) => {
@@ -90,14 +91,14 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <TooltipButton 
+        <Button 
           variant="outline" 
           className={className} 
-          tooltip="Customize visible columns"
+          onClick={() => setOpen(true)}
         >
           <Columns className="h-4 w-4 mr-2" />
           Customize Columns
-        </TooltipButton>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-4" align="end">
         <h3 className="font-medium mb-2">Display Columns</h3>

@@ -21,12 +21,15 @@ const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorP
   className = "ml-2"
 }) => {
   console.log("HomeownerRequestsColumnSelector rendering with", columns.length, "columns");
-  console.log("Selected columns:", selectedColumns);
+  
+  // Filter out null values from selectedColumns
+  const validSelectedColumns = selectedColumns.filter(column => column !== null);
+  console.log("Valid selected columns:", validSelectedColumns);
   
   return (
     <ColumnSelector
       columns={columns}
-      selectedColumns={selectedColumns}
+      selectedColumns={validSelectedColumns}
       onChange={onChange}
       onReorder={onReorder}
       resetToDefaults={onResetDefault}

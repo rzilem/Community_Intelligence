@@ -20,7 +20,10 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
   onResetColumns
 }) => {
   console.log("RequestsCardHeader rendering with columns:", columns.length);
-  console.log("Visible column IDs:", visibleColumnIds);
+  
+  // Filter out null values from visibleColumnIds
+  const validVisibleColumnIds = visibleColumnIds.filter(id => id !== null);
+  console.log("Valid visible column IDs:", validVisibleColumnIds);
   
   const handleColumnChange = (newColumnIds: string[]) => {
     console.log("Column change in RequestsCardHeader:", newColumnIds);
@@ -33,7 +36,7 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
       <div className="flex items-center">
         <HomeownerRequestsColumnSelector
           columns={columns}
-          selectedColumns={visibleColumnIds}
+          selectedColumns={validVisibleColumnIds}
           onChange={handleColumnChange}
           onReorder={onReorderColumns}
           onResetDefault={onResetColumns}

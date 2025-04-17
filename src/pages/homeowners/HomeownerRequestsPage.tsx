@@ -22,13 +22,13 @@ const HomeownerRequestsPage = () => {
         isLoading={requestsHook.isLoading}
         error={requestsHook.error}
         activeTab={requestsHook.activeTab}
-        setActiveTab={requestsHook.setActiveTab}
+        setActiveTab={(tab) => requestsHook.setActiveTab(tab as any)}
         searchTerm={requestsHook.searchTerm}
         setSearchTerm={requestsHook.setSearchTerm}
         priority={requestsHook.priority}
-        setPriority={requestsHook.setPriority}
+        setPriority={(priority) => requestsHook.setPriority(priority as any)}
         type={requestsHook.type}
-        setType={requestsHook.setType}
+        setType={(type) => requestsHook.setType(type as any)}
       />
       
       <HomeownerRequestDialogs 

@@ -48,23 +48,25 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
     );
   }
 
+  const validVisibleColumnIds = visibleColumnIds.filter(id => id !== null && id !== undefined);
+
   return (
     <div className="rounded-md border">
       <Table>
         <RequestTableHeader 
           columns={columns} 
-          visibleColumnIds={visibleColumnIds} 
+          visibleColumnIds={validVisibleColumnIds} 
         />
         <TableBody>
           {requests.length === 0 ? (
-            <EmptyRequestsRow columnsCount={visibleColumnIds.length + 1} />
+            <EmptyRequestsRow columnsCount={validVisibleColumnIds.length + 1} />
           ) : (
             requests.map((request) => (
               <RequestTableRow
                 key={request.id}
                 request={request}
                 columns={columns}
-                visibleColumnIds={visibleColumnIds}
+                visibleColumnIds={validVisibleColumnIds}
                 onViewRequest={onViewRequest}
                 onEditRequest={onEditRequest}
                 onAddComment={onAddComment}

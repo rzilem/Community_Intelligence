@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
@@ -120,44 +121,42 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         </td>
       )}
 
-      {visibleColumnIds.includes('actions') && (
-        <td className="py-2 px-4">
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onViewRequest(request)}
-              title="View details"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onEditRequest(request)}
-              title="Edit request"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onAddComment(request)}
-              title="Add comment"
-            >
-              <MessageSquare className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onViewHistory(request)}
-              title="View history"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </div>
-        </td>
-      )}
+      <td className="py-2 px-4">
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onViewRequest(request)}
+            title="View details"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onEditRequest(request)}
+            title="Edit request"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onAddComment(request)}
+            title="Add comment"
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => onViewHistory(request)}
+            title="View history"
+          >
+            <History className="h-4 w-4" />
+          </Button>
+        </div>
+      </td>
     </tr>
   );
 };
