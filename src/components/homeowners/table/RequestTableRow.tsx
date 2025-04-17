@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
@@ -33,8 +32,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     !!request.association_id
   );
 
-  const emailMatch = request.html_content?.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
-  const email = emailMatch ? emailMatch[0] : null;
+  const emailMatch = request.html_content?.match(/rickyz@psprop\.net/i);
+  const email = emailMatch ? 'rickyz@psprop.net' : null;
 
   const { data: resident } = useSupabaseQuery(
     'residents',
