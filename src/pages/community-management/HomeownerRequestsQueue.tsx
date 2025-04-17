@@ -107,6 +107,7 @@ const HomeownerRequestsQueue = () => {
               <div className="text-xs space-y-1">
                 <p><strong>Total Requests:</strong> {homeownerRequests.length}</p>
                 <p><strong>Filtered Requests:</strong> {filteredRequests.length}</p>
+                <p><strong>Active Tab:</strong> {activeTab}</p>
                 <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Done'}</p>
                 <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
                 <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleTimeString()}</p>
@@ -147,6 +148,8 @@ const HomeownerRequestsQueue = () => {
               <HomeownerRequestFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} status={activeTab} setStatus={setActiveTab} priority={priority} setPriority={setPriority} type={type} setType={setType} />
               
               <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="active" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
               <RequestsTabContent value="open" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               

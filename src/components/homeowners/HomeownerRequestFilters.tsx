@@ -1,49 +1,96 @@
 
 import React from 'react';
-import { HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
-import FilterSearchInput from './filters/FilterSearchInput';
-import FilterDropdowns from './filters/FilterDropdowns';
-import MoreFiltersButton from './filters/MoreFiltersButton';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { HomeownerRequestPriority, HomeownerRequestStatus, HomeownerRequestType } from '@/types/homeowner-request-types';
+import { Search } from 'lucide-react';
 
 interface HomeownerRequestFiltersProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  status?: HomeownerRequestStatus | 'all';
-  setStatus?: (status: HomeownerRequestStatus | 'all') => void;
   priority: HomeownerRequestPriority | 'all';
   setPriority: (priority: HomeownerRequestPriority | 'all') => void;
   type: HomeownerRequestType | 'all';
   setType: (type: HomeownerRequestType | 'all') => void;
+  status?: HomeownerRequestStatus | 'all' | 'active';
+  setStatus?: (status: HomeownerRequestStatus | 'all' | 'active') => void;
 }
 
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   searchTerm,
   setSearchTerm,
-  status = 'all',
-  setStatus = () => {},
   priority,
   setPriority,
   type,
-  setType
+  setType,
+  status,
+  setStatus
 }) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <FilterSearchInput 
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-      />
-      
-      <div className="flex flex-wrap gap-2">
-        <FilterDropdowns
-          status={status}
-          setStatus={setStatus}
-          priority={priority}
-          setPriority={setPriority}
-          type={type}
-          setType={setType}
+      <div className="relative flex-1">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search requests..."
+          className="pl-8"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
+      </div>
+      
+      <div className="flex gap-2">
+        <Select
+          value={priority}
+          onValueChange={(value) => setPriority(value as HomeownerRequestPriority | 'all')}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+          </SelectContent>
+        </Select>
         
-        <MoreFiltersButton />
+        <Select
+          value={type}
+          onValueChange={(value) => setType(value as HomeownerRequestType | 'all')}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="compliance">Compliance</SelectItem>
+            <SelectItem value="billing">Billing</SelectItem>
+            <SelectItem value="general">General</SelectItem>
+            <SelectItem value="amenity">Amenity</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        {status && setStatus && (
+          <Select
+            value={status}
+            onValueChange={(value) => setStatus(value as HomeownerRequestStatus | 'all' | 'active')}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="in-progress">In Progress</SelectItem>
+              <SelectItem value="resolved">Resolved</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );
