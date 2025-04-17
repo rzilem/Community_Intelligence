@@ -1,7 +1,9 @@
 import { toast } from 'sonner';
 import { PostgrestError } from '@supabase/supabase-js';
 
-// Known tables in Supabase
+/**
+ * Known tables in Supabase
+ */
 export type KnownTables = 
   | 'associations'
   | 'properties'
@@ -18,6 +20,8 @@ export type KnownTables =
   | 'amenities'
   | 'resale_events'
   | 'calendar_events'
+  | 'comments'
+  | 'history'  // Added history table to known tables
   | string;  // Allow any string for dynamic tables
 
 // Filter options

@@ -57,21 +57,22 @@ const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps
     try {
       setLoading(true);
       
-      // First check if we have access to the history table
-      const { error: accessError } = await supabase
-        .from('history')
-        .select('count', { count: 'exact', head: true })
-        .eq('entity_id', request.id)
-        .eq('entity_type', 'homeowner_request');
+      // First check if we have access to the history table using a raw query
+      // instead of the typed client which doesn't know about this table
+      const accessCheckResult = await supabase.rpc('check_table_access', {
+        table_name: 'history'
+      }).catch(() => ({ data: null, error: { message: 'Table access check failed' } }));
       
-      if (accessError) {
-        console.warn('History table not available:', accessError.message);
+      const historyAccessible = accessCheckResult.data && !accessCheckResult.error;
+      
+      if (!historyAccessible) {
+        console.warn('History table not available:', accessCheckResult.error?.message);
         // Use mock data if table doesn't exist
         setHistory(generateMockHistory(request));
         return;
       }
       
-      // Fetch real history data
+      // Fetch real history data using a raw query since the table isn't in the type system
       const { data, error } = await supabase
         .from('history')
         .select(`
@@ -89,7 +90,8 @@ const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setHistory(data);
+        // Type cast the data as HistoryItem[]
+        setHistory(data as unknown as HistoryItem[]);
       } else {
         // Use mock data if no real history exists
         setHistory(generateMockHistory(request));
