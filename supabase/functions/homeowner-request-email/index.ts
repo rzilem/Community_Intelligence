@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
+import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -15,27 +16,34 @@ serve(async (req) => {
 
   try {
     console.log("Received homeowner request email webhook");
-
-    // Get email data from request
+    
+    // Get email data from request - handle both JSON and multipart form data
     let emailData;
+    
     try {
-      emailData = await req.json();
+      // Try to process the request using our multipart form data processor first
+      emailData = await processMultipartFormData(req);
+      console.log("Successfully processed multipart form data");
     } catch (parseError) {
-      console.error("Error parsing request body:", parseError);
-      // Try to get the raw text and see if we can parse it another way
-      const rawText = await req.text();
-      console.log("Raw request body:", rawText.substring(0, 200));
+      console.error("Error parsing request as multipart form data:", parseError);
+      
+      // Clone the request before attempting to parse as JSON
+      // This avoids the "body already consumed" error
+      const clonedRequest = req.clone();
       
       try {
-        // Try parsing as JSON again (in case text() worked better than json())
-        emailData = JSON.parse(rawText);
-      } catch (secondError) {
-        console.error("Failed to parse request body as JSON:", secondError);
+        // Fallback to regular JSON parsing
+        emailData = await clonedRequest.json();
+        console.log("Successfully parsed request as JSON");
+      } catch (jsonError) {
+        console.error("Error parsing request as JSON:", jsonError);
         return new Response(
           JSON.stringify({ 
             success: false, 
             error: "Invalid request format",
-            message: "Could not parse request body as JSON"
+            message: "Could not parse request body as multipart form data or JSON",
+            parseError: parseError.message,
+            jsonError: jsonError.message
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -46,22 +54,28 @@ serve(async (req) => {
     }
 
     // Validate we have at least some data to work with
-    if (!emailData || Object.keys(emailData).length === 0) {
+    if (!emailData || (typeof emailData === 'object' && Object.keys(emailData).length === 0)) {
       console.error("Empty email data received");
       return new Response(
-        JSON.stringify({ success: false, error: "Empty email data" }),
+        JSON.stringify({ 
+          success: false, 
+          error: "Empty email data", 
+          details: "The email webhook payload was empty or invalid" 
+        }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400 
         }
       );
     }
-
-    console.log("Processing email data to extract request information");
-    console.log("Email data keys:", Object.keys(emailData));
     
+    // Normalize the email data to handle different formats
+    const normalizedEmailData = normalizeEmailData(emailData);
+    console.log("Processing normalized email data:", JSON.stringify(normalizedEmailData, null, 2));
+
     // Process the email to extract request information
-    const requestData = await processEmailData(emailData);
+    console.log("Extracting request information from email");
+    const requestData = await processEmailData(normalizedEmailData);
 
     // Create the homeowner request in the database
     console.log("Creating homeowner request with the extracted data");

@@ -31,14 +31,16 @@ export function extractTrackingNumber(subject?: string, body?: string): string |
 // Process raw multipart form data using native FormData API
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type") || "";
+  console.log("Processing request with content-type:", contentType);
   
   // If not multipart form data, try json parsing
   if (!contentType.includes("multipart/form-data")) {
     try {
-      return await request.json();
+      // We will handle JSON parsing in the main function
+      throw new Error(`Not a multipart form: ${contentType}`);
     } catch (error) {
-      console.error("Error parsing JSON request:", error);
-      throw new Error(`Not a multipart form or valid JSON: ${contentType}`);
+      console.error("Not a multipart form data request:", error);
+      throw error;
     }
   }
 

@@ -83,3 +83,6 @@ verify_jwt = false
 
 [functions.email-receiver]
 verify_jwt = false
+
+[functions.invoice-receiver]
+verify_jwt = false
