@@ -33,10 +33,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         onOpenChange(false);
         if (onSuccess) onSuccess();
       },
-      onError: (error) => {
-        toast.error(`Error updating request: ${error.message}`);
-        console.error('Database error:', error);
-      }
+      showErrorToast: true, // Using the built-in error handling instead of onError
     }
   );
 
