@@ -33,6 +33,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   const getStatusVariant = (status: string) => {
     switch (status) {
       case 'open': return 'secondary';
+      case 'in-progress': 
       case 'in_progress': return 'warning';
       case 'resolved': return 'secondary';
       case 'closed': return 'outline';
@@ -61,6 +62,12 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
 
   return (
     <tr className="hover:bg-muted/50 border-b">
+      {visibleColumnIds.includes('priority') && (
+        <td className="py-2 px-4">
+          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
+        </td>
+      )}
+
       {visibleColumnIds.includes('title') && (
         <td className="py-2 px-4 max-w-[200px]">
           <div className="font-medium truncate">
@@ -69,11 +76,9 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         </td>
       )}
 
-      {visibleColumnIds.includes('description') && (
+      {visibleColumnIds.includes('type') && (
         <td className="py-2 px-4">
-          <div className="text-sm text-muted-foreground max-w-xl line-clamp-2">
-            {getDescription()}
-          </div>
+          <div className="text-sm">{request.type}</div>
         </td>
       )}
 
@@ -83,15 +88,11 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         </td>
       )}
 
-      {visibleColumnIds.includes('priority') && (
+      {visibleColumnIds.includes('description') && (
         <td className="py-2 px-4">
-          <Badge variant={getPriorityVariant(request.priority)}>{request.priority}</Badge>
-        </td>
-      )}
-
-      {visibleColumnIds.includes('type') && (
-        <td className="py-2 px-4">
-          <div className="text-sm">{request.type}</div>
+          <div className="text-sm text-muted-foreground max-w-xl line-clamp-2">
+            {getDescription()}
+          </div>
         </td>
       )}
 
