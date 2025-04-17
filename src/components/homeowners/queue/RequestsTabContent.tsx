@@ -1,8 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TabsContent } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
+import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
+import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/HomeownerRequestHistoryDialog';
+import { toast } from 'sonner';
 
 interface RequestsTabContentProps {
   value: string;
@@ -19,21 +24,35 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   columns, 
   visibleColumnIds 
 }) => {
-  // Mock handlers - these should be passed from parent in a real implementation
+  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  
   const handleViewRequest = (request: HomeownerRequest) => {
-    console.log('View request:', request);
+    setSelectedRequest(request);
+    setIsDetailOpen(true);
   };
   
   const handleEditRequest = (request: HomeownerRequest) => {
-    console.log('Edit request:', request);
+    setSelectedRequest(request);
+    setIsEditOpen(true);
   };
   
   const handleAddComment = (request: HomeownerRequest) => {
-    console.log('Add comment:', request);
+    setSelectedRequest(request);
+    setIsCommentOpen(true);
   };
   
   const handleViewHistory = (request: HomeownerRequest) => {
-    console.log('View history:', request);
+    setSelectedRequest(request);
+    setIsHistoryOpen(true);
+  };
+  
+  const handleRequestUpdated = () => {
+    toast.success('Request updated successfully');
+    // The parent component will auto-refresh data
   };
 
   return (
@@ -41,16 +60,45 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
       {isLoading ? (
         <div className="py-8 text-center">Loading requests...</div>
       ) : (
-        <HomeownerRequestsTable 
-          requests={requests} 
-          columns={columns}
-          visibleColumnIds={visibleColumnIds}
-          isLoading={isLoading}
-          onViewRequest={handleViewRequest}
-          onEditRequest={handleEditRequest}
-          onAddComment={handleAddComment}
-          onViewHistory={handleViewHistory}
-        />
+        <>
+          <HomeownerRequestsTable 
+            requests={requests} 
+            columns={columns}
+            visibleColumnIds={visibleColumnIds}
+            isLoading={isLoading}
+            onViewRequest={handleViewRequest}
+            onEditRequest={handleEditRequest}
+            onAddComment={handleAddComment}
+            onViewHistory={handleViewHistory}
+          />
+          
+          {/* Dialogs */}
+          <HomeownerRequestDetailDialog
+            request={selectedRequest}
+            open={isDetailOpen}
+            onOpenChange={setIsDetailOpen}
+          />
+          
+          <HomeownerRequestEditDialog
+            request={selectedRequest}
+            open={isEditOpen}
+            onOpenChange={setIsEditOpen}
+            onSuccess={handleRequestUpdated}
+          />
+          
+          <HomeownerRequestCommentDialog
+            request={selectedRequest}
+            open={isCommentOpen}
+            onOpenChange={setIsCommentOpen}
+            onSuccess={handleRequestUpdated}
+          />
+          
+          <HomeownerRequestHistoryDialog
+            request={selectedRequest}
+            open={isHistoryOpen}
+            onOpenChange={setIsHistoryOpen}
+          />
+        </>
       )}
     </TabsContent>
   );
