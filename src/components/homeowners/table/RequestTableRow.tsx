@@ -33,9 +33,12 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     !!request.association_id
   );
 
-  const emailMatch = request.html_content?.match(/rickyz@psprop\.net/i);
-  const email = emailMatch ? 'rickyz@psprop.net' : null;
+  // Extract email from HTML content using regex
+  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i;
+  const emailMatch = request.html_content?.match(emailRegex);
+  const email = emailMatch ? emailMatch[1] : null;
 
+  // Query resident data if we found an email
   const { data: resident } = useSupabaseQuery(
     'residents',
     {
@@ -46,6 +49,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     !!email
   );
 
+  // Query property data if we found a resident
   const { data: property } = useSupabaseQuery(
     'properties',
     {
