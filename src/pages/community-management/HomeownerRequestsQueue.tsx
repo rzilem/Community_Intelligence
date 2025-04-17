@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,13 +11,9 @@ import RequestsTabContent from '@/components/homeowners/queue/RequestsTabContent
 import RequestsStatusFooter from '@/components/homeowners/queue/RequestsStatusFooter';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
-
 const HomeownerRequestsQueue = () => {
   const [open, setOpen] = useState(false);
-  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(
-    HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id)
-  );
-
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
   const {
     filteredRequests,
     isLoading,
@@ -35,27 +30,22 @@ const HomeownerRequestsQueue = () => {
     homeownerRequests,
     createDummyRequest
   } = useHomeownerRequests();
-
   const handleFormSuccess = () => {
     setOpen(false);
     handleRefresh(); // Use handleRefresh instead of refetch
     toast.success('Request created successfully');
   };
-
   const handleExport = () => {
     toast.success('Export functionality will be implemented soon');
   };
-
   const handleColumnChange = (selectedColumnIds: string[]) => {
     setVisibleColumnIds(selectedColumnIds);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(selectedColumnIds));
   };
-
   const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
     const newVisibleColumns = [...visibleColumnIds];
     const [removed] = newVisibleColumns.splice(sourceIndex, 1);
     newVisibleColumns.splice(destinationIndex, 0, removed);
-    
     setVisibleColumnIds(newVisibleColumns);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(newVisibleColumns));
   };
@@ -67,111 +57,37 @@ const HomeownerRequestsQueue = () => {
       setVisibleColumnIds(JSON.parse(savedColumns));
     }
   }, []);
-
-  return (
-    <AppLayout>
+  return <AppLayout>
       <div className="p-6 space-y-6">
-        <HomeownerRequestsHeader
-          onRefresh={handleRefresh}
-          onExport={handleExport}
-          open={open}
-          setOpen={setOpen}
-          onSuccess={handleFormSuccess}
-        />
+        <HomeownerRequestsHeader onRefresh={handleRefresh} onExport={handleExport} open={open} setOpen={setOpen} onSuccess={handleFormSuccess} />
 
-        {homeownerRequests.length === 0 && (
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-            <h3 className="font-medium text-amber-800">No homeowner requests found</h3>
-            <p className="text-amber-700 mt-1">
-              You can create a test request to verify functionality is working correctly.
-            </p>
-            <button 
-              onClick={createDummyRequest}
-              className="mt-2 px-3 py-1 bg-amber-500 text-white rounded hover:bg-amber-600"
-            >
-              Create Test Request
-            </button>
-          </div>
-        )}
+        {homeownerRequests.length === 0}
 
         <Card>
           <CardHeader>
-            <RequestsCardHeader
-              visibleColumnIds={visibleColumnIds}
-              columns={HOMEOWNER_REQUEST_COLUMNS}
-              onColumnChange={handleColumnChange}
-              onReorderColumns={handleReorderColumns}
-            />
+            <RequestsCardHeader visibleColumnIds={visibleColumnIds} columns={HOMEOWNER_REQUEST_COLUMNS} onColumnChange={handleColumnChange} onReorderColumns={handleReorderColumns} />
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as any)}>
-              <RequestsTabsList 
-                activeTab={activeTab} 
-                onTabChange={(value) => setActiveTab(value as any)} 
-              />
+            <Tabs defaultValue={activeTab} onValueChange={value => setActiveTab(value as any)}>
+              <RequestsTabsList activeTab={activeTab} onTabChange={value => setActiveTab(value as any)} />
               
-              <HomeownerRequestFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                status={activeTab}
-                setStatus={setActiveTab}
-                priority={priority}
-                setPriority={setPriority}
-                type={type}
-                setType={setType}
-              />
+              <HomeownerRequestFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} status={activeTab} setStatus={setActiveTab} priority={priority} setPriority={setPriority} type={type} setType={setType} />
               
-              <RequestsTabContent 
-                value="all" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-              />
+              <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent 
-                value="open" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-              />
+              <RequestsTabContent value="open" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent 
-                value="in-progress" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-              />
+              <RequestsTabContent value="in-progress" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent 
-                value="resolved" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-              />
+              <RequestsTabContent value="resolved" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent 
-                value="closed" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-              />
+              <RequestsTabContent value="closed" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
             </Tabs>
             
-            <RequestsStatusFooter
-              filteredCount={filteredRequests.length}
-              totalCount={homeownerRequests.length}
-              lastRefreshed={lastRefreshed}
-            />
+            <RequestsStatusFooter filteredCount={filteredRequests.length} totalCount={homeownerRequests.length} lastRefreshed={lastRefreshed} />
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default HomeownerRequestsQueue;
