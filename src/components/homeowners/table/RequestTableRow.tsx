@@ -57,17 +57,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         </Badge>
       );
     }
-
-    if (columnId === 'description') {
-      const description = String(request.html_content || value || '-');
-      // Split by newlines and take first two lines
-      const firstTwoLines = description.split('\n').slice(0, 2).join('\n');
-      return (
-        <div className="max-w-xl">
-          {firstTwoLines || '-'}
-        </div>
-      );
-    }
     
     if (columnId === 'created_at' || columnId === 'updated_at' || columnId === 'resolved_at') {
       return value ? formatDate(value as string) : '-';
@@ -77,9 +66,9 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   };
 
   return (
-    <TableRow className="group hover:bg-muted/50">
+    <TableRow className="group">
       {visibleColumnIds.map(columnId => (
-        <TableCell key={`${request.id}-${columnId}`} className="border-b">
+        <TableCell key={`${request.id}-${columnId}`}>
           {renderCellContent(columnId)}
         </TableCell>
       ))}
