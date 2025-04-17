@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { InfoIcon, Bug, Plus, RefreshCw, Loader2 } from 'lucide-react';
+
 const HomeownerRequestsQueue = () => {
   const [open, setOpen] = useState(false);
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
@@ -46,19 +48,23 @@ const HomeownerRequestsQueue = () => {
       setVisibleColumnIds(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
     }
   }, []);
+
   const handleFormSuccess = () => {
     setOpen(false);
     handleRefresh();
     toast.success('Request created successfully');
   };
+
   const handleExport = () => {
     toast.success('Export functionality will be implemented soon');
   };
+
   const handleColumnChange = (selectedColumnIds: string[]) => {
     console.log("Column selection changed:", selectedColumnIds);
     setVisibleColumnIds(selectedColumnIds);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(selectedColumnIds));
   };
+
   const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
     console.log("Reordering columns:", sourceIndex, "to", destinationIndex);
     const newVisibleColumns = [...visibleColumnIds];
@@ -67,12 +73,14 @@ const HomeownerRequestsQueue = () => {
     setVisibleColumnIds(newVisibleColumns);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(newVisibleColumns));
   };
+
   const handleResetColumns = () => {
     console.log("Resetting columns to default");
     const defaultColumns = HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id);
     setVisibleColumnIds(defaultColumns);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(defaultColumns));
   };
+
   return <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
@@ -123,7 +131,14 @@ const HomeownerRequestsQueue = () => {
             <Tabs defaultValue={activeTab} onValueChange={value => setActiveTab(value as any)}>
               <RequestsTabsList activeTab={activeTab} onTabChange={value => setActiveTab(value as any)} />
               
-              <HomeownerRequestFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} status={activeTab} setStatus={setActiveTab} priority={priority} setPriority={setPriority} type={type} setType={setType} />
+              <HomeownerRequestFilters 
+                searchTerm={searchTerm} 
+                setSearchTerm={setSearchTerm} 
+                priority={priority} 
+                setPriority={setPriority as any} 
+                type={type} 
+                setType={setType as any} 
+              />
               
               <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
@@ -144,4 +159,5 @@ const HomeownerRequestsQueue = () => {
       </div>
     </AppLayout>;
 };
+
 export default HomeownerRequestsQueue;

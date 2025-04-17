@@ -5,6 +5,21 @@ import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTab
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { useUserColumns } from '@/hooks/useUserColumns';
 import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
+
+interface HomeownerRequestContentProps {
+  filteredRequests: HomeownerRequest[];
+  isLoading: boolean;
+  error: Error | null;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  priority: string;
+  setPriority: (priority: string) => void;
+  type: string;
+  setType: (type: string) => void;
+}
 
 const HomeownerRequestContent = ({
   filteredRequests,
@@ -18,18 +33,36 @@ const HomeownerRequestContent = ({
   setPriority,
   type,
   setType
-}) => {
+}: HomeownerRequestContentProps) => {
   const { visibleColumnIds } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests');
+
+  // Since we're in the content component, we'll create stub handlers that would be 
+  // implemented by a parent component in a real scenario
+  const handleViewRequest = (request: HomeownerRequest) => {
+    console.log('View request', request.id);
+  };
+
+  const handleEditRequest = (request: HomeownerRequest) => {
+    console.log('Edit request', request.id);
+  };
+
+  const handleAddComment = (request: HomeownerRequest) => {
+    console.log('Add comment to request', request.id);
+  };
+
+  const handleViewHistory = (request: HomeownerRequest) => {
+    console.log('View history for request', request.id);
+  };
 
   return (
     <>
       <HomeownerRequestFilters 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        priority={priority}
-        setPriority={setPriority}
-        type={type}
-        setType={setType}
+        priority={priority as any}
+        setPriority={setPriority as any}
+        type={type as any}
+        setType={setType as any}
       />
 
       <Tabs 
@@ -44,6 +77,10 @@ const HomeownerRequestContent = ({
             error={error}
             columns={HOMEOWNER_REQUEST_COLUMNS}
             visibleColumnIds={visibleColumnIds}
+            onViewRequest={handleViewRequest}
+            onEditRequest={handleEditRequest}
+            onAddComment={handleAddComment}
+            onViewHistory={handleViewHistory}
           />
         </TabsContent>
       </Tabs>

@@ -6,9 +6,14 @@ import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequ
 import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
 import { toast } from 'sonner';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
 
-const HomeownerRequestDialogs = ({ handleRefresh }) => {
-  const [selectedRequest, setSelectedRequest] = useState(null);
+interface HomeownerRequestDialogsProps {
+  handleRefresh: () => void;
+}
+
+const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps) => {
+  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCommentOpen, setIsCommentOpen] = useState(false);

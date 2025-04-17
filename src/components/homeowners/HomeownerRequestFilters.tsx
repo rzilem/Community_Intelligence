@@ -11,6 +11,8 @@ interface HomeownerRequestFiltersProps {
   setPriority: (priority: HomeownerRequestPriority | 'all') => void;
   type: HomeownerRequestType | 'all';
   setType: (type: HomeownerRequestType | 'all') => void;
+  status?: HomeownerRequestStatus | 'all' | 'active';
+  setStatus?: (status: HomeownerRequestStatus | 'all' | 'active') => void;
 }
 
 const priorityOptions = [
@@ -36,7 +38,9 @@ const HomeownerRequestFilters = ({
   priority,
   setPriority,
   type,
-  setType
+  setType,
+  status,
+  setStatus
 }: HomeownerRequestFiltersProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">

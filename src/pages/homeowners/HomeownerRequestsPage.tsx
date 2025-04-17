@@ -22,7 +22,6 @@ const HomeownerRequestsPage = () => {
       />
       
       <HomeownerRequestDialogs 
-        selectedRequest={null}
         handleRefresh={requestsHook.handleRefresh}
       />
       

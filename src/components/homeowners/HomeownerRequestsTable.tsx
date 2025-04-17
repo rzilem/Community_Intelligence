@@ -12,13 +12,13 @@ import EmptyRequestsRow from './table/EmptyRequestsRow';
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
-  visibleColumnIds: string[]; // Make this prop required
+  visibleColumnIds: string[];
   isLoading?: boolean;
   error?: Error | null;
-  onViewRequest: (request: HomeownerRequest) => void;
-  onEditRequest: (request: HomeownerRequest) => void;
-  onAddComment: (request: HomeownerRequest) => void;
-  onViewHistory: (request: HomeownerRequest) => void;
+  onViewRequest?: (request: HomeownerRequest) => void;
+  onEditRequest?: (request: HomeownerRequest) => void;
+  onAddComment?: (request: HomeownerRequest) => void;
+  onViewHistory?: (request: HomeownerRequest) => void;
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
@@ -27,10 +27,10 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   visibleColumnIds,
   isLoading,
   error,
-  onViewRequest,
-  onEditRequest,
-  onAddComment,
-  onViewHistory
+  onViewRequest = () => {},
+  onEditRequest = () => {},
+  onAddComment = () => {},
+  onViewHistory = () => {}
 }) => {
   if (isLoading) {
     return (

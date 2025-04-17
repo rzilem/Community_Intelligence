@@ -49,23 +49,26 @@ const FilterDropdowns: React.FC<FilterDropdownsProps> = ({
     <div className="flex flex-wrap gap-2">
       <FilterSelect
         value={status}
-        onValueChange={(value) => setStatus(value as HomeownerRequestStatus | 'all')}
+        onChange={(value) => setStatus(value as HomeownerRequestStatus | 'all')}
         label="Status"
         options={statusOptions}
+        placeholder="Status"
       />
       
       <FilterSelect
         value={priority}
-        onValueChange={(value) => setPriority(value as HomeownerRequestPriority | 'all')}
+        onChange={(value) => setPriority(value as HomeownerRequestPriority | 'all')}
         label="Priority"
         options={priorityOptions}
+        placeholder="Priority"
       />
       
       <FilterSelect
         value={type}
-        onValueChange={(value) => setType(value as HomeownerRequestType | 'all')}
+        onChange={(value) => setType(value as HomeownerRequestType | 'all')}
         label="Type"
         options={typeOptions}
+        placeholder="Type"
       />
     </div>
   );
