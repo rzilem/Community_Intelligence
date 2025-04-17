@@ -39,6 +39,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       case 'type':
         return request.type;
       case 'tracking_number':
+        // Fixed: This should display the tracking number, not the description
         return request.tracking_number || 'N/A';
       case 'created_at':
         return request.created_at 
@@ -49,6 +50,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           ? formatDistanceToNow(new Date(request.updated_at), { addSuffix: true }) 
           : 'N/A';
       case 'description':
+        // Fixed: This should display the description
         return (
           <div className="max-w-xs truncate">
             {request.description || 'N/A'}
