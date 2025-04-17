@@ -19,7 +19,7 @@ export async function processEmailData(emailData: any) {
     title: emailData.subject || "Email Request",
     status: "open",
     priority: determinePriority(emailData.subject),
-    type: determineRequestType(emailData.subject, emailData.text, emailData.html),
+    type: determineRequestType(emailData.subject, emailData.text || "", emailData.html || ""),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     tracking_number: emailData.tracking_number || `REQ-${Date.now()}`,
@@ -46,7 +46,7 @@ export async function processEmailData(emailData: any) {
   }
   
   // Extract sender information for possible resident matching
-  const senderEmail = extractSenderEmail(emailData.from);
+  const senderEmail = extractSenderEmail(emailData.from || "");
   if (senderEmail) {
     requestData.sender_email = senderEmail;
     console.log("Extracted sender email:", senderEmail);
