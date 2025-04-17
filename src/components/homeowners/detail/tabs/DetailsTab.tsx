@@ -5,6 +5,7 @@ import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { formatDate } from '@/lib/date-utils';
 import { StatusBadge } from '../../history/badges/StatusBadge';
 import { PriorityBadge } from '../../history/badges/PriorityBadge';
+import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 
 interface DetailsTabProps {
   request: HomeownerRequest;
@@ -12,6 +13,16 @@ interface DetailsTabProps {
 }
 
 const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }) => {
+  const { data: association } = useSupabaseQuery(
+    'associations',
+    {
+      select: 'name',
+      filter: [{ column: 'id', value: request.association_id }],
+      single: true
+    },
+    !!request.association_id
+  );
+
   return (
     <ScrollArea className="h-[60vh]">
       <div className="space-y-4 p-4">
@@ -45,8 +56,8 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
               <div className="text-muted-foreground">Property ID:</div>
               <div>{request.property_id || 'Not specified'}</div>
               
-              <div className="text-muted-foreground">Association ID:</div>
-              <div>{request.association_id || 'Not specified'}</div>
+              <div className="text-muted-foreground">Association:</div>
+              <div>{association?.name || 'Not specified'}</div>
               
               <div className="text-muted-foreground">Resident ID:</div>
               <div>{request.resident_id || 'N/A'}</div>
