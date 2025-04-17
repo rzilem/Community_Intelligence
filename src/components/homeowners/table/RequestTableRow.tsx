@@ -5,7 +5,6 @@ import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 import { useResidentFromEmail } from '@/hooks/homeowners/useResidentFromEmail';
 import { RequestStatusBadge } from './RequestStatusBadge';
 import { RequestActions } from './RequestActions';
-import { Separator } from '@/components/ui/separator';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -124,7 +123,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           {renderCell(columnId)}
         </td>
       ))}
-      <td className="py-2 px-4 text-center">
+      <td className="py-2 px-4 text-center border-l border-border/20">
         <RequestActions 
           request={request}
           onViewRequest={onViewRequest}

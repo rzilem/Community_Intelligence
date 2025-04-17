@@ -2,7 +2,6 @@
 import React from 'react';
 import { TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import { Separator } from '@/components/ui/separator';
 
 interface RequestTableHeaderProps {
   columns: HomeownerRequestColumn[];
@@ -24,7 +23,7 @@ const RequestTableHeader: React.FC<RequestTableHeaderProps> = ({ columns, visibl
             </th>
           ) : null;
         })}
-        <th className="py-3 px-4 text-center font-medium text-sm text-muted-foreground relative">
+        <th className="py-3 px-4 text-center font-medium text-sm text-muted-foreground border-l border-border/20">
           Actions
         </th>
       </tr>
