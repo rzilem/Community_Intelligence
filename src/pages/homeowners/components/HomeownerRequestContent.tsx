@@ -36,18 +36,12 @@ const HomeownerRequestContent = ({
 }: HomeownerRequestContentProps) => {
   const { visibleColumnIds } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests');
 
-  // Since we're in the content component, we'll create stub handlers that would be 
-  // implemented by a parent component in a real scenario
   const handleViewRequest = (request: HomeownerRequest) => {
     console.log('View request', request.id);
   };
 
   const handleEditRequest = (request: HomeownerRequest) => {
     console.log('Edit request', request.id);
-  };
-
-  const handleAddComment = (request: HomeownerRequest) => {
-    console.log('Add comment to request', request.id);
   };
 
   return (
@@ -75,7 +69,6 @@ const HomeownerRequestContent = ({
             visibleColumnIds={visibleColumnIds}
             onViewRequest={handleViewRequest}
             onEditRequest={handleEditRequest}
-            onAddComment={handleAddComment}
           />
         </TabsContent>
       </Tabs>

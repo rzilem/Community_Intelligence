@@ -1,8 +1,5 @@
+
 import React from 'react';
-import { 
-  Table, 
-  TableBody
-} from '@/components/ui/table';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
@@ -14,64 +11,48 @@ interface HomeownerRequestsTableProps {
   visibleColumnIds: string[];
   isLoading?: boolean;
   error?: Error | null;
-  onViewRequest?: (request: HomeownerRequest) => void;
-  onEditRequest?: (request: HomeownerRequest) => void;
-  onAddComment?: (request: HomeownerRequest) => void;
+  onViewRequest: (request: HomeownerRequest) => void;
+  onEditRequest: (request: HomeownerRequest) => void;
 }
 
-const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
-  requests, 
+const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
+  requests,
   columns,
   visibleColumnIds,
   isLoading,
   error,
-  onViewRequest = () => {},
-  onEditRequest = () => {},
-  onAddComment = () => {}
+  onViewRequest,
+  onEditRequest,
 }) => {
   if (isLoading) {
-    return (
-      <div className="rounded-md border p-8 text-center">
-        <p className="text-muted-foreground">Loading requests...</p>
-      </div>
-    );
+    return <div className="text-center py-8">Loading requests...</div>;
   }
 
   if (error) {
-    return (
-      <div className="rounded-md border p-8 text-center">
-        <p className="text-red-500">Error loading requests: {error.message}</p>
-      </div>
-    );
+    return <div className="text-center py-8 text-red-500">{error.message}</div>;
   }
 
-  const validVisibleColumnIds = visibleColumnIds.filter(id => id !== null && id !== undefined);
-
   return (
-    <div className="rounded-md border">
-      <Table>
-        <RequestTableHeader 
-          columns={columns} 
-          visibleColumnIds={validVisibleColumnIds} 
-        />
-        <TableBody>
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
+        <tbody>
           {requests.length === 0 ? (
-            <EmptyRequestsRow columnsCount={validVisibleColumnIds.length + 1} />
+            <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
           ) : (
             requests.map((request) => (
               <RequestTableRow
                 key={request.id}
                 request={request}
                 columns={columns}
-                visibleColumnIds={validVisibleColumnIds}
+                visibleColumnIds={visibleColumnIds}
                 onViewRequest={onViewRequest}
                 onEditRequest={onEditRequest}
-                onAddComment={onAddComment}
               />
             ))
           )}
-        </TableBody>
-      </Table>
+        </tbody>
+      </table>
     </div>
   );
 };

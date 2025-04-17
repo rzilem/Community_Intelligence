@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, MessageSquare, Edit } from 'lucide-react';
+import { Eye, Edit } from 'lucide-react';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -11,7 +11,6 @@ interface RequestTableRowProps {
   visibleColumnIds: string[];
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
-  onAddComment: (request: HomeownerRequest) => void;
 }
 
 const RequestTableRow: React.FC<RequestTableRowProps> = ({
@@ -20,7 +19,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   visibleColumnIds,
   onViewRequest,
   onEditRequest,
-  onAddComment
 }) => {
   const getPriorityVariant = (priority: string) => {
     switch (priority) {
@@ -58,14 +56,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     }
     
     return formatDescription(request.description);
-  };
-
-  const truncateToTwoLines = (text: string, maxLength: number = 100) => {
-    if (!text) return '';
-    const lines = text.split('\n');
-    const truncatedLines = lines.slice(0, 2);
-    const truncatedText = truncatedLines.join(' ').substring(0, maxLength);
-    return truncatedText + (lines.length > 2 || truncatedText.length === maxLength ? '...' : '');
   };
 
   return (
@@ -135,14 +125,6 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
             title="Edit request"
           >
             <Edit className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onAddComment(request)}
-            title="Add comment"
-          >
-            <MessageSquare className="h-4 w-4" />
           </Button>
         </div>
       </td>
