@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -13,7 +12,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { formatDate } from '@/lib/date-utils';
 import { X } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RequestEditForm from './RequestEditForm';
+import DetailsTab from '../detail/tabs/DetailsTab';
+import CommentsTab from '../detail/tabs/CommentsTab';
+import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
+import AttachmentsTab from './tabs/AttachmentsTab';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -29,6 +33,9 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = React.useState('edit');
+  const [fullscreenEmail, setFullscreenEmail] = React.useState(false);
+  
   const { mutate: updateRequest, isPending } = useSupabaseUpdate<HomeownerRequest>(
     'homeowner_requests',
     {
@@ -175,12 +182,44 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             </div>
           </div>
 
-          <RequestEditForm 
-            request={request} 
-            onSubmit={handleSubmit} 
-            isPending={isPending}
-            onCancel={() => onOpenChange(false)}
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="edit">Edit</TabsTrigger>
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="comments">Comments</TabsTrigger>
+              <TabsTrigger value="email">Original Email</TabsTrigger>
+              <TabsTrigger value="attachments">Attachments</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="edit">
+              <RequestEditForm 
+                request={request} 
+                onSubmit={handleSubmit} 
+                isPending={isPending}
+                onCancel={() => onOpenChange(false)}
+              />
+            </TabsContent>
+
+            <TabsContent value="details">
+              <DetailsTab request={request} />
+            </TabsContent>
+
+            <TabsContent value="comments">
+              <CommentsTab request={request} />
+            </TabsContent>
+
+            <TabsContent value="email">
+              <OriginalEmailTab 
+                htmlContent={request.html_content} 
+                fullscreenEmail={fullscreenEmail}
+                setFullscreenEmail={setFullscreenEmail}
+              />
+            </TabsContent>
+
+            <TabsContent value="attachments">
+              <AttachmentsTab request={request} />
+            </TabsContent>
+          </Tabs>
         </div>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
