@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
@@ -30,6 +31,29 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       single: true
     },
     !!request.association_id
+  );
+
+  const emailMatch = request.html_content?.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+  const email = emailMatch ? emailMatch[0] : null;
+
+  const { data: resident } = useSupabaseQuery(
+    'residents',
+    {
+      select: 'id, name, property_id',
+      filter: [{ column: 'email', value: email }],
+      single: true
+    },
+    !!email
+  );
+
+  const { data: property } = useSupabaseQuery(
+    'properties',
+    {
+      select: 'address, unit_number',
+      filter: [{ column: 'id', value: resident?.property_id }],
+      single: true
+    },
+    !!resident?.property_id
   );
 
   const getPriorityVariant = (priority: string) => {
@@ -127,16 +151,21 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
           </div>
         );
       case 'email':
-        const emailMatch = request.html_content?.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
         return (
           <div className="text-sm">
-            {emailMatch ? emailMatch[0] : 'No email found'}
+            {email || 'No email found'}
           </div>
         );
       case 'property_id':
         return (
           <div className="text-sm">
-            {request.property_id || 'Not assigned'}
+            {property ? `${property.address}${property.unit_number ? ` #${property.unit_number}` : ''}` : 'Not assigned'}
+          </div>
+        );
+      case 'resident_id':
+        return (
+          <div className="text-sm">
+            {resident?.name || 'Not assigned'}
           </div>
         );
       case 'association_id':

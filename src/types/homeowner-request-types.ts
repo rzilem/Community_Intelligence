@@ -60,7 +60,7 @@ export const HOMEOWNER_REQUEST_COLUMNS: HomeownerRequestColumn[] = [
   { id: 'email', label: 'Email', accessorKey: 'email', defaultVisible: false },
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
   { id: 'description', label: 'Description', accessorKey: 'description', defaultVisible: false },
-  { id: 'resident_id', label: 'Resident', accessorKey: 'resident_id', defaultVisible: false },
+  { id: 'resident_id', label: 'Owner', accessorKey: 'resident_id', defaultVisible: false },
   { id: 'property_id', label: 'Property', accessorKey: 'property_id', defaultVisible: true },
   { id: 'association_id', label: 'Association', accessorKey: 'association_id', defaultVisible: true },
   { id: 'assigned_to', label: 'Assigned To', accessorKey: 'assigned_to', defaultVisible: false },
