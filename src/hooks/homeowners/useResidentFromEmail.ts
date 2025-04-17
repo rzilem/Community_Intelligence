@@ -7,16 +7,19 @@ export const useResidentFromEmail = (htmlContent: string | undefined) => {
   const emailMatch = htmlContent?.match(emailRegex);
   const email = emailMatch ? emailMatch[1] : null;
 
-  // Query resident data if we found an email
-  const { data: resident } = useSupabaseQuery(
+  // Query resident data if we found an email, but don't use single: true to avoid errors
+  const { data: residents = [] } = useSupabaseQuery(
     'residents',
     {
       select: 'id, name, property_id',
       filter: [{ column: 'email', value: email }],
-      single: true
+      // Remove single: true to get all matching residents
     },
     !!email
   );
+
+  // Get the first resident if any exist
+  const resident = residents && residents.length > 0 ? residents[0] : null;
 
   // Query property data if we found a resident
   const { data: property } = useSupabaseQuery(
