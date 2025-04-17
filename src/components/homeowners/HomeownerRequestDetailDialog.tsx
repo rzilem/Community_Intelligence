@@ -1,16 +1,17 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { X } from 'lucide-react';
+import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-request-types';
+import { cleanHtmlContent } from '@/lib/format-utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import HomeownerRequestDialogHeader from './detail/HomeownerRequestDialogHeader';
 import DetailsTab from './detail/tabs/DetailsTab';
 import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
 import CommentsTab from './detail/tabs/CommentsTab';
@@ -27,78 +28,115 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   open, 
   onOpenChange 
 }) => {
-  const [activeTab, setActiveTab] = useState('request-information');
   const [fullscreenEmail, setFullscreenEmail] = useState(false);
+  const [comments, setComments] = useState<HomeownerRequestComment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
+  React.useEffect(() => {
+    if (open && request && activeTab === 'updates') {
+      fetchComments();
+    }
+  }, [open, request, activeTab]);
+
+  const fetchComments = async () => {
+    if (!request) return;
+    
+    try {
+      setLoadingComments(true);
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          user:user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('parent_id', request.id)
+        .eq('parent_type', 'homeowner_request')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setComments(data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments');
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+  
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'updates') {
+      fetchComments();
+    }
+  };
+  
   if (!request) return null;
-
+  
+  const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-xl font-semibold flex items-center justify-between">
-            <span>Request Details: {request.title}</span>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
-
-        <Tabs defaultValue="request-information" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-transparent border-b w-full rounded-none h-12 pb-0">
-            <TabsTrigger 
-              value="request-information"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              Request Information
-            </TabsTrigger>
-            <TabsTrigger 
-              value="original-email"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              Original Email
-            </TabsTrigger>
-            <TabsTrigger 
-              value="comments"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              Comments
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
-            >
-              History
-            </TabsTrigger>
+    <Dialog 
+      open={open} 
+      onOpenChange={onOpenChange}
+      modal={!fullscreenEmail}
+    >
+      <DialogContent className={`${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl max-h-[80vh]'} overflow-hidden flex flex-col`}>
+        <HomeownerRequestDialogHeader 
+          title={request.title}
+          showFullscreenButton={activeTab === 'original'}
+          isFullscreen={fullscreenEmail}
+          onFullscreenToggle={() => setFullscreenEmail(!fullscreenEmail)}
+        />
+        
+        <Tabs defaultValue="details" className="flex-1" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="details">Request Information</TabsTrigger>
+            <TabsTrigger value="original">Original Email</TabsTrigger>
+            <TabsTrigger value="updates">Comments</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
-          <div className="mt-6">
-            <TabsContent value="request-information">
-              <DetailsTab request={request} />
-            </TabsContent>
-            
-            <TabsContent value="original-email">
-              <OriginalEmailTab 
-                htmlContent={request.html_content} 
-                fullscreenEmail={fullscreenEmail}
-                setFullscreenEmail={setFullscreenEmail}
-              />
-            </TabsContent>
-            
-            <TabsContent value="comments">
-              <CommentsTab comments={[]} loadingComments={false} />
-            </TabsContent>
-            
-            <TabsContent value="history">
-              <HistoryTimeline request={request} />
-            </TabsContent>
-          </div>
+          <TabsContent value="details" className="flex-1 overflow-hidden">
+            <DetailsTab request={request} processedDescription={processedDescription} />
+          </TabsContent>
+          
+          <TabsContent value="original" className="flex-1 overflow-hidden">
+            <OriginalEmailTab 
+              htmlContent={request.html_content}
+              fullscreenEmail={fullscreenEmail}
+              setFullscreenEmail={setFullscreenEmail}
+            />
+          </TabsContent>
+          
+          <TabsContent value="updates" className="flex-1 overflow-hidden">
+            <CommentsTab comments={comments} loadingComments={loadingComments} />
+          </TabsContent>
+          
+          <TabsContent value="history" className="flex-1 overflow-hidden">
+            <ScrollArea className="h-[60vh]">
+              <div className="p-4">
+                <HistoryTimeline request={request} />
+              </div>
+            </ScrollArea>
+          </TabsContent>
         </Tabs>
+        
+        <DialogFooter>
+          <Button 
+            onClick={() => {
+              setFullscreenEmail(false);
+              onOpenChange(false);
+            }}
+          >
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
