@@ -16,7 +16,6 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <TabsList>
-        <TabsTrigger value="edit">Edit</TabsTrigger>
         <TabsTrigger value="details">Details</TabsTrigger>
         <TabsTrigger value="comments">Comments</TabsTrigger>
         <TabsTrigger value="email">Original Email</TabsTrigger>

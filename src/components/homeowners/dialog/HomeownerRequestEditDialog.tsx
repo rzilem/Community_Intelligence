@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -34,7 +33,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   onSuccess
 }) => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = React.useState('edit');
+  const [activeTab, setActiveTab] = React.useState('details');
   const [fullscreenEmail, setFullscreenEmail] = React.useState(false);
   const [comments, setComments] = React.useState([]);
   const [loadingComments, setLoadingComments] = React.useState(false);
@@ -153,13 +152,8 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Top scrollable section with tabs */}
           <div className="p-6 pt-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '40vh' }}>
             <RequestDialogTabs activeTab={activeTab} setActiveTab={setActiveTab}>
-              <TabsContent value="edit">
-                <RequestDetailsSection request={request} />
-              </TabsContent>
-
               <TabsContent value="details">
                 <DetailsTab request={request} processedDescription={processedDescription} />
               </TabsContent>
@@ -182,7 +176,6 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             </RequestDialogTabs>
           </div>
 
-          {/* Fixed bottom section with the form */}
           <div className="p-6 border-t bg-background flex-shrink-0">
             <RequestEditForm 
               request={request} 
