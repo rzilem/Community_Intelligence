@@ -51,7 +51,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
       case 'description':
         return (
           <div className="max-w-xs truncate">
-            {request.description}
+            {request.description || 'N/A'}
           </div>
         );
       case 'resident_id':
@@ -72,7 +72,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   };
 
   return (
-    <TableRow>
+    <TableRow key={request.id}>
       {visibleColumnIds.map((columnId) => (
         <TableCell key={columnId}>
           {renderCellContent(columnId)}
