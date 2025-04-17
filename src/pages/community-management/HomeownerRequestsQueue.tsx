@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -11,9 +12,15 @@ import RequestsTabContent from '@/components/homeowners/queue/RequestsTabContent
 import RequestsStatusFooter from '@/components/homeowners/queue/RequestsStatusFooter';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { InfoIcon, Bug, Plus, RefreshCw, Loader2 } from 'lucide-react';
+
 const HomeownerRequestsQueue = () => {
   const [open, setOpen] = useState(false);
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
+  const [showDebug, setShowDebug] = useState(false);
+  
   const {
     filteredRequests,
     isLoading,
@@ -28,20 +35,25 @@ const HomeownerRequestsQueue = () => {
     lastRefreshed,
     handleRefresh,
     homeownerRequests,
-    createDummyRequest
+    createDummyRequest,
+    error
   } = useHomeownerRequests();
+  
   const handleFormSuccess = () => {
     setOpen(false);
-    handleRefresh(); // Use handleRefresh instead of refetch
+    handleRefresh();
     toast.success('Request created successfully');
   };
+  
   const handleExport = () => {
     toast.success('Export functionality will be implemented soon');
   };
+  
   const handleColumnChange = (selectedColumnIds: string[]) => {
     setVisibleColumnIds(selectedColumnIds);
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(selectedColumnIds));
   };
+  
   const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
     const newVisibleColumns = [...visibleColumnIds];
     const [removed] = newVisibleColumns.splice(sourceIndex, 1);
@@ -57,11 +69,72 @@ const HomeownerRequestsQueue = () => {
       setVisibleColumnIds(JSON.parse(savedColumns));
     }
   }, []);
+  
   return <AppLayout>
       <div className="p-6 space-y-6">
-        <HomeownerRequestsHeader onRefresh={handleRefresh} onExport={handleExport} open={open} setOpen={setOpen} onSuccess={handleFormSuccess} />
+        <div className="flex justify-between items-center">
+          <HomeownerRequestsHeader 
+            onRefresh={handleRefresh} 
+            onExport={handleExport} 
+            open={open} 
+            setOpen={setOpen} 
+            onSuccess={handleFormSuccess} 
+          />
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowDebug(!showDebug)}
+            >
+              <Bug className="h-4 w-4 mr-2" /> 
+              {showDebug ? 'Hide Debug' : 'Debug'}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={createDummyRequest}
+            >
+              <Plus className="h-4 w-4 mr-2" /> 
+              Create Test Request
+            </Button>
+          </div>
+        </div>
 
-        {homeownerRequests.length === 0}
+        {showDebug && (
+          <Card className="bg-muted/50">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-2">Debug Information</h3>
+              <div className="text-xs space-y-1">
+                <p><strong>Total Requests:</strong> {homeownerRequests.length}</p>
+                <p><strong>Filtered Requests:</strong> {filteredRequests.length}</p>
+                <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Done'}</p>
+                <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+                <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleTimeString()}</p>
+                <div className="mt-2">
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleRefresh} 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                    Force Refresh
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {homeownerRequests.length === 0 && !isLoading && (
+          <Alert>
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>No requests found</AlertTitle>
+            <AlertDescription>
+              There are no homeowner requests in the system yet. You can create a test request using the "Create Test Request" button, or wait for email requests to come in.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>

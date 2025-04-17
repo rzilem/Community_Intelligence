@@ -24,13 +24,13 @@ export async function createRequest(requestData: any) {
       },
     });
     
-    console.log("Inserting request into homeowner_requests table");
+    console.log("Inserting request into homeowner_requests table with data:", JSON.stringify(requestData, null, 2));
     
     // Clean up requestData to ensure we only include valid fields
     // This ensures we don't try to insert undefined or null values for fields that require values
     const cleanRequestData = {
       title: requestData.title,
-      description: requestData.description,
+      description: requestData.description || "No description provided",
       type: requestData.type || 'general',
       priority: requestData.priority || 'medium',
       status: requestData.status || 'open',
@@ -50,6 +50,13 @@ export async function createRequest(requestData: any) {
     if (requestData.resident_id) {
       cleanRequestData.resident_id = requestData.resident_id;
     }
+    
+    if (requestData.sender_email) {
+      // Store sender email in description if not found in residents table
+      cleanRequestData.description = `${cleanRequestData.description}\n\nSender Email: ${requestData.sender_email}`;
+    }
+    
+    console.log("Cleaned request data:", JSON.stringify(cleanRequestData, null, 2));
     
     // Insert the request into the database with only valid fields
     const { data, error } = await supabase

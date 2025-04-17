@@ -5,6 +5,14 @@
 
 export async function processEmailData(emailData: any) {
   console.log("Processing email for homeowner request extraction");
+  console.log("Email data received:", JSON.stringify({
+    from: emailData.from,
+    to: emailData.to,
+    subject: emailData.subject,
+    has_html: !!emailData.html,
+    has_text: !!emailData.text,
+    attachments: emailData.attachments?.length || 0
+  }, null, 2));
   
   // Extract the data we need to create a request
   const requestData: Record<string, any> = {
@@ -37,18 +45,15 @@ export async function processEmailData(emailData: any) {
     requestData.description = "Request submitted via email. No content provided.";
   }
   
-  // Attempt to extract an association ID if present in the subject or email
-  requestData.association_id = extractAssociationId(emailData);
-  
   // Extract sender information for possible resident matching
   const senderEmail = extractSenderEmail(emailData.from);
   if (senderEmail) {
     requestData.sender_email = senderEmail;
-    
-    // We could look up the resident based on email
-    // This would be done via a database query in a production system
-    // requestData.resident_id = await findResidentByEmail(senderEmail);
+    console.log("Extracted sender email:", senderEmail);
   }
+  
+  // Attempt to extract an association ID if present in the subject or email
+  requestData.association_id = extractAssociationId(emailData);
   
   // Handle attachments if present
   if (emailData.attachments && emailData.attachments.length > 0) {
@@ -59,9 +64,16 @@ export async function processEmailData(emailData: any) {
       contentType: attachment.contentType,
       size: attachment.size
     }));
+    
+    // Include attachment info in description
+    const attachmentInfo = emailData.attachments
+      .map((a: any) => `${a.filename} (${a.contentType})`)
+      .join(", ");
+    
+    requestData.description += `\n\nAttachments: ${attachmentInfo}`;
   }
   
-  console.log("Extracted request data:", requestData);
+  console.log("Extracted request data:", JSON.stringify(requestData, null, 2));
   return requestData;
 }
 
@@ -122,7 +134,26 @@ function extractSenderEmail(fromHeader: string): string | null {
 }
 
 function extractAssociationId(emailData: any): string | null {
-  // This would normally extract the association ID from the email data
-  // For now, we'll return null and let the application assign it
+  // Try to extract from subject
+  const subject = emailData.subject || "";
+  const toHeader = emailData.to || "";
+  const fromHeader = emailData.from || "";
+  const text = emailData.text || "";
+  
+  console.log("Attempting to extract association ID from email data");
+  
+  // For debugging, if this is a test email from specific domains, we can hardcode association ID
+  if (fromHeader.includes("@resend.dev") || 
+      fromHeader.includes("@cloudmailin.net") || 
+      fromHeader.includes("@example.com")) {
+    console.log("Test email detected, using default association ID");
+    // Return the first association ID you want to use for testing
+    return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Replace with a valid association ID in your system
+  }
+  
+  // In a real system, you would need to implement logic to determine the association
+  // based on the email content, domain, recipient address, etc.
+  
+  // This is just a placeholder implementation
   return null;
 }

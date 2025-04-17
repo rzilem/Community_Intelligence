@@ -20,31 +20,51 @@ export const useHomeownerRequests = () => {
   // Fetch homeowner requests directly using Supabase client
   useEffect(() => {
     fetchRequests();
-  }, [currentAssociation, lastRefreshed]);
+    
+    // Set up an interval to refresh the data every 30 seconds
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing homeowner requests...');
+      fetchRequests(false); // Silent refresh without loading indicator
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [currentAssociation?.id, lastRefreshed]);
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       setError(null);
 
       console.log('Fetching homeowner requests, current association:', currentAssociation?.id);
       
-      // Check if there are any requests in the table at all (for debugging)
-      const { data: allRequests, error: countError } = await supabase
+      // First check if we can access the homeowner_requests table
+      const { error: accessError } = await supabase
         .from('homeowner_requests')
-        .select('*', { count: 'exact' });
+        .select('count', { count: 'exact', head: true });
+        
+      if (accessError) {
+        console.error('Error accessing homeowner_requests table:', accessError);
+        throw new Error(`Cannot access homeowner requests: ${accessError.message}`);
+      }
+      
+      // Check if there are any requests in the table at all (for debugging)
+      const { count: allCount, error: countError } = await supabase
+        .from('homeowner_requests')
+        .select('*', { count: 'exact', head: true });
         
       if (countError) {
-        console.error('Error fetching all homeowner requests:', countError);
+        console.error('Error counting homeowner requests:', countError);
         throw countError;
       }
       
-      console.log(`Total homeowner requests in database: ${allRequests?.length || 0}`);
+      console.log(`Total homeowner requests in database: ${allCount || 0}`);
       
       // If current association exists, filter by association
       let query = supabase.from('homeowner_requests').select('*');
       
-      if (currentAssociation) {
+      if (currentAssociation?.id) {
         console.log(`Filtering by association: ${currentAssociation.id}`);
         query = query.eq('association_id', currentAssociation.id);
       } else {
@@ -62,6 +82,8 @@ export const useHomeownerRequests = () => {
       
       if (data && data.length > 0) {
         console.log('First request sample:', data[0]);
+      } else {
+        console.log('No homeowner requests found for the current filters');
       }
       
       // Properly cast the data to ensure it matches the HomeownerRequest type
@@ -87,9 +109,13 @@ export const useHomeownerRequests = () => {
     } catch (err: any) {
       console.error('Error in fetchRequests:', err);
       setError(err);
-      toast.error(`Failed to load homeowner requests: ${err.message}`);
+      if (showLoading) {
+        toast.error(`Failed to load homeowner requests: ${err.message}`);
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
@@ -103,7 +129,8 @@ export const useHomeownerRequests = () => {
     
     const matchesSearch = 
       request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchTerm.toLowerCase());
+      request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (request.tracking_number && request.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = activeTab === 'all' || request.status === activeTab;
     const matchesPriority = priority === 'all' || request.priority === priority;
@@ -133,7 +160,7 @@ export const useHomeownerRequests = () => {
       };
       
       // Only add association_id when it exists
-      if (currentAssociation) {
+      if (currentAssociation?.id) {
         testRequest.association_id = currentAssociation.id;
       }
       
@@ -142,8 +169,12 @@ export const useHomeownerRequests = () => {
         .insert(testRequest)
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating test request:', error);
+        throw error;
+      }
       
+      console.log('Test request created successfully:', data);
       toast.success('Test request created successfully');
       handleRefresh();
     } catch (err: any) {
