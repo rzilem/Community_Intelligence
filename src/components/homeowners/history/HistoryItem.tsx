@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { formatDate } from '@/lib/date-utils';
-import { Badge } from '@/components/ui/badge';
 import { ArrowRight, FileEdit, User, Clock } from 'lucide-react';
+import { StatusBadge } from './badges/StatusBadge';
+import { PriorityBadge } from './badges/PriorityBadge';
 
 export interface HistoryItemData {
   id: string;
@@ -30,9 +31,9 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item }) => {
       if (key === 'status') {
         return (
           <div className="flex items-center gap-2">
-            <RenderStatusBadge status={value.old} />
+            <StatusBadge status={value.old} />
             <ArrowRight className="h-4 w-4 text-gray-400" />
-            <RenderStatusBadge status={value.new} />
+            <StatusBadge status={value.new} />
           </div>
         );
       }
@@ -41,9 +42,9 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item }) => {
       if (key === 'priority') {
         return (
           <div className="flex items-center gap-2">
-            <RenderPriorityBadge priority={value.old} />
+            <PriorityBadge priority={value.old} />
             <ArrowRight className="h-4 w-4 text-gray-400" />
-            <RenderPriorityBadge priority={value.new} />
+            <PriorityBadge priority={value.new} />
           </div>
         );
       }
@@ -111,36 +112,6 @@ const HistoryItem: React.FC<HistoryItemProps> = ({ item }) => {
       </div>
     </div>
   );
-};
-
-export const RenderStatusBadge = ({ status }: { status: string }) => {
-  switch (status) {
-    case 'open':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800">Open</Badge>;
-    case 'in-progress':
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">In Progress</Badge>;
-    case 'resolved':
-      return <Badge variant="outline" className="bg-green-100 text-green-800">Resolved</Badge>;
-    case 'closed':
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800">Closed</Badge>;
-    default:
-      return <Badge>{status}</Badge>;
-  }
-};
-
-export const RenderPriorityBadge = ({ priority }: { priority: string }) => {
-  switch (priority) {
-    case 'low':
-      return <Badge variant="outline" className="bg-green-100 text-green-800">Low</Badge>;
-    case 'medium':
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Medium</Badge>;
-    case 'high':
-      return <Badge variant="outline" className="bg-orange-100 text-orange-800">High</Badge>;
-    case 'urgent':
-      return <Badge variant="outline" className="bg-red-100 text-red-800">Urgent</Badge>;
-    default:
-      return <Badge>{priority}</Badge>;
-  }
 };
 
 export default HistoryItem;

@@ -6,7 +6,7 @@ import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-requ
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from '@/components/homeowners/HomeownerRequestHistoryDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import { toast } from 'sonner';
 
 interface RequestsTabContentProps {

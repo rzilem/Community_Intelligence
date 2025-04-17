@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Table, 
   TableBody
@@ -8,7 +7,7 @@ import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-requ
 import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
 import HomeownerRequestEditDialog from './dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from './HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from './HomeownerRequestHistoryDialog';
+import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
 import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
 import EmptyRequestsRow from './table/EmptyRequestsRow';

@@ -6,7 +6,7 @@ import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFil
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from '@/components/homeowners/HomeownerRequestHistoryDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { HOMEOWNER_REQUEST_COLUMNS, HomeownerRequest } from '@/types/homeowner-request-types';
 import { Button } from '@/components/ui/button';
