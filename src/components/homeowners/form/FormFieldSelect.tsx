@@ -53,7 +53,7 @@ const FormFieldSelect = ({
           <Select
             disabled={disabled}
             onValueChange={field.onChange}
-            value={field.value || ""}
+            value={field.value || "unassigned"}
           >
             <FormControl>
               <SelectTrigger>

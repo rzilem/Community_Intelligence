@@ -49,20 +49,26 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       priority: values.priority,
       type: values.type,
       // Handle unassigned values by setting them to null for the database
-      assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to || null,
+      assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to,
     };
     
     // Only include these fields if they have valid values to prevent integrity errors
     if (values.association_id && values.association_id !== 'unassigned') {
       updatedData.association_id = values.association_id;
+    } else {
+      updatedData.association_id = null;
     }
     
     if (values.property_id && values.property_id !== 'unassigned') {
       updatedData.property_id = values.property_id;
+    } else {
+      updatedData.property_id = null;
     }
     
     if (values.resident_id && values.resident_id !== 'unassigned') {
       updatedData.resident_id = values.resident_id;
+    } else {
+      updatedData.resident_id = null;
     }
     
     console.log('Transformed data for update:', updatedData);

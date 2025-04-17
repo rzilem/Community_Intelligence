@@ -18,7 +18,7 @@ const FilterSelect: React.FC<FilterSelectProps> = ({
   width = "w-[150px]"
 }) => {
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || "all"} onValueChange={onValueChange}>
       <SelectTrigger className={width}>
         <SelectValue placeholder={label} />
       </SelectTrigger>
