@@ -22,8 +22,8 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
-  // Extract sender email from tracking number or directly from the 'from' field if available
-  const emailInfo = extractSenderEmail(request);
+  // Extract primary sender email with improved priority handling
+  const senderEmail = extractPrimarySenderEmail(request);
   
   // Fetch association data
   const { data: association } = useSupabaseQuery(
@@ -39,7 +39,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   // Pass both HTML content and direct email to the hook
   const { resident, property, email } = useResidentFromEmail(
     request.html_content,
-    emailInfo
+    senderEmail
   );
 
   const getDescription = () => {
@@ -119,25 +119,47 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   );
 };
 
-// Helper function to extract email from tracking number or from the HTML content
-const extractSenderEmail = (request: HomeownerRequest): string | null => {
-  // If we have a tracking number, try to extract email from it
+// Improved helper function to extract primary sender email with better prioritization
+const extractPrimarySenderEmail = (request: HomeownerRequest): string | null => {
+  // First, check if there's a specific "From:" header in the HTML content
+  if (request.html_content) {
+    const fromHeaderMatch = request.html_content.match(/From:\s*([^<\r\n]*?)<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
+    if (fromHeaderMatch && fromHeaderMatch[2]) {
+      console.log('Found email in From header:', fromHeaderMatch[2]);
+      return fromHeaderMatch[2];
+    }
+  }
+  
+  // Next, check for email in tracking number
   if (request.tracking_number) {
-    // Check if the tracking number contains an email (like "HOR-123456-user@example.com")
     const emailMatch = request.tracking_number.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
     if (emailMatch) {
+      console.log('Found email in tracking number:', emailMatch[1]);
       return emailMatch[1];
     }
   }
   
-  // If we have HTML content, try to find a "From:" header
+  // Finally, try a more general search in HTML for specific patterns that likely represent the sender
   if (request.html_content) {
-    const fromMatch = request.html_content.match(/From:.*?([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
-    if (fromMatch) {
-      return fromMatch[1];
+    // Look for common email patterns typically found in email headers
+    const emailPatterns = [
+      /Reply-To:\s*(?:[^<\r\n]*?)<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i,
+      /Reply-To:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /Return-Path:\s*<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i,
+      /envelope-from\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /email=([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i
+    ];
+    
+    for (const pattern of emailPatterns) {
+      const match = request.html_content.match(pattern);
+      if (match && match[1]) {
+        console.log('Found email using pattern:', pattern, match[1]);
+        return match[1];
+      }
     }
   }
   
+  // If all else fails, return null
   return null;
 };
 

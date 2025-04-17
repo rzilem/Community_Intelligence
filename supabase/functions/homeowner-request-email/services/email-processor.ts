@@ -23,9 +23,49 @@ export interface RequestData {
 export async function processEmailData(emailData: any): Promise<RequestData> {
   console.log("Processing email data:", JSON.stringify(emailData, null, 2));
   
-  // Extract basic info from email
+  // Extract basic info from email with extensive sender email detection
   const { subject, from, text, html } = emailData;
-  const fromEmail = from?.address || from?.email || extractEmailFromText(from) || "";
+  
+  // Extract email using multiple methods to ensure we get it right
+  let fromEmail = "";
+  
+  // Try structured properties first
+  if (from?.address) {
+    fromEmail = from.address;
+  } else if (from?.email) {
+    fromEmail = from.email;
+  } 
+  // Try to extract from string formats next
+  else if (typeof from === 'string') {
+    // Check for format "name <email@example.com>"
+    const angleMatch = from.match(/<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
+    if (angleMatch) {
+      fromEmail = angleMatch[1];
+    } else {
+      // Simple email pattern extraction
+      const emailMatch = from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+      if (emailMatch) {
+        fromEmail = emailMatch[1];
+      }
+    }
+  }
+  
+  // Check headers as a last resort
+  if (!fromEmail && emailData.headers) {
+    const fromHeader = emailData.headers.From || emailData.headers.from;
+    if (fromHeader) {
+      const headerMatch = fromHeader.match(/<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
+      if (headerMatch) {
+        fromEmail = headerMatch[1];
+      } else {
+        const simpleMatch = fromHeader.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+        if (simpleMatch) {
+          fromEmail = simpleMatch[1];
+        }
+      }
+    }
+  }
+  
   const fromName = from?.name || "";
   
   console.log(`Email from: ${fromName} <${fromEmail}>`);
@@ -144,13 +184,4 @@ export async function processEmailData(emailData: any): Promise<RequestData> {
   console.log("Processed request data:", requestData);
   
   return requestData;
-}
-
-// Helper function to extract email from a string
-function extractEmailFromText(text: string): string | null {
-  if (!text) return null;
-  
-  const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i;
-  const match = text.match(emailRegex);
-  return match ? match[1] : null;
 }

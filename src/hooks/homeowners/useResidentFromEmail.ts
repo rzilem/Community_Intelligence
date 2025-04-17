@@ -5,16 +5,25 @@ export const useResidentFromEmail = (htmlContent: string | undefined, directEmai
   // First prioritize a direct email if provided, then attempt to extract from HTML content
   let email = directEmail || null;
   
-  // Extract email from HTML content using regex only if no direct email was provided
+  // Only try to extract from HTML if no direct email was provided
   if (!email && htmlContent) {
-    // Improved email regex for better matching
+    // Check for typical email formats in the HTML content
     const emailRegex = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
     const emailMatches = htmlContent.match(emailRegex);
     
-    // Use the first email match if found
     if (emailMatches && emailMatches.length > 0) {
-      email = emailMatches[0];
-      console.log('Extracted email from HTML content:', email);
+      // Filter out common system emails we don't want
+      const filteredEmails = emailMatches.filter(e => 
+        !e.toLowerCase().includes('psmanagement@psprop.net') && 
+        !e.toLowerCase().includes('noreply') && 
+        !e.toLowerCase().includes('no-reply'));
+      
+      // Use the first filtered email, or if none are left, use the first email found
+      email = filteredEmails.length > 0 ? filteredEmails[0] : null;
+      
+      if (email) {
+        console.log('Found usable email in HTML content:', email);
+      }
     }
   }
   
