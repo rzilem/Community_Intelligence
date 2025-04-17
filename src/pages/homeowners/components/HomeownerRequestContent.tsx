@@ -5,14 +5,14 @@ import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTab
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { useUserColumns } from '@/hooks/useUserColumns';
 import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 
 interface HomeownerRequestContentProps {
   filteredRequests: HomeownerRequest[];
   isLoading: boolean;
   error: Error | null;
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  setActiveTab: React.Dispatch<React.SetStateAction<HomeownerRequestStatus | 'all' | 'active'>>;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   priority: string;
@@ -67,7 +67,7 @@ const HomeownerRequestContent = ({
 
       <Tabs 
         value={activeTab} 
-        onValueChange={setActiveTab}
+        onValueChange={(value) => setActiveTab(value as HomeownerRequestStatus | 'all' | 'active')}
         className="mt-6"
       >
         <TabsContent value={activeTab}>

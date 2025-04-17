@@ -8,34 +8,37 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-interface FilterSelectProps {
+export interface FilterSelectProps {
   value: string;
   onChange: (value: string) => void;
-  options: { value: string; label: string; }[];
+  options: { value: string; label: string }[];
   placeholder: string;
-  label: string;
+  label?: string;
 }
 
-const FilterSelect = ({
+const FilterSelect: React.FC<FilterSelectProps> = ({
   value,
   onChange,
   options,
   placeholder,
   label
-}: FilterSelectProps) => {
+}) => {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[140px]">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map(option => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="w-full min-w-[140px]">
+      {label && <span className="text-sm font-medium mb-1 block">{label}</span>}
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

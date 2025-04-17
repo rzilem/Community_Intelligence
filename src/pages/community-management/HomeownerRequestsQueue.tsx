@@ -135,9 +135,9 @@ const HomeownerRequestsQueue = () => {
                 searchTerm={searchTerm} 
                 setSearchTerm={setSearchTerm} 
                 priority={priority} 
-                setPriority={setPriority as any} 
+                setPriority={(value) => setPriority(value as any)} 
                 type={type} 
-                setType={setType as any} 
+                setType={(value) => setType(value as any)}
               />
               
               <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />

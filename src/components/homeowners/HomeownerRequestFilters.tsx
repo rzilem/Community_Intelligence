@@ -8,11 +8,11 @@ interface HomeownerRequestFiltersProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   priority: HomeownerRequestPriority | 'all';
-  setPriority: (priority: HomeownerRequestPriority | 'all') => void;
+  setPriority: (priority: string) => void;
   type: HomeownerRequestType | 'all';
-  setType: (type: HomeownerRequestType | 'all') => void;
+  setType: (type: string) => void;
   status?: HomeownerRequestStatus | 'all' | 'active';
-  setStatus?: (status: HomeownerRequestStatus | 'all' | 'active') => void;
+  setStatus?: (status: string) => void;
 }
 
 const priorityOptions = [
@@ -52,7 +52,7 @@ const HomeownerRequestFilters = ({
       <div className="flex gap-2">
         <FilterSelect
           value={priority}
-          onChange={(value) => setPriority(value as HomeownerRequestPriority | 'all')}
+          onChange={(value) => setPriority(value)}
           options={priorityOptions}
           placeholder="Priority"
           label="Priority"
@@ -60,7 +60,7 @@ const HomeownerRequestFilters = ({
         
         <FilterSelect
           value={type}
-          onChange={(value) => setType(value as HomeownerRequestType | 'all')}
+          onChange={(value) => setType(value)}
           options={typeOptions}
           placeholder="Type"
           label="Type"

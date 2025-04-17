@@ -18,7 +18,17 @@ const HomeownerRequestsPage = () => {
       />
       
       <HomeownerRequestContent 
-        {...requestsHook}
+        filteredRequests={requestsHook.filteredRequests}
+        isLoading={requestsHook.isLoading}
+        error={requestsHook.error}
+        activeTab={requestsHook.activeTab}
+        setActiveTab={requestsHook.setActiveTab}
+        searchTerm={requestsHook.searchTerm}
+        setSearchTerm={requestsHook.setSearchTerm}
+        priority={requestsHook.priority}
+        setPriority={requestsHook.setPriority}
+        type={requestsHook.type}
+        setType={requestsHook.setType}
       />
       
       <HomeownerRequestDialogs 
