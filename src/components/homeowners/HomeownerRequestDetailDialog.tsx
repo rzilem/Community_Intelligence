@@ -1,11 +1,8 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter
+  DialogContent,
+  DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,10 +10,12 @@ import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-req
 import { cleanHtmlContent } from '@/lib/format-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import HistoryTimeline from './history/HistoryTimeline';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import HomeownerRequestDialogHeader from './detail/HomeownerRequestDialogHeader';
 import DetailsTab from './detail/tabs/DetailsTab';
 import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
 import CommentsTab from './detail/tabs/CommentsTab';
+import HistoryTimeline from './history/HistoryTimeline';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -88,23 +87,14 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       modal={!fullscreenEmail}
     >
       <DialogContent className={`${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl max-h-[80vh]'} overflow-hidden flex flex-col`}>
-        <DialogHeader>
-          <DialogTitle className="flex justify-between items-center">
-            <span>Request Details: {request.title}</span>
-            {activeTab === 'original' && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setFullscreenEmail(!fullscreenEmail)}
-              >
-                {fullscreenEmail ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                {fullscreenEmail ? 'Exit Fullscreen' : 'Fullscreen'}
-              </Button>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+        <HomeownerRequestDialogHeader 
+          title={request.title}
+          showFullscreenButton={activeTab === 'original'}
+          isFullscreen={fullscreenEmail}
+          onFullscreenToggle={() => setFullscreenEmail(!fullscreenEmail)}
+        />
         
-        <Tabs defaultValue="details" className="flex-1" value={activeTab} onValueChange={handleTabChange}>
+        <Tabs defaultValue="details" className="flex-1" value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="details">Request Information</TabsTrigger>
             <TabsTrigger value="original">Original Email</TabsTrigger>
