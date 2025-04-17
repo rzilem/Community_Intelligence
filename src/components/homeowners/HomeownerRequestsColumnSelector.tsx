@@ -1,10 +1,7 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Columns } from 'lucide-react';
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import TooltipButton from '@/components/ui/tooltip-button';
 
 interface HomeownerRequestsColumnSelectorProps {
   columns: HomeownerRequestColumn[];

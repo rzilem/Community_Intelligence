@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw, Plus, Bug } from 'lucide-react';
-import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
+import { PlusCircle, RefreshCw, Bug, LayoutList } from 'lucide-react';
 import { HomeownerRequestColumn } from '@/types/homeowner-request-types';
+import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
 
 interface HomeownerRequestActionsProps {
   isLoading: boolean;
@@ -11,12 +11,12 @@ interface HomeownerRequestActionsProps {
   onRefresh: () => void;
   onNewRequest: () => void;
   onToggleDebug: () => void;
-  onCreateTest: () => void;
+  onCreateTest?: () => void;
   columns: HomeownerRequestColumn[];
   selectedColumns: string[];
   onColumnChange: (columns: string[]) => void;
-  onColumnReorder: (sourceIndex: number, destinationIndex: number) => void;
-  onColumnReset: () => void;
+  onColumnReorder?: (sourceIndex: number, destinationIndex: number) => void;
+  onColumnReset?: () => void;
 }
 
 const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
@@ -30,17 +30,35 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
   selectedColumns,
   onColumnChange,
   onColumnReorder,
-  onColumnReset
+  onColumnReset,
 }) => {
   return (
-    <div className="flex gap-3">
+    <div className="flex items-center gap-2">
+      <Button onClick={onNewRequest}>
+        <PlusCircle className="h-4 w-4 mr-2" />
+        New Request
+      </Button>
+      
       <Button variant="outline" onClick={onRefresh} disabled={isLoading}>
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+        <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
         Refresh
       </Button>
-      <Button onClick={onNewRequest}>
-        <Plus className="h-4 w-4 mr-2" /> New Request
+      
+      {onCreateTest && (
+        <Button variant="outline" onClick={onCreateTest}>
+          <Bug className="h-4 w-4 mr-2" />
+          Test Data
+        </Button>
+      )}
+      
+      <Button 
+        variant={showDebugInfo ? "default" : "outline"}
+        onClick={onToggleDebug}
+      >
+        <LayoutList className="h-4 w-4 mr-2" />
+        {showDebugInfo ? 'Hide Debug' : 'Show Debug'}
       </Button>
+      
       <HomeownerRequestsColumnSelector
         columns={columns}
         selectedColumns={selectedColumns}
@@ -48,12 +66,6 @@ const HomeownerRequestActions: React.FC<HomeownerRequestActionsProps> = ({
         onReorder={onColumnReorder}
         onResetDefault={onColumnReset}
       />
-      <Button variant="outline" onClick={onToggleDebug}>
-        <Bug className="h-4 w-4 mr-2" /> {showDebugInfo ? 'Hide Debug' : 'Show Debug'}
-      </Button>
-      <Button variant="outline" onClick={onCreateTest}>
-        Create Test Request
-      </Button>
     </div>
   );
 };

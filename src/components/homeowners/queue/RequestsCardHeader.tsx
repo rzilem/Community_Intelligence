@@ -9,13 +9,15 @@ interface RequestsCardHeaderProps {
   columns: HomeownerRequestColumn[];
   onColumnChange: (columnIds: string[]) => void;
   onReorderColumns: (sourceIndex: number, destinationIndex: number) => void;
+  onResetColumns?: () => void; 
 }
 
 const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
   visibleColumnIds,
   columns,
   onColumnChange,
-  onReorderColumns
+  onReorderColumns,
+  onResetColumns
 }) => {
   return (
     <div className="flex justify-between items-center">
@@ -26,6 +28,7 @@ const RequestsCardHeader: React.FC<RequestsCardHeaderProps> = ({
           selectedColumns={visibleColumnIds}
           onChange={onColumnChange}
           onReorder={onReorderColumns}
+          onResetDefault={onResetColumns}
         />
       </div>
     </div>
