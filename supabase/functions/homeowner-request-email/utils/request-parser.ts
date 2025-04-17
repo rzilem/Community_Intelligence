@@ -92,16 +92,23 @@ export function normalizeEmailData(data: any): any {
   
   const normalizedData: Record<string, any> = {};
   
-  // CloudMailin specific format handling
+  // CloudMailin specific format handling - Multipart Normalized format
   if (data.headers && typeof data.headers === 'object') {
     console.log("Detected CloudMailin format with headers object");
     normalizedData.subject = data.headers.Subject || data.headers.subject || "";
     normalizedData.from = data.headers.From || data.headers.from || "";
     normalizedData.to = data.headers.To || data.headers.to || "";
     
-    // CloudMailin specific structure
+    // CloudMailin specific structure for Multipart Normalized format
     if (data.plain !== undefined) normalizedData.text = data.plain;
     if (data.html !== undefined) normalizedData.html = data.html;
+    
+    // CloudMailin also passes envelope data sometimes
+    if (data.envelope && typeof data.envelope === 'object') {
+      console.log("Found envelope data in CloudMailin format");
+      if (!normalizedData.from) normalizedData.from = data.envelope.from || "";
+      if (!normalizedData.to) normalizedData.to = data.envelope.to || "";
+    }
   }
   
   // Handle different field names for common email properties
@@ -118,7 +125,7 @@ export function normalizeEmailData(data: any): any {
   
   // Create a tracking number from email ID or message ID
   normalizedData.tracking_number = data.message_id || data.messageId || data.id || 
-    data.envelope?.messageId || `email-${Date.now()}`;
+    (data.envelope && data.envelope.messageId) || `email-${Date.now()}`;
   
   // Add raw email data for debugging
   normalizedData.raw_email = data;
@@ -157,6 +164,20 @@ function processAttachments(data: any): any[] {
   } else if (data.Attachment && !Array.isArray(data.Attachment)) {
     attachments = [data.Attachment];
     console.log("Found single attachment object in data.Attachment");
+  }
+  
+  // Try to parse attachments from CloudMailin's normalized format
+  // where they might be in a string format that needs to be parsed
+  if (!attachments.length && typeof data.attachments === 'string') {
+    try {
+      const parsedAttachments = JSON.parse(data.attachments);
+      if (Array.isArray(parsedAttachments)) {
+        attachments = parsedAttachments;
+        console.log(`Parsed ${attachments.length} attachments from string`);
+      }
+    } catch (e) {
+      console.log("Failed to parse attachments string as JSON");
+    }
   }
   
   // Standardize attachment object structure

@@ -61,7 +61,22 @@ export const useHomeownerRequests = () => {
       
       console.log(`Total homeowner requests in database: ${allCount || 0}`);
       
-      // If current association exists, filter by association
+      // Query without association filtering to see ALL requests (for debugging)
+      const { data: allData, error: allDataError } = await supabase
+        .from('homeowner_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (allDataError) {
+        console.error('Error fetching all homeowner requests:', allDataError);
+      } else {
+        console.log(`Found ${allData?.length || 0} total requests without association filtering`);
+        if (allData && allData.length > 0) {
+          console.log('First request sample without filtering:', allData[0]);
+        }
+      }
+      
+      // Main query - either filtered by association or get all requests if no association is selected
       let query = supabase.from('homeowner_requests').select('*');
       
       if (currentAssociation?.id) {
@@ -159,10 +174,10 @@ export const useHomeownerRequests = () => {
         tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
       };
       
-      // Only add association_id when it exists
-      if (currentAssociation?.id) {
-        testRequest.association_id = currentAssociation.id;
-      }
+      // Always add association_id 
+      testRequest.association_id = currentAssociation?.id || "85bdb4ea-4288-414d-8f17-83b4a33725b8";
+      
+      console.log('Creating test request:', testRequest);
       
       const { data, error } = await supabase
         .from('homeowner_requests')

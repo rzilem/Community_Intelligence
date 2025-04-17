@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, Plus, Bug } from 'lucide-react';
 import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestForm';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Card, CardContent } from '@/components/ui/card';
 
 const HomeownerRequestsPage = () => {
@@ -42,7 +42,7 @@ const HomeownerRequestsPage = () => {
   const [isCommentOpen, setIsCommentOpen] = React.useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
   const [isNewRequestFormOpen, setIsNewRequestFormOpen] = React.useState(false);
-  const [showDebugInfo, setShowDebugInfo] = React.useState(false);
+  const [showDebugInfo, setShowDebugInfo] = React.useState(true); // Default to true to help diagnose the issue
 
   // Handle view request
   const handleViewRequest = (request: HomeownerRequest) => {
@@ -93,13 +93,11 @@ const HomeownerRequestsPage = () => {
             <Plus className="h-4 w-4 mr-2" /> New Request
           </Button>
           <Button variant="outline" onClick={() => setShowDebugInfo(!showDebugInfo)}>
-            <Bug className="h-4 w-4 mr-2" /> Debug
+            <Bug className="h-4 w-4 mr-2" /> {showDebugInfo ? 'Hide Debug' : 'Show Debug'}
           </Button>
-          {process.env.NODE_ENV === 'development' && (
-            <Button variant="outline" onClick={createDummyRequest}>
-              Create Test Request
-            </Button>
-          )}
+          <Button variant="outline" onClick={createDummyRequest}>
+            Create Test Request
+          </Button>
         </div>
       </div>
 
@@ -115,6 +113,7 @@ const HomeownerRequestsPage = () => {
               <p><strong>Active Tab:</strong> {activeTab}</p>
               <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Loaded'}</p>
               <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+              <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>

@@ -26,23 +26,20 @@ export async function createRequest(requestData: any) {
     
     console.log("Inserting request into homeowner_requests table with data:", JSON.stringify(requestData, null, 2));
     
-    // Clean up requestData to ensure we only include valid fields
-    // This ensures we don't try to insert undefined or null values for fields that require values
+    // Add default values for required fields if not provided
     const cleanRequestData = {
-      title: requestData.title,
+      title: requestData.title || "Email Request",
       description: requestData.description || "No description provided",
       type: requestData.type || 'general',
       priority: requestData.priority || 'medium',
       status: requestData.status || 'open',
-      tracking_number: requestData.tracking_number,
+      tracking_number: requestData.tracking_number || `REQ-${Date.now()}`,
       html_content: requestData.html_content,
+      // Always set a default association_id if not provided
+      association_id: requestData.association_id || "85bdb4ea-4288-414d-8f17-83b4a33725b8", // Default to Reeceville COA
     };
     
     // Only add these fields if they actually have values
-    if (requestData.association_id) {
-      cleanRequestData.association_id = requestData.association_id;
-    }
-    
     if (requestData.property_id) {
       cleanRequestData.property_id = requestData.property_id;
     }
@@ -77,7 +74,7 @@ export async function createRequest(requestData: any) {
     console.log("Request created successfully:", data[0].id);
     
     // Log creation in communications_log table for tracking
-    await logCommunication(supabase, data[0].id, requestData.tracking_number);
+    await logCommunication(supabase, data[0].id, cleanRequestData.tracking_number);
     
     return data[0];
   } catch (error) {

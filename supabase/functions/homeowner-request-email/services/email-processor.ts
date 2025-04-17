@@ -53,7 +53,9 @@ export async function processEmailData(emailData: any) {
   }
   
   // Attempt to extract an association ID if present in the subject or email
-  requestData.association_id = extractAssociationId(emailData);
+  // Always set a default association ID if none is found
+  requestData.association_id = extractAssociationId(emailData) || "85bdb4ea-4288-414d-8f17-83b4a33725b8";
+  console.log("Using association ID:", requestData.association_id);
   
   // Handle attachments if present
   if (emailData.attachments && emailData.attachments.length > 0) {
@@ -145,10 +147,12 @@ function extractAssociationId(emailData: any): string | null {
   // For debugging, if this is a test email from specific domains, we can hardcode association ID
   if (fromHeader.includes("@resend.dev") || 
       fromHeader.includes("@cloudmailin.net") || 
-      fromHeader.includes("@example.com")) {
-    console.log("Test email detected, using default association ID");
+      fromHeader.includes("@example.com") ||
+      fromHeader.includes("@gmail.com") ||
+      fromHeader.includes("@psprop.net")) {
+    console.log("Test email detected, using Reeceville COA association ID");
     // Return the first association ID you want to use for testing
-    return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Replace with a valid association ID in your system
+    return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Reeceville COA
   }
   
   // In a real system, you would need to implement logic to determine the association
