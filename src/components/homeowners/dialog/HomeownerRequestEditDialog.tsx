@@ -10,6 +10,7 @@ import { useSupabaseUpdate } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { cleanHtmlContent } from '@/lib/format-utils';
+import { TabsContent } from '@/components/ui/tabs';
 import RequestEditForm from './RequestEditForm';
 import DetailsTab from '../detail/tabs/DetailsTab';
 import CommentsTab from '../detail/tabs/CommentsTab';
