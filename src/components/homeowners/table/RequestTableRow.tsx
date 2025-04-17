@@ -119,7 +119,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   );
 };
 
-// Improved helper function to extract primary sender email with better prioritization
+// Helper function to extract primary sender email with better prioritization
 const extractPrimarySenderEmail = (request: HomeownerRequest): string | null => {
   // First, check if there's a specific "From:" header in the HTML content
   if (request.html_content) {
