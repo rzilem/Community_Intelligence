@@ -22,6 +22,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
+  // Fetch association data
   const { data: association } = useSupabaseQuery(
     'associations',
     {
