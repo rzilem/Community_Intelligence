@@ -69,8 +69,9 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
           ) : (
             requests.map((request) => (
               <RequestTableRow
-                key={`${request.id}-${request.updated_at || 'null'}`}
+                key={`${request.id}-${request.updated_at}`}
                 request={request}
+                columns={columns}
                 visibleColumnIds={visibleColumnIds}
                 onViewRequest={onViewRequest}
                 onEditRequest={onEditRequest}

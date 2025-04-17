@@ -49,33 +49,6 @@ export const useHomeownerRequests = () => {
         throw new Error(`Cannot access homeowner requests: ${accessError.message}`);
       }
       
-      // Check if there are any requests in the table at all (for debugging)
-      const { count: allCount, error: countError } = await supabase
-        .from('homeowner_requests')
-        .select('*', { count: 'exact', head: true });
-        
-      if (countError) {
-        console.error('Error counting homeowner requests:', countError);
-        throw countError;
-      }
-      
-      console.log(`Total homeowner requests in database: ${allCount || 0}`);
-      
-      // Query without association filtering to see ALL requests (for debugging)
-      const { data: allData, error: allDataError } = await supabase
-        .from('homeowner_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (allDataError) {
-        console.error('Error fetching all homeowner requests:', allDataError);
-      } else {
-        console.log(`Found ${allData?.length || 0} total requests without association filtering`);
-        if (allData && allData.length > 0) {
-          console.log('First request sample without filtering:', allData[0]);
-        }
-      }
-      
       // Get all requests instead of filtering by association
       // This approach allows us to show all requests and filter client-side
       let query = supabase.from('homeowner_requests').select('*');
@@ -91,12 +64,6 @@ export const useHomeownerRequests = () => {
       }
       
       console.log(`Received ${data?.length || 0} homeowner requests after querying`);
-      
-      if (data && data.length > 0) {
-        console.log('First request sample:', data[0]);
-      } else {
-        console.log('No homeowner requests found in the database');
-      }
       
       // Properly cast the data to ensure it matches the HomeownerRequest type
       const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
@@ -151,6 +118,7 @@ export const useHomeownerRequests = () => {
       request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (request.tracking_number && request.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
+    // Apply status filter correctly - ensure we're comparing the same status values
     const matchesStatus = activeTab === 'all' || request.status === activeTab;
     const matchesPriority = priority === 'all' || request.priority === priority;
     const matchesType = type === 'all' || request.type === type;

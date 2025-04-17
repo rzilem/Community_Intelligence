@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
@@ -15,6 +15,8 @@ import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestFo
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { Card, CardContent } from '@/components/ui/card';
+import { useUserColumns } from '@/hooks/useUserColumns';
+import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
 
 const HomeownerRequestsPage = () => {
   const { currentAssociation } = useAuth();
@@ -35,6 +37,14 @@ const HomeownerRequestsPage = () => {
     handleRefresh,
     createDummyRequest
   } = useHomeownerRequests();
+
+  // Use the hook for column customization
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults 
+  } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests-page');
 
   const [selectedRequest, setSelectedRequest] = React.useState<HomeownerRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
@@ -92,6 +102,13 @@ const HomeownerRequestsPage = () => {
           <Button onClick={() => setIsNewRequestFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> New Request
           </Button>
+          <HomeownerRequestsColumnSelector
+            columns={HOMEOWNER_REQUEST_COLUMNS}
+            selectedColumns={visibleColumnIds}
+            onChange={updateVisibleColumns}
+            onReorder={reorderColumns}
+            onResetDefault={resetToDefaults}
+          />
           <Button variant="outline" onClick={() => setShowDebugInfo(!showDebugInfo)}>
             <Bug className="h-4 w-4 mr-2" /> {showDebugInfo ? 'Hide Debug' : 'Show Debug'}
           </Button>
@@ -114,6 +131,7 @@ const HomeownerRequestsPage = () => {
               <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Loaded'}</p>
               <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
               <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleString()}</p>
+              <p><strong>Visible Columns:</strong> {visibleColumnIds.join(', ')}</p>
             </div>
           </CardContent>
         </Card>
@@ -147,6 +165,7 @@ const HomeownerRequestsPage = () => {
             isLoading={isLoading}
             error={error}
             columns={HOMEOWNER_REQUEST_COLUMNS}
+            visibleColumnIds={visibleColumnIds}
             onViewRequest={handleViewRequest}
             onEditRequest={handleEditRequest}
             onAddComment={handleAddComment}
