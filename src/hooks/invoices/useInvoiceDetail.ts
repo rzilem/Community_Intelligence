@@ -19,6 +19,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
     paymentType: '',
     htmlContent: '',
     pdfUrl: '',
+    emailContent: '',
   });
 
   const [lines, setLines] = useState([{
@@ -72,6 +73,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
       
       // Get the cleaned values, defaulting to empty strings
       const htmlContent = invoiceData.html_content || '';
+      const emailContent = invoiceData.email_content || '';
       
       // Ensure PDF URL is properly formatted
       let pdfUrl = invoiceData.pdf_url || '';
@@ -107,6 +109,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
       console.log("Using values:", {
         htmlContent: htmlContent ? 'present' : 'empty',
         pdfUrl: pdfUrl || 'empty',
+        emailContent: emailContent ? 'present' : 'empty',
       });
       console.groupEnd();
       
@@ -122,6 +125,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
         paymentType: invoiceData.payment_method || '',
         htmlContent: htmlContent,
         pdfUrl: pdfUrl,
+        emailContent: emailContent,
       });
     }
   }, [invoiceData, id]);

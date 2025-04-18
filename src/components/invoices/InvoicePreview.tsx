@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -7,7 +8,7 @@ import { DocumentViewer } from './preview/DocumentViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
-import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage } from './preview/previewUtils';
+import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -26,6 +27,22 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState('document');
+  
+  // Determine if the document is a Word document based on file extension
+  const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
+                          getFileExtension(pdfUrl || '') === 'docx';
+  
+  // Handle opening the document in a new tab
+  const handleExternalOpen = () => {
+    if (normalizedPdfUrl) {
+      window.open(normalizedPdfUrl, '_blank');
+    }
+  };
+  
+  // Handle toggling fullscreen mode
+  const handleToggleFullscreen = () => {
+    setFullscreen(!fullscreen);
+  };
   
   useEffect(() => {
     // Reset states
@@ -129,25 +146,3 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     </div>
   );
 };
-
-function getFileExtension(urlOrFilename: string): string {
-  if (!urlOrFilename) return '';
-  
-  // Extract the filename from the URL if it's a URL
-  let filename = urlOrFilename;
-  
-  try {
-    const url = new URL(urlOrFilename);
-    filename = url.pathname.split('/').pop() || '';
-  } catch (e) {
-    // Not a URL, use as filename
-  }
-  
-  // Extract extension
-  const parts = filename.split('.');
-  if (parts.length > 1) {
-    return parts.pop()?.toLowerCase() || '';
-  }
-  
-  return '';
-}

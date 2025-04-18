@@ -13,6 +13,7 @@ export interface Invoice {
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
   pdf_url?: string;
+  email_content?: string;
   source_document?: string;
   created_at: string;
   updated_at: string;
