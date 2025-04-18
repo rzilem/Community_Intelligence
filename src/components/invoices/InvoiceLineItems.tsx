@@ -176,7 +176,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
               variant="destructive" 
               size="sm" 
               onClick={() => handleRemoveLine(index)}
-              className="flex items-center gap-2"
+              className="flex items-center"
             >
               <Trash2 className="h-4 w-4" />
             </Button>
