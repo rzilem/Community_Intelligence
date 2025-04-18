@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   ResponsiveDialog,
@@ -144,7 +143,9 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-7xl w-[95%] flex flex-col max-h-[95vh]">
+      <ResponsiveDialogContent 
+        className="max-w-[85%] w-[105%] flex flex-col max-h-[100vh]" 
+      >
         <RequestDialogHeader 
           title={request.title}
           trackingNumber={request.tracking_number}
