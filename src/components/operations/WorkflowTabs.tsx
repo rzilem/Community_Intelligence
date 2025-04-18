@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search } from 'lucide-react';
 
 interface WorkflowTabsProps {
@@ -19,23 +19,15 @@ const WorkflowTabs: React.FC<WorkflowTabsProps> = ({
 }) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between space-y-4 sm:space-y-0">
-      <TabsList className="grid grid-cols-5 w-full sm:w-auto">
-        <TabsTrigger value="templates" onClick={() => setActiveTab('templates')}>
-          Templates
-        </TabsTrigger>
-        <TabsTrigger value="active" onClick={() => setActiveTab('active')}>
-          Active
-        </TabsTrigger>
-        <TabsTrigger value="custom" onClick={() => setActiveTab('custom')}>
-          Custom
-        </TabsTrigger>
-        <TabsTrigger value="builder" onClick={() => setActiveTab('builder')}>
-          Builder
-        </TabsTrigger>
-        <TabsTrigger value="analytics" onClick={() => setActiveTab('analytics')}>
-          Analytics
-        </TabsTrigger>
-      </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-5 w-full sm:w-auto">
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="custom">Custom</TabsTrigger>
+          <TabsTrigger value="builder">Builder</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+        </TabsList>
+      </Tabs>
       
       <div className="relative w-full sm:w-[300px]">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

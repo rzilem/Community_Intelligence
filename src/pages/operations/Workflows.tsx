@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Workflow as WorkflowIcon, Plus, Loader2, Filter } from 'lucide-react';
@@ -38,7 +37,6 @@ const Workflows = () => {
     isCreating
   } = useWorkflows();
 
-  // Filter workflows based on search term and type filter
   const filteredTemplates = useMemo(() => {
     return workflowTemplates.filter(workflow => {
       const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -57,7 +55,6 @@ const Workflows = () => {
     });
   }, [activeWorkflows, searchTerm, typeFilter]);
 
-  // Available workflow types for filtering
   const workflowTypes: WorkflowType[] = [
     'Financial', 
     'Compliance', 
