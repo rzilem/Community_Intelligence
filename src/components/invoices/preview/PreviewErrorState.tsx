@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 interface PreviewErrorStateProps {
   error: string;
   pdfUrl?: string;
-  onExternalOpen: () => void;
+  onExternalOpen?: () => void; // Made optional since it's not always used
 }
 
 export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
@@ -18,7 +18,7 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
     <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
       <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
       <p className="text-center">{error}</p>
-      {pdfUrl && (
+      {pdfUrl && onExternalOpen && (
         <Button 
           variant="link" 
           onClick={onExternalOpen} 

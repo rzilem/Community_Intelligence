@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import NoPreviewState from './preview/NoPreviewState';
-import DocumentViewer from './preview/DocumentViewer';
-import PreviewErrorState from './preview/PreviewErrorState';
-import PreviewHeader from './preview/PreviewHeader';
+import { NoPreviewState } from './preview/NoPreviewState';
+import { DocumentViewer } from './preview/DocumentViewer';
+import { PreviewErrorState } from './preview/PreviewErrorState';
+import { PreviewHeader } from './preview/PreviewHeader';
 import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf } from './preview/previewUtils';
 
 interface InvoicePreviewProps {
