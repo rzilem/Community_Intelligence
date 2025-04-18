@@ -3,6 +3,14 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Minimize2, Maximize2 } from 'lucide-react';
 
+export interface InvoiceNavigationProps {
+  isNewInvoice: boolean;
+  showPreview: boolean;
+  onTogglePreview: () => void;
+  onNavigate: (direction: 'next' | 'prev') => void;
+  disableNavigation: boolean;
+}
+
 export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   isNewInvoice,
   showPreview,
