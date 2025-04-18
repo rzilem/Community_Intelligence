@@ -1,12 +1,18 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { processEmail } from "./services/email-processor.ts";
 import { createLead } from "./services/lead-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
+import { createClient } from '@supabase/supabase-js';
+import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
 
 // Add a configuration flag to prevent modifications
 const CURRENT_CONFIG_LOCKED = true;
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') || '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+);
 
 serve(async (req) => {
   // Check if configuration is locked
@@ -75,6 +81,51 @@ serve(async (req) => {
       );
     }
 
+    // Process attachments if present
+    let pdfUrl = null;
+    if (normalizedEmailData.attachments && normalizedEmailData.attachments.length > 0) {
+      console.log("Processing attachments:", normalizedEmailData.attachments.length);
+      
+      // Find the first PDF or Word document attachment
+      const attachment = normalizedEmailData.attachments.find(att => 
+        att.contentType.includes('pdf') || 
+        att.contentType.includes('word') || 
+        att.contentType.includes('doc')
+      );
+      
+      if (attachment) {
+        console.log("Found document attachment:", attachment.filename);
+        
+        // Generate a unique filename
+        const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
+        const fileName = `invoice_${Date.now()}${fileExt}`;
+        
+        // Upload to storage
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('invoices')
+            .upload(`public/${fileName}`, Buffer.from(attachment.content, 'base64'), {
+              contentType: attachment.contentType,
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error("Error uploading attachment:", uploadError);
+          } else {
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from('invoices')
+              .getPublicUrl(`public/${fileName}`);
+              
+            pdfUrl = urlData.publicUrl;
+            console.log("Attachment uploaded successfully:", pdfUrl);
+          }
+        } catch (storageError) {
+          console.error("Storage error:", storageError);
+        }
+      }
+    }
+
     // Process the email to extract lead information
     const leadData = await processEmail(normalizedEmailData);
 
@@ -97,6 +148,16 @@ serve(async (req) => {
 
     // Insert lead into the database
     try {
+      // If we have a PDF URL, add it to the lead data
+      if (pdfUrl) {
+        leadData.pdf_url = pdfUrl;
+      }
+      
+      // If the HTML content is just a placeholder, don't save it
+      if (normalizedEmailData.html && normalizedEmailData.html.includes('See what happens')) {
+        leadData.html_content = null;
+      }
+      
       const lead = await createLead(leadData);
 
       console.log("Lead created successfully:", lead);
