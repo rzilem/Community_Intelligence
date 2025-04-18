@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,12 +53,13 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <div className="md:col-span-1">
           <div className="space-y-2">
-            <Label htmlFor="invoiceNumber">Invoice Number</Label>
+            <Label htmlFor="invoiceTotal">Total</Label>
             <Input
-              id="invoiceNumber"
-              value={invoice.invoiceNumber}
-              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
-              placeholder="Enter invoice number"
+              id="invoiceTotal"
+              type="number"
+              value={invoice.totalAmount}
+              onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
+              step="0.01"
               className="w-full"
             />
           </div>
@@ -79,6 +81,35 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <div className="md:col-span-2">
           <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={invoice.dueDate}
+              onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceNumber">Invoice Number</Label>
+            <Input
+              id="invoiceNumber"
+              value={invoice.invoiceNumber}
+              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
+              placeholder="Enter invoice number"
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Payment type row */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="md:col-span-2">
+          <div className="space-y-2">
             <Label>Payment Type</Label>
             <Select
               value={invoice.paymentType}
@@ -93,20 +124,6 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 <SelectItem value="credit_card">Credit Card</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="invoiceTotal">Total</Label>
-            <Input
-              id="invoiceTotal"
-              type="number"
-              value={invoice.totalAmount}
-              onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
-              step="0.01"
-              className="w-full"
-            />
           </div>
         </div>
       </div>
