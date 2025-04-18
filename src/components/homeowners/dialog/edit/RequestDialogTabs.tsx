@@ -31,7 +31,7 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
       <div className="flex justify-between items-center gap-4">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="comments">Comments</TabsTrigger>
+          <TabsTrigger value="activity">Activity Feed</TabsTrigger>
           <TabsTrigger value="email">Original Email</TabsTrigger>
           <TabsTrigger value="attachments">Attachments</TabsTrigger>
         </TabsList>
