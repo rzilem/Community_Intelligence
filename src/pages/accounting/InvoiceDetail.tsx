@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -34,23 +33,17 @@ const InvoiceDetail = () => {
     isNewInvoice
   } = useInvoiceDetail(id);
 
-  // Debug log to check if we have the invoice data with HTML content
-  React.useEffect(() => {
-    console.group('Invoice Preview Debug');
-    console.log("Invoice ID:", id);
-    console.log("Invoice detail rendered with invoice:", {
-      id: invoice.id,
-      hasHtmlContent: !!invoice.htmlContent,
-      hasPdfUrl: !!invoice.pdfUrl,
-      htmlContentLength: invoice.htmlContent?.length || 0,
-      pdfUrlValue: invoice.pdfUrl,
-      association: invoice.association
+  // Debug log to see invoice data changes
+  useEffect(() => {
+    console.log("Invoice data in component:", {
+      association: invoice.association,
+      vendor: invoice.vendor,
+      invoiceNumber: invoice.invoiceNumber
     });
-    console.groupEnd();
-  }, [invoice, id]);
+  }, [invoice]);
 
   const handleSave = async () => {
-    console.log("Calling saveInvoice with association:", invoice.association);
+    console.log("Saving invoice with association:", invoice.association);
     
     if (isSaving) return; // Prevent multiple save attempts
     

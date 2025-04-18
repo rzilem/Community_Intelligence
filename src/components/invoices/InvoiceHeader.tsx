@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -37,9 +36,8 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
   const handleAssociationChange = (id: string) => {
     console.log('Association changed to:', id);
-    // If the association is empty (user cleared the selection), 
-    // let's pass null or empty string based on what the system can handle
-    onInvoiceChange('association', id || '');
+    // When the association is changed, update the parent component with the new value
+    onInvoiceChange('association', id);
   };
 
   return (
