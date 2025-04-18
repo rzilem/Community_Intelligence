@@ -59,6 +59,10 @@ serve(async (req) => {
     const apiKey = openAIConfig.apiKey;
     const model = openAIConfig.model || 'gpt-4o-mini';
 
+    console.log("OpenAI config found:", openAIConfig ? "Yes" : "No");
+    console.log("API Key present:", apiKey ? "Yes" : "No");
+    console.log("Model:", model);
+
     if (!apiKey) {
       console.log("No OpenAI API key found in settings");
       return new Response(JSON.stringify({

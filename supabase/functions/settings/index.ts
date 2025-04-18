@@ -89,6 +89,16 @@ serve(async (req) => {
           const requestData = await req.json();
           console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
           
+          // Log specific integration data for debugging
+          if (action === 'integrations' && requestData.integrationSettings) {
+            Object.keys(requestData.integrationSettings).forEach(integration => {
+              console.log(`Integration ${integration} config:`, JSON.stringify({
+                ...requestData.integrationSettings[integration],
+                apiKey: requestData.integrationSettings[integration].apiKey ? "PRESENT" : "MISSING"
+              }));
+            });
+          }
+          
           // Update the setting
           const { error } = await supabase
             .from('system_settings')
