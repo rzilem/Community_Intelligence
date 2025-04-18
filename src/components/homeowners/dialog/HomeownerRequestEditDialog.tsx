@@ -145,7 +145,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent 
-        className="max-w-[85%] w-[105%] flex flex-col max-h-[100vh]" 
+        className="max-w-[95%] w-[105%] flex flex-col max-h-[95vh]" 
       >
         <RequestDialogHeader 
           title={request.title}
@@ -154,7 +154,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-6 pt-2 pb-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '50vh' }}>
+          <div className="p-4 pt-2 pb-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '55vh' }}>
             <RequestDialogTabs activeTab={activeTab} setActiveTab={setActiveTab}>
               <TabsContent value="details">
                 <DetailsTab request={request} processedDescription={processedDescription} />
@@ -178,7 +178,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             </RequestDialogTabs>
           </div>
 
-          <div className="p-4 border-t bg-background flex-shrink-0 h-auto">
+          <div className="p-3 border-t bg-background flex-shrink-0 h-auto">
             <RequestEditForm 
               request={request} 
               onSubmit={handleSubmit} 
