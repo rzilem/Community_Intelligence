@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Card } from "@/components/ui/card";
+import { Mail } from "lucide-react";
 
 interface EmailPreviewProps {
   emailContent?: string;
@@ -9,14 +10,16 @@ interface EmailPreviewProps {
 export const EmailPreview: React.FC<EmailPreviewProps> = ({ emailContent }) => {
   if (!emailContent) {
     return (
-      <div className="flex items-center justify-center h-full p-6 text-muted-foreground">
-        No email content available
+      <div className="flex flex-col items-center justify-center h-full p-6 text-muted-foreground">
+        <Mail className="h-12 w-12 mb-4 opacity-20" />
+        <p>No email content available</p>
+        <p className="text-sm mt-2">This invoice may not have been received via email.</p>
       </div>
     );
   }
 
   return (
-    <Card className="p-4 h-full overflow-auto bg-white dark:bg-gray-800">
+    <Card className="p-6 h-full overflow-auto bg-white dark:bg-gray-800 shadow-sm">
       <div 
         className="prose dark:prose-invert max-w-none"
         dangerouslySetInnerHTML={{ __html: emailContent }} 

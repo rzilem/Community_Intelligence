@@ -26,7 +26,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState('document');
+  const [activeTab, setActiveTab] = useState<string>('document');
   
   // Determine if the document is a Word document based on file extension
   const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
@@ -76,6 +76,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       normalizedPdfUrl: normalizedPdfUrl || "none",
       hasHtmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
+      hasEmailContent: !!emailContent,
+      emailContentLength: emailContent?.length || 0,
       hasContent: hasContent,
       isPdfFile: isPdf(pdfUrl || '')
     });

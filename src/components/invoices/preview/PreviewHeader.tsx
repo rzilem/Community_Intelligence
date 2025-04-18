@@ -41,12 +41,14 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
           Invoice Preview
         </div>
         
-        <Tabs value={activeTab} onValueChange={onTabChange} className="w-[400px]">
-          <TabsList>
-            <TabsTrigger value="document">Document</TabsTrigger>
-            {hasEmail && <TabsTrigger value="email">Original Email</TabsTrigger>}
-          </TabsList>
-        </Tabs>
+        {hasEmail && (
+          <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
+            <TabsList>
+              <TabsTrigger value="document">Document</TabsTrigger>
+              <TabsTrigger value="email">Original Email</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
       </div>
       
       {showActions && (
