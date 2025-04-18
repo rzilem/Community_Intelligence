@@ -11,6 +11,30 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle } from 'lucide-react';
 
+// Define the CustomSelectProps interface
+interface CustomSelectProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}
+
+// Define the LineItem interface
+interface LineItem {
+  glAccount: string;
+  fund: string;
+  bankAccount: string;
+  description: string;
+  amount: number;
+}
+
+// Define the InvoiceLineItemsProps interface
+interface InvoiceLineItemsProps {
+  lines: LineItem[];
+  onLinesChange: (lines: LineItem[]) => void;
+  associationId?: string;
+}
+
 const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
   <div className="space-y-2">
     <Label className="text-sm text-gray-600">{label}</Label>
