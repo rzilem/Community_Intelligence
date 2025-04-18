@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search } from 'lucide-react';
 
 interface WorkflowTabsProps {
@@ -11,32 +11,41 @@ interface WorkflowTabsProps {
   onSearchChange: (value: string) => void;
 }
 
-const WorkflowTabs: React.FC<WorkflowTabsProps> = ({ 
-  activeTab, 
+const WorkflowTabs: React.FC<WorkflowTabsProps> = ({
+  activeTab,
   setActiveTab,
   searchTerm,
   onSearchChange
 }) => {
   return (
-    <div className="mb-6 space-y-4">
-      <div className="relative">
+    <div className="flex flex-col sm:flex-row justify-between space-y-4 sm:space-y-0">
+      <TabsList className="grid grid-cols-5 w-full sm:w-auto">
+        <TabsTrigger value="templates" onClick={() => setActiveTab('templates')}>
+          Templates
+        </TabsTrigger>
+        <TabsTrigger value="active" onClick={() => setActiveTab('active')}>
+          Active
+        </TabsTrigger>
+        <TabsTrigger value="custom" onClick={() => setActiveTab('custom')}>
+          Custom
+        </TabsTrigger>
+        <TabsTrigger value="builder" onClick={() => setActiveTab('builder')}>
+          Builder
+        </TabsTrigger>
+        <TabsTrigger value="analytics" onClick={() => setActiveTab('analytics')}>
+          Analytics
+        </TabsTrigger>
+      </TabsList>
+      
+      <div className="relative w-full sm:w-[300px]">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search workflows..."
+          className="pl-8"
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8"
         />
       </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-5">
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="active">Active Workflows</TabsTrigger>
-          <TabsTrigger value="custom">Custom Workflows</TabsTrigger>
-          <TabsTrigger value="builder">Workflow Builder</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-      </Tabs>
     </div>
   );
 };

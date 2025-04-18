@@ -1,166 +1,139 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  CreditCard, 
-  AlertTriangle, 
-  ClipboardList, 
-  MessageSquare, 
-  Calendar, 
-  Home,
-  Eye,
-  XCircle,
-  PlayCircle,
-  PauseCircle
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronRight, PauseCircle, PlayCircle, X } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { Workflow } from '@/types/workflow-types';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ActiveWorkflowCardProps {
   workflow: Workflow;
-  onViewDetails?: (workflowId: string) => void;
-  onPauseWorkflow?: (workflowId: string) => void;
-  onResumeWorkflow?: (workflowId: string) => void;
-  onCancelWorkflow?: (workflowId: string) => void;
+  onViewDetails: (id: string) => void;
+  onPauseWorkflow: (id: string) => void;
+  onResumeWorkflow: (id: string) => void;
+  onCancelWorkflow: (id: string) => void;
 }
 
-const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({ 
+const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
   workflow,
   onViewDetails,
   onPauseWorkflow,
   onResumeWorkflow,
   onCancelWorkflow
 }) => {
-  const getWorkflowIcon = () => {
-    switch (workflow.type) {
-      case 'Financial':
-        return <CreditCard className="h-10 w-10 text-orange-500" />;
-      case 'Compliance':
-        return <AlertTriangle className="h-10 w-10 text-red-500" />;
-      case 'Maintenance':
-        return <ClipboardList className="h-10 w-10 text-green-500" />;
-      case 'Resident Management':
-        return <MessageSquare className="h-10 w-10 text-blue-500" />;
-      case 'Governance':
-        return <Calendar className="h-10 w-10 text-purple-500" />;
-      case 'Communication':
-        return <MessageSquare className="h-10 w-10 text-indigo-500" />;
-      default:
-        return <Home className="h-10 w-10 text-gray-500" />;
-    }
-  };
-
-  const getStatusBadge = () => {
-    switch (workflow.status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
-      case 'draft':
-        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Draft</Badge>;
-      case 'inactive':
-        return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Paused</Badge>;
-      default:
-        return <Badge>{workflow.status}</Badge>;
-    }
-  };
-
-  const completedSteps = workflow.steps.filter(step => step.isComplete).length;
-  const totalSteps = workflow.steps.length;
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  
+  // Calculate progress based on completed steps
+  const totalSteps = workflow.steps?.length || 0;
+  const completedSteps = workflow.steps?.filter(step => step.isComplete)?.length || 0;
   const progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-
+  
   return (
-    <Card className="h-full">
-      <CardContent className="pt-6 pb-4 px-6 flex flex-col h-full">
-        <div className="flex justify-between items-start mb-4">
-          {getWorkflowIcon()}
-          <div>{getStatusBadge()}</div>
+    <Card className="transition-all hover:shadow-md">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-xl font-bold">
+            {workflow.name}
+          </CardTitle>
+          <Badge 
+            variant={workflow.status === 'active' ? 'default' : 
+                    workflow.status === 'inactive' ? 'secondary' : 
+                    'outline'}
+            className="capitalize"
+          >
+            {workflow.status}
+          </Badge>
         </div>
-
-        <h3 className="text-lg font-semibold mb-2">{workflow.name}</h3>
-        <p className="text-sm text-gray-500 mb-4 flex-grow">{workflow.description}</p>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-sm mb-4">
+          {workflow.description || 'No description provided.'}
+        </p>
         
-        <div className="mt-auto">
-          <div className="mb-3">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Progress:</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-primary rounded-full h-2" 
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>Progress: {progress}%</span>
+            <span>
+              {completedSteps} of {totalSteps} steps
+            </span>
           </div>
-          
-          <div className="flex justify-between text-sm mb-3">
-            <span className="text-muted-foreground">Steps:</span>
-            <span className="font-medium">{completedSteps} of {totalSteps} completed</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            {workflow.status === 'active' && onPauseWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onPauseWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                  >
-                    <PauseCircle className="h-4 w-4 mr-2" />
-                    Pause
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Pause this workflow</TooltipContent>
-              </Tooltip>
-            )}
-            
-            {workflow.status === 'inactive' && onResumeWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onResumeWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                  >
-                    <PlayCircle className="h-4 w-4 mr-2" />
-                    Resume
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Resume this workflow</TooltipContent>
-              </Tooltip>
-            )}
-
-            {onCancelWorkflow && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    onClick={() => onCancelWorkflow(workflow.id)} 
-                    variant="outline"
-                    size="sm"
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Cancel this workflow</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-
-          {onViewDetails && (
-            <Button 
-              onClick={() => onViewDetails(workflow.id)} 
-              className="w-full"
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              View Details
-            </Button>
-          )}
+          <Progress value={progress} className="h-2" />
         </div>
       </CardContent>
+      <CardFooter className="flex justify-between pt-3 border-t">
+        <div className="flex gap-2">
+          {workflow.status === 'active' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPauseWorkflow(workflow.id)}
+            >
+              <PauseCircle className="h-4 w-4 mr-2" />
+              Pause
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onResumeWorkflow(workflow.id)}
+            >
+              <PlayCircle className="h-4 w-4 mr-2" />
+              Resume
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsCancelDialogOpen(true)}
+            className="text-destructive hover:text-destructive"
+          >
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
+        <Button 
+          size="sm"
+          onClick={() => onViewDetails(workflow.id)}
+        >
+          View Details
+          <ChevronRight className="h-4 w-4 ml-2" />
+        </Button>
+      </CardFooter>
+
+      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Workflow?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this workflow? This action cannot be undone, 
+              and all progress will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Nevermind</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                onCancelWorkflow(workflow.id);
+                setIsCancelDialogOpen(false);
+              }}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Yes, Cancel Workflow
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

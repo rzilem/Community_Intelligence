@@ -16,11 +16,13 @@ import { useWorkflows } from '@/hooks/operations/useWorkflows';
 import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
 import { WorkflowType } from '@/types/workflow-types';
 import WorkflowAnalyticsDashboard from '@/components/operations/WorkflowAnalyticsDashboard';
+import WorkflowCreateDialog from '@/components/operations/dialogs/WorkflowCreateDialog';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<WorkflowType | 'all'>('all');
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   const { 
     workflowTemplates, 
@@ -32,7 +34,8 @@ const Workflows = () => {
     pauseWorkflow,
     resumeWorkflow,
     cancelWorkflow,
-    viewWorkflowDetails
+    viewWorkflowDetails,
+    isCreating
   } = useWorkflows();
 
   // Filter workflows based on search term and type filter
@@ -63,6 +66,14 @@ const Workflows = () => {
     'Governance', 
     'Communication'
   ];
+
+  const handleCreateWorkflow = async (values: {
+    name: string;
+    description?: string;
+    type: WorkflowType;
+  }) => {
+    await createCustomTemplate(values);
+  };
 
   return (
     <PageTemplate 
@@ -97,9 +108,9 @@ const Workflows = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button onClick={createCustomTemplate}>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Custom Template
+            Create Custom Workflow
           </Button>
         </div>
       }
@@ -195,6 +206,13 @@ const Workflows = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <WorkflowCreateDialog 
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCreateWorkflow={handleCreateWorkflow}
+        isCreating={isCreating}
+      />
     </PageTemplate>
   );
 };
