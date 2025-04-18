@@ -48,9 +48,9 @@ export async function processInvoiceEmail(emailData: any) {
           console.log(`Found document attachment: ${attachment.filename}, type: ${documentType}`);
           
           // Store PDF URLs for rendering in the UI
-          if (documentType === "pdf" && attachment.url) {
+          if ((documentType === "pdf" || documentType === "docx" || documentType === "doc") && attachment.url) {
             invoice.pdf_url = attachment.url;
-            console.log(`Stored PDF URL: ${attachment.url}`);
+            console.log(`Stored document URL: ${attachment.url}`);
           }
           
           // Extract text based on document type
@@ -73,11 +73,11 @@ export async function processInvoiceEmail(emailData: any) {
             documentContent = extractedText;
             processedAttachment = attachment;
             
-            // If this is a PDF and we don't have a URL but have content
-            if (documentType === "pdf" && !invoice.pdf_url && attachment.content) {
-              // In a production environment, you would store the PDF in a storage bucket
+            // If this is a document and we don't have a URL but have content
+            if ((documentType === "pdf" || documentType === "docx" || documentType === "doc") && !invoice.pdf_url && attachment.content) {
+              // In a production environment, you would store the file in a storage bucket
               // and save the URL to the invoice record
-              console.log("PDF content available but no URL - would store in production");
+              console.log("Document content available but no URL - would store in production");
             }
             
             break; // Use the first successful document extraction
