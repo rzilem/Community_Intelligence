@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ExternalLink, FileText, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +22,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen,
 }) => {
+  // Log component props on mount and when they change
+  useEffect(() => {
+    console.group('DocumentViewer Props');
+    console.log('pdfUrl:', pdfUrl || 'none');
+    console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
+    console.log('isPdf:', isPdf);
+    console.log('isWordDocument:', isWordDocument);
+    console.groupEnd();
+  }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+
   const createHtmlContent = () => {
     if (!htmlContent) return '';
     
@@ -62,20 +72,32 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
-  // Log details about what we're trying to display
-  React.useEffect(() => {
-    console.group('DocumentViewer Render');
-    console.log('Content type:', {
-      pdfUrl: pdfUrl || 'none',
-      isPdf,
-      isWordDocument,
-      hasHtmlContent: !!htmlContent
-    });
-    console.groupEnd();
-  }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+  // Prioritize HTML content if PDF URL is missing
+  if (htmlContent && !pdfUrl) {
+    console.log('Displaying HTML content (no PDF URL available)');
+    return (
+      <div className="h-full">
+        <iframe
+          srcDoc={createHtmlContent()}
+          title="Invoice HTML Content"
+          className="w-full h-full border-0"
+          sandbox="allow-same-origin"
+          onError={(e) => {
+            console.error('HTML iframe error:', e);
+            onIframeError();
+          }}
+          onLoad={() => {
+            console.log('HTML iframe loaded successfully');
+            onIframeLoad();
+          }}
+        />
+      </div>
+    );
+  }
 
   if (pdfUrl) {
     if (isPdf) {
+      console.log('Displaying PDF content from URL:', pdfUrl);
       return (
         <div className="w-full h-full relative">
           <iframe 
@@ -87,13 +109,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               console.error('PDF iframe error:', e);
               onIframeError();
             }}
-            onLoad={onIframeLoad}
+            onLoad={() => {
+              console.log('PDF iframe loaded successfully');
+              onIframeLoad();
+            }}
           />
         </div>
       );
     }
 
     if (isWordDocument) {
+      console.log('Displaying Word document placeholder');
       return (
         <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
           <File className="h-16 w-16 mb-4 text-blue-500" />
@@ -110,6 +136,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       );
     }
 
+    console.log('Displaying unknown document type placeholder');
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <FileText className="h-12 w-12 mb-4 text-muted-foreground/50" />
@@ -125,7 +152,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
+  // If we have HTML content, we'll render it
   if (htmlContent) {
+    console.log('Displaying HTML content');
     return (
       <div className="h-full">
         <iframe
@@ -137,11 +166,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             console.error('HTML iframe error:', e);
             onIframeError();
           }}
-          onLoad={onIframeLoad}
+          onLoad={() => {
+            console.log('HTML iframe loaded successfully');
+            onIframeLoad();
+          }}
         />
       </div>
     );
   }
 
+  // No content available
+  console.log('No content to display');
   return null;
 };

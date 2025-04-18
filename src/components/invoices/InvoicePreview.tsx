@@ -19,7 +19,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.group('InvoicePreview Diagnostics');
+    console.group('InvoicePreview Component');
     console.log('Props received:', {
       hasHtmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
@@ -28,8 +28,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     });
 
     setPreviewError(null);
-    
-    // Reset loading state when props change
     setIsLoading(false);
 
     if (!htmlContent && !pdfUrl) {
@@ -38,7 +36,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       return;
     }
 
-    if (pdfUrl) {
+    // Only check PDF URL if one is provided
+    if (pdfUrl && pdfUrl.trim() !== '') {
       console.log('Checking PDF URL accessibility:', pdfUrl);
       setIsLoading(true);
       
@@ -52,7 +51,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
               statusText: response.statusText,
               url: pdfUrl
             });
-            setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
+            
+            // If we have HTML content, no need to show an error
+            if (htmlContent) {
+              console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
+            } else {
+              setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
+            }
           } else {
             console.log('PDF URL is accessible:', pdfUrl);
           }
@@ -60,7 +65,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
         .catch((err) => {
           console.error('Error accessing PDF URL:', err.message, pdfUrl);
           setIsLoading(false);
-          setPreviewError(`Error accessing PDF: ${err.message}`);
+          
+          // If we have HTML content, no need to show an error
+          if (htmlContent) {
+            console.log('PDF URL error but HTML content available, will use HTML instead');
+          } else {
+            setPreviewError(`Error accessing PDF: ${err.message}`);
+          }
         })
         .finally(() => {
           console.groupEnd();
@@ -85,7 +96,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       hasHtmlContent: !!htmlContent
     });
     setIsLoading(false);
-    setPreviewError('Failed to load document preview. The file may be inaccessible or corrupted.');
+    
+    // Only show error if we don't have an HTML fallback
+    if (!htmlContent && pdfUrl) {
+      setPreviewError('Failed to load document preview. The file may be inaccessible or corrupted.');
+    }
   };
 
   const handleIframeLoad = () => {
@@ -113,7 +128,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       );
     }
 
-    if (previewError) {
+    // Only show error state if we have no HTML content to fall back to
+    if (previewError && !htmlContent) {
       return (
         <PreviewErrorState
           error={previewError}

@@ -51,38 +51,33 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   useEffect(() => {
     if (invoiceData) {
-      console.group('Invoice Data Logging');
+      console.group('Invoice Data Debug');
+      console.log("Invoice ID:", id);
       console.log("Raw Invoice Data:", invoiceData);
-      console.log("PDF URL Field:", invoiceData.pdf_url);
-      console.log("HTML Content Field:", invoiceData.html_content);
       
-      // Check for PDF URL - log details to help diagnose issues
-      if (invoiceData.pdf_url) {
-        console.log("PDF URL validation:", {
-          url: invoiceData.pdf_url,
-          length: invoiceData.pdf_url.length,
-          isProbablyValid: !!invoiceData.pdf_url && invoiceData.pdf_url.startsWith('http')
-        });
-      } else {
-        console.warn("Missing PDF URL in invoice data");
-      }
+      // Explicitly check for PDF URL and HTML content
+      console.log("PDF URL Check:", {
+        raw: invoiceData.pdf_url,
+        type: typeof invoiceData.pdf_url,
+        length: invoiceData.pdf_url?.length || 0,
+        isValid: !!invoiceData.pdf_url && typeof invoiceData.pdf_url === 'string' && invoiceData.pdf_url.trim().length > 0
+      });
       
-      // Check for HTML content - log details to help diagnose issues
-      if (invoiceData.html_content) {
-        console.log("HTML Content validation:", {
-          length: invoiceData.html_content.length,
-          preview: invoiceData.html_content.substring(0, 100) + '...',
-          hasHtmlTags: invoiceData.html_content.includes('<')
-        });
-      } else {
-        console.warn("Missing HTML content in invoice data");
-      }
+      console.log("HTML Content Check:", {
+        exists: !!invoiceData.html_content,
+        length: invoiceData.html_content?.length || 0,
+        sample: invoiceData.html_content ? invoiceData.html_content.substring(0, 100) + '...' : 'none'
+      });
       
-      console.groupEnd();
-      
-      // Ensure we have either PDF URL or HTML content for display
+      // Get the cleaned values, defaulting to empty strings
       const htmlContent = invoiceData.html_content || '';
       const pdfUrl = invoiceData.pdf_url || '';
+      
+      console.log("Using values:", {
+        htmlContent: htmlContent ? 'present' : 'empty',
+        pdfUrl: pdfUrl || 'empty',
+      });
+      console.groupEnd();
       
       setInvoice({
         id: invoiceData.id,
@@ -98,7 +93,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
         pdfUrl: pdfUrl,
       });
     }
-  }, [invoiceData]);
+  }, [invoiceData, id]);
 
   const handleInvoiceChange = (field: string, value: string | number) => {
     setInvoice({ ...invoice, [field]: value });
