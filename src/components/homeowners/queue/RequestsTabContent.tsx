@@ -1,12 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TabsContent } from '@/components/ui/tabs';
-import { TableCell, TableRow, TableBody, Table, TableHead, TableHeader } from '@/components/ui/table';
+import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import { formatDate } from '@/lib/date-utils';
-import { RequestStatusBadge } from '@/components/homeowners/table/RequestStatusBadge';
-import { Skeleton } from '@/components/ui/skeleton';
-import EmptyRequestsRow from '@/components/homeowners/table/EmptyRequestsRow';
+import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
+import { toast } from 'sonner';
 
 interface RequestsTabContentProps {
   value: string;
@@ -14,7 +13,6 @@ interface RequestsTabContentProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
   visibleColumnIds: string[];
-  onRowClick?: (request: HomeownerRequest) => void;
 }
 
 const RequestsTabContent: React.FC<RequestsTabContentProps> = ({ 
@@ -22,83 +20,55 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   isLoading, 
   requests, 
   columns, 
-  visibleColumnIds,
-  onRowClick
+  visibleColumnIds 
 }) => {
-  const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
-
-  const renderCellContent = (request: HomeownerRequest, columnId: string) => {
-    switch(columnId) {
-      case 'status':
-        return <RequestStatusBadge status={request.status} type="status" />;
-      case 'created_at':
-      case 'updated_at':
-      case 'resolved_at':
-        return request[columnId] ? formatDate(request[columnId] as string) : '-';
-      case 'priority':
-        return <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          request.priority === 'urgent' ? 'bg-red-100 text-red-800' :
-          request.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-          request.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {request.priority}
-        </span>;
-      case 'type':
-        return <span className="capitalize">{request.type}</span>;
-      default:
-        return request[columnId] || '-';
-    }
+  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  
+  const handleViewRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsDetailOpen(true);
+  };
+  
+  const handleEditRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsEditOpen(true);
+  };
+  
+  const handleRequestUpdated = () => {
+    toast.success('Request updated successfully');
   };
 
-  const filteredRequests = value === 'all' 
-    ? requests 
-    : value === 'active'
-      ? requests.filter(r => ['open', 'in-progress'].includes(r.status))
-      : requests.filter(r => r.status === value);
-
   return (
-    <TabsContent value={value} className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumns.map(column => (
-                <TableHead key={column.id}>{column.label}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  {visibleColumns.map(column => (
-                    <TableCell key={column.id}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : filteredRequests.length === 0 ? (
-              <EmptyRequestsRow colSpan={visibleColumns.length} />
-            ) : (
-              filteredRequests.map(request => (
-                <TableRow 
-                  key={request.id} 
-                  className={onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}
-                  onClick={onRowClick ? () => onRowClick(request) : undefined}
-                >
-                  {visibleColumns.map(column => (
-                    <TableCell key={column.id}>
-                      {renderCellContent(request, column.accessorKey)}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+    <TabsContent value={value} className="mt-0">
+      {isLoading ? (
+        <div className="py-8 text-center">Loading requests...</div>
+      ) : (
+        <>
+          <HomeownerRequestsTable 
+            requests={requests} 
+            columns={columns}
+            visibleColumnIds={visibleColumnIds}
+            isLoading={isLoading}
+            onViewRequest={handleViewRequest}
+            onEditRequest={handleEditRequest}
+          />
+          
+          <HomeownerRequestDetailDialog
+            request={selectedRequest}
+            open={isDetailOpen}
+            onOpenChange={setIsDetailOpen}
+          />
+          
+          <HomeownerRequestEditDialog
+            request={selectedRequest}
+            open={isEditOpen}
+            onOpenChange={setIsEditOpen}
+            onSuccess={handleRequestUpdated}
+          />
+        </>
+      )}
     </TabsContent>
   );
 };

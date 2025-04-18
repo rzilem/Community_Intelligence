@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { HOMEOWNER_REQUEST_COLUMNS, HomeownerRequest } from '@/types/homeowner-request-types';
+import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
 import HomeownerRequestsHeader from '@/components/homeowners/queue/HomeownerRequestsHeader';
 import RequestsCardHeader from '@/components/homeowners/queue/RequestsCardHeader';
 import RequestsTabsList from '@/components/homeowners/queue/RequestsTabsList';
@@ -15,19 +15,11 @@ import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { InfoIcon, Bug, Plus, RefreshCw, Loader2 } from 'lucide-react';
-import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
-import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 
 const HomeownerRequestsQueue = () => {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  
   const {
     filteredRequests,
     isLoading,
@@ -45,25 +37,6 @@ const HomeownerRequestsQueue = () => {
     createDummyRequest,
     error
   } = useHomeownerRequests();
-
-  // Handle URL parameters
-  useEffect(() => {
-    const requestId = searchParams.get('requestId');
-    const action = searchParams.get('action');
-    
-    if (requestId) {
-      const request = homeownerRequests.find(r => r.id === requestId);
-      if (request) {
-        setSelectedRequest(request);
-        
-        if (action === 'view') {
-          setIsDetailOpen(true);
-        } else if (action === 'edit') {
-          setIsEditOpen(true);
-        }
-      }
-    }
-  }, [searchParams, homeownerRequests]);
 
   // Load column preferences from localStorage on component mount
   useEffect(() => {
@@ -108,18 +81,6 @@ const HomeownerRequestsQueue = () => {
     localStorage.setItem('homeownerRequestColumns', JSON.stringify(defaultColumns));
   };
 
-  const handleRowClick = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setIsEditOpen(true);
-    setSearchParams({ requestId: request.id, action: 'edit' });
-  };
-
-  const handleDialogClose = () => {
-    setIsDetailOpen(false);
-    setIsEditOpen(false);
-    setSearchParams({});
-  };
-
   return <AppLayout>
       <div className="p-6 space-y-6">
         <div className="flex justify-between items-center">
@@ -129,6 +90,7 @@ const HomeownerRequestsQueue = () => {
               <Bug className="h-4 w-4 mr-2" /> 
               {showDebug ? 'Hide Debug' : 'Debug'}
             </Button>
+            
           </div>
         </div>
 
@@ -178,49 +140,23 @@ const HomeownerRequestsQueue = () => {
                 setType={(value) => setType(value as any)}
               />
               
-              <RequestsTabContent 
-                value="all" 
-                isLoading={isLoading} 
-                requests={filteredRequests} 
-                columns={HOMEOWNER_REQUEST_COLUMNS} 
-                visibleColumnIds={visibleColumnIds} 
-                onRowClick={handleRowClick}
-              />
+              <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent value="active" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} onRowClick={handleRowClick} />
+              <RequestsTabContent value="active" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent value="open" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} onRowClick={handleRowClick} />
+              <RequestsTabContent value="open" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent value="in-progress" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} onRowClick={handleRowClick} />
+              <RequestsTabContent value="in-progress" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent value="resolved" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} onRowClick={handleRowClick} />
+              <RequestsTabContent value="resolved" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
               
-              <RequestsTabContent value="closed" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} onRowClick={handleRowClick} />
+              <RequestsTabContent value="closed" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
             </Tabs>
             
             <RequestsStatusFooter filteredCount={filteredRequests.length} totalCount={homeownerRequests.length} lastRefreshed={lastRefreshed} />
           </CardContent>
         </Card>
       </div>
-
-      <HomeownerRequestDetailDialog
-        request={selectedRequest}
-        open={isDetailOpen}
-        onOpenChange={(open) => {
-          setIsDetailOpen(open);
-          if (!open) handleDialogClose();
-        }}
-      />
-
-      <HomeownerRequestEditDialog
-        request={selectedRequest}
-        open={isEditOpen}
-        onOpenChange={(open) => {
-          setIsEditOpen(open);
-          if (!open) handleDialogClose();
-        }}
-        onSuccess={handleRefresh}
-      />
     </AppLayout>;
 };
 

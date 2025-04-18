@@ -1,10 +1,12 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { TooltipButton } from '@/components/ui/tooltip-button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
-import AIResponseArea from './actions/AIResponseArea';
-import ActionButtons from './actions/ActionButtons';
+import { PauseCircle, ArrowUpCircle, MailX, Send, Edit, RefreshCw } from 'lucide-react';
 
 interface RequestActionsAreaProps {
   request: HomeownerRequest;
@@ -24,65 +26,96 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   const generateAIResponse = async () => {
     setIsGenerating(true);
     try {
-      // Construct a prompt based on the request details
-      const prompt = `Please create a professional response to a homeowner request with the following details:
-      Title: ${request.title}
-      Description: ${request.description?.substring(0, 500) || 'No description provided'}
-      Type: ${request.type}
-      Priority: ${request.priority}
-      
-      The response should be courteous, address the homeowner's concerns directly, and provide next steps or a timeline if applicable.`;
-      
-      // Call the Supabase edge function to generate a response
       const response = await fetch('https://your-project-id.supabase.co/functions/v1/generate-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ requestData: request, prompt }),
+        body: JSON.stringify({ requestData: request }),
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to generate AI response');
-      }
-      
       const data = await response.json();
-      setAiResponse(data.generatedText || 'We have received your request and are working to address it promptly. A team member will reach out to you with more information soon.');
+      setAiResponse(data.generatedText);
       toast.success('AI response generated successfully');
     } catch (error) {
       console.error('Error generating AI response:', error);
       toast.error('Failed to generate AI response');
-      // Provide a fallback response
-      setAiResponse("Thank you for reaching out. We've received your request and are working to address it promptly. A team member will contact you with more information soon.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleSpamConfirm = () => {
-    toast.success('Request marked as spam and blocked successfully');
+    // Implement spam blocking logic
+    toast.success(`Request marked as spam and blocked successfully`);
+    // Pass status without the email since it's not available in the HomeownerRequest type
     onSubmit({ status: 'spam' });
     setShowSpamDialog(false);
   };
 
   return (
     <div className="space-y-4 p-4 bg-gradient-to-r from-slate-100 to-slate-50 rounded-md border shadow-sm dark:from-slate-800 dark:to-slate-900/90">
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Request Actions</h3>
-        
-        <ActionButtons 
-          onSubmit={onSubmit}
-          onSpamClick={() => setShowSpamDialog(true)}
+      <div className="space-y-2">
+        <div className="flex items-center space-x-2 mb-4">
+          <TooltipButton
+            tooltip="Generate AI Response"
+            onClick={generateAIResponse}
+            disabled={isGenerating}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            <RefreshCw className={`${isGenerating ? 'animate-spin' : ''}`} />
+            {isGenerating ? 'Generating...' : 'Generate AI Response'}
+          </TooltipButton>
+          
+          <TooltipButton
+            tooltip="Place request on hold"
+            variant="outline"
+            onClick={() => onSubmit({ status: 'hold' })}
+          >
+            <PauseCircle />
+            Hold
+          </TooltipButton>
+
+          <TooltipButton
+            tooltip="Send to board for review"
+            variant="outline"
+            onClick={() => onSubmit({ status: 'board-review' })}
+          >
+            <ArrowUpCircle />
+            Board Review
+          </TooltipButton>
+
+          <TooltipButton
+            tooltip="Mark as spam"
+            variant="destructive"
+            onClick={() => setShowSpamDialog(true)}
+          >
+            <MailX />
+            Mark as Spam
+          </TooltipButton>
+        </div>
+
+        <Textarea
+          className="min-h-[120px] mb-4"
+          placeholder="AI-generated response will appear here..."
+          value={aiResponse}
+          onChange={(e) => setAiResponse(e.target.value)}
         />
 
-        <AIResponseArea 
-          aiResponse={aiResponse}
-          setAiResponse={setAiResponse}
-          generateAIResponse={generateAIResponse}
-          onSubmit={onSubmit}
-          isGenerating={isGenerating}
-          isPending={isPending}
-        />
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={() => setAiResponse('')}>
+            <Edit className="mr-2" />
+            Edit Manually
+          </Button>
+          <Button 
+            className="bg-blue-500 hover:bg-blue-600" 
+            disabled={!aiResponse || isPending}
+            onClick={() => onSubmit({ response: aiResponse, status: 'responded' })}
+          >
+            <Send className="mr-2" />
+            {isPending ? 'Sending...' : 'Approve & Send'}
+          </Button>
+        </div>
       </div>
 
       <AlertDialog open={showSpamDialog} onOpenChange={setShowSpamDialog}>

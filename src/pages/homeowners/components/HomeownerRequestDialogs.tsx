@@ -1,90 +1,24 @@
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
 import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
 import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
 import { toast } from 'sonner';
-import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
-import { supabase } from '@/integrations/supabase/client';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
 
 interface HomeownerRequestDialogsProps {
   handleRefresh: () => void;
 }
 
 const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps) => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCommentOpen, setIsCommentOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isNewRequestFormOpen, setIsNewRequestFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Check URL parameters for request ID
-  useEffect(() => {
-    const requestId = searchParams.get('requestId');
-    const action = searchParams.get('action');
-    
-    if (requestId) {
-      fetchRequestById(requestId, action);
-    }
-  }, [searchParams]);
-
-  const fetchRequestById = async (requestId: string, action: string | null) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('homeowner_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
-      
-      if (error) throw error;
-      
-      if (data) {
-        // Type cast the raw database data to our HomeownerRequest type
-        const typedRequest: HomeownerRequest = {
-          ...data,
-          status: data.status as HomeownerRequestStatus,
-          priority: data.priority as HomeownerRequestPriority,
-          type: data.type as HomeownerRequestType
-        };
-        
-        setSelectedRequest(typedRequest);
-        
-        // Open the corresponding dialog based on the action
-        if (action === 'view') {
-          setIsDetailOpen(true);
-        } else if (action === 'edit') {
-          setIsEditOpen(true);
-        } else if (action === 'comment') {
-          setIsCommentOpen(true);
-        } else if (action === 'history') {
-          setIsHistoryOpen(true);
-        } else {
-          // Default to edit if no action specified
-          setIsEditOpen(true);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching request:', error);
-      toast.error('Failed to load request details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCloseDialogs = () => {
-    setIsDetailOpen(false);
-    setIsEditOpen(false);
-    setIsCommentOpen(false);
-    setIsHistoryOpen(false);
-    setSearchParams({});
-  };
 
   const handleNewRequestSuccess = () => {
     setIsNewRequestFormOpen(false);
@@ -97,39 +31,27 @@ const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps
       <HomeownerRequestDetailDialog
         request={selectedRequest}
         open={isDetailOpen}
-        onOpenChange={(open) => {
-          setIsDetailOpen(open);
-          if (!open) handleCloseDialogs();
-        }}
+        onOpenChange={setIsDetailOpen}
       />
 
       <HomeownerRequestEditDialog
         request={selectedRequest}
         open={isEditOpen}
-        onOpenChange={(open) => {
-          setIsEditOpen(open);
-          if (!open) handleCloseDialogs();
-        }}
+        onOpenChange={setIsEditOpen}
         onSuccess={handleRefresh}
       />
 
       <HomeownerRequestCommentDialog
         request={selectedRequest}
         open={isCommentOpen}
-        onOpenChange={(open) => {
-          setIsCommentOpen(open);
-          if (!open) handleCloseDialogs();
-        }}
+        onOpenChange={setIsCommentOpen}
         onSuccess={handleRefresh}
       />
 
       <HomeownerRequestHistoryDialog
         request={selectedRequest}
         open={isHistoryOpen}
-        onOpenChange={(open) => {
-          setIsHistoryOpen(open);
-          if (!open) handleCloseDialogs();
-        }}
+        onOpenChange={setIsHistoryOpen}
       />
 
       <NewRequestDialog
