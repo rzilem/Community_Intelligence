@@ -14,6 +14,42 @@ const OriginalEmailTab: React.FC<OriginalEmailTabProps> = ({
   fullscreenEmail, 
   setFullscreenEmail 
 }) => {
+  // Function to safely create HTML content for iframe
+  const createHtmlContent = () => {
+    if (!htmlContent) return '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+              line-height: 1.5;
+              color: #333;
+              margin: 20px;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            th, td {
+              padding: 8px;
+              text-align: left;
+              border: 1px solid #ddd;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>${htmlContent}</body>
+      </html>
+    `;
+  };
+
   return (
     <div className={`${fullscreenEmail ? 'h-[calc(100vh-120px)]' : 'h-full'} flex flex-col`}>
       {htmlContent ? (
@@ -35,7 +71,7 @@ const OriginalEmailTab: React.FC<OriginalEmailTabProps> = ({
           </div>
           <div className="w-full h-full overflow-auto">
             <iframe 
-              srcDoc={`<!DOCTYPE html><html><head><style>body { font-family: Arial, sans-serif; margin: 20px; }</style></head><body>${htmlContent}</body></html>`}
+              srcDoc={createHtmlContent()}
               title="Original Email" 
               className="w-full h-full bg-white"
               sandbox="allow-same-origin"

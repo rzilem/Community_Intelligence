@@ -33,6 +33,42 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     }
   };
 
+  // Function to safely create HTML content for iframe
+  const createHtmlContent = () => {
+    if (!htmlContent) return '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+              line-height: 1.5;
+              color: #333;
+              margin: 20px;
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            th, td {
+              padding: 8px;
+              text-align: left;
+              border: 1px solid #ddd;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>${htmlContent}</body>
+      </html>
+    `;
+  };
+
   return (
     <Card className="h-full">
       <div className="bg-gray-50 px-4 py-3 border-b font-medium flex items-center justify-between">
@@ -124,10 +160,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           </div>
         ) : htmlContent ? (
           <div className="h-full">
-            <OriginalEmailTab 
-              htmlContent={htmlContent} 
-              fullscreenEmail={fullscreenPreview}
-              setFullscreenEmail={setFullscreenPreview}
+            <iframe
+              srcDoc={createHtmlContent()}
+              title="Invoice HTML Content"
+              className="w-full h-full border-0"
+              sandbox="allow-same-origin"
+              onError={handleIframeError}
             />
           </div>
         ) : (
