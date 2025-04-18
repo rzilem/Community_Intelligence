@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -7,6 +8,7 @@ import { Form } from '@/components/ui/form';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import RequestBasicFields from './fields/RequestBasicFields';
+import RequestAssignmentFields from './fields/RequestAssignmentFields';
 import RequestNoteField from './fields/RequestNoteField';
 
 interface RequestEditFormProps {
@@ -14,6 +16,7 @@ interface RequestEditFormProps {
   onSubmit: (values: any) => void;
   isPending: boolean;
   onCancel: () => void;
+  compact?: boolean;
 }
 
 const formSchema = z.object({
@@ -33,7 +36,8 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
   request, 
   onSubmit, 
   isPending,
-  onCancel
+  onCancel,
+  compact = false
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -51,10 +55,54 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
     },
   });
 
+  if (compact) {
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="bg-slate-50 p-3 rounded-md">
+            <h3 className="text-sm font-medium text-slate-700 mb-2">Add Note & Submit Changes</h3>
+            <RequestNoteField form={form} compact={true} />
+            <div className="flex justify-end space-x-2 mt-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                size="sm"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending} size="sm">
+                {isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Form>
+    );
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RequestBasicFields form={form} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Assignment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RequestAssignmentFields form={form} optional={true} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Add Note</CardTitle>
