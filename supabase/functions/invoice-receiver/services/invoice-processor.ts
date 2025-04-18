@@ -47,6 +47,12 @@ export async function processInvoiceEmail(emailData: any) {
         if (documentType !== "unknown") {
           console.log(`Found document attachment: ${attachment.filename}, type: ${documentType}`);
           
+          // Store PDF URLs for rendering in the UI
+          if (documentType === "pdf" && attachment.url) {
+            invoice.pdf_url = attachment.url;
+            console.log(`Stored PDF URL: ${attachment.url}`);
+          }
+          
           // Extract text based on document type
           let extractedText = "";
           
@@ -66,6 +72,14 @@ export async function processInvoiceEmail(emailData: any) {
             console.log(`Successfully extracted text from ${attachment.filename}, length: ${extractedText.length}`);
             documentContent = extractedText;
             processedAttachment = attachment;
+            
+            // If this is a PDF and we don't have a URL but have content
+            if (documentType === "pdf" && !invoice.pdf_url && attachment.content) {
+              // In a production environment, you would store the PDF in a storage bucket
+              // and save the URL to the invoice record
+              console.log("PDF content available but no URL - would store in production");
+            }
+            
             break; // Use the first successful document extraction
           }
         }
@@ -100,7 +114,7 @@ export async function processInvoiceEmail(emailData: any) {
     // Merge all extracted information into the invoice object
     Object.assign(invoice, vendorInfo, invoiceDetails, associationInfo);
 
-    // NEW: Use AI to analyze and enhance extraction if we have enough content
+    // Use AI to analyze and enhance extraction if we have enough content
     if (content && content.length > 100) {
       try {
         console.log("Using AI to enhance invoice data extraction");
@@ -177,7 +191,7 @@ export async function processInvoiceEmail(emailData: any) {
       invoice.due_date = dueDate.toISOString().split('T')[0];
     }
 
-    // Set a default amount if not extracted - IMPORTANT ADDITION
+    // Set a default amount if not extracted
     if (!invoice.amount) {
       invoice.amount = 0; // Default to 0 so the validation doesn't fail
       console.log("No amount could be extracted, setting default value of 0");

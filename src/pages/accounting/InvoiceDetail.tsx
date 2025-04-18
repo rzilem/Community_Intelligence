@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt, Maximize2, Minimize2 } from 'lucide-react';
+import { Receipt, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,6 +23,16 @@ const InvoiceDetail = () => {
 
   const [showPreview, setShowPreview] = useState(true);
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
+
+  // Get all invoices for navigation
+  const { data: allInvoices, isLoading: isLoadingAllInvoices } = useSupabaseQuery(
+    'invoices',
+    {
+      select: 'id',
+      order: [{ column: 'created_at', ascending: false }]
+    },
+    !isNewInvoice
+  );
 
   const { data: invoiceData, isLoading: isLoadingInvoice } = useSupabaseQuery(
     'invoices',
@@ -53,6 +64,7 @@ const InvoiceDetail = () => {
     status: 'pending',
     paymentType: '',
     htmlContent: '',
+    pdfUrl: '',
   });
 
   const [lines, setLines] = useState([{
@@ -76,6 +88,7 @@ const InvoiceDetail = () => {
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
         htmlContent: invoiceData.html_content || '',
+        pdfUrl: invoiceData.pdf_url || '',
       });
     }
   }, [invoiceData]);
@@ -113,6 +126,23 @@ const InvoiceDetail = () => {
     navigate("/accounting/invoice-queue");
   };
 
+  // Navigation functions
+  const navigateToInvoice = (direction: 'next' | 'prev') => {
+    if (!allInvoices || allInvoices.length === 0) return;
+    
+    const currentIndex = allInvoices.findIndex(inv => inv.id === id);
+    if (currentIndex === -1) return;
+    
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = (currentIndex + 1) % allInvoices.length;
+    } else {
+      nextIndex = (currentIndex - 1 + allInvoices.length) % allInvoices.length;
+    }
+    
+    navigate(`/accounting/invoice-queue/${allInvoices[nextIndex].id}`);
+  };
+
   return (
     <PageTemplate 
       title={invoiceTitle}
@@ -120,7 +150,29 @@ const InvoiceDetail = () => {
       description="Process and code invoice for payment."
     >
       <div className="mt-6 space-y-6">
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-between">
+          <div className="flex gap-2">
+            {!isNewInvoice && (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigateToInvoice('prev')}
+                  disabled={isLoadingAllInvoices || allInvoices?.length <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigateToInvoice('next')}
+                  disabled={isLoadingAllInvoices || allInvoices?.length <= 1}
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </>
+            )}
+          </div>
           <Button 
             variant="outline" 
             size="sm" 
@@ -163,7 +215,10 @@ const InvoiceDetail = () => {
             <>
               <ResizableHandle />
               <ResizablePanel defaultSize={40}>
-                <InvoicePreview htmlContent={invoice.htmlContent} />
+                <InvoicePreview 
+                  htmlContent={invoice.htmlContent} 
+                  pdfUrl={invoice.pdfUrl}
+                />
               </ResizablePanel>
             </>
           )}
