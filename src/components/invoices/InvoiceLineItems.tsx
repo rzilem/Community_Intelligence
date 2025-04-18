@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle } from 'lucide-react';
@@ -134,24 +135,24 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
             <Label htmlFor={`description-${index}`} className="text-sm text-gray-600">
               Description
             </Label>
-            <input
-              type="text"
+            <Input
               id={`description-${index}`}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/50 sm:text-sm"
               value={line.description}
               onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+              placeholder="Enter description"
             />
           </div>
           <div>
             <Label htmlFor={`amount-${index}`} className="text-sm text-gray-600">
               Amount
             </Label>
-            <input
-              type="number"
+            <Input
               id={`amount-${index}`}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary/50 sm:text-sm"
+              type="number"
               value={line.amount}
               onChange={(e) => handleLineChange(index, 'amount', Number(e.target.value))}
+              placeholder="0.00"
+              className="text-right"
             />
           </div>
           <div className="flex items-end">
