@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { AlertCircle, ExternalLink, FileText, File, Maximize2 } from 'lucide-react';
@@ -11,23 +10,46 @@ interface InvoicePreviewProps {
 
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdfUrl }) => {
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
-  const [previewError, setPreviewError] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Debug logs to see what data we're receiving
   useEffect(() => {
-    console.log("InvoicePreview props:", { 
-      htmlContent: !!htmlContent, 
+    console.log('InvoicePreview props:', {
+      htmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
-      pdfUrl: pdfUrl || 'none' 
+      pdfUrl: pdfUrl || 'none',
     });
+
+    if (!htmlContent && !pdfUrl) {
+      setPreviewError('No PDF or HTML content available for this invoice.');
+      return;
+    }
+
+    if (pdfUrl) {
+      setIsLoading(true);
+      fetch(pdfUrl, { method: 'HEAD' })
+        .then((response) => {
+          setIsLoading(false);
+          if (!response.ok) {
+            setPreviewError(`Failed to access PDF: ${response.statusText}`);
+          } else {
+            setPreviewError(null);
+          }
+        })
+        .catch((err) => {
+          setIsLoading(false);
+          setPreviewError(`Error accessing PDF: ${err.message}`);
+        });
+    }
   }, [htmlContent, pdfUrl]);
 
   const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx');
   const isPdf = pdfUrl?.toLowerCase().endsWith('.pdf');
 
   const handleIframeError = () => {
-    console.error("Error loading iframe content");
-    setPreviewError(true);
+    console.error('Error loading iframe content');
+    setIsLoading(false);
+    setPreviewError('Failed to load document preview.');
   };
 
   const openExternalLink = () => {
@@ -109,10 +131,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
         )}
       </div>
       <div className="p-0 h-[calc(100%-48px)] overflow-auto">
-        {previewError ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+            <p>Loading preview...</p>
+          </div>
+        ) : previewError ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
             <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
-            <p className="text-center">Failed to load document preview.</p>
+            <p className="text-center">{previewError}</p>
             {pdfUrl && (
               <Button 
                 variant="link" 
@@ -132,6 +158,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
                 className="w-full h-full border-0"
                 sandbox="allow-same-origin allow-scripts allow-forms"
                 onError={handleIframeError}
+                onLoad={() => setIsLoading(false)}
               />
             ) : isWordDocument ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
@@ -174,7 +201,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
             <AlertCircle className="h-12 w-12 mb-4 text-muted-foreground/50" />
             <p className="text-center">No preview available for this invoice.</p>
-            <p className="text-center text-sm mt-2">Try uploading a PDF or check if the email HTML content is available.</p>
+            <p className="text-center text-sm mt-2">Try uploading a PDF or check if email content is available.</p>
           </div>
         )}
       </div>

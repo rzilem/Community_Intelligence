@@ -6,7 +6,6 @@ import { format } from 'date-fns';
 
 export const useInvoiceDetail = (id: string | undefined) => {
   const isNewInvoice = id === 'new';
-
   const [invoice, setInvoice] = useState({
     id: '',
     vendor: '',
@@ -52,7 +51,12 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   useEffect(() => {
     if (invoiceData) {
-      console.log("Loaded invoice data:", invoiceData);
+      console.log("Loaded invoice data:", {
+        id: invoiceData.id,
+        pdfUrl: invoiceData.pdf_url || 'none',
+        htmlContent: !!invoiceData.html_content,
+      });
+      
       setInvoice({
         id: invoiceData.id,
         vendor: invoiceData.vendor || '',
@@ -82,7 +86,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
     setLines,
     handleInvoiceChange,
     lineTotal,
-    isBalanced,
+    isBalanced: Math.abs(lineTotal - invoice.totalAmount) < 0.01,
     allInvoices,
     isLoadingAllInvoices,
     isLoadingInvoice,
