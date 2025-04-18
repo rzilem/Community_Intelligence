@@ -7,9 +7,8 @@ import { analyzeInvoiceWithAI } from "./ai-analyzer.ts";
 import { cleanupInvoiceData } from "./utils/invoice-cleanup.ts";
 import { processDocument } from "./document-processor.ts";
 import { processHtmlContent } from "./html-processor.ts";
-import { Invoice } from "../types/invoice-types.ts";
 
-export async function processInvoiceEmail(emailData: any): Promise<Invoice> {
+export async function processInvoiceEmail(emailData: any) {
   console.log("Processing invoice email data");
   
   const invoice: Record<string, any> = {
@@ -24,20 +23,32 @@ export async function processInvoiceEmail(emailData: any): Promise<Invoice> {
     const subject = emailData.subject || emailData.Subject || "";
     const rawHtmlContent = emailData.html || emailData.Html || emailData.body || emailData.Body || "";
     const rawTextContent = emailData.text || emailData.Text || emailData.plain || emailData.Plain || "";
+
+    console.log("Processing email:", {
+      from,
+      subject,
+      hasHtml: !!rawHtmlContent,
+      hasText: !!rawTextContent,
+      attachments: emailData.attachments?.length || 0
+    });
     
-    // Save the original HTML content
-    invoice.html_content = rawHtmlContent;
-    
-    // Process attachments and documents
+    // Process attachments and documents first
     const { documentContent, processedAttachment } = await processDocument(emailData.attachments);
+    
     if (processedAttachment) {
+      console.log("Attachment processed successfully:", {
+        filename: processedAttachment.filename,
+        url: processedAttachment.url
+      });
+      
       invoice.source_document = processedAttachment.filename;
       invoice.pdf_url = processedAttachment.url;
+    } else {
+      console.log("No valid attachments processed");
     }
     
     // Process HTML content if no document content
     const content = await processHtmlContent(documentContent, rawHtmlContent, rawTextContent, subject);
-    console.log("Processing content excerpt:", content.substring(0, 200));
     
     // Extract information using specialized extractors
     const vendorInfo = extractVendorInformation(content, from);
@@ -47,25 +58,9 @@ export async function processInvoiceEmail(emailData: any): Promise<Invoice> {
     // Merge extracted information
     Object.assign(invoice, vendorInfo, invoiceDetails, associationInfo);
 
-    // Use AI to enhance extraction if we have enough content
-    if (content && content.length > 100) {
-      try {
-        console.log("Using AI to enhance invoice data extraction");
-        const aiExtractedData = await analyzeInvoiceWithAI(content, subject, from);
-        
-        if (aiExtractedData) {
-          console.log("AI extraction successful, merging data");
-          Object.keys(aiExtractedData).forEach(key => {
-            if (!invoice[key] || 
-                (typeof aiExtractedData[key] === 'string' && 
-                 aiExtractedData[key].length > (invoice[key]?.length || 0))) {
-              invoice[key] = aiExtractedData[key];
-            }
-          });
-        }
-      } catch (aiError) {
-        console.error("AI extraction failed, continuing with rule-based extraction:", aiError);
-      }
+    // Skip saving placeholder HTML content
+    if (rawHtmlContent && !rawHtmlContent.includes('See what happens')) {
+      invoice.html_content = rawHtmlContent;
     }
 
     // Clean up and validate invoice data
