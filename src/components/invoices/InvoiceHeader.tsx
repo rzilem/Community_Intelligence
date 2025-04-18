@@ -43,7 +43,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-4">
           <VendorSelector
             onVendorChange={(value) => onInvoiceChange('vendor', value)}
             initialVendorName={invoice.vendor}
@@ -51,22 +51,9 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             label="Vendor"
           />
         </div>
-
-        <div className="md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="invoiceNumber">Invoice Number</Label>
-            <Input
-              id="invoiceNumber"
-              value={invoice.invoiceNumber}
-              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
-              placeholder="Enter invoice number"
-              className="w-full"
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Date row */}
+      {/* Date and Invoice Number row */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="md:col-span-2">
           <div className="space-y-2">
@@ -89,6 +76,19 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               type="date"
               value={invoice.dueDate}
               onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceNumber">Invoice Number</Label>
+            <Input
+              id="invoiceNumber"
+              value={invoice.invoiceNumber}
+              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
+              placeholder="Enter invoice number"
               className="w-full"
             />
           </div>
@@ -146,4 +146,3 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 };
 
 export default InvoiceHeader;
-
