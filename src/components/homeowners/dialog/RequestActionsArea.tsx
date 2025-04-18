@@ -46,9 +46,7 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   };
 
   const handleSpamConfirm = () => {
-    // Implement spam blocking logic
-    toast.success(`Request marked as spam and blocked successfully`);
-    // Pass status without the email since it's not available in the HomeownerRequest type
+    toast.success('Request marked as spam and blocked successfully');
     onSubmit({ status: 'spam' });
     setShowSpamDialog(false);
   };
