@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { SelectField } from '../ui/select';
+import { Select } from '../ui/select';
 
 interface InvoiceLineItemsProps {
   lines: Array<{
@@ -49,7 +50,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       <h3 className="text-xl font-semibold">Line Items</h3>
       {lines.map((line, index) => (
         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4">
-          <SelectField
+          <Select
             label="GL Account"
             value={line.glAccount}
             onChange={(e) => handleLineChange(index, 'glAccount', e.target.value)}
@@ -58,7 +59,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
               { value: 'Account2', label: 'Account 2' },
             ]}
           />
-          <SelectField
+          <Select
             label="Fund"
             value={line.fund}
             onChange={(e) => handleLineChange(index, 'fund', e.target.value)}
@@ -67,7 +68,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
               { value: 'Reserve', label: 'Reserve' },
             ]}
           />
-          <SelectField
+          <Select
             label="Bank Account"
             value={line.bankAccount}
             onChange={(e) => handleLineChange(index, 'bankAccount', e.target.value)}

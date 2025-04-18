@@ -1,3 +1,6 @@
+
+import { createWorker } from "tesseract.js";
+
 export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unknown" {
   if (!filename) return "unknown";
   
@@ -16,10 +19,24 @@ export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unk
 
 export async function extractTextFromPdf(content: string): Promise<string> {
   try {
-    // Use more robust PDF text extraction
-    // For now returning placeholder since actual PDF parsing requires additional dependencies
-    // In production, this would use a PDF parsing library
-    return content;
+    // Initialize Tesseract worker
+    const worker = await createWorker();
+    
+    // Configure worker for better invoice recognition
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    await worker.setParameters({
+      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$,.-():/',
+    });
+
+    // Perform OCR on the PDF content
+    const { data: { text } } = await worker.recognize(content);
+    
+    // Terminate worker to free resources
+    await worker.terminate();
+
+    console.log('OCR extracted text:', text.substring(0, 200) + '...');
+    return text;
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
     return '';
