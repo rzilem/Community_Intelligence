@@ -33,7 +33,6 @@ const InvoiceDetail = () => {
     isNewInvoice
   } = useInvoiceDetail(id);
 
-  // Debug log to see invoice data changes
   useEffect(() => {
     console.log("Invoice data in component:", {
       association: invoice.association,
@@ -60,10 +59,8 @@ const InvoiceDetail = () => {
     } catch (error) {
       console.error("Error saving invoice:", error);
       
-      // Provide a more specific error message based on the error
       let errorMessage = "There was an error updating the invoice. Please try again.";
       
-      // Check if the error message contains specific information about UUID
       if (error instanceof Error && error.message.includes("uuid")) {
         errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
       }
@@ -153,7 +150,7 @@ const InvoiceDetail = () => {
                 <InvoicePreview 
                   htmlContent={invoice.htmlContent} 
                   pdfUrl={invoice.pdfUrl}
-                  emailContent={invoice.emailContent}
+                  emailContent={invoice.emailContent || ''}
                 />
               </ResizablePanel>
             </>
