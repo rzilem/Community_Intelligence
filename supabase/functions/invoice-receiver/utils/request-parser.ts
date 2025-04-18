@@ -1,17 +1,16 @@
 
-// Process raw multipart form data using native FormData API
+// This file contains utility functions for parsing requests from email providers like CloudMailin
+
+/**
+ * Process multipart/form-data requests and extract relevant fields
+ */
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type");
   
   // If not multipart form data, try json parsing
   if (!contentType || !contentType.includes("multipart/form-data")) {
     try {
-      const jsonData = await request.json();
-      console.log("Parsed request as JSON data");
-      if (jsonData) {
-        console.log("JSON data keys:", Object.keys(jsonData));
-      }
-      return jsonData;
+      return await request.json();
     } catch (error) {
       console.error("Error parsing JSON request:", error);
       throw new Error(`Not a multipart form or valid JSON: ${contentType}`);
@@ -32,34 +31,27 @@ export async function processMultipartFormData(request: Request): Promise<any> {
   
   // Process each form field
   for (const [key, value] of formData.entries()) {
-    console.log(`Processing form field: ${key}, type: ${typeof value}`);
-    
     if (typeof value === "string") {
       try {
         // Try to parse JSON values
         result[key] = JSON.parse(value);
-        console.log(`Successfully parsed JSON for key: ${key}`);
       } catch {
         // If not JSON, store as string
         result[key] = value;
-        if (value.length < 1000) {
-          console.log(`String value for key ${key}: ${value}`);
-        } else {
-          console.log(`String value for key ${key} (truncated): ${value.substring(0, 100)}...`);
-        }
       }
     } else {
       // Handle file data if needed
-      console.log(`Non-string value for key ${key}, type:`, typeof value);
       result[key] = value;
     }
   }
 
-  console.log("Processed form data keys:", Object.keys(result));
+  console.log("Processed form data:", Object.keys(result));
   return result;
 }
 
-// Function to extract the most important fields from different email webhook formats
+/**
+ * Normalize email data from different providers into a standard format
+ */
 export function normalizeEmailData(data: any): any {
   const normalizedData: Record<string, any> = {};
   
@@ -76,8 +68,6 @@ export function normalizeEmailData(data: any): any {
     };
   }
   
-  console.log("Normalizing email data from structure with keys:", Object.keys(data));
-  
   // CloudMailin specific format handling
   if (data.headers && typeof data.headers === 'object') {
     console.log("Detected CloudMailin format with headers object");
@@ -88,19 +78,6 @@ export function normalizeEmailData(data: any): any {
     // CloudMailin specific structure
     if (data.plain !== undefined) normalizedData.text = data.plain;
     if (data.html !== undefined) normalizedData.html = data.html;
-  }
-  
-  // Deep inspection of data to find attachments
-  if (data.envelope && typeof data.envelope === 'string') {
-    try {
-      const parsedEnvelope = JSON.parse(data.envelope);
-      if (parsedEnvelope) {
-        console.log("Found and parsed envelope data");
-        data.parsedEnvelope = parsedEnvelope;
-      }
-    } catch (e) {
-      console.log("Could not parse envelope as JSON");
-    }
   }
   
   // Handle different field names for common email properties
@@ -115,22 +92,17 @@ export function normalizeEmailData(data: any): any {
   
   // Create a tracking number
   normalizedData.tracking_number = data.message_id || data.messageId || data.id || 
-    data.envelope?.messageId || data.parsedEnvelope?.messageId || `email-${Date.now()}`;
+    data.envelope?.messageId || `email-${Date.now()}`;
   
-  // Log normalized data for debugging
-  console.log("Email normalized:", {
-    from: normalizedData.from,
-    subject: normalizedData.subject,
-    hasHtml: !!normalizedData.html,
-    hasText: !!normalizedData.text,
-    attachmentsCount: normalizedData.attachments?.length || 0,
-    hasAttachmentContent: normalizedData.attachments?.some(a => !!a.content)
-  });
+  // Add original data for reference in case we need to debug
+  normalizedData.original = data;
   
   return normalizedData;
 }
 
-// Extract and normalize attachments from different email service formats
+/**
+ * Process attachments from different email service formats
+ */
 function processAttachments(data: any): any[] {
   // Safely check if data exists
   if (!data) return [];
@@ -138,72 +110,35 @@ function processAttachments(data: any): any[] {
   // Initialize with empty array as fallback
   let attachments: any[] = [];
   
-  // Log all keys to help debug attachment location
-  console.log("Looking for attachments in data with keys:", Object.keys(data));
+  // Handle different attachment field names based on email service providers
+  if (Array.isArray(data.attachments)) {
+    attachments = data.attachments;
+  } else if (Array.isArray(data.Attachments)) {
+    attachments = data.Attachments;
+  } else if (data.attachment && !Array.isArray(data.attachment)) {
+    // Some services might provide a single attachment object
+    attachments = [data.attachment];
+  } else if (data.Attachment && !Array.isArray(data.Attachment)) {
+    attachments = [data.Attachment];
+  }
   
-  // CloudMailin specific handling - this is a common format
-  if (data.attachments && typeof data.attachments === 'string') {
+  // Check for CloudMailin specific formats
+  if (attachments.length === 0 && data.attachments && typeof data.attachments === 'string') {
     try {
-      // CloudMailin stores attachments as a JSON string in the 'attachments' field
       const parsedAttachments = JSON.parse(data.attachments);
       if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
         console.log(`Found ${parsedAttachments.length} attachments in parsed data.attachments string`);
         attachments = parsedAttachments;
       }
     } catch (e) {
-      console.log("Could not parse attachments string as JSON:", e);
+      console.log("Could not parse attachments string as JSON");
     }
   }
   
-  // Handle CloudMailin's normalized multipart format - most common format
-  if (data.envelope) {
-    try {
-      let envelopeData = data.envelope;
-      if (typeof envelopeData === 'string') {
-        envelopeData = JSON.parse(envelopeData);
-      }
-      
-      // Check if there are attachments in the envelope
-      if (envelopeData && envelopeData.attachments && envelopeData.attachments.length > 0) {
-        console.log(`Found ${envelopeData.attachments.length} attachments in envelope`);
-        attachments = envelopeData.attachments.map((att: any) => ({
-          filename: att.filename,
-          contentType: att.content_type || att.contentType || 'application/octet-stream',
-          content: att.content,
-          size: att.size
-        }));
-      }
-    } catch (e) {
-      console.log("Could not process envelope data:", e);
-    }
-  }
-  
-  // Handle different attachment field names based on email service providers
-  if (attachments.length === 0 && Array.isArray(data.attachments)) {
-    console.log(`Found ${data.attachments.length} attachments in data.attachments array`);
-    attachments = data.attachments;
-  } else if (attachments.length === 0 && Array.isArray(data.Attachments)) {
-    console.log(`Found ${data.Attachments.length} attachments in data.Attachments`);
-    attachments = data.Attachments;
-  } else if (attachments.length === 0 && data.attachment && !Array.isArray(data.attachment)) {
-    // Some services might provide a single attachment object
-    console.log("Found single attachment in data.attachment");
-    attachments = [data.attachment];
-  } else if (attachments.length === 0 && data.Attachment && !Array.isArray(data.Attachment)) {
-    console.log("Found single attachment in data.Attachment");
-    attachments = [data.Attachment];
-  } else if (attachments.length === 0 && data.parsedEnvelope && data.parsedEnvelope.attachments) {
-    console.log(`Found ${data.parsedEnvelope.attachments.length} attachments in parsedEnvelope`);
-    attachments = data.parsedEnvelope.attachments;
-  }
-  
-  // Special handling for raw content attribute sometimes found in CloudMailin
-  if (attachments.length === 0 && data.raw && typeof data.raw === 'object') {
-    console.log("Checking for attachments in raw data object");
-    if (data.raw.attachments && Array.isArray(data.raw.attachments)) {
-      console.log(`Found ${data.raw.attachments.length} attachments in data.raw.attachments`);
-      attachments = data.raw.attachments;
-    }
+  // Also check for Sendgrid style attachments
+  if (attachments.length === 0 && data.email && data.email.attachments) {
+    console.log(`Found ${data.email.attachments.length} attachments in data.email.attachments`);
+    attachments = data.email.attachments;
   }
   
   // Attempt to find raw attachments in any other key that might contain them
@@ -219,17 +154,17 @@ function processAttachments(data: any): any[] {
     }
   }
   
-  console.log(`Found ${attachments.length} attachments to process`);
+  console.log(`Processing ${attachments.length} attachments`);
   
   // Standardize attachment object structure
-  const processedAttachments = attachments.map(attachment => {
-    if (!attachment) return null;
+  return attachments.map(attachment => {
+    if (!attachment) return { filename: "unknown", contentType: "application/octet-stream", content: "", size: 0 };
     
     const normalized: Record<string, any> = {};
     
     // Extract filename with fallbacks
     normalized.filename = attachment.filename || attachment.name || attachment.fileName || 
-                          attachment.Filename || attachment.Name || "unknown.pdf";
+                          attachment.Filename || attachment.Name || "unknown";
     
     // Extract content type with fallbacks
     normalized.contentType = attachment.contentType || attachment.content_type || 
@@ -241,22 +176,8 @@ function processAttachments(data: any): any[] {
                          attachment.Data || attachment.body || attachment.Body || "";
                          
     // Some services might provide the size
-    normalized.size = attachment.size || attachment.Size || 
-                     (normalized.content ? normalized.content.length : 0);
-    
-    console.log(`Processed attachment: ${normalized.filename}, type: ${normalized.contentType}, has content: ${!!normalized.content}, content length: ${normalized.content ? normalized.content.length : 0}`);
+    normalized.size = attachment.size || attachment.Size || 0;
     
     return normalized;
-  });
-  
-  // Filter out null attachments and those without content
-  return processedAttachments.filter(att => {
-    if (!att) return false;
-    
-    const hasContent = !!att.content && att.content.length > 0;
-    if (!hasContent) {
-      console.log(`Filtering out attachment ${att.filename} due to missing content`);
-    }
-    return hasContent;
   });
 }

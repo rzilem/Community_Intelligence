@@ -59,10 +59,10 @@ export async function processDocument(attachments: any[] = []) {
       const safeFilename = attachment.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
       const fileName = `invoice_${timestamp}_${safeFilename}`;
       
-      // Attempt to decode the base64 content to ensure it's valid
+      // Decode the base64 content - enhanced with better error handling
       let contentBuffer;
       try {
-        // Check if content is already Base64-encoded
+        // Improved base64 detection
         const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(attachment.content.trim());
         
         if (isBase64) {
@@ -86,7 +86,7 @@ export async function processDocument(attachments: any[] = []) {
         contentBuffer = new TextEncoder().encode(attachment.content);
       }
       
-      // Attempt to upload directly to the bucket without 'public/' prefix
+      // Upload directly to the 'invoices' bucket (no public/ prefix)
       const uploadResult = await supabase.storage
         .from('invoices')
         .upload(fileName, contentBuffer, {
@@ -121,7 +121,7 @@ export async function processDocument(attachments: any[] = []) {
         }
       }
 
-      // Get the public URL after successful upload
+      // Get the public URL - use the correct method
       const { data: urlData } = supabase.storage
         .from('invoices')
         .getPublicUrl(fileName);
@@ -133,7 +133,7 @@ export async function processDocument(attachments: any[] = []) {
 
       console.log(`Document uploaded successfully: ${urlData.publicUrl}`);
 
-      // Extract text content based on document type
+      // Extract text content based on document type (placeholders)
       let extractedText = "";
       try {
         switch (documentType) {
