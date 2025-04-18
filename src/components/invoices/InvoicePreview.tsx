@@ -36,12 +36,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       return;
     }
 
-    // Only check PDF URL if one is provided
+    // Enhanced PDF URL validation and accessibility check
     if (pdfUrl && pdfUrl.trim() !== '') {
       console.log('Checking PDF URL accessibility:', pdfUrl);
       setIsLoading(true);
       
-      // Test if the PDF URL is accessible
       fetch(pdfUrl, { method: 'HEAD' })
         .then((response) => {
           setIsLoading(false);
@@ -52,7 +51,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
               url: pdfUrl
             });
             
-            // If we have HTML content, no need to show an error
+            // Fallback to HTML content if available
             if (htmlContent) {
               console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
             } else {
@@ -66,7 +65,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           console.error('Error accessing PDF URL:', err.message, pdfUrl);
           setIsLoading(false);
           
-          // If we have HTML content, no need to show an error
+          // Fallback to HTML content if available
           if (htmlContent) {
             console.log('PDF URL error but HTML content available, will use HTML instead');
           } else {
