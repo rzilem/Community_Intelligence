@@ -35,6 +35,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const createHtmlContent = () => {
     if (!htmlContent) return '';
     
+    // Improve the styling of the HTML content for better readability
     return `
       <!DOCTYPE html>
       <html>
@@ -65,6 +66,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             div {
               margin-bottom: 1rem;
             }
+            h1, h2, h3 {
+              color: #1a56db;
+            }
+            .invoice-details {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 1rem;
+              margin-bottom: 2rem;
+            }
+            .invoice-total {
+              text-align: right;
+              font-weight: bold;
+              margin-top: 1rem;
+              font-size: 1.2rem;
+            }
           </style>
         </head>
         <body>${htmlContent}</body>
@@ -72,22 +88,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
-  // Prioritize HTML content if PDF URL is missing
-  if (htmlContent && !pdfUrl) {
-    console.log('Displaying HTML content (no PDF URL available)');
+  // Prioritize PDF viewing when available
+  if (pdfUrl && isPdf) {
+    console.log('Displaying PDF content from URL:', pdfUrl);
     return (
-      <div className="h-full">
-        <iframe
-          srcDoc={createHtmlContent()}
-          title="Invoice HTML Content"
+      <div className="w-full h-full relative">
+        <iframe 
+          src={pdfUrl}
+          title="Invoice PDF"
           className="w-full h-full border-0"
-          sandbox="allow-same-origin"
+          sandbox="allow-same-origin allow-scripts allow-forms"
           onError={(e) => {
-            console.error('HTML iframe error:', e);
+            console.error('PDF iframe error:', e);
             onIframeError();
           }}
           onLoad={() => {
-            console.log('HTML iframe loaded successfully');
+            console.log('PDF iframe loaded successfully');
             onIframeLoad();
           }}
         />
@@ -95,47 +111,27 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  if (pdfUrl) {
-    if (isPdf) {
-      console.log('Displaying PDF content from URL:', pdfUrl);
-      return (
-        <div className="w-full h-full relative">
-          <iframe 
-            src={pdfUrl}
-            title="Invoice PDF"
-            className="w-full h-full border-0"
-            sandbox="allow-same-origin allow-scripts allow-forms"
-            onError={(e) => {
-              console.error('PDF iframe error:', e);
-              onIframeError();
-            }}
-            onLoad={() => {
-              console.log('PDF iframe loaded successfully');
-              onIframeLoad();
-            }}
-          />
-        </div>
-      );
-    }
+  // Handle Word documents
+  if (pdfUrl && isWordDocument) {
+    console.log('Displaying Word document placeholder');
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+        <File className="h-16 w-16 mb-4 text-blue-500" />
+        <p className="text-center mb-2">Microsoft Word Document</p>
+        <p className="text-center text-sm mb-6">Word documents cannot be previewed directly in the browser.</p>
+        <Button 
+          variant="outline" 
+          onClick={onExternalOpen}
+          className="flex items-center"
+        >
+          Download Document <ExternalLink className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    );
+  }
 
-    if (isWordDocument) {
-      console.log('Displaying Word document placeholder');
-      return (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-          <File className="h-16 w-16 mb-4 text-blue-500" />
-          <p className="text-center mb-2">Microsoft Word Document</p>
-          <p className="text-center text-sm mb-6">Word documents cannot be previewed directly in the browser.</p>
-          <Button 
-            variant="outline" 
-            onClick={onExternalOpen}
-            className="flex items-center"
-          >
-            Download Document <ExternalLink className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
-      );
-    }
-
+  // Handle other document types with URL but not PDF or Word
+  if (pdfUrl && !isPdf && !isWordDocument) {
     console.log('Displaying unknown document type placeholder');
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -152,7 +148,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // If we have HTML content, we'll render it
+  // If we have HTML content, render it
   if (htmlContent) {
     console.log('Displaying HTML content');
     return (

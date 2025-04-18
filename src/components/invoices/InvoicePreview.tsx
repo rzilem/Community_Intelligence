@@ -17,6 +17,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
 
   useEffect(() => {
     console.group('InvoicePreview Component');
@@ -30,16 +31,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     setPreviewError(null);
     setIsLoading(false);
 
+    // First, determine what content we have to display
     if (!htmlContent && !pdfUrl) {
       console.warn('No preview content available (no HTML or PDF URL)');
+      setContentType('none');
       console.groupEnd();
       return;
     }
 
-    // Enhanced PDF URL validation and accessibility check
+    // If we have a PDF URL, check if it's accessible
     if (pdfUrl && pdfUrl.trim() !== '') {
       console.log('Checking PDF URL accessibility:', pdfUrl);
       setIsLoading(true);
+      setContentType('pdf');
       
       fetch(pdfUrl, { method: 'HEAD' })
         .then((response) => {
@@ -54,11 +58,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
             // Fallback to HTML content if available
             if (htmlContent) {
               console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
+              setContentType('html');
             } else {
               setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
+              setContentType('none');
             }
           } else {
             console.log('PDF URL is accessible:', pdfUrl);
+            setContentType('pdf');
           }
         })
         .catch((err) => {
@@ -68,8 +75,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           // Fallback to HTML content if available
           if (htmlContent) {
             console.log('PDF URL error but HTML content available, will use HTML instead');
+            setContentType('html');
           } else {
             setPreviewError(`Error accessing PDF: ${err.message}`);
+            setContentType('none');
           }
         })
         .finally(() => {
@@ -77,9 +86,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
         });
     } else if (htmlContent) {
       console.log('No PDF URL provided, using HTML content for preview');
+      setContentType('html');
       console.groupEnd();
     } else {
       console.warn('Both PDF URL and HTML content are empty or invalid');
+      setContentType('none');
       console.groupEnd();
     }
   }, [htmlContent, pdfUrl]);
@@ -118,6 +129,44 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     }
   };
 
+  const isInvoicePreviewable = (content?: string): boolean => {
+    if (!content) return false;
+    
+    // Check if content seems to be a robots.txt or non-invoice content
+    const lowerContent = content.toLowerCase();
+    const nonInvoicePatterns = [
+      /user-agent:/,
+      /robots\.txt/,
+      /sitemap:/,
+      /disallow:/,
+      /allow:\s*\//
+    ];
+    
+    // Check if the content matches any non-invoice patterns
+    const containsNonInvoiceContent = nonInvoicePatterns.some(pattern => pattern.test(lowerContent));
+    
+    // Check if the content might contain invoice-related terms
+    const invoiceRelatedTerms = [
+      /invoice/i,
+      /total/i,
+      /amount/i,
+      /payment/i,
+      /due date/i,
+      /bill/i,
+      /receipt/i
+    ];
+    
+    const containsInvoiceTerms = invoiceRelatedTerms.some(term => term.test(content));
+    
+    // If it contains non-invoice patterns and doesn't have invoice-related terms, it's likely not an invoice
+    if (containsNonInvoiceContent && !containsInvoiceTerms) {
+      console.log('Content appears to be non-invoice related (possibly robots.txt or similar)');
+      return false;
+    }
+    
+    return true;
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -145,6 +194,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           title="No preview available"
           description="No PDF or HTML content available for this invoice."
         />
+      );
+    }
+
+    // Check if HTML content seems to be a robots.txt or similar non-invoice content
+    if (contentType === 'html' && !isInvoicePreviewable(htmlContent)) {
+      return (
+        <NoPreviewState />
       );
     }
 
