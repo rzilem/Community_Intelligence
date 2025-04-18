@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useSupabaseUpdate } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { useAuth } from '@/contexts/auth';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
@@ -28,6 +29,7 @@ export const useRequestForm = (
 ) => {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const { user } = useAuth();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
