@@ -10,25 +10,9 @@ import { toast } from 'sonner';
 import { vendorService } from '@/services/vendor-service';
 
 interface VendorSelectorProps {
-  /**
-   * Callback function when vendor selection changes
-   */
   onVendorChange: (vendorName: string) => void;
-  
-  /**
-   * Optional initial vendor name to pre-select
-   */
   initialVendorName?: string;
-  
-  /**
-   * Optional CSS class name for custom styling
-   */
   className?: string;
-  
-  /**
-   * Optional label to display above the selector
-   * Set to false to hide the label completely
-   */
   label?: React.ReactNode | false;
 }
 
@@ -36,14 +20,13 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
   onVendorChange,
   initialVendorName,
   className,
-  label = "Select Vendor" // Default label that can be overridden
+  label = "Select Vendor"
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedVendorName, setSelectedVendorName] = useState<string | undefined>(initialVendorName);
   const [vendors, setVendors] = useState<Array<{id: string, name: string}>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch vendors using the vendorService
   useEffect(() => {
     const fetchVendors = async () => {
       try {
@@ -64,21 +47,17 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
     fetchVendors();
   }, []);
 
-  // Update selected vendor when initialVendorName changes
   useEffect(() => {
-    console.log('initialVendorName changed:', initialVendorName);
     setSelectedVendorName(initialVendorName);
   }, [initialVendorName]);
 
   const handleSelect = (vendorName: string) => {
-    console.log('Vendor selected:', vendorName);
     setSelectedVendorName(vendorName);
     onVendorChange(vendorName);
     setOpen(false);
   };
 
   const handleClear = () => {
-    console.log('Vendor cleared');
     setSelectedVendorName(undefined);
     onVendorChange('');
     setOpen(false);
@@ -93,7 +72,7 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between" // Ensure full width
             disabled={isLoading}
           >
             {isLoading 
@@ -109,7 +88,6 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
               <CommandList>
                 <CommandEmpty>No vendor found.</CommandEmpty>
                 <CommandGroup>
-                  {/* Add an option to clear the selection */}
                   <CommandItem
                     value="clear"
                     onSelect={handleClear}
@@ -154,3 +132,4 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
 };
 
 export default VendorSelector;
+
