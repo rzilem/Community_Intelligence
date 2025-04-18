@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
@@ -6,6 +5,7 @@ import { formatDate } from '@/lib/date-utils';
 import { StatusBadge } from '../../history/badges/StatusBadge';
 import { PriorityBadge } from '../../history/badges/PriorityBadge';
 import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
+import { cn } from '@/lib/utils';
 
 interface DetailsTabProps {
   request: HomeownerRequest;
@@ -88,7 +88,15 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
         {/* Description Section */}
         <div className="space-y-3">
           <h3 className="font-medium text-base">Description</h3>
-          <div className="border rounded-md p-4 whitespace-pre-wrap bg-card text-sm">
+          <div 
+            className={cn(
+              "border rounded-lg p-4 whitespace-pre-wrap text-sm",
+              "bg-gradient-to-br from-hoa-blue-50 to-hoa-silver-100", 
+              "shadow-sm hover:shadow-md transition-all duration-300",
+              "text-hoa-blue-900 dark:text-white",
+              "dark:from-hoa-blue-800/50 dark:to-hoa-silver-900/50"
+            )}
+          >
             {processedDescription}
           </div>
         </div>
