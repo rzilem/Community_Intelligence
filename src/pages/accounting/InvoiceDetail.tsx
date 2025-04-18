@@ -102,7 +102,7 @@ const InvoiceDetail = () => {
       icon={<Receipt className="h-8 w-8" />}
       description="Process and code invoice for payment."
     >
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 space-y-4"> {/* Reduced space-y from 6 to 4 */}
         <InvoiceNavigation 
           isNewInvoice={isNewInvoice}
           showPreview={showPreview}
@@ -112,7 +112,7 @@ const InvoiceDetail = () => {
         />
 
         <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={60}>
+          <ResizablePanel defaultSize={showPreview ? 60 : 100}>
             <div className="p-4 h-full space-y-6">
               <InvoiceHeader 
                 invoice={invoice}
@@ -137,8 +137,8 @@ const InvoiceDetail = () => {
           
           {showPreview && (
             <>
-              <ResizableHandle />
-              <ResizablePanel defaultSize={40}>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={40} className="min-h-[600px]"> {/* Added min-height */}
                 <InvoicePreview 
                   htmlContent={invoice.htmlContent} 
                   pdfUrl={invoice.pdfUrl} 

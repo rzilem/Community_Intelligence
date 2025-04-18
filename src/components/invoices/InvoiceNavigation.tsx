@@ -1,15 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
-
-interface InvoiceNavigationProps {
-  isNewInvoice: boolean;
-  showPreview: boolean;
-  onTogglePreview: () => void;
-  onNavigate: (direction: 'next' | 'prev') => void;
-  disableNavigation: boolean;
-}
+import { ChevronLeft, ChevronRight, Minimize2, Maximize2 } from 'lucide-react';
 
 export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   isNewInvoice,
@@ -19,7 +11,7 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   disableNavigation
 }) => {
   return (
-    <div className="flex justify-between">
+    <div className="flex items-center justify-between"> {/* Changed from space-between to items-center */}
       <div className="flex gap-2">
         {!isNewInvoice && (
           <>
