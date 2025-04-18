@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -89,11 +88,14 @@ const InvoiceDetail = () => {
     });
   };
 
+  // Get pending invoices and current position
+  const pendingInvoices = allInvoices?.filter(inv => inv.status === 'pending') || [];
+  const currentPosition = pendingInvoices.findIndex(inv => inv.id === id) + 1;
+  const totalPending = pendingInvoices.length;
+
   const navigateToInvoice = (direction: 'next' | 'prev') => {
     if (!allInvoices || allInvoices.length === 0) return;
     
-    // Filter to only pending invoices
-    const pendingInvoices = allInvoices.filter(inv => inv.status === 'pending');
     if (pendingInvoices.length === 0) return;
     
     // Find current index within pending invoices
@@ -127,7 +129,9 @@ const InvoiceDetail = () => {
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
           onNavigate={navigateToInvoice}
-          disableNavigation={isLoadingAllInvoices || (allInvoices?.filter(inv => inv.status === 'pending').length || 0) <= 1}
+          disableNavigation={isLoadingAllInvoices || pendingInvoices.length <= 1}
+          currentPosition={currentPosition}
+          totalPending={totalPending}
         />
 
         <ResizablePanelGroup direction="horizontal">
