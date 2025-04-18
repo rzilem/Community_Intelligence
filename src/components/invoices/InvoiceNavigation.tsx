@@ -19,7 +19,7 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   disableNavigation
 }) => {
   return (
-    <div className="flex items-center justify-between"> {/* Changed from space-between to items-center */}
+    <div className="flex items-center justify-between">
       <div className="flex gap-2">
         {!isNewInvoice && (
           <>
@@ -28,16 +28,18 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
               size="sm"
               onClick={() => onNavigate('prev')}
               disabled={disableNavigation}
+              title="Navigate to previous pending invoice"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous Pending
             </Button>
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => onNavigate('next')}
               disabled={disableNavigation}
+              title="Navigate to next pending invoice"
             >
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+              Next Pending <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </>
         )}

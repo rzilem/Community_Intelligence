@@ -92,17 +92,27 @@ const InvoiceDetail = () => {
   const navigateToInvoice = (direction: 'next' | 'prev') => {
     if (!allInvoices || allInvoices.length === 0) return;
     
-    const currentIndex = allInvoices.findIndex(inv => inv.id === id);
-    if (currentIndex === -1) return;
+    // Filter to only pending invoices
+    const pendingInvoices = allInvoices.filter(inv => inv.status === 'pending');
+    if (pendingInvoices.length === 0) return;
     
-    let nextIndex;
-    if (direction === 'next') {
-      nextIndex = (currentIndex + 1) % allInvoices.length;
-    } else {
-      nextIndex = (currentIndex - 1 + allInvoices.length) % allInvoices.length;
+    // Find current index within pending invoices
+    const currentIndex = pendingInvoices.findIndex(inv => inv.id === id);
+    if (currentIndex === -1) {
+      // If current invoice is not pending, navigate to the first pending invoice
+      navigate(`/accounting/invoice-queue/${pendingInvoices[0].id}`);
+      return;
     }
     
-    navigate(`/accounting/invoice-queue/${allInvoices[nextIndex].id}`);
+    // Calculate next index
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = (currentIndex + 1) % pendingInvoices.length;
+    } else {
+      nextIndex = (currentIndex - 1 + pendingInvoices.length) % pendingInvoices.length;
+    }
+    
+    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`);
   };
 
   return (
@@ -117,7 +127,7 @@ const InvoiceDetail = () => {
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
           onNavigate={navigateToInvoice}
-          disableNavigation={isLoadingAllInvoices || (allInvoices?.length || 0) <= 1}
+          disableNavigation={isLoadingAllInvoices || (allInvoices?.filter(inv => inv.status === 'pending').length || 0) <= 1}
         />
 
         <ResizablePanelGroup direction="horizontal">

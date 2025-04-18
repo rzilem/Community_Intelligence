@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -47,7 +47,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setFullscreen(!fullscreen);
   };
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Reset states
     setLoading(false);
     setError(null);
@@ -86,10 +86,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     });
   }, [htmlContent, pdfUrl, emailContent]);
 
+  // If no content and no email, show no preview state
   if (!hasContent && !hasEmailContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
+  // If there's an error, show error state
   if (error) {
     return <PreviewErrorState error={error} />;
   }
