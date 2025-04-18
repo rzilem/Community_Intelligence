@@ -23,8 +23,8 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   const [lines, setLines] = useState([{
     glAccount: '',
-    fund: '',
-    bankAccount: '',
+    fund: 'Operating',
+    bankAccount: 'Operating',
     description: '',
     amount: 0,
   }]);
@@ -135,7 +135,13 @@ export const useInvoiceDetail = (id: string | undefined) => {
   }, [invoiceData, id]);
 
   const handleInvoiceChange = (field: string, value: string | number) => {
-    setInvoice({ ...invoice, [field]: value });
+    // For amount fields, ensure we maintain decimal precision
+    if (field === 'totalAmount' || field === 'amount') {
+      const numValue = typeof value === 'string' ? parseFloat(value) : value;
+      setInvoice({ ...invoice, [field]: parseFloat(numValue.toFixed(2)) });
+    } else {
+      setInvoice({ ...invoice, [field]: value });
+    }
   };
 
   const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);

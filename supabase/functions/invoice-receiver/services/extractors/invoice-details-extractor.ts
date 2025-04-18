@@ -1,4 +1,3 @@
-
 /**
  * Helper functions for extracting invoice details from email content
  */
@@ -18,8 +17,11 @@ export function extractInvoiceDetails(content: string, subject: string): {
     description?: string;
   } = {};
 
-  // Invoice number patterns - prioritize exact matches
+  // Improved invoice number patterns
   const invoiceNumberPatterns = [
+    /Invoice(?:\s*Number|\s*#|\s*No)?[:.\s]*(\d{3,4})\b/i,
+    /Invoice[:\s]*#?\s*(\d{3,4})\b/i,
+    /\bInv(?:oice)?\s*#?\s*(\d{3,4})\b/i,
     /\bInvoice\s*(?:#|No|Number)?\s*[:=]?\s*(\d{3,7})\b/i,
     /\bInvoice\s+(\d{3,7})\b/i,
     /INVOICE[:\s-]*#?\s*(\d+)/i,
@@ -34,28 +36,31 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /Invoice\s*:\s*(\d+)/i
   ];
 
-  // First try to find invoice number in subject
+  // First try to find invoice number in subject and content
+  let foundInvoiceNumber = false;
   for (const pattern of invoiceNumberPatterns) {
-    const match = subject.match(pattern);
+    const subjectMatch = subject.match(pattern);
+    const contentMatch = content.match(pattern);
+    const match = subjectMatch || contentMatch;
+    
     if (match && match[1] && match[1].trim()) {
       result.invoice_number = match[1].trim();
+      foundInvoiceNumber = true;
       break;
     }
   }
 
-  // If not found in subject, try content
-  if (!result.invoice_number) {
-    for (const pattern of invoiceNumberPatterns) {
-      const match = content.match(pattern);
-      if (match && match[1] && match[1].trim()) {
-        result.invoice_number = match[1].trim();
-        break;
-      }
-    }
+  // If no invoice number found, don't set a default
+  if (!foundInvoiceNumber) {
+    result.invoice_number = '';
   }
 
-  // Amount patterns - prioritize total amount due
+  // Amount patterns - prioritize exact amount matches with decimals
   const amountPatterns = [
+    /Total\s+Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
+    /Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
+    /Total[:\s]*\$?\s*([\d,]+\.?\d*)/i,
+    /\$\s*([\d,]+\.\d{2})/,  // Match exact dollar amounts with cents
     /Total Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /TOTAL\s+AMOUNT\s+DUE\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
@@ -74,22 +79,25 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /amount[:\s]*(?:USD|EUR|GBP)?\s*([\d,]+\.?\d*)/i
   ];
 
-  // Extract amount using the new patterns
+  // Extract amount using the patterns
   for (const pattern of amountPatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
-      // Remove commas and convert to number
       const amountStr = match[1].replace(/,/g, '');
       const amount = parseFloat(amountStr);
       if (!isNaN(amount)) {
-        result.amount = amount;
+        result.amount = parseFloat(amount.toFixed(2)); // Ensure 2 decimal places
         break;
       }
     }
   }
 
-  // Due date patterns - improved to handle various formats
+  // Due date patterns - improved to handle more formats
   const dueDatePatterns = [
+    /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due\s+Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
+    /Due\s+By[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
     /Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
@@ -107,7 +115,7 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /payment\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i
   ];
 
-  // Extract due date using the new patterns
+  // Extract due date using the patterns
   for (const pattern of dueDatePatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
@@ -121,30 +129,6 @@ export function extractInvoiceDetails(content: string, subject: string): {
       } catch (e) {
         // Ignore parsing errors
       }
-    }
-  }
-
-  // Association name patterns - expanded for better matching
-  const associationPatterns = [
-    /Association Name[:\s]*([^\n<]+)/i,
-    /Community Name[:\s]*([^\n<]+)/i,
-    /HOA Name[:\s]*([^\n<]+)/i,
-    /Property Name[:\s]*([^\n<]+)/i,
-    /Client[:\s]*([^\n<]+)/i,
-    /Homeowners Association[:\s]*([^\n<]+)/i,
-    /Association[:\s]*([^\n<]+)/i,
-    /Community[:\s]*([^\n<]+)/i,
-    /Prepared\s+For\s*:?([^\n<]+)/i,
-    /Bill\s+To\s*:?([^\n<]+(?:Association|HOA|Community))/i,
-    /TO\s*:?([^\n<]+(?:Association|HOA|Community))/i
-  ];
-
-  // Extract association name
-  for (const pattern of associationPatterns) {
-    const match = content.match(pattern);
-    if (match && match[1] && match[1].trim()) {
-      result.description = match[1].trim();
-      break;
     }
   }
 

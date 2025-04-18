@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Select as UISelect, 
@@ -100,13 +99,13 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       
       {lines.map((line, index) => (
         <div key={index} className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          {/* Top row with GL Account, Fund, and Bank Account */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select
               label="GL Account"
               value={line.glAccount}
               onChange={(value) => handleLineChange(index, 'glAccount', value)}
               options={[
+                { value: '', label: 'Select GL Account' },
                 { value: 'Account1', label: 'Account 1' },
                 { value: 'Account2', label: 'Account 2' },
               ]}
@@ -131,9 +130,8 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
             />
           </div>
 
-          {/* Bottom row with Description and Amount */}
-          <div className={`grid ${showPreview ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-5'} gap-4`}>
-            <div className={showPreview ? 'md:col-span-1' : 'md:col-span-4'}>
+          <div className={showPreview ? 'space-y-4' : 'grid grid-cols-5 gap-4'}>
+            <div className={showPreview ? 'w-full' : 'col-span-4'}>
               <Label htmlFor={`description-${index}`} className="text-sm font-medium text-gray-600">
                 Description
               </Label>
@@ -161,7 +159,6 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
             </div>
           </div>
 
-          {/* Remove button */}
           <div className="flex justify-end mt-4">
             <Button 
               variant="destructive" 
