@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { formatDate } from '@/lib/date-utils';
@@ -24,7 +23,7 @@ const DetailsTab: React.FC<DetailsTabProps> = ({ request, processedDescription }
   );
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="h-full overflow-auto p-4">
       <div className="grid grid-cols-3 gap-6">
         {/* Request Information - Column 1 */}
         <div className="space-y-3 bg-card rounded-lg border p-4 shadow-sm">

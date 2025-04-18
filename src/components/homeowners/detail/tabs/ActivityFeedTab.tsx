@@ -10,7 +10,7 @@ interface ActivityFeedTabProps {
 
 const ActivityFeedTab: React.FC<ActivityFeedTabProps> = ({ comments, loadingComments }) => {
   return (
-    <div className="p-4">
+    <div className="h-full overflow-auto p-4">
       <div className="border rounded-md p-4 space-y-4">
         <h3 className="font-medium text-lg mb-4">Activity Feed</h3>
         

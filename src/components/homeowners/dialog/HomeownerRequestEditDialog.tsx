@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { ResponsiveDialog, ResponsiveDialogContent } from '@/components/ui/responsive-dialog';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { cleanHtmlContent } from '@/lib/format-utils';
 import { TabsContent } from '@/components/ui/tabs';
-import { Form } from '@/components/ui/form';
 import DetailsTab from '../detail/tabs/DetailsTab';
 import CommentsTab from '../detail/tabs/CommentsTab';
 import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
@@ -14,6 +12,7 @@ import RequestDialogTabs from './edit/RequestDialogTabs';
 import RequestFormFields from './edit/RequestFormFields';
 import RequestFormActions from './edit/RequestFormActions';
 import { useRequestForm } from './edit/useRequestForm';
+import ActivityFeedTab from '../detail/tabs/ActivityFeedTab';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -66,7 +65,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent 
-        className="max-w-[95%] w-[105%] flex flex-col max-h-[95vh]" 
+        className="max-w-[800px] w-[95%] h-[80vh] flex flex-col" 
       >
         <RequestDialogHeader 
           title={request.title}
@@ -86,15 +85,15 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
               onAssociationChange={handleAssociationChange}
               onPropertyChange={handlePropertyChange}
             >
-              <TabsContent value="details" className="h-full m-0">
+              <TabsContent value="details" className="flex-1 m-0 overflow-hidden">
                 <DetailsTab request={request} processedDescription={processedDescription} />
               </TabsContent>
 
-              <TabsContent value="activity" className="h-full m-0">
-                <CommentsTab comments={comments} loadingComments={loadingComments} />
+              <TabsContent value="activity" className="flex-1 m-0 overflow-hidden">
+                <ActivityFeedTab comments={comments} loadingComments={loadingComments} />
               </TabsContent>
 
-              <TabsContent value="email" className="h-full m-0">
+              <TabsContent value="email" className="flex-1 m-0 overflow-hidden">
                 <OriginalEmailTab 
                   htmlContent={request.html_content} 
                   fullscreenEmail={fullscreenEmail}
@@ -102,7 +101,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
                 />
               </TabsContent>
 
-              <TabsContent value="attachments" className="h-full m-0">
+              <TabsContent value="attachments" className="flex-1 m-0 overflow-hidden">
                 <AttachmentsTab request={request} />
               </TabsContent>
             </RequestDialogTabs>
