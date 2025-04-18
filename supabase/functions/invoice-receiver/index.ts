@@ -94,7 +94,8 @@ serve(async (req) => {
         name: a.filename,
         type: a.contentType,
         hasContent: !!a.content,
-        contentLength: a.content?.length || 0
+        contentLength: a.content?.length || 0,
+        contentType: typeof a.content
       }))
     }, null, 2));
 

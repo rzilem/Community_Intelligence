@@ -45,6 +45,70 @@ export async function processMultipartFormData(request: Request): Promise<any> {
     }
   }
 
+  // CloudMailin specific handling for attachments
+  // Look for attachment_details and attachments fields which are specific to CloudMailin
+  if (formData.has('attachment_details[]')) {
+    // Check for CloudMailin attachment format
+    console.log("Found CloudMailin attachment_details[] field");
+    const attachmentDetails = [];
+    
+    // Get all attachment details entries
+    const attachmentKeys = Array.from(formData.keys()).filter(key => 
+      key.startsWith('attachment_details[') || key === 'attachment_details[]'
+    );
+    
+    // Get all attachment file entries
+    const attachmentFiles = Array.from(formData.keys()).filter(key => 
+      key.startsWith('attachments[') || key === 'attachments[]'
+    );
+    
+    console.log(`Found ${attachmentKeys.length} attachment detail entries and ${attachmentFiles.length} attachment files`);
+    
+    // Process all attachment files
+    for (let i = 0; i < attachmentFiles.length; i++) {
+      const fileKey = attachmentFiles[i];
+      const fileContent = formData.get(fileKey);
+      
+      // Find corresponding details for this file
+      const detailPrefix = fileKey.replace('attachments', 'attachment_details');
+      const detailKeys = Array.from(formData.keys()).filter(key => 
+        key.startsWith(detailPrefix) || 
+        (detailPrefix === 'attachment_details[]' && key === 'attachment_details[]')
+      );
+      
+      // Extract attachment details
+      const details: Record<string, any> = {};
+      for (const detailKey of detailKeys) {
+        const propMatch = detailKey.match(/\[(\d+)\]\[([^\]]+)\]/);
+        if (propMatch) {
+          const propName = propMatch[2];
+          details[propName] = formData.get(detailKey);
+        } else {
+          // Default to single attachment case
+          const simpleMatch = detailKey.match(/\[([^\]]+)\]/);
+          if (simpleMatch) {
+            const propName = simpleMatch[1];
+            details[propName] = formData.get(detailKey);
+          }
+        }
+      }
+      
+      // Create attachment object
+      attachmentDetails.push({
+        filename: details.filename || `attachment_${i}.bin`,
+        contentType: details.content_type || details.contentType || 'application/octet-stream',
+        content: fileContent,
+        size: fileContent instanceof Blob ? fileContent.size : 0
+      });
+    }
+    
+    // Add processed attachments to result
+    if (attachmentDetails.length > 0) {
+      console.log(`Processed ${attachmentDetails.length} CloudMailin attachments`);
+      result.attachments = attachmentDetails;
+    }
+  }
+
   console.log("Processed form data:", Object.keys(result));
   return result;
 }

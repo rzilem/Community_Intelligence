@@ -27,7 +27,8 @@ export async function processDocument(attachments: any[] = []) {
       filename: a.filename, 
       contentType: a.contentType,
       hasContent: !!a.content,
-      contentLength: a.content ? a.content.length : 0
+      contentLength: a.content ? a.content.length : 0,
+      contentType: typeof a.content
     }))
   );
   
@@ -39,8 +40,28 @@ export async function processDocument(attachments: any[] = []) {
       continue;
     }
 
-    if (typeof attachment.content !== 'string' || attachment.content.length === 0) {
-      console.warn(`Invalid content for attachment ${attachment.filename}: Type: ${typeof attachment.content}, Length: ${attachment.content ? attachment.content.length : 0}`);
+    // Handle both string content and Blob/File objects from form data
+    let contentToProcess = attachment.content;
+    if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
+      console.log(`Converting Blob/File to ArrayBuffer for: ${attachment.filename}`);
+      try {
+        // Convert Blob to ArrayBuffer
+        const arrayBuffer = await contentToProcess.arrayBuffer();
+        // Convert ArrayBuffer to base64 string
+        const uint8Array = new Uint8Array(arrayBuffer);
+        contentToProcess = btoa(String.fromCharCode.apply(null, uint8Array));
+        console.log(`Successfully converted Blob to base64 string, length: ${contentToProcess.length}`);
+      } catch (blobError) {
+        console.error(`Error converting Blob to string: ${blobError.message}`);
+        continue;
+      }
+    } else if (typeof contentToProcess !== 'string') {
+      console.warn(`Unsupported content type for ${attachment.filename}: ${typeof contentToProcess}`);
+      continue;
+    }
+
+    if (typeof contentToProcess === 'string' && contentToProcess.length === 0) {
+      console.warn(`Empty content for attachment ${attachment.filename}`);
       continue;
     }
 
@@ -51,7 +72,9 @@ export async function processDocument(attachments: any[] = []) {
       continue;
     }
 
-    console.log(`Processing ${documentType} document: ${attachment.filename} (content length: ${attachment.content.length})`);
+    console.log(`Processing ${documentType} document: ${attachment.filename} (content length: ${
+      typeof contentToProcess === 'string' ? contentToProcess.length : 'unknown'
+    })`);
     
     try {
       // Generate a unique filename for storage
@@ -62,15 +85,29 @@ export async function processDocument(attachments: any[] = []) {
       // Decode the base64 content - enhanced with better error handling
       let contentBuffer;
       try {
-        // Improved base64 detection
-        const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(attachment.content.trim());
-        
-        if (isBase64) {
-          console.log(`Content appears to be Base64 encoded, decoding now`);
-          contentBuffer = new Uint8Array(atob(attachment.content).split('').map(c => c.charCodeAt(0)));
+        // Improved base64 detection and handling
+        if (typeof contentToProcess === 'string') {
+          // Check if content is already base64 encoded
+          const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(
+            contentToProcess.trim().replace(/\s/g, '')
+          );
+          
+          if (isBase64) {
+            console.log(`Content appears to be Base64 encoded, decoding now`);
+            try {
+              contentBuffer = new Uint8Array(atob(contentToProcess).split('').map(c => c.charCodeAt(0)));
+            } catch (base64Error) {
+              console.error(`Base64 decode error: ${base64Error.message}`);
+              // Try to directly encode the content as a fallback
+              contentBuffer = new TextEncoder().encode(contentToProcess);
+            }
+          } else {
+            console.log(`Content does not appear to be Base64 encoded, encoding it first`);
+            contentBuffer = new TextEncoder().encode(contentToProcess);
+          }
         } else {
-          console.log(`Content does not appear to be Base64 encoded, encoding it first`);
-          contentBuffer = new TextEncoder().encode(attachment.content);
+          // If content is already a Uint8Array or similar
+          contentBuffer = contentToProcess;
         }
         
         console.log(`Successfully processed content, byte length: ${contentBuffer.byteLength}`);
@@ -83,7 +120,9 @@ export async function processDocument(attachments: any[] = []) {
         console.error(`Failed to process content for ${attachment.filename}:`, decodeError);
         // Try direct upload as a fallback
         console.log("Attempting direct upload without processing");
-        contentBuffer = new TextEncoder().encode(attachment.content);
+        contentBuffer = new TextEncoder().encode(
+          typeof contentToProcess === 'string' ? contentToProcess : JSON.stringify(contentToProcess)
+        );
       }
       
       // Upload directly to the 'invoices' bucket (no public/ prefix)
@@ -100,7 +139,9 @@ export async function processDocument(attachments: any[] = []) {
         // Try alternative method if first attempt failed
         try {
           console.log("Attempting alternative upload method...");
-          const altBuffer = new TextEncoder().encode(attachment.content);
+          const altBuffer = new TextEncoder().encode(
+            typeof contentToProcess === 'string' ? contentToProcess : JSON.stringify(contentToProcess)
+          );
           const altResult = await supabase.storage
             .from('invoices')
             .upload(fileName, altBuffer, {
@@ -138,13 +179,19 @@ export async function processDocument(attachments: any[] = []) {
       try {
         switch (documentType) {
           case "pdf":
-            extractedText = await extractTextFromPdf(attachment.content);
+            extractedText = await extractTextFromPdf(
+              typeof contentToProcess === 'string' ? contentToProcess : ''
+            );
             break;
           case "docx":
-            extractedText = await extractTextFromDocx(attachment.content);
+            extractedText = await extractTextFromDocx(
+              typeof contentToProcess === 'string' ? contentToProcess : ''
+            );
             break;
           case "doc":
-            extractedText = await extractTextFromDoc(attachment.content);
+            extractedText = await extractTextFromDoc(
+              typeof contentToProcess === 'string' ? contentToProcess : ''
+            );
             break;
         }
       } catch (extractError) {
