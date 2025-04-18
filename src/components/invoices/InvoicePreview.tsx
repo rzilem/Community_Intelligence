@@ -61,6 +61,42 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     }
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+          <p>Loading preview...</p>
+        </div>
+      );
+    }
+
+    if (previewError) {
+      return (
+        <PreviewErrorState
+          error={previewError}
+          pdfUrl={pdfUrl}
+          onExternalOpen={openExternalLink}
+        />
+      );
+    }
+
+    if (!htmlContent && !pdfUrl) {
+      return <NoPreviewState />;
+    }
+
+    return (
+      <DocumentViewer
+        pdfUrl={pdfUrl}
+        htmlContent={htmlContent}
+        isPdf={isPdf}
+        isWordDocument={isWordDocument}
+        onIframeError={handleIframeError}
+        onIframeLoad={() => setIsLoading(false)}
+        onExternalOpen={openExternalLink}
+      />
+    );
+  };
+
   return (
     <Card className="h-full">
       <PreviewHeader
@@ -72,27 +108,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
         showActions={!!(htmlContent || pdfUrl)}
       />
       <div className="p-0 h-[calc(100%-48px)] overflow-auto">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-            <p>Loading preview...</p>
-          </div>
-        ) : previewError ? (
-          <PreviewErrorState
-            error={previewError}
-            pdfUrl={pdfUrl}
-            onExternalOpen={openExternalLink}
-          />
-        ) : (
-          <DocumentViewer
-            pdfUrl={pdfUrl}
-            htmlContent={htmlContent}
-            isPdf={isPdf}
-            isWordDocument={isWordDocument}
-            onIframeError={handleIframeError}
-            onIframeLoad={() => setIsLoading(false)}
-            onExternalOpen={openExternalLink}
-          />
-        ) || <NoPreviewState />}
+        {renderContent()}
       </div>
     </Card>
   );
