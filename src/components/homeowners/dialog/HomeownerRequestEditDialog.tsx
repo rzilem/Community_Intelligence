@@ -18,7 +18,6 @@ import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
 import AttachmentsTab from './tabs/AttachmentsTab';
 import RequestDialogHeader from './edit/RequestDialogHeader';
 import RequestDialogTabs from './edit/RequestDialogTabs';
-import CompactRequestHeader from './edit/CompactRequestHeader';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -146,43 +145,43 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="max-w-7xl w-[95%] flex flex-col max-h-[95vh]">
+        <RequestDialogHeader 
+          title={request.title}
+          trackingNumber={request.tracking_number}
+          onClose={() => onOpenChange(false)}
+        />
+
         <div className="flex flex-col flex-1 overflow-hidden">
-          <CompactRequestHeader 
-            request={request}
-            onClose={() => onOpenChange(false)}
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-          />
+          <div className="p-6 pt-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '50vh' }}>
+            <RequestDialogTabs activeTab={activeTab} setActiveTab={setActiveTab}>
+              <TabsContent value="details">
+                <DetailsTab request={request} processedDescription={processedDescription} />
+              </TabsContent>
 
-          <div className="p-4 pt-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '60vh' }}>
-            <TabsContent value="details">
-              <DetailsTab request={request} processedDescription={processedDescription} />
-            </TabsContent>
+              <TabsContent value="comments">
+                <CommentsTab comments={comments} loadingComments={loadingComments} />
+              </TabsContent>
 
-            <TabsContent value="comments">
-              <CommentsTab comments={comments} loadingComments={loadingComments} />
-            </TabsContent>
+              <TabsContent value="email">
+                <OriginalEmailTab 
+                  htmlContent={request.html_content} 
+                  fullscreenEmail={fullscreenEmail}
+                  setFullscreenEmail={setFullscreenEmail}
+                />
+              </TabsContent>
 
-            <TabsContent value="email">
-              <OriginalEmailTab 
-                htmlContent={request.html_content} 
-                fullscreenEmail={fullscreenEmail}
-                setFullscreenEmail={setFullscreenEmail}
-              />
-            </TabsContent>
-
-            <TabsContent value="attachments">
-              <AttachmentsTab request={request} />
-            </TabsContent>
+              <TabsContent value="attachments">
+                <AttachmentsTab request={request} />
+              </TabsContent>
+            </RequestDialogTabs>
           </div>
 
-          <div className="p-4 border-t bg-background flex-shrink-0 h-auto">
+          <div className="p-6 border-t bg-background flex-shrink-0 h-auto">
             <RequestEditForm 
               request={request} 
               onSubmit={handleSubmit} 
               isPending={isPending}
               onCancel={() => onOpenChange(false)}
-              compact={true}
             />
           </div>
         </div>
