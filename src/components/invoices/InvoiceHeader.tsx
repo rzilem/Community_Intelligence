@@ -37,7 +37,9 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
   const handleAssociationChange = (id: string) => {
     console.log('Association changed to:', id);
-    onInvoiceChange('association', id);
+    // If the association is empty (user cleared the selection), 
+    // let's pass null or empty string based on what the system can handle
+    onInvoiceChange('association', id || '');
   };
 
   return (

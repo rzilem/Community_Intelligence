@@ -161,19 +161,27 @@ export const useInvoiceDetail = (id: string | undefined) => {
       payment_method: invoice.paymentType,
     });
     
-    return updateInvoice({
-      id: invoice.id,
-      data: {
-        vendor: invoice.vendor,
-        association_id: invoice.association,
-        invoice_number: invoice.invoiceNumber,
-        invoice_date: invoice.invoiceDate,
-        due_date: invoice.dueDate,
-        amount: invoice.totalAmount,
-        status: invoice.status,
-        payment_method: invoice.paymentType,
-      }
-    });
+    // Handle empty association - use null instead of empty string for UUID field
+    const association_id = invoice.association ? invoice.association : null;
+    
+    try {
+      return await updateInvoice({
+        id: invoice.id,
+        data: {
+          vendor: invoice.vendor,
+          association_id: association_id,
+          invoice_number: invoice.invoiceNumber,
+          invoice_date: invoice.invoiceDate,
+          due_date: invoice.dueDate,
+          amount: invoice.totalAmount,
+          status: invoice.status,
+          payment_method: invoice.paymentType,
+        }
+      });
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      throw error;
+    }
   };
 
   const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);

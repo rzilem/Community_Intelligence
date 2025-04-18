@@ -18,6 +18,7 @@ const InvoiceDetail = () => {
   const { toast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     invoice,
@@ -51,6 +52,10 @@ const InvoiceDetail = () => {
   const handleSave = async () => {
     console.log("Calling saveInvoice with association:", invoice.association);
     
+    if (isSaving) return; // Prevent multiple save attempts
+    
+    setIsSaving(true);
+    
     try {
       await saveInvoice();
       
@@ -60,11 +65,22 @@ const InvoiceDetail = () => {
       });
     } catch (error) {
       console.error("Error saving invoice:", error);
+      
+      // Provide a more specific error message based on the error
+      let errorMessage = "There was an error updating the invoice. Please try again.";
+      
+      // Check if the error message contains specific information about UUID
+      if (error instanceof Error && error.message.includes("uuid")) {
+        errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
+      }
+      
       toast({
         title: "Error updating invoice",
-        description: "There was an error updating the invoice. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -131,6 +147,7 @@ const InvoiceDetail = () => {
                 isBalanced={isBalanced}
                 onSave={handleSave}
                 onApprove={handleApprove}
+                isSaving={isSaving}
               />
             </div>
           </ResizablePanel>
