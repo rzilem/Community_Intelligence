@@ -62,9 +62,17 @@ export function useSupabaseQuery<T = any>(
         query = query.limit(limit);
       }
 
-      // Apply ordering
+      // Apply ordering - fix the order handling to support both object and array formats
       if (order) {
-        query = query.order(order.column, { ascending: order.ascending ?? true });
+        if (Array.isArray(order)) {
+          // Handle array of order objects
+          order.forEach(orderItem => {
+            query = query.order(orderItem.column, { ascending: orderItem.ascending ?? true });
+          });
+        } else {
+          // Handle single order object
+          query = query.order(order.column, { ascending: order.ascending ?? true });
+        }
       }
 
       // Get single result if requested

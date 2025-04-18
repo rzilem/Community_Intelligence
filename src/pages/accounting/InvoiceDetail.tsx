@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -24,12 +23,11 @@ const InvoiceDetail = () => {
   const [showPreview, setShowPreview] = useState(true);
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
 
-  // Get all invoices for navigation
   const { data: allInvoices, isLoading: isLoadingAllInvoices } = useSupabaseQuery(
     'invoices',
     {
       select: 'id',
-      order: [{ column: 'created_at', ascending: false }]
+      order: { column: 'created_at', ascending: false },
     },
     !isNewInvoice
   );
@@ -126,7 +124,6 @@ const InvoiceDetail = () => {
     navigate("/accounting/invoice-queue");
   };
 
-  // Navigation functions
   const navigateToInvoice = (direction: 'next' | 'prev') => {
     if (!allInvoices || allInvoices.length === 0) return;
     

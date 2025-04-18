@@ -16,6 +16,10 @@ export interface Invoice {
   source_document?: string;
   created_at: string;
   updated_at: string;
+  payment_method?: string;
+  payment_date?: string;
+  gl_account_id?: string;
+  bank_account_id?: string;
 }
 
 export interface InvoiceFilterOptions {
