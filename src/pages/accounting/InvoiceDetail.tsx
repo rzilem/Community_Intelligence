@@ -2,60 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Eye, EyeOff, Receipt, RefreshCw, Save, Send, Maximize2, Minimize2 } from 'lucide-react';
+import { Receipt, Maximize2, Minimize2, Save, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
-import { useSupabaseQuery } from '@/hooks/supabase';
+import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import OriginalEmailTab from '@/components/homeowners/detail/tabs/OriginalEmailTab';
-
-// Mock data for vendors, GL accounts, funds, and bank accounts
-const vendors = [
-  { id: '1', name: 'Prime Pool Service', address: 'PO Box 160726' },
-  { id: '2', name: 'Landscaping Services Inc.', address: '123 Garden Way' },
-  { id: '3', name: 'Security Systems Ltd.', address: '456 Safety Blvd' },
-];
-
-const glAccounts = [
-  { id: '601', name: 'Pool Maintenance', number: '601' },
-  { id: '602', name: 'Landscaping', number: '602' },
-  { id: '603', name: 'Security', number: '603' },
-  { id: '604', name: 'Utilities', number: '604' },
-  { id: '605', name: 'Building Repairs', number: '605' },
-];
-
-const funds = [
-  { id: '1', name: 'Operating Fund' },
-  { id: '2', name: 'Reserve Fund' },
-  { id: '3', name: 'Special Assessment Fund' },
-];
-
-const bankAccounts = [
-  { id: '1', name: 'Operating Account', number: '*****1234' },
-  { id: '2', name: 'Reserve Account', number: '*****5678' },
-];
-
-const paymentTypes = [
-  { id: 'check', name: 'Check' },
-  { id: 'ach', name: 'ACH' },
-  { id: 'credit_card', name: 'Credit Card' },
-  { id: 'transfer', name: 'Transfer' },
-];
-
-interface InvoiceLine {
-  id: string;
-  glAccount: string;
-  fund: string;
-  bankAccount: string;
-  description: string;
-  amount: number;
-}
+import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const InvoiceDetail = () => {
   const { id } = useParams();
@@ -64,7 +23,7 @@ const InvoiceDetail = () => {
   const isNewInvoice = id === 'new';
   const invoiceTitle = isNewInvoice ? 'New Invoice' : `Invoice #${id}`;
 
-  // State for managing preview visibility
+  // State for managing preview visibility and layout
   const [showPreview, setShowPreview] = useState(true);
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
 
@@ -79,10 +38,20 @@ const InvoiceDetail = () => {
     !isNewInvoice
   );
 
+  // Invoice update mutation
+  const { mutate: updateInvoice } = useSupabaseUpdate('invoices', {
+    onSuccess: () => {
+      toast({
+        title: "Invoice updated",
+        description: "The invoice has been updated successfully.",
+      });
+    }
+  });
+
   // State for invoice data
   const [invoice, setInvoice] = useState({
-    id: 'INV-001',
-    vendor: '1', // Prime Pool Service
+    id: '',
+    vendor: '',
     association: '',
     invoiceNumber: '',
     invoiceDate: format(new Date(), 'yyyy-MM-dd'),
@@ -91,66 +60,34 @@ const InvoiceDetail = () => {
     status: 'pending',
     paymentType: '',
     htmlContent: '',
-    lines: [] as InvoiceLine[],
   });
+
+  // State for line items
+  const [lines, setLines] = useState([{
+    glAccount: '',
+    fund: '',
+    bankAccount: '',
+    description: '',
+    amount: 0,
+  }]);
 
   // Effect to update invoice data when fetched
   useEffect(() => {
     if (invoiceData) {
       setInvoice({
-        ...invoice,
         id: invoiceData.id,
-        vendor: invoiceData.vendor || '1',
+        vendor: invoiceData.vendor || '',
         association: invoiceData.association_id || '',
         invoiceNumber: invoiceData.invoice_number || '',
         invoiceDate: invoiceData.invoice_date || format(new Date(), 'yyyy-MM-dd'),
         dueDate: invoiceData.due_date || format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
         totalAmount: invoiceData.amount || 0,
         status: invoiceData.status || 'pending',
+        paymentType: invoiceData.payment_method || '',
         htmlContent: invoiceData.html_content || '',
       });
     }
   }, [invoiceData]);
-
-  // State for line items
-  const [lines, setLines] = useState<InvoiceLine[]>([
-    {
-      id: '1',
-      glAccount: '',
-      fund: '',
-      bankAccount: '',
-      description: '',
-      amount: 0,
-    },
-  ]);
-
-  // Get vendor details
-  const selectedVendor = vendors.find(v => v.id === invoice.vendor);
-
-  // Handle line item changes
-  const updateLine = (index: number, field: keyof InvoiceLine, value: string | number) => {
-    const updatedLines = [...lines];
-    updatedLines[index] = {
-      ...updatedLines[index],
-      [field]: value,
-    };
-    setLines(updatedLines);
-  };
-
-  // Add new line
-  const addLine = () => {
-    setLines([
-      ...lines,
-      {
-        id: `line-${lines.length + 1}`,
-        glAccount: '',
-        fund: '',
-        bankAccount: '',
-        description: '',
-        amount: 0,
-      },
-    ]);
-  };
 
   // Calculate total of line items
   const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
@@ -163,25 +100,30 @@ const InvoiceDetail = () => {
 
   // Handle save
   const handleSave = () => {
-    toast({
-      title: "Invoice saved",
-      description: "The invoice has been saved successfully.",
+    updateInvoice({
+      id: invoice.id,
+      data: {
+        vendor: invoice.vendor,
+        association_id: invoice.association,
+        invoice_number: invoice.invoiceNumber,
+        invoice_date: invoice.invoiceDate,
+        due_date: invoice.dueDate,
+        amount: invoice.totalAmount,
+        status: invoice.status,
+        payment_method: invoice.paymentType,
+      }
     });
-    navigate("/accounting/invoice-queue");
   };
 
   // Handle approve
   const handleApprove = () => {
-    toast({
-      title: "Invoice approved",
-      description: "The invoice has been approved and is ready for payment.",
+    updateInvoice({
+      id: invoice.id,
+      data: {
+        status: 'approved'
+      }
     });
     navigate("/accounting/invoice-queue");
-  };
-
-  // Toggle preview panel
-  const togglePreview = () => {
-    setShowPreview(!showPreview);
   };
 
   return (
@@ -196,288 +138,145 @@ const InvoiceDetail = () => {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={togglePreview}
+            onClick={() => setShowPreview(!showPreview)}
             className="gap-1"
           >
             {showPreview ? (
-              <><EyeOff className="h-4 w-4" /> Hide Preview</>
+              <><Minimize2 className="h-4 w-4" /> Hide Preview</>
             ) : (
-              <><Eye className="h-4 w-4" /> Show Preview</>
+              <><Maximize2 className="h-4 w-4" /> Show Preview</>
             )}
           </Button>
-          {showPreview && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setFullscreenPreview(!fullscreenPreview)}
-              className="gap-1"
-            >
-              {fullscreenPreview ? (
-                <><Minimize2 className="h-4 w-4" /> Minimize</>
-              ) : (
-                <><Maximize2 className="h-4 w-4" /> Maximize</>
-              )}
-            </Button>
-          )}
         </div>
 
-        {/* Flexible layout for invoice details and preview */}
-        <div className={`grid ${showPreview ? (fullscreenPreview ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2') : 'grid-cols-1'} gap-6`}>
-          {/* Invoice details section */}
-          <div className={`${fullscreenPreview && showPreview ? 'hidden' : 'block'} space-y-6`}>
-            {/* Invoice header information */}
-            <Card className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Association</label>
-                  <AssociationSelector
-                    onAssociationChange={handleAssociationChange}
-                    initialAssociationId={invoice.association}
-                    label={false}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Vendor</label>
-                  <Select value={invoice.vendor} onValueChange={(value) => setInvoice({...invoice, vendor: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vendors.map((vendor) => (
-                        <SelectItem key={vendor.id} value={vendor.id}>{vendor.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedVendor && (
-                    <p className="text-xs text-gray-500 mt-1">{selectedVendor.address}</p>
-                  )}
-                </div>
-                
-                <div className="md:col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium mb-1">Invoice Number</label>
-                  <Input 
-                    value={invoice.invoiceNumber} 
-                    onChange={(e) => setInvoice({...invoice, invoiceNumber: e.target.value})} 
-                    placeholder="Enter invoice number"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Date</label>
-                  <Input 
-                    type="date" 
-                    value={invoice.invoiceDate} 
-                    onChange={(e) => setInvoice({...invoice, invoiceDate: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Due Date</label>
-                  <Input 
-                    type="date" 
-                    value={invoice.dueDate} 
-                    onChange={(e) => setInvoice({...invoice, dueDate: e.target.value})}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Invoice Total</label>
-                  <Input 
-                    type="number" 
-                    step="0.01" 
-                    value={invoice.totalAmount} 
-                    onChange={(e) => setInvoice({...invoice, totalAmount: parseFloat(e.target.value)})}
-                    className="text-right"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Payment Type</label>
-                  <Select value={invoice.paymentType} onValueChange={(value) => setInvoice({...invoice, paymentType: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-            
-            {/* Tabs for different invoice views */}
-            <Tabs defaultValue="details">
-              <TabsList>
-                <TabsTrigger value="details">Details</TabsTrigger>
-                <TabsTrigger value="messages">Messages</TabsTrigger>
-                <TabsTrigger value="recent">Recent Invoices</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="details" className="space-y-4 mt-4">
-                <div className="flex justify-between items-center">
-                  <Button size="sm" onClick={addLine} className="gap-1">
-                    + New Item
-                  </Button>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <RefreshCw className="h-4 w-4" /> Refresh GL
-                  </Button>
-                </div>
-                
-                {/* Line items table */}
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[180px]">GL</TableHead>
-                        <TableHead className="w-[180px]">Fund</TableHead>
-                        <TableHead className="w-[180px]">Bank Account</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-[150px] text-right">Amount</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {lines.map((line, index) => (
-                        <TableRow key={line.id}>
-                          <TableCell>
-                            <Select 
-                              value={line.glAccount}
-                              onValueChange={(value) => updateLine(index, 'glAccount', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Account" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {glAccounts.map((account) => (
-                                  <SelectItem key={account.id} value={account.id}>
-                                    {account.number} - {account.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Select 
-                              value={line.fund}
-                              onValueChange={(value) => updateLine(index, 'fund', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Fund" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {funds.map((fund) => (
-                                  <SelectItem key={fund.id} value={fund.id}>{fund.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Select 
-                              value={line.bankAccount}
-                              onValueChange={(value) => updateLine(index, 'bankAccount', value)}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select Account" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {bankAccounts.map((account) => (
-                                  <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={line.description}
-                              onChange={(e) => updateLine(index, 'description', e.target.value)}
-                              placeholder="Enter description"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={line.amount || ''}
-                              onChange={(e) => updateLine(index, 'amount', parseFloat(e.target.value) || 0)}
-                              className="text-right"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                {/* Summary and balance */}
-                <div className="flex justify-end">
-                  <div className="w-80 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Line Items Total:</span>
-                      <span>${lineTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Invoice Total:</span>
-                      <span>${invoice.totalAmount.toFixed(2)}</span>
-                    </div>
-                    <div className={`flex justify-between font-semibold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-                      <span>Difference:</span>
-                      <span>{isBalanced ? 'Balanced' : `$${Math.abs(lineTotal - invoice.totalAmount).toFixed(2)}`}</span>
-                    </div>
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel defaultSize={60}>
+            <div className="p-4 h-full space-y-6">
+              {/* Invoice header information */}
+              <Card className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Association</label>
+                    <AssociationSelector
+                      onAssociationChange={handleAssociationChange}
+                      initialAssociationId={invoice.association}
+                      label={false}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Invoice Number</label>
+                    <Input 
+                      value={invoice.invoiceNumber} 
+                      onChange={(e) => setInvoice({...invoice, invoiceNumber: e.target.value})} 
+                      placeholder="Enter invoice number"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Vendor</label>
+                    <Input 
+                      value={invoice.vendor} 
+                      onChange={(e) => setInvoice({...invoice, vendor: e.target.value})} 
+                      placeholder="Enter vendor name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Invoice Date</label>
+                    <Input 
+                      type="date" 
+                      value={invoice.invoiceDate} 
+                      onChange={(e) => setInvoice({...invoice, invoiceDate: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Due Date</label>
+                    <Input 
+                      type="date" 
+                      value={invoice.dueDate} 
+                      onChange={(e) => setInvoice({...invoice, dueDate: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Invoice Total</label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={invoice.totalAmount} 
+                      onChange={(e) => setInvoice({...invoice, totalAmount: parseFloat(e.target.value)})}
+                      className="text-right"
+                    />
                   </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="messages">
-                <div className="py-8 text-center text-gray-500">
-                  No messages for this invoice
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="recent">
-                <div className="py-8 text-center text-gray-500">
-                  No recent invoices from this vendor
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Invoice preview section */}
-          {showPreview && (
-            <div className={`${fullscreenPreview ? 'col-span-full' : ''}`}>
-              <Card className="overflow-hidden h-full">
-                <div className="bg-gray-50 px-4 py-3 border-b font-medium flex justify-between items-center">
-                  <h3>Invoice Preview</h3>
-                </div>
-                <div className="p-0 h-[calc(100%-48px)]">
-                  <OriginalEmailTab 
-                    htmlContent={invoice.htmlContent} 
-                    fullscreenEmail={fullscreenPreview}
-                    setFullscreenEmail={setFullscreenPreview}
-                  />
-                </div>
               </Card>
+              
+              {/* Line Items */}
+              <InvoiceLineItems 
+                lines={lines}
+                onLinesChange={setLines}
+                associationId={invoice.association}
+              />
+              
+              {/* Summary and balance */}
+              <div className="flex justify-end">
+                <div className="w-80 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Line Items Total:</span>
+                    <span>${lineTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Invoice Total:</span>
+                    <span>${invoice.totalAmount.toFixed(2)}</span>
+                  </div>
+                  <div className={`flex justify-between font-semibold ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
+                    <span>Difference:</span>
+                    <span>{isBalanced ? 'Balanced' : `$${Math.abs(lineTotal - invoice.totalAmount).toFixed(2)}`}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Bottom action buttons */}
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div>
+                  Payment Amount: <span className="font-semibold">${invoice.totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex gap-4">
+                  <Button variant="outline" className="gap-2" onClick={handleSave}>
+                    <Save className="h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button className="gap-2" onClick={handleApprove} disabled={!isBalanced}>
+                    <Send className="h-4 w-4" />
+                    Approve
+                  </Button>
+                </div>
+              </div>
             </div>
+          </ResizablePanel>
+          
+          {showPreview && (
+            <>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={40}>
+                <Card className="h-full">
+                  <div className="bg-gray-50 px-4 py-3 border-b font-medium">
+                    Invoice Preview
+                  </div>
+                  <div className="p-0 h-[calc(100%-48px)]">
+                    <OriginalEmailTab 
+                      htmlContent={invoice.htmlContent} 
+                      fullscreenEmail={false}
+                      setFullscreenEmail={() => {}}
+                    />
+                  </div>
+                </Card>
+              </ResizablePanel>
+            </>
           )}
-        </div>
-        
-        {/* Bottom action buttons */}
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div>
-            Payment Amount: <span className="font-semibold">${invoice.totalAmount.toFixed(2)}</span>
-          </div>
-          <div className="flex gap-4">
-            <Button variant="outline" className="gap-2" onClick={handleSave}>
-              <Save className="h-4 w-4" />
-              Save & Msg
-            </Button>
-            <Button className="gap-2" onClick={handleApprove} disabled={!isBalanced}>
-              <Send className="h-4 w-4" />
-              Update
-            </Button>
-          </div>
-        </div>
+        </ResizablePanelGroup>
       </div>
     </PageTemplate>
   );

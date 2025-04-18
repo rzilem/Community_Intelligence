@@ -384,6 +384,50 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_number: string
+          account_type: string
+          association_id: string | null
+          bank_name: string
+          created_at: string
+          id: string
+          name: string
+          routing_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          account_type: string
+          association_id?: string | null
+          bank_name: string
+          created_at?: string
+          id?: string
+          name: string
+          routing_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string
+          association_id?: string | null
+          bank_name?: string
+          created_at?: string
+          id?: string
+          name?: string
+          routing_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bid_request_vendors: {
         Row: {
           bid_request_id: string
@@ -973,6 +1017,44 @@ export type Database = {
           },
         ]
       }
+      gl_accounts: {
+        Row: {
+          account_number: string
+          association_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          association_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          association_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
@@ -1135,18 +1217,77 @@ export type Database = {
           },
         ]
       }
+      invoice_line_items: {
+        Row: {
+          amount: number
+          bank_account_id: string | null
+          created_at: string
+          description: string | null
+          gl_account_id: string | null
+          id: string
+          invoice_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          bank_account_id?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bank_account_id?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
           association_id: string | null
           association_name: string | null
+          bank_account_id: string | null
           created_at: string
           description: string | null
           due_date: string | null
+          gl_account_id: string | null
           html_content: string | null
           id: string
           invoice_date: string | null
           invoice_number: string
+          payment_date: string | null
+          payment_method: string | null
           status: string
           tracking_number: string | null
           updated_at: string
@@ -1156,13 +1297,17 @@ export type Database = {
           amount: number
           association_id?: string | null
           association_name?: string | null
+          bank_account_id?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          gl_account_id?: string | null
           html_content?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number: string
+          payment_date?: string | null
+          payment_method?: string | null
           status?: string
           tracking_number?: string | null
           updated_at?: string
@@ -1172,13 +1317,17 @@ export type Database = {
           amount?: number
           association_id?: string | null
           association_name?: string | null
+          bank_account_id?: string | null
           created_at?: string
           description?: string | null
           due_date?: string | null
+          gl_account_id?: string | null
           html_content?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string
+          payment_date?: string | null
+          payment_method?: string | null
           status?: string
           tracking_number?: string | null
           updated_at?: string
