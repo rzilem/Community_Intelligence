@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { 
-  Select, 
+  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
@@ -34,7 +34,8 @@ interface InvoiceLineItemsProps {
   showPreview?: boolean;
 }
 
-const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
+// Renamed from Select to CustomSelect to avoid naming conflict
+const CustomSelect = ({ label, value, onChange, options }: CustomSelectProps) => (
   <div className="space-y-2">
     <Label className="text-sm font-medium text-gray-600">{label}</Label>
     <SelectTrigger className="w-full bg-background border-input">
