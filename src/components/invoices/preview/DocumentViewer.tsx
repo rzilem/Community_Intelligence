@@ -62,6 +62,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
+  // Log details about what we're trying to display
+  React.useEffect(() => {
+    console.group('DocumentViewer Render');
+    console.log('Content type:', {
+      pdfUrl: pdfUrl || 'none',
+      isPdf,
+      isWordDocument,
+      hasHtmlContent: !!htmlContent
+    });
+    console.groupEnd();
+  }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+
   if (pdfUrl) {
     if (isPdf) {
       return (
@@ -71,7 +83,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             title="Invoice PDF"
             className="w-full h-full border-0"
             sandbox="allow-same-origin allow-scripts allow-forms"
-            onError={onIframeError}
+            onError={(e) => {
+              console.error('PDF iframe error:', e);
+              onIframeError();
+            }}
             onLoad={onIframeLoad}
           />
         </div>
@@ -118,7 +133,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           title="Invoice HTML Content"
           className="w-full h-full border-0"
           sandbox="allow-same-origin"
-          onError={onIframeError}
+          onError={(e) => {
+            console.error('HTML iframe error:', e);
+            onIframeError();
+          }}
           onLoad={onIframeLoad}
         />
       </div>

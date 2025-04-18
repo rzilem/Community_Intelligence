@@ -19,10 +19,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log('InvoicePreview props:', {
-      htmlContent: !!htmlContent,
+    console.group('InvoicePreview Diagnostics');
+    console.log('Props received:', {
+      hasHtmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
       pdfUrl: pdfUrl || 'none',
+      pdfUrlValid: typeof pdfUrl === 'string' && pdfUrl.trim().length > 0
     });
 
     setPreviewError(null);
@@ -31,36 +33,73 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     setIsLoading(false);
 
     if (!htmlContent && !pdfUrl) {
+      console.warn('No preview content available (no HTML or PDF URL)');
+      console.groupEnd();
       return;
     }
 
     if (pdfUrl) {
+      console.log('Checking PDF URL accessibility:', pdfUrl);
       setIsLoading(true);
+      
+      // Test if the PDF URL is accessible
       fetch(pdfUrl, { method: 'HEAD' })
         .then((response) => {
           setIsLoading(false);
           if (!response.ok) {
-            setPreviewError(`Failed to access PDF: ${response.statusText}`);
+            console.error('PDF URL inaccessible:', {
+              status: response.status,
+              statusText: response.statusText,
+              url: pdfUrl
+            });
+            setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
+          } else {
+            console.log('PDF URL is accessible:', pdfUrl);
           }
         })
         .catch((err) => {
+          console.error('Error accessing PDF URL:', err.message, pdfUrl);
           setIsLoading(false);
           setPreviewError(`Error accessing PDF: ${err.message}`);
+        })
+        .finally(() => {
+          console.groupEnd();
         });
+    } else if (htmlContent) {
+      console.log('No PDF URL provided, using HTML content for preview');
+      console.groupEnd();
+    } else {
+      console.warn('Both PDF URL and HTML content are empty or invalid');
+      console.groupEnd();
     }
   }, [htmlContent, pdfUrl]);
 
-  const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx');
-  const isPdf = pdfUrl?.toLowerCase().endsWith('.pdf');
+  const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx') || false;
+  const isPdf = pdfUrl?.toLowerCase().endsWith('.pdf') || false;
 
   const handleIframeError = () => {
-    console.error('Error loading iframe content');
+    console.error('Iframe failed to load content:', {
+      pdfUrl,
+      isPdf,
+      isWordDocument,
+      hasHtmlContent: !!htmlContent
+    });
     setIsLoading(false);
-    setPreviewError('Failed to load document preview.');
+    setPreviewError('Failed to load document preview. The file may be inaccessible or corrupted.');
+  };
+
+  const handleIframeLoad = () => {
+    console.log('Iframe content loaded successfully:', {
+      pdfUrl,
+      isPdf,
+      hasHtmlContent: !!htmlContent
+    });
+    setIsLoading(false);
   };
 
   const openExternalLink = () => {
     if (pdfUrl) {
+      console.log('Opening external link:', pdfUrl);
       window.open(pdfUrl, '_blank');
     }
   };
@@ -101,7 +140,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
         isPdf={isPdf}
         isWordDocument={isWordDocument}
         onIframeError={handleIframeError}
-        onIframeLoad={() => setIsLoading(false)}
+        onIframeLoad={handleIframeLoad}
         onExternalOpen={openExternalLink}
       />
     );

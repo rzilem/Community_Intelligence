@@ -55,6 +55,29 @@ export const useInvoiceDetail = (id: string | undefined) => {
       console.log("Raw Invoice Data:", invoiceData);
       console.log("PDF URL Field:", invoiceData.pdf_url);
       console.log("HTML Content Field:", invoiceData.html_content);
+      
+      // Check for PDF URL - log details to help diagnose issues
+      if (invoiceData.pdf_url) {
+        console.log("PDF URL validation:", {
+          url: invoiceData.pdf_url,
+          length: invoiceData.pdf_url.length,
+          isProbablyValid: !!invoiceData.pdf_url && invoiceData.pdf_url.startsWith('http')
+        });
+      } else {
+        console.warn("Missing PDF URL in invoice data");
+      }
+      
+      // Check for HTML content - log details to help diagnose issues
+      if (invoiceData.html_content) {
+        console.log("HTML Content validation:", {
+          length: invoiceData.html_content.length,
+          preview: invoiceData.html_content.substring(0, 100) + '...',
+          hasHtmlTags: invoiceData.html_content.includes('<')
+        });
+      } else {
+        console.warn("Missing HTML content in invoice data");
+      }
+      
       console.groupEnd();
       
       // Ensure we have either PDF URL or HTML content for display
