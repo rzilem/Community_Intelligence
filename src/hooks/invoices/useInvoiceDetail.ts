@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 export const useInvoiceDetail = (id: string | undefined) => {
   const isNewInvoice = id === 'new';
@@ -75,6 +76,23 @@ export const useInvoiceDetail = (id: string | undefined) => {
       // Ensure PDF URL is properly formatted
       let pdfUrl = invoiceData.pdf_url || '';
       
+      // Analyze HTML content for PDF mentions
+      if (htmlContent && !pdfUrl) {
+        console.log("Checking HTML content for PDF mentions");
+        const pdfMentionRegex = /attach(ed|ment)|pdf|invoice|document/i;
+        const hasPdfMention = pdfMentionRegex.test(htmlContent);
+        console.log("PDF mention detected:", hasPdfMention);
+        
+        if (hasPdfMention) {
+          // Check communications_log for possible attachments
+          toast({
+            title: "PDF mentioned but missing",
+            description: "The invoice mentions an attachment but no PDF was found",
+            variant: "destructive"
+          });
+        }
+      }
+      
       // Make sure the PDF URL doesn't have any whitespace or control characters
       if (pdfUrl) {
         pdfUrl = pdfUrl.trim();
@@ -84,6 +102,9 @@ export const useInvoiceDetail = (id: string | undefined) => {
           console.log('Adding https:// to PDF URL:', pdfUrl);
           pdfUrl = 'https://' + pdfUrl;
         }
+        
+        // Log the final PDF URL
+        console.log("Final PDF URL after formatting:", pdfUrl);
       }
       
       console.log("Using values:", {

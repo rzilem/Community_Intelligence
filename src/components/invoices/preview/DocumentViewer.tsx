@@ -81,6 +81,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               margin-top: 1rem;
               font-size: 1.2rem;
             }
+            font[color="#6fa8dc"] {
+              color: #6fa8dc;
+              font-size: 24px;
+              font-weight: bold;
+            }
           </style>
         </head>
         <body>${htmlContent}</body>
@@ -88,27 +93,37 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
+  // Function to create a direct PDF embed that works in most browsers
+  const createPdfEmbed = () => {
+    if (!pdfUrl) return null;
+    
+    return (
+      <div className="w-full h-full flex flex-col">
+        <object
+          data={pdfUrl}
+          type="application/pdf"
+          className="w-full h-full border-0"
+          onError={onIframeError}
+          onLoad={onIframeLoad}
+        >
+          <div className="flex flex-col items-center justify-center h-full p-6">
+            <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
+            <Button 
+              onClick={onExternalOpen}
+              className="flex items-center"
+            >
+              Download PDF <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </object>
+      </div>
+    );
+  };
+
   // Prioritize PDF viewing when available
   if (pdfUrl && isPdf) {
     console.log('Displaying PDF content from URL:', pdfUrl);
-    return (
-      <div className="w-full h-full relative">
-        <iframe 
-          src={pdfUrl}
-          title="Invoice PDF"
-          className="w-full h-full border-0"
-          sandbox="allow-same-origin allow-scripts allow-forms"
-          onError={(e) => {
-            console.error('PDF iframe error:', e);
-            onIframeError();
-          }}
-          onLoad={() => {
-            console.log('PDF iframe loaded successfully');
-            onIframeLoad();
-          }}
-        />
-      </div>
-    );
+    return createPdfEmbed();
   }
 
   // Handle Word documents

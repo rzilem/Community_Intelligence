@@ -18,6 +18,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
+  const [pdfMentioned, setPdfMentioned] = useState(false);
 
   useEffect(() => {
     console.group('InvoicePreview Component');
@@ -30,6 +31,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
 
     setPreviewError(null);
     setIsLoading(true);
+
+    // Check if HTML content mentions a PDF attachment
+    if (htmlContent && !pdfUrl) {
+      const pdfMentionRegex = /attach(ed|ment)|pdf|invoice|document/i;
+      const containsPdfMention = pdfMentionRegex.test(htmlContent);
+      setPdfMentioned(containsPdfMention);
+      console.log('PDF mention detected in HTML:', containsPdfMention);
+    }
 
     // First, determine what content we have to display
     if (!htmlContent && !pdfUrl) {
@@ -222,10 +231,24 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       );
     }
 
+    // PDF is mentioned in HTML but no PDF URL is available
+    if (pdfMentioned && !pdfUrl && htmlContent) {
+      return (
+        <NoPreviewState
+          message="PDF Attachment Mentioned But Not Available"
+          pdfUrl={pdfUrl}
+          onExternalOpen={pdfUrl ? openExternalLink : undefined}
+        />
+      );
+    }
+
     // Check if HTML content seems to be a robots.txt or similar non-invoice content
     if (contentType === 'html' && !isInvoicePreviewable(htmlContent)) {
       return (
-        <NoPreviewState />
+        <NoPreviewState
+          pdfUrl={pdfUrl}
+          onExternalOpen={pdfUrl ? openExternalLink : undefined}
+        />
       );
     }
 
