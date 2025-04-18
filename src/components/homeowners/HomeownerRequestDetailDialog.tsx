@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -86,7 +87,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       onOpenChange={onOpenChange}
       modal={!fullscreenEmail}
     >
-      <DialogContent className={`${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl max-h-[80vh]'} overflow-hidden flex flex-col`}>
+      <DialogContent className={`${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl max-h-[90vh]'} overflow-hidden flex flex-col`}>
         <HomeownerRequestDialogHeader 
           title={request.title}
           showFullscreenButton={activeTab === 'original'}
@@ -94,7 +95,12 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
           onFullscreenToggle={() => setFullscreenEmail(!fullscreenEmail)}
         />
         
-        <Tabs defaultValue="details" className="flex-1" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs 
+          defaultValue="details" 
+          className="flex-1 flex flex-col" 
+          value={activeTab} 
+          onValueChange={handleTabChange}
+        >
           <TabsList>
             <TabsTrigger value="details">Request Information</TabsTrigger>
             <TabsTrigger value="original">Original Email</TabsTrigger>
@@ -102,11 +108,11 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="details" className="flex-1 overflow-hidden">
+          <TabsContent value="details" className="flex-1 overflow-auto">
             <DetailsTab request={request} processedDescription={processedDescription} />
           </TabsContent>
           
-          <TabsContent value="original" className="flex-1 overflow-hidden">
+          <TabsContent value="original" className="flex-1 overflow-auto">
             <OriginalEmailTab 
               htmlContent={request.html_content}
               fullscreenEmail={fullscreenEmail}
@@ -114,12 +120,12 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             />
           </TabsContent>
           
-          <TabsContent value="updates" className="flex-1 overflow-hidden">
+          <TabsContent value="updates" className="flex-1 overflow-auto">
             <CommentsTab comments={comments} loadingComments={loadingComments} />
           </TabsContent>
           
-          <TabsContent value="history" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[60vh]">
+          <TabsContent value="history" className="flex-1 overflow-auto">
+            <ScrollArea className="h-full">
               <div className="p-4">
                 <HistoryTimeline request={request} />
               </div>
