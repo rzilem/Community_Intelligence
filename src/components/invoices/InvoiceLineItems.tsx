@@ -92,16 +92,18 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       
       {lines.map((line, index) => (
         <div key={index} className="relative space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-12 gap-4">
-          <Button 
-            variant="destructive" 
-            size="icon" 
-            onClick={() => handleRemoveLine(index)}
-            className="absolute top-2 left-2 h-6 w-6"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="col-span-1 flex items-center justify-center">
+            <Button 
+              variant="destructive" 
+              size="icon" 
+              onClick={() => handleRemoveLine(index)}
+              className="h-5 w-5"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
           
-          <div className="col-span-12 space-y-4">
+          <div className="col-span-11 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-600">GL Account</Label>
