@@ -118,11 +118,11 @@ export const useInvoiceDetail = (id: string | undefined) => {
       amount: invoice.totalAmount,
       status: invoice.status,
       payment_method: invoice.paymentType,
-      description: invoice.description,
     });
     
     try {
       // Send the association_id as null if it's an empty string to avoid UUID validation errors
+      // This is crucial for proper handling in the database
       const association_id = invoice.association ? invoice.association : null;
       console.log('Final association_id value being sent:', association_id);
       console.log('Final vendor value being sent:', invoice.vendor);
@@ -138,7 +138,6 @@ export const useInvoiceDetail = (id: string | undefined) => {
           amount: invoice.totalAmount,
           status: invoice.status,
           payment_method: invoice.paymentType,
-          description: invoice.description,
         }
       });
       

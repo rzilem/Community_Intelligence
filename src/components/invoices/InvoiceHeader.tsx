@@ -1,90 +1,135 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { Invoice } from '@/types/invoice-types';
+import VendorSelector from '@/components/vendors/VendorSelector';
 
 interface InvoiceHeaderProps {
   invoice: {
-    id: string;
     vendor: string;
     association: string;
     invoiceNumber: string;
     invoiceDate: string;
     dueDate: string;
-    description: string;
+    totalAmount: number;
+    paymentType: string;
+    description?: string;
   };
   onInvoiceChange: (field: string, value: string | number) => void;
 }
 
-const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({ invoice, onInvoiceChange }) => {
-  // Log the association ID to help with debugging
-  console.log("InvoiceHeader component - association ID:", invoice.association);
-
+const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
+  invoice,
+  onInvoiceChange,
+}) => {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="font-medium mb-1">Vendor</h3>
+    <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+      {/* First row with Association and Vendor */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="md:col-span-2">
+          <AssociationSelector
+            initialAssociationId={invoice.association}
+            onAssociationChange={(value) => onInvoiceChange('association', value)}
+            label="Association"
+          />
+        </div>
+
+        <div className="md:col-span-4">
+          <VendorSelector
+            onVendorChange={(value) => onInvoiceChange('vendor', value)}
+            initialVendorName={invoice.vendor}
+            className="w-full"
+            label="Vendor"
+          />
+        </div>
+      </div>
+
+      {/* Date and Invoice Number row */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceDate">Invoice Date</Label>
             <Input
-              value={invoice.vendor}
-              onChange={(e) => onInvoiceChange('vendor', e.target.value)}
-              placeholder="Enter vendor name"
-              className="mb-4"
+              id="invoiceDate"
+              type="date"
+              value={invoice.invoiceDate}
+              onChange={(e) => onInvoiceChange('invoiceDate', e.target.value)}
+              className="w-full"
             />
-            
-            <h3 className="font-medium mb-1">Invoice Number</h3>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
             <Input
+              id="dueDate"
+              type="date"
+              value={invoice.dueDate}
+              onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceNumber">Invoice Number</Label>
+            <Input
+              id="invoiceNumber"
               value={invoice.invoiceNumber}
               onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
               placeholder="Enter invoice number"
-              className="mb-4"
+              className="w-full"
             />
-            
-            <h3 className="font-medium mb-1">Description</h3>
-            <Input
-              value={invoice.description || ''}
-              onChange={(e) => onInvoiceChange('description', e.target.value)}
-              placeholder="Enter description"
-            />
-          </div>
-          
-          <div>
-            <AssociationSelector
-              onAssociationChange={(id) => {
-                console.log('Association selected:', id);
-                onInvoiceChange('association', id);
-              }}
-              initialAssociationId={invoice.association}
-              label="Association"
-            />
-            
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div>
-                <h3 className="font-medium mb-1">Invoice Date</h3>
-                <Input
-                  type="date"
-                  value={invoice.invoiceDate}
-                  onChange={(e) => onInvoiceChange('invoiceDate', e.target.value)}
-                  className="mb-4"
-                />
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-1">Due Date</h3>
-                <Input
-                  type="date"
-                  value={invoice.dueDate}
-                  onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
-                />
-              </div>
-            </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Payment type and Total row */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="md:col-span-2">
+          <div className="space-y-2">
+            <Label>Payment Type</Label>
+            <Select
+              value={invoice.paymentType}
+              onValueChange={(value) => onInvoiceChange('paymentType', value)}
+            >
+              <SelectTrigger id="paymentType">
+                <SelectValue placeholder="Select payment type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="check">Check</SelectItem>
+                <SelectItem value="ach">ACH</SelectItem>
+                <SelectItem value="credit_card">Credit Card</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 md:col-start-5">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceTotal">Total</Label>
+            <Input
+              id="invoiceTotal"
+              type="number"
+              value={invoice.totalAmount}
+              onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
+              step="0.01"
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
