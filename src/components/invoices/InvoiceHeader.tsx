@@ -2,13 +2,12 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
 } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import VendorSelector from '@/components/vendors/VendorSelector';
@@ -129,17 +128,6 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             />
           </div>
         </div>
-      </div>
-
-      {/* Description area */}
-      <div className="space-y-2">
-        <Label>Description</Label>
-        <Textarea
-          value={invoice.description}
-          onChange={(e) => onInvoiceChange('description', e.target.value)}
-          placeholder="Enter description"
-          className="min-h-[100px]"
-        />
       </div>
     </div>
   );
