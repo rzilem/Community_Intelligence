@@ -20,6 +20,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
     htmlContent: '',
     pdfUrl: '',
     emailContent: '',
+    description: '',
   });
 
   const [lines, setLines] = useState([{
@@ -87,6 +88,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
         htmlContent: invoiceData.html_content || '',
         pdfUrl: invoiceData.pdf_url || '',
         emailContent: invoiceData.email_content || '',
+        description: invoiceData.description || invoiceData.subject || '',
       });
 
       console.groupEnd();
