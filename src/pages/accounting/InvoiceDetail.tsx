@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
-import { InvoiceHeader } from '@/components/invoices/InvoiceHeader';
+import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
 import { InvoicePreview } from '@/components/invoices/InvoicePreview';
 import { InvoiceNavigation } from '@/components/invoices/InvoiceNavigation';
