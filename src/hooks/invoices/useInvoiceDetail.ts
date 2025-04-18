@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -86,7 +87,6 @@ export const useInvoiceDetail = (id: string | undefined) => {
         
         if (hasPdfMention) {
           // Check communications_log for possible attachments
-          // Fix: Using the correct toast syntax for sonner
           toast("The invoice mentions an attachment but no PDF was found");
         }
       }
@@ -131,10 +131,15 @@ export const useInvoiceDetail = (id: string | undefined) => {
         pdfUrl: pdfUrl,
         emailContent: emailContent,
       });
+
+      // Load line items if they exist (this would need to be implemented)
+      // fetchLineItems(invoiceData.id);
     }
   }, [invoiceData, id]);
 
   const handleInvoiceChange = (field: string, value: string | number) => {
+    console.log(`Updating invoice field: ${field} with value:`, value);
+    
     // For amount fields, ensure we maintain decimal precision
     if (field === 'totalAmount' || field === 'amount') {
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
@@ -142,6 +147,33 @@ export const useInvoiceDetail = (id: string | undefined) => {
     } else {
       setInvoice({ ...invoice, [field]: value });
     }
+  };
+
+  const saveInvoice = async () => {
+    console.log("Saving invoice with data:", {
+      vendor: invoice.vendor,
+      association_id: invoice.association,
+      invoice_number: invoice.invoiceNumber,
+      invoice_date: invoice.invoiceDate,
+      due_date: invoice.dueDate,
+      amount: invoice.totalAmount,
+      status: invoice.status,
+      payment_method: invoice.paymentType,
+    });
+    
+    return updateInvoice({
+      id: invoice.id,
+      data: {
+        vendor: invoice.vendor,
+        association_id: invoice.association,
+        invoice_number: invoice.invoiceNumber,
+        invoice_date: invoice.invoiceDate,
+        due_date: invoice.dueDate,
+        amount: invoice.totalAmount,
+        status: invoice.status,
+        payment_method: invoice.paymentType,
+      }
+    });
   };
 
   const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
@@ -158,6 +190,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
     isLoadingAllInvoices,
     isLoadingInvoice,
     updateInvoice,
+    saveInvoice,
     isNewInvoice
   };
 };

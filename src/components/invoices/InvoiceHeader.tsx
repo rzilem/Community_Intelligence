@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,16 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   invoice,
   onInvoiceChange,
 }) => {
+  // Debug association changes
+  useEffect(() => {
+    console.log('InvoiceHeader - Current association:', invoice.association);
+  }, [invoice.association]);
+
+  const handleAssociationChange = (id: string) => {
+    console.log('Association changed to:', id);
+    onInvoiceChange('association', id);
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -37,7 +47,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         <div className="space-y-2">
           <Label htmlFor="association">Association</Label>
           <AssociationSelector
-            onAssociationChange={(id) => onInvoiceChange('association', id)}
+            onAssociationChange={handleAssociationChange}
             initialAssociationId={invoice.association}
             label={false}
           />

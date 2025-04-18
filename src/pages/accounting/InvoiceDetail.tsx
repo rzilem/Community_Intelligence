@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -27,6 +28,7 @@ const InvoiceDetail = () => {
     isBalanced,
     allInvoices,
     isLoadingAllInvoices,
+    saveInvoice,
     updateInvoice,
     isNewInvoice
   } = useInvoiceDetail(id);
@@ -40,32 +42,30 @@ const InvoiceDetail = () => {
       hasHtmlContent: !!invoice.htmlContent,
       hasPdfUrl: !!invoice.pdfUrl,
       htmlContentLength: invoice.htmlContent?.length || 0,
-      pdfUrlValue: invoice.pdfUrl
+      pdfUrlValue: invoice.pdfUrl,
+      association: invoice.association
     });
     console.groupEnd();
-  }, [invoice]);
+  }, [invoice, id]);
 
-  const handleSave = () => {
-    updateInvoice({
-      id: invoice.id,
-      data: {
-        vendor: invoice.vendor,
-        association_id: invoice.association,
-        invoice_number: invoice.invoiceNumber,
-        invoice_date: invoice.invoiceDate,
-        due_date: invoice.dueDate,
-        amount: invoice.totalAmount,
-        status: invoice.status,
-        payment_method: invoice.paymentType,
-      }
-    }, {
-      onSuccess: () => {
-        toast({
-          title: "Invoice updated",
-          description: "The invoice has been updated successfully.",
-        });
-      }
-    });
+  const handleSave = async () => {
+    console.log("Calling saveInvoice with association:", invoice.association);
+    
+    try {
+      await saveInvoice();
+      
+      toast({
+        title: "Invoice updated",
+        description: "The invoice has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      toast({
+        title: "Error updating invoice",
+        description: "There was an error updating the invoice. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleApprove = () => {
