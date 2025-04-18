@@ -23,6 +23,7 @@ import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
 import AttachmentsTab from './tabs/AttachmentsTab';
 import RequestDialogHeader from './edit/RequestDialogHeader';
 import RequestDialogTabs from './edit/RequestDialogTabs';
+import RequestEditForm from './RequestEditForm';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -34,7 +35,7 @@ interface HomeownerRequestEditDialogProps {
 const formSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
   description: z.string().min(10, { message: "Description must be at least 10 characters" }),
-  status: z.enum(['open', 'in-progress', 'resolved', 'closed']),
+  status: z.enum(['open', 'in-progress', 'resolved', 'closed', 'hold', 'board-review', 'responded', 'spam']),
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
   assigned_to: z.string().optional(),
@@ -42,6 +43,7 @@ const formSchema = z.object({
   property_id: z.string().optional(),
   resident_id: z.string().optional(),
   note: z.string().optional(),
+  response: z.string().optional(),
 });
 
 const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({ 
@@ -69,6 +71,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
       property_id: request?.property_id || 'unassigned',
       resident_id: request?.resident_id || 'unassigned',
       note: '',
+      response: '',
     },
   });
   
@@ -89,8 +92,25 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   );
 
   React.useEffect(() => {
-    if (open && request && activeTab === 'comments') {
-      fetchComments();
+    if (open && request) {
+      // Reset form with request data
+      form.reset({
+        title: request.title || '',
+        description: request.description || '',
+        status: request.status || 'open',
+        priority: request.priority || 'medium',
+        type: request.type || 'general',
+        assigned_to: request.assigned_to || 'unassigned',
+        association_id: request.association_id || 'unassigned',
+        property_id: request.property_id || 'unassigned',
+        resident_id: request.resident_id || 'unassigned',
+        note: '',
+        response: '',
+      });
+      
+      if (activeTab === 'comments') {
+        fetchComments();
+      }
     }
   }, [open, request, activeTab]);
 
@@ -145,6 +165,12 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
     
     if (values.status !== 'resolved' && request.status === 'resolved') {
       updatedData.resolved_at = null;
+    }
+    
+    // Handle response & note if provided
+    if (values.response) {
+      // Implement sending response to the homeowner
+      console.log("Send response:", values.response);
     }
     
     if (values.note?.trim()) {
@@ -215,6 +241,15 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
             >
               <TabsContent value="details">
                 <DetailsTab request={request} processedDescription={processedDescription} />
+                
+                {/* Add the RequestEditForm here */}
+                <RequestEditForm 
+                  request={request}
+                  onSubmit={handleSubmit}
+                  isPending={isPending}
+                  onCancel={() => onOpenChange(false)}
+                  form={form}
+                />
               </TabsContent>
 
               <TabsContent value="comments">

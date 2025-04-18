@@ -24,20 +24,36 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   const generateAIResponse = async () => {
     setIsGenerating(true);
     try {
+      // Construct a prompt based on the request details
+      const prompt = `Please create a professional response to a homeowner request with the following details:
+      Title: ${request.title}
+      Description: ${request.description?.substring(0, 500) || 'No description provided'}
+      Type: ${request.type}
+      Priority: ${request.priority}
+      
+      The response should be courteous, address the homeowner's concerns directly, and provide next steps or a timeline if applicable.`;
+      
+      // Call the Supabase edge function to generate a response
       const response = await fetch('https://your-project-id.supabase.co/functions/v1/generate-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ requestData: request }),
+        body: JSON.stringify({ requestData: request, prompt }),
       });
       
+      if (!response.ok) {
+        throw new Error('Failed to generate AI response');
+      }
+      
       const data = await response.json();
-      setAiResponse(data.generatedText);
+      setAiResponse(data.generatedText || 'We have received your request and are working to address it promptly. A team member will reach out to you with more information soon.');
       toast.success('AI response generated successfully');
     } catch (error) {
       console.error('Error generating AI response:', error);
       toast.error('Failed to generate AI response');
+      // Provide a fallback response
+      setAiResponse('Thank you for reaching out. We've received your request and are working to address it promptly. A team member will contact you with more information soon.');
     } finally {
       setIsGenerating(false);
     }
@@ -51,7 +67,9 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
 
   return (
     <div className="space-y-4 p-4 bg-gradient-to-r from-slate-100 to-slate-50 rounded-md border shadow-sm dark:from-slate-800 dark:to-slate-900/90">
-      <div className="space-y-2">
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Request Actions</h3>
+        
         <ActionButtons 
           onSubmit={onSubmit}
           onSpamClick={() => setShowSpamDialog(true)}

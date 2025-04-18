@@ -10,33 +10,39 @@ interface ActionButtonsProps {
 
 const ActionButtons = ({ onSubmit, onSpamClick }: ActionButtonsProps) => {
   return (
-    <div className="flex items-center space-x-2">
-      <TooltipButton
-        tooltip="Place request on hold"
-        variant="outline"
-        onClick={() => onSubmit({ status: 'hold' })}
-      >
-        <PauseCircle />
-        Hold
-      </TooltipButton>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium">Change Status</h4>
+      <div className="flex flex-wrap gap-2">
+        <TooltipButton
+          tooltip="Place request on hold until more information is available"
+          variant="outline"
+          size="sm"
+          onClick={() => onSubmit({ status: 'hold' })}
+        >
+          <PauseCircle className="h-4 w-4 mr-1" />
+          Hold
+        </TooltipButton>
 
-      <TooltipButton
-        tooltip="Send to board for review"
-        variant="outline"
-        onClick={() => onSubmit({ status: 'board-review' })}
-      >
-        <ArrowUpCircle />
-        Board Review
-      </TooltipButton>
+        <TooltipButton
+          tooltip="Escalate to board members for review and decision"
+          variant="outline"
+          size="sm"
+          onClick={() => onSubmit({ status: 'board-review' })}
+        >
+          <ArrowUpCircle className="h-4 w-4 mr-1" />
+          Board Review
+        </TooltipButton>
 
-      <TooltipButton
-        tooltip="Mark as spam"
-        variant="destructive"
-        onClick={onSpamClick}
-      >
-        <MailX />
-        Mark as Spam
-      </TooltipButton>
+        <TooltipButton
+          tooltip="Mark as spam and block sender from future submissions"
+          variant="destructive"
+          size="sm"
+          onClick={onSpamClick}
+        >
+          <MailX className="h-4 w-4 mr-1" />
+          Mark as Spam
+        </TooltipButton>
+      </div>
     </div>
   );
 };
