@@ -7,7 +7,7 @@ import { NoPreviewState } from './preview/NoPreviewState';
 import { DocumentViewer } from './preview/DocumentViewer';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
-import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf } from './preview/previewUtils';
+import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage } from './preview/previewUtils';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -22,6 +22,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
   const [hasContent, setHasContent] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  
+  // Handle opening PDF in new tab
+  const handleExternalOpen = () => {
+    if (normalizedPdfUrl) {
+      window.open(normalizedPdfUrl, '_blank');
+    }
+  };
+  
+  // Handle toggling fullscreen view
+  const handleToggleFullscreen = () => {
+    setFullscreen(!fullscreen);
+  };
   
   useEffect(() => {
     // Reset states
@@ -70,16 +83,32 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     return <PreviewErrorState error={error} />;
   }
 
+  // Determine file type
+  const isPdfFile = isPdf(normalizedPdfUrl);
+  const isWordDocument = normalizedPdfUrl && getFileExtension(normalizedPdfUrl) === 'docx';
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <PreviewHeader
-        hasPdfUrl={!!normalizedPdfUrl}
+        isPdf={isPdfFile}
+        isWordDocument={isWordDocument}
         pdfUrl={normalizedPdfUrl}
+        onExternalOpen={handleExternalOpen}
+        onToggleFullscreen={handleToggleFullscreen}
+        showActions={!!normalizedPdfUrl}
       />
       
       <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900">
         {normalizedPdfUrl ? (
-          <DocumentViewer url={normalizedPdfUrl} />
+          <DocumentViewer 
+            pdfUrl={normalizedPdfUrl}
+            htmlContent={undefined}
+            isPdf={isPdfFile}
+            isWordDocument={isWordDocument}
+            onIframeError={() => setError("Failed to load document")}
+            onIframeLoad={() => setLoading(false)}
+            onExternalOpen={handleExternalOpen}
+          />
         ) : htmlContent && isValidHtml(htmlContent) ? (
           <Card className="p-4 h-full overflow-auto bg-white dark:bg-gray-800">
             <div 
@@ -102,3 +131,26 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     </div>
   );
 };
+
+// Helper function to get file extension
+function getFileExtension(urlOrFilename: string): string {
+  if (!urlOrFilename) return '';
+  
+  // Extract the filename from the URL if it's a URL
+  let filename = urlOrFilename;
+  
+  try {
+    const url = new URL(urlOrFilename);
+    filename = url.pathname.split('/').pop() || '';
+  } catch (e) {
+    // Not a URL, use as filename
+  }
+  
+  // Extract extension
+  const parts = filename.split('.');
+  if (parts.length > 1) {
+    return parts.pop()?.toLowerCase() || '';
+  }
+  
+  return '';
+}
