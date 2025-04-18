@@ -147,6 +147,7 @@ const InvoiceDetail = () => {
                 onLinesChange={setLines}
                 associationId={invoice.association}
                 showPreview={showPreview}
+                invoiceTotal={invoice.totalAmount}
               />
               
               <InvoiceSummary 

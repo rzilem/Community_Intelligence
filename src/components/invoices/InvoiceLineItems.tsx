@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Select,
   SelectContent,
@@ -11,13 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle } from 'lucide-react';
-
-interface CustomSelectProps {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-}
 
 interface LineItem {
   glAccount: string;
@@ -32,31 +24,24 @@ interface InvoiceLineItemsProps {
   onLinesChange: (lines: LineItem[]) => void;
   associationId?: string;
   showPreview?: boolean;
+  invoiceTotal: number;
 }
-
-// Renamed from Select to CustomSelect to avoid naming conflict
-const CustomSelect = ({ label, value, onChange, options }: CustomSelectProps) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-medium text-gray-600">{label}</Label>
-    <SelectTrigger className="w-full bg-background border-input">
-      <SelectValue placeholder={`Select ${label}`} />
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </SelectTrigger>
-  </div>
-);
 
 export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   lines,
   onLinesChange,
   associationId,
-  showPreview = true
+  showPreview = true,
+  invoiceTotal = 0
 }) => {
+  useEffect(() => {
+    if (lines.length === 1 && invoiceTotal > 0 && lines[0].amount === 0) {
+      const updatedLines = [...lines];
+      updatedLines[0].amount = invoiceTotal;
+      onLinesChange(updatedLines);
+    }
+  }, [invoiceTotal, lines, onLinesChange]);
+
   const handleAddLine = () => {
     onLinesChange([
       ...lines,
@@ -73,6 +58,14 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   const handleLineChange = (index: number, field: string, value: string | number) => {
     const newLines = [...lines];
     newLines[index][field] = value;
+
+    if (field === 'amount' && index > 0) {
+      const totalExcludingFirst = newLines
+        .slice(1)
+        .reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
+      newLines[0].amount = invoiceTotal - totalExcludingFirst;
+    }
+
     onLinesChange(newLines);
   };
 
@@ -173,6 +166,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
                 placeholder="0.00"
                 className="mt-2 text-right"
                 step="0.01"
+                disabled={index === 0}
               />
             </div>
           </div>
