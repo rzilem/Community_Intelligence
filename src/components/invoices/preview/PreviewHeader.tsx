@@ -40,7 +40,9 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
           )}
           <span className="font-medium">Invoice Preview</span>
         </div>
-        
+      </div>
+      
+      <div className="flex items-center gap-4">
         {hasEmail && (
           <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
             <TabsList>
@@ -55,32 +57,32 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
             </TabsList>
           </Tabs>
         )}
-      </div>
-      
-      {showActions && (
-        <div className="flex gap-2">
-          {pdfUrl && (
+        
+        {showActions && (
+          <div className="flex gap-2">
+            {pdfUrl && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="p-0 h-8 w-8"
+                onClick={onExternalOpen}
+                title="Open in new tab"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            )}
             <Button 
               variant="ghost" 
               size="sm" 
               className="p-0 h-8 w-8"
-              onClick={onExternalOpen}
-              title="Open in new tab"
+              onClick={onToggleFullscreen}
+              title="Toggle fullscreen"
             >
-              <ExternalLink className="h-4 w-4" />
+              <Maximize2 className="h-4 w-4" />
             </Button>
-          )}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-0 h-8 w-8"
-            onClick={onToggleFullscreen}
-            title="Toggle fullscreen"
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
