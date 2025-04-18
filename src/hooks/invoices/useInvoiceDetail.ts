@@ -57,11 +57,16 @@ export const useInvoiceDetail = (id: string | undefined) => {
       console.log("Invoice ID:", id);
       console.log("Raw Invoice Data:", invoiceData);
       
-      // Explicitly log association data
+      // Explicitly log association and vendor data
       console.log("Association ID:", {
         raw: invoiceData.association_id,
         type: typeof invoiceData.association_id,
         isValid: !!invoiceData.association_id
+      });
+      
+      console.log("Vendor:", {
+        raw: invoiceData.vendor,
+        type: typeof invoiceData.vendor
       });
       
       // Ensure full decimal precision for amount
@@ -118,6 +123,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
       // This is crucial for proper handling in the database
       const association_id = invoice.association ? invoice.association : null;
       console.log('Final association_id value being sent:', association_id);
+      console.log('Final vendor value being sent:', invoice.vendor);
       
       const result = await updateInvoice({
         id: invoice.id,

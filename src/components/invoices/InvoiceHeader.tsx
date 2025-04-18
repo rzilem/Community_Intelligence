@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import AssociationSelector from '@/components/associations/AssociationSelector';
+import VendorSelector from '@/components/vendors/VendorSelector';
 
 interface InvoiceHeaderProps {
   invoice: {
@@ -32,7 +34,8 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   // Debug association changes
   useEffect(() => {
     console.log('InvoiceHeader - Current association:', invoice.association);
-  }, [invoice.association]);
+    console.log('InvoiceHeader - Current vendor:', invoice.vendor);
+  }, [invoice.association, invoice.vendor]);
 
   const handleAssociationChange = (id: string) => {
     console.log('Association changed to:', id);
@@ -40,15 +43,31 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
     onInvoiceChange('association', id);
   };
 
+  const handleVendorChange = (vendorName: string) => {
+    console.log('Vendor changed to:', vendorName);
+    // When the vendor is changed, update the parent component with the new value
+    onInvoiceChange('vendor', vendorName);
+  };
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Association selection */}
         <div className="space-y-2">
           <Label htmlFor="association">Association</Label>
           <AssociationSelector
             onAssociationChange={handleAssociationChange}
             initialAssociationId={invoice.association}
+            label={false}
+          />
+        </div>
+
+        {/* Vendor selection */}
+        <div className="space-y-2">
+          <Label htmlFor="vendor">Vendor</Label>
+          <VendorSelector
+            onVendorChange={handleVendorChange}
+            initialVendorName={invoice.vendor}
             label={false}
           />
         </div>
@@ -65,7 +84,7 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Invoice Date */}
         <div className="space-y-2">
           <Label>Invoice Date</Label>
@@ -119,30 +138,15 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             </PopoverContent>
           </Popover>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Invoice Total */}
-        <div className="space-y-2">
-          <Label htmlFor="totalAmount">Invoice Total</Label>
-          <Input
-            id="totalAmount"
-            type="number"
-            value={invoice.totalAmount}
-            onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
-            step="0.01"
-            className="text-right"
-          />
-        </div>
-
-        {/* Payment Type */}
+        {/* Payment Type with smaller width */}
         <div className="space-y-2">
           <Label htmlFor="paymentType">Payment Type</Label>
           <Select
             value={invoice.paymentType}
             onValueChange={(value) => onInvoiceChange('paymentType', value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full max-w-[200px]">
               <SelectValue placeholder="Select payment type" />
             </SelectTrigger>
             <SelectContent>
@@ -152,6 +156,21 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               <SelectItem value="card">Credit Card</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+        {/* Invoice Total */}
+        <div className="space-y-2 max-w-[200px]">
+          <Label htmlFor="totalAmount">Invoice Total</Label>
+          <Input
+            id="totalAmount"
+            type="number"
+            value={invoice.totalAmount}
+            onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
+            step="0.01"
+            className="text-right"
+          />
         </div>
       </div>
     </div>

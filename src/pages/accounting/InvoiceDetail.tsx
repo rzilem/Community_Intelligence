@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -44,6 +45,7 @@ const InvoiceDetail = () => {
 
   const handleSave = async () => {
     console.log("Saving invoice with association:", invoice.association);
+    console.log("Saving invoice with vendor:", invoice.vendor);
     
     if (isSaving) return; // Prevent multiple save attempts
     
