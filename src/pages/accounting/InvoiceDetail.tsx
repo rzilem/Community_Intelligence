@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt, Maximize2, Minimize2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
 import { InvoiceHeader } from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
+import { InvoicePreview } from '@/components/invoices/InvoicePreview';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import OriginalEmailTab from '@/components/homeowners/detail/tabs/OriginalEmailTab';
 
 const InvoiceDetail = () => {
   const { id } = useParams();
@@ -162,18 +163,7 @@ const InvoiceDetail = () => {
             <>
               <ResizableHandle />
               <ResizablePanel defaultSize={40}>
-                <Card className="h-full">
-                  <div className="bg-gray-50 px-4 py-3 border-b font-medium">
-                    Invoice Preview
-                  </div>
-                  <div className="p-0 h-[calc(100%-48px)]">
-                    <OriginalEmailTab 
-                      htmlContent={invoice.htmlContent} 
-                      fullscreenEmail={false}
-                      setFullscreenEmail={() => {}}
-                    />
-                  </div>
-                </Card>
+                <InvoicePreview htmlContent={invoice.htmlContent} />
               </ResizablePanel>
             </>
           )}
