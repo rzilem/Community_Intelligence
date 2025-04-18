@@ -1,12 +1,13 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { DocumentViewer } from './preview/DocumentViewer';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -39,12 +40,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  // Helper function to check if a field was likely AI-extracted
   const isAIAssisted = (invoice: Invoice, field: keyof Invoice) => {
     if (!invoice.html_content) return false;
     
-    // If the invoice has HTML content but the specific field is filled,
-    // it likely means it was extracted using either rules or AI
     return !!invoice[field] && field !== 'html_content';
   };
 
@@ -149,9 +147,33 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
-                  <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-[600px] h-[400px] p-0">
+                      {(invoice.pdf_url || invoice.html_content) ? (
+                        <div className="w-full h-full">
+                          <DocumentViewer
+                            pdfUrl={invoice.pdf_url}
+                            htmlContent={invoice.html_content}
+                            isPdf={!!invoice.pdf_url}
+                            isWordDocument={false}
+                            onIframeError={() => {}}
+                            onIframeLoad={() => {}}
+                            onExternalOpen={() => onViewInvoice(invoice.id)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          No preview available
+                        </div>
+                      )}
+                    </HoverCardContent>
+                  </HoverCard>
+                  
                   {invoice.status === 'pending' && onApproveInvoice && (
                     <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
                       <CheckCircle className="h-4 w-4 text-green-600" />
