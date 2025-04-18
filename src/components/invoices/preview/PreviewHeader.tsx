@@ -2,6 +2,7 @@
 import React from 'react';
 import { ExternalLink, FileText, File, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PreviewHeaderProps {
   isPdf: boolean;
@@ -10,6 +11,9 @@ interface PreviewHeaderProps {
   onExternalOpen: () => void;
   onToggleFullscreen: () => void;
   showActions: boolean;
+  activeTab: string;
+  onTabChange: (value: string) => void;
+  hasEmail: boolean;
 }
 
 export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
@@ -18,20 +22,33 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
   pdfUrl,
   onExternalOpen,
   onToggleFullscreen,
-  showActions
+  showActions,
+  activeTab,
+  onTabChange,
+  hasEmail
 }) => {
   return (
-    <div className="bg-gray-50 px-4 py-3 border-b font-medium flex items-center justify-between">
-      <div className="flex items-center">
-        {isPdf ? (
-          <FileText className="h-4 w-4 mr-2 text-red-500" />
-        ) : isWordDocument ? (
-          <File className="h-4 w-4 mr-2 text-blue-500" />
-        ) : (
-          <FileText className="h-4 w-4 mr-2" />
-        )}
-        Invoice Preview
+    <div className="bg-gray-50 px-4 py-2 border-b font-medium flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center">
+          {isPdf ? (
+            <FileText className="h-4 w-4 mr-2 text-red-500" />
+          ) : isWordDocument ? (
+            <File className="h-4 w-4 mr-2 text-blue-500" />
+          ) : (
+            <FileText className="h-4 w-4 mr-2" />
+          )}
+          Invoice Preview
+        </div>
+        
+        <Tabs value={activeTab} onValueChange={onTabChange} className="w-[400px]">
+          <TabsList>
+            <TabsTrigger value="document">Document</TabsTrigger>
+            {hasEmail && <TabsTrigger value="email">Original Email</TabsTrigger>}
+          </TabsList>
+        </Tabs>
       </div>
+      
       {showActions && (
         <div className="flex gap-2">
           {pdfUrl && (

@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, ExternalLink } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { NoPreviewState } from './preview/NoPreviewState';
 import { DocumentViewer } from './preview/DocumentViewer';
+import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
 import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage } from './preview/previewUtils';
@@ -12,29 +12,20 @@ import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage } f
 interface InvoicePreviewProps {
   htmlContent?: string;
   pdfUrl?: string;
+  emailContent?: string;
 }
 
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
   htmlContent, 
-  pdfUrl 
+  pdfUrl,
+  emailContent
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  
-  // Handle opening PDF in new tab
-  const handleExternalOpen = () => {
-    if (normalizedPdfUrl) {
-      window.open(normalizedPdfUrl, '_blank');
-    }
-  };
-  
-  // Handle toggling fullscreen view
-  const handleToggleFullscreen = () => {
-    setFullscreen(!fullscreen);
-  };
+  const [activeTab, setActiveTab] = useState('document');
   
   useEffect(() => {
     // Reset states
@@ -73,66 +64,72 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     });
   }, [htmlContent, pdfUrl]);
 
-  // If no preview data is available, show the no preview state
   if (!hasContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
-  // If there's an error, show the error state
   if (error) {
     return <PreviewErrorState error={error} />;
   }
 
-  // Determine file type
-  const isPdfFile = isPdf(normalizedPdfUrl);
-  const isWordDocument = normalizedPdfUrl && getFileExtension(normalizedPdfUrl) === 'docx';
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <PreviewHeader
-        isPdf={isPdfFile}
+        isPdf={isPdf(normalizedPdfUrl)}
         isWordDocument={isWordDocument}
         pdfUrl={normalizedPdfUrl}
         onExternalOpen={handleExternalOpen}
         onToggleFullscreen={handleToggleFullscreen}
         showActions={!!normalizedPdfUrl}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasEmail={!!emailContent}
       />
       
-      <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900">
-        {normalizedPdfUrl ? (
-          <DocumentViewer 
-            pdfUrl={normalizedPdfUrl}
-            htmlContent={undefined}
-            isPdf={isPdfFile}
-            isWordDocument={isWordDocument}
-            onIframeError={() => setError("Failed to load document")}
-            onIframeLoad={() => setLoading(false)}
-            onExternalOpen={handleExternalOpen}
-          />
-        ) : htmlContent && isValidHtml(htmlContent) ? (
-          <Card className="p-4 h-full overflow-auto bg-white dark:bg-gray-800">
-            <div 
-              className="invoice-html-content"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
-            />
-          </Card>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <Alert variant="destructive" className="max-w-md">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>No preview available</AlertTitle>
-              <AlertDescription>
-                No valid PDF or HTML content is available for this invoice.
-              </AlertDescription>
-            </Alert>
+      <Tabs value={activeTab} className="flex-1 overflow-hidden">
+        <TabsContent value="document" className="h-full m-0">
+          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
+            {normalizedPdfUrl ? (
+              <DocumentViewer 
+                pdfUrl={normalizedPdfUrl}
+                htmlContent={undefined}
+                isPdf={isPdf(normalizedPdfUrl)}
+                isWordDocument={isWordDocument}
+                onIframeError={() => setError("Failed to load document")}
+                onIframeLoad={() => setLoading(false)}
+                onExternalOpen={handleExternalOpen}
+              />
+            ) : htmlContent && isValidHtml(htmlContent) ? (
+              <div className="h-full">
+                <div 
+                  className="invoice-html-content h-full"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
+                />
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Alert variant="destructive" className="max-w-md">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No preview available</AlertTitle>
+                  <AlertDescription>
+                    No valid PDF or HTML content is available for this invoice.
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
+        
+        <TabsContent value="email" className="h-full m-0">
+          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
+            <EmailPreview emailContent={emailContent} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
 
-// Helper function to get file extension
 function getFileExtension(urlOrFilename: string): string {
   if (!urlOrFilename) return '';
   
