@@ -38,11 +38,15 @@ serve(async (req) => {
     
     try {
       emailData = await processMultipartFormData(req);
+      console.log("Successfully processed form data");
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       try {
+        // Clone the request before trying to parse as JSON
+        const jsonReqCopy = req.clone();
         // Fallback to regular JSON parsing
-        emailData = await req.json();
+        emailData = await jsonReqCopy.json();
+        console.log("Successfully parsed as JSON fallback");
       } catch (jsonError) {
         console.error("Error parsing request as JSON:", jsonError);
         return new Response(
@@ -111,13 +115,21 @@ serve(async (req) => {
     }
 
     // Process the email to extract invoice information
+    console.log("Processing invoice email to extract data");
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
+    console.log("Extracted invoice data:", JSON.stringify(invoiceData, null, 2));
 
     // Always attempt to create the invoice, even with partial data
     try {
       const invoice = await createInvoice(invoiceData);
 
-      console.log("Invoice created successfully:", invoice);
+      console.log("Invoice created successfully:", JSON.stringify({
+        id: invoice.id,
+        vendor: invoice.vendor,
+        amount: invoice.amount,
+        pdf_url: invoice.pdf_url || 'none',
+        html_content: invoice.html_content ? 'present' : 'none'
+      }, null, 2));
 
       // If we have partial data but created the invoice anyway
       if (!invoiceData.vendor || invoiceData.vendor === "Unknown Vendor" || !invoiceData.amount || invoiceData.amount === 0) {
