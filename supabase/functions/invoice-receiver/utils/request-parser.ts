@@ -66,6 +66,18 @@ export function normalizeEmailData(data: any): any {
   
   console.log("Normalizing email data from structure:", Object.keys(data));
   
+  // CloudMailin specific format handling
+  if (data.headers && typeof data.headers === 'object') {
+    console.log("Detected CloudMailin format with headers object");
+    normalizedData.subject = data.headers.Subject || data.headers.subject || "";
+    normalizedData.from = data.headers.From || data.headers.from || "";
+    normalizedData.to = data.headers.To || data.headers.to || "";
+    
+    // CloudMailin specific structure
+    if (data.plain !== undefined) normalizedData.text = data.plain;
+    if (data.html !== undefined) normalizedData.html = data.html;
+  }
+  
   // Deep inspection of data to find attachments
   if (data.envelope && typeof data.envelope === 'string') {
     try {
@@ -77,18 +89,6 @@ export function normalizeEmailData(data: any): any {
     } catch (e) {
       console.log("Could not parse envelope as JSON");
     }
-  }
-  
-  // CloudMailin specific format handling
-  if (data.headers && typeof data.headers === 'object') {
-    console.log("Detected CloudMailin format with headers object");
-    normalizedData.subject = data.headers.Subject || data.headers.subject || "";
-    normalizedData.from = data.headers.From || data.headers.from || "";
-    normalizedData.to = data.headers.To || data.headers.to || "";
-    
-    // CloudMailin specific structure
-    if (data.plain !== undefined) normalizedData.text = data.plain;
-    if (data.html !== undefined) normalizedData.html = data.html;
   }
   
   // Handle different field names for common email properties
@@ -135,36 +135,37 @@ function processAttachments(data: any): any[] {
   // Log all keys to help debug attachment location
   console.log("Looking for attachments in data with keys:", Object.keys(data));
   
-  // Handle different attachment field names based on email service providers
-  if (Array.isArray(data.attachments)) {
-    console.log(`Found ${data.attachments.length} attachments in data.attachments`);
-    attachments = data.attachments;
-  } else if (Array.isArray(data.Attachments)) {
-    console.log(`Found ${data.Attachments.length} attachments in data.Attachments`);
-    attachments = data.Attachments;
-  } else if (data.attachment && !Array.isArray(data.attachment)) {
-    // Some services might provide a single attachment object
-    console.log("Found single attachment in data.attachment");
-    attachments = [data.attachment];
-  } else if (data.Attachment && !Array.isArray(data.Attachment)) {
-    console.log("Found single attachment in data.Attachment");
-    attachments = [data.Attachment];
-  } else if (data.parsedEnvelope && data.parsedEnvelope.attachments) {
-    console.log(`Found ${data.parsedEnvelope.attachments.length} attachments in parsedEnvelope`);
-    attachments = data.parsedEnvelope.attachments;
-  }
-  
-  // Check for CloudMailin specific formats
-  if (attachments.length === 0 && data.attachments && typeof data.attachments === 'string') {
+  // CloudMailin specific handling
+  if (data.attachments && typeof data.attachments === 'string') {
     try {
+      // CloudMailin stores attachments as a JSON string in the 'attachments' field
       const parsedAttachments = JSON.parse(data.attachments);
       if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
         console.log(`Found ${parsedAttachments.length} attachments in parsed data.attachments string`);
         attachments = parsedAttachments;
       }
     } catch (e) {
-      console.log("Could not parse attachments string as JSON");
+      console.log("Could not parse attachments string as JSON:", e);
     }
+  }
+  
+  // Handle different attachment field names based on email service providers
+  if (attachments.length === 0 && Array.isArray(data.attachments)) {
+    console.log(`Found ${data.attachments.length} attachments in data.attachments`);
+    attachments = data.attachments;
+  } else if (attachments.length === 0 && Array.isArray(data.Attachments)) {
+    console.log(`Found ${data.Attachments.length} attachments in data.Attachments`);
+    attachments = data.Attachments;
+  } else if (attachments.length === 0 && data.attachment && !Array.isArray(data.attachment)) {
+    // Some services might provide a single attachment object
+    console.log("Found single attachment in data.attachment");
+    attachments = [data.attachment];
+  } else if (attachments.length === 0 && data.Attachment && !Array.isArray(data.Attachment)) {
+    console.log("Found single attachment in data.Attachment");
+    attachments = [data.Attachment];
+  } else if (attachments.length === 0 && data.parsedEnvelope && data.parsedEnvelope.attachments) {
+    console.log(`Found ${data.parsedEnvelope.attachments.length} attachments in parsedEnvelope`);
+    attachments = data.parsedEnvelope.attachments;
   }
   
   // Also check for Sendgrid style attachments

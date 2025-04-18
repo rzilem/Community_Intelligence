@@ -20,7 +20,6 @@ serve(async (req) => {
     
     // Make a copy of the request to inspect the raw body if needed
     const reqCopy = req.clone();
-    let rawBody;
     try {
       // Try to get the raw body as text for debugging 
       const rawText = await reqCopy.text();
@@ -50,7 +49,8 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false, 
             error: "Invalid request format", 
-            details: `${parseError.message}, then ${jsonError.message}`
+            details: `${parseError.message}, then ${jsonError.message}`,
+            headers: Object.fromEntries([...req.headers.entries()])
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -67,7 +67,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid"
+          details: "The email webhook payload was empty or invalid",
+          headers: Object.fromEntries([...req.headers.entries()])
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
