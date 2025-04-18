@@ -28,6 +28,11 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
   onAssociationChange,
   onPropertyChange
 }) => {
+  // Track search inputs
+  const [userSearch, setUserSearch] = React.useState("");
+  const [associationSearch, setAssociationSearch] = React.useState("");
+  const [propertySearch, setPropertySearch] = React.useState("");
+
   // Fetch users for assignment
   const { data: users } = useSupabaseQuery(
     'profiles',
@@ -54,13 +59,39 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
     !!associationId
   );
 
+  // Filter users based on search
+  const filteredUsers = React.useMemo(() => {
+    return users?.filter(user => 
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(userSearch.toLowerCase())
+    );
+  }, [users, userSearch]);
+
+  // Filter associations based on search
+  const filteredAssociations = React.useMemo(() => {
+    return associations?.filter(assoc =>
+      assoc.name.toLowerCase().includes(associationSearch.toLowerCase())
+    );
+  }, [associations, associationSearch]);
+
+  // Filter properties based on search
+  const filteredProperties = React.useMemo(() => {
+    return properties?.filter(property => {
+      const addressText = `${property.address} ${property.unit_number || ''}`;
+      return addressText.toLowerCase().includes(propertySearch.toLowerCase());
+    });
+  }, [properties, propertySearch]);
+
   const menuItemClass = "flex items-center space-x-1 border-r last:border-r-0 px-3";
 
   return (
     <div className={cn(
       "flex justify-between items-center bg-gradient-to-r from-slate-100 to-slate-50",
-      "px-2 py-1 rounded-md border shadow-sm",
-      "dark:from-slate-800 dark:to-slate-900/90 dark:text-slate-200"
+      "px-2 py-1 rounded-md border shadow-sm transition-all duration-200",
+      "hover:shadow-md hover:from-slate-50 hover:to-white",
+      "dark:from-slate-800 dark:to-slate-900/90 dark:text-slate-200",
+      "dark:hover:from-slate-800/90 dark:hover:to-slate-900/80"
     )}>
       <div className="flex items-center text-xs">
         <div className={menuItemClass}>
@@ -70,8 +101,14 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
               <SelectValue placeholder="Assign to..." />
             </SelectTrigger>
             <SelectContent>
+              <input
+                className="px-2 py-1 text-xs w-full border-b mb-1"
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+              />
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {users?.map(user => (
+              {filteredUsers?.map(user => (
                 <SelectItem key={user.id} value={user.id}>
                   {user.first_name} {user.last_name}
                 </SelectItem>
@@ -87,8 +124,14 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
               <SelectValue placeholder="Association..." />
             </SelectTrigger>
             <SelectContent>
+              <input
+                className="px-2 py-1 text-xs w-full border-b mb-1"
+                placeholder="Search associations..."
+                value={associationSearch}
+                onChange={(e) => setAssociationSearch(e.target.value)}
+              />
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {associations?.map(assoc => (
+              {filteredAssociations?.map(assoc => (
                 <SelectItem key={assoc.id} value={assoc.id}>
                   {assoc.name}
                 </SelectItem>
@@ -108,8 +151,14 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
               <SelectValue placeholder="Property..." />
             </SelectTrigger>
             <SelectContent>
+              <input
+                className="px-2 py-1 text-xs w-full border-b mb-1"
+                placeholder="Search properties..."
+                value={propertySearch}
+                onChange={(e) => setPropertySearch(e.target.value)}
+              />
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {properties?.map(property => (
+              {filteredProperties?.map(property => (
                 <SelectItem key={property.id} value={property.id}>
                   {property.address} {property.unit_number ? `#${property.unit_number}` : ''}
                 </SelectItem>
