@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -123,6 +122,7 @@ const InvoiceDetail = () => {
                 lines={lines}
                 onLinesChange={setLines}
                 associationId={invoice.association}
+                showPreview={showPreview}
               />
               
               <InvoiceSummary 

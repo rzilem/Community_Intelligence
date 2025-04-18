@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle } from 'lucide-react';
 
-// Define the CustomSelectProps interface
 interface CustomSelectProps {
   label: string;
   value: string;
@@ -20,7 +19,6 @@ interface CustomSelectProps {
   options: { value: string; label: string }[];
 }
 
-// Define the LineItem interface
 interface LineItem {
   glAccount: string;
   fund: string;
@@ -29,18 +27,18 @@ interface LineItem {
   amount: number;
 }
 
-// Define the InvoiceLineItemsProps interface
 interface InvoiceLineItemsProps {
   lines: LineItem[];
   onLinesChange: (lines: LineItem[]) => void;
   associationId?: string;
+  showPreview?: boolean;
 }
 
 const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
   <div className="space-y-2">
-    <Label className="text-sm text-gray-600">{label}</Label>
+    <Label className="text-sm font-medium text-gray-600">{label}</Label>
     <UISelect value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full border-gray-300 focus:ring-2 focus:ring-primary/50">
+      <SelectTrigger className="w-full bg-background border-input">
         <SelectValue placeholder={`Select ${label}`} />
       </SelectTrigger>
       <SelectContent>
@@ -57,7 +55,8 @@ const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
 export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   lines,
   onLinesChange,
-  associationId
+  associationId,
+  showPreview = true
 }) => {
   const handleAddLine = () => {
     onLinesChange([
@@ -100,62 +99,70 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       </div>
       
       {lines.map((line, index) => (
-        <div 
-          key={index} 
-          className="grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200"
-        >
-          <Select
-            label="GL Account"
-            value={line.glAccount}
-            onChange={(value) => handleLineChange(index, 'glAccount', value)}
-            options={[
-              { value: 'Account1', label: 'Account 1' },
-              { value: 'Account2', label: 'Account 2' },
-            ]}
-          />
-          <Select
-            label="Fund"
-            value={line.fund}
-            onChange={(value) => handleLineChange(index, 'fund', value)}
-            options={[
-              { value: 'Operating', label: 'Operating' },
-              { value: 'Reserve', label: 'Reserve' },
-            ]}
-          />
-          <Select
-            label="Bank Account"
-            value={line.bankAccount}
-            onChange={(value) => handleLineChange(index, 'bankAccount', value)}
-            options={[
-              { value: 'Operating', label: 'Operating' },
-              { value: 'Reserve', label: 'Reserve' },
-            ]}
-          />
-          <div className="md:col-span-2">
-            <Label htmlFor={`description-${index}`} className="text-sm text-gray-600">
-              Description
-            </Label>
-            <Input
-              id={`description-${index}`}
-              value={line.description}
-              onChange={(e) => handleLineChange(index, 'description', e.target.value)}
-              placeholder="Enter description"
+        <div key={index} className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          {/* Top row with GL Account, Fund, and Bank Account */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              label="GL Account"
+              value={line.glAccount}
+              onChange={(value) => handleLineChange(index, 'glAccount', value)}
+              options={[
+                { value: 'Account1', label: 'Account 1' },
+                { value: 'Account2', label: 'Account 2' },
+              ]}
+            />
+            <Select
+              label="Fund"
+              value={line.fund}
+              onChange={(value) => handleLineChange(index, 'fund', value)}
+              options={[
+                { value: 'Operating', label: 'Operating' },
+                { value: 'Reserve', label: 'Reserve' },
+              ]}
+            />
+            <Select
+              label="Bank Account"
+              value={line.bankAccount}
+              onChange={(value) => handleLineChange(index, 'bankAccount', value)}
+              options={[
+                { value: 'Operating', label: 'Operating' },
+                { value: 'Reserve', label: 'Reserve' },
+              ]}
             />
           </div>
-          <div>
-            <Label htmlFor={`amount-${index}`} className="text-sm text-gray-600">
-              Amount
-            </Label>
-            <Input
-              id={`amount-${index}`}
-              type="number"
-              value={line.amount}
-              onChange={(e) => handleLineChange(index, 'amount', Number(e.target.value))}
-              placeholder="0.00"
-              className="text-right"
-            />
+
+          {/* Bottom row with Description and Amount */}
+          <div className={`grid ${showPreview ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-5'} gap-4`}>
+            <div className={showPreview ? 'md:col-span-1' : 'md:col-span-4'}>
+              <Label htmlFor={`description-${index}`} className="text-sm font-medium text-gray-600">
+                Description
+              </Label>
+              <Input
+                id={`description-${index}`}
+                value={line.description}
+                onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+                placeholder="Enter description"
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label htmlFor={`amount-${index}`} className="text-sm font-medium text-gray-600">
+                Amount
+              </Label>
+              <Input
+                id={`amount-${index}`}
+                type="number"
+                value={line.amount}
+                onChange={(e) => handleLineChange(index, 'amount', parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+                className="mt-2 text-right"
+                step="0.01"
+              />
+            </div>
           </div>
-          <div className="flex items-end">
+
+          {/* Remove button */}
+          <div className="flex justify-end mt-4">
             <Button 
               variant="destructive" 
               size="sm" 
