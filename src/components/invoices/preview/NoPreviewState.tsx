@@ -1,9 +1,17 @@
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export const NoPreviewState: React.FC = () => {
+interface NoPreviewStateProps {
+  pdfUrl?: string;
+  onExternalOpen?: () => void;
+}
+
+export const NoPreviewState: React.FC<NoPreviewStateProps> = ({ 
+  pdfUrl,
+  onExternalOpen
+}) => {
   return (
     <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
       <AlertTriangle className="h-12 w-12 mb-4 text-amber-500" />
@@ -11,6 +19,15 @@ export const NoPreviewState: React.FC = () => {
       <p className="text-center text-sm mb-4">
         The content doesn't appear to be a valid invoice. It may be a metadata file or misconfigured email content.
       </p>
+      {pdfUrl && (
+        <Button 
+          variant="outline" 
+          onClick={onExternalOpen}
+          className="mb-4 flex items-center"
+        >
+          Try Opening PDF Directly <ExternalLink className="h-4 w-4 ml-2" />
+        </Button>
+      )}
       <p className="text-center text-xs text-muted-foreground max-w-md">
         Try uploading a proper invoice document or check if the email contains valid invoice information. 
         You can still process this manually by entering invoice details in the form.

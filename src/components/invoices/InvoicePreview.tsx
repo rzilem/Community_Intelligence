@@ -16,7 +16,7 @@ interface InvoicePreviewProps {
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdfUrl }) => {
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
 
   useEffect(() => {
@@ -29,22 +29,23 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     });
 
     setPreviewError(null);
-    setIsLoading(false);
+    setIsLoading(true);
 
     // First, determine what content we have to display
     if (!htmlContent && !pdfUrl) {
       console.warn('No preview content available (no HTML or PDF URL)');
       setContentType('none');
+      setIsLoading(false);
       console.groupEnd();
       return;
     }
 
-    // If we have a PDF URL, check if it's accessible
+    // If we have a PDF URL, always check if it's accessible first
     if (pdfUrl && pdfUrl.trim() !== '') {
       console.log('Checking PDF URL accessibility:', pdfUrl);
-      setIsLoading(true);
       setContentType('pdf');
       
+      // Check if the URL is accessible
       fetch(pdfUrl, { method: 'HEAD' })
         .then((response) => {
           setIsLoading(false);
@@ -72,31 +73,55 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           console.error('Error accessing PDF URL:', err.message, pdfUrl);
           setIsLoading(false);
           
-          // Fallback to HTML content if available
-          if (htmlContent) {
-            console.log('PDF URL error but HTML content available, will use HTML instead');
-            setContentType('html');
-          } else {
-            setPreviewError(`Error accessing PDF: ${err.message}`);
-            setContentType('none');
+          // Try with a direct browser fetch as a fallback
+          try {
+            // Create an image element to test if the PDF is accessible in a different way
+            const img = new Image();
+            img.onload = () => {
+              console.log('PDF is accessible via image test');
+              setContentType('pdf');
+              setIsLoading(false);
+            };
+            img.onerror = () => {
+              console.error('PDF is not accessible via image test either');
+              // Fallback to HTML content if available
+              if (htmlContent) {
+                console.log('Using HTML content fallback');
+                setContentType('html');
+              } else {
+                setPreviewError(`Error accessing PDF: ${err.message}`);
+                setContentType('none');
+              }
+              setIsLoading(false);
+            };
+            img.src = pdfUrl;
+          } catch (imgError) {
+            // Final fallback to HTML content if available
+            if (htmlContent) {
+              console.log('PDF URL error but HTML content available, will use HTML instead');
+              setContentType('html');
+            } else {
+              setPreviewError(`Error accessing PDF: ${err.message}`);
+              setContentType('none');
+            }
+            setIsLoading(false);
           }
-        })
-        .finally(() => {
-          console.groupEnd();
         });
     } else if (htmlContent) {
       console.log('No PDF URL provided, using HTML content for preview');
       setContentType('html');
+      setIsLoading(false);
       console.groupEnd();
     } else {
       console.warn('Both PDF URL and HTML content are empty or invalid');
       setContentType('none');
+      setIsLoading(false);
       console.groupEnd();
     }
   }, [htmlContent, pdfUrl]);
 
-  const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx') || false;
   const isPdf = pdfUrl?.toLowerCase().endsWith('.pdf') || false;
+  const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx') || false;
 
   const handleIframeError = () => {
     console.error('Iframe failed to load content:', {

@@ -71,7 +71,20 @@ export const useInvoiceDetail = (id: string | undefined) => {
       
       // Get the cleaned values, defaulting to empty strings
       const htmlContent = invoiceData.html_content || '';
-      const pdfUrl = invoiceData.pdf_url || '';
+      
+      // Ensure PDF URL is properly formatted
+      let pdfUrl = invoiceData.pdf_url || '';
+      
+      // Make sure the PDF URL doesn't have any whitespace or control characters
+      if (pdfUrl) {
+        pdfUrl = pdfUrl.trim();
+        
+        // Fix common URL issues
+        if (!pdfUrl.startsWith('http://') && !pdfUrl.startsWith('https://') && !pdfUrl.startsWith('/')) {
+          console.log('Adding https:// to PDF URL:', pdfUrl);
+          pdfUrl = 'https://' + pdfUrl;
+        }
+      }
       
       console.log("Using values:", {
         htmlContent: htmlContent ? 'present' : 'empty',
