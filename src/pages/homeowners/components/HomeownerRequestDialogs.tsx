@@ -46,7 +46,15 @@ const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps
       if (error) throw error;
       
       if (data) {
-        setSelectedRequest(data);
+        // Type cast the raw database data to our HomeownerRequest type
+        const typedRequest: HomeownerRequest = {
+          ...data,
+          status: data.status as HomeownerRequestStatus,
+          priority: data.priority as HomeownerRequestPriority,
+          type: data.type as HomeownerRequestType
+        };
+        
+        setSelectedRequest(typedRequest);
         
         // Open the corresponding dialog based on the action
         if (action === 'view') {

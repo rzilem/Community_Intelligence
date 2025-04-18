@@ -30,7 +30,7 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   const renderCellContent = (request: HomeownerRequest, columnId: string) => {
     switch(columnId) {
       case 'status':
-        return <RequestStatusBadge status={request.status} />;
+        return <RequestStatusBadge status={request.status} type="status" />;
       case 'created_at':
       case 'updated_at':
       case 'resolved_at':
