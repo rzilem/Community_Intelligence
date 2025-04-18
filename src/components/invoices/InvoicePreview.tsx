@@ -5,6 +5,8 @@ import { PreviewHeader } from './preview/PreviewHeader';
 import { DocumentViewer } from './preview/DocumentViewer';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { NoPreviewState } from './preview/NoPreviewState';
+import { EmptyState } from '@/components/ui/empty-state';
+import { AlertCircle } from 'lucide-react';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -23,8 +25,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       pdfUrl: pdfUrl || 'none',
     });
 
+    setPreviewError(null);
+    
+    // Reset loading state when props change
+    setIsLoading(false);
+
     if (!htmlContent && !pdfUrl) {
-      setPreviewError('No PDF or HTML content available for this invoice.');
       return;
     }
 
@@ -35,8 +41,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           setIsLoading(false);
           if (!response.ok) {
             setPreviewError(`Failed to access PDF: ${response.statusText}`);
-          } else {
-            setPreviewError(null);
           }
         })
         .catch((err) => {
@@ -81,7 +85,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     }
 
     if (!htmlContent && !pdfUrl) {
-      return <NoPreviewState />;
+      return (
+        <EmptyState
+          icon={<AlertCircle className="h-12 w-12" />}
+          title="No preview available"
+          description="No PDF or HTML content available for this invoice."
+        />
+      );
     }
 
     return (

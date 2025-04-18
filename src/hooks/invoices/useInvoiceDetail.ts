@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -56,12 +57,9 @@ export const useInvoiceDetail = (id: string | undefined) => {
       console.log("HTML Content Field:", invoiceData.html_content);
       console.groupEnd();
       
-      // Enhanced PDF URL fallback strategy
-      const pdfUrl = 
-        invoiceData.pdf_url || 
-        ((!invoiceData.html_content || invoiceData.html_content.length === 0) 
-          ? 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
-          : '');
+      // Ensure we have either PDF URL or HTML content for display
+      const htmlContent = invoiceData.html_content || '';
+      const pdfUrl = invoiceData.pdf_url || '';
       
       setInvoice({
         id: invoiceData.id,
@@ -73,8 +71,8 @@ export const useInvoiceDetail = (id: string | undefined) => {
         totalAmount: invoiceData.amount || 0,
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
-        htmlContent: invoiceData.html_content || '',
-        pdfUrl,
+        htmlContent: htmlContent,
+        pdfUrl: pdfUrl,
       });
     }
   }, [invoiceData]);

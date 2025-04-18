@@ -37,10 +37,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               line-height: 1.5;
               color: #333;
               margin: 20px;
+              padding: 20px;
             }
             table {
               border-collapse: collapse;
               width: 100%;
+              margin-bottom: 1rem;
             }
             th, td {
               padding: 8px;
@@ -49,6 +51,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             }
             th {
               background-color: #f2f2f2;
+            }
+            div {
+              margin-bottom: 1rem;
             }
           </style>
         </head>
@@ -114,6 +119,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           className="w-full h-full border-0"
           sandbox="allow-same-origin"
           onError={onIframeError}
+          onLoad={onIframeLoad}
         />
       </div>
     );
