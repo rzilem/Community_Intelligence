@@ -53,7 +53,7 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
       console.error('Error generating AI response:', error);
       toast.error('Failed to generate AI response');
       // Provide a fallback response
-      setAiResponse('Thank you for reaching out. We've received your request and are working to address it promptly. A team member will contact you with more information soon.');
+      setAiResponse("Thank you for reaching out. We've received your request and are working to address it promptly. A team member will contact you with more information soon.");
     } finally {
       setIsGenerating(false);
     }
