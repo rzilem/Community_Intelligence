@@ -7,7 +7,7 @@ import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequ
 import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
 import { toast } from 'sonner';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HomeownerRequestDialogsProps {

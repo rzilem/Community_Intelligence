@@ -4,7 +4,7 @@ import { TabsContent } from '@/components/ui/tabs';
 import { TableCell, TableRow, TableBody, Table, TableHead, TableHeader } from '@/components/ui/table';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { formatDate } from '@/lib/date-utils';
-import RequestStatusBadge from '@/components/homeowners/table/RequestStatusBadge';
+import { RequestStatusBadge } from '@/components/homeowners/table/RequestStatusBadge';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyRequestsRow from '@/components/homeowners/table/EmptyRequestsRow';
 
