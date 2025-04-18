@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { ResponsiveDialog, ResponsiveDialogContent } from '@/components/ui/responsive-dialog';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { cleanHtmlContent } from '@/lib/format-utils';
 import { TabsContent } from '@/components/ui/tabs';
+import { Form } from '@/components/ui/form';
 import DetailsTab from '../detail/tabs/DetailsTab';
 import CommentsTab from '../detail/tabs/CommentsTab';
 import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
