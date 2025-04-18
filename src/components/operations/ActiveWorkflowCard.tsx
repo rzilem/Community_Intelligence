@@ -1,21 +1,17 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, PauseCircle, PlayCircle, X } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { PlayCircle, PauseCircle, Eye, XCircle, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 interface ActiveWorkflowCardProps {
   workflow: Workflow;
@@ -23,6 +19,8 @@ interface ActiveWorkflowCardProps {
   onPauseWorkflow: (id: string) => void;
   onResumeWorkflow: (id: string) => void;
   onCancelWorkflow: (id: string) => void;
+  onEditWorkflow?: (id: string) => void;
+  onDeleteWorkflow?: (id: string) => void;
 }
 
 const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
@@ -30,30 +28,60 @@ const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
   onViewDetails,
   onPauseWorkflow,
   onResumeWorkflow,
-  onCancelWorkflow
+  onCancelWorkflow,
+  onEditWorkflow,
+  onDeleteWorkflow
 }) => {
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
-  
-  // Calculate progress based on completed steps
-  const totalSteps = workflow.steps?.length || 0;
-  const completedSteps = workflow.steps?.filter(step => step.isComplete)?.length || 0;
-  const progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-  
+  // Function to check if all steps are completed
+  const getProgressPercentage = () => {
+    if (!workflow.steps || workflow.steps.length === 0) return 0;
+    const completedSteps = workflow.steps.filter(step => step.isComplete).length;
+    return Math.round((completedSteps / workflow.steps.length) * 100);
+  };
+
+  const isActive = workflow.status === 'active';
+  const progressPercentage = getProgressPercentage();
+
   return (
     <Card className="transition-all hover:shadow-md">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold">
-            {workflow.name}
-          </CardTitle>
-          <Badge 
-            variant={workflow.status === 'active' ? 'default' : 
-                    workflow.status === 'inactive' ? 'secondary' : 
-                    'outline'}
-            className="capitalize"
-          >
-            {workflow.status}
-          </Badge>
+          <CardTitle className="text-xl font-bold">{workflow.name}</CardTitle>
+          <div className="flex items-center space-x-2">
+            <Badge 
+              variant={isActive ? "default" : "secondary"}
+              className="capitalize"
+            >
+              {workflow.status}
+            </Badge>
+            
+            {(onEditWorkflow || onDeleteWorkflow) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0" aria-label="More options">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onEditWorkflow && (
+                    <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDeleteWorkflow && (
+                    <DropdownMenuItem 
+                      onClick={() => onDeleteWorkflow(workflow.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -61,79 +89,68 @@ const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
           {workflow.description || 'No description provided.'}
         </p>
         
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Progress: {progress}%</span>
-            <span>
-              {completedSteps} of {totalSteps} steps
-            </span>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Progress</span>
+            <span className="font-medium">{progressPercentage}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          
+          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-primary h-2 rounded-full" 
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <div>
+              <span className="font-medium">Type: </span>
+              {workflow.type}
+            </div>
+            <div>
+              <span className="font-medium">Steps: </span>
+              {workflow.steps?.length || 0}
+            </div>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between pt-3 border-t">
-        <div className="flex gap-2">
-          {workflow.status === 'active' ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPauseWorkflow(workflow.id)}
-            >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => isActive ? onPauseWorkflow(workflow.id) : onResumeWorkflow(workflow.id)}
+        >
+          {isActive ? (
+            <>
               <PauseCircle className="h-4 w-4 mr-2" />
               Pause
-            </Button>
+            </>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onResumeWorkflow(workflow.id)}
-            >
+            <>
               <PlayCircle className="h-4 w-4 mr-2" />
               Resume
-            </Button>
+            </>
           )}
-          <Button
+        </Button>
+        <div className="space-x-2">
+          <Button 
             variant="outline"
             size="sm"
-            onClick={() => setIsCancelDialogOpen(true)}
+            onClick={() => onCancelWorkflow(workflow.id)}
             className="text-destructive hover:text-destructive"
           >
-            <X className="h-4 w-4 mr-2" />
+            <XCircle className="h-4 w-4 mr-2" />
             Cancel
           </Button>
+          <Button 
+            size="sm"
+            onClick={() => onViewDetails(workflow.id)}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View
+          </Button>
         </div>
-        <Button 
-          size="sm"
-          onClick={() => onViewDetails(workflow.id)}
-        >
-          View Details
-          <ChevronRight className="h-4 w-4 ml-2" />
-        </Button>
       </CardFooter>
-
-      <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Workflow?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this workflow? This action cannot be undone, 
-              and all progress will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Nevermind</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                onCancelWorkflow(workflow.id);
-                setIsCancelDialogOpen(false);
-              }}
-              className="bg-destructive text-destructive-foreground"
-            >
-              Yes, Cancel Workflow
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 };

@@ -5,10 +5,12 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useSupabaseDelete } from '../supabase/use-supabase-delete';
 
 export const useWorkflows = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
@@ -210,6 +212,10 @@ export const useWorkflows = () => {
       setLoading(true);
       
       try {
+        // Get current user for audit
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        
         // Initialize with a single default step
         const initialSteps = [
           {
@@ -230,7 +236,8 @@ export const useWorkflows = () => {
             status: 'template',
             steps: initialSteps,
             is_template: true,
-            is_popular: false
+            is_popular: false,
+            created_by: userId
           })
           .select()
           .single();
@@ -318,6 +325,31 @@ export const useWorkflows = () => {
     }
   });
 
+  // Delete template mutation
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setIsDeleting(true);
+      try {
+        const { error } = await supabase
+          .from('workflow_templates')
+          .delete()
+          .eq('id', templateId);
+          
+        if (error) throw error;
+        return templateId;
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Template deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+    },
+    onError: (error) => {
+      toast.error(`Error deleting template: ${error.message}`);
+    }
+  });
+
   // Handler functions
   const useWorkflowTemplate = (workflowId: string) => {
     useTemplateMutation.mutate(workflowId);
@@ -347,6 +379,10 @@ export const useWorkflows = () => {
     cancelWorkflowMutation.mutate(workflowId);
   };
 
+  const deleteTemplate = (templateId: string) => {
+    deleteTemplateMutation.mutate(templateId);
+  };
+
   const viewWorkflowDetails = (workflowId: string) => {
     navigate(`/operations/workflows/${workflowId}`);
   };
@@ -363,6 +399,8 @@ export const useWorkflows = () => {
     resumeWorkflow,
     cancelWorkflow,
     viewWorkflowDetails,
+    deleteTemplate,
+    isDeleting,
     refreshWorkflows: () => {
       refetch();
       refetchActive();

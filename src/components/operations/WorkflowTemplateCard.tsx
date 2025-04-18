@@ -3,19 +3,30 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, PlayCircle, Star } from 'lucide-react';
+import { Copy, PlayCircle, Star, Edit, Trash2 } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 interface WorkflowTemplateCardProps {
   workflow: Workflow;
   onUseTemplate: (id: string) => void;
   onDuplicateTemplate: (id: string) => void;
+  onEditTemplate?: (id: string) => void;
+  onDeleteTemplate?: (id: string) => void;
 }
 
 const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
   workflow,
   onUseTemplate,
-  onDuplicateTemplate
+  onDuplicateTemplate,
+  onEditTemplate,
+  onDeleteTemplate
 }) => {
   return (
     <Card className="transition-all hover:shadow-md">
@@ -30,9 +41,38 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
               </Badge>
             )}
           </CardTitle>
-          <Badge variant="outline" className="capitalize">
-            {workflow.type}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="capitalize">
+              {workflow.type}
+            </Badge>
+            
+            {(onEditTemplate || onDeleteTemplate) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0" aria-label="More options">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onEditTemplate && (
+                    <DropdownMenuItem onClick={() => onEditTemplate(workflow.id)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDeleteTemplate && (
+                    <DropdownMenuItem 
+                      onClick={() => onDeleteTemplate(workflow.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
