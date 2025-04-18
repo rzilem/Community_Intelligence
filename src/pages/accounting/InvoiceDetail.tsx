@@ -1,102 +1,37 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Receipt } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
-import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
 import { InvoiceHeader } from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
 import { InvoicePreview } from '@/components/invoices/InvoicePreview';
+import { InvoiceNavigation } from '@/components/invoices/InvoiceNavigation';
+import { useInvoiceDetail } from '@/hooks/invoices/useInvoiceDetail';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 const InvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isNewInvoice = id === 'new';
-  const invoiceTitle = isNewInvoice ? 'New Invoice' : `Invoice #${id}`;
-
+  
   const [showPreview, setShowPreview] = useState(true);
   const [fullscreenPreview, setFullscreenPreview] = useState(false);
 
-  const { data: allInvoices, isLoading: isLoadingAllInvoices } = useSupabaseQuery(
-    'invoices',
-    {
-      select: 'id',
-      order: { column: 'created_at', ascending: false },
-    },
-    !isNewInvoice
-  );
-
-  const { data: invoiceData, isLoading: isLoadingInvoice } = useSupabaseQuery(
-    'invoices',
-    {
-      select: '*',
-      filter: [{ column: 'id', value: id, operator: 'eq' }],
-      single: true
-    },
-    !isNewInvoice
-  );
-
-  const { mutate: updateInvoice } = useSupabaseUpdate('invoices', {
-    onSuccess: () => {
-      toast({
-        title: "Invoice updated",
-        description: "The invoice has been updated successfully.",
-      });
-    }
-  });
-
-  const [invoice, setInvoice] = useState({
-    id: '',
-    vendor: '',
-    association: '',
-    invoiceNumber: '',
-    invoiceDate: format(new Date(), 'yyyy-MM-dd'),
-    dueDate: format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-    totalAmount: 0,
-    status: 'pending',
-    paymentType: '',
-    htmlContent: '',
-    pdfUrl: '',
-  });
-
-  const [lines, setLines] = useState([{
-    glAccount: '',
-    fund: '',
-    bankAccount: '',
-    description: '',
-    amount: 0,
-  }]);
-
-  useEffect(() => {
-    if (invoiceData) {
-      setInvoice({
-        id: invoiceData.id,
-        vendor: invoiceData.vendor || '',
-        association: invoiceData.association_id || '',
-        invoiceNumber: invoiceData.invoice_number || '',
-        invoiceDate: invoiceData.invoice_date || format(new Date(), 'yyyy-MM-dd'),
-        dueDate: invoiceData.due_date || format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-        totalAmount: invoiceData.amount || 0,
-        status: invoiceData.status || 'pending',
-        paymentType: invoiceData.payment_method || '',
-        htmlContent: invoiceData.html_content || '',
-        pdfUrl: invoiceData.pdf_url || '',
-      });
-    }
-  }, [invoiceData]);
-
-  const handleInvoiceChange = (field: string, value: string | number) => {
-    setInvoice({ ...invoice, [field]: value });
-  };
-
-  const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
-  const isBalanced = Math.abs(lineTotal - invoice.totalAmount) < 0.01;
+  const {
+    invoice,
+    lines,
+    setLines,
+    handleInvoiceChange,
+    lineTotal,
+    isBalanced,
+    allInvoices,
+    isLoadingAllInvoices,
+    updateInvoice,
+    isNewInvoice
+  } = useInvoiceDetail(id);
 
   const handleSave = () => {
     updateInvoice({
@@ -111,6 +46,13 @@ const InvoiceDetail = () => {
         status: invoice.status,
         payment_method: invoice.paymentType,
       }
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Invoice updated",
+          description: "The invoice has been updated successfully.",
+        });
+      }
     });
   };
 
@@ -120,8 +62,9 @@ const InvoiceDetail = () => {
       data: {
         status: 'approved'
       }
+    }, {
+      onSuccess: () => navigate("/accounting/invoice-queue")
     });
-    navigate("/accounting/invoice-queue");
   };
 
   const navigateToInvoice = (direction: 'next' | 'prev') => {
@@ -142,47 +85,18 @@ const InvoiceDetail = () => {
 
   return (
     <PageTemplate 
-      title={invoiceTitle}
+      title={isNewInvoice ? 'New Invoice' : `Invoice #${id}`}
       icon={<Receipt className="h-8 w-8" />}
       description="Process and code invoice for payment."
     >
       <div className="mt-6 space-y-6">
-        <div className="flex justify-between">
-          <div className="flex gap-2">
-            {!isNewInvoice && (
-              <>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigateToInvoice('prev')}
-                  disabled={isLoadingAllInvoices || allInvoices?.length <= 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => navigateToInvoice('next')}
-                  disabled={isLoadingAllInvoices || allInvoices?.length <= 1}
-                >
-                  Next <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </>
-            )}
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowPreview(!showPreview)}
-            className="gap-1"
-          >
-            {showPreview ? (
-              <><Minimize2 className="h-4 w-4" /> Hide Preview</>
-            ) : (
-              <><Maximize2 className="h-4 w-4" /> Show Preview</>
-            )}
-          </Button>
-        </div>
+        <InvoiceNavigation 
+          isNewInvoice={isNewInvoice}
+          showPreview={showPreview}
+          onTogglePreview={() => setShowPreview(!showPreview)}
+          onNavigate={navigateToInvoice}
+          disableNavigation={isLoadingAllInvoices || (allInvoices?.length || 0) <= 1}
+        />
 
         <ResizablePanelGroup direction="horizontal">
           <ResizablePanel defaultSize={60}>
