@@ -1289,6 +1289,7 @@ export type Database = {
           payment_date: string | null
           payment_method: string | null
           pdf_url: string | null
+          source_document: string | null
           status: string
           tracking_number: string | null
           updated_at: string
@@ -1310,6 +1311,7 @@ export type Database = {
           payment_date?: string | null
           payment_method?: string | null
           pdf_url?: string | null
+          source_document?: string | null
           status?: string
           tracking_number?: string | null
           updated_at?: string
@@ -1331,6 +1333,7 @@ export type Database = {
           payment_date?: string | null
           payment_method?: string | null
           pdf_url?: string | null
+          source_document?: string | null
           status?: string
           tracking_number?: string | null
           updated_at?: string

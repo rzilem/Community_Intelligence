@@ -1,4 +1,3 @@
-
 import { 
   extractTextFromPdf, 
   extractTextFromDocx, 
@@ -104,19 +103,14 @@ export async function processDocument(attachments: any[] = []) {
       continue;
     }
 
-    const documentType = getDocumentType(filename);
-    if (documentType === "unknown" && !contentType.includes('pdf')) {
-      console.log(`Skipping unsupported document type: ${filename} (${contentType})`);
-      
-      // Even if we can't extract text, still save the file if it's not a recognized document type
-      // This ensures we don't lose attachments that might be important
-    }
-
     try {
-      // Generate a unique filename for storage with timestamp
+      // Generate a unique filename with original extension
       const timestamp = new Date().getTime();
       const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
       const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      
+      // Store original filename as source_document
+      const sourceDocument = safeFilename;
       
       // Upload to the 'invoices' bucket
       console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
@@ -124,7 +118,8 @@ export async function processDocument(attachments: any[] = []) {
         .from('invoices')
         .upload(storageFilename, contentBuffer, {
           contentType: contentType,
-          upsert: true
+          upsert: true,
+          duplex: 'full'
         });
 
       if (uploadResult.error) {
@@ -146,7 +141,13 @@ export async function processDocument(attachments: any[] = []) {
 
       // Extract text content for recognized document types
       let extractedText = "";
-      if (documentType !== "unknown") {
+      const documentType = getDocumentType(filename);
+      if (documentType === "unknown" && !contentType.includes('pdf')) {
+        console.log(`Skipping unsupported document type: ${filename} (${contentType})`);
+        
+        // Even if we can't extract text, still save the file if it's not a recognized document type
+        // This ensures we don't lose attachments that might be important
+      } else {
         try {
           switch (documentType) {
             case "pdf":
@@ -176,7 +177,8 @@ export async function processDocument(attachments: any[] = []) {
       processedAttachment = {
         ...attachment,
         url: urlData.publicUrl,
-        filename: storageFilename
+        filename: storageFilename,
+        source_document: sourceDocument // Add original filename as source_document
       };
       
       // If we successfully processed a PDF, we can stop here
