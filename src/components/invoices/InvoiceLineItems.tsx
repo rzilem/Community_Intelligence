@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle } from 'lucide-react';
+
 interface LineItem {
   glAccount: string;
   fund: string;
@@ -11,6 +12,7 @@ interface LineItem {
   description: string;
   amount: number;
 }
+
 interface InvoiceLineItemsProps {
   lines: LineItem[];
   onLinesChange: (lines: LineItem[]) => void;
@@ -18,6 +20,7 @@ interface InvoiceLineItemsProps {
   showPreview?: boolean;
   invoiceTotal: number;
 }
+
 export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   lines,
   onLinesChange,
@@ -32,6 +35,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       onLinesChange(updatedLines);
     }
   }, [invoiceTotal, lines, onLinesChange]);
+
   const handleAddLine = () => {
     onLinesChange([...lines, {
       glAccount: '',
@@ -41,6 +45,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       amount: 0
     }]);
   };
+
   const handleLineChange = (index: number, field: string, value: string | number) => {
     const newLines = [...lines];
     newLines[index][field] = value;
@@ -50,11 +55,13 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
     }
     onLinesChange(newLines);
   };
+
   const handleRemoveLine = (index: number) => {
     const newLines = [...lines];
     newLines.splice(index, 1);
     onLinesChange(newLines);
   };
+
   return <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       <div className="flex justify-between items-center border-b pb-4">
         <h3 className="text-xl font-semibold text-gray-800">Line Items</h3>
@@ -66,7 +73,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       
       {lines.map((line, index) => <div key={index} className="relative space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200 grid grid-cols-12 gap-4">
           <div className="col-span-1 flex items-center justify-center">
-            <Button variant="destructive" size="icon" onClick={() => handleRemoveLine(index)} className="h-5 w-5 py-0 px-px mx-[3px]">
+            <Button variant="destructive" size="icon" onClick={() => handleRemoveLine(index)} className="h-5 w-5 py-0 px-0.5 mx-1">
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>
@@ -130,4 +137,5 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
         </div>)}
     </div>;
 };
+
 export default InvoiceLineItems;
