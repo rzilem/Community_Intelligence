@@ -39,7 +39,7 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
         const decodedValue = decodeHtmlEntities(rawValue);
         
         return (
-          <FormItem className="h-full">
+          <FormItem>
             <FormControl>
               <Textarea 
                 {...field}
@@ -49,7 +49,7 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
                   field.onChange(e.target.value);
                 }}
                 placeholder="Request description" 
-                className="min-h-[200px] h-full resize-none"
+                className="min-h-[120px] h-[120px] resize-none"
               />
             </FormControl>
             <FormMessage />
@@ -61,3 +61,4 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
 };
 
 export default RequestDescriptionField;
+
