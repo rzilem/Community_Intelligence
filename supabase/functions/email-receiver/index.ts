@@ -1,9 +1,10 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { processEmail } from "./services/email-processor.ts";
 import { createLead } from "./services/lead-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
-import { createClient } from '@supabase/supabase-js';
 import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
 
 // Add a configuration flag to prevent modifications
