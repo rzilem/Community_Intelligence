@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, ExternalLink, FileText, FilePdf, FileWord, Maximize2 } from 'lucide-react';
+import { AlertCircle, ExternalLink, FileText, File, Maximize2 } from 'lucide-react';
 import OriginalEmailTab from '@/components/homeowners/detail/tabs/OriginalEmailTab';
 import { Button } from '@/components/ui/button';
 
@@ -38,9 +38,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
       <div className="bg-gray-50 px-4 py-3 border-b font-medium flex items-center justify-between">
         <div className="flex items-center">
           {isPdf ? (
-            <FilePdf className="h-4 w-4 mr-2 text-red-500" />
+            <FileText className="h-4 w-4 mr-2 text-red-500" />
           ) : isWordDocument ? (
-            <FileWord className="h-4 w-4 mr-2 text-blue-500" />
+            <File className="h-4 w-4 mr-2 text-blue-500" />
           ) : (
             <FileText className="h-4 w-4 mr-2" />
           )}
@@ -97,7 +97,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
               />
             ) : isWordDocument ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-                <FileWord className="h-16 w-16 mb-4 text-blue-500" />
+                <File className="h-16 w-16 mb-4 text-blue-500" />
                 <p className="text-center mb-2">Microsoft Word Document</p>
                 <p className="text-center text-sm mb-6">Word documents cannot be previewed directly in the browser.</p>
                 <Button 
