@@ -1,12 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { TooltipButton } from '@/components/ui/tooltip-button';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
-import { PauseCircle, ArrowUpCircle, MailX, Send, Edit, RefreshCw } from 'lucide-react';
+import AIResponseArea from './actions/AIResponseArea';
+import ActionButtons from './actions/ActionButtons';
 
 interface RequestActionsAreaProps {
   request: HomeownerRequest;
@@ -54,66 +52,19 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   return (
     <div className="space-y-4 p-4 bg-gradient-to-r from-slate-100 to-slate-50 rounded-md border shadow-sm dark:from-slate-800 dark:to-slate-900/90">
       <div className="space-y-2">
-        <div className="flex items-center space-x-2 mb-4">
-          <TooltipButton
-            tooltip="Generate AI Response"
-            onClick={generateAIResponse}
-            disabled={isGenerating}
-            className="bg-blue-500 hover:bg-blue-600"
-          >
-            <RefreshCw className={`${isGenerating ? 'animate-spin' : ''}`} />
-            {isGenerating ? 'Generating...' : 'Generate AI Response'}
-          </TooltipButton>
-          
-          <TooltipButton
-            tooltip="Place request on hold"
-            variant="outline"
-            onClick={() => onSubmit({ status: 'hold' })}
-          >
-            <PauseCircle />
-            Hold
-          </TooltipButton>
-
-          <TooltipButton
-            tooltip="Send to board for review"
-            variant="outline"
-            onClick={() => onSubmit({ status: 'board-review' })}
-          >
-            <ArrowUpCircle />
-            Board Review
-          </TooltipButton>
-
-          <TooltipButton
-            tooltip="Mark as spam"
-            variant="destructive"
-            onClick={() => setShowSpamDialog(true)}
-          >
-            <MailX />
-            Mark as Spam
-          </TooltipButton>
-        </div>
-
-        <Textarea
-          className="min-h-[120px] mb-4"
-          placeholder="AI-generated response will appear here..."
-          value={aiResponse}
-          onChange={(e) => setAiResponse(e.target.value)}
+        <ActionButtons 
+          onSubmit={onSubmit}
+          onSpamClick={() => setShowSpamDialog(true)}
         />
 
-        <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => setAiResponse('')}>
-            <Edit className="mr-2" />
-            Edit Manually
-          </Button>
-          <Button 
-            className="bg-blue-500 hover:bg-blue-600" 
-            disabled={!aiResponse || isPending}
-            onClick={() => onSubmit({ response: aiResponse, status: 'responded' })}
-          >
-            <Send className="mr-2" />
-            {isPending ? 'Sending...' : 'Approve & Send'}
-          </Button>
-        </div>
+        <AIResponseArea 
+          aiResponse={aiResponse}
+          setAiResponse={setAiResponse}
+          generateAIResponse={generateAIResponse}
+          onSubmit={onSubmit}
+          isGenerating={isGenerating}
+          isPending={isPending}
+        />
       </div>
 
       <AlertDialog open={showSpamDialog} onOpenChange={setShowSpamDialog}>
