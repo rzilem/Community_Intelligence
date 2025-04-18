@@ -34,7 +34,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-        {/* First row - 3 columns */}
+        {/* First row */}
         <div className="md:col-span-2">
           <AssociationSelector
             initialAssociationId={invoice.association}
@@ -50,22 +50,10 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             className="w-full"
           />
         </div>
+      </div>
 
-        <div className="md:col-span-1">
-          <div className="space-y-2">
-            <Label htmlFor="invoiceTotal">Total</Label>
-            <Input
-              id="invoiceTotal"
-              type="number"
-              value={invoice.totalAmount}
-              onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
-              step="0.01"
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        {/* Second row - 3 columns */}
+      {/* Second row */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="md:col-span-2">
           <div className="space-y-2">
             <Label htmlFor="invoiceDate">Invoice Date</Label>
@@ -106,7 +94,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         </div>
       </div>
 
-      {/* Payment type row */}
+      {/* Payment type and Total row */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="md:col-span-2">
           <div className="space-y-2">
@@ -124,6 +112,20 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 <SelectItem value="credit_card">Credit Card</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        <div className="md:col-span-2 md:col-start-5">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceTotal">Total</Label>
+            <Input
+              id="invoiceTotal"
+              type="number"
+              value={invoice.totalAmount}
+              onChange={(e) => onInvoiceChange('totalAmount', parseFloat(e.target.value) || 0)}
+              step="0.01"
+              className="w-full"
+            />
           </div>
         </div>
       </div>
