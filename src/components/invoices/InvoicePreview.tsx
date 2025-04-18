@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { AlertCircle, ExternalLink, FileText, File, Maximize2 } from 'lucide-react';
-import OriginalEmailTab from '@/components/homeowners/detail/tabs/OriginalEmailTab';
 import { Button } from '@/components/ui/button';
 
 interface InvoicePreviewProps {
@@ -15,8 +14,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
   const [previewError, setPreviewError] = useState(false);
 
   // Debug logs to see what data we're receiving
-  React.useEffect(() => {
-    console.log("InvoicePreview props:", { htmlContent: !!htmlContent, pdfUrl: pdfUrl || 'none' });
+  useEffect(() => {
+    console.log("InvoicePreview props:", { 
+      htmlContent: !!htmlContent, 
+      htmlContentLength: htmlContent?.length || 0,
+      pdfUrl: pdfUrl || 'none' 
+    });
   }, [htmlContent, pdfUrl]);
 
   const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx');
@@ -33,7 +36,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
     }
   };
 
-  // Function to safely create HTML content for iframe
   const createHtmlContent = () => {
     if (!htmlContent) return '';
     
