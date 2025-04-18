@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { FileUploader } from '@/components/ui/file-uploader';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { Download, File, Paperclip } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 
 interface AttachmentsTabProps {
@@ -37,30 +36,28 @@ const AttachmentsTab: React.FC<AttachmentsTabProps> = ({ request }) => {
     }
     
     return (
-      <ScrollArea className="h-[60vh]">
-        <div className="space-y-2 p-1">
-          {attachments.map((attachment: any, index: number) => (
-            <div key={index} className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/30 transition-colors">
-              <div className="flex items-center gap-3">
-                <File className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="font-medium">{attachment.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {attachment.type} • {formatFileSize(attachment.size)}
-                  </p>
-                </div>
+      <div className="space-y-2 p-1">
+        {attachments.map((attachment: any, index: number) => (
+          <div key={index} className="flex items-center justify-between p-3 border rounded-md hover:bg-muted/30 transition-colors">
+            <div className="flex items-center gap-3">
+              <File className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="font-medium">{attachment.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {attachment.type} • {formatFileSize(attachment.size)}
+                </p>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => handleDownload(attachment)}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
             </div>
-          ))}
-        </div>
-      </ScrollArea>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => handleDownload(attachment)}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
     );
   };
   
@@ -73,7 +70,7 @@ const AttachmentsTab: React.FC<AttachmentsTabProps> = ({ request }) => {
   };
   
   return (
-    <div className="space-y-6">
+    <div className="p-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Attachments</CardTitle>

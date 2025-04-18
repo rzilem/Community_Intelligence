@@ -15,11 +15,18 @@ const OriginalEmailTab: React.FC<OriginalEmailTabProps> = ({
   setFullscreenEmail 
 }) => {
   return (
-    <div className={`${fullscreenEmail ? 'h-[calc(100vh-120px)]' : 'h-[60vh]'} flex flex-col`}>
+    <div className={`${fullscreenEmail ? 'h-[calc(100vh-120px)]' : 'h-full'} flex flex-col p-4`}>
       {htmlContent ? (
         <div className="border rounded-lg flex-1 overflow-hidden">
           <div className="bg-gray-100 p-2 border-b flex justify-between items-center">
             <h3 className="font-medium">Original Email Content</h3>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setFullscreenEmail(!fullscreenEmail)}
+            >
+              {fullscreenEmail ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
           </div>
           <div className="w-full h-full overflow-auto">
             <iframe 
