@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -112,6 +111,11 @@ export const useInvoiceDetail = (id: string | undefined) => {
         emailContent: emailContent ? 'present' : 'empty',
       });
       console.groupEnd();
+
+      // Ensure full decimal precision for amount
+      const fullAmount = invoiceData.amount !== null 
+        ? parseFloat(invoiceData.amount.toFixed(2)) 
+        : 0;
       
       setInvoice({
         id: invoiceData.id,
@@ -120,7 +124,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
         invoiceNumber: invoiceData.invoice_number || '',
         invoiceDate: invoiceData.invoice_date || format(new Date(), 'yyyy-MM-dd'),
         dueDate: invoiceData.due_date || format(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-        totalAmount: invoiceData.amount || 0,
+        totalAmount: fullAmount,
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
         htmlContent: htmlContent,
