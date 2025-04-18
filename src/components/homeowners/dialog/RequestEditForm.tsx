@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -8,7 +7,6 @@ import { Form } from '@/components/ui/form';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import RequestBasicFields from './fields/RequestBasicFields';
-import RequestAssignmentFields from './fields/RequestAssignmentFields';
 import RequestNoteField from './fields/RequestNoteField';
 
 interface RequestEditFormProps {
@@ -56,25 +54,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Basic Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RequestBasicFields form={form} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Assignment</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RequestAssignmentFields form={form} optional={true} />
-            </CardContent>
-          </Card>
-
+        <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Add Note</CardTitle>
