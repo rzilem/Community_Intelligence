@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { SlidersHorizontal } from 'lucide-react';
@@ -100,7 +99,10 @@ const SystemSettings = () => {
         onValueChange={setActiveTab}
         className="mt-6"
       >
-        <SystemSettingsTabs activeTab={activeTab} />
+        <SystemSettingsTabs 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+        />
         
         <SystemSettingsContent 
           activeTab={activeTab}
