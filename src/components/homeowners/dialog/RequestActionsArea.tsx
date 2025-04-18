@@ -46,8 +46,9 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   };
 
   const handleSpamConfirm = () => {
-    // Here we would implement the spam blocking logic
+    // Implement spam blocking logic
     toast.success(`Email address blocked successfully`);
+    onSubmit({ status: 'spam', blockedEmail: request.email });
     setShowSpamDialog(false);
   };
 
