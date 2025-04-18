@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { 
-  Select as UISelect, 
+  Select, 
   SelectContent,
   SelectItem,
   SelectTrigger,
@@ -36,10 +37,8 @@ interface InvoiceLineItemsProps {
 const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
   <div className="space-y-2">
     <Label className="text-sm font-medium text-gray-600">{label}</Label>
-    <UISelect value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full bg-background border-input">
-        <SelectValue placeholder={`Select ${label}`} />
-      </SelectTrigger>
+    <SelectTrigger className="w-full bg-background border-input">
+      <SelectValue placeholder={`Select ${label}`} />
       <SelectContent>
         {options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
@@ -47,7 +46,7 @@ const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
           </SelectItem>
         ))}
       </SelectContent>
-    </UISelect>
+    </SelectTrigger>
   </div>
 );
 
@@ -100,34 +99,52 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       {lines.map((line, index) => (
         <div key={index} className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select
-              label="GL Account"
-              value={line.glAccount}
-              onChange={(value) => handleLineChange(index, 'glAccount', value)}
-              options={[
-                { value: '', label: 'Select GL Account' },
-                { value: 'Account1', label: 'Account 1' },
-                { value: 'Account2', label: 'Account 2' },
-              ]}
-            />
-            <Select
-              label="Fund"
-              value={line.fund}
-              onChange={(value) => handleLineChange(index, 'fund', value)}
-              options={[
-                { value: 'Operating', label: 'Operating' },
-                { value: 'Reserve', label: 'Reserve' },
-              ]}
-            />
-            <Select
-              label="Bank Account"
-              value={line.bankAccount}
-              onChange={(value) => handleLineChange(index, 'bankAccount', value)}
-              options={[
-                { value: 'Operating', label: 'Operating' },
-                { value: 'Reserve', label: 'Reserve' },
-              ]}
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-600">GL Account</Label>
+              <Select
+                value={line.glAccount || "none"}
+                onValueChange={(value) => handleLineChange(index, 'glAccount', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select GL Account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Select GL Account</SelectItem>
+                  <SelectItem value="Account1">Account 1</SelectItem>
+                  <SelectItem value="Account2">Account 2</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-600">Fund</Label>
+              <Select
+                value={line.fund}
+                onValueChange={(value) => handleLineChange(index, 'fund', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Fund" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Operating">Operating</SelectItem>
+                  <SelectItem value="Reserve">Reserve</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-600">Bank Account</Label>
+              <Select
+                value={line.bankAccount}
+                onValueChange={(value) => handleLineChange(index, 'bankAccount', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Bank Account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Operating">Operating</SelectItem>
+                  <SelectItem value="Reserve">Reserve</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className={showPreview ? 'space-y-4' : 'grid grid-cols-5 gap-4'}>

@@ -9,6 +9,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 interface InvoiceHeaderProps {
   invoice: {
@@ -35,20 +36,11 @@ export const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         {/* Association selection */}
         <div className="space-y-2">
           <Label htmlFor="association">Association</Label>
-          <Select
-            value={invoice.association || ''}
-            onValueChange={(value) => onInvoiceChange('association', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select association" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Select association</SelectItem>
-              <SelectItem value="association1">Calmer Bluffs HOA</SelectItem>
-              <SelectItem value="association2">Nolan City HOA</SelectItem>
-              <SelectItem value="association3">Reeceville COA</SelectItem>
-            </SelectContent>
-          </Select>
+          <AssociationSelector
+            onAssociationChange={(id) => onInvoiceChange('association', id)}
+            initialAssociationId={invoice.association}
+            label={false}
+          />
         </div>
 
         {/* Invoice Number */}
