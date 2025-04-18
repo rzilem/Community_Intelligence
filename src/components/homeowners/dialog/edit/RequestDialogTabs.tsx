@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import QuickEditMenu from '../QuickEditMenu';
@@ -26,7 +27,7 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
   children
 }) => {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 h-full flex flex-col">
       <div className="flex justify-between items-center gap-4">
         <TabsList>
           <TabsTrigger value="details">Details</TabsTrigger>
@@ -45,7 +46,9 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
         />
       </div>
       
-      {children}
+      <div className="flex-1 overflow-hidden">
+        {children}
+      </div>
     </Tabs>
   );
 };

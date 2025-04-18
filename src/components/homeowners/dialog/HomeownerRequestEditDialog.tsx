@@ -89,7 +89,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   );
 
   React.useEffect(() => {
-    if (open && request && activeTab === 'comments') {
+    if (open && request && activeTab === 'activity') {
       fetchComments();
     }
   }, [open, request, activeTab]);
@@ -202,7 +202,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
         />
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-4 pt-2 pb-2 overflow-y-auto flex-shrink-0" style={{ maxHeight: '55vh' }}>
+          <div className="p-4 pt-2 pb-2 overflow-y-auto flex-shrink-0 flex flex-col" style={{ height: '500px' }}>
             <RequestDialogTabs 
               activeTab={activeTab} 
               setActiveTab={setActiveTab}
@@ -213,25 +213,27 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
               onAssociationChange={handleAssociationChange}
               onPropertyChange={handlePropertyChange}
             >
-              <TabsContent value="details">
-                <DetailsTab request={request} processedDescription={processedDescription} />
-              </TabsContent>
+              <div className="flex-1 h-full overflow-auto">
+                <TabsContent value="details" className="h-full m-0">
+                  <DetailsTab request={request} processedDescription={processedDescription} />
+                </TabsContent>
 
-              <TabsContent value="comments">
-                <CommentsTab comments={comments} loadingComments={loadingComments} />
-              </TabsContent>
+                <TabsContent value="activity" className="h-full m-0">
+                  <CommentsTab comments={comments} loadingComments={loadingComments} />
+                </TabsContent>
 
-              <TabsContent value="email">
-                <OriginalEmailTab 
-                  htmlContent={request.html_content} 
-                  fullscreenEmail={fullscreenEmail}
-                  setFullscreenEmail={setFullscreenEmail}
-                />
-              </TabsContent>
+                <TabsContent value="email" className="h-full m-0">
+                  <OriginalEmailTab 
+                    htmlContent={request.html_content} 
+                    fullscreenEmail={fullscreenEmail}
+                    setFullscreenEmail={setFullscreenEmail}
+                  />
+                </TabsContent>
 
-              <TabsContent value="attachments">
-                <AttachmentsTab request={request} />
-              </TabsContent>
+                <TabsContent value="attachments" className="h-full m-0">
+                  <AttachmentsTab request={request} />
+                </TabsContent>
+              </div>
             </RequestDialogTabs>
           </div>
 
