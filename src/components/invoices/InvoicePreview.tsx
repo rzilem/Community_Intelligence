@@ -13,6 +13,11 @@ interface InvoicePreviewProps {
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdfUrl }) => {
   const [fullscreenPreview, setFullscreenPreview] = React.useState(false);
 
+  // Debug logs to see what data we're receiving
+  React.useEffect(() => {
+    console.log("InvoicePreview props:", { htmlContent: !!htmlContent, pdfUrl: pdfUrl || 'none' });
+  }, [htmlContent, pdfUrl]);
+
   return (
     <Card className="h-full">
       <div className="bg-gray-50 px-4 py-3 border-b font-medium flex items-center justify-between">

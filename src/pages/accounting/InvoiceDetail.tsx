@@ -32,6 +32,16 @@ const InvoiceDetail = () => {
     isNewInvoice
   } = useInvoiceDetail(id);
 
+  // Debug log to check if we have the invoice data with HTML content
+  React.useEffect(() => {
+    console.log("Invoice detail rendered with invoice:", {
+      id: invoice.id,
+      hasHtmlContent: !!invoice.htmlContent,
+      hasPdfUrl: !!invoice.pdfUrl,
+      htmlContentLength: invoice.htmlContent?.length || 0
+    });
+  }, [invoice]);
+
   const handleSave = () => {
     updateInvoice({
       id: invoice.id,
