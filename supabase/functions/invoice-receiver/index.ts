@@ -18,6 +18,22 @@ serve(async (req) => {
     console.log("Received invoice email with content-type:", req.headers.get("content-type"));
     console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
     
+    // Make a copy of the request to inspect the raw body if needed
+    const reqCopy = req.clone();
+    let rawBody;
+    try {
+      // Try to get the raw body as text for debugging 
+      const rawText = await reqCopy.text();
+      console.log(`Raw request body length: ${rawText.length} characters`);
+      if (rawText.length < 10000) { // Only log if not too large
+        console.log("Raw request body:", rawText);
+      } else {
+        console.log("Raw request body (truncated):", rawText.substring(0, 1000) + "...");
+      }
+    } catch (e) {
+      console.log("Could not read raw request body:", e);
+    }
+    
     // Get email data from request - handle both JSON and multipart form data
     let emailData;
     
@@ -62,7 +78,20 @@ serve(async (req) => {
     
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
-    console.log("Normalized invoice email data:", JSON.stringify(normalizedEmailData, null, 2));
+    console.log("Normalized invoice email data:", JSON.stringify({
+      from: normalizedEmailData.from,
+      to: normalizedEmailData.to,
+      subject: normalizedEmailData.subject,
+      hasHtml: !!normalizedEmailData.html,
+      hasText: !!normalizedEmailData.text,
+      attachmentsCount: normalizedEmailData.attachments?.length,
+      attachmentSummary: normalizedEmailData.attachments?.map(a => ({
+        name: a.filename,
+        type: a.contentType,
+        hasContent: !!a.content,
+        contentLength: a.content?.length || 0
+      }))
+    }, null, 2));
 
     // Check if we have either HTML content, text content, or subject (minimum required to process)
     if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {

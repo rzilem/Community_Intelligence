@@ -21,13 +21,23 @@ export async function processDocument(attachments: any[] = []) {
     return { documentContent: "", processedAttachment: null };
   }
 
-  console.log(`Processing ${attachments.length} attachments`);
+  console.log(`Processing ${attachments.length} attachments`, attachments.map(a => ({ 
+    filename: a.filename, 
+    contentType: a.contentType,
+    hasContent: !!a.content,
+    contentLength: a.content ? a.content.length : 0
+  })));
   
   for (const attachment of attachments) {
     console.log(`Examining attachment: ${attachment.filename} (${attachment.contentType})`);
     
     if (!attachment.content) {
       console.warn(`No content for attachment: ${attachment.filename}`);
+      continue;
+    }
+
+    if (typeof attachment.content !== 'string' || attachment.content.length === 0) {
+      console.warn(`Invalid content for attachment ${attachment.filename}: Type: ${typeof attachment.content}, Length: ${attachment.content ? attachment.content.length : 0}`);
       continue;
     }
 
@@ -38,17 +48,32 @@ export async function processDocument(attachments: any[] = []) {
       continue;
     }
 
-    console.log(`Processing ${documentType} document: ${attachment.filename}`);
+    console.log(`Processing ${documentType} document: ${attachment.filename} (content length: ${attachment.content.length})`);
     
     try {
       // Generate a unique filename for storage
       const timestamp = new Date().getTime();
       const fileName = `invoice_${timestamp}_${attachment.filename}`;
       
+      // Attempt to decode the base64 content to ensure it's valid
+      let contentBuffer;
+      try {
+        contentBuffer = Buffer.from(attachment.content, 'base64');
+        console.log(`Successfully decoded base64 content, byte length: ${contentBuffer.byteLength}`);
+        
+        if (contentBuffer.byteLength === 0) {
+          console.error("Decoded content is empty");
+          continue;
+        }
+      } catch (decodeError) {
+        console.error(`Failed to decode base64 content for ${attachment.filename}:`, decodeError);
+        continue;
+      }
+      
       // Upload the document to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('invoices')
-        .upload(`public/${fileName}`, Buffer.from(attachment.content, 'base64'), {
+        .upload(`public/${fileName}`, contentBuffer, {
           contentType: attachment.contentType,
           upsert: true
         });
@@ -85,7 +110,7 @@ export async function processDocument(attachments: any[] = []) {
       }
 
       if (extractedText) {
-        console.log(`Successfully extracted text from ${attachment.filename}`);
+        console.log(`Successfully extracted text from ${attachment.filename}, text length: ${extractedText.length}`);
         documentContent = extractedText;
         processedAttachment = {
           ...attachment,
@@ -93,11 +118,14 @@ export async function processDocument(attachments: any[] = []) {
           filename: fileName
         };
         break; // Stop after first successful processing
+      } else {
+        console.warn(`No text extracted from ${attachment.filename}`);
       }
     } catch (error) {
       console.error(`Error processing document ${attachment.filename}:`, error);
     }
   }
 
+  console.log(`Document processing complete. Success: ${!!processedAttachment}, URL: ${processedAttachment?.url || 'none'}`);
   return { documentContent, processedAttachment };
 }

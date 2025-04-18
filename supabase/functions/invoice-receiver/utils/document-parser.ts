@@ -10,13 +10,23 @@ export async function extractTextFromPdf(base64Content: string): Promise<string>
   try {
     console.log("Starting PDF text extraction");
     
+    if (!base64Content || typeof base64Content !== 'string') {
+      console.error("Invalid PDF content provided:", typeof base64Content);
+      return "";
+    }
+    
     // This is a simplified implementation - in a production environment,
     // you would use a more robust PDF parsing library
     
     // For demonstration purposes, we'll extract some text from the binary data
-    const decodedContent = decode(base64Content);
-    
-    console.log(`Decoded PDF content, size: ${decodedContent.length} bytes`);
+    let decodedContent;
+    try {
+      decodedContent = decode(base64Content);
+      console.log(`Decoded PDF content, size: ${decodedContent.length} bytes`);
+    } catch (decodeError) {
+      console.error("Error decoding PDF content:", decodeError);
+      return "";
+    }
     
     // Extract text content from the PDF binary
     // This is a simplified approach - we're looking for text markers in the PDF
@@ -41,12 +51,22 @@ export async function extractTextFromDocx(base64Content: string): Promise<string
   try {
     console.log("Starting DOCX text extraction");
     
+    if (!base64Content || typeof base64Content !== 'string') {
+      console.error("Invalid DOCX content provided:", typeof base64Content);
+      return "";
+    }
+    
     // This is a simplified implementation - in a production environment,
     // you would use a library like mammoth.js or similar
     
-    const decodedContent = decode(base64Content);
-    
-    console.log(`Decoded DOCX content, size: ${decodedContent.length} bytes`);
+    let decodedContent;
+    try {
+      decodedContent = decode(base64Content);
+      console.log(`Decoded DOCX content, size: ${decodedContent.length} bytes`);
+    } catch (decodeError) {
+      console.error("Error decoding DOCX content:", decodeError);
+      return "";
+    }
     
     // Extract text content from the DOCX binary
     // This is a simplified approach - we're looking for text in the XML structure
@@ -71,12 +91,22 @@ export async function extractTextFromDoc(base64Content: string): Promise<string>
   try {
     console.log("Starting DOC text extraction");
     
+    if (!base64Content || typeof base64Content !== 'string') {
+      console.error("Invalid DOC content provided:", typeof base64Content);
+      return "";
+    }
+    
     // For the old binary .doc format - this is more challenging
     // In a production environment, you would use a specialized library
     
-    const decodedContent = decode(base64Content);
-    
-    console.log(`Decoded DOC content, size: ${decodedContent.length} bytes`);
+    let decodedContent;
+    try {
+      decodedContent = decode(base64Content);
+      console.log(`Decoded DOC content, size: ${decodedContent.length} bytes`);
+    } catch (decodeError) {
+      console.error("Error decoding DOC content:", decodeError);
+      return "";
+    }
     
     // Extract text from binary content
     const textContent = extractTextFromBinary(decodedContent);
