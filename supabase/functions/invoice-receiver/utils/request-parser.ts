@@ -17,7 +17,7 @@ export async function processMultipartFormData(request: Request): Promise<any> {
     }
   }
 
-  console.log("Processing multipart form data");
+  console.log("Processing multipart form data with content type:", contentType);
   let formData;
   
   try {
@@ -29,9 +29,57 @@ export async function processMultipartFormData(request: Request): Promise<any> {
   
   const result: Record<string, any> = {};
   
+  // Log all form data keys for debugging
+  console.log("Form data keys:", Array.from(formData.keys()));
+  
   // Process each form field
   for (const [key, value] of formData.entries()) {
-    if (typeof value === "string") {
+    // Check if this might be a CloudMailin attachment
+    if (key.startsWith('attachments[') || key === 'attachments[]') {
+      console.log(`Found potential CloudMailin attachment with key: ${key}, type: ${typeof value}, is file: ${value instanceof File}`);
+      
+      if (!result.attachments) {
+        result.attachments = [];
+      }
+      
+      // CloudMailin sends attachments as files
+      if (value instanceof File || value instanceof Blob) {
+        // Get the file details
+        const fileContent = value;
+        const fileName = value instanceof File ? value.name : key.replace(/attachments\[\d*\]/, 'attachment');
+        const contentType = value instanceof File ? value.type : 'application/octet-stream';
+        
+        console.log(`Processing file attachment: name=${fileName}, type=${contentType}, size=${fileContent.size}`);
+        
+        // Add to the attachments array
+        result.attachments.push({
+          filename: fileName,
+          contentType: contentType,
+          content: fileContent,
+          size: fileContent.size
+        });
+      }
+    } else if (key.startsWith('attachment_details[') || key === 'attachment_details[]') {
+      // Process CloudMailin attachment details
+      console.log(`Found attachment details with key: ${key}, value: ${value}`);
+      
+      // We'll process these after gathering all attachment files
+      if (!result.attachment_details) {
+        result.attachment_details = [];
+      }
+      
+      // Try to parse the value as JSON if it's a string
+      if (typeof value === 'string') {
+        try {
+          const parsedValue = JSON.parse(value);
+          result.attachment_details.push(parsedValue);
+        } catch {
+          result.attachment_details.push(value);
+        }
+      } else {
+        result.attachment_details.push(value);
+      }
+    } else if (typeof value === "string") {
       try {
         // Try to parse JSON values
         result[key] = JSON.parse(value);
@@ -40,76 +88,51 @@ export async function processMultipartFormData(request: Request): Promise<any> {
         result[key] = value;
       }
     } else {
-      // Handle file data if needed
+      // Handle any other form fields
       result[key] = value;
     }
   }
 
-  // CloudMailin specific handling for attachments
-  // Look for attachment_details and attachments fields which are specific to CloudMailin
-  if (formData.has('attachment_details[]')) {
-    // Check for CloudMailin attachment format
-    console.log("Found CloudMailin attachment_details[] field");
-    const attachmentDetails = [];
+  // Match up CloudMailin attachment details with the actual files
+  if (result.attachments && result.attachment_details) {
+    console.log("Matching attachment details with files");
     
-    // Get all attachment details entries
-    const attachmentKeys = Array.from(formData.keys()).filter(key => 
-      key.startsWith('attachment_details[') || key === 'attachment_details[]'
-    );
-    
-    // Get all attachment file entries
-    const attachmentFiles = Array.from(formData.keys()).filter(key => 
-      key.startsWith('attachments[') || key === 'attachments[]'
-    );
-    
-    console.log(`Found ${attachmentKeys.length} attachment detail entries and ${attachmentFiles.length} attachment files`);
-    
-    // Process all attachment files
-    for (let i = 0; i < attachmentFiles.length; i++) {
-      const fileKey = attachmentFiles[i];
-      const fileContent = formData.get(fileKey);
-      
-      // Find corresponding details for this file
-      const detailPrefix = fileKey.replace('attachments', 'attachment_details');
-      const detailKeys = Array.from(formData.keys()).filter(key => 
-        key.startsWith(detailPrefix) || 
-        (detailPrefix === 'attachment_details[]' && key === 'attachment_details[]')
-      );
-      
-      // Extract attachment details
-      const details: Record<string, any> = {};
-      for (const detailKey of detailKeys) {
-        const propMatch = detailKey.match(/\[(\d+)\]\[([^\]]+)\]/);
-        if (propMatch) {
-          const propName = propMatch[2];
-          details[propName] = formData.get(detailKey);
-        } else {
-          // Default to single attachment case
-          const simpleMatch = detailKey.match(/\[([^\]]+)\]/);
-          if (simpleMatch) {
-            const propName = simpleMatch[1];
-            details[propName] = formData.get(detailKey);
+    try {
+      // CloudMailin specific format where attachment details are provided separately
+      for (let i = 0; i < result.attachments.length; i++) {
+        const attachment = result.attachments[i];
+        const details = result.attachment_details[i];
+        
+        if (details) {
+          if (typeof details === 'object') {
+            // Copy relevant properties
+            attachment.filename = details.filename || attachment.filename;
+            attachment.contentType = details.content_type || details.contentType || attachment.contentType;
+          } else if (typeof details === 'string') {
+            // Try to extract details from the string
+            try {
+              const detailsObj = JSON.parse(details);
+              attachment.filename = detailsObj.filename || attachment.filename;
+              attachment.contentType = detailsObj.content_type || detailsObj.contentType || attachment.contentType;
+            } catch {
+              // If parsing fails, just continue with what we have
+            }
           }
         }
       }
-      
-      // Create attachment object
-      attachmentDetails.push({
-        filename: details.filename || `attachment_${i}.bin`,
-        contentType: details.content_type || details.contentType || 'application/octet-stream',
-        content: fileContent,
-        size: fileContent instanceof Blob ? fileContent.size : 0
-      });
+    } catch (matchError) {
+      console.error("Error matching attachment details:", matchError);
     }
     
-    // Add processed attachments to result
-    if (attachmentDetails.length > 0) {
-      console.log(`Processed ${attachmentDetails.length} CloudMailin attachments`);
-      result.attachments = attachmentDetails;
-    }
+    // Remove the attachment_details from the result to avoid confusion
+    delete result.attachment_details;
   }
 
-  console.log("Processed form data:", Object.keys(result));
+  console.log("Processed form data result:", Object.keys(result));
+  if (result.attachments) {
+    console.log(`Found ${result.attachments.length} attachments in form data`);
+  }
+  
   return result;
 }
 
@@ -174,15 +197,19 @@ function processAttachments(data: any): any[] {
   // Initialize with empty array as fallback
   let attachments: any[] = [];
   
-  // Handle different attachment field names based on email service providers
+  // Check if we already have processed attachments in the data
   if (Array.isArray(data.attachments)) {
+    console.log(`Using ${data.attachments.length} attachments from data.attachments array`);
     attachments = data.attachments;
   } else if (Array.isArray(data.Attachments)) {
+    console.log(`Using ${data.Attachments.length} attachments from data.Attachments array`);
     attachments = data.Attachments;
   } else if (data.attachment && !Array.isArray(data.attachment)) {
     // Some services might provide a single attachment object
+    console.log("Using single attachment from data.attachment");
     attachments = [data.attachment];
   } else if (data.Attachment && !Array.isArray(data.Attachment)) {
+    console.log("Using single attachment from data.Attachment");
     attachments = [data.Attachment];
   }
   

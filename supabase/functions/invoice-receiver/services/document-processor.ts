@@ -24,148 +24,118 @@ export async function processDocument(attachments: any[] = []) {
 
   console.log(`Processing ${attachments.length} attachments:`, 
     attachments.map(a => ({ 
-      filename: a.filename, 
-      contentType: a.contentType,
+      filename: a.filename || "unnamed", 
+      contentType: a.contentType || "unknown",
       hasContent: !!a.content,
-      contentLength: a.content ? a.content.length : 0,
-      contentType: typeof a.content
+      contentLength: a.content ? (typeof a.content === 'string' ? a.content.length : 'binary') : 0,
     }))
   );
   
-  for (const attachment of attachments) {
-    console.log(`Examining attachment: ${attachment.filename} (${attachment.contentType})`);
+  // Sort attachments to prioritize PDFs
+  const sortedAttachments = [...attachments].sort((a, b) => {
+    // Prioritize PDFs first
+    const aIsPdf = a.contentType === 'application/pdf' || (a.filename && a.filename.toLowerCase().endsWith('.pdf'));
+    const bIsPdf = b.contentType === 'application/pdf' || (b.filename && b.filename.toLowerCase().endsWith('.pdf'));
+    
+    if (aIsPdf && !bIsPdf) return -1;
+    if (!aIsPdf && bIsPdf) return 1;
+    
+    // Then check for existence of content
+    if (a.content && !b.content) return -1;
+    if (!a.content && b.content) return 1;
+    
+    return 0;
+  });
+  
+  for (const attachment of sortedAttachments) {
+    const filename = attachment.filename || "unnamed_attachment";
+    const contentType = attachment.contentType || "application/octet-stream";
+    
+    console.log(`Processing attachment: ${filename} (${contentType})`);
     
     if (!attachment.content) {
-      console.warn(`No content for attachment: ${attachment.filename}`);
+      console.warn(`No content for attachment: ${filename}`);
       continue;
     }
 
     // Handle both string content and Blob/File objects from form data
     let contentToProcess = attachment.content;
-    if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
-      console.log(`Converting Blob/File to ArrayBuffer for: ${attachment.filename}`);
-      try {
-        // Convert Blob to ArrayBuffer
-        const arrayBuffer = await contentToProcess.arrayBuffer();
-        // Convert ArrayBuffer to base64 string
-        const uint8Array = new Uint8Array(arrayBuffer);
-        contentToProcess = btoa(String.fromCharCode.apply(null, uint8Array));
-        console.log(`Successfully converted Blob to base64 string, length: ${contentToProcess.length}`);
-      } catch (blobError) {
-        console.error(`Error converting Blob to string: ${blobError.message}`);
-        continue;
-      }
-    } else if (typeof contentToProcess !== 'string') {
-      console.warn(`Unsupported content type for ${attachment.filename}: ${typeof contentToProcess}`);
-      continue;
-    }
-
-    if (typeof contentToProcess === 'string' && contentToProcess.length === 0) {
-      console.warn(`Empty content for attachment ${attachment.filename}`);
-      continue;
-    }
-
-    const documentType = getDocumentType(attachment.filename);
-    
-    if (documentType === "unknown") {
-      console.log(`Skipping unsupported document type: ${attachment.filename}`);
-      continue;
-    }
-
-    console.log(`Processing ${documentType} document: ${attachment.filename} (content length: ${
-      typeof contentToProcess === 'string' ? contentToProcess.length : 'unknown'
-    })`);
+    let contentBuffer;
     
     try {
-      // Generate a unique filename for storage
-      const timestamp = new Date().getTime();
-      const safeFilename = attachment.filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const fileName = `invoice_${timestamp}_${safeFilename}`;
-      
-      // Decode the base64 content - enhanced with better error handling
-      let contentBuffer;
-      try {
-        // Improved base64 detection and handling
-        if (typeof contentToProcess === 'string') {
-          // Check if content is already base64 encoded
-          const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(
-            contentToProcess.trim().replace(/\s/g, '')
-          );
-          
-          if (isBase64) {
-            console.log(`Content appears to be Base64 encoded, decoding now`);
-            try {
-              contentBuffer = new Uint8Array(atob(contentToProcess).split('').map(c => c.charCodeAt(0)));
-            } catch (base64Error) {
-              console.error(`Base64 decode error: ${base64Error.message}`);
-              // Try to directly encode the content as a fallback
-              contentBuffer = new TextEncoder().encode(contentToProcess);
-            }
-          } else {
-            console.log(`Content does not appear to be Base64 encoded, encoding it first`);
+      if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
+        console.log(`Converting Blob/File to ArrayBuffer for: ${filename}`);
+        // Convert Blob to ArrayBuffer
+        const arrayBuffer = await contentToProcess.arrayBuffer();
+        contentBuffer = new Uint8Array(arrayBuffer);
+        console.log(`Successfully converted Blob to Uint8Array, length: ${contentBuffer.byteLength}`);
+      } else if (typeof contentToProcess === 'string') {
+        // Try to determine if it's base64 encoded
+        const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(
+          contentToProcess.trim().replace(/\s/g, '')
+        );
+        
+        if (isBase64) {
+          console.log(`Content appears to be Base64 encoded, decoding now`);
+          try {
+            // Convert base64 to binary
+            contentBuffer = new Uint8Array(Array.from(atob(contentToProcess), c => c.charCodeAt(0)));
+          } catch (base64Error) {
+            console.error(`Base64 decode error: ${base64Error.message}`);
             contentBuffer = new TextEncoder().encode(contentToProcess);
           }
         } else {
-          // If content is already a Uint8Array or similar
-          contentBuffer = contentToProcess;
+          console.log(`Content is plain text, encoding as binary`);
+          contentBuffer = new TextEncoder().encode(contentToProcess);
         }
-        
-        console.log(`Successfully processed content, byte length: ${contentBuffer.byteLength}`);
-        
-        if (contentBuffer.byteLength === 0) {
-          console.error("Processed content is empty");
-          continue;
-        }
-      } catch (decodeError) {
-        console.error(`Failed to process content for ${attachment.filename}:`, decodeError);
-        // Try direct upload as a fallback
-        console.log("Attempting direct upload without processing");
-        contentBuffer = new TextEncoder().encode(
-          typeof contentToProcess === 'string' ? contentToProcess : JSON.stringify(contentToProcess)
-        );
+      } else {
+        console.warn(`Unsupported content type for ${filename}: ${typeof contentToProcess}`);
+        continue;
       }
       
-      // Upload directly to the 'invoices' bucket (no public/ prefix)
+      if (!contentBuffer || contentBuffer.byteLength === 0) {
+        console.error("Empty content buffer after processing");
+        continue;
+      }
+      
+      console.log(`Successfully processed content, byte length: ${contentBuffer.byteLength}`);
+    } catch (processError) {
+      console.error(`Error processing attachment content: ${processError.message}`);
+      continue;
+    }
+
+    const documentType = getDocumentType(filename);
+    if (documentType === "unknown" && !contentType.includes('pdf')) {
+      console.log(`Skipping unsupported document type: ${filename} (${contentType})`);
+      
+      // Even if we can't extract text, still save the file if it's not a recognized document type
+      // This ensures we don't lose attachments that might be important
+    }
+
+    try {
+      // Generate a unique filename for storage with timestamp
+      const timestamp = new Date().getTime();
+      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      
+      // Upload to the 'invoices' bucket
+      console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
       const uploadResult = await supabase.storage
         .from('invoices')
-        .upload(fileName, contentBuffer, {
-          contentType: attachment.contentType || 'application/octet-stream',
+        .upload(storageFilename, contentBuffer, {
+          contentType: contentType,
           upsert: true
         });
 
       if (uploadResult.error) {
         console.error("Failed to upload document:", uploadResult.error);
-        
-        // Try alternative method if first attempt failed
-        try {
-          console.log("Attempting alternative upload method...");
-          const altBuffer = new TextEncoder().encode(
-            typeof contentToProcess === 'string' ? contentToProcess : JSON.stringify(contentToProcess)
-          );
-          const altResult = await supabase.storage
-            .from('invoices')
-            .upload(fileName, altBuffer, {
-              contentType: 'application/octet-stream',
-              upsert: true
-            });
-            
-          if (altResult.error) {
-            console.error("Alternative upload also failed:", altResult.error);
-            continue;
-          } else {
-            console.log("Alternative upload succeeded!");
-            uploadResult.data = altResult.data;
-          }
-        } catch (altError) {
-          console.error("Error in alternative upload:", altError);
-          continue;
-        }
+        continue;
       }
 
-      // Get the public URL - use the correct method
+      // Get the public URL
       const { data: urlData } = supabase.storage
         .from('invoices')
-        .getPublicUrl(fileName);
+        .getPublicUrl(storageFilename);
 
       if (!urlData?.publicUrl) {
         console.error("Failed to get public URL for uploaded document");
@@ -174,41 +144,99 @@ export async function processDocument(attachments: any[] = []) {
 
       console.log(`Document uploaded successfully: ${urlData.publicUrl}`);
 
-      // Extract text content based on document type (placeholders)
+      // Extract text content for recognized document types
       let extractedText = "";
-      try {
-        switch (documentType) {
-          case "pdf":
-            extractedText = await extractTextFromPdf(
-              typeof contentToProcess === 'string' ? contentToProcess : ''
-            );
-            break;
-          case "docx":
-            extractedText = await extractTextFromDocx(
-              typeof contentToProcess === 'string' ? contentToProcess : ''
-            );
-            break;
-          case "doc":
-            extractedText = await extractTextFromDoc(
-              typeof contentToProcess === 'string' ? contentToProcess : ''
-            );
-            break;
+      if (documentType !== "unknown") {
+        try {
+          switch (documentType) {
+            case "pdf":
+              extractedText = await extractTextFromPdf(
+                typeof contentToProcess === 'string' ? contentToProcess : ''
+              );
+              break;
+            case "docx":
+              extractedText = await extractTextFromDocx(
+                typeof contentToProcess === 'string' ? contentToProcess : ''
+              );
+              break;
+            case "doc":
+              extractedText = await extractTextFromDoc(
+                typeof contentToProcess === 'string' ? contentToProcess : ''
+              );
+              break;
+          }
+        } catch (extractError) {
+          console.error(`Error extracting text: ${extractError.message}`);
+          // Even if text extraction fails, we still have the document
         }
-      } catch (extractError) {
-        console.error(`Error extracting text: ${extractError.message}`);
-        // Even if text extraction fails, we still have the document
       }
 
-      console.log(`Text extraction ${extractedText ? 'successful' : 'failed'}, length: ${extractedText?.length || 0}`);
+      console.log(`Text extraction ${extractedText ? 'successful' : 'failed or not attempted'}, length: ${extractedText?.length || 0}`);
       documentContent = extractedText || "";
       processedAttachment = {
         ...attachment,
         url: urlData.publicUrl,
-        filename: fileName
+        filename: storageFilename
       };
-      break; // Stop after first successful processing
+      
+      // If we successfully processed a PDF, we can stop here
+      if (documentType === "pdf" || contentType.includes('pdf')) {
+        console.log("PDF document processed successfully, stopping attachment processing");
+        break;
+      }
     } catch (error) {
-      console.error(`Error processing document ${attachment.filename}:`, error);
+      console.error(`Error processing document ${filename}:`, error);
+    }
+  }
+
+  // If no document was successfully processed but we have attachments,
+  // use the first attachment as a fallback
+  if (!processedAttachment && attachments.length > 0) {
+    console.log("No documents were successfully processed, using first attachment as fallback");
+    
+    try {
+      const firstAttachment = attachments[0];
+      const filename = firstAttachment.filename || "unnamed_attachment";
+      const timestamp = new Date().getTime();
+      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      
+      let contentBuffer;
+      const contentToProcess = firstAttachment.content;
+      
+      if (typeof contentToProcess === 'string') {
+        contentBuffer = new TextEncoder().encode(contentToProcess);
+      } else if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
+        const arrayBuffer = await contentToProcess.arrayBuffer();
+        contentBuffer = new Uint8Array(arrayBuffer);
+      } else {
+        throw new Error("Unsupported content type for fallback attachment");
+      }
+      
+      const uploadResult = await supabase.storage
+        .from('invoices')
+        .upload(storageFilename, contentBuffer, {
+          contentType: firstAttachment.contentType || 'application/octet-stream',
+          upsert: true
+        });
+        
+      if (uploadResult.error) {
+        throw new Error(`Failed to upload fallback attachment: ${uploadResult.error.message}`);
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(storageFilename);
+        
+      processedAttachment = {
+        ...firstAttachment,
+        url: urlData.publicUrl,
+        filename: storageFilename
+      };
+      
+      console.log(`Fallback attachment uploaded successfully: ${urlData.publicUrl}`);
+    } catch (fallbackError) {
+      console.error("Error processing fallback attachment:", fallbackError);
     }
   }
 

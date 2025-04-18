@@ -1,139 +1,104 @@
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { PreviewHeader } from './preview/PreviewHeader';
-import { DocumentViewer } from './preview/DocumentViewer';
-import { PreviewErrorState } from './preview/PreviewErrorState';
-import { NoPreviewState } from './preview/NoPreviewState';
-import { EmptyState } from '@/components/ui/empty-state';
-import { AlertCircle } from 'lucide-react';
-import { useInvoicePreview } from '@/hooks/invoices/useInvoicePreview';
-import { isInvoicePreviewable } from './preview/previewUtils';
+import React, { useState, useEffect } from 'react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, ExternalLink } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import NoPreviewState from './preview/NoPreviewState';
+import DocumentViewer from './preview/DocumentViewer';
+import PreviewErrorState from './preview/PreviewErrorState';
+import PreviewHeader from './preview/PreviewHeader';
+import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf } from './preview/previewUtils';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
   pdfUrl?: string;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdfUrl }) => {
-  const {
-    fullscreenPreview,
-    setFullscreenPreview,
-    previewError,
-    setPreviewError,
-    isLoading,
-    setIsLoading,
-    contentType,
-    pdfMentioned,
-  } = useInvoicePreview({ htmlContent, pdfUrl });
-
-  const isPdf = pdfUrl?.toLowerCase().endsWith('.pdf') || false;
-  const isWordDocument = pdfUrl?.toLowerCase().endsWith('.doc') || pdfUrl?.toLowerCase().endsWith('.docx') || false;
-
-  const handleIframeError = () => {
-    console.error('Iframe failed to load content:', {
-      pdfUrl,
-      isPdf,
-      isWordDocument,
-      hasHtmlContent: !!htmlContent
-    });
-    setIsLoading(false);
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
+  htmlContent, 
+  pdfUrl 
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
+  const [hasContent, setHasContent] = useState(false);
+  
+  useEffect(() => {
+    // Reset states
+    setLoading(false);
+    setError(null);
     
-    if (!htmlContent && pdfUrl) {
-      setPreviewError('Failed to load document preview. The file may be inaccessible or corrupted.');
-    }
-  };
-
-  const handleIframeLoad = () => {
-    console.log('Iframe content loaded successfully:', {
-      pdfUrl,
-      isPdf,
-      hasHtmlContent: !!htmlContent
-    });
-    setIsLoading(false);
-  };
-
-  const openExternalLink = () => {
+    // Validate PDF URL
     if (pdfUrl) {
-      console.log('Opening external link:', pdfUrl);
-      window.open(pdfUrl, '_blank');
+      try {
+        // Normalize URL by ensuring it has a protocol
+        const normalizedUrl = normalizeUrl(pdfUrl);
+        setNormalizedPdfUrl(normalizedUrl);
+        setHasContent(true);
+      } catch (e) {
+        console.error("Invalid PDF URL:", pdfUrl, e);
+        setError("Invalid PDF URL format");
+      }
+    } else {
+      setNormalizedPdfUrl('');
     }
-  };
+    
+    // Check if we have HTML content
+    const validHtml = htmlContent && isValidHtml(htmlContent);
+    
+    // Update has content state
+    setHasContent(!!normalizedPdfUrl || !!validHtml);
+    
+    // Log for debugging
+    console.log("Invoice Preview Data:", {
+      hasPdfUrl: !!pdfUrl,
+      normalizedPdfUrl: normalizedPdfUrl || "none",
+      hasHtmlContent: !!htmlContent,
+      htmlContentLength: htmlContent?.length || 0,
+      hasContent: hasContent,
+      isPdfFile: isPdf(pdfUrl || '')
+    });
+  }, [htmlContent, pdfUrl]);
 
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-          <p>Loading preview...</p>
-        </div>
-      );
-    }
+  // If no preview data is available, show the no preview state
+  if (!hasContent && !loading && !error) {
+    return <NoPreviewState />;
+  }
 
-    if (previewError && !htmlContent) {
-      return (
-        <PreviewErrorState
-          error={previewError}
-          pdfUrl={pdfUrl}
-          onExternalOpen={openExternalLink}
-        />
-      );
-    }
-
-    if (!htmlContent && !pdfUrl) {
-      return (
-        <EmptyState
-          icon={<AlertCircle className="h-12 w-12" />}
-          title="No preview available"
-          description="No PDF or HTML content available for this invoice."
-        />
-      );
-    }
-
-    if (pdfMentioned && !pdfUrl && htmlContent) {
-      return (
-        <NoPreviewState
-          message="PDF Attachment Mentioned But Not Available"
-          pdfUrl={pdfUrl}
-          onExternalOpen={pdfUrl ? openExternalLink : undefined}
-        />
-      );
-    }
-
-    if (contentType === 'html' && !isInvoicePreviewable(htmlContent)) {
-      return (
-        <NoPreviewState
-          pdfUrl={pdfUrl}
-          onExternalOpen={pdfUrl ? openExternalLink : undefined}
-        />
-      );
-    }
-
-    return (
-      <DocumentViewer
-        pdfUrl={pdfUrl}
-        htmlContent={htmlContent}
-        isPdf={isPdf}
-        isWordDocument={isWordDocument}
-        onIframeError={handleIframeError}
-        onIframeLoad={handleIframeLoad}
-        onExternalOpen={openExternalLink}
-      />
-    );
-  };
+  // If there's an error, show the error state
+  if (error) {
+    return <PreviewErrorState error={error} />;
+  }
 
   return (
-    <Card className="h-full">
+    <div className="h-full flex flex-col overflow-hidden">
       <PreviewHeader
-        isPdf={isPdf}
-        isWordDocument={isWordDocument}
-        pdfUrl={pdfUrl}
-        onExternalOpen={openExternalLink}
-        onToggleFullscreen={() => setFullscreenPreview(!fullscreenPreview)}
-        showActions={!!(htmlContent || pdfUrl)}
+        hasPdfUrl={!!normalizedPdfUrl}
+        pdfUrl={normalizedPdfUrl}
       />
-      <div className="p-0 h-[calc(100%-48px)] overflow-auto">
-        {renderContent()}
+      
+      <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900">
+        {normalizedPdfUrl ? (
+          <DocumentViewer url={normalizedPdfUrl} />
+        ) : htmlContent && isValidHtml(htmlContent) ? (
+          <Card className="p-4 h-full overflow-auto bg-white dark:bg-gray-800">
+            <div 
+              className="invoice-html-content"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
+            />
+          </Card>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Alert variant="destructive" className="max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>No preview available</AlertTitle>
+              <AlertDescription>
+                No valid PDF or HTML content is available for this invoice.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
       </div>
-    </Card>
+    </div>
   );
 };

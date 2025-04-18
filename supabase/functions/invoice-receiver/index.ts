@@ -94,7 +94,7 @@ serve(async (req) => {
         name: a.filename,
         type: a.contentType,
         hasContent: !!a.content,
-        contentLength: a.content?.length || 0,
+        contentLength: typeof a.content === 'string' ? a.content.length : (a.content instanceof Blob ? a.content.size : 'unknown'),
         contentType: typeof a.content
       }))
     }, null, 2));

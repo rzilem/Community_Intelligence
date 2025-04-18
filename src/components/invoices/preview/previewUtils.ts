@@ -1,108 +1,133 @@
 
 /**
- * Utility functions for invoice preview
+ * Utility functions for handling invoice previews
  */
 
-export const isInvoicePreviewable = (content?: string): boolean => {
-  if (!content) return false;
+/**
+ * Checks if a string is a valid URL
+ * 
+ * @param str String to check
+ * @returns boolean indicating if the string is a valid URL
+ */
+export const isValidUrl = (str: string): boolean => {
+  if (!str) return false;
   
-  const lowerContent = content.toLowerCase();
-  
-  // Patterns that indicate non-invoice content or default placeholder content
-  const nonInvoicePatterns = [
-    /user-agent:/,
-    /robots\.txt/,
-    /sitemap:/,
-    /disallow:/,
-    /allow:\s*\//,
-    /^see what happens/i,  // CloudMailin placeholder
-    /this is a multi-part message in mime format/i  // Common MIME message header
-  ];
-  
-  // Check if content contains patterns indicating it's not an invoice
-  const containsNonInvoiceContent = nonInvoicePatterns.some(pattern => pattern.test(lowerContent));
-  
-  // If it contains non-invoice content, we need to check if it also has invoice-related terms
-  // that would override the non-invoice classification
-  
-  // Invoice-related terms to check for - expanded list for better detection
-  const invoiceRelatedTerms = [
-    /invoice/i,
-    /total/i,
-    /amount due/i,
-    /payment/i,
-    /due date/i,
-    /bill/i,
-    /receipt/i,
-    /statement/i,
-    /balance/i,
-    /order/i,
-    /purchase/i,
-    /paid/i,
-    /\$\s*[\d,\.]+/,  // Dollar amount pattern
-    /amount:/i,
-    /subtotal/i,
-    /tax/i,
-    /invoice #/i,
-    /invoice no/i,
-    /account/i,
-    /vendor/i,
-    /customer/i,
-    /qty|quantity/i,
-    /price/i,
-    /po\s*#|purchase\s*order/i,
-    /reference/i,
-    /payable/i
-  ];
-  
-  // Check if content contains invoice-related terms
-  const containsInvoiceTerms = invoiceRelatedTerms.some(term => term.test(content));
-  
-  // Either it doesn't have non-invoice content or it explicitly has invoice terms
-  return (!containsNonInvoiceContent) || containsInvoiceTerms;
+  try {
+    new URL(str);
+    return true;
+  } catch (e) {
+    return false;
+  }
 };
 
 /**
- * Detect if the content is likely an email with an attachment
- * This helps inform users when there's a PDF mentioned but not available
+ * Normalizes a URL by ensuring it has a protocol
+ * 
+ * @param url URL to normalize
+ * @returns Normalized URL with protocol
  */
-export const detectPdfMention = (content?: string): boolean => {
-  if (!content) return false;
+export const normalizeUrl = (url: string): string => {
+  if (!url) return '';
   
-  const lowerContent = content.toLowerCase();
+  // Remove any leading/trailing whitespace
+  url = url.trim();
   
-  // Patterns that indicate a PDF attachment might be mentioned
-  const pdfMentionPatterns = [
-    /attach(ed|ment)/i,
-    /pdf/i,
-    /document attached/i,
-    /please find/i,
-    /enclosed/i,
-    /see attached/i
-  ];
-  
-  return pdfMentionPatterns.some(pattern => pattern.test(lowerContent));
-};
-
-/**
- * Get a snippet of invoice-related content for display in fallback scenarios
- */
-export const getInvoiceContentSnippet = (content?: string): string => {
-  if (!content) return '';
-  
-  // Try to extract the most relevant part of the invoice
-  const amountMatch = content.match(/\$\s*[\d,\.]+/);
-  const invoiceNumberMatch = content.match(/invoice\s*#?\s*[a-z0-9\-]+/i);
-  const dateMatch = content.match(/date:?\s*[a-z0-9\-\/,\s]+/i);
-  
-  if (amountMatch || invoiceNumberMatch || dateMatch) {
-    return [
-      invoiceNumberMatch?.[0],
-      dateMatch?.[0],
-      amountMatch?.[0]
-    ].filter(Boolean).join(' - ');
+  // Check if the URL already has a protocol
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
   }
   
-  // If no specific invoice data found, return short preview
-  return content.substring(0, 100) + '...';
+  // Add https:// protocol if missing
+  return `https://${url}`;
+};
+
+/**
+ * Checks if HTML content is valid enough to display
+ * 
+ * @param html HTML content to check
+ * @returns boolean indicating if the HTML is valid enough to display
+ */
+export const isValidHtml = (html: string): boolean => {
+  if (!html) return false;
+  
+  // Check for some basic HTML structure
+  const hasHtmlTags = /<[a-z][\s\S]*>/i.test(html);
+  
+  // Exclude placeholder content
+  const isPlaceholder = /See what happens|placeholder/i.test(html);
+  
+  return hasHtmlTags && !isPlaceholder && html.length > 15;
+};
+
+/**
+ * Sanitizes HTML content for safe rendering
+ * 
+ * @param html HTML content to sanitize
+ * @returns Sanitized HTML
+ */
+export const sanitizeHtml = (html: string): string => {
+  if (!html) return '';
+  
+  // Very basic sanitization - in a production app, use a proper sanitizer like DOMPurify
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+="[^"]*"/gi, '')
+    .replace(/on\w+='[^']*'/gi, '')
+    .replace(/on\w+=\w+/gi, '');
+};
+
+/**
+ * Gets the file extension from a URL or filename
+ * 
+ * @param urlOrFilename URL or filename to extract extension from
+ * @returns Lowercase file extension without the dot
+ */
+export const getFileExtension = (urlOrFilename: string): string => {
+  if (!urlOrFilename) return '';
+  
+  // Extract the filename from the URL if it's a URL
+  let filename = urlOrFilename;
+  
+  try {
+    const url = new URL(urlOrFilename);
+    filename = url.pathname.split('/').pop() || '';
+  } catch (e) {
+    // Not a URL, use as filename
+  }
+  
+  // Extract extension
+  const parts = filename.split('.');
+  if (parts.length > 1) {
+    return parts.pop()?.toLowerCase() || '';
+  }
+  
+  return '';
+};
+
+/**
+ * Checks if a URL or filename is a PDF
+ * 
+ * @param urlOrFilename URL or filename to check
+ * @returns boolean indicating if it's a PDF
+ */
+export const isPdf = (urlOrFilename: string): boolean => {
+  if (!urlOrFilename) return false;
+  
+  // Check extension
+  const ext = getFileExtension(urlOrFilename);
+  return ext === 'pdf';
+};
+
+/**
+ * Checks if a URL or filename is an image
+ * 
+ * @param urlOrFilename URL or filename to check
+ * @returns boolean indicating if it's an image
+ */
+export const isImage = (urlOrFilename: string): boolean => {
+  if (!urlOrFilename) return false;
+  
+  // Check extension
+  const ext = getFileExtension(urlOrFilename);
+  return ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'].includes(ext);
 };
