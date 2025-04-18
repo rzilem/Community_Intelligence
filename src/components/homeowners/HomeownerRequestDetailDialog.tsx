@@ -5,6 +5,7 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-request-types';
 import { cleanHtmlContent } from '@/lib/format-utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import HomeownerRequestDialogHeader from './detail/HomeownerRequestDialogHeader';
 import DetailsTab from './detail/tabs/DetailsTab';
 import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
-import CommentsTab from './detail/tabs/CommentsTab';
+import ActivityFeedTab from './detail/tabs/ActivityFeedTab';
 import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import HistoryTimeline from './history/HistoryTimeline';
 
@@ -118,7 +119,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
               <ScrollArea className="h-full">
                 <div className="space-y-6 p-4">
                   <HistoryTimeline request={request} />
-                  <CommentsTab comments={comments} loadingComments={loadingComments} />
+                  <ActivityFeedTab comments={comments} loadingComments={loadingComments} />
                 </div>
               </ScrollArea>
             </TabsContent>
