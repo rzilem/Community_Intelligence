@@ -85,9 +85,8 @@ export const useInvoiceDetail = (id: string | undefined) => {
         
         if (hasPdfMention) {
           // Check communications_log for possible attachments
-          toast({
-            description: "The invoice mentions an attachment but no PDF was found"
-          });
+          // Fix: Using the correct toast syntax for sonner
+          toast("The invoice mentions an attachment but no PDF was found");
         }
       }
       
