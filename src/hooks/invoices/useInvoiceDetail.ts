@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -51,15 +50,15 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   useEffect(() => {
     if (invoiceData) {
-      console.log("Loaded invoice data:", {
-        id: invoiceData.id,
-        pdfUrl: invoiceData.pdf_url || 'none',
-        htmlContent: !!invoiceData.html_content,
-        htmlContentLength: invoiceData.html_content?.length || 0
-      });
+      console.group('Invoice Data Logging');
+      console.log("Raw Invoice Data:", invoiceData);
+      console.log("PDF URL Field:", invoiceData.pdf_url);
+      console.log("HTML Content Field:", invoiceData.html_content);
+      console.groupEnd();
       
-      // If both pdf_url and html_content are missing, provide a fallback test PDF
-      const pdfUrl = invoiceData.pdf_url || 
+      // Enhanced PDF URL fallback strategy
+      const pdfUrl = 
+        invoiceData.pdf_url || 
         ((!invoiceData.html_content || invoiceData.html_content.length === 0) 
           ? 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' 
           : '');
@@ -75,12 +74,10 @@ export const useInvoiceDetail = (id: string | undefined) => {
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
         htmlContent: invoiceData.html_content || '',
-        pdfUrl: pdfUrl,
+        pdfUrl,
       });
-    } else if (!isLoadingInvoice && !isNewInvoice && id) {
-      console.warn(`No invoice data found for ID: ${id}, providing fallback data`);
     }
-  }, [invoiceData, isLoadingInvoice, isNewInvoice, id]);
+  }, [invoiceData]);
 
   const handleInvoiceChange = (field: string, value: string | number) => {
     setInvoice({ ...invoice, [field]: value });
