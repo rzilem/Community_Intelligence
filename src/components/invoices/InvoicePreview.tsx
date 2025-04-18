@@ -86,7 +86,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     });
   }, [htmlContent, pdfUrl, emailContent]);
 
-  if (!hasContent && !loading && !error) {
+  if (!hasContent && !hasEmailContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
