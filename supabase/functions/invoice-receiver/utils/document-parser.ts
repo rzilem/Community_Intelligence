@@ -1,5 +1,6 @@
 
-import { createWorker } from "tesseract.js";
+// Fix import path to use full URL for Edge Function compatibility
+import { createWorker } from "https://esm.sh/tesseract.js@5.0.5";
 
 export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unknown" {
   if (!filename) return "unknown";

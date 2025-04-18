@@ -1,3 +1,4 @@
+
 /**
  * Helper functions for extracting invoice details from email content
  */
@@ -19,9 +20,8 @@ export function extractInvoiceDetails(content: string, subject: string): {
 
   // Invoice number patterns - prioritize exact matches
   const invoiceNumberPatterns = [
-    /\bInvoice\s*#?\s*(\d{3,7})\b/i,
-    /\bInvoice Number[:\s]*(\d{3,7})\b/i,
-    /\bInvoice[:\s]*#?\s*(\d{3,7})\b/i,
+    /\bInvoice\s*(?:#|No|Number)?\s*[:=]?\s*(\d{3,7})\b/i,
+    /\bInvoice\s+(\d{3,7})\b/i,
     /INVOICE[:\s-]*#?\s*(\d+)/i,
     /INVOICE[:\s-]*(\d+)/i,
     /Invoice Number[:\s]*(\d+)/i,
@@ -30,7 +30,8 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /invoice[:\s]+([a-zA-Z0-9\-_]+)/i,
     /#\s*([a-zA-Z0-9\-_]+)/i,
     /bill\s*(?:#|number|num|no)[:\s]*([a-zA-Z0-9\-_]+)/i,
-    /inv[:\s]*([a-zA-Z0-9\-_]+)/i  // Added shorter version
+    /inv[:\s]*([a-zA-Z0-9\-_]+)/i,  // Added shorter version
+    /Invoice\s*:\s*(\d+)/i
   ];
 
   // First try to find invoice number in subject
@@ -56,15 +57,16 @@ export function extractInvoiceDetails(content: string, subject: string): {
   // Amount patterns - prioritize total amount due
   const amountPatterns = [
     /Total Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
+    /TOTAL\s+AMOUNT\s+DUE\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Total Current Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Invoice Total[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Total Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Balance Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
-    /TOTAL\s+AMOUNT\s+DUE\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Total\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Amount\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Total\s+Current\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
+    /Total\s*:\s*\$?\s*([\d,]+\.?\d*)/i,
     /(?:total|amount|sum|invoice amount|balance|due)[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /\$\s*([\d,]+\.?\d*)/i,
     /(?:USD|EUR|GBP)[:\s]*\s*([\d,]+\.?\d*)/i,
@@ -89,12 +91,15 @@ export function extractInvoiceDetails(content: string, subject: string): {
   // Due date patterns - improved to handle various formats
   const dueDatePatterns = [
     /Due Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
     /Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
     /Payment Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due By[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Pay By[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due\s+Date[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i, // April 30, 2025
+    /Due\s+By[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,   // April 30, 2025
     /due\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /payment\s+due[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /due\s+by[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
@@ -119,12 +124,19 @@ export function extractInvoiceDetails(content: string, subject: string): {
     }
   }
 
-  // Association name patterns
+  // Association name patterns - expanded for better matching
   const associationPatterns = [
     /Association Name[:\s]*([^\n<]+)/i,
     /Community Name[:\s]*([^\n<]+)/i,
     /HOA Name[:\s]*([^\n<]+)/i,
-    /Property Name[:\s]*([^\n<]+)/i
+    /Property Name[:\s]*([^\n<]+)/i,
+    /Client[:\s]*([^\n<]+)/i,
+    /Homeowners Association[:\s]*([^\n<]+)/i,
+    /Association[:\s]*([^\n<]+)/i,
+    /Community[:\s]*([^\n<]+)/i,
+    /Prepared\s+For\s*:?([^\n<]+)/i,
+    /Bill\s+To\s*:?([^\n<]+(?:Association|HOA|Community))/i,
+    /TO\s*:?([^\n<]+(?:Association|HOA|Community))/i
   ];
 
   // Extract association name

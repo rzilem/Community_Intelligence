@@ -1,6 +1,40 @@
 
 import React from 'react';
-import { Select } from '../ui/select';
+import { 
+  Select as UISelect, 
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { FormField } from '@/components/ui/form';
+
+// Custom Select component that includes a label
+interface CustomSelectProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}
+
+const Select = ({ label, value, onChange, options }: CustomSelectProps) => (
+  <div className="space-y-2">
+    <Label htmlFor={label.toLowerCase().replace(/\s+/g, '-')}>{label}</Label>
+    <UISelect value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder={`Select ${label}`} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </UISelect>
+  </div>
+);
 
 interface InvoiceLineItemsProps {
   lines: Array<{
@@ -53,7 +87,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
           <Select
             label="GL Account"
             value={line.glAccount}
-            onChange={(e) => handleLineChange(index, 'glAccount', e.target.value)}
+            onChange={(value) => handleLineChange(index, 'glAccount', value)}
             options={[
               { value: 'Account1', label: 'Account 1' },
               { value: 'Account2', label: 'Account 2' },
@@ -62,7 +96,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
           <Select
             label="Fund"
             value={line.fund}
-            onChange={(e) => handleLineChange(index, 'fund', e.target.value)}
+            onChange={(value) => handleLineChange(index, 'fund', value)}
             options={[
               { value: 'Operating', label: 'Operating' },
               { value: 'Reserve', label: 'Reserve' },
@@ -71,7 +105,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
           <Select
             label="Bank Account"
             value={line.bankAccount}
-            onChange={(e) => handleLineChange(index, 'bankAccount', e.target.value)}
+            onChange={(value) => handleLineChange(index, 'bankAccount', value)}
             options={[
               { value: 'Operating', label: 'Operating' },
               { value: 'Reserve', label: 'Reserve' },
