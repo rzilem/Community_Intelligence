@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -6,7 +5,6 @@ import {
   DialogFooter 
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HomeownerRequest, HomeownerRequestComment } from '@/types/homeowner-request-types';
 import { cleanHtmlContent } from '@/lib/format-utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,6 +14,7 @@ import HomeownerRequestDialogHeader from './detail/HomeownerRequestDialogHeader'
 import DetailsTab from './detail/tabs/DetailsTab';
 import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
 import CommentsTab from './detail/tabs/CommentsTab';
+import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import HistoryTimeline from './history/HistoryTimeline';
 
 interface HomeownerRequestDetailDialogProps {
@@ -87,51 +86,62 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       onOpenChange={onOpenChange}
       modal={!fullscreenEmail}
     >
-      <DialogContent className={`${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl max-h-[90vh]'} overflow-hidden flex flex-col`}>
+      <DialogContent className={`
+        ${fullscreenEmail ? 'max-w-full h-screen m-0 rounded-none' : 'max-w-4xl h-[90vh]'} 
+        overflow-hidden flex flex-col gap-4
+      `}>
         <HomeownerRequestDialogHeader 
           title={request.title}
-          showFullscreenButton={activeTab === 'original'}
+          showFullscreenButton={activeTab === 'email'}
           isFullscreen={fullscreenEmail}
           onFullscreenToggle={() => setFullscreenEmail(!fullscreenEmail)}
         />
         
-        <Tabs 
-          defaultValue="details" 
-          className="flex-1 flex flex-col" 
-          value={activeTab} 
-          onValueChange={handleTabChange}
+        <RequestDialogTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          assignedTo={request.assigned_to || null}
+          associationId={request.association_id || null}
+          propertyId={request.property_id || null}
+          onAssignChange={(value) => console.log('Assign change:', value)}
+          onAssociationChange={(value) => console.log('Association change:', value)}
+          onPropertyChange={(value) => console.log('Property change:', value)}
         >
-          <TabsList>
-            <TabsTrigger value="details">Request Information</TabsTrigger>
-            <TabsTrigger value="original">Original Email</TabsTrigger>
-            <TabsTrigger value="updates">Comments</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="details" className="flex-1 overflow-auto">
-            <DetailsTab request={request} processedDescription={processedDescription} />
-          </TabsContent>
-          
-          <TabsContent value="original" className="flex-1 overflow-auto">
-            <OriginalEmailTab 
-              htmlContent={request.html_content}
-              fullscreenEmail={fullscreenEmail}
-              setFullscreenEmail={setFullscreenEmail}
-            />
-          </TabsContent>
-          
-          <TabsContent value="updates" className="flex-1 overflow-auto">
-            <CommentsTab comments={comments} loadingComments={loadingComments} />
-          </TabsContent>
-          
-          <TabsContent value="history" className="flex-1 overflow-auto">
-            <ScrollArea className="h-full">
-              <div className="p-4">
-                <HistoryTimeline request={request} />
-              </div>
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
+          <div className="flex-1 min-h-0">
+            <TabsContent value="details" className="h-full m-0">
+              <ScrollArea className="h-full">
+                <DetailsTab request={request} processedDescription={processedDescription} />
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="activity" className="h-full m-0">
+              <ScrollArea className="h-full">
+                <div className="space-y-6 p-4">
+                  <HistoryTimeline request={request} />
+                  <CommentsTab comments={comments} loadingComments={loadingComments} />
+                </div>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="email" className="h-full m-0">
+              <ScrollArea className="h-full">
+                <OriginalEmailTab 
+                  htmlContent={request.html_content}
+                  fullscreenEmail={fullscreenEmail}
+                  setFullscreenEmail={setFullscreenEmail}
+                />
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="attachments" className="h-full m-0">
+              <ScrollArea className="h-full">
+                <div className="p-4">
+                  Attachments content will go here
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </div>
+        </RequestDialogTabs>
         
         <DialogFooter>
           <Button 
