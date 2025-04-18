@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -32,6 +32,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
                           getFileExtension(pdfUrl || '') === 'docx';
   
+  // Check if we have valid email content to show the email tab
+  const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
+  
   // Handle opening the document in a new tab
   const handleExternalOpen = () => {
     if (normalizedPdfUrl) {
@@ -44,7 +47,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setFullscreen(!fullscreen);
   };
   
-  useEffect(() => {
+  React.useEffect(() => {
     // Reset states
     setLoading(false);
     setError(null);
@@ -81,7 +84,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       hasContent: hasContent,
       isPdfFile: isPdf(pdfUrl || '')
     });
-  }, [htmlContent, pdfUrl]);
+  }, [htmlContent, pdfUrl, emailContent]);
 
   if (!hasContent && !loading && !error) {
     return <NoPreviewState />;
@@ -102,7 +105,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         showActions={!!normalizedPdfUrl}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        hasEmail={!!emailContent}
+        hasEmail={hasEmailContent}
       />
       
       <Tabs value={activeTab} className="flex-1 overflow-hidden">

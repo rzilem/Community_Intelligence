@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -37,7 +38,9 @@ const InvoiceDetail = () => {
     console.log("Invoice data in component:", {
       association: invoice.association,
       vendor: invoice.vendor,
-      invoiceNumber: invoice.invoiceNumber
+      invoiceNumber: invoice.invoiceNumber,
+      hasEmailContent: !!invoice.emailContent,
+      emailContentLength: invoice.emailContent?.length || 0
     });
   }, [invoice]);
 
