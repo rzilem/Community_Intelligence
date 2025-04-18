@@ -101,11 +101,11 @@ serve(async (req) => {
         const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
         const fileName = `invoice_${Date.now()}${fileExt}`;
         
-        // Upload to storage
+        // Upload to storage - FIX: Upload directly to invoices bucket without 'public/' subfolder
         try {
           const { error: uploadError } = await supabase.storage
             .from('invoices')
-            .upload(`public/${fileName}`, Buffer.from(attachment.content, 'base64'), {
+            .upload(fileName, Buffer.from(attachment.content, 'base64'), {
               contentType: attachment.contentType,
               upsert: true
             });
@@ -116,7 +116,7 @@ serve(async (req) => {
             // Get public URL
             const { data: urlData } = supabase.storage
               .from('invoices')
-              .getPublicUrl(`public/${fileName}`);
+              .getPublicUrl(fileName);
               
             pdfUrl = urlData.publicUrl;
             console.log("Attachment uploaded successfully:", pdfUrl);

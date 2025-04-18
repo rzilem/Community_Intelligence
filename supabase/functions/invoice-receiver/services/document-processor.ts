@@ -70,10 +70,10 @@ export async function processDocument(attachments: any[] = []) {
         continue;
       }
       
-      // Upload the document to storage
+      // Upload the document to storage - FIX: Using the 'invoices' bucket without 'public/' subfolder
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('invoices')
-        .upload(`public/${fileName}`, contentBuffer, {
+        .upload(fileName, contentBuffer, {
           contentType: attachment.contentType,
           upsert: true
         });
@@ -86,7 +86,7 @@ export async function processDocument(attachments: any[] = []) {
       // Get the public URL
       const { data: urlData } = supabase.storage
         .from('invoices')
-        .getPublicUrl(`public/${fileName}`);
+        .getPublicUrl(fileName);
 
       if (!urlData?.publicUrl) {
         console.error("Failed to get public URL for uploaded document");

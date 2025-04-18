@@ -86,9 +86,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
         if (hasPdfMention) {
           // Check communications_log for possible attachments
           toast({
-            title: "PDF mentioned but missing",
-            description: "The invoice mentions an attachment but no PDF was found",
-            variant: "destructive"
+            description: "The invoice mentions an attachment but no PDF was found"
           });
         }
       }
