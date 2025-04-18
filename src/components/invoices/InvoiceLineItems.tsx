@@ -1,31 +1,15 @@
-
 import React from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useSupabaseQuery } from '@/hooks/supabase';
-
-interface InvoiceLineItem {
-  id?: string;
-  glAccount: string;
-  fund: string;
-  bankAccount: string;
-  description: string;
-  amount: number;
-}
+import { SelectField } from '../ui/select';
 
 interface InvoiceLineItemsProps {
-  lines: InvoiceLineItem[];
-  onLinesChange: (lines: InvoiceLineItem[]) => void;
+  lines: Array<{
+    glAccount: string;
+    fund: string;
+    bankAccount: string;
+    description: string;
+    amount: number;
+  }>;
+  onLinesChange: (lines: any[]) => void;
   associationId?: string;
 }
 
@@ -34,138 +18,110 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   onLinesChange,
   associationId
 }) => {
-  const { data: glAccounts = [] } = useSupabaseQuery(
-    'gl_accounts',
-    {
-      select: '*',
-      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
-    },
-    !!associationId
-  );
-
-  const { data: bankAccounts = [] } = useSupabaseQuery(
-    'bank_accounts',
-    {
-      select: '*',
-      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
-    },
-    !!associationId
-  );
-
-  const updateLine = (index: number, field: keyof InvoiceLineItem, value: string | number) => {
-    const updatedLines = [...lines];
-    updatedLines[index] = {
-      ...updatedLines[index],
-      [field]: value,
-    };
-    onLinesChange(updatedLines);
-  };
-
-  const addLine = () => {
+  // Add default values for Operating account
+  const handleAddLine = () => {
     onLinesChange([
       ...lines,
       {
         glAccount: '',
-        fund: '',
-        bankAccount: '',
+        fund: 'Operating', // Default to Operating fund
+        bankAccount: 'Operating', // Default to Operating bank account
         description: '',
-        amount: 0,
-      },
+        amount: 0
+      }
     ]);
+  };
+
+  const handleLineChange = (index: number, field: string, value: string | number) => {
+    const newLines = [...lines];
+    newLines[index][field] = value;
+    onLinesChange(newLines);
+  };
+
+  const handleRemoveLine = (index: number) => {
+    const newLines = [...lines];
+    newLines.splice(index, 1);
+    onLinesChange(newLines);
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Button size="sm" onClick={addLine} className="gap-1">
-          <Plus className="h-4 w-4" /> New Line Item
-        </Button>
-      </div>
-      
-      <div className="border rounded-md overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[180px]">GL Account</TableHead>
-              <TableHead className="w-[180px]">Fund</TableHead>
-              <TableHead className="w-[180px]">Bank Account</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="w-[150px] text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {lines.map((line, index) => (
-              <TableRow key={line.id || index}>
-                <TableCell>
-                  <Select 
-                    value={line.glAccount}
-                    onValueChange={(value) => updateLine(index, 'glAccount', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {glAccounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.account_number} - {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select 
-                    value={line.fund}
-                    onValueChange={(value) => updateLine(index, 'fund', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Fund" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="operating">Operating Fund</SelectItem>
-                      <SelectItem value="reserve">Reserve Fund</SelectItem>
-                      <SelectItem value="special">Special Assessment</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select 
-                    value={line.bankAccount}
-                    onValueChange={(value) => updateLine(index, 'bankAccount', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {bankAccounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Input
-                    value={line.description}
-                    onChange={(e) => updateLine(index, 'description', e.target.value)}
-                    placeholder="Enter description"
-                  />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={line.amount || ''}
-                    onChange={(e) => updateLine(index, 'amount', parseFloat(e.target.value) || 0)}
-                    className="text-right"
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      <h3 className="text-xl font-semibold">Line Items</h3>
+      {lines.map((line, index) => (
+        <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <SelectField
+            label="GL Account"
+            value={line.glAccount}
+            onChange={(e) => handleLineChange(index, 'glAccount', e.target.value)}
+            options={[
+              { value: 'Account1', label: 'Account 1' },
+              { value: 'Account2', label: 'Account 2' },
+            ]}
+          />
+          <SelectField
+            label="Fund"
+            value={line.fund}
+            onChange={(e) => handleLineChange(index, 'fund', e.target.value)}
+            options={[
+              { value: 'Operating', label: 'Operating' },
+              { value: 'Reserve', label: 'Reserve' },
+            ]}
+          />
+          <SelectField
+            label="Bank Account"
+            value={line.bankAccount}
+            onChange={(e) => handleLineChange(index, 'bankAccount', e.target.value)}
+            options={[
+              { value: 'Operating', label: 'Operating' },
+              { value: 'Reserve', label: 'Reserve' },
+            ]}
+          />
+          <div className="md:col-span-2">
+            <label htmlFor={`description-${index}`} className="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <input
+              type="text"
+              id={`description-${index}`}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              value={line.description}
+              onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+            />
+          </div>
+          <div>
+            <label htmlFor={`amount-${index}`} className="block text-sm font-medium text-gray-700">
+              Amount
+            </label>
+            <input
+              type="number"
+              id={`amount-${index}`}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              value={line.amount}
+              onChange={(e) => handleLineChange(index, 'amount', Number(e.target.value))}
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              onClick={() => handleRemoveLine(index)}
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+      ))}
+      <div>
+        <button
+          type="button"
+          className="inline-flex items-center rounded-md border border-transparent bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          onClick={handleAddLine}
+        >
+          Add Line
+        </button>
       </div>
     </div>
   );
 };
+
+export default InvoiceLineItems;

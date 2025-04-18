@@ -1,4 +1,3 @@
-
 /**
  * Helper functions for extracting invoice details from email content
  */
@@ -18,8 +17,12 @@ export function extractInvoiceDetails(content: string, subject: string): {
     description?: string;
   } = {};
   
-  // Extract invoice number
+  // Extract invoice number - improved patterns for more specific matches
   const invoiceNumberPatterns = [
+    /INVOICE[:\s-]*#?\s*(\d+)/i,
+    /INVOICE[:\s-]*(\d+)/i,
+    /Invoice Number[:\s]*(\d+)/i,
+    /Invoice #[:\s]*(\d+)/i,
     /invoice\s*(?:#|number|num|no)[:\s]*([a-zA-Z0-9\-_]+)/i,
     /invoice[:\s]+([a-zA-Z0-9\-_]+)/i,
     /#\s*([a-zA-Z0-9\-_]+)/i,
@@ -47,8 +50,12 @@ export function extractInvoiceDetails(content: string, subject: string): {
     }
   }
   
-  // Extract amount - improved patterns
+  // Extract amount - look specifically for total amount due
   const amountPatterns = [
+    /TOTAL\s+AMOUNT\s+DUE\s*[\$]?\s*([\d,]+\.?\d*)/i,
+    /Total\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
+    /Amount\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
+    /Total\s+Current\s+Due\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /(?:total|amount|sum|invoice amount|balance|due)[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /\$\s*([\d,]+\.?\d*)/i,
     /(?:USD|EUR|GBP)[:\s]*\s*([\d,]+\.?\d*)/i,
@@ -120,6 +127,8 @@ export function extractInvoiceDetails(content: string, subject: string): {
   
   // Extract due date - improved patterns
   const dueDatePatterns = [
+    /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Due[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /due\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /payment\s+due[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /due\s+by[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
