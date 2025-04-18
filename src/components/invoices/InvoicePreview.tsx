@@ -31,21 +31,24 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ htmlContent, pdf
           </Button>
         )}
       </div>
-      <div className="p-0 h-[calc(100%-48px)]">
+      <div className="p-0 h-[calc(100%-48px)] overflow-auto">
         {pdfUrl ? (
           <div className="w-full h-full">
             <iframe 
-              src={`${pdfUrl}#toolbar=0&navpanes=0`}
+              src={pdfUrl}
               title="Invoice PDF"
               className="w-full h-full border-0"
+              sandbox="allow-same-origin allow-scripts allow-forms"
             />
           </div>
         ) : htmlContent ? (
-          <OriginalEmailTab 
-            htmlContent={htmlContent} 
-            fullscreenEmail={fullscreenPreview}
-            setFullscreenEmail={setFullscreenPreview}
-          />
+          <div className="h-full">
+            <OriginalEmailTab 
+              htmlContent={htmlContent} 
+              fullscreenEmail={fullscreenPreview}
+              setFullscreenEmail={setFullscreenPreview}
+            />
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
             <AlertCircle className="h-12 w-12 mb-4 text-muted-foreground/50" />

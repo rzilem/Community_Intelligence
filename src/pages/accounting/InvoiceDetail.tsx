@@ -18,7 +18,6 @@ const InvoiceDetail = () => {
   const { toast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
-  const [fullscreenPreview, setFullscreenPreview] = useState(false);
 
   const {
     invoice,
@@ -128,7 +127,7 @@ const InvoiceDetail = () => {
               <ResizablePanel defaultSize={40}>
                 <InvoicePreview 
                   htmlContent={invoice.htmlContent} 
-                  pdfUrl={invoice.pdfUrl}
+                  pdfUrl={invoice.pdfUrl} 
                 />
               </ResizablePanel>
             </>

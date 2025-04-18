@@ -52,6 +52,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   useEffect(() => {
     if (invoiceData) {
+      console.log("Loaded invoice data:", invoiceData);
       setInvoice({
         id: invoiceData.id,
         vendor: invoiceData.vendor || '',
