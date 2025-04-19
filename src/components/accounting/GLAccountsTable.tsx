@@ -1,59 +1,32 @@
 
 import React from 'react';
-import { Search, ArrowUpDown, Download, PlusCircle } from 'lucide-react';
+import { Search, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ColumnSelector from '@/components/table/ColumnSelector';
 import { GLAccount } from '@/types/accounting-types';
-import { useUserColumns } from '@/hooks/useUserColumns';
-
-type ColumnKey = 'code' | 'description' | 'type' | 'category';
+import GLAccountGroups from './GLAccountGroups';
 
 interface GLAccountsTableProps {
   accounts: GLAccount[];
   searchTerm: string;
   accountType: string;
-  visibleColumns: ColumnKey[];
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
-  onColumnChange: (columns: string[]) => void;
+  onEdit?: (account: GLAccount) => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   accounts,
   searchTerm,
   accountType,
-  visibleColumns,
   onSearchChange,
   onAccountTypeChange,
-  onColumnChange
+  onEdit
 }) => {
-  const columnOptions = [
-    { id: 'code', label: 'Code' },
-    { id: 'description', label: 'Description' },
-    { id: 'type', label: 'GL Type' },
-    { id: 'category', label: 'Category' }
-  ];
-
-  const { 
-    visibleColumnIds, 
-    updateVisibleColumns
-  } = useUserColumns(columnOptions, 'gl-accounts-table');
-
-  // Use visibleColumns passed from the parent component
-  const handleColumnChange = (columns: string[]) => {
-    updateVisibleColumns(columns);
-    onColumnChange(columns);
-  };
-
   const filteredAccounts = accounts.filter(account => {
-    const matchesSearch = account.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         account.code.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = accountType === 'all' || account.type === accountType;
-    
-    return matchesSearch && matchesType;
+    return matchesType;
   });
 
   return (
@@ -83,12 +56,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
             </SelectContent>
           </Select>
           
-          <ColumnSelector 
-            columns={columnOptions} 
-            selectedColumns={visibleColumns} 
-            onChange={handleColumnChange} 
-          />
-          
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" /> Export
           </Button>
@@ -99,83 +66,11 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumns.includes('code') && (
-                <TableHead className="w-[100px]">
-                  <div className="flex items-center">
-                    Code
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-              )}
-              {visibleColumns.includes('description') && (
-                <TableHead>
-                  <div className="flex items-center">
-                    Description
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-              )}
-              {visibleColumns.includes('type') && (
-                <TableHead>
-                  <div className="flex items-center">
-                    GL Type
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-              )}
-              {visibleColumns.includes('category') && (
-                <TableHead>
-                  <div className="flex items-center">
-                    Category
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </div>
-                </TableHead>
-              )}
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAccounts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground">
-                  No accounts found matching your search.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredAccounts.map((account) => (
-                <TableRow key={account.code}>
-                  {visibleColumns.includes('code') && (
-                    <TableCell className="font-medium">{account.code}</TableCell>
-                  )}
-                  {visibleColumns.includes('description') && (
-                    <TableCell>{account.description}</TableCell>
-                  )}
-                  {visibleColumns.includes('type') && (
-                    <TableCell>{account.type}</TableCell>
-                  )}
-                  {visibleColumns.includes('category') && (
-                    <TableCell>{account.category}</TableCell>
-                  )}
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive">
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <GLAccountGroups 
+        accounts={filteredAccounts}
+        searchTerm={searchTerm}
+        onEdit={onEdit}
+      />
     </>
   );
 };

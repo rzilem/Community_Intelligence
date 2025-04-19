@@ -11,10 +11,9 @@ interface GLAccountTabsProps {
   accounts: GLAccount[];
   searchTerm: string;
   accountType: string;
-  visibleColumns: Array<'code' | 'description' | 'type' | 'category'>;
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
-  onColumnChange: (columns: string[]) => void;
+  onEdit?: (account: GLAccount) => void;
 }
 
 const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
@@ -23,10 +22,9 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
   accounts,
   searchTerm,
   accountType,
-  visibleColumns,
   onSearchChange,
   onAccountTypeChange,
-  onColumnChange
+  onEdit
 }) => {
   return (
     <Tabs defaultValue="master" className="w-full" value={activeTab} onValueChange={onTabChange}>
@@ -46,10 +44,9 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
           accounts={accounts}
           searchTerm={searchTerm}
           accountType={accountType}
-          visibleColumns={visibleColumns}
           onSearchChange={onSearchChange}
           onAccountTypeChange={onAccountTypeChange}
-          onColumnChange={onColumnChange}
+          onEdit={onEdit}
         />
       </TabsContent>
 

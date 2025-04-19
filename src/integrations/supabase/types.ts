@@ -1128,30 +1128,42 @@ export type Database = {
       }
       gl_accounts: {
         Row: {
-          account_number: string
+          account_number: string | null
           association_id: string | null
+          balance: number | null
+          category: string | null
+          code: string
           created_at: string
           description: string | null
           id: string
           name: string
+          type: string
           updated_at: string
         }
         Insert: {
-          account_number: string
+          account_number?: string | null
           association_id?: string | null
+          balance?: number | null
+          category?: string | null
+          code: string
           created_at?: string
           description?: string | null
           id?: string
           name: string
+          type: string
           updated_at?: string
         }
         Update: {
-          account_number?: string
+          account_number?: string | null
           association_id?: string | null
+          balance?: number | null
+          category?: string | null
+          code?: string
           created_at?: string
           description?: string | null
           id?: string
           name?: string
+          type?: string
           updated_at?: string
         }
         Relationships: [

@@ -1,4 +1,3 @@
-
 export interface ReportCategory {
   title: string;
   reports: string[];
@@ -6,13 +5,14 @@ export interface ReportCategory {
 
 export interface GLAccount {
   id: string;
-  number: string;
+  code: string;
   name: string;
   type: string;
-  balance: number;
-  code: string;
   description: string;
   category: string;
+  balance: number;
+  account_number?: string;
+  association_id?: string;
 }
 
 export interface JournalEntry {
