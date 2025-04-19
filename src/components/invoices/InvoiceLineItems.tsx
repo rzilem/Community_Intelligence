@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Trash2, PlusCircle, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { GLAccount } from '@/types/accounting-types';
 
 interface LineItem {
   glAccount: string;
@@ -30,6 +32,32 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   showPreview = true,
   invoiceTotal = 0
 }) => {
+  const [glAccounts, setGLAccounts] = useState<GLAccount[]>([]);
+
+  useEffect(() => {
+    const fetchGLAccounts = async () => {
+      let query = supabase
+        .from('gl_accounts')
+        .select('*')
+        .order('code');
+
+      if (associationId) {
+        query = query.or(`association_id.is.null,association_id.eq.${associationId}`);
+      }
+
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching GL accounts:', error);
+        return;
+      }
+
+      setGLAccounts(data || []);
+    };
+
+    fetchGLAccounts();
+  }, [associationId]);
+
   const lineTotal = useMemo(() => 
     lines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0), 
     [lines]
@@ -56,11 +84,12 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
     newLines[index] = { ...newLines[index], [field]: value };
 
     if (field === 'amount' && index > 0) {
-      newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
+      const lineTotal = newLines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
+      newLines[0] = { ...newLines[0], amount: invoiceTotal - lineTotal };
     }
 
     onLinesChange(newLines);
-  }, [lines, onLinesChange, adjustedFirstLineAmount]);
+  }, [lines, onLinesChange, invoiceTotal]);
 
   const handleRemoveLine = useCallback((index: number) => {
     if (lines.length > 1) {
@@ -137,8 +166,11 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Select GL Account</SelectItem>
-                    <SelectItem value="Account1">Account 1</SelectItem>
-                    <SelectItem value="Account2">Account 2</SelectItem>
+                    {glAccounts.map(account => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.code} - {account.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
