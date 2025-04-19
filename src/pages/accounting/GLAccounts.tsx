@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Database } from 'lucide-react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import GLAccountTabs from '@/components/accounting/GLAccountTabs';
 import { GLAccount } from '@/types/accounting-types';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/useAuth';
 
 const GLAccounts = () => {
   const [searchTerm, setSearchTerm] = useState('');

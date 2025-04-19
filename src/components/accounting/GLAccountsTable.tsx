@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountGroups from './GLAccountGroups';
 import { GLAccountDialog } from './GLAccountDialog';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/useAuth';
 
 interface GLAccountsTableProps {
   accounts: GLAccount[];

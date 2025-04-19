@@ -26,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GLAccount } from '@/types/accounting-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/useAuth';
 
 // Zod schema for form validation
 const glAccountSchema = z.object({
@@ -75,13 +75,20 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   const handleSubmit = async (values: z.infer<typeof glAccountSchema>) => {
     setIsSubmitting(true);
     try {
+      // Make sure to include all required fields for the upsert
+      const dataToUpsert = {
+        ...(account?.id ? { id: account.id } : {}),
+        code: values.code,
+        name: values.name,
+        type: values.type,
+        description: values.description || null,
+        category: values.category || null,
+        association_id: associationId || currentAssociation?.id || null,
+      };
+
       const { data, error } = await supabase
         .from('gl_accounts')
-        .upsert({
-          ...values,
-          id: account?.id,
-          association_id: associationId || currentAssociation?.id,
-        })
+        .upsert(dataToUpsert)
         .select()
         .single();
 
