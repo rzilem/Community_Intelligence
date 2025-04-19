@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -162,7 +161,6 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({
           <TableBody>
             {glAccountGroups.map(group => (
               <React.Fragment key={group.id}>
-                {/* Group Row */}
                 <TableRow className="hover:bg-muted/30 group cursor-pointer" onClick={() => onGroupToggle(group.id)}>
                   <TableCell className="font-medium sticky left-0 bg-background group-hover:bg-muted/30 z-20">
                     <div className="flex items-center">
@@ -189,7 +187,6 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({
                   {visibleMonths.map(() => <TableCell key={`${group.id}-spacer`} />)}
                 </TableRow>
                 
-                {/* Account Rows (when group is expanded) */}
                 {group.isExpanded && group.accounts.map(account => {
                   const entry = budgetEntries[account.id] || { 
                     id: account.id,
@@ -203,7 +200,7 @@ const BudgetEditor: React.FC<BudgetEditorProps> = ({
                     <TableRow key={account.id} className="hover:bg-muted/20">
                       <TableCell className="pl-8 sticky left-0 bg-background hover:bg-muted/20 z-20">
                         <div className="flex items-center">
-                          {account.number} - {account.name}
+                          {account.code} - {account.name}
                           {renderAIPredictionIndicator(account)}
                         </div>
                       </TableCell>

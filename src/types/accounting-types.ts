@@ -1,3 +1,4 @@
+
 export interface ReportCategory {
   title: string;
   reports: string[];
@@ -13,6 +14,8 @@ export interface GLAccount {
   balance: number;
   account_number?: string;
   association_id?: string;
+  // This property is referred to in the code but wasn't properly defined in the type
+  number?: string;
 }
 
 export interface JournalEntry {
