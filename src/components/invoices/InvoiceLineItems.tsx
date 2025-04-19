@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LineItemRow } from './line-items/LineItemRow';
+import { LineItemsList } from './line-items/LineItemsList';
 import { LineItemsHeader } from './line-items/LineItemsHeader';
 import { EmptyLineItems } from './line-items/EmptyLineItems';
 import { useLineItems } from './line-items/useLineItems';
@@ -46,18 +46,13 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
         maxLinesReached={maxLinesReached}
       />
       
-      {externalLines.map((line, index) => (
-        <LineItemRow
-          key={index}
-          index={index}
-          line={line}
-          isFirstLine={index === 0}
-          glAccounts={glAccounts}
-          onLineChange={handleLineChange}
-          onRemoveLine={handleRemoveLine}
-          showPreview={showPreview}
-        />
-      ))}
+      <LineItemsList
+        lines={externalLines}
+        glAccounts={glAccounts}
+        onLineChange={handleLineChange}
+        onRemoveLine={handleRemoveLine}
+        showPreview={showPreview}
+      />
 
       {hasLineMismatch && <EmptyLineItems />}
     </div>
