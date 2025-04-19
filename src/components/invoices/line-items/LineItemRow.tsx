@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GLAccount } from '@/types/accounting-types';
+import { cn } from '@/lib/utils';
 
 interface LineItemRowProps {
   index: number;
