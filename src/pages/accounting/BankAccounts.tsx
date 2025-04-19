@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Building, Search, Download, PlusCircle } from 'lucide-react';
+import { Building, Search, Download, PlusCircle, Upload } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,56 +9,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import BankAccountTable, { BankAccount } from '@/components/banking/BankAccountTable';
 import BankAccountDialog from '@/components/banking/BankAccountDialog';
-
-const mockBankAccounts: BankAccount[] = [
-  { 
-    id: '1', 
-    name: 'Operating Account', 
-    accountNumber: '12345678', 
-    routingNumber: '987654321', 
-    balance: 25436.78, 
-    accountType: 'Checking', 
-    institution: 'First Citizens Bank', 
-    lastReconciled: '2025-03-31' 
-  },
-  { 
-    id: '2', 
-    name: 'Reserve Fund', 
-    accountNumber: '87654321', 
-    routingNumber: '123456789', 
-    balance: 125785.42, 
-    accountType: 'Money Market', 
-    institution: 'First Citizens Bank', 
-    lastReconciled: '2025-03-31' 
-  },
-  { 
-    id: '3', 
-    name: 'Capital Improvements', 
-    accountNumber: '23456789', 
-    routingNumber: '987654321', 
-    balance: 57892.33, 
-    accountType: 'Savings', 
-    institution: 'First Citizens Bank', 
-    lastReconciled: '2025-03-15' 
-  },
-  { 
-    id: '4', 
-    name: 'CD Reserve', 
-    accountNumber: '34567890', 
-    routingNumber: '123456789', 
-    balance: 200000.00, 
-    accountType: 'Certificate of Deposit', 
-    institution: 'USAA', 
-    lastReconciled: '2025-03-01' 
-  },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const BankAccounts: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [accountTypeFilter, setAccountTypeFilter] = useState<string>('all');
-  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(mockBankAccounts);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchBankAccounts = async () => {
+    try {
+      setIsLoading(true);
+      
+      let query = supabase
+        .from('bank_accounts')
+        .select('*');
+      
+      if (selectedAssociationId) {
+        query = query.eq('association_id', selectedAssociationId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      // Map database fields to component props
+      const mappedAccounts: BankAccount[] = data.map(account => ({
+        id: account.id,
+        name: account.name,
+        accountNumber: account.account_number,
+        routingNumber: account.routing_number || '',
+        balance: 0, // We'll fetch this from transactions later
+        accountType: account.account_type,
+        institution: account.bank_name,
+        lastReconciledDate: account.last_reconciled_date,
+        lastStatementDate: account.last_statement_date
+      }));
+      
+      setBankAccounts(mappedAccounts);
+    } catch (error: any) {
+      console.error('Error fetching bank accounts:', error);
+      toast.error(`Failed to load bank accounts: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedAssociationId) {
+      fetchBankAccounts();
+    }
+  }, [selectedAssociationId]);
 
   const filteredAccounts = bankAccounts.filter(account => {
     const matchesSearch = 
@@ -72,23 +76,77 @@ const BankAccounts: React.FC = () => {
   });
 
   const handleAssociationChange = (associationId: string) => {
-    console.log('Association changed to:', associationId);
     setSelectedAssociationId(associationId);
   };
 
-  const handleAddAccount = (data: Partial<BankAccount>) => {
-    const newAccount: BankAccount = {
-      id: Date.now().toString(),
-      name: data.name || '',
-      accountNumber: data.accountNumber || '',
-      routingNumber: data.routingNumber || '',
-      balance: data.balance || 0,
-      accountType: data.accountType || '',
-      institution: data.institution || '',
-      lastReconciled: new Date().toISOString().split('T')[0]
-    };
+  const handleAddAccount = async (data: Partial<BankAccount>) => {
+    if (!selectedAssociationId) {
+      toast.error('Please select an association first');
+      return;
+    }
     
-    setBankAccounts([...bankAccounts, newAccount]);
+    try {
+      const { data: newAccount, error } = await supabase
+        .from('bank_accounts')
+        .insert({
+          name: data.name,
+          account_number: data.accountNumber,
+          routing_number: data.routingNumber,
+          account_type: data.accountType,
+          bank_name: data.institution,
+          association_id: selectedAssociationId
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      toast.success('Bank account added successfully');
+      fetchBankAccounts();
+    } catch (error: any) {
+      console.error('Error adding bank account:', error);
+      toast.error(`Failed to add bank account: ${error.message}`);
+    }
+  };
+
+  const handleUpdateAccount = async (account: BankAccount) => {
+    try {
+      const { error } = await supabase
+        .from('bank_accounts')
+        .update({
+          name: account.name,
+          account_number: account.accountNumber,
+          routing_number: account.routingNumber,
+          account_type: account.accountType,
+          bank_name: account.institution
+        })
+        .eq('id', account.id);
+      
+      if (error) throw error;
+      
+      toast.success('Bank account updated successfully');
+      fetchBankAccounts();
+    } catch (error: any) {
+      console.error('Error updating bank account:', error);
+      toast.error(`Failed to update bank account: ${error.message}`);
+    }
+  };
+
+  const handleDeleteAccount = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('bank_accounts')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Bank account deleted successfully');
+      fetchBankAccounts();
+    } catch (error: any) {
+      console.error('Error deleting bank account:', error);
+      toast.error(`Failed to delete bank account: ${error.message}`);
+    }
   };
 
   return (
@@ -130,8 +188,8 @@ const BankAccounts: React.FC = () => {
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="checking">Checking</SelectItem>
                   <SelectItem value="savings">Savings</SelectItem>
-                  <SelectItem value="money market">Money Market</SelectItem>
-                  <SelectItem value="certificate of deposit">CD</SelectItem>
+                  <SelectItem value="money_market">Money Market</SelectItem>
+                  <SelectItem value="cd">Certificate of Deposit</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -145,10 +203,20 @@ const BankAccounts: React.FC = () => {
             </div>
           </div>
 
-          <BankAccountTable 
-            accounts={filteredAccounts}
-            searchTerm={searchTerm}
-          />
+          {isLoading ? (
+            <div className="text-center py-8">Loading bank accounts...</div>
+          ) : selectedAssociationId ? (
+            <BankAccountTable 
+              accounts={filteredAccounts}
+              searchTerm={searchTerm}
+              onUpdateAccount={handleUpdateAccount}
+              onDeleteAccount={handleDeleteAccount}
+            />
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              Please select an association to view bank accounts
+            </div>
+          )}
 
           <BankAccountDialog 
             isOpen={isDialogOpen}
