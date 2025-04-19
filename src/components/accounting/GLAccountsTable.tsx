@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountGroups from './GLAccountGroups';
+import { GLAccountDialog } from './GLAccountDialog';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface GLAccountsTableProps {
   accounts: GLAccount[];
@@ -14,6 +16,7 @@ interface GLAccountsTableProps {
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
   onEdit?: (account: GLAccount) => void;
+  onAccountAdded?: (account: GLAccount) => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
@@ -22,8 +25,12 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   accountType,
   onSearchChange,
   onAccountTypeChange,
-  onEdit
+  onEdit,
+  onAccountAdded
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { currentAssociation } = useAuth();
+
   const filteredAccounts = accounts.filter(account => {
     const matchesType = accountType === 'all' || account.type === accountType;
     return matchesType;
@@ -60,7 +67,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
             <Download className="h-4 w-4 mr-2" /> Export
           </Button>
           
-          <Button>
+          <Button onClick={() => setIsDialogOpen(true)}>
             <PlusCircle className="h-4 w-4 mr-2" /> Add Account
           </Button>
         </div>
@@ -70,6 +77,13 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         accounts={filteredAccounts}
         searchTerm={searchTerm}
         onEdit={onEdit}
+      />
+
+      <GLAccountDialog 
+        isOpen={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        associationId={currentAssociation?.id}
+        onAccountAdded={onAccountAdded}
       />
     </>
   );

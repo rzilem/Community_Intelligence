@@ -13,7 +13,7 @@ interface GLAccountTabsProps {
   accountType: string;
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
-  onEdit?: (account: GLAccount) => void;
+  onAccountAdded?: (account: GLAccount) => void;
 }
 
 const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
@@ -24,7 +24,7 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
   accountType,
   onSearchChange,
   onAccountTypeChange,
-  onEdit
+  onAccountAdded
 }) => {
   return (
     <Tabs defaultValue="master" className="w-full" value={activeTab} onValueChange={onTabChange}>
@@ -46,7 +46,7 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
           accountType={accountType}
           onSearchChange={onSearchChange}
           onAccountTypeChange={onAccountTypeChange}
-          onEdit={onEdit}
+          onAccountAdded={onAccountAdded}
         />
       </TabsContent>
 
