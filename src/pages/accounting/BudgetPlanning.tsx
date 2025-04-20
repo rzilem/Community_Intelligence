@@ -26,9 +26,10 @@ import {
 } from '@/types/accounting-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
-// Mock data for GL accounts
-const mockGLAccounts: GLAccount[] = [
+// Mock data for GL accounts - now with is_active property
+const mockGLAccounts = ensureGLAccountsHaveIsActive([
   { id: '1000', code: '1000', name: 'First Citizens Bank Operating-X2806', type: 'Asset', balance: 0, description: 'First Citizens Bank Operating-X2806', category: 'Assets', account_number: '1000' },
   { id: '4000', code: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, description: 'Assessment Income', category: 'Income', account_number: '4000' },
   { id: '4010', code: '4010', name: 'Special Assessment', type: 'Revenue', balance: 0, description: 'Special Assessment', category: 'Income', account_number: '4010' },
@@ -49,7 +50,7 @@ const mockGLAccounts: GLAccount[] = [
   { id: '6250', code: '6250', name: 'Trash', type: 'Expense', balance: 0, description: 'Trash', category: 'Expenses', account_number: '6250' },
   { id: '8010', code: '8010', name: 'General Liability + D&O Insurance', type: 'Expense', balance: 0, description: 'General Liability + D&O Insurance', category: 'Expenses', account_number: '8010' },
   { id: '9050', code: '9050', name: 'Contribution to Reserves', type: 'Expense', balance: 0, description: 'Contribution to Reserves', category: 'Expenses', account_number: '9050' },
-];
+]);
 
 const BudgetPlanning = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());

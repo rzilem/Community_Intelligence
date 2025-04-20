@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, PlusCircle, SortAsc, SortDesc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -42,7 +41,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
-  // Get unique categories for filtering
   const categories = Array.from(new Set(accounts.map(account => account.category))).filter(Boolean) as string[];
 
   const filteredAccounts = accounts.filter(account => {
@@ -56,7 +54,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
     return matchesType && matchesCategory && matchesBalance && matchesActive;
   });
 
-  // Sort accounts based on current sort settings
   const sortedAccounts = [...filteredAccounts].sort((a, b) => {
     let valueA, valueB;
     switch (sortField) {
@@ -102,7 +99,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
 
   const maxBalance = Math.max(...accounts.map(account => account.balance || 0));
   
-  // Fixed type issue: Now correctly handles the 'all'|'active'|'inactive' type
   const handleActiveFilterChange = (value: string) => {
     setActiveFilter(value as 'all' | 'active' | 'inactive');
   };
