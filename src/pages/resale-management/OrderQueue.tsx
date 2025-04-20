@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { 
   ListOrdered, 
@@ -12,7 +13,8 @@ import {
   ArrowDownUp, 
   Eye, 
   FileEdit, 
-  Download
+  Download,
+  Plus
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,100 +37,24 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-
-// Types for order queue entries
-interface OrderQueueEntry {
-  id: string;
-  orderNumber: string;
-  address: string;
-  ownerSeller: string;
-  community: string;
-  type: string;
-  priority: 'Urgent' | 'Regular' | 'Standard' | 'Expedited';
-  scheduledDate: string;
-  status: 'Scheduled' | 'Completed' | 'In Review' | 'Past Due';
-}
+import { ResaleOrder, ResalePriority, ResaleOrderStatus } from '@/types/resale-order-types';
+import { useResaleOrders } from '@/hooks/resale/useResaleOrders';
+import { toast } from 'sonner';
 
 const OrderQueue = () => {
-  // Sample data for order queue
-  const orderQueueData: OrderQueueEntry[] = [
-    {
-      id: '1',
-      orderNumber: 'MOH-402879',
-      address: '4508 Duval Road Unit 1-101, Austin, TX 78759',
-      ownerSeller: 'Rebecca Johnson',
-      community: 'Stonehaven Condos',
-      type: 'Mortgage Questionnaire',
-      priority: 'Regular',
-      scheduledDate: '04/01/25',
-      status: 'Scheduled'
-    },
-    {
-      id: '2',
-      orderNumber: 'MOH-402855',
-      address: '175 Caspian Ln, Driftwood, TX 78619',
-      ownerSeller: 'Viktor & Maria Cizmarik',
-      community: 'La Ventana Ranch',
-      type: 'Resale Certificate',
-      priority: 'Standard',
-      scheduledDate: '04/01/25',
-      status: 'Scheduled'
-    },
-    {
-      id: '3',
-      orderNumber: 'MOH-402899',
-      address: '107 Sunrise Ridge Cv Unit 1603, Austin, TX 78738',
-      ownerSeller: 'James Wilson',
-      community: 'Enclave at Alta Vista',
-      type: 'Questionnaire',
-      priority: 'Expedited',
-      scheduledDate: '04/01/25',
-      status: 'In Review'
-    },
-    {
-      id: '4',
-      orderNumber: 'MOH-402881',
-      address: '206 Newport Landing Pl, Round Rock, TX 78664',
-      ownerSeller: 'Kathleen Moore',
-      community: 'Chandler Creek HOA',
-      type: 'Resale Certificate',
-      priority: 'Regular',
-      scheduledDate: '04/01/25',
-      status: 'Completed'
-    },
-    {
-      id: '5',
-      orderNumber: 'MOH-402851',
-      address: '5704 Menchaca Rd Unit 21, Austin, TX 78745',
-      ownerSeller: 'Bette Williams',
-      community: 'Towne Court',
-      type: 'Resale Certificate',
-      priority: 'Urgent',
-      scheduledDate: '04/01/25',
-      status: 'Scheduled'
-    },
-    {
-      id: '6',
-      orderNumber: 'MOH-402500',
-      address: '107 Sunrise Ridge Cv Unit 1603, Austin, TX 78738',
-      ownerSeller: 'James Wilson',
-      community: 'Enclave at Alta Vista',
-      type: 'Compliance Questionnaire',
-      priority: 'Expedited',
-      scheduledDate: '04/02/25',
-      status: 'Past Due'
-    }
-  ];
-
+  const navigate = useNavigate();
+  const { orders, isLoading, error, refreshOrders } = useResaleOrders();
+  
   // State for filters
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
-  const [priorityFilter, setPriorityFilter] = useState('All Priorities');
-  const [typeFilter, setTypeFilter] = useState('All Types');
+  const [statusFilter, setStatusFilter] = useState<string>('All Statuses');
+  const [priorityFilter, setPriorityFilter] = useState<string>('All Priorities');
+  const [typeFilter, setTypeFilter] = useState<string>('All Types');
   const [activeTab, setActiveTab] = useState('all');
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
   // Filter the data based on the current filters and search term
-  const filteredData = orderQueueData.filter(order => {
+  const filteredOrders = orders.filter(order => {
     // Search term filtering
     if (searchTerm && !Object.values(order).some(value => 
       typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
@@ -165,13 +91,38 @@ const OrderQueue = () => {
     return true;
   });
 
+  // Handle refresh 
+  const handleRefresh = () => {
+    refreshOrders();
+    setLastRefreshed(new Date());
+    toast.success('Resale orders refreshed');
+  };
+
   // Get unique values for filters
-  const statusOptions = ['All Statuses', ...new Set(orderQueueData.map(order => order.status))];
-  const priorityOptions = ['All Priorities', ...new Set(orderQueueData.map(order => order.priority))];
-  const typeOptions = ['All Types', ...new Set(orderQueueData.map(order => order.type))];
+  const statusOptions = ['All Statuses', ...Array.from(new Set(orders.map(order => order.status)))];
+  const priorityOptions = ['All Priorities', ...Array.from(new Set(orders.map(order => order.priority)))];
+  const typeOptions = ['All Types', ...Array.from(new Set(orders.map(order => order.type)))];
+
+  // Action handlers
+  const handleViewOrder = (id: string) => {
+    toast.info(`Viewing order ${id}`);
+    // In a real implementation, this would navigate to a detail view
+    // navigate(`/resale-management/certificate/${id}`);
+  };
+
+  const handleEditOrder = (id: string) => {
+    toast.info(`Editing order ${id}`);
+    // In a real implementation, this would navigate to an edit view
+    // navigate(`/resale-management/certificate/${id}/edit`);
+  };
+
+  const handleDownloadOrder = (id: string) => {
+    toast.success(`Order ${id} prepared for download`);
+    // In a real implementation, this would download the document
+  };
 
   // Helper function to render status badges with appropriate colors
-  const renderStatusBadge = (status: string) => {
+  const renderStatusBadge = (status: ResaleOrderStatus) => {
     switch (status) {
       case 'Scheduled':
         return <Badge className="bg-amber-500">Scheduled</Badge>;
@@ -187,7 +138,7 @@ const OrderQueue = () => {
   };
 
   // Helper function to render priority badges with appropriate colors
-  const renderPriorityBadge = (priority: string) => {
+  const renderPriorityBadge = (priority: ResalePriority) => {
     switch (priority) {
       case 'Urgent':
         return <Badge className="bg-red-500">Urgent</Badge>;
@@ -202,6 +153,13 @@ const OrderQueue = () => {
     }
   };
 
+  // Handle new resale request
+  const handleNewResaleRequest = () => {
+    toast.info('Creating new resale request');
+    // In a real implementation, this would navigate to a create form
+    // navigate('/resale-management/certificate/new');
+  };
+
   return (
     <PageTemplate 
       title="Resale Management" 
@@ -210,8 +168,8 @@ const OrderQueue = () => {
     >
       <div className="flex justify-between items-center mb-6">
         <p className="text-gray-600">Process and manage property resale documentation</p>
-        <Button className="gap-2">
-          <span>+</span> New Resale Request
+        <Button className="gap-2" onClick={handleNewResaleRequest}>
+          <Plus className="h-4 w-4" /> New Resale Request
         </Button>
       </div>
 
@@ -277,8 +235,12 @@ const OrderQueue = () => {
                   <span>Past Due</span>
                 </TabsTrigger>
               </TabsList>
-              <div className="flex justify-end">
-                <Button variant="outline" className="ml-auto">
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handleRefresh}>
+                  <ArrowDownUp className="h-4 w-4 mr-2" />
+                  Refresh
+                </Button>
+                <Button variant="outline">
                   <Download className="h-4 w-4 mr-2" />
                   Export
                 </Button>
@@ -342,59 +304,92 @@ const OrderQueue = () => {
               <div className="p-4 border-b">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold">Order Queue</h3>
-                  <p className="text-sm text-gray-500">Showing {filteredData.length} of {orderQueueData.length} orders</p>
+                  <p className="text-sm text-gray-500">Showing {filteredOrders.length} of {orders.length} orders</p>
                 </div>
                 <p className="text-sm text-gray-500">Manage and process resale documentation orders</p>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="whitespace-nowrap">Order #</TableHead>
-                    <TableHead className="whitespace-nowrap">Address</TableHead>
-                    <TableHead className="whitespace-nowrap">Owner/Seller</TableHead>
-                    <TableHead className="whitespace-nowrap">Community</TableHead>
-                    <TableHead className="whitespace-nowrap">Type</TableHead>
-                    <TableHead className="whitespace-nowrap">Priority</TableHead>
-                    <TableHead className="whitespace-nowrap">Scheduled</TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredData.length > 0 ? (
-                    filteredData.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                        <TableCell className="whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">{order.address}</TableCell>
-                        <TableCell>{order.ownerSeller}</TableCell>
-                        <TableCell>{order.community}</TableCell>
-                        <TableCell>{order.type}</TableCell>
-                        <TableCell>{renderPriorityBadge(order.priority)}</TableCell>
-                        <TableCell>{order.scheduledDate}</TableCell>
-                        <TableCell>{renderStatusBadge(order.status)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" title="View">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" title="Edit">
-                              <FileEdit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" title="Download">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
+              
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <p className="text-muted-foreground">Loading resale orders...</p>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center">
+                  <p className="text-red-500">{error}</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-4">No orders found matching the current filters.</TableCell>
+                      <TableHead className="whitespace-nowrap">Order #</TableHead>
+                      <TableHead className="whitespace-nowrap">Address</TableHead>
+                      <TableHead className="whitespace-nowrap">Owner/Seller</TableHead>
+                      <TableHead className="whitespace-nowrap">Community</TableHead>
+                      <TableHead className="whitespace-nowrap">Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Priority</TableHead>
+                      <TableHead className="whitespace-nowrap">Scheduled</TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
+                      <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOrders.length > 0 ? (
+                      filteredOrders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                          <TableCell className="whitespace-nowrap overflow-hidden text-ellipsis max-w-xs">{order.address}</TableCell>
+                          <TableCell>{order.ownerSeller}</TableCell>
+                          <TableCell>{order.community}</TableCell>
+                          <TableCell>{order.type}</TableCell>
+                          <TableCell>{renderPriorityBadge(order.priority)}</TableCell>
+                          <TableCell>{order.scheduledDate}</TableCell>
+                          <TableCell>{renderStatusBadge(order.status)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="View"
+                                onClick={() => handleViewOrder(order.id)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Edit"
+                                onClick={() => handleEditOrder(order.id)}
+                              >
+                                <FileEdit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                title="Download"
+                                onClick={() => handleDownloadOrder(order.id)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-4">No orders found matching the current filters.</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </div>
+            
+            {!isLoading && !error && (
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <div>Showing {filteredOrders.length} of {orders.length} orders</div>
+                <div>Last refreshed: {lastRefreshed.toLocaleString()}</div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
