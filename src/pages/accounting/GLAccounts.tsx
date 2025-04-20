@@ -9,62 +9,34 @@ import { GLAccount } from '@/types/accounting-types';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
+import { LoadingState } from '@/components/ui/loading-state';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const GLAccounts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [accountType, setAccountType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('master');
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
-  const [accounts, setAccounts] = useState<GLAccount[]>([]);
-  const [loading, setLoading] = useState(false);
+  
+  // Use the hook based on active tab and selected association
+  const {
+    accounts,
+    isLoading,
+    error,
+    refreshAccounts
+  } = useGLAccounts({
+    associationId: activeTab === 'association' ? selectedAssociationId : undefined,
+    includeMaster: activeTab === 'master',
+  });
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
   };
 
   const handleAccountAdded = (newAccount: GLAccount) => {
-    setAccounts(prevAccounts => [...prevAccounts, newAccount]);
+    refreshAccounts();
   };
-
-  // Load appropriate GL accounts based on active tab and selected association
-  useEffect(() => {
-    async function fetchGLAccounts() {
-      setLoading(true);
-      try {
-        let query = supabase.from('gl_accounts').select('*');
-        
-        if (activeTab === 'master') {
-          // Fetch master chart (global accounts)
-          query = query.eq('association_id', null);
-        } else if (activeTab === 'association' && selectedAssociationId) {
-          // Fetch association-specific accounts
-          query = query.eq('association_id', selectedAssociationId);
-        } else {
-          // No association selected for association tab
-          setAccounts([]);
-          setLoading(false);
-          return;
-        }
-        
-        // Execute query and sort by code
-        const { data, error } = await query.order('code', { ascending: true });
-        
-        if (error) {
-          console.error('Error fetching GL accounts:', error);
-          toast.error('Failed to load GL accounts');
-        } else if (data) {
-          setAccounts(data as GLAccount[]);
-        }
-      } catch (err) {
-        console.error('Error in fetchGLAccounts:', err);
-        toast.error('An error occurred while fetching GL accounts');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchGLAccounts();
-  }, [activeTab, selectedAssociationId]);
 
   // Function to copy master GL accounts to an association
   const handleCopyMasterToAssociation = async () => {
@@ -73,13 +45,12 @@ const GLAccounts = () => {
       return;
     }
 
-    setLoading(true);
     try {
       // 1. Fetch all master GL accounts
       const { data: masterAccounts, error: fetchError } = await supabase
         .from('gl_accounts')
         .select('*')
-        .eq('association_id', null);
+        .is('association_id', null);
 
       if (fetchError) {
         throw new Error(`Error fetching master accounts: ${fetchError.message}`);
@@ -87,7 +58,6 @@ const GLAccounts = () => {
 
       if (!masterAccounts || masterAccounts.length === 0) {
         toast.warning('No master GL accounts found to copy');
-        setLoading(false);
         return;
       }
 
@@ -114,23 +84,11 @@ const GLAccounts = () => {
 
       toast.success(`Successfully copied ${accountsToInsert.length} GL accounts to association`);
       
-      // If we're on the association tab, refresh the list
-      if (activeTab === 'association') {
-        const { data: updatedAccounts } = await supabase
-          .from('gl_accounts')
-          .select('*')
-          .eq('association_id', selectedAssociationId)
-          .order('code', { ascending: true });
-          
-        if (updatedAccounts) {
-          setAccounts(updatedAccounts as GLAccount[]);
-        }
-      }
+      // Refresh the accounts list
+      refreshAccounts();
     } catch (err: any) {
       console.error('Error copying master GL accounts:', err);
       toast.error(err.message || 'Failed to copy GL accounts');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -166,7 +124,15 @@ const GLAccounts = () => {
             selectedAssociationId={selectedAssociationId}
             onCopyMasterToAssociation={handleCopyMasterToAssociation}
           />
-          {loading && <div className="text-center text-sm text-gray-400 mt-4">Loading...</div>}
+          
+          {isLoading && <LoadingState variant="spinner" text="Loading GL accounts..." />}
+          
+          {error && (
+            <EmptyState 
+              title="Failed to load GL accounts" 
+              description={error.message}
+            />
+          )}
         </CardContent>
       </Card>
     </PageTemplate>
