@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -34,6 +33,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
   onRemoveLine,
   showPreview = true,
 }) => {
+  const noGLAccounts = !glAccounts || glAccounts.length === 0;
   return (
     <div className={cn(
       "relative space-y-4 p-4 rounded-lg border grid grid-cols-12 gap-4",
@@ -66,17 +66,26 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
             <Select 
               value={line.glAccount || "none"} 
               onValueChange={value => onLineChange(index, 'glAccount', value)}
+              disabled={noGLAccounts}
             >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select GL Account" />
+                <SelectValue placeholder={noGLAccounts ? "No GL Accounts Found" : "Select GL Account"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Select GL Account</SelectItem>
-                {glAccounts.map(account => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.code} - {account.name}
+                {noGLAccounts ? (
+                  <SelectItem value="none" disabled>
+                    No GL Accounts Found
                   </SelectItem>
-                ))}
+                ) : (
+                  <>
+                    <SelectItem value="none">Select GL Account</SelectItem>
+                    {glAccounts.map(account => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.code} - {account.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
