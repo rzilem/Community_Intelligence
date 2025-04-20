@@ -14,7 +14,6 @@ export interface GLAccount {
   balance: number;
   account_number?: string;
   association_id?: string;
-  // This property is referred to in the code but wasn't properly defined in the type
   number?: string;
 }
 
@@ -28,6 +27,16 @@ export interface JournalEntry {
   createdBy: string;
   createdAt: string;
   associationId?: string;
+}
+
+export interface JournalEntryDetail {
+  id: string;
+  journal_entry_id: string;
+  gl_account_id: string;
+  description?: string;
+  debit: number;
+  credit: number;
+  gl_account?: GLAccount;
 }
 
 // Budget-related types
@@ -88,4 +97,39 @@ export interface BudgetPrediction {
   suggestedAmount: number;
   confidence: number;
   reasoning: string;
+}
+
+export interface GLAccountReconciliation {
+  id: string;
+  gl_account_id: string;
+  statement_date: string;
+  book_balance: number;
+  statement_balance: number;
+  is_reconciled: boolean;
+  reconciled_at?: string;
+  reconciled_by?: string;
+  notes?: string;
+}
+
+export interface GLAccountTransaction {
+  id: string;
+  gl_account_id: string;
+  date: string;
+  description: string;
+  reference?: string;
+  debit: number;
+  credit: number;
+  balance_after: number;
+  journal_entry_id?: string;
+  created_at: string;
+}
+
+export interface GLAccountAuditLog {
+  id: string;
+  gl_account_id: string;
+  action: 'create' | 'update' | 'delete';
+  changed_by: string;
+  changed_at: string;
+  old_values?: Record<string, any>;
+  new_values?: Record<string, any>;
 }

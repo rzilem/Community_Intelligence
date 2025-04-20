@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Database } from 'lucide-react';
+import { Database, ChartBar } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import GLAccountTabs from '@/components/accounting/GLAccountTabs';
@@ -12,12 +12,15 @@ import { toast } from 'sonner';
 import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import GLAccountBalanceChart from '@/components/accounting/GLAccountBalanceChart';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 const GLAccounts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [accountType, setAccountType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('master');
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
+  const [viewMode, setViewMode] = useState<'list' | 'chart'>('list');
   
   // Use the hook based on active tab and selected association
   const {
@@ -105,25 +108,94 @@ const GLAccounts = () => {
               <CardTitle>Chart of Accounts</CardTitle>
               <CardDescription>Manage general ledger accounts for your associations</CardDescription>
             </div>
-            <AssociationSelector 
-              className="md:self-end" 
-              onAssociationChange={handleAssociationChange}
-            />
+            <div className="flex gap-4 items-center">
+              <Tabs 
+                value={viewMode} 
+                onValueChange={(value) => setViewMode(value as 'list' | 'chart')}
+                className="mr-4"
+              >
+                <TabsList className="grid w-[180px] grid-cols-2">
+                  <TabsTrigger value="list">List View</TabsTrigger>
+                  <TabsTrigger value="chart">
+                    <ChartBar className="h-4 w-4 mr-1" />
+                    Chart View
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <AssociationSelector 
+                className="md:self-end" 
+                onAssociationChange={handleAssociationChange}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <GLAccountTabs
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            accounts={accounts}
-            searchTerm={searchTerm}
-            accountType={accountType}
-            onSearchChange={setSearchTerm}
-            onAccountTypeChange={setAccountType}
-            onAccountAdded={handleAccountAdded}
-            selectedAssociationId={selectedAssociationId}
-            onCopyMasterToAssociation={handleCopyMasterToAssociation}
-          />
+          {viewMode === 'list' ? (
+            <GLAccountTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              accounts={accounts}
+              searchTerm={searchTerm}
+              accountType={accountType}
+              onSearchChange={setSearchTerm}
+              onAccountTypeChange={setAccountType}
+              onAccountAdded={handleAccountAdded}
+              selectedAssociationId={selectedAssociationId}
+              onCopyMasterToAssociation={handleCopyMasterToAssociation}
+            />
+          ) : (
+            <div className="space-y-6">
+              {accounts.length > 0 ? (
+                <>
+                  <GLAccountBalanceChart 
+                    accounts={accounts}
+                    title="Top Account Balances" 
+                    description="Highest balance GL accounts"
+                    limit={10}
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <GLAccountBalanceChart 
+                      accounts={accounts}
+                      title="Top Assets" 
+                      description="Highest balance asset accounts"
+                      limit={5}
+                      type="Asset"
+                    />
+                    <GLAccountBalanceChart 
+                      accounts={accounts}
+                      title="Top Liabilities" 
+                      description="Highest balance liability accounts"
+                      limit={5}
+                      type="Liability"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <GLAccountBalanceChart 
+                      accounts={accounts}
+                      title="Top Revenue" 
+                      description="Highest balance revenue accounts"
+                      limit={5}
+                      type="Revenue"
+                    />
+                    <GLAccountBalanceChart 
+                      accounts={accounts}
+                      title="Top Expenses" 
+                      description="Highest balance expense accounts"
+                      limit={5}
+                      type="Expense"
+                    />
+                  </div>
+                </>
+              ) : (
+                <EmptyState 
+                  title="No GL accounts found"
+                  description="No GL accounts available to display in charts"
+                />
+              )}
+            </div>
+          )}
           
           {isLoading && <LoadingState variant="spinner" text="Loading GL accounts..." />}
           

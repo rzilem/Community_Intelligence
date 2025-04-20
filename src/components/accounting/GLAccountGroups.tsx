@@ -1,10 +1,10 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Edit2 } from 'lucide-react';
+import { Edit2, Eye } from 'lucide-react';
 import { GLAccount } from '@/types/accounting-types';
+import GLAccountDetailDialog from './GLAccountDetailDialog';
 
 interface GLAccountsGroupProps {
   accounts: GLAccount[];
@@ -17,6 +17,9 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
   searchTerm,
   onEdit,
 }) => {
+  const [selectedAccount, setSelectedAccount] = useState<GLAccount | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+
   const groupedAccounts = useMemo(() => {
     const filtered = accounts.filter(account => 
       account.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -33,6 +36,11 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
       return groups;
     }, {} as Record<string, GLAccount[]>);
   }, [accounts, searchTerm]);
+
+  const handleViewAccount = (account: GLAccount) => {
+    setSelectedAccount(account);
+    setIsDetailDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -64,15 +72,25 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
                     }) || '0.00'}
                   </TableCell>
                   <TableCell>
-                    {onEdit && (
+                    <div className="flex space-x-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onEdit(account)}
+                        onClick={() => handleViewAccount(account)}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
-                    )}
+                      
+                      {onEdit && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onEdit(account)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -80,6 +98,12 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
           </Table>
         </div>
       ))}
+
+      <GLAccountDetailDialog 
+        isOpen={isDetailDialogOpen}
+        onClose={() => setIsDetailDialogOpen(false)}
+        account={selectedAccount}
+      />
     </div>
   );
 };
