@@ -40,6 +40,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Get unique categories for filtering
   const categories = Array.from(new Set(accounts.map(account => account.category))).filter(Boolean) as string[];
@@ -48,15 +49,16 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
     const matchesType = accountType === 'all' || account.type === accountType;
     const matchesCategory = categoryFilter === 'all' || account.category === categoryFilter;
     const matchesBalance = account.balance >= balanceRange[0] && account.balance <= balanceRange[1];
-    
-    return matchesType && matchesCategory && matchesBalance;
+    const matchesActive =
+      activeFilter === 'all' ||
+      (activeFilter === 'active' && account.is_active) ||
+      (activeFilter === 'inactive' && !account.is_active);
+    return matchesType && matchesCategory && matchesBalance && matchesActive;
   });
 
   // Sort accounts based on current sort settings
   const sortedAccounts = [...filteredAccounts].sort((a, b) => {
     let valueA, valueB;
-    
-    // Determine which field to sort by
     switch (sortField) {
       case 'code':
         valueA = a.code;
@@ -74,19 +76,14 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         valueA = a.code;
         valueB = b.code;
     }
-    
-    // For numeric values
     if (typeof valueA === 'number' && typeof valueB === 'number') {
       return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
     }
-    
-    // For string values
     if (typeof valueA === 'string' && typeof valueB === 'string') {
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? valueA.localeCompare(valueB)
         : valueB.localeCompare(valueA);
     }
-    
     return 0;
   });
 
@@ -129,6 +126,17 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
               <SelectItem value="Equity">Equity</SelectItem>
               <SelectItem value="Revenue">Revenue</SelectItem>
               <SelectItem value="Expense">Expense</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={activeFilter} onValueChange={setActiveFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Active Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
             </SelectContent>
           </Select>
           
@@ -225,6 +233,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         accounts={sortedAccounts}
         searchTerm={searchTerm}
         onEdit={onEdit}
+        // Provide prop for state update for activation if needed
       />
 
       <GLAccountDialog 

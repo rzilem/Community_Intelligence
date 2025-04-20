@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Edit2, Eye } from 'lucide-react';
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountDetailDialog from './GLAccountDetailDialog';
+import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
 
 interface GLAccountsGroupProps {
   accounts: GLAccount[];
@@ -19,6 +20,13 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
 }) => {
   const [selectedAccount, setSelectedAccount] = useState<GLAccount | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+
+  // Add activation/deactivation mutation
+  const { mutate: updateAccount, isPending: isActivating } = useSupabaseUpdate<GLAccount>('gl_accounts', {
+    showSuccessToast: true,
+    showErrorToast: true,
+    invalidateQueries: [['gl_accounts']],
+  });
 
   const groupedAccounts = useMemo(() => {
     const filtered = accounts.filter(account => 
@@ -42,12 +50,18 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
     setIsDetailDialogOpen(true);
   };
 
+  const handleToggleActive = (account: GLAccount) => {
+    updateAccount({ id: account.id, data: { is_active: !account.is_active } });
+  };
+
   return (
     <div className="space-y-6">
       {Object.entries(groupedAccounts).map(([type, accounts]) => (
         <div key={type} className="rounded-md border">
-          <div className="bg-muted px-4 py-2 font-medium border-b">
-            {type} ({accounts.length})
+          <div className="bg-muted px-4 py-2 font-medium border-b flex justify-between items-center">
+            <span>
+              {type} ({accounts.length})
+            </span>
           </div>
           <Table>
             <TableHeader>
@@ -55,8 +69,9 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
                 <TableHead className="w-24">Code</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead className="w-32">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -65,6 +80,11 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
                   <TableCell className="font-medium">{account.code}</TableCell>
                   <TableCell>{account.name}</TableCell>
                   <TableCell>{account.category}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${account.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-muted-foreground'}`}>
+                      {account.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-right">
                     ${account.balance?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
@@ -90,6 +110,14 @@ const GLAccountGroups: React.FC<GLAccountsGroupProps> = ({
                           <Edit2 className="h-4 w-4" />
                         </Button>
                       )}
+                      <Button
+                        variant={account.is_active ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => handleToggleActive(account)}
+                        disabled={isActivating}
+                      >
+                        {account.is_active ? "Deactivate" : "Activate"}
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

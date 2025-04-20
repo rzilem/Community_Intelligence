@@ -1,4 +1,3 @@
-
 export interface ReportCategory {
   title: string;
   reports: string[];
@@ -15,6 +14,7 @@ export interface GLAccount {
   account_number?: string;
   association_id?: string;
   number?: string;
+  is_active: boolean;
 }
 
 export interface JournalEntry {

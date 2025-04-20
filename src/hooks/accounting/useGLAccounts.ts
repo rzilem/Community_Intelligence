@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { GLAccount } from '@/types/accounting-types';
@@ -10,6 +9,7 @@ type UseGLAccountsOptions = {
   includeCategories?: boolean;
   onlyActive?: boolean;
   onError?: (error: Error) => void;
+  isActiveFilter?: boolean | null;
 };
 
 export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
@@ -18,7 +18,8 @@ export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
     includeMaster = true, 
     includeCategories = false,
     onlyActive = false,
-    onError 
+    onError,
+    isActiveFilter = null,
   } = options;
   
   const [accounts, setAccounts] = useState<GLAccount[]>([]);
@@ -34,29 +35,24 @@ export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
       let query = supabase.from('gl_accounts').select('*');
       
       if (associationId) {
-        // If we have an association ID and we should include master accounts
         if (includeMaster) {
-          // This will get both association-specific accounts AND master accounts (association_id is null)
           query = query.or(`association_id.eq.${associationId},association_id.is.null`);
         } else {
-          // Only get association-specific accounts
           query = query.eq('association_id', associationId);
         }
       } else if (!includeMaster) {
-        // If we don't want master accounts and no association ID, return empty
         setAccounts([]);
         setIsLoading(false);
         return;
       } else {
-        // Only get master accounts
         query = query.is('association_id', null);
       }
+
+      if (typeof isActiveFilter === 'boolean') {
+        query = query.eq('is_active', isActiveFilter);
+      }
       
-      // If onlyActive is true, we could filter by status if implemented
-      
-      // Execute query and sort by code
       const { data, error } = await query.order('code', { ascending: true });
-      
       if (error) {
         throw new Error(`Error fetching GL accounts: ${error.message}`);
       }
@@ -64,7 +60,6 @@ export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
       const fetchedAccounts = data as GLAccount[];
       setAccounts(fetchedAccounts);
 
-      // If categories are requested, extract unique categories
       if (includeCategories) {
         const uniqueCategories = Array.from(
           new Set(
@@ -92,7 +87,7 @@ export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
 
   useEffect(() => {
     fetchGLAccounts();
-  }, [associationId, includeMaster, includeCategories, onlyActive]);
+  }, [associationId, includeMaster, includeCategories, onlyActive, isActiveFilter]);
   
   return { 
     accounts, 
