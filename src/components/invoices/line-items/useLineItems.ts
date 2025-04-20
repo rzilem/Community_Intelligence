@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { GLAccount } from '@/types/accounting-types';
+import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
 
 interface LineItem {
   glAccount: string;
@@ -12,7 +12,11 @@ interface LineItem {
 }
 
 export const useLineItems = (associationId?: string, invoiceTotal: number = 0) => {
-  const [glAccounts, setGLAccounts] = useState<GLAccount[]>([]);
+  const { accounts: glAccounts, isLoading: isLoadingAccounts } = useGLAccounts({
+    associationId,
+    includeMaster: true
+  });
+
   const [lines, setLines] = useState<LineItem[]>([{
     glAccount: '',
     fund: 'Operating',
@@ -20,30 +24,6 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
     description: '',
     amount: 0,
   }]);
-
-  useEffect(() => {
-    const fetchGLAccounts = async () => {
-      let query = supabase
-        .from('gl_accounts')
-        .select('*')
-        .order('code');
-
-      if (associationId) {
-        query = query.or(`association_id.is.null,association_id.eq.${associationId}`);
-      }
-
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching GL accounts:', error);
-        return;
-      }
-
-      setGLAccounts(data || []);
-    };
-
-    fetchGLAccounts();
-  }, [associationId]);
 
   const lineTotal = lines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
   const adjustedFirstLineAmount = invoiceTotal - lineTotal;
@@ -81,6 +61,7 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
     lines,
     setLines,
     glAccounts,
+    isLoadingAccounts,
     lineTotal,
     adjustedFirstLineAmount,
     handleAddLine,

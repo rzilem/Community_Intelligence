@@ -8,6 +8,7 @@ import { Trash2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { GLAccount } from '@/types/accounting-types';
 import { cn } from '@/lib/utils';
+import { getFormattedGLAccountLabel } from '@/hooks/accounting/useGLAccounts';
 
 interface LineItemRowProps {
   index: number;
@@ -35,11 +36,6 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
   showPreview = true,
 }) => {
   const noGLAccounts = !glAccounts || glAccounts.length === 0;
-  
-  // Helper function to format GL account display
-  const formatGLAccountLabel = (account: GLAccount) => {
-    return `${account.code} - ${account.name}`;
-  };
   
   return (
     <div className={cn(
@@ -88,7 +84,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
                     <SelectItem value="none">Select GL Account</SelectItem>
                     {glAccounts.map(account => (
                       <SelectItem key={account.id} value={account.id}>
-                        {formatGLAccountLabel(account)}
+                        {getFormattedGLAccountLabel(account)}
                       </SelectItem>
                     ))}
                   </>

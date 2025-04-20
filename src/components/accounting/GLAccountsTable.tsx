@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
-import { Search, Download, PlusCircle } from 'lucide-react';
+import { Search, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountGroups from './GLAccountGroups';
 import { GLAccountDialog } from './GLAccountDialog';
+import GLAccountImportExport from './GLAccountImportExport';
 import { useAuth } from '@/contexts/auth/useAuth';
 
 interface GLAccountsTableProps {
@@ -62,9 +64,11 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
             </SelectContent>
           </Select>
           
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" /> Export
-          </Button>
+          <GLAccountImportExport 
+            accounts={accounts} 
+            associationId={currentAssociation?.id}
+            onImportComplete={() => onAccountAdded && onAccountAdded({} as GLAccount)}
+          />
           
           <Button onClick={() => setIsDialogOpen(true)}>
             <PlusCircle className="h-4 w-4 mr-2" /> Add Account

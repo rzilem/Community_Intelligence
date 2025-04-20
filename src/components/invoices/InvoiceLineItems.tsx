@@ -4,6 +4,7 @@ import { LineItemsList } from './line-items/LineItemsList';
 import { LineItemsHeader } from './line-items/LineItemsHeader';
 import { EmptyLineItems } from './line-items/EmptyLineItems';
 import { useLineItems } from './line-items/useLineItems';
+import { LoadingState } from '@/components/ui/loading-state';
 
 interface LineItem {
   glAccount: string;
@@ -30,6 +31,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
 }) => {
   const {
     glAccounts,
+    isLoadingAccounts,
     lineTotal,
     handleAddLine,
     handleLineChange,
@@ -38,6 +40,10 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
 
   const hasLineMismatch = Math.abs(lineTotal + (externalLines[0]?.amount || 0) - invoiceTotal) > 0.01;
   const maxLinesReached = externalLines.length >= 5;
+
+  if (isLoadingAccounts) {
+    return <LoadingState variant="spinner" text="Loading GL accounts..." className="py-6" />;
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">

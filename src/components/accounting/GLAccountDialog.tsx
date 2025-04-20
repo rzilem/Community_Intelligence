@@ -1,14 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CheckCircle2, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GLAccount } from '@/types/accounting-types';
+import { useGLAccounts, getFormattedAccountCategories } from '@/hooks/accounting/useGLAccounts';
 
 interface GLAccountDialogProps {
   isOpen: boolean;
@@ -34,18 +37,76 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeError, setCodeError] = useState('');
+  const [existingCodes, setExistingCodes] = useState<string[]>([]);
+
+  // Fetch existing codes for validation
+  useEffect(() => {
+    const fetchExistingCodes = async () => {
+      try {
+        let query = supabase.from('gl_accounts').select('code');
+        if (associationId) {
+          query = query.eq('association_id', associationId);
+        } else {
+          query = query.is('association_id', null);
+        }
+        
+        if (accountToEdit) {
+          query = query.neq('id', accountToEdit.id);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        setExistingCodes(data.map(item => item.code));
+      } catch (error) {
+        console.error('Error fetching existing codes:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchExistingCodes();
+    }
+  }, [isOpen, associationId, accountToEdit]);
+
+  // For available categories
+  const { accounts } = useGLAccounts({
+    associationId: associationId || undefined,
+    includeMaster: true
+  });
+  
+  const categories = getFormattedAccountCategories(accounts);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    if (name === 'code') {
+      // Validate code format and uniqueness
+      const codeRegex = /^\d+$/;
+      if (!codeRegex.test(value)) {
+        setCodeError('Code must contain only numbers');
+      } else if (existingCodes.includes(value)) {
+        setCodeError('This code is already in use');
+      } else {
+        setCodeError('');
+      }
+    }
+    
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData({ ...formData, type: value });
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (codeError) {
+      toast.error('Please fix the errors before submitting');
+      return;
+    }
+    
     setIsSubmitting(true);
 
     try {
@@ -117,7 +178,31 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="code">Account Code</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="code">Account Code</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Account Code Guidelines</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Account codes typically follow a standardized structure:
+                      </p>
+                      <ul className="text-sm list-disc pl-4 space-y-1">
+                        <li>1000-1999: Assets</li>
+                        <li>2000-2999: Liabilities</li>
+                        <li>3000-3999: Equity</li>
+                        <li>4000-4999: Revenue</li>
+                        <li>5000-9999: Expenses</li>
+                      </ul>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <Input
                 id="code"
                 name="code"
@@ -125,14 +210,16 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
                 value={formData.code}
                 onChange={handleInputChange}
                 required
+                className={codeError ? "border-red-500" : ""}
               />
+              {codeError && <p className="text-sm text-red-500">{codeError}</p>}
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="type">Account Type</Label>
               <Select 
                 value={formData.type} 
-                onValueChange={handleSelectChange}
+                onValueChange={(value) => handleSelectChange('type', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select account type" />
@@ -162,6 +249,29 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={formData.category || ""}
+              onValueChange={(value) => handleSelectChange('category', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Category</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__new__" className="text-primary font-medium">
+                  + Add New Category
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
             <Label htmlFor="description">Description (Optional)</Label>
             <Textarea
               id="description"
@@ -170,17 +280,6 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
               value={formData.description}
               onChange={handleInputChange}
               rows={3}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category (Optional)</Label>
-            <Input
-              id="category"
-              name="category"
-              placeholder="e.g., Operating, Reserve"
-              value={formData.category}
-              onChange={handleInputChange}
             />
           </div>
           
@@ -195,7 +294,7 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
             </Button>
             <Button 
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!codeError}
             >
               {isSubmitting ? 'Saving...' : buttonText}
             </Button>
