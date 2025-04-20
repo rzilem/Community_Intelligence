@@ -33,7 +33,7 @@ const formSchema = z.object({
   property_type: z.string().optional(),
   total_units: z.coerce.number().optional(),
   website: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
-  description: z.string().optional(),
+  description: z.string().optional()
 });
 
 interface AssociationEditDialogProps {
@@ -60,9 +60,9 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
       zip: association.zip || '',
       phone: association.phone || '',
       property_type: association.property_type || '',
-      total_units: association.total_units || undefined,
+      total_units: association.total_units ?? undefined,
       website: association.website || '',
-      description: association.description || '',
+      description: association.description || ''
     },
   });
 
@@ -100,7 +100,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                   <FormItem>
                     <FormLabel>Property Type</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., HOA, Condo" {...field} />
+                      <Input placeholder="e.g., HOA, Condo, Apartment" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,7 +118,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                         type="number" 
                         placeholder="Number of units" 
                         {...field}
-                        value={field.value || ''}
+                        value={field.value ?? ''}
                         onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
                       />
                     </FormControl>
@@ -230,6 +230,20 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Description or notes" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
@@ -241,3 +255,4 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
 };
 
 export default AssociationEditDialog;
+

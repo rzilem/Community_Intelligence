@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Columns, GripVertical } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,7 +16,10 @@ interface ColumnSelectorProps {
   onReorder?: (sourceIndex: number, destinationIndex: number) => void;
   resetToDefaults?: () => void;
   className?: string;
+  storageKey?: string;
 }
+
+const getStorageKey = (key?: string) => key ?? "column_selector_default";
 
 const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   columns,
@@ -25,24 +27,37 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   onChange,
   onReorder,
   resetToDefaults,
-  className
+  className,
+  storageKey = "column_selector_default"
 }) => {
   const [open, setOpen] = useState(false);
   const [localColumns, setLocalColumns] = useState<string[]>(selectedColumns || []);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Update local state when selectedColumns prop changes
   useEffect(() => {
-    setLocalColumns(selectedColumns || []);
-  }, [selectedColumns]);
+    const saved = localStorage.getItem(getStorageKey(storageKey));
+    if (saved) {
+      try {
+        setLocalColumns(JSON.parse(saved));
+      } catch {
+        setLocalColumns(selectedColumns || []);
+      }
+    } else {
+      setLocalColumns(selectedColumns || []);
+    }
+  }, [selectedColumns, storageKey]);
+
+  const saveToStorage = (cols: string[]) => {
+    localStorage.setItem(getStorageKey(storageKey), JSON.stringify(cols));
+  };
 
   const handleColumnToggle = (columnId: string) => {
     const updatedColumns = localColumns.includes(columnId)
       ? localColumns.filter(id => id !== columnId)
       : [...localColumns, columnId];
-    
     if (updatedColumns.length > 0) {
       setLocalColumns(updatedColumns);
+      saveToStorage(updatedColumns);
       onChange(updatedColumns);
     }
   };
@@ -55,17 +70,15 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (draggedIndex === null || !onReorder) return;
-    
     if (draggedIndex !== index) {
-      // Create a copy of the local columns array to modify
       const newOrder = [...localColumns];
       const [removed] = newOrder.splice(draggedIndex, 1);
       newOrder.splice(index, 0, removed);
-      
-      // Update local state and call the reorder function
       setLocalColumns(newOrder);
+      saveToStorage(newOrder);
       onReorder(draggedIndex, index);
       setDraggedIndex(index);
+      onChange(newOrder);
     }
   };
 
@@ -73,17 +86,14 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     setDraggedIndex(null);
   };
 
-  // Filter only valid columns that exist in the columns array
   const validColumns = columns.filter(col => 
     localColumns.includes(col.id) || !localColumns.includes(col.id)
   );
 
-  // Get selected column objects
   const selectedColumnObjects = validColumns
     .filter(col => localColumns.includes(col.id))
     .sort((a, b) => localColumns.indexOf(a.id) - localColumns.indexOf(b.id));
 
-  // Get unselected column objects
   const unselectedColumnObjects = validColumns
     .filter(col => !localColumns.includes(col.id));
 
@@ -100,7 +110,6 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         <p className="text-xs text-muted-foreground mb-2">
           {onReorder ? "Drag to reorder columns" : "Select columns to display"}
         </p>
-        
         <div className="space-y-1 max-h-[300px] overflow-auto">
           {selectedColumnObjects.map((column, index) => (
             <div 
@@ -130,7 +139,6 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             </div>
           ))}
         </div>
-
         <div className="border-t pt-2 mt-2">
           <p className="text-xs text-muted-foreground mb-2">Available Columns</p>
           <div className="space-y-1 max-h-[150px] overflow-auto">
@@ -154,13 +162,12 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             ))}
           </div>
         </div>
-        
         {resetToDefaults && (
           <Button 
             variant="outline" 
             size="sm" 
             className="mt-4 w-full"
-            onClick={resetToDefaults}
+            onClick={() => { resetToDefaults(); localStorage.removeItem(getStorageKey(storageKey)); }}
           >
             Reset to Defaults
           </Button>
