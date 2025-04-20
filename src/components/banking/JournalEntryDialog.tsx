@@ -13,15 +13,7 @@ import { JournalEntry } from './JournalEntryTable';
 import { useGLAccounts, getFormattedGLAccountLabel } from '@/hooks/accounting/useGLAccounts';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { LoadingState } from '@/components/ui/loading-state';
-
-interface GLAccount {
-  id: string;
-  number: string;
-  name: string;
-  type: string;
-  balance: number;
-  code: string;
-}
+import { GLAccount } from '@/types/accounting-types';
 
 interface JournalEntryLineItem {
   accountId: string;
@@ -46,24 +38,29 @@ const formSchema = z.object({
   }, { message: 'Total debits must equal total credits' }),
 });
 
-interface JournalEntryDialogProps {
+export interface JournalEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   entry?: JournalEntry;
+  accounts?: GLAccount[]; // Add the accounts property to the interface
 }
 
 const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  entry
+  entry,
+  accounts: providedAccounts
 }) => {
   const { currentAssociation } = useAuth();
-  const { accounts, isLoading } = useGLAccounts({
+  const { accounts: fetchedAccounts, isLoading } = useGLAccounts({
     associationId: currentAssociation?.id,
     includeMaster: true
   });
+
+  // Use provided accounts if available, otherwise use fetched accounts
+  const accounts = providedAccounts || fetchedAccounts;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -97,7 +94,7 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
   const totalCredits = lineItems.reduce((sum, item) => sum + (Number(item.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
 
-  if (isLoading) {
+  if (isLoading && !providedAccounts) {
     return (
       <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
