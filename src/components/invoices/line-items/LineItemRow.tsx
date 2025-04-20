@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,12 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
   showPreview = true,
 }) => {
   const noGLAccounts = !glAccounts || glAccounts.length === 0;
+  
+  // Helper function to format GL account display
+  const formatGLAccountLabel = (account: GLAccount) => {
+    return `${account.code} - ${account.name}`;
+  };
+  
   return (
     <div className={cn(
       "relative space-y-4 p-4 rounded-lg border grid grid-cols-12 gap-4",
@@ -81,7 +88,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
                     <SelectItem value="none">Select GL Account</SelectItem>
                     {glAccounts.map(account => (
                       <SelectItem key={account.id} value={account.id}>
-                        {account.code} - {account.name}
+                        {formatGLAccountLabel(account)}
                       </SelectItem>
                     ))}
                   </>
