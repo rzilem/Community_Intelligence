@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BookOpen, Plus, Search, Download, Filter } from 'lucide-react';
@@ -21,18 +22,45 @@ const mockGLAccounts = ensureGLAccountsHaveIsActive([
   { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
 ]);
 
-function ensureGLAccountsHaveIsActive(accounts: any[]): GLAccount[] {
-  return accounts.map(account => ({
-    ...account,
-    is_active: account.is_active !== undefined ? account.is_active : true
-  }));
-}
+// Sample mock journal entries data
+const mockJournalEntriesData: JournalEntry[] = [
+  {
+    id: '1',
+    date: '2025-03-15',
+    reference: 'JE-2025-001',
+    description: 'Monthly utility expense',
+    amount: 1500,
+    status: 'posted',
+    createdBy: 'System Admin',
+    createdAt: '2025-03-15T08:30:00Z'
+  },
+  {
+    id: '2',
+    date: '2025-03-16',
+    reference: 'JE-2025-002',
+    description: 'Assessment revenue recognition',
+    amount: 12000,
+    status: 'posted',
+    createdBy: 'John Doe',
+    createdAt: '2025-03-16T09:15:00Z'
+  },
+  {
+    id: '3',
+    date: '2025-03-20',
+    reference: 'JE-2025-003',
+    description: 'Office supplies expense',
+    amount: 350,
+    status: 'draft',
+    createdBy: 'Jane Smith',
+    createdAt: '2025-03-20T14:45:00Z'
+  }
+];
 
 const JournalEntries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntriesData);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | undefined>();
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
   
