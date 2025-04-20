@@ -11,12 +11,12 @@ import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
 
 // Updated mock GL accounts to match the GLAccount interface
 const mockGLAccounts = [
-  { id: '1', number: '1000', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
-  { id: '2', number: '1100', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
-  { id: '3', number: '2000', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
-  { id: '4', number: '3000', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
-  { id: '5', number: '4000', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
-  { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
+  { id: '1', number: '1000', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000, is_active: true },
+  { id: '2', number: '1100', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000, is_active: true },
+  { id: '3', number: '2000', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000, is_active: true },
+  { id: '4', number: '3000', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000, is_active: true },
+  { id: '5', number: '4000', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000, is_active: true },
+  { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000, is_active: true },
 ];
 
 // Mock journal entries
@@ -72,6 +72,13 @@ const mockJournalEntries: JournalEntry[] = [
     createdAt: '2025-04-09T15:10:00Z'
   }
 ];
+
+function ensureGLAccountsHaveIsActive(accounts: any[]): GLAccount[] {
+  return accounts.map(account => ({
+    ...account,
+    is_active: account.is_active !== undefined ? account.is_active : true
+  }));
+}
 
 const JournalEntries = () => {
   const [searchTerm, setSearchTerm] = useState('');

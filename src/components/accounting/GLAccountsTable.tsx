@@ -101,6 +101,11 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   };
 
   const maxBalance = Math.max(...accounts.map(account => account.balance || 0));
+  
+  // Fixed type issue: Now correctly handles the 'all'|'active'|'inactive' type
+  const handleActiveFilterChange = (value: string) => {
+    setActiveFilter(value as 'all' | 'active' | 'inactive');
+  };
 
   return (
     <>
@@ -129,7 +134,7 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
             </SelectContent>
           </Select>
           
-          <Select value={activeFilter} onValueChange={setActiveFilter}>
+          <Select value={activeFilter} onValueChange={handleActiveFilterChange}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Active Status" />
             </SelectTrigger>
@@ -233,7 +238,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
         accounts={sortedAccounts}
         searchTerm={searchTerm}
         onEdit={onEdit}
-        // Provide prop for state update for activation if needed
       />
 
       <GLAccountDialog 
