@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AssociationTable, { associationTableColumns } from './AssociationTable';
 import { Association } from '@/types/association-types';
@@ -30,18 +30,6 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
   selectedAssociations = [],
   onViewProfile
 }) => {
-  // Restore saved column preferences on initial render
-  useEffect(() => {
-    // This effect just ensures we have initialized the columns
-    const savedColumns = localStorage.getItem('associationTableColumns');
-    if (!savedColumns) {
-      // If no saved preferences, set defaults
-      localStorage.setItem('associationTableColumns', JSON.stringify(
-        associationTableColumns.filter(col => ['name', 'property_type', 'location', 'contact_email', 'status', 'actions'].includes(col.id)).map(col => col.id)
-      ));
-    }
-  }, []);
-
   return (
     <Tabs defaultValue="active" className="w-full">
       <TabsList className="mb-4 w-full sm:w-auto">
