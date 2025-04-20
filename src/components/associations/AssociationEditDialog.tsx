@@ -22,9 +22,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Association } from '@/types/association-types';
 
+// Add all relevant association fields for editing
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  contact_email: z.string().email({ message: 'Invalid email address.' }).optional().or(z.literal('')),
+  contact_email: z.string().email({ message: 'Invalid email address.' }).or(z.literal('')).optional(),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -32,8 +33,12 @@ const formSchema = z.object({
   phone: z.string().optional(),
   property_type: z.string().optional(),
   total_units: z.coerce.number().optional(),
-  website: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
-  description: z.string().optional()
+  website: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
+  description: z.string().optional(),
+  insurance_expiration: z.string().optional(),
+  fire_inspection_due: z.string().optional(),
+  founded_date: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'pending']).optional()
 });
 
 interface AssociationEditDialogProps {
@@ -42,6 +47,12 @@ interface AssociationEditDialogProps {
   association: Association;
   onSave: (data: Partial<Association>) => void;
 }
+
+const statuses = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'pending', label: 'Pending' }
+];
 
 const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
   open,
@@ -62,7 +73,11 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
       property_type: association.property_type || '',
       total_units: association.total_units ?? undefined,
       website: association.website || '',
-      description: association.description || ''
+      description: association.description || '',
+      insurance_expiration: association.insurance_expiration ?? '',
+      fire_inspection_due: association.fire_inspection_due ?? '',
+      founded_date: association.founded_date ?? '',
+      status: association.status ?? undefined
     },
   });
 
@@ -72,12 +87,13 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[575px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Association</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Name */}
             <FormField
               control={form.control}
               name="name"
@@ -91,8 +107,8 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-2 gap-4">
+              {/* Property Type */}
               <FormField
                 control={form.control}
                 name="property_type"
@@ -106,7 +122,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                   </FormItem>
                 )}
               />
-
+              {/* Total Units */}
               <FormField
                 control={form.control}
                 name="total_units"
@@ -119,7 +135,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                         placeholder="Number of units" 
                         {...field}
                         value={field.value ?? ''}
-                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                        onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
                       />
                     </FormControl>
                     <FormMessage />
@@ -127,7 +143,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 )}
               />
             </div>
-
+            {/* Address */}
             <FormField
               control={form.control}
               name="address"
@@ -141,8 +157,8 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 </FormItem>
               )}
             />
-
             <div className="grid grid-cols-3 gap-4">
+              {/* City */}
               <FormField
                 control={form.control}
                 name="city"
@@ -156,7 +172,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                   </FormItem>
                 )}
               />
-
+              {/* State */}
               <FormField
                 control={form.control}
                 name="state"
@@ -170,7 +186,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                   </FormItem>
                 )}
               />
-
+              {/* ZIP */}
               <FormField
                 control={form.control}
                 name="zip"
@@ -185,8 +201,8 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 )}
               />
             </div>
-
             <div className="grid grid-cols-2 gap-4">
+              {/* Contact Email */}
               <FormField
                 control={form.control}
                 name="contact_email"
@@ -200,7 +216,7 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                   </FormItem>
                 )}
               />
-
+              {/* Phone */}
               <FormField
                 control={form.control}
                 name="phone"
@@ -215,21 +231,101 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 )}
               />
             </div>
-
+            {/* Website and Status */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Website */}
+              <FormField
+                control={form.control}
+                name="website"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Website URL" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {/* Status */}
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                      <select
+                        className="w-full border rounded px-2 py-1"
+                        {...field}
+                        value={field.value ?? ''}
+                        onChange={e => field.onChange(e.target.value || undefined)}
+                      >
+                        <option value="">Select status</option>
+                        {statuses.map(s => (
+                          <option key={s.value} value={s.value}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* Insurance Expiration and Fire Inspection Due */}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="insurance_expiration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Insurance Expiration</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="YYYY-MM-DD or custom"
+                        {...field}
+                        type="text"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="fire_inspection_due"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fire Inspection Due</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="YYYY-MM-DD or custom"
+                        {...field}
+                        type="text"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            {/* Founded Date */}
             <FormField
               control={form.control}
-              name="website"
+              name="founded_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Website</FormLabel>
+                  <FormLabel>Founded Date</FormLabel>
                   <FormControl>
-                    <Input placeholder="Website URL" {...field} />
+                    <Input placeholder="YYYY-MM-DD or year" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
+            {/* Description */}
             <FormField
               control={form.control}
               name="description"
@@ -243,7 +339,6 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
                 </FormItem>
               )}
             />
-
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
@@ -255,4 +350,3 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
 };
 
 export default AssociationEditDialog;
-

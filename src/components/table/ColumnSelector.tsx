@@ -38,27 +38,33 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     const saved = localStorage.getItem(getStorageKey(storageKey));
     if (saved) {
       try {
-        setLocalColumns(JSON.parse(saved));
+        const parsed: string[] = JSON.parse(saved);
+        const valid = parsed.filter(id => columns.find(c => c.id === id));
+        setLocalColumns(valid);
       } catch {
         setLocalColumns(selectedColumns || []);
       }
     } else {
       setLocalColumns(selectedColumns || []);
     }
-  }, [selectedColumns, storageKey]);
+  }, [selectedColumns, storageKey, columns]);
 
-  const saveToStorage = (cols: string[]) => {
-    localStorage.setItem(getStorageKey(storageKey), JSON.stringify(cols));
-  };
+  useEffect(() => {
+    if (localColumns && localColumns.length > 0) {
+      localStorage.setItem(getStorageKey(storageKey), JSON.stringify(localColumns));
+      onChange(localColumns);
+    }
+  }, [localColumns]);
 
   const handleColumnToggle = (columnId: string) => {
-    const updatedColumns = localColumns.includes(columnId)
-      ? localColumns.filter(id => id !== columnId)
-      : [...localColumns, columnId];
+    let updatedColumns;
+    if (localColumns.includes(columnId)) {
+      updatedColumns = localColumns.filter(id => id !== columnId);
+    } else {
+      updatedColumns = [...localColumns, columnId];
+    }
     if (updatedColumns.length > 0) {
       setLocalColumns(updatedColumns);
-      saveToStorage(updatedColumns);
-      onChange(updatedColumns);
     }
   };
 
@@ -75,10 +81,8 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       const [removed] = newOrder.splice(draggedIndex, 1);
       newOrder.splice(index, 0, removed);
       setLocalColumns(newOrder);
-      saveToStorage(newOrder);
-      onReorder(draggedIndex, index);
+      if (onReorder) onReorder(draggedIndex, index);
       setDraggedIndex(index);
-      onChange(newOrder);
     }
   };
 
@@ -86,9 +90,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     setDraggedIndex(null);
   };
 
-  const validColumns = columns.filter(col => 
-    localColumns.includes(col.id) || !localColumns.includes(col.id)
-  );
+  const validColumns = columns.filter(col => true);
 
   const selectedColumnObjects = validColumns
     .filter(col => localColumns.includes(col.id))
@@ -114,9 +116,9 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           {selectedColumnObjects.map((column, index) => (
             <div 
               key={column.id}
-              draggable={onReorder !== undefined}
-              onDragStart={(e) => handleDragStart(e, index)}
-              onDragOver={(e) => handleDragOver(e, index)}
+              draggable={!!onReorder}
+              onDragStart={e => handleDragStart(e, index)}
+              onDragOver={e => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
               className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
             >
