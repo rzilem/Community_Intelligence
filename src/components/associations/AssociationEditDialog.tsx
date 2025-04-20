@@ -12,15 +12,14 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Association } from '@/types/association-types';
+
+import AssociationFormSectionAddress from './edit/AssociationFormSectionAddress';
+import AssociationFormSectionContact from './edit/AssociationFormSectionContact';
+import AssociationFormSectionPropertyInfo from './edit/AssociationFormSectionPropertyInfo';
+import AssociationFormSectionDatesDescription from './edit/AssociationFormSectionDatesDescription';
 
 // Add all relevant association fields for editing
 const formSchema = z.object({
@@ -41,18 +40,18 @@ const formSchema = z.object({
   status: z.enum(['active', 'inactive', 'pending']).optional()
 });
 
+export const statuses = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+  { value: 'pending', label: 'Pending' }
+];
+
 interface AssociationEditDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   association: Association;
   onSave: (data: Partial<Association>) => void;
 }
-
-const statuses = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'pending', label: 'Pending' }
-];
 
 const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
   open,
@@ -94,251 +93,22 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Name */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Association Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter association name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              {/* Property Type */}
-              <FormField
-                control={form.control}
-                name="property_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Property Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., HOA, Condo, Apartment" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Total Units */}
-              <FormField
-                control={form.control}
-                name="total_units"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Units</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Number of units" 
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div>
+              <label className="block text-sm font-medium mb-1">Association Name</label>
+              <input
+                className="input input-bordered w-full"
+                placeholder="Enter association name"
+                {...form.register("name")}
               />
             </div>
-            {/* Address */}
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter street address" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-3 gap-4">
-              {/* City */}
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>City</FormLabel>
-                    <FormControl>
-                      <Input placeholder="City" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* State */}
-              <FormField
-                control={form.control}
-                name="state"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>State</FormLabel>
-                    <FormControl>
-                      <Input placeholder="State" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* ZIP */}
-              <FormField
-                control={form.control}
-                name="zip"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ZIP Code</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ZIP Code" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Contact Email */}
-              <FormField
-                control={form.control}
-                name="contact_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Contact email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Phone */}
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Phone number" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            {/* Website and Status */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Website */}
-              <FormField
-                control={form.control}
-                name="website"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Website URL" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* Status */}
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                      <select
-                        className="w-full border rounded px-2 py-1"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={e => field.onChange(e.target.value || undefined)}
-                      >
-                        <option value="">Select status</option>
-                        {statuses.map(s => (
-                          <option key={s.value} value={s.value}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            {/* Insurance Expiration and Fire Inspection Due */}
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="insurance_expiration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Insurance Expiration</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="YYYY-MM-DD or custom"
-                        {...field}
-                        type="text"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="fire_inspection_due"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fire Inspection Due</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="YYYY-MM-DD or custom"
-                        {...field}
-                        type="text"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            {/* Founded Date */}
-            <FormField
-              control={form.control}
-              name="founded_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Founded Date</FormLabel>
-                  <FormControl>
-                    <Input placeholder="YYYY-MM-DD or year" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Description or notes" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Address Section */}
+            <AssociationFormSectionAddress control={form.control} />
+            {/* Contact Section */}
+            <AssociationFormSectionContact control={form.control} />
+            {/* Property Info Section */}
+            <AssociationFormSectionPropertyInfo control={form.control} />
+            {/* Dates & Description Section */}
+            <AssociationFormSectionDatesDescription control={form.control} />
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>
