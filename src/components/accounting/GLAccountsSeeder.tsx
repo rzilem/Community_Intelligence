@@ -1,39 +1,19 @@
 
-import React, { useState } from "react";
+// GLAccountsSeeder is no longer needed for Master Chart as all global GLs are now loaded from Supabase.
+// You can use this component for custom seeds or leave for association-level seeding if desired.
+
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { glAccountsSeedData } from "@/utils/glAccountsSeedData";
 
-// OPTIONAL: association_id can be set to null for global GLs, or to your current association.
-const association_id = null;
-
+// Optional: Redirect user to Chart of Accounts page if they try to use this
 const GLAccountsSeeder: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const handleSeed = async () => {
-    setLoading(true);
-    try {
-      const seed = glAccountsSeedData.map(acc => ({
-        code: acc.code,
-        name: acc.name,
-        type: acc.type,
-        association_id,
-        balance: 0,
-        description: acc.name,
-      }));
-      const { data, error } = await supabase.from("gl_accounts").insert(seed);
-      if (error) throw error;
-      toast.success("GL Accounts Seeded!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to seed GL accounts");
-    }
-    setLoading(false);
-  };
-
   return (
-    <Button onClick={handleSeed} disabled={loading}>
-      {loading ? "Seeding..." : "Seed GL Accounts"}
+    <Button
+      onClick={() => toast.info("Master Chart of Accounts is now always loaded from the database. Seeder not needed!")}
+      disabled
+    >
+      Seeder Not Needed
     </Button>
   );
 };

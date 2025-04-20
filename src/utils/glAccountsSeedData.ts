@@ -1,4 +1,3 @@
-
 export const glAccountsSeedData = [
   { code: '5939', name: 'Access Cards', type: 'Expense' },
   { code: '4506', name: 'Access Devices', type: 'Income' },
