@@ -7,20 +7,10 @@ import {
   Calendar, 
   Users, 
   File, 
-  WrenchIcon, 
-  PiggyBank, 
-  User, 
-  BarChart, 
-  AlertTriangle, 
-  CheckSquare, 
-  Mail, 
-  BookOpen, 
-  Video, 
-  Sparkles, 
-  DollarSign, 
-  LayoutDashboard, 
   Building,
-  Activity
+  Activity,
+  BookOpen,
+  LayoutDashboard
 } from 'lucide-react';
 
 interface NavItem {
@@ -48,14 +38,10 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
   const boardNavItems: NavItem[] = [
     { title: 'Dashboard', path: '/portal/board/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
     { title: 'Community Pulse', path: '/portal/board/community-pulse', icon: <Activity className="h-5 w-5" /> },
-    { title: 'Homeowners', path: '/portal/board/homeowners', icon: <User className="h-5 w-5" /> },
+    { title: 'Homeowners', path: '/portal/board/homeowners', icon: <Users className="h-5 w-5" /> },
     { title: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
-    { title: 'Board Tasks', path: '/portal/board/tasks', icon: <CheckSquare className="h-5 w-5" /> },
+    { title: 'Knowledge Base', path: '/portal/board/knowledge-base', icon: <BookOpen className="h-5 w-5" /> },
     { title: 'Email Community', path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
-    { title: 'Board Portal Training', path: '/portal/board/training', icon: <BookOpen className="h-5 w-5" /> },
-    { title: 'Board Member Video Education', path: '/portal/board/video-education', icon: <Video className="h-5 w-5" /> },
-    { title: 'Board Member AI Assistant', path: '/portal/board/ai-assistant', icon: <Sparkles className="h-5 w-5" /> },
-    { title: 'Board Reimbursement', path: '/portal/board/reimbursement', icon: <DollarSign className="h-5 w-5" /> },
   ];
 
   const navItems = portalType === 'homeowner' ? homeownerNavItems : boardNavItems;

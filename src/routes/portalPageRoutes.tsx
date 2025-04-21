@@ -26,6 +26,7 @@ import BoardReimbursementPage from '@/pages/portal/board/ReimbursementPage';
 import BoardDashboardPage from '@/pages/portal/board/MemberDashboardPage';
 import OperationsPage from '@/pages/portal/board/OperationsPage';
 import CommunityPulsePage from '@/pages/portal/board/CommunityPulsePage';
+import KnowledgeBasePage from '@/pages/portal/board/KnowledgeBasePage';
 
 // Homeowner Portal Routes
 export const homeownerPortalRoutes = [
@@ -178,47 +179,11 @@ export const boardPortalRoutes = [
     }
   />,
   <Route 
-    key="board-training"
-    path="/portal/board/training"
+    key="board-knowledge-base"
+    path="/portal/board/knowledge-base"
     element={
       <RequireAuth menuId="board-portal">
-        <BoardTrainingPage />
-      </RequireAuth>
-    }
-  />,
-  <Route 
-    key="board-video-education"
-    path="/portal/board/video-education"
-    element={
-      <RequireAuth menuId="board-portal">
-        <BoardVideoEducationPage />
-      </RequireAuth>
-    }
-  />,
-  <Route 
-    key="board-ai-assistant"
-    path="/portal/board/ai-assistant"
-    element={
-      <RequireAuth menuId="board-portal">
-        <BoardAIAssistantPage />
-      </RequireAuth>
-    }
-  />,
-  <Route 
-    key="board-reimbursement"
-    path="/portal/board/reimbursement"
-    element={
-      <RequireAuth menuId="board-portal">
-        <BoardReimbursementPage />
-      </RequireAuth>
-    }
-  />,
-  <Route 
-    key="board-member-dashboard"
-    path="/portal/board/dashboard"
-    element={
-      <RequireAuth menuId="board-portal">
-        <BoardDashboardPage />
+        <KnowledgeBasePage />
       </RequireAuth>
     }
   />,
