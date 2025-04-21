@@ -1,28 +1,52 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { WidgetType } from '@/types/portal-types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DashboardWidgetProps {
   title: string;
   widgetType: WidgetType;
   isLoading?: boolean;
+  onSave?: () => void;
+  isSaving?: boolean;
   children: React.ReactNode;
+  className?: string;
 }
 
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   title,
   widgetType,
   isLoading = false,
-  children
+  onSave,
+  isSaving = false,
+  children,
+  className
 }) => {
   return (
-    <Card className="shadow-sm h-full">
+    <Card className={cn("shadow-sm h-full", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>{title}</span>
-          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <div className="flex items-center gap-2">
+            {onSave && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onSave}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>

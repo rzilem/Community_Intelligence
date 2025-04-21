@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Route } from 'react-router-dom';
 import HomeownerDashboard from '@/pages/portal/HomeownerDashboard';
@@ -6,8 +5,18 @@ import BoardDashboard from '@/pages/portal/BoardDashboard';
 import VendorDashboard from '@/pages/portal/VendorDashboard';
 import PortalManagement from '@/pages/system/PortalManagement';
 import RequireAuth from '@/components/auth/RequireAuth';
+import PortalSelection from '@/pages/portal/PortalSelection';
 
 export const portalRoutes = [
+  <Route 
+    key="portal-selection"
+    path="/portal"
+    element={
+      <RequireAuth>
+        <PortalSelection />
+      </RequireAuth>
+    }
+  />,
   <Route 
     key="homeowner-portal"
     path="/portal/homeowner"
