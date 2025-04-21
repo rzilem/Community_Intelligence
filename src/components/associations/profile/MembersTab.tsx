@@ -6,13 +6,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Plus, Pencil, Trash, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash, AlertCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { AssociationMember, associationMemberService } from '@/services/association-member-service';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { ResidentWithProfile } from '@/types/resident-types';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
 interface MembersTabProps {
   associationId: string;
 }
+
+// Member types
+type MemberType = 'homeowner' | 'developer' | 'builder';
 
 const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   const [activeTab, setActiveTab] = useState('board');
@@ -20,12 +28,44 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
+  const [homeowners, setHomeowners] = useState<ResidentWithProfile[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredHomeowners, setFilteredHomeowners] = useState<ResidentWithProfile[]>([]);
   
   const [selectedUserId, setSelectedUserId] = useState('');
   const [roleType, setRoleType] = useState<'board' | 'committee'>('board');
   const [roleName, setRoleName] = useState('');
   const [editingMember, setEditingMember] = useState<AssociationMember | null>(null);
+  const [memberType, setMemberType] = useState<MemberType>('homeowner');
+  
+  // For manual entry (developer/builder)
+  const [manualFirstName, setManualFirstName] = useState('');
+  const [manualLastName, setManualLastName] = useState('');
+  const [manualEmail, setManualEmail] = useState('');
+
+  // Fetch homeowners for the association
+  const { data: associationHomeowners = [], isLoading: isLoadingHomeowners } = useSupabaseQuery<ResidentWithProfile[]>(
+    'residents',
+    {
+      select: `
+        *,
+        user:user_id (
+          profile:profiles (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone_number
+          )
+        )
+      `,
+      filter: [
+        { column: 'property_id', operator: 'in', subquery: `select id from properties where association_id = '${associationId}'` },
+        { column: 'resident_type', operator: 'eq', value: 'owner' }
+      ]
+    },
+    [associationId]
+  );
 
   const boardRoles = [
     'President',
@@ -61,12 +101,40 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   }, [associationId]);
 
   useEffect(() => {
+    if (associationHomeowners.length > 0) {
+      setHomeowners(associationHomeowners);
+    }
+  }, [associationHomeowners]);
+
+  useEffect(() => {
     if (roleType === 'board') {
       setRoleName('');
     } else {
       setRoleName('');
     }
   }, [roleType]);
+
+  // Filter homeowners based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredHomeowners(homeowners);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = homeowners.filter(homeowner => {
+      const firstName = homeowner.user?.profile?.first_name?.toLowerCase() || '';
+      const lastName = homeowner.user?.profile?.last_name?.toLowerCase() || '';
+      const email = homeowner.user?.profile?.email?.toLowerCase() || '';
+      
+      return firstName.includes(query) || 
+             lastName.includes(query) || 
+             email.includes(query) ||
+             `${firstName} ${lastName}`.includes(query);
+    });
+    
+    setFilteredHomeowners(filtered);
+  }, [searchQuery, homeowners]);
 
   const fetchMembers = async () => {
     try {
@@ -85,7 +153,6 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     try {
       const data = await associationMemberService.getAssociationUsers(associationId);
       setUsers(data);
-      setFilteredUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load association users');
@@ -97,6 +164,11 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     setSelectedUserId('');
     setRoleType('board');
     setRoleName('');
+    setMemberType('homeowner');
+    setManualFirstName('');
+    setManualLastName('');
+    setManualEmail('');
+    setSearchQuery('');
     setIsDialogOpen(true);
   };
 
@@ -105,6 +177,7 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     setSelectedUserId(member.user_id);
     setRoleType(member.role_type);
     setRoleName(member.role_name);
+    setMemberType('homeowner'); // Default, as we don't store this information currently
     setIsDialogOpen(true);
   };
 
@@ -127,13 +200,51 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   };
 
   const handleSaveMember = async () => {
-    if (!selectedUserId || !roleName) {
+    // Validate based on member type
+    if (memberType === 'homeowner' && !selectedUserId) {
+      toast.error('Please select a homeowner');
+      return;
+    }
+
+    if ((memberType === 'developer' || memberType === 'builder') && 
+        (!manualFirstName || !manualLastName || !manualEmail)) {
       toast.error('Please fill out all required fields');
+      return;
+    }
+
+    if (!roleName) {
+      toast.error('Please select a role');
       return;
     }
 
     try {
       setIsLoading(true);
+      
+      let userId = selectedUserId;
+      
+      // For developer/builder, we need to create a new user if they don't exist
+      if (memberType !== 'homeowner') {
+        // Check if user with this email already exists
+        const existingUserData = await associationMemberService.findUserByEmail(manualEmail);
+        
+        if (existingUserData) {
+          userId = existingUserData.id;
+        } else {
+          // Create a new user for the developer/builder
+          const newUserData = await associationMemberService.createExternalUser({
+            first_name: manualFirstName,
+            last_name: manualLastName,
+            email: manualEmail,
+            user_type: memberType
+          });
+          
+          if (newUserData) {
+            userId = newUserData.id;
+          } else {
+            throw new Error('Failed to create user');
+          }
+        }
+      }
       
       if (editingMember) {
         // Update existing member
@@ -145,10 +256,11 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
       } else {
         // Add new member
         await associationMemberService.addAssociationMember({
-          user_id: selectedUserId,
+          user_id: userId,
           association_id: associationId,
           role_type: roleType,
-          role_name: roleName
+          role_name: roleName,
+          member_type: memberType // Store the member type for future reference
         });
         toast.success('Member added successfully');
       }
@@ -161,6 +273,11 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectHomeowner = (homeownerId: string) => {
+    setSelectedUserId(homeownerId);
+    setSearchQuery(''); // Clear search after selection
   };
 
   // Filter members based on active tab
@@ -288,21 +405,110 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           
           <div className="space-y-4 py-4">
             {!editingMember && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">User</label>
-                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users.map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.first_name} {user.last_name} ({user.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Member Type</label>
+                  <RadioGroup 
+                    value={memberType} 
+                    onValueChange={(value: MemberType) => setMemberType(value)}
+                    className="flex space-x-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="homeowner" id="homeowner" />
+                      <Label htmlFor="homeowner">Homeowner</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="developer" id="developer" />
+                      <Label htmlFor="developer">Developer</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="builder" id="builder" />
+                      <Label htmlFor="builder">Builder</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {memberType === 'homeowner' ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Homeowner</label>
+                    <div className="relative">
+                      <Input
+                        placeholder="Search homeowners by name or email"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full"
+                      />
+                      <Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    </div>
+                    
+                    {searchQuery && (
+                      <div className="mt-1 border rounded-md max-h-40 overflow-y-auto">
+                        {isLoadingHomeowners ? (
+                          <div className="p-2 text-center text-sm text-muted-foreground">Loading homeowners...</div>
+                        ) : filteredHomeowners.length === 0 ? (
+                          <div className="p-2 text-center text-sm text-muted-foreground">No homeowners found</div>
+                        ) : (
+                          <div className="py-1">
+                            {filteredHomeowners.map(homeowner => (
+                              <div 
+                                key={homeowner.user_id} 
+                                className={`px-3 py-2 cursor-pointer hover:bg-accent ${selectedUserId === homeowner.user_id ? 'bg-accent' : ''}`}
+                                onClick={() => handleSelectHomeowner(homeowner.user_id || '')}
+                              >
+                                {homeowner.user?.profile?.first_name || ''} {homeowner.user?.profile?.last_name || ''} 
+                                {homeowner.user?.profile?.email ? ` (${homeowner.user.profile.email})` : ''}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {selectedUserId && (
+                      <div className="mt-2 p-2 border rounded-md bg-muted">
+                        <p className="text-sm font-medium">Selected Homeowner:</p>
+                        <p className="text-sm">
+                          {homeowners.find(h => h.user_id === selectedUserId)?.user?.profile?.first_name || ''} 
+                          {' '}
+                          {homeowners.find(h => h.user_id === selectedUserId)?.user?.profile?.last_name || ''}
+                          {' '}
+                          ({homeowners.find(h => h.user_id === selectedUserId)?.user?.profile?.email || ''})
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">First Name</label>
+                        <Input 
+                          value={manualFirstName} 
+                          onChange={(e) => setManualFirstName(e.target.value)} 
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Last Name</label>
+                        <Input 
+                          value={manualLastName} 
+                          onChange={(e) => setManualLastName(e.target.value)} 
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Email</label>
+                      <Input 
+                        value={manualEmail} 
+                        onChange={(e) => setManualEmail(e.target.value)} 
+                        placeholder="Enter email address"
+                        type="email"
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
             
             <div className="space-y-2">
@@ -349,7 +555,16 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveMember} disabled={!selectedUserId || !roleName || isLoading}>
+            <Button 
+              onClick={handleSaveMember} 
+              disabled={
+                (memberType === 'homeowner' && !selectedUserId) || 
+                ((memberType === 'developer' || memberType === 'builder') && 
+                  (!manualFirstName || !manualLastName || !manualEmail)) ||
+                !roleName || 
+                isLoading
+              }
+            >
               {isLoading 
                 ? 'Saving...' 
                 : editingMember 

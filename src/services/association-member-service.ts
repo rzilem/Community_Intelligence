@@ -9,11 +9,19 @@ export interface AssociationMember {
   association_id: string;
   role_type: 'board' | 'committee';
   role_name: string;
+  member_type?: 'homeowner' | 'developer' | 'builder';
   first_name?: string;
   last_name?: string;
   email?: string;
   created_at: string;
   updated_at: string;
+}
+
+interface ExternalUserData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  user_type: 'developer' | 'builder';
 }
 
 export const associationMemberService = {
@@ -51,6 +59,7 @@ export const associationMemberService = {
             association_id: member.association_id,
             role_type: member.role_type,
             role_name: member.role_name,
+            member_type: member.member_type || 'homeowner',
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
@@ -73,6 +82,7 @@ export const associationMemberService = {
     association_id: string;
     role_type: 'board' | 'committee';
     role_name: string;
+    member_type?: 'homeowner' | 'developer' | 'builder';
   }) => {
     try {
       // First, insert the member role
@@ -106,6 +116,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
+        member_type: data.member_type || 'homeowner',
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -155,6 +166,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
+        member_type: data.member_type || 'homeowner',
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -209,5 +221,74 @@ export const associationMemberService = {
       email: user.profiles?.email,
       role: user.role
     }));
+  },
+
+  // Find user by email (for external users)
+  findUserByEmail: async (email: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No record found, return null
+          return null;
+        }
+        console.error('Error finding user by email:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in findUserByEmail:', error);
+      throw error;
+    }
+  },
+
+  // Create an external user (developer/builder)
+  createExternalUser: async (userData: ExternalUserData) => {
+    try {
+      // First, create a new auth user (this would typically be done by auth service)
+      // For now, we'll simulate by creating a profile directly
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          email: userData.email,
+          user_type: userData.user_type
+        })
+        .select()
+        .single();
+
+      if (profileError) {
+        console.error('Error creating external user profile:', profileError);
+        throw profileError;
+      }
+
+      // Now add the user to the association
+      const { data: associationUserData, error: assocUserError } = await supabase
+        .from('association_users')
+        .insert({
+          user_id: profileData.id,
+          association_id: associationId,
+          role: userData.user_type
+        })
+        .select()
+        .single();
+
+      if (assocUserError) {
+        console.error('Error adding user to association:', assocUserError);
+        // Don't throw here, we'll still return the profile
+      }
+
+      return profileData;
+    } catch (error) {
+      console.error('Error in createExternalUser:', error);
+      throw error;
+    }
   }
 };
