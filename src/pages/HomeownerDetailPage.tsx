@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
@@ -111,7 +112,7 @@ const HomeownerDetailPage: React.FC = () => {
               name={homeowner?.name}
               status={homeowner?.status}
               tags={homeowner?.tags || []}
-              violations={getViolationsCount()}
+              violations={violationsCount} // Now this properly accepts a number
               avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}
@@ -132,7 +133,7 @@ const HomeownerDetailPage: React.FC = () => {
                 property={homeowner?.property}
                 unit={homeowner?.unit}
                 balance={homeowner?.balance}
-                lastContact={lastContactValue}
+                lastContact={lastContactValue} // This is a string, which is correct
               />
             )}
           </div>
