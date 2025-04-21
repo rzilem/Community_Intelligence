@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,7 +59,7 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
         )
       `,
       filter: [
-        { column: 'property_id', operator: 'in', subquery: `select id from properties where association_id = '${associationId}'` },
+        { column: 'property_id', operator: 'eq', value: null },
         { column: 'resident_type', operator: 'eq', value: 'owner' }
       ]
     },
@@ -177,7 +176,7 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     setSelectedUserId(member.user_id);
     setRoleType(member.role_type);
     setRoleName(member.role_name);
-    setMemberType('homeowner'); // Default, as we don't store this information currently
+    setMemberType(member.member_type || 'homeowner');
     setIsDialogOpen(true);
   };
 
@@ -200,7 +199,6 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   };
 
   const handleSaveMember = async () => {
-    // Validate based on member type
     if (memberType === 'homeowner' && !selectedUserId) {
       toast.error('Please select a homeowner');
       return;
@@ -222,15 +220,12 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
       
       let userId = selectedUserId;
       
-      // For developer/builder, we need to create a new user if they don't exist
       if (memberType !== 'homeowner') {
-        // Check if user with this email already exists
         const existingUserData = await associationMemberService.findUserByEmail(manualEmail);
         
         if (existingUserData) {
           userId = existingUserData.id;
         } else {
-          // Create a new user for the developer/builder
           const newUserData = await associationMemberService.createExternalUser({
             first_name: manualFirstName,
             last_name: manualLastName,
@@ -247,20 +242,18 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
       }
       
       if (editingMember) {
-        // Update existing member
         await associationMemberService.updateAssociationMember(editingMember.id, {
           role_type: roleType,
           role_name: roleName
         });
         toast.success('Member updated successfully');
       } else {
-        // Add new member
         await associationMemberService.addAssociationMember({
           user_id: userId,
           association_id: associationId,
           role_type: roleType,
           role_name: roleName,
-          member_type: memberType // Store the member type for future reference
+          member_type: memberType
         });
         toast.success('Member added successfully');
       }
@@ -277,10 +270,9 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
 
   const handleSelectHomeowner = (homeownerId: string) => {
     setSelectedUserId(homeownerId);
-    setSearchQuery(''); // Clear search after selection
+    setSearchQuery('');
   };
 
-  // Filter members based on active tab
   const filteredMembers = members.filter(member => member.role_type === activeTab);
 
   return (

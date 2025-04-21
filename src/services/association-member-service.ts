@@ -1,8 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AssociationMemberRole } from '@/types/communication-types';
+import { AssociationMemberRole, ExternalMember } from '@/types/member-types';
 
+// Using the imported types from member-types.ts
 export interface AssociationMember {
   id: string;
   user_id: string;
@@ -15,13 +16,6 @@ export interface AssociationMember {
   email?: string;
   created_at: string;
   updated_at: string;
-}
-
-interface ExternalUserData {
-  first_name: string;
-  last_name: string;
-  email: string;
-  user_type: 'developer' | 'builder';
 }
 
 export const associationMemberService = {
@@ -42,7 +36,7 @@ export const associationMemberService = {
 
       // For each member, fetch their profile information
       const membersWithProfiles = await Promise.all(
-        data.map(async (member) => {
+        data.map(async (member: AssociationMemberRole) => {
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('first_name, last_name, email')
@@ -59,7 +53,7 @@ export const associationMemberService = {
             association_id: member.association_id,
             role_type: member.role_type,
             role_name: member.role_name,
-            member_type: member.member_type || 'homeowner',
+            member_type: member.member_type || 'homeowner', // Added proper handling for member_type
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
@@ -116,7 +110,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
-        member_type: data.member_type || 'homeowner',
+        member_type: data.member_type || 'homeowner', // Handling optional field
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -166,7 +160,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
-        member_type: data.member_type || 'homeowner',
+        member_type: data.member_type || 'homeowner', // Handling optional field
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -249,17 +243,16 @@ export const associationMemberService = {
   },
 
   // Create an external user (developer/builder)
-  createExternalUser: async (userData: ExternalUserData) => {
+  createExternalUser: async (userData: ExternalMember, currentAssociationId: string) => {
     try {
-      // First, create a new auth user (this would typically be done by auth service)
-      // For now, we'll simulate by creating a profile directly
+      // First, create a new profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
           first_name: userData.first_name,
           last_name: userData.last_name,
           email: userData.email,
-          user_type: userData.user_type
+          role: userData.user_type // Use role field instead of user_type
         })
         .select()
         .single();
@@ -274,7 +267,7 @@ export const associationMemberService = {
         .from('association_users')
         .insert({
           user_id: profileData.id,
-          association_id: associationId,
+          association_id: currentAssociationId,
           role: userData.user_type
         })
         .select()
