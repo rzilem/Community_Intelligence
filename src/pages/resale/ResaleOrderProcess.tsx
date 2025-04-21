@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
@@ -32,8 +31,9 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/auth';
+import { PropertySearchCombobox } from '@/components/resale/PropertySearchCombobox';
+import { toast } from 'sonner';
 
-// Mock order types data (in a real implementation this would come from API/database)
 const orderTypes = {
   'resale-cert': {
     id: 'resale-cert',
@@ -94,7 +94,6 @@ const ResaleOrderProcess = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form state
   const [formData, setFormData] = useState({
     propertyInfo: {
       address: '',
@@ -104,6 +103,8 @@ const ResaleOrderProcess = () => {
       zip: '',
       community: '',
       propertyType: 'condo',
+      propertyId: null,
+      associationId: null
     },
     contactInfo: {
       role: 'title-company',
@@ -126,11 +127,9 @@ const ResaleOrderProcess = () => {
     }
   });
   
-  // Calculate total price
   const selectedRushOption = orderType.rushOptions.find(option => option.id === formData.orderDetails.rushOption);
   const totalPrice = orderType.basePrice + (selectedRushOption?.price || 0);
   
-  // Prefill user info if available
   useEffect(() => {
     if (user && user.email) {
       setFormData(prev => ({
@@ -153,10 +152,29 @@ const ResaleOrderProcess = () => {
     }));
   };
   
+  const handlePropertySelect = (property: Property | null) => {
+    if (property) {
+      setFormData(prev => ({
+        ...prev,
+        propertyInfo: {
+          ...prev.propertyInfo,
+          address: property.address,
+          unit: property.unit_number || '',
+          city: property.city || '',
+          state: property.state || '',
+          zip: property.zip || '',
+          propertyId: property.id,
+          associationId: property.association_id
+        }
+      }));
+    } else {
+      toast.error("Please select a valid property from the database.");
+    }
+  };
+  
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate API call
     setTimeout(() => {
       toast({
         title: "Order Submitted Successfully",
@@ -165,9 +183,6 @@ const ResaleOrderProcess = () => {
       setIsSubmitting(false);
       navigate('/resale-portal/my-orders');
     }, 2000);
-    
-    // In a real implementation, you would submit the order to your backend
-    // and handle payment processing here
   };
   
   const handleBack = () => {
@@ -179,6 +194,11 @@ const ResaleOrderProcess = () => {
   };
   
   const handleNext = () => {
+    if (currentStep === 1 && !formData.propertyInfo.propertyId) {
+      toast.error("Please select a valid property from the database to continue");
+      return;
+    }
+    
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
@@ -210,97 +230,35 @@ const ResaleOrderProcess = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Step 1: Property Information */}
               {currentStep === 1 && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <Label htmlFor="address">Property Address</Label>
-                      <Input 
-                        id="address"
-                        value={formData.propertyInfo.address}
-                        onChange={(e) => handleInputChange('propertyInfo', 'address', e.target.value)}
-                        placeholder="Street Address"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="unit">Unit/Apt #</Label>
-                        <Input 
-                          id="unit"
-                          value={formData.propertyInfo.unit}
-                          onChange={(e) => handleInputChange('propertyInfo', 'unit', e.target.value)}
-                          placeholder="Unit/Apt # (if applicable)"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="propertyType">Property Type</Label>
-                        <Select 
-                          value={formData.propertyInfo.propertyType}
-                          onValueChange={(value) => handleInputChange('propertyInfo', 'propertyType', value)}
-                        >
-                          <SelectTrigger id="propertyType">
-                            <SelectValue placeholder="Select property type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="condo">Condominium</SelectItem>
-                            <SelectItem value="townhouse">Townhouse</SelectItem>
-                            <SelectItem value="single-family">Single Family Home</SelectItem>
-                            <SelectItem value="co-op">Co-op</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="city">City</Label>
-                        <Input 
-                          id="city"
-                          value={formData.propertyInfo.city}
-                          onChange={(e) => handleInputChange('propertyInfo', 'city', e.target.value)}
-                          placeholder="City"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="state">State</Label>
-                        <Input 
-                          id="state"
-                          value={formData.propertyInfo.state}
-                          onChange={(e) => handleInputChange('propertyInfo', 'state', e.target.value)}
-                          placeholder="State"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="zip">ZIP Code</Label>
-                        <Input 
-                          id="zip"
-                          value={formData.propertyInfo.zip}
-                          onChange={(e) => handleInputChange('propertyInfo', 'zip', e.target.value)}
-                          placeholder="ZIP Code"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="community">HOA/Community Name (if known)</Label>
-                      <Input 
-                        id="community"
-                        value={formData.propertyInfo.community}
-                        onChange={(e) => handleInputChange('propertyInfo', 'community', e.target.value)}
-                        placeholder="Community or Association Name"
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="address">Property Address</Label>
+                    <PropertySearchCombobox
+                      onPropertySelect={handlePropertySelect}
+                      value={formData.propertyInfo.address ? 
+                        `${formData.propertyInfo.address}${formData.propertyInfo.unit ? ` Unit ${formData.propertyInfo.unit}` : ''}, ${formData.propertyInfo.city}, ${formData.propertyInfo.state} ${formData.propertyInfo.zip}`
+                        : undefined
+                      }
+                    />
                   </div>
+                  
+                  {formData.propertyInfo.address && (
+                    <div className="mt-4 p-4 bg-muted rounded-md">
+                      <h3 className="font-medium mb-2 flex items-center gap-2">
+                        <Building className="h-4 w-4" />
+                        Selected Property Details
+                      </h3>
+                      <div className="text-sm space-y-1">
+                        <p>Address: {formData.propertyInfo.address}</p>
+                        {formData.propertyInfo.unit && <p>Unit: {formData.propertyInfo.unit}</p>}
+                        <p>Location: {formData.propertyInfo.city}, {formData.propertyInfo.state} {formData.propertyInfo.zip}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               
-              {/* Step 2: Contact Information */}
               {currentStep === 2 && (
                 <div className="space-y-4">
                   <div>
@@ -378,7 +336,6 @@ const ResaleOrderProcess = () => {
                 </div>
               )}
               
-              {/* Step 3: Order Details */}
               {currentStep === 3 && (
                 <div className="space-y-4">
                   <div>
@@ -439,7 +396,6 @@ const ResaleOrderProcess = () => {
                 </div>
               )}
               
-              {/* Step 4: Payment */}
               {currentStep === 4 && (
                 <div className="space-y-4">
                   <div>
