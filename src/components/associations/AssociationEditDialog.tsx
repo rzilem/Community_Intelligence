@@ -59,6 +59,8 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
   association,
   onSave,
 }) => {
+  console.log('Initial association data:', association);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -73,14 +75,15 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
       total_units: association.total_units ?? undefined,
       website: association.website || '',
       description: association.description || '',
-      insurance_expiration: association.insurance_expiration ?? '',
-      fire_inspection_due: association.fire_inspection_due ?? '',
-      founded_date: association.founded_date ?? '',
+      insurance_expiration: association.insurance_expiration || '',
+      fire_inspection_due: association.fire_inspection_due || '',
+      founded_date: association.founded_date || '',
       status: association.status ?? undefined
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('Submitting form values:', values);
     onSave(values);
   }
 
