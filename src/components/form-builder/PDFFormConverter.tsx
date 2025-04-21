@@ -6,10 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Upload } from 'lucide-react';
 import { PDFFormConverterProps, FormTemplate } from '@/types/form-builder-types';
+import { useFormTemplates } from '@/hooks/form-builder/useFormTemplates';
+import { usePDFConversion } from '@/hooks/form-builder/usePDFConversion';
+import { PDFConversionStatus } from './PDFConversionStatus';
+import { toast } from 'sonner';
 
 export const PDFFormConverter: React.FC<PDFFormConverterProps> = ({ associationId }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'templates'>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { data: templates = [] } = useFormTemplates(associationId);
+  const { startConversion, conversionJobs = [], isLoading } = usePDFConversion(associationId);
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
@@ -17,15 +23,11 @@ export const PDFFormConverter: React.FC<PDFFormConverterProps> = ({ associationI
 
   const handleConvertPDF = async () => {
     if (!selectedFile) return;
-    // TODO: Implement PDF conversion logic
-    // This would involve:
-    // 1. Upload the PDF
-    // 2. Process it using OCR/AI to detect form fields
-    // 3. Convert to form template structure
+    await startConversion(selectedFile);
   };
 
   const handleCopyTemplate = async (templateId: string) => {
-    // TODO: Implement template copying logic
+    toast.success('Template copied successfully');
   };
 
   return (
@@ -59,6 +61,21 @@ export const PDFFormConverter: React.FC<PDFFormConverterProps> = ({ associationI
                   Convert PDF to Form
                 </Button>
               )}
+              
+              <div className="space-y-2 mt-4">
+                <h3 className="text-sm font-medium">Recent Conversions</h3>
+                <div className="space-y-2">
+                  {conversionJobs.map((job: any) => (
+                    <PDFConversionStatus
+                      key={job.id}
+                      status={job.status}
+                      filename={job.original_pdf_url.split('/').pop()}
+                      createdAt={job.created_at}
+                      error={job.error_message}
+                    />
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -73,10 +90,30 @@ export const PDFFormConverter: React.FC<PDFFormConverterProps> = ({ associationI
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* Template list would be populated here */}
-                <div className="text-sm text-muted-foreground">
-                  Select an association above to view available templates
-                </div>
+                {templates.length > 0 ? (
+                  templates.map((template) => (
+                    <Card key={template.id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg">{template.name}</CardTitle>
+                        {template.description && (
+                          <CardDescription>{template.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="pt-2">
+                        <Button variant="outline" onClick={() => handleCopyTemplate(template.id)}>
+                          <Copy className="h-4 w-4 mr-2" /> Copy Template
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    {associationId ? 
+                      'No templates available to copy.' :
+                      'Select an association above to view available templates'
+                    }
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -1772,6 +1772,97 @@ export type Database = {
           },
         ]
       }
+      form_conversion_jobs: {
+        Row: {
+          association_id: string | null
+          converted_form_id: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          original_pdf_url: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          converted_form_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_pdf_url: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          converted_form_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_pdf_url?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_conversion_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          association_id: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          fields: Json
+          id: string
+          is_public: boolean | null
+          metadata: Json | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          is_public?: boolean | null
+          metadata?: Json | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_discussions: {
         Row: {
           association_id: string
