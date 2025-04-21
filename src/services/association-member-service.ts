@@ -110,7 +110,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
-        member_type: data.member_type || 'homeowner',
+        member_type: data.member_type || memberData.member_type || 'homeowner',
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -245,7 +245,7 @@ export const associationMemberService = {
   // Create an external user (developer/builder)
   createExternalUser: async (userData: ExternalMember, currentAssociationId: string) => {
     try {
-      // First, create a new profile
+      // First, create a new profile (note: we omit the id as it will be auto-generated)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
