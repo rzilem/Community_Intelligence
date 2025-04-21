@@ -24,13 +24,22 @@ const Associations = () => {
   // Ensure associations is treated as an array
   const associationsArray = Array.isArray(associations) ? associations : [];
   
+  // Log associations data to debug
+  console.log('Associations data:', associationsArray);
+  
   const filteredAssociations = associationsArray.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const activeAssociations = filteredAssociations.filter(a => !a.is_archived);
-  const inactiveAssociations = filteredAssociations.filter(a => a.is_archived);
+  // More explicit active/inactive filtering with fallback
+  const activeAssociations = filteredAssociations.filter(a => a.is_archived === false);
+  const inactiveAssociations = filteredAssociations.filter(a => a.is_archived === true);
+  
+  // Log filtered counts for debugging
+  console.log('Active associations:', activeAssociations.length);
+  console.log('Inactive associations:', inactiveAssociations.length);
+  console.log('All filtered associations:', filteredAssociations.length);
 
   return (
     <AppLayout>
