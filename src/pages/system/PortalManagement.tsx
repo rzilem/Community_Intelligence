@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { useAuth } from '@/contexts/auth';
 import PermissionGuard from '@/components/auth/PermissionGuard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getAvailableWidgets } from '@/components/portal/widgetRegistry';
 
 const PortalManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('homeowner');
@@ -30,6 +32,10 @@ const PortalManagement: React.FC = () => {
     // This would be implemented to update the widget settings
     toast.success(`Widget ${enabled ? 'enabled' : 'disabled'} successfully`);
   };
+
+  const availableHomeownerWidgets = getAvailableWidgets('homeowner');
+  const availableBoardWidgets = getAvailableWidgets('board');
+  const availableVendorWidgets = getAvailableWidgets('vendor');
 
   return (
     <PermissionGuard menuId="system" submenuId="settings" requiredAccess="full">
@@ -70,25 +76,72 @@ const PortalManagement: React.FC = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                      {['payments', 'requests', 'violations', 'announcements', 'documents', 'calendar'].map((widgetType) => (
-                        <div key={widgetType} className="flex items-center justify-between rounded-lg border p-4">
+                      {availableHomeownerWidgets.map((widget) => (
+                        <div key={widget.type} className="flex items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <Label htmlFor={`${widgetType}-toggle`} className="text-base">{widgetType.charAt(0).toUpperCase() + widgetType.slice(1)}</Label>
+                            <Label htmlFor={`${widget.type}-toggle`} className="text-base">{widget.name}</Label>
                             <p className="text-sm text-muted-foreground">
-                              {`${widgetType.charAt(0).toUpperCase() + widgetType.slice(1)} information for homeowners`}
+                              {widget.description}
                             </p>
                           </div>
-                          <Switch
-                            id={`${widgetType}-toggle`}
-                            defaultChecked={true}
-                            onCheckedChange={(checked) => handleWidgetToggle(widgetType, checked)}
-                          />
+                          <div className="flex items-center gap-3">
+                            <Select defaultValue="required">
+                              <SelectTrigger className="w-32">
+                                <SelectValue placeholder="Status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="required">Required</SelectItem>
+                                <SelectItem value="optional">Optional</SelectItem>
+                                <SelectItem value="hidden">Hidden</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Switch
+                              id={`${widget.type}-toggle`}
+                              defaultChecked={true}
+                              onCheckedChange={(checked) => handleWidgetToggle(widget.type, checked)}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
                     <Button className="mt-4">Save Configuration</Button>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Default Widget Layout</CardTitle>
+                <CardDescription>
+                  Set the default order and position of widgets for new users.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {availableHomeownerWidgets.slice(0, 6).map((widget, index) => (
+                      <div key={widget.type} className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <Label className="text-base">{widget.name}</Label>
+                        </div>
+                        <div className="flex items-center">
+                          <Select defaultValue={`${index + 1}`}>
+                            <SelectTrigger className="w-16">
+                              <SelectValue placeholder="Position" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4, 5, 6].map(pos => (
+                                <SelectItem key={pos} value={`${pos}`}>{pos}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button className="mt-4">Save Layout</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -103,21 +156,33 @@ const PortalManagement: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {['financial-snapshot', 'violations', 'requests', 'board-summary', 'calendar', 'documents'].map((widgetType) => (
-                    <div key={widgetType} className="flex items-center justify-between rounded-lg border p-4">
+                  {availableBoardWidgets.map((widget) => (
+                    <div key={widget.type} className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label htmlFor={`board-${widgetType}-toggle`} className="text-base">
-                          {widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        <Label htmlFor={`board-${widget.type}-toggle`} className="text-base">
+                          {widget.name}
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                          {`${widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} for board members`}
+                          {widget.description}
                         </p>
                       </div>
-                      <Switch
-                        id={`board-${widgetType}-toggle`}
-                        defaultChecked={true}
-                        onCheckedChange={(checked) => handleWidgetToggle(`board-${widgetType}`, checked)}
-                      />
+                      <div className="flex items-center gap-3">
+                        <Select defaultValue="required">
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="required">Required</SelectItem>
+                            <SelectItem value="optional">Optional</SelectItem>
+                            <SelectItem value="hidden">Hidden</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Switch
+                          id={`board-${widget.type}-toggle`}
+                          defaultChecked={true}
+                          onCheckedChange={(checked) => handleWidgetToggle(`board-${widget.type}`, checked)}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -136,21 +201,33 @@ const PortalManagement: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
-                  {['payments', 'invoices', 'vendor-stats', 'bid-opportunities', 'preferred-status'].map((widgetType) => (
-                    <div key={widgetType} className="flex items-center justify-between rounded-lg border p-4">
+                  {availableVendorWidgets.map((widget) => (
+                    <div key={widget.type} className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <Label htmlFor={`vendor-${widgetType}-toggle`} className="text-base">
-                          {widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        <Label htmlFor={`vendor-${widget.type}-toggle`} className="text-base">
+                          {widget.name}
                         </Label>
                         <p className="text-sm text-muted-foreground">
-                          {`${widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} for vendors`}
+                          {widget.description}
                         </p>
                       </div>
-                      <Switch
-                        id={`vendor-${widgetType}-toggle`}
-                        defaultChecked={true}
-                        onCheckedChange={(checked) => handleWidgetToggle(`vendor-${widgetType}`, checked)}
-                      />
+                      <div className="flex items-center gap-3">
+                        <Select defaultValue="required">
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="required">Required</SelectItem>
+                            <SelectItem value="optional">Optional</SelectItem>
+                            <SelectItem value="hidden">Hidden</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Switch
+                          id={`vendor-${widget.type}-toggle`}
+                          defaultChecked={true}
+                          onCheckedChange={(checked) => handleWidgetToggle(`vendor-${widget.type}`, checked)}
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

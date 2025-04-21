@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { WidgetType } from '@/types/portal-types';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DashboardWidgetProps {
@@ -14,6 +14,8 @@ interface DashboardWidgetProps {
   isSaving?: boolean;
   children: React.ReactNode;
   className?: string;
+  isDraggable?: boolean;
+  dragHandleProps?: any;
 }
 
 const DashboardWidget: React.FC<DashboardWidgetProps> = ({
@@ -23,13 +25,25 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   onSave,
   isSaving = false,
   children,
-  className
+  className,
+  isDraggable = false,
+  dragHandleProps
 }) => {
   return (
     <Card className={cn("shadow-sm h-full", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center justify-between">
-          <span>{title}</span>
+          <div className="flex items-center gap-2">
+            {isDraggable && (
+              <div 
+                className="cursor-move p-1 hover:bg-secondary rounded-md" 
+                {...dragHandleProps}
+              >
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+              </div>
+            )}
+            <span>{title}</span>
+          </div>
           <div className="flex items-center gap-2">
             {onSave && (
               <Button 

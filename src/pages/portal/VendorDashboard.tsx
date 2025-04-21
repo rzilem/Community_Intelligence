@@ -3,9 +3,16 @@ import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useAuth } from '@/contexts/auth';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { Truck, Receipt, DollarSign, Star, FileText } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
 import PermissionGuard from '@/components/auth/PermissionGuard';
+import { useWidgetSettings } from '@/hooks/portal/useWidgetSettings';
+import { WidgetType, PortalWidget } from '@/types/portal-types';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { useDraggableWidgets } from '@/hooks/portal/useDraggableWidgets';
+import { getWidgetComponent } from '@/components/portal/widgetRegistry';
+import WidgetMarketplace from '@/components/portal/WidgetMarketplace';
+import UpcomingBidsWidget from '@/components/portal/widgets/UpcomingBidsWidget';
 
 const VendorDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -20,142 +27,152 @@ const VendorDashboard: React.FC = () => {
     !!user?.id
   );
 
+  const { data: userWidgets = [], isLoading: loadingWidgets } = useSupabaseQuery(
+    'user_portal_widgets',
+    {
+      select: '*',
+      filter: [{ column: 'user_id', value: user?.id }],
+      order: { column: 'position', ascending: true },
+    },
+    !!user?.id
+  );
+
+  // Transform data to match our PortalWidget type
+  const transformedWidgets: PortalWidget[] = userWidgets.map((widget: any) => ({
+    id: widget.id,
+    widgetType: widget.widget_type as WidgetType,
+    settings: widget.settings,
+    position: widget.position,
+    isEnabled: widget.is_enabled
+  }));
+
+  const { saveWidgetSettings, toggleWidget } = useWidgetSettings('user');
+  const { orderedWidgets, handleDragEnd } = useDraggableWidgets(transformedWidgets, 'user');
+
+  // Get enabled widgets
+  const enabledWidgets = orderedWidgets.filter(widget => widget.isEnabled);
+  const enabledWidgetTypes = enabledWidgets.map(widget => widget.widgetType);
+
+  const handleToggleWidget = async (widgetType: string, enabled: boolean) => {
+    const widget = orderedWidgets.find(w => w.widgetType === widgetType);
+    if (widget) {
+      await toggleWidget(widget.id, enabled);
+    }
+  };
+
+  if (loadingProfile) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
   return (
     <PermissionGuard menuId="vendor-portal">
       <AppLayout>
         <div className="p-6 space-y-6">
-          <div className="flex items-center gap-2">
-            <Truck className="h-6 w-6" />
-            <h1 className="text-3xl font-bold tracking-tight">Vendor Dashboard</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Truck className="h-6 w-6" />
+              <h1 className="text-3xl font-bold tracking-tight">Vendor Dashboard</h1>
+            </div>
+            <WidgetMarketplace 
+              portalType="vendor"
+              enabledWidgets={enabledWidgetTypes}
+              onToggleWidget={handleToggleWidget}
+            />
           </div>
           
           <p className="text-muted-foreground">
             Welcome to your vendor portal. Manage your company profile, invoices, and services.
           </p>
           
-          {loadingProfile ? (
-            <div className="flex justify-center py-12">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <DashboardWidget title="Company Profile" widgetType="vendor-stats">
-                <div className="space-y-4">
-                  <p className="text-lg font-semibold">{vendorProfile?.company_name || 'Your Company'}</p>
-                  <div className="flex items-center gap-2">
-                    <span>Status:</span>
-                    <span className={`px-2 py-1 rounded text-xs ${vendorProfile?.is_preferred ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                      {vendorProfile?.is_preferred ? 'Preferred Vendor' : 'Standard Vendor'}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{vendorProfile?.company_description || 'No company description available'}</p>
-                  <button className="w-full bg-primary text-white py-2 px-4 rounded">Update Profile</button>
-                </div>
-              </DashboardWidget>
-              
-              <DashboardWidget title="Invoices" widgetType="invoices">
-                <div className="space-y-4">
-                  <p className="text-lg font-semibold">Your Invoices</p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Total Invoices:</span>
-                      <span>5</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Pending Approval:</span>
-                      <span>2</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Paid:</span>
-                      <span>3</span>
-                    </div>
-                  </div>
-                  <button className="w-full bg-primary text-white py-2 px-4 rounded">View All Invoices</button>
-                </div>
-              </DashboardWidget>
-              
-              <DashboardWidget title="Payment History" widgetType="payments">
-                <div className="space-y-4">
-                  <p className="text-lg font-semibold">Recent Payments</p>
-                  <div className="border-l-4 border-green-500 pl-3 py-1">
-                    <div className="flex justify-between">
-                      <span>INV-2023-042</span>
-                      <span className="font-semibold">$1,250.00</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Paid on April 15, 2023</p>
-                  </div>
-                  <div className="border-l-4 border-green-500 pl-3 py-1">
-                    <div className="flex justify-between">
-                      <span>INV-2023-036</span>
-                      <span className="font-semibold">$875.00</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Paid on March 28, 2023</p>
-                  </div>
-                  <button className="w-full bg-primary text-white py-2 px-4 rounded">View Payment History</button>
-                </div>
-              </DashboardWidget>
-              
-              <DashboardWidget title="Bid Opportunities" widgetType="bid-opportunities">
-                <div className="space-y-4">
-                  <p className="text-lg font-semibold">Open Bid Requests</p>
-                  <div className="border-l-4 border-blue-500 pl-3 py-1">
-                    <p className="font-semibold">Landscaping Services</p>
-                    <p className="text-sm text-muted-foreground">Due: May 30, 2023</p>
-                  </div>
-                  <div className="border-l-4 border-blue-500 pl-3 py-1">
-                    <p className="font-semibold">Pool Maintenance</p>
-                    <p className="text-sm text-muted-foreground">Due: June 15, 2023</p>
-                  </div>
-                  <button className="w-full bg-primary text-white py-2 px-4 rounded">View All Opportunities</button>
-                </div>
-              </DashboardWidget>
-              
-              <DashboardWidget title="Preferred Status" widgetType="preferred-status">
-                <div className="space-y-4">
-                  {vendorProfile?.is_preferred ? (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-5 w-5 text-yellow-500" />
-                        <p className="text-lg font-semibold">Preferred Vendor</p>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="widgets" direction="horizontal">
+              {(provided) => (
+                <div 
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                >
+                  <Draggable draggableId="upcoming-bids" index={0}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                      >
+                        <UpcomingBidsWidget 
+                          dragHandleProps={provided.dragHandleProps}
+                          saveSettings={(settings) => saveWidgetSettings('upcoming-bids', settings)}
+                        />
                       </div>
-                      <p className="text-sm">Your company is listed as a preferred vendor which gives you priority access to bid opportunities.</p>
-                      <button className="w-full bg-primary text-white py-2 px-4 rounded">Manage Preferred Status</button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-5 w-5 text-gray-300" />
-                        <p className="text-lg font-semibold">Standard Vendor</p>
+                    )}
+                  </Draggable>
+                  
+                  <Draggable draggableId="company-profile" index={1}>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                      >
+                        <DashboardWidget 
+                          title="Company Profile" 
+                          widgetType="vendor-stats"
+                          isDraggable={true}
+                          dragHandleProps={provided.dragHandleProps}
+                        >
+                          <div className="space-y-4">
+                            <p className="text-lg font-semibold">{vendorProfile?.company_name || 'Your Company'}</p>
+                            <div className="flex items-center gap-2">
+                              <span>Status:</span>
+                              <span className={`px-2 py-1 rounded text-xs ${vendorProfile?.is_preferred ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {vendorProfile?.is_preferred ? 'Preferred Vendor' : 'Standard Vendor'}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{vendorProfile?.company_description || 'No company description available'}</p>
+                            <button className="w-full bg-primary text-white py-2 px-4 rounded">Update Profile</button>
+                          </div>
+                        </DashboardWidget>
                       </div>
-                      <p className="text-sm">Upgrade to preferred vendor status to receive priority access to bid opportunities and enhanced visibility.</p>
-                      <button className="w-full bg-primary text-white py-2 px-4 rounded">Upgrade to Preferred</button>
-                    </>
-                  )}
+                    )}
+                  </Draggable>
+                  
+                  {enabledWidgets
+                    .filter(widget => !['upcoming-bids', 'vendor-stats'].includes(widget.widgetType))
+                    .map((widget, index) => {
+                      const WidgetComponent = getWidgetComponent(widget.widgetType);
+                      
+                      return (
+                        <Draggable key={widget.id} draggableId={widget.id} index={index + 2}>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                            >
+                              <DashboardWidget 
+                                title={widget.widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} 
+                                widgetType={widget.widgetType}
+                                isDraggable={true}
+                                dragHandleProps={provided.dragHandleProps}
+                                onSave={() => saveWidgetSettings(widget.widgetType, { ...widget.settings })}
+                              >
+                                <WidgetComponent 
+                                  widgetId={widget.id}
+                                  saveSettings={(settings) => saveWidgetSettings(widget.widgetType, settings)}
+                                  settings={widget.settings}
+                                />
+                              </DashboardWidget>
+                            </div>
+                          )}
+                        </Draggable>
+                      );
+                  })}
+                  {provided.placeholder}
                 </div>
-              </DashboardWidget>
-              
-              <DashboardWidget title="Documents" widgetType="documents">
-                <div className="space-y-4">
-                  <p className="text-lg font-semibold">Vendor Documents</p>
-                  <ul className="space-y-2">
-                    <li className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <span>Vendor Agreement</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <span>W-9 Form</span>
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      <span>Insurance Certificate</span>
-                    </li>
-                  </ul>
-                  <button className="w-full bg-primary text-white py-2 px-4 rounded">Manage Documents</button>
-                </div>
-              </DashboardWidget>
-            </div>
-          )}
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
       </AppLayout>
     </PermissionGuard>

@@ -14,7 +14,16 @@ export type WidgetType =
   | 'vendor-stats'
   | 'invoices'
   | 'bid-opportunities'
-  | 'preferred-status';
+  | 'preferred-status'
+  | 'financial-chart'
+  | 'recent-payments'
+  | 'delinquent-accounts'
+  | 'maintenance-tracker'
+  | 'amenity-bookings'
+  | 'community-poll'
+  | 'vendor-ratings'
+  | 'work-history'
+  | 'upcoming-bids';
 
 export interface PortalWidget {
   id: string;
@@ -44,4 +53,14 @@ export interface VendorProfile {
   settings: Record<string, any>;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface WidgetDefinition {
+  type: WidgetType;
+  name: string;
+  description: string;
+  icon: string;
+  defaultEnabled: boolean;
+  availableFor: ('homeowner' | 'board' | 'vendor')[];
+  component: React.ComponentType<any>;
 }
