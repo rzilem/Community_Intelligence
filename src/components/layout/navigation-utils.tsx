@@ -157,6 +157,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Financial Report Mapping', path: '/system/financial-report-mapping', icon: FileBarChart },
         { name: 'Workflow Schedule', path: '/system/workflow-schedule', icon: Clock },
         { name: 'Permissions', path: '/system/permissions', icon: Shield },
+        { name: 'Form Builder', path: '/system/form-builder', icon: FileText },
       ]
     });
   }
