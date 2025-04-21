@@ -15,11 +15,11 @@ import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
 export const systemRoutes: RouteObject[] = [
   {
     path: "/system",
-    element: <RequireAuth><System /></RequireAuth>
+    element: <RequireAuth menuId="system"><System /></RequireAuth>
   },
   {
     path: "/system/settings",
-    element: <RequireAuth><SystemSettings /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="settings" requiredAccess="full"><SystemSettings /></RequireAuth>
   },
   {
     path: "/system/integrations",
@@ -27,11 +27,11 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/permissions",
-    element: <RequireAuth><Permissions /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="permissions" requiredAccess="full"><Permissions /></RequireAuth>
   },
   {
     path: "/system/data-management",
-    element: <RequireAuth><DataManagement /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="data-management"><DataManagement /></RequireAuth>
   },
   {
     path: "/system/import-export",
@@ -43,7 +43,7 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/financial-report-mapping",
-    element: <RequireAuth><FinancialReportMapping /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="financial-report-mapping"><FinancialReportMapping /></RequireAuth>
   },
   {
     path: "/system/associations",
@@ -51,14 +51,14 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/associations/:id",
-    element: <RequireAuth><AssociationProfile /></RequireAuth>
+    element: <RequireAuth menuId="system"><AssociationProfile /></RequireAuth>
   },
   {
     path: "/system/email-workflows",
-    element: <RequireAuth><EmailWorkflows /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="email-workflows"><EmailWorkflows /></RequireAuth>
   },
   {
     path: "/system/workflow-schedule",
-    element: <RequireAuth><WorkflowSchedule /></RequireAuth>
+    element: <RequireAuth menuId="system" submenuId="workflow-schedule"><WorkflowSchedule /></RequireAuth>
   }
 ];

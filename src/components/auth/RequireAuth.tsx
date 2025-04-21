@@ -3,19 +3,27 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
+import usePermissions from '@/hooks/users/usePermissions';
 
 interface RequireAuthProps {
   children: React.ReactNode;
+  menuId?: string;
+  submenuId?: string;
+  requiredAccess?: 'read' | 'full';
   allowedRoles?: string[];
   requireAssociation?: boolean;
 }
 
 export const RequireAuth: React.FC<RequireAuthProps> = ({ 
   children, 
+  menuId,
+  submenuId,
+  requiredAccess = 'read',
   allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'],
   requireAssociation = false
 }) => {
   const { user, loading, userRole, currentAssociation, userAssociations, isAuthenticated } = useAuth();
+  const { checkPermission } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -52,6 +60,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       return;
     }
 
+    // Check role-based access
     if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
       console.log(`[RequireAuth] User role ${userRole} not in allowed roles, redirecting`);
       toast.error('You do not have permission to access this page');
@@ -59,8 +68,33 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
       return;
     }
 
+    // Check menu/submenu permissions if specified
+    if (menuId && userRole) {
+      const hasAccess = checkPermission(menuId, submenuId, requiredAccess);
+      if (!hasAccess) {
+        console.log(`[RequireAuth] User lacks permission for ${menuId}/${submenuId || ''}, redirecting`);
+        toast.error('You do not have permission to access this page');
+        navigate('/dashboard');
+        return;
+      }
+    }
+
     console.log('[RequireAuth] User authenticated and authorized to access page');
-  }, [user, loading, userRole, navigate, location, allowedRoles, requireAssociation, userAssociations, currentAssociation]);
+  }, [
+    user, 
+    loading, 
+    userRole, 
+    navigate, 
+    location, 
+    allowedRoles, 
+    requireAssociation, 
+    userAssociations, 
+    currentAssociation,
+    menuId,
+    submenuId,
+    requiredAccess,
+    checkPermission
+  ]);
 
   if (loading) {
     console.log('[RequireAuth] Rendering loading state in RequireAuth');
