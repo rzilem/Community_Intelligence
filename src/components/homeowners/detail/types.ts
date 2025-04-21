@@ -1,4 +1,12 @@
 
+export interface NoteType {
+  id?: string;
+  content: string;
+  author: string;
+  date: string;
+  type: 'manual' | 'system';
+}
+
 export interface Homeowner {
   id: string;
   name: string;
