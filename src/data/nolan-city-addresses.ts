@@ -1,4 +1,3 @@
-
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import { MaintenanceRequest } from '@/types/maintenance-types';
@@ -615,7 +614,10 @@ export const exportAddressesAsCSV = (
   const addresses = generateAddresses(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(addresses);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Properties & Owners`);
+  
+  // Truncate worksheet name to stay under Excel's 31 character limit
+  const worksheetName = `${communityName} Properties`.substring(0, 30);
+  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -636,7 +638,10 @@ export const exportMaintenanceRequestsAsCSV = (
   const requests = generateMaintenanceRequests(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(requests);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Maintenance Requests`);
+  
+  // Truncate worksheet name to stay under Excel's 31 character limit
+  const worksheetName = `${communityName} Maintenance`.substring(0, 30);
+  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -657,7 +662,10 @@ export const exportComplianceIssuesAsCSV = (
   const issues = generateComplianceIssues(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(issues);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Compliance Issues`);
+  
+  // Truncate worksheet name to stay under Excel's 31 character limit
+  const worksheetName = `${communityName} Compliance`.substring(0, 30);
+  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -678,7 +686,10 @@ export const exportFinancialRecordsAsCSV = (
   const records = generateFinancialRecords(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(records);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Financial Records`);
+  
+  // Truncate worksheet name to stay under Excel's 31 character limit
+  const worksheetName = `${communityName} Financial`.substring(0, 30);
+  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
