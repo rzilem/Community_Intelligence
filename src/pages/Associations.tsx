@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Network, RefreshCw, Search } from 'lucide-react';
+import { Network, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,9 @@ import ApiError from '@/components/ui/api-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import AssociationTableWithPagination from '@/components/associations/AssociationTableWithPagination';
+import AssociationTable, { associationTableColumns } from '@/components/associations/AssociationTable';
+import { useUserColumns } from '@/hooks/useUserColumns';
+import ColumnSelector from '@/components/table/ColumnSelector';
 
 const PAGE_SIZE = 10;
 
@@ -36,11 +38,8 @@ const Associations = () => {
     const matchesSearch =
       association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    // By default show only active unless checkbox is checked
     const showAssociation =
       includeInactive ? true : !association.is_archived;
-
     return matchesSearch && showAssociation;
   });
 
@@ -55,6 +54,15 @@ const Associations = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, includeInactive]);
+
+  // Restore column selector functionality
+  const {
+    visibleColumnIds,
+    updateVisibleColumns,
+    reorderColumns,
+    resetToDefaults,
+    loading: columnsLoading,
+  } = useUserColumns(associationTableColumns, 'associations-table');
 
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
     updateAssociation(id, data)
@@ -80,6 +88,35 @@ const Associations = () => {
     toast.info("Refreshing associations...");
     manuallyRefresh();
   };
+
+  // Pagination controls
+  const Pagination = () => (
+    <div className="flex flex-col sm:flex-row justify-between items-center mt-4 gap-3">
+      <div className="text-sm text-muted-foreground">
+        Page {currentPage} of {totalPages}
+      </div>
+      <div className="flex gap-2 mt-2 sm:mt-0">
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(currentPage - 1)}
+          title="Previous page"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(currentPage + 1)}
+          title="Next page"
+        >
+          Next <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <AppLayout>
@@ -138,20 +175,32 @@ const Associations = () => {
               </div>
             </div>
 
+            <div className="flex justify-end mb-4">
+              <ColumnSelector
+                columns={associationTableColumns}
+                selectedColumns={visibleColumnIds}
+                onChange={updateVisibleColumns}
+                onReorder={reorderColumns}
+                resetToDefaults={resetToDefaults}
+                className="mb-2"
+                storageKey="associations-table"
+              />
+            </div>
+
             {error && (
               <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
             )}
 
-            <AssociationTableWithPagination
+            <AssociationTable
               associations={paginatedAssociations}
-              currentPage={currentPage}
-              pageSize={PAGE_SIZE}
-              totalPages={totalPages}
+              isLoading={isLoading || columnsLoading}
               onEdit={handleEditAssociation}
               onDelete={handleDeleteAssociation}
-              setCurrentPage={setCurrentPage}
-              isLoading={isLoading}
+              selectedAssociations={[]}
+              // Don't include selection logic here unless needed.
             />
+
+            <Pagination />
           </CardContent>
         </Card>
       </div>
@@ -160,3 +209,4 @@ const Associations = () => {
 };
 
 export default Associations;
+
