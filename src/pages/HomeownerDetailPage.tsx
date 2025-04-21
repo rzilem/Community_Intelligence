@@ -67,12 +67,20 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
-  // Convert violations to number, handling both number and string array cases
-  const violationsCount = typeof homeowner?.violations === 'number' 
-    ? homeowner.violations 
-    : Array.isArray(homeowner?.violations) 
-      ? homeowner.violations.length 
-      : 0;
+  // Calculate violations count based on the type of the violations property
+  const getViolationsCount = (): number => {
+    if (!homeowner?.violations) return 0;
+    
+    if (typeof homeowner.violations === 'number') {
+      return homeowner.violations;
+    }
+    
+    if (Array.isArray(homeowner.violations)) {
+      return homeowner.violations.length;
+    }
+    
+    return 0;
+  };
 
   // Extract the most recent contact date from the lastContact object
   // or use an empty string if it's not available
@@ -97,6 +105,7 @@ const HomeownerDetailPage: React.FC = () => {
   };
 
   const lastContactValue = getLastContactString();
+  const violationsCount = getViolationsCount();
 
   return (
     <AppLayout>
