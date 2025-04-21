@@ -265,7 +265,7 @@ export const FormBuilderSettings = () => {
                 rows={5}
               />
               <p className="text-sm text-muted-foreground">
-                Template for notification emails. Use {{form_name}} or {{submission_date}} for dynamic content.
+                Template for notification emails. Use {'{'}{'{'}'form_name'{'}'}{'}'} or {'{'}{'{'}'submission_date'{'}'}{'}'} for dynamic content.
               </p>
             </div>
           </CardContent>
