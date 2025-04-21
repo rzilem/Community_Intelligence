@@ -333,6 +333,7 @@ export type Database = {
           arc_name: string | null
           association_address_setting: string | null
           association_time_zone: string | null
+          auto_reminders: boolean | null
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
@@ -344,8 +345,10 @@ export type Database = {
           created_at: string
           decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
           include_ach_default: boolean | null
           include_all_properties_default: boolean | null
@@ -354,6 +357,7 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
@@ -361,6 +365,7 @@ export type Database = {
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
           primary_color: string | null
           processing_days: string | null
@@ -368,6 +373,7 @@ export type Database = {
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
           statement_format: string | null
           status: string | null
@@ -391,6 +397,7 @@ export type Database = {
           arc_name?: string | null
           association_address_setting?: string | null
           association_time_zone?: string | null
+          auto_reminders?: boolean | null
           balance_threshold?: string | null
           balance_threshold_type?: string | null
           board_approval_required?: boolean | null
@@ -402,8 +409,10 @@ export type Database = {
           created_at?: string
           decline_threshold?: number | null
           description?: string | null
+          email_notifications?: boolean | null
           fire_inspection_due?: string | null
           founded_date?: string | null
+          grace_period_days?: string | null
           id?: string
           include_ach_default?: boolean | null
           include_all_properties_default?: boolean | null
@@ -412,6 +421,7 @@ export type Database = {
           include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          late_fee_percentage?: string | null
           lien_threshold?: string | null
           lien_threshold_type?: string | null
           logo_url?: string | null
@@ -419,6 +429,7 @@ export type Database = {
           name: string
           new_association_grace_period?: string | null
           new_owner_grace_period?: string | null
+          payment_due_day?: string | null
           phone?: string | null
           primary_color?: string | null
           processing_days?: string | null
@@ -426,6 +437,7 @@ export type Database = {
           remittance_coupon_message?: string | null
           require_arc_voting?: boolean | null
           secondary_color?: string | null
+          sms_notifications?: boolean | null
           state?: string | null
           statement_format?: string | null
           status?: string | null
@@ -449,6 +461,7 @@ export type Database = {
           arc_name?: string | null
           association_address_setting?: string | null
           association_time_zone?: string | null
+          auto_reminders?: boolean | null
           balance_threshold?: string | null
           balance_threshold_type?: string | null
           board_approval_required?: boolean | null
@@ -460,8 +473,10 @@ export type Database = {
           created_at?: string
           decline_threshold?: number | null
           description?: string | null
+          email_notifications?: boolean | null
           fire_inspection_due?: string | null
           founded_date?: string | null
+          grace_period_days?: string | null
           id?: string
           include_ach_default?: boolean | null
           include_all_properties_default?: boolean | null
@@ -470,6 +485,7 @@ export type Database = {
           include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          late_fee_percentage?: string | null
           lien_threshold?: string | null
           lien_threshold_type?: string | null
           logo_url?: string | null
@@ -477,6 +493,7 @@ export type Database = {
           name?: string
           new_association_grace_period?: string | null
           new_owner_grace_period?: string | null
+          payment_due_day?: string | null
           phone?: string | null
           primary_color?: string | null
           processing_days?: string | null
@@ -484,6 +501,7 @@ export type Database = {
           remittance_coupon_message?: string | null
           require_arc_voting?: boolean | null
           secondary_color?: string | null
+          sms_notifications?: boolean | null
           state?: string | null
           statement_format?: string | null
           status?: string | null
@@ -2679,6 +2697,7 @@ export type Database = {
           arc_name: string | null
           association_address_setting: string | null
           association_time_zone: string | null
+          auto_reminders: boolean | null
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
@@ -2690,8 +2709,10 @@ export type Database = {
           created_at: string
           decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
           include_ach_default: boolean | null
           include_all_properties_default: boolean | null
@@ -2700,6 +2721,7 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
@@ -2707,6 +2729,7 @@ export type Database = {
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
           primary_color: string | null
           processing_days: string | null
@@ -2714,6 +2737,7 @@ export type Database = {
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
           statement_format: string | null
           status: string | null
@@ -2752,6 +2776,7 @@ export type Database = {
           arc_name: string | null
           association_address_setting: string | null
           association_time_zone: string | null
+          auto_reminders: boolean | null
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
@@ -2763,8 +2788,10 @@ export type Database = {
           created_at: string
           decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
           include_ach_default: boolean | null
           include_all_properties_default: boolean | null
@@ -2773,6 +2800,7 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
@@ -2780,6 +2808,7 @@ export type Database = {
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
           primary_color: string | null
           processing_days: string | null
@@ -2787,6 +2816,7 @@ export type Database = {
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
           statement_format: string | null
           status: string | null

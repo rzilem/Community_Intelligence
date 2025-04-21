@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { GeneralInfoTab } from './GeneralInfoTab';
-import { PlaceholderTab } from './PlaceholderTab';
 import { Association, AssociationAIIssue } from '@/types/association-types';
 import MembersTab from './MembersTab';
 import AssociationSettingsTab from './AssociationSettingsTab';
@@ -10,12 +8,15 @@ import {
   FileText, 
   CreditCard, 
   Building2, 
-  FileText as FileDocument, // Use FileText as FileDocument 
   Users, 
   MessageSquare, 
   Settings 
 } from 'lucide-react';
 import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
+import { FinancialsTab } from './tabs/FinancialsTab';
+import { PropertiesTab } from './tabs/PropertiesTab';
+import { DocumentsTab } from './tabs/DocumentsTab';
+import { CommunicationsTab } from './tabs/CommunicationsTab';
 
 interface AssociationTabsProps {
   association: Association;
@@ -32,7 +33,6 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
 }) => {
   const [settingsSaving, setSettingsSaving] = React.useState(false);
 
-  // Use the Supabase update hook to save association settings
   const updateAssociationMutation = useSupabaseUpdate<Association>('associations', {
     showSuccessToast: true,
     invalidateQueries: [['associations'], [`association-${association.id}`]]
@@ -80,7 +80,7 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
           value="documents" 
           className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
-          <FileDocument className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
           Documents
         </TabsTrigger>
         <TabsTrigger 
@@ -111,15 +111,15 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="financials">
-        <PlaceholderTab title="Financial Information" />
+        <FinancialsTab />
       </TabsContent>
       
       <TabsContent value="properties">
-        <PlaceholderTab title="Properties" />
+        <PropertiesTab associationId={association.id} />
       </TabsContent>
       
       <TabsContent value="documents">
-        <PlaceholderTab title="Documents" />
+        <DocumentsTab associationId={association.id} />
       </TabsContent>
       
       <TabsContent value="members">
@@ -127,7 +127,7 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="communications">
-        <PlaceholderTab title="Communications" />
+        <CommunicationsTab associationId={association.id} />
       </TabsContent>
       
       <TabsContent value="settings">

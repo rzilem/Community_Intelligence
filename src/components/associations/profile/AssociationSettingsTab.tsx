@@ -38,9 +38,9 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     insurance_expiration: association.insurance_expiration ?? "",
     fire_inspection_due: association.fire_inspection_due ?? "",
     // Assessment Settings
-    payment_due_day: association.payment_due_day ?? "",
-    late_fee_percentage: association.late_fee_percentage ?? "",
-    grace_period_days: association.grace_period_days ?? "",
+    payment_due_day: association.payment_due_day ?? '',
+    late_fee_percentage: association.late_fee_percentage ?? '',
+    grace_period_days: association.grace_period_days ?? '',
     // Communication Preferences
     email_notifications: association.email_notifications ?? false,
     sms_notifications: association.sms_notifications ?? false,
@@ -111,12 +111,9 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     try {
       const formattedData: Partial<Association> = {
         ...form,
-        ach_generate_in_advance: form.ach_generate_in_advance ? parseInt(form.ach_generate_in_advance, 10) : null,
-        approval_threshold: form.approval_threshold ? parseInt(form.approval_threshold, 10) : null,
-        decline_threshold: form.decline_threshold ? parseInt(form.decline_threshold, 10) : null,
-        minimum_balance: form.minimum_balance ? parseFloat(form.minimum_balance) : null,
-        additional_arc_models: form.additional_arc_models ? typeof form.additional_arc_models === 'string' ? JSON.parse(form.additional_arc_models) : form.additional_arc_models : null,
-        additional_collections_models: form.additional_collections_models ? typeof form.additional_collections_models === 'string' ? JSON.parse(form.additional_collections_models) : form.additional_collections_models : null
+        email_notifications: !!form.email_notifications,
+        sms_notifications: !!form.sms_notifications,
+        auto_reminders: !!form.auto_reminders,
       };
       await onSave(formattedData);
       toast.success("Association settings updated successfully");
