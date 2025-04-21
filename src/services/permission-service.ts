@@ -90,6 +90,43 @@ export const menuPermissions: MenuPermission[] = [
     ]
   },
   {
+    id: 'homeowner-portal',
+    name: 'Homeowner Portal',
+    description: 'Access to homeowner portal features',
+    submenuPermissions: [
+      { id: 'my-profile', name: 'My Profile', parentId: 'homeowner-portal' },
+      { id: 'my-property', name: 'My Property', parentId: 'homeowner-portal' },
+      { id: 'my-payments', name: 'My Payments', parentId: 'homeowner-portal' },
+      { id: 'my-requests', name: 'My Requests', parentId: 'homeowner-portal' },
+      { id: 'my-documents', name: 'My Documents', parentId: 'homeowner-portal' },
+      { id: 'amenity-bookings', name: 'Amenity Bookings', parentId: 'homeowner-portal' }
+    ]
+  },
+  {
+    id: 'board-portal',
+    name: 'Board Portal',
+    description: 'Access to board member portal features',
+    submenuPermissions: [
+      { id: 'board-dashboard', name: 'Board Dashboard', parentId: 'board-portal' },
+      { id: 'financial-reports', name: 'Financial Reports', parentId: 'board-portal' },
+      { id: 'board-documents', name: 'Board Documents', parentId: 'board-portal' },
+      { id: 'violation-review', name: 'Violation Review', parentId: 'board-portal' },
+      { id: 'arc-requests', name: 'ARC Requests', parentId: 'board-portal' }
+    ]
+  },
+  {
+    id: 'vendor-portal',
+    name: 'Vendor Portal',
+    description: 'Access to vendor portal features',
+    submenuPermissions: [
+      { id: 'vendor-profile', name: 'Company Profile', parentId: 'vendor-portal' },
+      { id: 'vendor-payments', name: 'Payment History', parentId: 'vendor-portal' },
+      { id: 'vendor-invoices', name: 'Invoices', parentId: 'vendor-portal' },
+      { id: 'preferred-status', name: 'Preferred Status', parentId: 'vendor-portal' },
+      { id: 'bid-opportunities', name: 'Bid Opportunities', parentId: 'vendor-portal' }
+    ]
+  },
+  {
     id: 'system',
     name: 'System',
     description: 'Access to system settings and configuration',
@@ -219,6 +256,75 @@ export const defaultRoles: Role[] = [
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
       const access = menu.id === 'dashboard' ? 'read' : 'none';
+      
+      const menuPermission: RolePermission = { menuId: menu.id, access };
+      const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
+        menuId: menu.id,
+        submenuId: submenu.id,
+        access
+      }));
+      
+      return [menuPermission, ...submenuPermissions];
+    })
+  },
+  {
+    id: 'board-member',
+    name: 'Board Member',
+    description: 'Board member access to association governance features',
+    accessLevel: 'high',
+    systemRole: true,
+    permissions: menuPermissions.flatMap(menu => {
+      let access: 'full' | 'read' | 'none' = 'none';
+      
+      if (['dashboard', 'board-portal', 'homeowner-portal'].includes(menu.id)) {
+        access = 'full';
+      }
+      
+      const menuPermission: RolePermission = { menuId: menu.id, access };
+      const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
+        menuId: menu.id,
+        submenuId: submenu.id,
+        access
+      }));
+      
+      return [menuPermission, ...submenuPermissions];
+    })
+  },
+  {
+    id: 'homeowner',
+    name: 'Homeowner',
+    description: 'Homeowner access to portal features',
+    accessLevel: 'medium',
+    systemRole: true,
+    permissions: menuPermissions.flatMap(menu => {
+      let access: 'full' | 'read' | 'none' = 'none';
+      
+      if (['homeowner-portal'].includes(menu.id)) {
+        access = 'full';
+      }
+      
+      const menuPermission: RolePermission = { menuId: menu.id, access };
+      const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
+        menuId: menu.id,
+        submenuId: submenu.id,
+        access
+      }));
+      
+      return [menuPermission, ...submenuPermissions];
+    })
+  },
+  {
+    id: 'vendor',
+    name: 'Vendor',
+    description: 'Vendor access to portal features',
+    accessLevel: 'medium',
+    systemRole: true,
+    permissions: menuPermissions.flatMap(menu => {
+      let access: 'full' | 'read' | 'none' = 'none';
+      
+      if (['vendor-portal'].includes(menu.id)) {
+        access = 'full';
+      }
       
       const menuPermission: RolePermission = { menuId: menu.id, access };
       const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({

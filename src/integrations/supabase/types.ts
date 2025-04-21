@@ -276,6 +276,47 @@ export type Database = {
           },
         ]
       }
+      association_portal_widgets: {
+        Row: {
+          association_id: string
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          position: number | null
+          settings: Json | null
+          updated_at: string
+          widget_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          widget_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "association_portal_widgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       association_users: {
         Row: {
           association_id: string
@@ -2540,6 +2581,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_portal_widgets: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          position: number | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+          widget_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+          widget_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+          widget_type?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           column_preferences: Json | null
@@ -2566,6 +2640,48 @@ export type Database = {
           notifications_enabled?: boolean | null
           theme?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendor_profiles: {
+        Row: {
+          company_description: string | null
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_preferred: boolean | null
+          services_offered: string[] | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_description?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_preferred?: boolean | null
+          services_offered?: string[] | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_preferred?: boolean | null
+          services_offered?: string[] | null
+          settings?: Json | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
