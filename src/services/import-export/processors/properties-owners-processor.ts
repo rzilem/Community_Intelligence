@@ -24,7 +24,7 @@ export const propertiesOwnersProcessor = {
     try {
       // Prepare property data
       const propertyData: PropertyData[] = processedData.map(row => ({
-        address: row.address,
+        address: row.address || '',
         unit_number: row.unit_number,
         property_type: row.property_type || 'residential',
         city: row.city,
@@ -37,11 +37,18 @@ export const propertiesOwnersProcessor = {
       }));
 
       if (!propertyData.length || !propertyData[0].address) {
-        details.push({
-          status: 'error',
-          message: 'No valid property data found in the import file'
-        });
-        return this.handleFailure(jobId, processedData.length, details);
+        const error = { 
+          success: false,
+          successfulImports: 0,
+          failedImports: processedData.length,
+          details: [{
+            status: 'error' as const,
+            message: 'No valid property data found in the import file'
+          }],
+          totalProcessed: processedData.length
+        };
+        await handleFailure(jobId, processedData.length, error.details);
+        return error;
       }
 
       // Process properties in batches
@@ -65,11 +72,18 @@ export const propertiesOwnersProcessor = {
       }
 
       if (insertedProperties.length === 0) {
-        details.push({
-          status: 'warning',
-          message: 'No properties were successfully imported'
-        });
-        return this.handleFailure(jobId, processedData.length, details);
+        const error = {
+          success: false,
+          successfulImports: 0,
+          failedImports: processedData.length,
+          details: [{
+            status: 'warning' as const,
+            message: 'No properties were successfully imported'
+          }],
+          totalProcessed: processedData.length
+        };
+        await handleFailure(jobId, processedData.length, error.details);
+        return error;
       }
 
       // Create property lookup map
@@ -82,7 +96,7 @@ export const propertiesOwnersProcessor = {
       });
 
       // Prepare owner data
-      const ownerData = this.prepareOwnerData(processedData, propertyMap);
+      const ownerData = prepareOwnerData(processedData, propertyMap);
 
       // Process owners in batches
       if (ownerData.length > 0) {
@@ -126,62 +140,63 @@ export const propertiesOwnersProcessor = {
 
     } catch (e) {
       console.error('Error in properties_owners import:', e);
-      return this.handleFailure(jobId, processedData.length, [{
-        status: 'error',
-        message: `Failed to import data: ${e instanceof Error ? e.message : 'Unknown error'}`
-      }]);
+      const error = {
+        success: false,
+        successfulImports: 0,
+        failedImports: processedData.length,
+        details: [{
+          status: 'error' as const,
+          message: `Failed to import data: ${e instanceof Error ? e.message : 'Unknown error'}`
+        }],
+        totalProcessed: processedData.length
+      };
+      await handleFailure(jobId, processedData.length, error.details);
+      return error;
     }
-  },
-
-  private prepareOwnerData(
-    processedData: Record<string, any>[],
-    propertyMap: Map<string, string>
-  ): OwnerData[] {
-    const ownerData: OwnerData[] = [];
-
-    processedData.forEach((row, index) => {
-      // Create lookup key
-      const lookupKey = row.unit_number
-        ? `${row.address}|${row.unit_number}`
-        : row.address;
-        
-      const propertyId = propertyMap.get(lookupKey);
-      
-      if (propertyId && (row.first_name || row.last_name)) {
-        ownerData.push({
-          name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
-          email: row.email,
-          phone: row.phone,
-          resident_type: 'owner',
-          property_id: propertyId,
-          move_in_date: row.move_in_date,
-          is_primary: row.is_primary === 'true' || row.is_primary === true,
-          emergency_contact: row.emergency_contact
-        });
-      }
-    });
-
-    return ownerData;
-  },
-
-  private handleFailure(
-    jobId: string,
-    totalRecords: number,
-    details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>
-  ): ProcessorResult {
-    jobService.updateImportJobStatus(jobId, 'failed', {
-      processed: totalRecords,
-      succeeded: 0,
-      failed: totalRecords,
-      errorDetails: { details }
-    });
-    
-    return {
-      success: false,
-      successfulImports: 0,
-      failedImports: totalRecords,
-      totalProcessed: totalRecords,
-      details
-    };
   }
 };
+
+// Helper functions as standalone functions rather than private methods
+function prepareOwnerData(
+  processedData: Record<string, any>[],
+  propertyMap: Map<string, string>
+): OwnerData[] {
+  const ownerData: OwnerData[] = [];
+
+  processedData.forEach((row) => {
+    // Create lookup key
+    const lookupKey = row.unit_number
+      ? `${row.address}|${row.unit_number}`
+      : row.address;
+      
+    const propertyId = propertyMap.get(lookupKey);
+    
+    if (propertyId && (row.first_name || row.last_name)) {
+      ownerData.push({
+        name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+        email: row.email,
+        phone: row.phone,
+        resident_type: 'owner',
+        property_id: propertyId,
+        move_in_date: row.move_in_date,
+        is_primary: row.is_primary === 'true' || row.is_primary === true,
+        emergency_contact: row.emergency_contact
+      });
+    }
+  });
+
+  return ownerData;
+}
+
+async function handleFailure(
+  jobId: string,
+  totalRecords: number,
+  details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>
+): Promise<void> {
+  await jobService.updateImportJobStatus(jobId, 'failed', {
+    processed: totalRecords,
+    succeeded: 0,
+    failed: totalRecords,
+    errorDetails: { details }
+  });
+}

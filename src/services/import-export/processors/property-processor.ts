@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { PropertyData } from './types';
+import { PropertyData, PropertyProcessorResult } from './types';
 import { jobService } from '../job-service';
 
 export const propertyProcessor = {
@@ -8,11 +8,7 @@ export const propertyProcessor = {
     batch: PropertyData[],
     batchIndex: number,
     jobId: string
-  ): Promise<{ 
-    properties: any[];
-    successCount: number;
-    details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>;
-  }> => {
+  ): Promise<PropertyProcessorResult> => {
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
     
     try {
@@ -35,7 +31,11 @@ export const propertyProcessor = {
           status: 'success',
           message: `Imported ${properties.length} properties successfully (batch ${batchIndex + 1})`
         });
-        return { properties, successCount: properties.length, details };
+        return { 
+          properties, 
+          successCount: properties.length, 
+          details 
+        };
       }
       
       return { properties: [], successCount: 0, details };

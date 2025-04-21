@@ -28,3 +28,9 @@ export interface OwnerData {
   property_id?: string;
   resident_type: 'owner';
 }
+
+export interface PropertyProcessorResult {
+  properties: Array<{ id: string; address: string; unit_number?: string }>;
+  successCount: number;
+  details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>;
+}
