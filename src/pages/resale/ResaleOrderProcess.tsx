@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   FileText, 
   ArrowLeft, 
@@ -12,8 +11,10 @@ import {
   Calendar,
   CreditCard,
   Check,
-  Loader2
+  Loader2,
+  Building
 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

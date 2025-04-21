@@ -3,7 +3,7 @@ import { ResalePackageStatus } from './resale-types';
 
 export type ResalePriority = 'Urgent' | 'Regular' | 'Standard' | 'Expedited';
 export type ResaleOrderStatus = 'Scheduled' | 'Completed' | 'In Review' | 'Past Due';
-export type ResaleOrderType = 'Resale Certificate' | 'Mortgage Questionnaire' | 'Questionnaire' | 'Compliance Questionnaire' | 'Condo Questionnaire';
+export type ResaleOrderType = 'Resale Certificate' | 'Mortgage Questionnaire' | 'Questionnaire' | 'Compliance Questionnaire' | 'Condo Questionnaire' | 'Disclosure Packet';
 
 export interface ResaleOrder {
   id: string;
