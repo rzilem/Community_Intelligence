@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface Association {
   id: string;
@@ -33,6 +34,7 @@ export const useAssociations = () => {
   const [associations, setAssociations] = useState<Association[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -41,6 +43,7 @@ export const useAssociations = () => {
   const fetchAssociations = async () => {
     try {
       setIsLoading(true);
+      setError(null);
 
       const { data, error } = await supabase
         .rpc('get_user_associations');
@@ -109,6 +112,10 @@ export const useAssociations = () => {
       if (error) throw error;
 
       toast.success('Association created successfully');
+      
+      // Refresh the associations list after creating a new one
+      fetchAssociations();
+      
       return data;
     } catch (error: any) {
       console.error('Error creating association:', error);
@@ -122,6 +129,8 @@ export const useAssociations = () => {
   const updateAssociation = async (id: string, updates: Partial<Association>) => {
     try {
       setIsUpdating(true);
+      console.log('Updating association with ID:', id);
+      console.log('Update data:', updates);
 
       const { data, error } = await supabase
         .from('associations')
@@ -132,10 +141,16 @@ export const useAssociations = () => {
 
       if (error) throw error;
 
+      console.log('Updated association data:', data);
+      
+      // Update the local state with the updated association
       setAssociations(prev =>
         prev.map(assoc => assoc.id === id ? { ...assoc, ...data } : assoc)
       );
 
+      // Also refresh the entire list to ensure consistency
+      fetchAssociations();
+      
       toast.success('Association updated successfully');
       return data;
     } catch (error: any) {
@@ -159,11 +174,15 @@ export const useAssociations = () => {
 
       if (error) throw error;
 
+      // Update the local state
       setAssociations(prev =>
         prev.map(assoc => assoc.id === id ? { ...assoc, is_archived: true } : assoc)
       );
 
       toast.success('Association archived successfully');
+      
+      // Refresh the associations list after archiving
+      fetchAssociations();
     } catch (error: any) {
       console.error('Error archiving association:', error);
       toast.error(`Failed to archive association: ${error.message}`);
@@ -174,6 +193,7 @@ export const useAssociations = () => {
   };
 
   const manuallyRefresh = () => {
+    console.log('Manually refreshing associations...');
     fetchAssociations();
   };
 

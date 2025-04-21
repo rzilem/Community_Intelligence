@@ -84,7 +84,14 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log('Submitting form values:', values);
-    onSave(values);
+    
+    // Ensure we have the correct data type for total_units
+    const formattedValues = {
+      ...values,
+      total_units: values.total_units ? parseInt(String(values.total_units)) : undefined
+    };
+    
+    onSave(formattedValues);
   }
 
   return (
