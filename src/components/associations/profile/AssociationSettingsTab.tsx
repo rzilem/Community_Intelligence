@@ -9,11 +9,13 @@ import { toast } from "sonner";
 import { Calendar, Percent, Clock, Bell, MessageSquare, AlarmClock, CreditCard, FileText, Building, Shield } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 interface AssociationSettingsTabProps {
   association: Association;
   onSave: (data: Partial<Association>) => Promise<void>;
   saving?: boolean;
 }
+
 export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
   association,
   onSave,
@@ -82,24 +84,28 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     // Miscellaneous
     association_time_zone: association.association_time_zone ?? "America/New_York"
   });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value
     });
   };
+
   const handleSelectChange = (field: string, value: string) => {
     setForm(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSwitchChange = (field: string, value: boolean) => {
     setForm(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -120,7 +126,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     }
   };
 
-  // Timezone options
   const timezoneOptions = [{
     value: "America/New_York",
     label: "Eastern Time (ET)"
@@ -141,7 +146,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Hawaii Time (HI)"
   }];
 
-  // Property type options
   const propertyTypeOptions = [{
     value: "condominium",
     label: "Condominium"
@@ -162,7 +166,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Commercial"
   }];
 
-  // ARC Model options
   const arcModelOptions = [{
     value: "standard",
     label: "Standard"
@@ -180,7 +183,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Custom"
   }];
 
-  // Collections Model options
   const collectionsModelOptions = [{
     value: "standard",
     label: "Standard"
@@ -195,7 +197,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Custom"
   }];
 
-  // Statement Format options
   const statementFormatOptions = [{
     value: "standard",
     label: "Standard"
@@ -210,7 +211,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Custom"
   }];
 
-  // Address options
   const addressSettingOptions = [{
     value: "association",
     label: "Association Address"
@@ -222,7 +222,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Custom"
   }];
 
-  // Threshold type options
   const thresholdTypeOptions = [{
     value: "amount",
     label: "Fixed Amount"
@@ -234,7 +233,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     label: "Months of Assessments"
   }];
 
-  // ACH draft amount options
   const draftAmountOptions = [{
     value: "full",
     label: "Full Balance"
@@ -245,23 +243,65 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     value: "custom",
     label: "Custom Amount"
   }];
-  return <div className="max-w-5xl mx-auto">
+
+  return (
+    <div className="w-full">
       <Card className="border-0 shadow-sm">
-        <CardContent className="p-6 px-0 py-0">
-          <h2 className="text-2xl font-bold mb-6">Association Settings</h2>
+        <CardContent className="p-0">
+          <h2 className="text-2xl font-bold p-6">Association Settings</h2>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-6 grid grid-cols-3 md:grid-cols-6 w-full">
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="assessments">Assessments</TabsTrigger>
-              <TabsTrigger value="communication">Communication</TabsTrigger>
-              <TabsTrigger value="ach">ACH</TabsTrigger>
-              <TabsTrigger value="arc">ARC</TabsTrigger>
-              <TabsTrigger value="collections">Collections</TabsTrigger>
-              <TabsTrigger value="statements">Statements</TabsTrigger>
-              <TabsTrigger value="misc">Misc</TabsTrigger>
+            <TabsList className="flex justify-between w-full border-b rounded-none bg-transparent p-0 h-auto">
+              <TabsTrigger 
+                value="general" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                General
+              </TabsTrigger>
+              <TabsTrigger 
+                value="assessments" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                Assessments
+              </TabsTrigger>
+              <TabsTrigger 
+                value="communication" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                Communication
+              </TabsTrigger>
+              <TabsTrigger 
+                value="ach" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                ACH
+              </TabsTrigger>
+              <TabsTrigger 
+                value="arc" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                ARC
+              </TabsTrigger>
+              <TabsTrigger 
+                value="collections" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                Collections
+              </TabsTrigger>
+              <TabsTrigger 
+                value="statements" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                Statements
+              </TabsTrigger>
+              <TabsTrigger 
+                value="misc" 
+                className="flex-1 rounded-none border-b-2 border-transparent px-8 py-4 text-base font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
+              >
+                Misc
+              </TabsTrigger>
             </TabsList>
-            
+
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* General Information Tab */}
               <TabsContent value="general" className="space-y-6">
@@ -710,6 +750,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
           </Tabs>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default AssociationSettingsTab;
