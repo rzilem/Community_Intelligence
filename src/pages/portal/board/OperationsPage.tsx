@@ -13,13 +13,18 @@ import {
 } from 'lucide-react';
 import DashboardTabs from '@/components/operations/DashboardTabs';
 import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
+import WorkOrdersTabContent from '@/components/work-orders/WorkOrdersTabContent';
+import ViolationsTabContent from '@/components/violations/ViolationsTabContent';
 import { useAuth } from '@/contexts/auth';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
+import { CollectionsTable } from '@/components/collections/CollectionsTable';
+import { useCollectionsData } from '@/hooks/collections/useCollectionsData';
 
 const OperationsPage = () => {
   const [activeTab, setActiveTab] = useState('invoices');
   const [searchTerm, setSearchTerm] = useState('');
   const { currentAssociation } = useAuth();
+  const { accounts, isLoading: collectionsLoading } = useCollectionsData(currentAssociation?.id || '');
 
   const tabs = [
     { id: 'invoices', label: 'Invoices', icon: <FileText className="h-4 w-4" /> },
@@ -63,13 +68,16 @@ const OperationsPage = () => {
                 />
               )}
               {activeTab === 'work-orders' && (
-                <div>Work Orders content will go here</div>
+                <WorkOrdersTabContent />
               )}
               {activeTab === 'collections' && (
-                <div>Collections content will go here</div>
+                <CollectionsTable 
+                  accounts={accounts}
+                  onSelectAccount={() => {}}
+                />
               )}
               {activeTab === 'violations' && (
-                <div>Violations content will go here</div>
+                <ViolationsTabContent />
               )}
             </div>
           </Card>
