@@ -1,4 +1,3 @@
-
 export interface Association {
   id: string;
   name: string;
@@ -23,7 +22,40 @@ export interface Association {
   country?: string;
   fire_inspection_due?: string;
   insurance_expiration?: string;
-  [key: string]: any; // Allow for additional fields
+  ach_auto_draft_day?: string;
+  ach_generate_in_advance?: number;
+  ach_draft_amount?: string;
+  ach_include_charges?: string;
+  arc_model?: string;
+  additional_arc_models?: any;
+  require_arc_voting?: boolean;
+  approval_threshold?: number;
+  decline_threshold?: number;
+  arc_name?: string;
+  collections_active?: string;
+  collections_model?: string;
+  processing_days?: string;
+  additional_collections_models?: any;
+  minimum_balance?: number;
+  age_of_balance?: string;
+  balance_threshold_type?: string;
+  balance_threshold?: string;
+  lien_threshold_type?: string;
+  lien_threshold?: string;
+  new_association_grace_period?: string;
+  new_owner_grace_period?: string;
+  board_approval_required?: boolean;
+  association_address_setting?: string;
+  statement_format?: string;
+  remittance_coupon_message?: string;
+  utilities_billing_message?: string;
+  include_block_ledger_accounts?: boolean;
+  include_ach_default?: boolean;
+  include_all_properties_default?: boolean;
+  include_credit_balances_default?: boolean;
+  include_qr_code?: boolean;
+  association_time_zone?: string;
+  [key: string]: any;
 }
 
 export interface AssociationAIIssue {

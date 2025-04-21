@@ -320,77 +320,176 @@ export type Database = {
       }
       associations: {
         Row: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
           fire_inspection_due: string | null
           founded_date: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
           logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
           phone: string | null
           primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
           secondary_color: string | null
           state: string | null
+          statement_format: string | null
           status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }
         Insert: {
+          ach_auto_draft_day?: string | null
+          ach_draft_amount?: string | null
+          ach_generate_in_advance?: number | null
+          ach_include_charges?: string | null
+          additional_arc_models?: Json | null
+          additional_collections_models?: Json | null
           address?: string | null
+          age_of_balance?: string | null
+          approval_threshold?: number | null
+          arc_model?: string | null
+          arc_name?: string | null
+          association_address_setting?: string | null
+          association_time_zone?: string | null
+          balance_threshold?: string | null
+          balance_threshold_type?: string | null
+          board_approval_required?: boolean | null
           city?: string | null
+          collections_active?: string | null
+          collections_model?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          decline_threshold?: number | null
           description?: string | null
           fire_inspection_due?: string | null
           founded_date?: string | null
           id?: string
+          include_ach_default?: boolean | null
+          include_all_properties_default?: boolean | null
+          include_block_ledger_accounts?: boolean | null
+          include_credit_balances_default?: boolean | null
+          include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          lien_threshold?: string | null
+          lien_threshold_type?: string | null
           logo_url?: string | null
+          minimum_balance?: number | null
           name: string
+          new_association_grace_period?: string | null
+          new_owner_grace_period?: string | null
           phone?: string | null
           primary_color?: string | null
+          processing_days?: string | null
           property_type?: string | null
+          remittance_coupon_message?: string | null
+          require_arc_voting?: boolean | null
           secondary_color?: string | null
           state?: string | null
+          statement_format?: string | null
           status?: string | null
           total_units?: number | null
           updated_at?: string
+          utilities_billing_message?: string | null
           website?: string | null
           zip?: string | null
         }
         Update: {
+          ach_auto_draft_day?: string | null
+          ach_draft_amount?: string | null
+          ach_generate_in_advance?: number | null
+          ach_include_charges?: string | null
+          additional_arc_models?: Json | null
+          additional_collections_models?: Json | null
           address?: string | null
+          age_of_balance?: string | null
+          approval_threshold?: number | null
+          arc_model?: string | null
+          arc_name?: string | null
+          association_address_setting?: string | null
+          association_time_zone?: string | null
+          balance_threshold?: string | null
+          balance_threshold_type?: string | null
+          board_approval_required?: boolean | null
           city?: string | null
+          collections_active?: string | null
+          collections_model?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          decline_threshold?: number | null
           description?: string | null
           fire_inspection_due?: string | null
           founded_date?: string | null
           id?: string
+          include_ach_default?: boolean | null
+          include_all_properties_default?: boolean | null
+          include_block_ledger_accounts?: boolean | null
+          include_credit_balances_default?: boolean | null
+          include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          lien_threshold?: string | null
+          lien_threshold_type?: string | null
           logo_url?: string | null
+          minimum_balance?: number | null
           name?: string
+          new_association_grace_period?: string | null
+          new_owner_grace_period?: string | null
           phone?: string | null
           primary_color?: string | null
+          processing_days?: string | null
           property_type?: string | null
+          remittance_coupon_message?: string | null
+          require_arc_voting?: boolean | null
           secondary_color?: string | null
           state?: string | null
+          statement_format?: string | null
           status?: string | null
           total_units?: number | null
           updated_at?: string
+          utilities_billing_message?: string | null
           website?: string | null
           zip?: string | null
         }
@@ -2567,27 +2666,60 @@ export type Database = {
       get_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
           fire_inspection_due: string | null
           founded_date: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
           logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
           phone: string | null
           primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
           secondary_color: string | null
           state: string | null
+          statement_format: string | null
           status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }[]
@@ -2607,27 +2739,60 @@ export type Database = {
       get_user_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
           fire_inspection_due: string | null
           founded_date: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
           logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
           phone: string | null
           primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
           secondary_color: string | null
           state: string | null
+          statement_format: string | null
           status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }[]
