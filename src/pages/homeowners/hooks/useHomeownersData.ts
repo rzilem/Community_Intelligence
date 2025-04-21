@@ -53,19 +53,16 @@ export const useHomeownersData = () => {
       }
 
       // First get the total count - FIX: Use a more reliable count query
-      const countQuery = supabase
+      // Create a properly structured query for counting
+      const { count, error: countError } = await supabase
         .from('residents')
-        .select('id', { count: 'exact' })
-        .in('properties.association_id', associationIds);
-      
-      // We need to add the join condition to the count query
-      const { count, error: countError } = await countQuery
         .select(`
           id,
           properties:property_id (
             association_id
           )
-        `, { count: 'exact', head: false });
+        `, { count: 'exact' })
+        .in('properties.association_id', associationIds);
 
       if (countError) {
         console.error('Error fetching resident count:', countError);
