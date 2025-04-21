@@ -3417,6 +3417,117 @@ export type Database = {
         }
         Relationships: []
       }
+      violations: {
+        Row: {
+          association_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          fine_amount: number | null
+          id: string
+          issued_date: string
+          property_id: string
+          resident_id: string | null
+          resolved_date: string | null
+          status: string
+          updated_at: string
+          violation_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          issued_date?: string
+          property_id: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          issued_date?: string
+          property_id?: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type?: string
+        }
+        Relationships: []
+      }
+      work_orders: {
+        Row: {
+          actual_cost: number | null
+          assigned_to: string | null
+          association_id: string
+          attachments: Json | null
+          category: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          id: string
+          priority: string
+          property_id: string | null
+          requested_by: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          association_id: string
+          attachments?: Json | null
+          category?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string
+          property_id?: string | null
+          requested_by?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          association_id?: string
+          attachments?: Json | null
+          category?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string
+          property_id?: string | null
+          requested_by?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       workflow_templates: {
         Row: {
           created_at: string

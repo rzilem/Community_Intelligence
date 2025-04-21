@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Route } from 'react-router-dom';
 import RequireAuth from '@/components/auth/RequireAuth';
@@ -24,7 +23,8 @@ import BoardTrainingPage from '@/pages/portal/board/TrainingPage';
 import BoardVideoEducationPage from '@/pages/portal/board/VideoEducationPage';
 import BoardAIAssistantPage from '@/pages/portal/board/AIAssistantPage';
 import BoardReimbursementPage from '@/pages/portal/board/ReimbursementPage';
-import BoardMemberDashboardPage from '@/pages/portal/board/MemberDashboardPage';
+import BoardDashboardPage from '@/pages/portal/board/MemberDashboardPage';
+import OperationsPage from '@/pages/portal/board/OperationsPage';
 
 // Homeowner Portal Routes
 export const homeownerPortalRoutes = [
@@ -77,6 +77,15 @@ export const homeownerPortalRoutes = [
 
 // Board Portal Routes
 export const boardPortalRoutes = [
+  <Route 
+    key="board-operations"
+    path="/portal/board/operations"
+    element={
+      <RequireAuth menuId="board-portal">
+        <OperationsPage />
+      </RequireAuth>
+    }
+  />,
   <Route 
     key="board-invoices"
     path="/portal/board/invoices"
@@ -199,7 +208,7 @@ export const boardPortalRoutes = [
     path="/portal/board/dashboard"
     element={
       <RequireAuth menuId="board-portal">
-        <BoardMemberDashboardPage />
+        <BoardDashboardPage />
       </RequireAuth>
     }
   />,
