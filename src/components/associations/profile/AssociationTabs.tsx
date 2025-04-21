@@ -6,7 +6,15 @@ import { PlaceholderTab } from './PlaceholderTab';
 import { Association, AssociationAIIssue } from '@/types/association-types';
 import MembersTab from './MembersTab';
 import AssociationSettingsTab from './AssociationSettingsTab';
-import { Settings } from 'lucide-react';
+import { 
+  FileText, 
+  CreditCard, 
+  Building2, 
+  FileDocument, 
+  Users, 
+  MessageSquare, 
+  Settings 
+} from 'lucide-react';
 import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
 
 interface AssociationTabsProps {
@@ -46,48 +54,54 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
 
   return (
     <Tabs defaultValue="details" className="w-full mt-6" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="w-full max-w-6xl flex flex-nowrap mb-6 border-b rounded-none bg-transparent p-0 h-auto overflow-x-auto scrollbar-hide">
+      <TabsList className="w-full max-w-[1400px] flex justify-between mb-8 border-b rounded-none bg-transparent p-0 h-auto">
         <TabsTrigger 
           value="details" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <FileText className="h-4 w-4" />
           Details
         </TabsTrigger>
         <TabsTrigger 
           value="financials" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <CreditCard className="h-4 w-4" />
           Financials
         </TabsTrigger>
         <TabsTrigger 
           value="properties" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <Building2 className="h-4 w-4" />
           Properties
         </TabsTrigger>
         <TabsTrigger 
           value="documents" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <FileDocument className="h-4 w-4" />
           Documents
         </TabsTrigger>
         <TabsTrigger 
           value="members" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <Users className="h-4 w-4" />
           Members
         </TabsTrigger>
         <TabsTrigger 
           value="communications" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
+          <MessageSquare className="h-4 w-4" />
           Communications
         </TabsTrigger>
         <TabsTrigger 
           value="settings" 
-          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
         >
-          <Settings className="h-3 w-3 mr-1" />
+          <Settings className="h-4 w-4" />
           Settings
         </TabsTrigger>
       </TabsList>
