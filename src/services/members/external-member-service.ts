@@ -11,15 +11,19 @@ export const externalMemberService = {
         return existingUser;
       }
       
-      // For new users, we need to insert without specifying an ID
-      // The profiles table might be set up to allow UUID generation on the server
+      // The TypeScript error indicates that the profiles table expects an id
+      // Let's use upsert instead of insert, which allows for server-side generation
+      // of the id when it doesn't exist
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           first_name: userData.first_name,
           last_name: userData.last_name,
           email: userData.email,
           role: userData.user_type
+        }, { 
+          onConflict: 'email',
+          ignoreDuplicates: false
         })
         .select()
         .single();
