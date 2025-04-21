@@ -1,56 +1,26 @@
 
-import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
+import { Homeowner } from '@/components/homeowners/detail/types';
 
-/**
- * Converts the mock homeowner data to the Homeowner type
- */
-export const convertDbResidentToHomeowner = (data: any): Homeowner => {
-  // Ensure balance is a string
-  const balanceStr = typeof data.balance === 'number' ? data.balance.toString() : data.balance || '0';
-
+export function formatCommentAsNote(comment: any) {
   return {
-    id: data.id,
-    name: data.name,
-    email: data.email,
-    phone: data.phone || '',
-    moveInDate: data.moveInDate,
-    moveOutDate: data.moveOutDate,
-    property: data.property || data.propertyAddress || '',
-    unit: data.unit || data.unitNumber || '',
-    balance: balanceStr,
-    tags: data.tags || [],
-    violations: typeof data.violations === 'number' ? data.violations : 0,
-    lastContact: {
-      called: data.lastContact?.called || '',
-      visit: data.lastContact?.visit || '',
-      email: data.lastContact?.email || ''
-    },
-    status: data.status,
-    avatarUrl: data.avatarUrl || '',
-    notes: (data.notes || []).map((note: any) => ({
-      type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
-      author: note.author || '',
-      content: note.content || '',
-      date: note.date || ''
-    })),
-    // Add additional fields for compatibility
-    type: data.type,
-    propertyId: data.propertyId,
-    propertyAddress: data.propertyAddress,
-    association: data.association,
-    closingDate: data.closingDate,
-    lastPayment: data.lastPayment
+    id: comment.id,
+    content: comment.content,
+    author: comment.user_name,
+    date: comment.created_at,
+    type: comment.content.startsWith('[SYSTEM]') ? 'system' : 'manual'
   };
-};
+}
 
-/**
- * Formats a comment from the database into a Note type
- */
-export const formatCommentAsNote = (comment: any): NoteType => {
+export function formatResidentAsHomeowner(resident: any): Homeowner {
   return {
-    type: comment.content.includes('[SYSTEM]') ? 'system' : 'manual',
-    author: comment.content.includes('[SYSTEM]') ? 'System' : comment.user_name || 'Staff',
-    content: comment.content.replace('[SYSTEM]', '').trim(),
-    date: new Date(comment.created_at).toLocaleString()
+    id: resident.id,
+    name: resident.name,
+    email: resident.email,
+    phone: resident.phone,
+    moveInDate: resident.move_in_date,
+    property: resident.property?.address,
+    unit: resident.property?.unit_number,
+    status: 'active',
+    type: resident.resident_type
   };
-};
+}

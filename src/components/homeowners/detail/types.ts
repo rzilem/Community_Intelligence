@@ -5,6 +5,7 @@ export interface Homeowner {
   email?: string;
   phone?: string;
   moveInDate?: string;
+  moveOutDate?: string;
   property?: string;
   unit?: string;
   balance?: string;
@@ -20,6 +21,7 @@ export interface Homeowner {
   lastLoginDate?: string;
   notes?: NoteType[];
   avatarUrl?: string;
+  type?: 'owner' | 'tenant' | 'family-member' | 'other';
 }
 
 export interface NoteType {

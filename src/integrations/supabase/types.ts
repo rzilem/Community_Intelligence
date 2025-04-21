@@ -1004,6 +1004,50 @@ export type Database = {
           },
         ]
       }
+      community_polls: {
+        Row: {
+          association_id: string
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_closed: boolean | null
+          options: Json
+          title: string
+        }
+        Insert: {
+          association_id: string
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          title: string
+        }
+        Update: {
+          association_id?: string
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_polls_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_issues: {
         Row: {
           association_id: string
@@ -1067,6 +1111,44 @@ export type Database = {
             columns: ["resident_id"]
             isOneToOne: false
             referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_messages: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]
@@ -1292,6 +1374,91 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_discussions: {
+        Row: {
+          association_id: string
+          category: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_locked: boolean | null
+          is_pinned: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          category: string
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_locked?: boolean | null
+          is_pinned?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_locked?: boolean | null
+          is_pinned?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_discussions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_replies: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          discussion_id: string
+          id: string
+          is_solution: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          discussion_id: string
+          id?: string
+          is_solution?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          discussion_id?: string
+          id?: string
+          is_solution?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "forum_discussions"
             referencedColumns: ["id"]
           },
         ]
@@ -2098,6 +2265,85 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      poll_responses: {
+        Row: {
+          created_at: string
+          id: string
+          poll_id: string
+          selected_option: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          poll_id: string
+          selected_option: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          poll_id?: string
+          selected_option?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_responses_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_notifications: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          link: string | null
+          metadata: Json | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_notifications_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
