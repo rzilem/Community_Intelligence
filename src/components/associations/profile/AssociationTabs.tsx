@@ -10,7 +10,7 @@ import {
   FileText, 
   CreditCard, 
   Building2, 
-  FileDocument, 
+  FileText as FileDocument, // Use FileText as FileDocument 
   Users, 
   MessageSquare, 
   Settings 
