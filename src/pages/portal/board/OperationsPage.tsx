@@ -11,8 +11,8 @@ import {
   Filter, 
   Search 
 } from 'lucide-react';
-import { DashboardTabs } from '@/components/operations/DashboardTabs';
-import { InvoiceTabContent } from '@/components/invoices/InvoiceTabContent';
+import DashboardTabs from '@/components/operations/DashboardTabs';
+import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
 import { useAuth } from '@/contexts/auth';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 
