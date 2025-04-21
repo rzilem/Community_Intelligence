@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LogOut, X } from 'lucide-react';
+import { LogOut, X, Home, Building, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -106,6 +106,33 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
+          <SidebarNavItem
+            name="Homeowner Portal"
+            path="/portal/homeowner"
+            icon={Home}
+            isOpen={activeSection === 'homeowner-portal'}
+            toggleSection={() => toggleSection('homeowner-portal')}
+            isActive={location.pathname === '/portal/homeowner'}
+          />
+          
+          <SidebarNavItem
+            name="Board Portal"
+            path="/portal/board"
+            icon={Building}
+            isOpen={activeSection === 'board-portal'}
+            toggleSection={() => toggleSection('board-portal')}
+            isActive={location.pathname === '/portal/board'}
+          />
+          
+          <SidebarNavItem
+            name="Vendor Portal"
+            path="/portal/vendor"
+            icon={Truck}
+            isOpen={activeSection === 'vendor-portal'}
+            toggleSection={() => toggleSection('vendor-portal')}
+            isActive={location.pathname === '/portal/vendor'}
+          />
+
           {mainNavItems.map((item) => (
             <SidebarNavItem
               key={item.path}

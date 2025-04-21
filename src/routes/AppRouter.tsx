@@ -10,6 +10,7 @@ import { operationsRoutes } from './operationsRoutes';
 import { recordsReportsRoutes } from './recordsReportsRoutes';
 import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
+import { portalRoutes } from './portalRoutes';
 
 /**
  * Main application router component that consolidates all routes
@@ -32,6 +33,9 @@ export const AppRouter = () => {
           element={route.element} 
         />
       ))}
+      
+      {/* Portal routes */}
+      {portalRoutes}
       
       {/* Community Management routes */}
       {communityManagementRoutes.map((route, index) => (

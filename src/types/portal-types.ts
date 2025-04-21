@@ -11,7 +11,10 @@ export type WidgetType =
   | 'quick-actions'
   | 'board-summary'
   | 'financial-snapshot'
-  | 'vendor-stats';
+  | 'vendor-stats'
+  | 'invoices'
+  | 'bid-opportunities'
+  | 'preferred-status';
 
 export interface PortalWidget {
   id: string;
