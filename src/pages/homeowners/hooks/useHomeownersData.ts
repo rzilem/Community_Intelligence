@@ -48,20 +48,31 @@ export const useHomeownersData = () => {
         console.log('No associations found for user');
         setLoading(false);
         setResidents([]);
+        setTotalCount(0);
         return;
       }
 
-      // First get the total count
-      const { count, error: countError } = await supabase
+      // First get the total count - FIX: Use a more reliable count query
+      const countQuery = supabase
         .from('residents')
-        .select('id', { count: 'exact', head: true })
+        .select('id', { count: 'exact' })
         .in('properties.association_id', associationIds);
+      
+      // We need to add the join condition to the count query
+      const { count, error: countError } = await countQuery
+        .select(`
+          id,
+          properties:property_id (
+            association_id
+          )
+        `, { count: 'exact', head: false });
 
       if (countError) {
         console.error('Error fetching resident count:', countError);
         setError('Failed to load count: ' + countError.message);
         setTotalCount(0);
       } else {
+        console.log('Total resident count:', count);
         setTotalCount(count || 0);
       }
       

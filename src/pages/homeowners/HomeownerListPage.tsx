@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users, Plus } from 'lucide-react';
+import { Users, Plus, RefreshCw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ import { useHomeownerFilters } from './hooks/useHomeownerFilters';
 import HomeownerListFilters from './components/HomeownerListFilters';
 import HomeownerTable from './components/HomeownerTable';
 import { Skeleton } from '@/components/ui/skeleton';
+import ApiError from '@/components/ui/api-error';
 
 const HomeownerListPage = () => {
   const navigate = useNavigate();
@@ -116,15 +117,16 @@ const HomeownerListPage = () => {
             {error && (
               <Alert className="mb-6" variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {error}
+                <AlertTitle>Error Loading Data</AlertTitle>
+                <AlertDescription className="flex items-center gap-4">
+                  <span>{error}</span>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="ml-4"
                     onClick={handleRetry}
+                    className="gap-1 items-center"
                   >
+                    <RefreshCw className="h-3 w-3" />
                     Retry
                   </Button>
                 </AlertDescription>
@@ -159,7 +161,7 @@ const HomeownerListPage = () => {
             ) : (
               <HomeownerTable
                 loading={loading}
-                filteredHomeowners={residents} // Use direct residents instead of filtered
+                filteredHomeowners={residents}
                 visibleColumnIds={visibleColumnIds}
                 extractStreetAddress={extractStreetAddress}
                 allResidentsCount={totalCount}
