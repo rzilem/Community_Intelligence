@@ -1,10 +1,10 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Shield } from 'lucide-react';
 import { AddNoteDialog } from './AddNoteDialog';
 import { NoteType } from './types';
+import LoginDetailsTab from './tabs/LoginDetailsTab';
 
 interface HomeownerTabsProps {
   activeTab: string;
@@ -14,6 +14,8 @@ interface HomeownerTabsProps {
   notes?: NoteType[];
   onAddNote?: (note: Omit<NoteType, 'date'>) => void;
   homeownerId: string;
+  email?: string;
+  lastLoginDate?: string;
 }
 
 export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
@@ -23,7 +25,9 @@ export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
   setActiveNotesTab,
   notes = [],
   onAddNote,
-  homeownerId
+  homeownerId,
+  email,
+  lastLoginDate
 }) => {
   const [isAddNoteDialogOpen, setIsAddNoteDialogOpen] = useState(false);
 
@@ -45,6 +49,10 @@ export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
           <TabsTrigger value="Financial">Financial</TabsTrigger>
           <TabsTrigger value="Documents">Documents</TabsTrigger>
           <TabsTrigger value="History">History</TabsTrigger>
+          <TabsTrigger value="Login" className="flex items-center gap-1">
+            <Shield className="h-4 w-4" />
+            <span>Login</span>
+          </TabsTrigger>
         </TabsList>
         
         {activeTab === 'Notes' && (
@@ -150,6 +158,14 @@ export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
           <h3 className="text-xl font-semibold mb-4">Activity History</h3>
           <p>This section will show a timeline of all homeowner activity.</p>
         </div>
+      </TabsContent>
+
+      <TabsContent value="Login" className="space-y-4">
+        <LoginDetailsTab 
+          homeownerId={homeownerId}
+          email={email}
+          lastLoginDate={lastLoginDate}
+        />
       </TabsContent>
 
       <AddNoteDialog

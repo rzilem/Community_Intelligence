@@ -144,6 +144,8 @@ const HomeownerDetailPage: React.FC = () => {
           notes={homeowner?.notes || []}
           onAddNote={handleAddNote}
           homeownerId={id || homeowner?.id || ''}
+          email={homeowner?.email}
+          lastLoginDate={homeowner?.lastLoginDate || undefined}
         />
       </div>
     </AppLayout>

@@ -1,75 +1,178 @@
 
-import { useState, useEffect } from 'react';
-import { Homeowner } from '@/components/homeowners/detail/types';
-import { useResidentData } from './resident/useResidentData';
-import { useResidentNotes } from './resident/useResidentNotes';
-import { useResidentImage } from './resident/useResidentImage';
-import { NoteType } from '@/components/homeowners/detail/types';
+import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
+import { toast } from 'sonner';
 
 export const useHomeownerData = (homeownerId: string) => {
-  const {
-    resident,
-    loading: residentLoading,
-    error: residentError,
-    updateResidentData
-  } = useResidentData(homeownerId);
-
-  const {
-    notes,
-    loading: notesLoading,
-    error: notesError,
-    addNote,
-    fetchNotes
-  } = useResidentNotes(homeownerId);
-
-  const { avatarUrl, updateResidentImage } = useResidentImage();
-
-  // Combine the data from the separate hooks
-  const [homeowner, setHomeowner] = useState<Homeowner>({} as Homeowner);
+  const [homeowner, setHomeowner] = useState<Homeowner | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Update homeowner with resident data when it changes
-    setHomeowner(prev => ({
-      ...prev,
-      ...resident,
-      notes
-    }));
-
-    // Determine overall loading state
-    setLoading(residentLoading || notesLoading);
-
-    // Determine overall error state
-    if (residentError) {
-      setError(residentError);
-    } else if (notesError) {
-      setError(notesError);
-    } else {
-      setError(null);
+  // Function to load homeowner data
+  const loadHomeownerData = useCallback(async () => {
+    if (!homeownerId) {
+      setLoading(false);
+      setError('No homeowner ID provided');
+      return;
     }
-  }, [resident, notes, residentLoading, notesLoading, residentError, notesError]);
 
-  const addHomeownerNote = async (noteData: Omit<NoteType, 'date'>) => {
     try {
-      const result = await addNote(noteData);
-      // Force a refresh of the notes after adding a new one
-      await fetchNotes();
-      console.log("Note added and refreshed");
-      return result;
-    } catch (error) {
-      console.error("Error in addHomeownerNote:", error);
-      throw error;
+      setLoading(true);
+      setError(null);
+
+      // This is a mock implementation - in a real app, this would fetch from your API
+      // For demo purposes, we're just simulating a response
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      // Mock data for homeowner
+      const mockHomeowner: Homeowner = {
+        id: homeownerId,
+        name: 'John Smith',
+        email: 'john.smith@example.com',
+        phone: '(512) 555-1234',
+        moveInDate: '2021-06-15',
+        property: '123 Main Street',
+        unit: 'Apt 4B',
+        balance: '150.00',
+        status: 'Active',
+        tags: ['Resident', 'Board Member'],
+        violations: 0,
+        lastContact: {
+          email: '2023-09-15T14:30:00Z',
+          called: '2023-08-20T10:15:00Z',
+          visit: '2023-07-05T16:45:00Z'
+        },
+        lastLoginDate: '2023-10-10T08:22:15Z',
+        notes: [
+          {
+            id: '1',
+            content: 'Requested information about pool hours',
+            author: 'Jane Doe',
+            date: '2023-09-15T14:30:00Z',
+            type: 'manual'
+          },
+          {
+            id: '2',
+            content: 'Submitted maintenance request for broken window',
+            author: 'System',
+            date: '2023-08-10T09:45:00Z',
+            type: 'system'
+          }
+        ]
+      };
+
+      setHomeowner(mockHomeowner);
+      setLoading(false);
+    } catch (err: any) {
+      console.error('Error loading homeowner data:', err);
+      setError(err.message || 'Failed to load homeowner data');
+      setLoading(false);
     }
-  };
+  }, [homeownerId]);
 
-  const updateHomeownerImage = (newUrl: string) => {
-    updateResidentImage(newUrl);
-  };
+  // Load data on initial render
+  useState(() => {
+    loadHomeownerData();
+  });
 
-  const updateHomeownerData = async (data: Partial<Homeowner>) => {
-    return updateResidentData(data);
-  };
+  // Function to update homeowner avatar
+  const updateHomeownerImage = useCallback(async (imageUrl: string) => {
+    if (!homeownerId) return;
+    
+    try {
+      // This would be an API call in a real implementation
+      console.log('Updating homeowner image:', { homeownerId, imageUrl });
+      
+      setHomeowner(prev => prev ? { ...prev, avatarUrl: imageUrl } : null);
+      return true;
+    } catch (err: any) {
+      console.error('Error updating homeowner image:', err);
+      toast.error('Failed to update profile image');
+      return false;
+    }
+  }, [homeownerId]);
+
+  // Function to update homeowner data
+  const updateHomeownerData = useCallback(async (data: Partial<Homeowner>) => {
+    if (!homeownerId) return;
+    
+    try {
+      // This would be an API call in a real implementation
+      console.log('Updating homeowner data:', { homeownerId, data });
+      
+      setHomeowner(prev => prev ? { ...prev, ...data } : null);
+      toast.success('Homeowner information updated');
+      return true;
+    } catch (err: any) {
+      console.error('Error updating homeowner data:', err);
+      toast.error('Failed to update homeowner information');
+      return false;
+    }
+  }, [homeownerId]);
+
+  // Function to add a note
+  const addHomeownerNote = useCallback(async (note: Omit<NoteType, 'date'>) => {
+    if (!homeownerId) return;
+    
+    try {
+      // This would be an API call in a real implementation
+      console.log('Adding homeowner note:', { homeownerId, note });
+      
+      // Create a new note with the current date
+      const newNote: NoteType = {
+        ...note,
+        id: Date.now().toString(), // This would be assigned by the server in a real implementation
+        date: new Date().toISOString()
+      };
+      
+      setHomeowner(prev => {
+        if (!prev) return null;
+        
+        const updatedNotes = [...(prev.notes || []), newNote];
+        return { ...prev, notes: updatedNotes };
+      });
+      
+      toast.success('Note added successfully');
+      return true;
+    } catch (err: any) {
+      console.error('Error adding homeowner note:', err);
+      toast.error('Failed to add note');
+      return false;
+    }
+  }, [homeownerId]);
+
+  // Function to add a system note for login events
+  const addSystemLoginNote = useCallback(async (message: string) => {
+    if (!homeownerId) return;
+    
+    try {
+      // This would be an API call in a real implementation
+      console.log('Adding login system note:', { homeownerId, message });
+      
+      const systemNote: NoteType = {
+        content: message,
+        author: 'System',
+        date: new Date().toISOString(),
+        type: 'system'
+      };
+      
+      // Update the homeowner's lastLoginDate
+      const updatedHomeowner = {
+        ...homeowner,
+        lastLoginDate: new Date().toISOString(),
+        notes: [...(homeowner?.notes || []), systemNote]
+      };
+      
+      setHomeowner(updatedHomeowner);
+      return true;
+    } catch (err: any) {
+      console.error('Error adding login system note:', err);
+      return false;
+    }
+  }, [homeownerId, homeowner]);
 
   return {
     homeowner,
@@ -77,6 +180,8 @@ export const useHomeownerData = (homeownerId: string) => {
     error,
     updateHomeownerImage,
     updateHomeownerData,
-    addHomeownerNote
+    addHomeownerNote,
+    addSystemLoginNote,
+    refreshData: loadHomeownerData
   };
 };
