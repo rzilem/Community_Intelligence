@@ -1,16 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { PropertySearchCombobox } from '@/components/resale/PropertySearchCombobox';
 import { ResaleOrderSteps } from '@/components/resale/order-process/ResaleOrderSteps';
 import { ResaleOrderSummary } from '@/components/resale/order-process/ResaleOrderSummary';
-import { useToast } from '@/hooks/use-toast';
-import { toast } from 'sonner';
 import { Property } from '@/types/property-types';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText } from 'lucide-react';
+import { FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { orderTypes } from '@/components/resale/order-process/types/resale-order-types';
+import { toast } from 'sonner';
 
 const ResaleOrderProcess = () => {
   const navigate = useNavigate();
