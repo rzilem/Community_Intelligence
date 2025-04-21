@@ -78,6 +78,24 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       fetchComments();
     }
   };
+
+  const handleAssignChange = (value: string) => {
+    console.log('Assign change:', value);
+    // In view-only mode, we just log this action
+    toast.info(`Assignment would change to: ${value}`);
+  };
+
+  const handleAssociationChange = (value: string) => {
+    console.log('Association change:', value);
+    // In view-only mode, we just log this action
+    toast.info(`Association would change to: ${value}`);
+  };
+
+  const handlePropertyChange = (value: string) => {
+    console.log('Property change:', value);
+    // In view-only mode, we just log this action
+    toast.info(`Property would change to: ${value}`);
+  };
   
   if (!request) return null;
   
@@ -112,9 +130,9 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
           assignedTo={request.assigned_to || null}
           associationId={request.association_id || null}
           propertyId={request.property_id || null}
-          onAssignChange={(value) => console.log('Assign change:', value)}
-          onAssociationChange={(value) => console.log('Association change:', value)}
-          onPropertyChange={(value) => console.log('Property change:', value)}
+          onAssignChange={handleAssignChange}
+          onAssociationChange={handleAssociationChange}
+          onPropertyChange={handlePropertyChange}
         >
           <div className="flex-1 min-h-0">
             <TabsContent value="details" className="h-full m-0">
