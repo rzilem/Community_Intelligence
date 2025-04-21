@@ -30,8 +30,8 @@ export interface ExternalMember {
 
 export interface MemberFormData {
   user_id: string;
+  association_id: string; // Added association_id as it's required by the database
   role_type: MemberRole;
   role_name: string;
-  member_type?: MemberType;
+  member_type: MemberType;
 }
-

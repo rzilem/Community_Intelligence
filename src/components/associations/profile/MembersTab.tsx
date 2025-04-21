@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,19 +49,16 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Form state
   const [selectedUserId, setSelectedUserId] = useState('');
   const [roleType, setRoleType] = useState<'board' | 'committee'>('board');
   const [roleName, setRoleName] = useState('');
   const [editingMember, setEditingMember] = useState<AssociationMember | null>(null);
   const [memberType, setMemberType] = useState<MemberType>('homeowner');
   
-  // Manual entry state
   const [manualFirstName, setManualFirstName] = useState('');
   const [manualLastName, setManualLastName] = useState('');
   const [manualEmail, setManualEmail] = useState('');
 
-  // Fetch homeowners
   const { data: associationHomeowners = [], isLoading: isLoadingHomeowners } = useSupabaseQuery<ResidentWithProfile[]>(
     'residents',
     {
@@ -85,7 +81,6 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     }
   );
 
-  // Filter homeowners based on search
   const filteredHomeowners = searchQuery
     ? associationHomeowners.filter(homeowner => {
         const query = searchQuery.toLowerCase();
@@ -205,6 +200,8 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
         await associationMemberService.updateAssociationMember(editingMember.id, {
           role_type: roleType,
           role_name: roleName,
+          member_type: memberType,
+          user_id: editingMember.user_id
         });
       } else {
         await associationMemberService.addAssociationMember({

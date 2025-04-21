@@ -35,7 +35,8 @@ export const associationMemberService = {
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
-          };
+            member_type: member.member_type // Ensure member_type is included
+          } as AssociationMember;
         })
       );
 
@@ -50,7 +51,13 @@ export const associationMemberService = {
     try {
       const { data, error } = await supabase
         .from('association_member_roles')
-        .insert(memberData)
+        .insert({
+          user_id: memberData.user_id,
+          association_id: memberData.association_id,
+          role_type: memberData.role_type,
+          role_name: memberData.role_name,
+          member_type: memberData.member_type
+        })
         .select()
         .single();
 
@@ -76,7 +83,8 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-      };
+        member_type: data.member_type // Ensure member_type is included
+      } as AssociationMember;
     } catch (error) {
       console.error('Error in addAssociationMember:', error);
       throw error;
@@ -114,7 +122,8 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-      };
+        member_type: data.member_type // Ensure member_type is included
+      } as AssociationMember;
     } catch (error) {
       console.error('Error in updateAssociationMember:', error);
       throw error;
