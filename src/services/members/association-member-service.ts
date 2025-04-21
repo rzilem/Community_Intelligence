@@ -8,7 +8,7 @@ export const associationMemberService = {
     try {
       const { data, error } = await supabase
         .from('association_member_roles')
-        .select('*, member_type')
+        .select('*')
         .eq('association_id', associationId)
         .order('role_type')
         .order('role_name');
@@ -35,7 +35,7 @@ export const associationMemberService = {
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
-            member_type: member.member_type || 'homeowner' // Default to homeowner if not specified
+            member_type: 'homeowner' // Default to homeowner since member_type column doesn't exist
           } as AssociationMember;
         })
       );
@@ -49,14 +49,15 @@ export const associationMemberService = {
 
   addAssociationMember: async (memberData: MemberFormData): Promise<AssociationMember> => {
     try {
+      // Exclude member_type from insertion if it doesn't exist in the table
       const { data, error } = await supabase
         .from('association_member_roles')
         .insert({
           user_id: memberData.user_id,
           association_id: memberData.association_id,
           role_type: memberData.role_type,
-          role_name: memberData.role_name,
-          member_type: memberData.member_type
+          role_name: memberData.role_name
+          // member_type is omitted as it doesn't exist in the database table
         })
         .select()
         .single();
@@ -83,7 +84,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type
+        member_type: memberData.member_type // Add to the returned object even if not in DB
       } as AssociationMember;
     } catch (error) {
       console.error('Error in addAssociationMember:', error);
@@ -93,13 +94,14 @@ export const associationMemberService = {
 
   updateAssociationMember: async (id: string, memberData: Partial<MemberFormData>): Promise<AssociationMember> => {
     try {
+      // Exclude member_type from update if it doesn't exist in the table
       const { data, error } = await supabase
         .from('association_member_roles')
         .update({ 
           role_type: memberData.role_type,
           role_name: memberData.role_name,
-          member_type: memberData.member_type,
           user_id: memberData.user_id
+          // member_type is omitted as it doesn't exist in the database table
         })
         .eq('id', id)
         .select()
@@ -127,7 +129,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type || 'homeowner'
+        member_type: memberData.member_type || 'homeowner' // Add to the returned object even if not in DB
       } as AssociationMember;
     } catch (error) {
       console.error('Error in updateAssociationMember:', error);
