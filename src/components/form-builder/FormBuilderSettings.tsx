@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const FormBuilderSettings = () => {
   const [generalSettings, setGeneralSettings] = useState({
@@ -34,6 +35,13 @@ export const FormBuilderSettings = () => {
     emailTemplate: '',
   });
   
+  const [integrationSettings, setIntegrationSettings] = useState({
+    defaultEndpointType: 'external',
+    defaultEndpointUrl: '',
+    allowPortalWidget: true,
+    defaultWorkflowType: 'homeowner_request',
+  });
+  
   const handleSaveSettings = (section: string) => {
     toast.success(`${section} settings saved successfully`);
   };
@@ -44,6 +52,7 @@ export const FormBuilderSettings = () => {
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="security">Security</TabsTrigger>
         <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="integrations">Integrations</TabsTrigger>
       </TabsList>
       
       <TabsContent value="general">
@@ -271,6 +280,92 @@ export const FormBuilderSettings = () => {
           </CardContent>
           <CardFooter>
             <Button onClick={() => handleSaveSettings('Notification')}>Save Settings</Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="integrations">
+        <Card>
+          <CardHeader>
+            <CardTitle>Integration Settings</CardTitle>
+            <CardDescription>
+              Configure how forms integrate with other systems and portals
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Allow Forms as Portal Widgets</Label>
+                <p className="text-sm text-muted-foreground">
+                  Allow forms to be added as widgets to homeowner and board portals
+                </p>
+              </div>
+              <Switch 
+                checked={integrationSettings.allowPortalWidget} 
+                onCheckedChange={(checked) => setIntegrationSettings({...integrationSettings, allowPortalWidget: checked})}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="defaultEndpointType">Default Endpoint Type</Label>
+              <Select 
+                value={integrationSettings.defaultEndpointType}
+                onValueChange={(value) => setIntegrationSettings({...integrationSettings, defaultEndpointType: value})}
+              >
+                <SelectTrigger id="defaultEndpointType">
+                  <SelectValue placeholder="Select endpoint type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">External URL</SelectItem>
+                  <SelectItem value="internal">Internal Workflow</SelectItem>
+                  <SelectItem value="email">Email Only</SelectItem>
+                  <SelectItem value="database">Database Storage Only</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                How form data should be processed by default
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="defaultEndpointUrl">Default External Endpoint URL</Label>
+              <Input 
+                id="defaultEndpointUrl" 
+                value={integrationSettings.defaultEndpointUrl} 
+                onChange={(e) => setIntegrationSettings({...integrationSettings, defaultEndpointUrl: e.target.value})}
+                placeholder="https://example.com/api/form-submissions"
+                disabled={integrationSettings.defaultEndpointType !== 'external'}
+              />
+              <p className="text-sm text-muted-foreground">
+                External API endpoint to send form submissions (for external endpoint type)
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="defaultWorkflowType">Default Workflow Type</Label>
+              <Select 
+                value={integrationSettings.defaultWorkflowType}
+                onValueChange={(value) => setIntegrationSettings({...integrationSettings, defaultWorkflowType: value})}
+                disabled={integrationSettings.defaultEndpointType !== 'internal'}
+              >
+                <SelectTrigger id="defaultWorkflowType">
+                  <SelectValue placeholder="Select workflow type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="homeowner_request">Homeowner Request</SelectItem>
+                  <SelectItem value="work_order">Work Order</SelectItem>
+                  <SelectItem value="maintenance_request">Maintenance Request</SelectItem>
+                  <SelectItem value="resale_order">Resale Order</SelectItem>
+                  <SelectItem value="custom">Custom Workflow</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Internal workflow type for processing submissions (for internal workflow type)
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={() => handleSaveSettings('Integration')}>Save Settings</Button>
           </CardFooter>
         </Card>
       </TabsContent>

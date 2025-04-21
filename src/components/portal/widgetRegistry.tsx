@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   BarChart2, 
@@ -24,6 +23,7 @@ import AmenityBookingsWidget from './widgets/AmenityBookingsWidget';
 import UpcomingBidsWidget from './widgets/UpcomingBidsWidget';
 import AIInsightsWidget from './widgets/AIInsightsWidget';
 import CustomWidget from './widgets/CustomWidget';
+import FormWidget from './widgets/FormWidget';
 
 export const widgetRegistry: Record<string, WidgetDefinition> = {
   'payments': {
@@ -213,6 +213,15 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
         <button className="w-full bg-primary text-white py-2 px-4 rounded">Manage Preferred Status</button>
       </div>
     )
+  },
+  'form-widget': {
+    type: 'form-widget',
+    name: 'Form',
+    description: 'Display a form from the Form Builder',
+    icon: 'file-text',
+    defaultEnabled: true,
+    availableFor: ['homeowner', 'board', 'vendor'],
+    component: FormWidget
   },
   'analytics-widget': {
     type: 'analytics-widget',

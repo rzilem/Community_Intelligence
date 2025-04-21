@@ -12,6 +12,7 @@ import { resaleManagementRoutes } from './resaleManagementRoutes';
 import { systemRoutes } from './systemRoutes';
 import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
+import { resalePortalRoutes } from './resalePortalRoutes';
 
 /**
  * Main application router component that consolidates all routes
@@ -40,6 +41,9 @@ export const AppRouter = () => {
       
       {/* Portal page routes */}
       {portalPageRoutes}
+      
+      {/* Resale Portal routes */}
+      {resalePortalRoutes}
       
       {/* Community Management routes */}
       {communityManagementRoutes.map((route, index) => (
