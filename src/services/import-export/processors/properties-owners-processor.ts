@@ -125,18 +125,34 @@ export const propertiesOwnersProcessor = {
       
       // Now prepare owner data with the property IDs
       const ownerData = [];
+      const propertyMap = new Map();
+      
+      // Create a map of properties for easier lookup
+      insertedProperties.forEach(property => {
+        const key = property.unit_number
+          ? `${property.address}|${property.unit_number}`
+          : property.address;
+        propertyMap.set(key, property.id);
+      });
+      
       for (let i = 0; i < processedData.length; i++) {
-        const matchingProperty = i < insertedProperties.length ? insertedProperties[i] : null;
+        const row = processedData[i];
         
-        if (matchingProperty) {
-          const row = processedData[i];
+        // Create a lookup key that matches our map
+        const lookupKey = row.unit_number
+          ? `${row.address}|${row.unit_number}`
+          : row.address;
+          
+        const propertyId = propertyMap.get(lookupKey);
+        
+        if (propertyId) {
           // Only add owner if first name or last name exists
           if (row.first_name || row.last_name) {
             // Combine first_name and last_name into name field since residents table has name, not first_name/last_name
             const name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
             
             ownerData.push({
-              property_id: matchingProperty.id,
+              property_id: propertyId,
               resident_type: 'owner',
               name: name, // Use combined name format
               email: row.email,
@@ -144,9 +160,14 @@ export const propertiesOwnersProcessor = {
               move_in_date: row.move_in_date,
               is_primary: row.is_primary === 'true' || row.is_primary === true,
               emergency_contact: row.emergency_contact
-              // Intentionally omitting first_name, last_name, and association_id
             });
           }
+        } else {
+          failedImports++;
+          details.push({
+            status: 'error',
+            message: `Could not find matching property for address: ${row.address}${row.unit_number ? `, Unit ${row.unit_number}` : ''}`
+          });
         }
       }
       
