@@ -16,7 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [usePagination, setUsePagination] = useState(false);
-  
+
   const { 
     associations, 
     isLoading, 
@@ -25,24 +25,22 @@ const Associations = () => {
     updateAssociation,
     deleteAssociation 
   } = useAssociations();
-  
-  // Ensure associations is treated as an array
+
+  // Ensure associations is treated as array
   const associationsArray = Array.isArray(associations) ? associations : [];
-  
-  // For non-paginated view
+
   const filteredAssociations = associationsArray.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
-  // More explicit active/inactive filtering with fallback
+
   const activeAssociations = filteredAssociations.filter(a => a.is_archived === false);
   const inactiveAssociations = filteredAssociations.filter(a => a.is_archived === true);
-  
+
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
-    updateAssociation({ id, data });
+    updateAssociation(id, data);
   };
-  
+
   const handleDeleteAssociation = (id: string) => {
     deleteAssociation(id);
   };
@@ -56,14 +54,14 @@ const Associations = () => {
             <h1 className="text-3xl font-bold tracking-tight">Associations</h1>
           </div>
         </div>
-        
+
         <p className="text-muted-foreground">Manage community associations and client organizations.</p>
 
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
               <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /> 
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search associations..."
                   value={searchTerm}
@@ -87,12 +85,12 @@ const Associations = () => {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                
+
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button 
-                        variant="outline" 
+                        variant="outline"
                         onClick={manuallyRefresh}
                         disabled={isLoading}
                         title="Refresh association list"
@@ -108,16 +106,11 @@ const Associations = () => {
                 </TooltipProvider>
               </div>
             </div>
-            
+
             {error && (
-              <ApiError 
-                error={error}
-                onRetry={manuallyRefresh}
-                title="Failed to load associations"
-                className="mb-4"
-              />
+              <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
             )}
-            
+
             {usePagination ? (
               <Tabs defaultValue="all">
                 <TabsList className="grid w-full grid-cols-3">
@@ -125,7 +118,7 @@ const Associations = () => {
                   <TabsTrigger value="active">Active</TabsTrigger>
                   <TabsTrigger value="inactive">Inactive</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="all">
                   <PaginatedAssociationTable 
                     associationStatus="all" 
@@ -133,7 +126,7 @@ const Associations = () => {
                     onDelete={handleDeleteAssociation}
                   />
                 </TabsContent>
-                
+
                 <TabsContent value="active">
                   <PaginatedAssociationTable 
                     associationStatus="active" 
@@ -141,7 +134,7 @@ const Associations = () => {
                     onDelete={handleDeleteAssociation}
                   />
                 </TabsContent>
-                
+
                 <TabsContent value="inactive">
                   <PaginatedAssociationTable 
                     associationStatus="inactive" 
@@ -172,15 +165,15 @@ const Associations = () => {
                     </span>
                   </TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="all">
                   <AssociationTable associations={filteredAssociations} isLoading={isLoading} />
                 </TabsContent>
-                
+
                 <TabsContent value="active">
                   <AssociationTable associations={activeAssociations} isLoading={isLoading} />
                 </TabsContent>
-                
+
                 <TabsContent value="inactive">
                   <AssociationTable associations={inactiveAssociations} isLoading={isLoading} />
                 </TabsContent>
