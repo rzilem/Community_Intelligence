@@ -114,6 +114,18 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
         email_notifications: !!form.email_notifications,
         sms_notifications: !!form.sms_notifications,
         auto_reminders: !!form.auto_reminders,
+        ach_generate_in_advance: form.ach_generate_in_advance !== "" 
+          ? parseInt(form.ach_generate_in_advance, 10) 
+          : null,
+        approval_threshold: form.approval_threshold !== "" 
+          ? parseInt(form.approval_threshold, 10) 
+          : null,
+        decline_threshold: form.decline_threshold !== "" 
+          ? parseInt(form.decline_threshold, 10) 
+          : null,
+        minimum_balance: form.minimum_balance !== "" 
+          ? parseFloat(form.minimum_balance) 
+          : null
       };
       await onSave(formattedData);
       toast.success("Association settings updated successfully");
