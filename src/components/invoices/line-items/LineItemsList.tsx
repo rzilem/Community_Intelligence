@@ -25,6 +25,12 @@ export const LineItemsList = ({
   onRemoveLine,
   showPreview = true,
 }: LineItemsListProps) => {
+  // Debug the current lines to check amounts
+  console.log('LineItemsList rendering with lines:', lines.map(line => ({
+    glAccount: line.glAccount,
+    amount: line.amount
+  })));
+  
   return (
     <>
       {lines.map((line, index) => (

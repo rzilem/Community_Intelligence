@@ -22,20 +22,27 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
     fund: 'Operating',
     bankAccount: 'Operating',
     description: '',
-    amount: 0,
+    amount: invoiceTotal, // Initialize with invoice total
   }]);
 
-  const lineTotal = lines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
-  const adjustedFirstLineAmount = invoiceTotal - lineTotal;
+  const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
+  
+  // Secondary lines total (all except the first line)
+  const secondaryLinesTotal = lines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
+  
+  // Calculate the first line's amount by subtracting secondary lines from invoice total
+  const adjustedFirstLineAmount = invoiceTotal - secondaryLinesTotal;
 
   // Update the first line's amount when invoice total or other line totals change
   useEffect(() => {
-    if (lines.length > 0 && lines[0]) {
+    console.log('Adjusting first line amount:', { invoiceTotal, secondaryLinesTotal, adjustedAmount: adjustedFirstLineAmount });
+    
+    if (lines.length > 0 && Math.abs(lines[0].amount - adjustedFirstLineAmount) > 0.001) {
       const newLines = [...lines];
       newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
       setLines(newLines);
     }
-  }, [invoiceTotal, lineTotal, adjustedFirstLineAmount]);
+  }, [invoiceTotal, secondaryLinesTotal, adjustedFirstLineAmount]);
 
   const handleAddLine = useCallback(() => {
     const { fund, bankAccount } = lines[0];
@@ -55,9 +62,18 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
     newLines[index] = { ...newLines[index], [field]: value };
 
     if (field === 'amount' && index > 0) {
-      // Recalculate the first line's amount after changing any other line's amount
-      const secondaryLinesTotal = newLines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
-      newLines[0] = { ...newLines[0], amount: invoiceTotal - secondaryLinesTotal };
+      // When changing amount of any line other than the first,
+      // recalculate the secondary lines total
+      const updatedSecondaryLinesTotal = newLines.slice(1).reduce(
+        (sum, line) => sum + (Number(line.amount) || 0), 
+        0
+      );
+      
+      // Adjust the first line to maintain the invoice total
+      newLines[0] = { 
+        ...newLines[0], 
+        amount: invoiceTotal - updatedSecondaryLinesTotal 
+      };
     }
 
     setLines(newLines);
@@ -65,9 +81,22 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
 
   const handleRemoveLine = useCallback((index: number) => {
     if (lines.length > 1 && index > 0) {
-      setLines(lines.filter((_, i) => i !== index));
+      const newLines = lines.filter((_, i) => i !== index);
+      
+      // After removing a line, recalculate the first line's amount
+      const updatedSecondaryLinesTotal = newLines.slice(1).reduce(
+        (sum, line) => sum + (Number(line.amount) || 0), 
+        0
+      );
+      
+      newLines[0] = {
+        ...newLines[0],
+        amount: invoiceTotal - updatedSecondaryLinesTotal
+      };
+      
+      setLines(newLines);
     }
-  }, [lines]);
+  }, [lines, invoiceTotal]);
 
   return {
     lines,

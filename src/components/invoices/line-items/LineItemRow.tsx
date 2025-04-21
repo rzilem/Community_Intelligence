@@ -37,6 +37,9 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
 }) => {
   const noGLAccounts = !glAccounts || glAccounts.length === 0;
   
+  // Format the amount to ensure it displays with proper decimal precision
+  const formattedAmount = line.amount.toFixed(2);
+  
   return (
     <div className={cn(
       "relative space-y-4 p-4 rounded-lg border grid grid-cols-12 gap-4",
@@ -67,11 +70,12 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-600">GL Account</Label>
             <Select 
-              defaultValue={line.glAccount || "none"}
               value={line.glAccount || "none"}
               onValueChange={(value) => {
                 console.log("GL Account selected:", value);
-                onLineChange(index, 'glAccount', value);
+                if (value !== "none") {
+                  onLineChange(index, 'glAccount', value);
+                }
               }}
               disabled={noGLAccounts}
             >
@@ -148,7 +152,7 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
             <Input 
               id={`amount-${index}`} 
               type="number" 
-              value={line.amount} 
+              value={formattedAmount} 
               onChange={e => onLineChange(index, 'amount', parseFloat(e.target.value) || 0)} 
               placeholder="0.00" 
               className="mt-2 text-right" 
