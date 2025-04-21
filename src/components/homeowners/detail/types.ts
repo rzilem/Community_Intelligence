@@ -1,12 +1,4 @@
 
-export interface NoteType {
-  id?: string;
-  content: string;
-  author: string;
-  date: string;
-  type: 'manual' | 'system';
-}
-
 export interface Homeowner {
   id: string;
   name: string;
@@ -22,7 +14,7 @@ export interface Homeowner {
   status?: string;
   notes?: NoteType[];
   tags?: string[];
-  violations?: number;
+  violations?: number | string[]; // Allow both number and string array for backward compatibility
   avatarUrl?: string;
   lastContact?: string | {
     called?: string;
@@ -34,5 +26,5 @@ export interface Homeowner {
   propertyId?: string;
   association?: string;
   closingDate?: string;
-  lastPayment?: { amount: number; date: string }; // Added missing property
+  lastPayment?: { amount: number; date: string };
 }

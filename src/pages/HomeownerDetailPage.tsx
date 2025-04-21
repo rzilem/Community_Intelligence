@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
@@ -43,7 +42,6 @@ const HomeownerDetailPage: React.FC = () => {
       
       await addHomeownerNote(note);
       
-      // Switch to the Notes tab and Manual Notes subtab
       setActiveTab('Notes');
       setActiveNotesTab('Manual Notes');
     } catch (error) {
@@ -68,10 +66,12 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
-  // Convert violations to number if it's a string array for backward compatibility
+  // Convert violations to number, handling both number and string array cases
   const violationsCount = typeof homeowner?.violations === 'number' 
     ? homeowner.violations 
-    : 0; // Just default to 0 if violations is undefined or not a number
+    : Array.isArray(homeowner?.violations) 
+      ? homeowner.violations.length 
+      : 0;
 
   // Extract the most recent contact date from the lastContact object
   // or use an empty string if it's not available
