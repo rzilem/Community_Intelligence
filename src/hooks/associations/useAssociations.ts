@@ -3,32 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-
-export interface Association {
-  id: string;
-  name: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zip?: string;
-  contact_email?: string;
-  created_at: string;
-  updated_at: string;
-  is_archived?: boolean;
-  description?: string;
-  phone?: string;
-  property_type?: string;
-  total_units?: number;
-  website?: string;
-  founded_date?: string;
-  insurance_expiration?: string;
-  fire_inspection_due?: string;
-  logo_url?: string | null;
-  primary_color?: string | null;
-  secondary_color?: string | null;
-  status?: 'active' | 'inactive' | 'pending';
-  [key: string]: any;
-}
+import { Association } from '@/types/association-types';
 
 export const useAssociations = () => {
   const [associations, setAssociations] = useState<Association[]>([]);
@@ -53,7 +28,7 @@ export const useAssociations = () => {
       console.log('Raw associations data:', data);
 
       // Map data to Association shape and normalize is_archived to a boolean value
-      const normalizedAssociations = (data || []).map((row: any) => {
+      const normalizedAssociations: Association[] = (data || []).map((row: any) => {
         // Explicitly convert is_archived to boolean
         const isArchived = row.is_archived === true || row.is_archived === 'true';
         
@@ -145,7 +120,7 @@ export const useAssociations = () => {
       
       // Update the local state with the updated association
       setAssociations(prev =>
-        prev.map(assoc => assoc.id === id ? { ...assoc, ...data } : assoc)
+        prev.map(assoc => assoc.id === id ? { ...assoc, ...data as Association } : assoc)
       );
 
       // Also refresh the entire list to ensure consistency

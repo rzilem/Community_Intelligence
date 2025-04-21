@@ -154,7 +154,7 @@ const Associations = () => {
                   </TabsTrigger>
                   <TabsTrigger value="active">
                     Active
-                    <span className="ml-1.5 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs">
+                    <span className="ml-1.5 rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs">
                       {activeAssociations.length}
                     </span>
                   </TabsTrigger>

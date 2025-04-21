@@ -37,7 +37,7 @@ const formSchema = z.object({
   insurance_expiration: z.string().optional(),
   fire_inspection_due: z.string().optional(),
   founded_date: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'pending']).optional()
+  status: z.enum(['active', 'inactive', 'pending']).or(z.string()).optional()
 });
 
 export const statuses = [
