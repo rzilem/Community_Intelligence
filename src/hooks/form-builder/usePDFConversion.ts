@@ -23,19 +23,17 @@ export function usePDFConversion(associationId?: string) {
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
-      // Correctly use the Tesseract.js v5 API
+      // Create worker with the proper v5 API usage
       const worker = await createWorker();
       
-      // Configure for better form field recognition using the correct API
+      // Configure and initialize using the proper v5 API
       await worker.load();
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-      
-      // Set parameters for better recognition
+      // Instead of loadLanguage and initialize, we directly set parameters
       await worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:-_()',
       });
 
+      // Correctly use the v5 recognize method
       const { data: { text } } = await worker.recognize(file);
       await worker.terminate();
       return text;
