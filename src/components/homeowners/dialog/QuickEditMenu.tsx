@@ -79,7 +79,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
       <div className={menuItemClass}>
         <User className="h-4 w-4 text-muted-foreground" />
         <Select
-          value={assignedTo || ""}
+          value={assignedTo || "unassigned"}
           onValueChange={onAssignChange}
           onOpenChange={() => setUserSearch("")}
         >
@@ -95,7 +95,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
                 onChange={(e) => setUserSearch(e.target.value)}
               />
             </div>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
             {filteredUsers?.map(user => (
               <SelectItem key={user.id} value={user.id}>
                 {user.first_name} {user.last_name}
@@ -108,7 +108,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
       <div className={menuItemClass}>
         <Building className="h-4 w-4 text-muted-foreground" />
         <Select
-          value={associationId || ""}
+          value={associationId || "unassigned"}
           onValueChange={onAssociationChange}
           onOpenChange={() => setAssociationSearch("")}
         >
@@ -124,7 +124,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
                 onChange={(e) => setAssociationSearch(e.target.value)}
               />
             </div>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
             {filteredAssociations?.map(assoc => (
               <SelectItem key={assoc.id} value={assoc.id}>
                 {assoc.name}
@@ -137,7 +137,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
       <div className={menuItemClass}>
         <MapPin className="h-4 w-4 text-muted-foreground" />
         <Select
-          value={propertyId || ""}
+          value={propertyId || "unassigned"}
           onValueChange={onPropertyChange}
           onOpenChange={() => setPropertySearch("")}
           disabled={!associationId}
@@ -155,7 +155,7 @@ const QuickEditMenu: React.FC<QuickEditMenuProps> = ({
                 disabled={!associationId}
               />
             </div>
-            <SelectItem value="">Unassigned</SelectItem>
+            <SelectItem value="unassigned">Unassigned</SelectItem>
             {filteredProperties?.map(property => (
               <SelectItem key={property.id} value={property.id}>
                 {property.address} {property.unit_number ? `#${property.unit_number}` : ''}

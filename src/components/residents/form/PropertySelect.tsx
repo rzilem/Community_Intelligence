@@ -18,7 +18,7 @@ interface PropertySelectProps {
 }
 
 const PropertySelect: React.FC<PropertySelectProps> = ({ associationId, propertyId, onChange }) => {
-  const [selectedProperty, setSelectedProperty] = useState<string>(propertyId || '');
+  const [selectedProperty, setSelectedProperty] = useState<string>(propertyId || 'unassigned');
 
   useEffect(() => {
     if (propertyId) {
@@ -41,6 +41,7 @@ const PropertySelect: React.FC<PropertySelectProps> = ({ associationId, property
           <SelectValue placeholder="Select a property" />
         </SelectTrigger>
         <SelectContent>
+          <SelectItem value="unassigned">None Selected</SelectItem>
           {isLoading ? (
             <SelectItem value="loading" disabled>
               <LoadingSpinner size="sm" /> Loading...
