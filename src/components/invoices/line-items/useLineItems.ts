@@ -42,7 +42,7 @@ export const useLineItems = (associationId?: string, invoiceTotal: number = 0) =
       newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
       setLines(newLines);
     }
-  }, [invoiceTotal, secondaryLinesTotal, adjustedFirstLineAmount]);
+  }, [invoiceTotal, secondaryLinesTotal, adjustedFirstLineAmount, lines]);
 
   const handleAddLine = useCallback(() => {
     const { fund, bankAccount } = lines[0];
