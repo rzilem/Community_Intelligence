@@ -23,7 +23,11 @@ export type WidgetType =
   | 'community-poll'
   | 'vendor-ratings'
   | 'work-history'
-  | 'upcoming-bids';
+  | 'upcoming-bids'
+  | 'analytics-widget'
+  | 'notifications-widget'
+  | 'shared-widget'
+  | 'custom-widget';
 
 export interface PortalWidget {
   id: string;
@@ -63,4 +67,13 @@ export interface WidgetDefinition {
   defaultEnabled: boolean;
   availableFor: ('homeowner' | 'board' | 'vendor')[];
   component: React.ComponentType<any>;
+}
+
+export interface BaseWidgetProps {
+  widgetId?: string;
+  saveSettings?: (settings: any) => Promise<void>;
+  isLoading?: boolean;
+  isSaving?: boolean;
+  settings?: Record<string, any>;
+  dragHandleProps?: any;
 }

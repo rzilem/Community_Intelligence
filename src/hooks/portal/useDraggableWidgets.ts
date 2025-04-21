@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PortalWidget } from '@/types/portal-types';
 import { useWidgetSettings } from './useWidgetSettings';
+import { useResponsive } from '@/hooks/use-responsive';
 
 export const useDraggableWidgets = (
   widgets: PortalWidget[], 
@@ -12,6 +13,7 @@ export const useDraggableWidgets = (
   );
   
   const { toggleWidget, saveWidgetSettings } = useWidgetSettings(portalType);
+  const { isMobile } = useResponsive();
   
   // Update widget order after drag and drop
   const handleDragEnd = async (result: any) => {
@@ -43,9 +45,47 @@ export const useDraggableWidgets = (
     }
   };
   
+  // Share widget with another user
+  const shareWidget = async (widgetId: string, userId: string) => {
+    try {
+      const widget = orderedWidgets.find(w => w.id === widgetId);
+      if (widget) {
+        // This would call an API endpoint to share the widget
+        console.log(`Sharing widget ${widget.widgetType} with user ${userId}`);
+        toast.success(`Widget shared successfully`);
+      }
+    } catch (error) {
+      console.error('Error sharing widget:', error);
+      toast.error('Failed to share widget');
+    }
+  };
+  
+  // Optimize widgets layout for mobile
+  useEffect(() => {
+    if (isMobile) {
+      // On mobile, prioritize important widgets at the top
+      const prioritizedWidgets = [...orderedWidgets].sort((a, b) => {
+        // Example prioritization logic - could be customized based on widget type
+        const priorityOrder: Record<string, number> = {
+          'payments': 1,
+          'requests': 2,
+          'notifications-widget': 3
+        };
+        
+        const priorityA = priorityOrder[a.widgetType] || 99;
+        const priorityB = priorityOrder[b.widgetType] || 99;
+        
+        return priorityA - priorityB;
+      });
+      
+      setOrderedWidgets(prioritizedWidgets);
+    }
+  }, [isMobile]);
+  
   return {
     orderedWidgets,
     handleDragEnd,
-    toggleWidget
+    toggleWidget,
+    shareWidget
   };
 };

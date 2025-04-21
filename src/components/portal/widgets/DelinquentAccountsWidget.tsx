@@ -2,21 +2,17 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
+import { BaseWidgetProps } from '@/types/portal-types';
 
-interface DelinquentAccountsWidgetProps {
-  widgetId?: string;
-  saveSettings?: (settings: any) => Promise<void>;
-  isLoading?: boolean;
-  isSaving?: boolean;
-  settings?: Record<string, any>;
-}
+interface DelinquentAccountsWidgetProps extends BaseWidgetProps {}
 
 const DelinquentAccountsWidget: React.FC<DelinquentAccountsWidgetProps> = ({ 
   widgetId, 
   saveSettings, 
   isLoading = false,
   isSaving = false,
-  settings = {}
+  settings = {},
+  dragHandleProps
 }) => {
   const handleSave = () => {
     if (saveSettings) {
@@ -42,6 +38,8 @@ const DelinquentAccountsWidget: React.FC<DelinquentAccountsWidgetProps> = ({
       isLoading={isLoading}
       onSave={saveSettings ? handleSave : undefined}
       isSaving={isSaving}
+      isDraggable={!!dragHandleProps}
+      dragHandleProps={dragHandleProps}
     >
       <div className="space-y-4">
         <div className="flex justify-between">

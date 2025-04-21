@@ -2,21 +2,17 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
+import { BaseWidgetProps } from '@/types/portal-types';
 
-interface UpcomingBidsWidgetProps {
-  widgetId?: string;
-  saveSettings?: (settings: any) => Promise<void>;
-  isLoading?: boolean;
-  isSaving?: boolean;
-  settings?: Record<string, any>;
-}
+interface UpcomingBidsWidgetProps extends BaseWidgetProps {}
 
 const UpcomingBidsWidget: React.FC<UpcomingBidsWidgetProps> = ({ 
   widgetId, 
   saveSettings, 
   isLoading = false,
   isSaving = false,
-  settings = {}
+  settings = {},
+  dragHandleProps
 }) => {
   const handleSave = () => {
     if (saveSettings) {
@@ -41,6 +37,8 @@ const UpcomingBidsWidget: React.FC<UpcomingBidsWidgetProps> = ({
       isLoading={isLoading}
       onSave={saveSettings ? handleSave : undefined}
       isSaving={isSaving}
+      isDraggable={!!dragHandleProps}
+      dragHandleProps={dragHandleProps}
     >
       <div className="space-y-4">
         {bids.map((bid, i) => (

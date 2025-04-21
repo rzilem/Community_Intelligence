@@ -3,6 +3,7 @@ import React from 'react';
 import { BarChart2, DollarSign } from 'lucide-react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BaseWidgetProps } from '@/types/portal-types';
 
 const data = [
   { month: 'Jan', income: 4000, expenses: 2400 },
@@ -13,20 +14,15 @@ const data = [
   { month: 'Jun', income: 2390, expenses: 3800 }
 ];
 
-interface FinancialChartWidgetProps {
-  widgetId?: string;
-  saveSettings?: (settings: any) => Promise<void>;
-  isLoading?: boolean;
-  isSaving?: boolean;
-  settings?: Record<string, any>;
-}
+interface FinancialChartWidgetProps extends BaseWidgetProps {}
 
 const FinancialChartWidget: React.FC<FinancialChartWidgetProps> = ({ 
   widgetId, 
   saveSettings, 
   isLoading = false,
   isSaving = false,
-  settings = {}
+  settings = {},
+  dragHandleProps
 }) => {
   const handleSave = () => {
     if (saveSettings) {
@@ -45,6 +41,8 @@ const FinancialChartWidget: React.FC<FinancialChartWidgetProps> = ({
       isLoading={isLoading}
       onSave={saveSettings ? handleSave : undefined}
       isSaving={isSaving}
+      isDraggable={!!dragHandleProps}
+      dragHandleProps={dragHandleProps}
     >
       <div className="w-full h-64">
         <ResponsiveContainer width="100%" height="100%">

@@ -2,21 +2,17 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
+import { BaseWidgetProps } from '@/types/portal-types';
 
-interface AmenityBookingsWidgetProps {
-  widgetId?: string;
-  saveSettings?: (settings: any) => Promise<void>;
-  isLoading?: boolean;
-  isSaving?: boolean;
-  settings?: Record<string, any>;
-}
+interface AmenityBookingsWidgetProps extends BaseWidgetProps {}
 
 const AmenityBookingsWidget: React.FC<AmenityBookingsWidgetProps> = ({ 
   widgetId, 
   saveSettings, 
   isLoading = false,
   isSaving = false,
-  settings = {}
+  settings = {},
+  dragHandleProps
 }) => {
   const handleSave = () => {
     if (saveSettings) {
@@ -41,6 +37,8 @@ const AmenityBookingsWidget: React.FC<AmenityBookingsWidgetProps> = ({
       isLoading={isLoading}
       onSave={saveSettings ? handleSave : undefined}
       isSaving={isSaving}
+      isDraggable={!!dragHandleProps}
+      dragHandleProps={dragHandleProps}
     >
       <div className="space-y-4">
         {bookings.map((booking, i) => (
