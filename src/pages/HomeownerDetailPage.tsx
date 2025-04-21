@@ -68,6 +68,11 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
+  // Convert violations to number if it's a string array for backward compatibility
+  const violationsCount = typeof homeowner?.violations === 'number' 
+    ? homeowner.violations 
+    : (Array.isArray(homeowner?.violations) ? homeowner?.violations.length : 0);
+
   // Extract the most recent contact date from the lastContact object
   // or use an empty string if it's not available
   const getLastContactString = () => {
@@ -87,7 +92,7 @@ const HomeownerDetailPage: React.FC = () => {
     if (dates.length === 0) return '';
     
     // Sort dates in descending order and take the first one
-    return dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+    return dates.sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0] || '';
   };
 
   const lastContactValue = getLastContactString();
@@ -102,7 +107,7 @@ const HomeownerDetailPage: React.FC = () => {
               name={homeowner?.name}
               status={homeowner?.status}
               tags={homeowner?.tags}
-              violations={homeowner?.violations}
+              violations={violationsCount}
               avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}

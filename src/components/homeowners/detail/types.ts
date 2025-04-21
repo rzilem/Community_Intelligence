@@ -13,8 +13,11 @@ export interface Homeowner {
   email?: string;
   phone?: string;
   moveInDate?: string;
+  moveOutDate?: string;
   property?: string;
+  propertyAddress?: string;
   unit?: string;
+  unitNumber?: string;
   balance?: string;
   status?: string;
   notes?: NoteType[];
@@ -27,4 +30,8 @@ export interface Homeowner {
     email?: string;
   };
   lastLoginDate?: string;
+  type?: 'owner' | 'tenant' | 'family-member' | 'other';
+  propertyId?: string;
+  association?: string;
+  closingDate?: string;
 }

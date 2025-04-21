@@ -5,17 +5,21 @@ import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
  * Converts the mock homeowner data to the Homeowner type
  */
 export const convertDbResidentToHomeowner = (data: any): Homeowner => {
+  // Ensure balance is a string
+  const balanceStr = typeof data.balance === 'number' ? data.balance.toString() : data.balance || '0';
+
   return {
     id: data.id,
     name: data.name,
     email: data.email,
     phone: data.phone || '',
     moveInDate: data.moveInDate,
+    moveOutDate: data.moveOutDate,
     property: data.property || data.propertyAddress || '',
     unit: data.unit || data.unitNumber || '',
-    balance: data.balance || 0,
+    balance: balanceStr,
     tags: data.tags || [],
-    violations: data.violations || [],
+    violations: typeof data.violations === 'number' ? data.violations : 0,
     lastContact: {
       called: data.lastContact?.called || '',
       visit: data.lastContact?.visit || '',
@@ -34,7 +38,6 @@ export const convertDbResidentToHomeowner = (data: any): Homeowner => {
     propertyId: data.propertyId,
     propertyAddress: data.propertyAddress,
     association: data.association,
-    moveOutDate: data.moveOutDate,
     lastPayment: data.lastPayment,
     aclStartDate: data.aclStartDate,
     closingDate: data.closingDate

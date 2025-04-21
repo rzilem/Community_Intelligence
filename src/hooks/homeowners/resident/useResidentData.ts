@@ -15,9 +15,9 @@ export const useResidentData = (residentId: string) => {
     moveInDate: '',
     property: '',
     unit: '',
-    balance: 0,
+    balance: '0', // Changed from number to string
     tags: [],
-    violations: [],
+    violations: 0, // Changed from array to number
     lastContact: {
       called: '',
       visit: '',
@@ -104,9 +104,9 @@ export const useResidentData = (residentId: string) => {
             property: propertyAddress,
             propertyId: residentData.property_id || '',
             unit: residentData.property?.unit_number || '',
-            balance: 0, // Would need to fetch from assessments table
+            balance: '0', // Changed from number to string
             tags: [],
-            violations: [], // Would need to fetch from compliance_issues table
+            violations: 0, // Changed from array to number
             lastContact: {
               called: '',
               visit: '',

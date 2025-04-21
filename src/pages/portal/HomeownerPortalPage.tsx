@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useSearchParams } from 'react-router-dom';
@@ -173,7 +172,7 @@ const HomeownerPortalPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status:</span>
-                      <Badge variant={homeowner.status === 'Active' ? 'success' : 'default'}>
+                      <Badge variant={homeowner.status === 'Active' ? 'default' : 'outline'}>
                         {homeowner.status || 'Unknown'}
                       </Badge>
                     </div>

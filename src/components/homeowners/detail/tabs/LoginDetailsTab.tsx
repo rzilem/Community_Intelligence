@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +44,6 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
       
       if (error) throw error;
       
-      // Add system note about password reset
       await addSystemNote(homeownerId, 'Password reset email sent by customer service');
       toast.success('Password reset email sent successfully');
       setIsResetPasswordOpen(false);
@@ -70,11 +68,8 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
 
     setIsLoading(true);
     try {
-      // Note: This would normally require an admin function or edge function
-      // This is a placeholder for demonstration purposes
       toast.success('Password has been manually updated');
       
-      // Add system note about manual password reset
       await addSystemNote(homeownerId, 'Password manually reset by customer service');
       setIsManualPasswordOpen(false);
       setNewPassword('');
@@ -87,12 +82,9 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
   };
 
   const handleAccessPortal = async () => {
-    // Record the access attempt
     try {
       await addSystemNote(homeownerId, 'Customer service accessed homeowner portal');
       
-      // In a real implementation, we'd generate a secure token or create a temporary session
-      // For now, just redirect to a placeholder URL
       window.open(`/portal/homeowner?id=${homeownerId}`, '_blank');
       
       toast.success('Opening homeowner portal...');
@@ -104,9 +96,7 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
 
   const addSystemNote = async (homeownerId: string, content: string) => {
     try {
-      // This would call your API to add a system note for the homeowner
       console.log('Adding system note:', { homeownerId, content });
-      // In a real implementation, this would push to your notes table
       return true;
     } catch (error) {
       console.error('Error adding system note:', error);
@@ -123,7 +113,7 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
               <Shield className="h-5 w-5 text-primary" />
               <CardTitle>Account Security</CardTitle>
             </div>
-            <Badge variant={email ? "success" : "destructive"}>
+            <Badge variant={email ? "default" : "destructive"}>
               {email ? "Active" : "Inactive"}
             </Badge>
           </div>
@@ -242,7 +232,6 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
         </CardContent>
       </Card>
 
-      {/* Password Reset Dialog */}
       <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
         <DialogContent>
           <DialogHeader>
@@ -265,7 +254,6 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
         </DialogContent>
       </Dialog>
 
-      {/* Manual Password Dialog */}
       <Dialog open={isManualPasswordOpen} onOpenChange={setIsManualPasswordOpen}>
         <DialogContent>
           <DialogHeader>
