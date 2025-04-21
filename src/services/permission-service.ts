@@ -1,4 +1,3 @@
-
 import { MenuPermission, Role, RolePermission, SubMenuPermission } from '@/types/permission-types';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -114,7 +113,6 @@ export const defaultRoles: Role[] = [
     accessLevel: 'unrestricted',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Full access to all menus and submenus
       const menuPermission: RolePermission = { menuId: menu.id, access: 'full' };
       const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
         menuId: menu.id,
@@ -131,11 +129,9 @@ export const defaultRoles: Role[] = [
     accessLevel: 'high',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Managers don't get full system access
       const access = menu.id === 'system' ? 'read' : 'full';
       const menuPermission: RolePermission = { menuId: menu.id, access };
       
-      // Limited system submenu access
       const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => {
         if (menu.id === 'system' && ['permissions', 'settings'].includes(submenu.id)) {
           return { menuId: menu.id, submenuId: submenu.id, access: 'none' };
@@ -153,7 +149,6 @@ export const defaultRoles: Role[] = [
     accessLevel: 'medium',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Residents only get access to specific areas
       let access: 'full' | 'read' | 'none' = 'none';
       if (['dashboard', 'communications'].includes(menu.id)) {
         access = 'read';
@@ -176,7 +171,6 @@ export const defaultRoles: Role[] = [
     accessLevel: 'medium',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Maintenance gets access to operations and specific community features
       let access: 'full' | 'read' | 'none' = 'none';
       if (['dashboard', 'operations'].includes(menu.id)) {
         access = 'full';
@@ -186,7 +180,6 @@ export const defaultRoles: Role[] = [
       
       const menuPermission: RolePermission = { menuId: menu.id, access };
       const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => {
-        // Special case for homeowner requests
         if (menu.id === 'community-management' && submenu.id === 'homeowner-requests') {
           return { menuId: menu.id, submenuId: submenu.id, access: 'full' };
         }
@@ -203,7 +196,6 @@ export const defaultRoles: Role[] = [
     accessLevel: 'medium',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Accountants get access to accounting and reports
       let access: 'full' | 'read' | 'none' = 'none';
       if (['dashboard', 'accounting'].includes(menu.id)) {
         access = 'full';
@@ -226,7 +218,6 @@ export const defaultRoles: Role[] = [
     accessLevel: 'low',
     systemRole: true,
     permissions: menuPermissions.flatMap(menu => {
-      // Basic users only get dashboard access
       const access = menu.id === 'dashboard' ? 'read' : 'none';
       
       const menuPermission: RolePermission = { menuId: menu.id, access };
@@ -243,15 +234,12 @@ export const defaultRoles: Role[] = [
 
 // Check if a role has permission for a specific menu or submenu
 export const hasPermission = (role: Role, menuId: string, submenuId?: string, requiredAccess: 'read' | 'full' = 'read'): boolean => {
-  // First check menu-level permission
   const menuPermission = role.permissions.find(p => p.menuId === menuId && !p.submenuId);
   if (!menuPermission || menuPermission.access === 'none') {
     return false;
   }
   
-  // If full access is required but role only has read access
   if (requiredAccess === 'full' && menuPermission.access === 'read') {
-    // Check if there's a specific submenu permission that grants full access
     if (submenuId) {
       const submenuPermission = role.permissions.find(
         p => p.menuId === menuId && p.submenuId === submenuId
@@ -261,51 +249,31 @@ export const hasPermission = (role: Role, menuId: string, submenuId?: string, re
     return false;
   }
   
-  // If submenu is specified, check submenu permission
   if (submenuId) {
     const submenuPermission = role.permissions.find(
       p => p.menuId === menuId && p.submenuId === submenuId
     );
     
-    // If no specific submenu permission found, inherit from menu permission
     if (!submenuPermission) {
-      return menuPermission.access !== 'none';
+      return true;
     }
     
-    // Otherwise check the specific permission
-    return submenuPermission.access !== 'none' && 
-      (requiredAccess === 'read' || submenuPermission.access === 'full');
+    if (submenuPermission.access === 'none') {
+      return false;
+    }
+    
+    return requiredAccess === 'read' || submenuPermission.access === 'full';
   }
   
-  // If we're just checking menu-level permission for read access
   return true;
 };
 
 // Save role permissions to Supabase (to be implemented with your DB schema)
 export const saveRolePermissions = async (roleId: string, permissions: RolePermission[]): Promise<boolean> => {
   try {
-    // Since role_permissions table doesn't exist yet, we'll log what we would save
-    // and return success for now
     console.log('Would save permissions for role:', roleId, permissions);
     
-    // This is a placeholder for when the role_permissions table is created:
-    /*
-    const { error } = await supabase
-      .from('role_permissions')
-      .upsert(
-        permissions.map(p => ({
-          role_id: roleId,
-          menu_id: p.menuId,
-          submenu_id: p.submenuId || null,
-          access_level: p.access
-        })),
-        { onConflict: 'role_id, menu_id, submenu_id' }
-      );
-      
-    return !error;
-    */
-    
-    return true; // Return success for now
+    return true;
   } catch (err) {
     console.error('Error saving role permissions:', err);
     return false;
