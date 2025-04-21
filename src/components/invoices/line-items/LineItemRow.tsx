@@ -67,8 +67,12 @@ export const LineItemRow: React.FC<LineItemRowProps> = ({
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-600">GL Account</Label>
             <Select 
-              value={line.glAccount || "none"} 
-              onValueChange={value => onLineChange(index, 'glAccount', value)}
+              defaultValue={line.glAccount || "none"}
+              value={line.glAccount || "none"}
+              onValueChange={(value) => {
+                console.log("GL Account selected:", value);
+                onLineChange(index, 'glAccount', value);
+              }}
               disabled={noGLAccounts}
             >
               <SelectTrigger className="w-full">

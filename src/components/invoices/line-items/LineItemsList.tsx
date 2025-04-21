@@ -1,5 +1,6 @@
 
 import { LineItemRow } from './LineItemRow';
+import { GLAccount } from '@/types/accounting-types';
 
 interface LineItem {
   glAccount: string;
@@ -11,7 +12,7 @@ interface LineItem {
 
 interface LineItemsListProps {
   lines: LineItem[];
-  glAccounts: any[];
+  glAccounts: GLAccount[];
   onLineChange: (index: number, field: string, value: string | number) => void;
   onRemoveLine: (index: number) => void;
   showPreview?: boolean;
@@ -28,7 +29,7 @@ export const LineItemsList = ({
     <>
       {lines.map((line, index) => (
         <LineItemRow
-          key={index}
+          key={`line-item-${index}`}
           index={index}
           line={line}
           isFirstLine={index === 0}

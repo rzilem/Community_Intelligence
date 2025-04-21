@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LineItemsList } from './line-items/LineItemsList';
 import { LineItemsHeader } from './line-items/LineItemsHeader';
 import { EmptyLineItems } from './line-items/EmptyLineItems';
 import { useLineItems } from './line-items/useLineItems';
 import { LoadingState } from '@/components/ui/loading-state';
+import { GLAccount } from '@/types/accounting-types';
 
 interface LineItem {
   glAccount: string;
@@ -38,6 +39,32 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
     handleRemoveLine
   } = useLineItems(associationId, invoiceTotal);
 
+  // When a line item changes, propagate changes up to parent
+  const handleChange = (index: number, field: string, value: string | number) => {
+    console.log(`LineItem change at index ${index}, field ${field}:`, value);
+    const updatedLines = [...externalLines];
+    updatedLines[index] = { ...updatedLines[index], [field]: value };
+    onLinesChange(updatedLines);
+  };
+
+  const handleAddLineItem = () => {
+    const { fund, bankAccount } = externalLines[0] || { fund: 'Operating', bankAccount: 'Operating' };
+    const newLine = {
+      glAccount: '',
+      fund,
+      bankAccount,
+      description: '',
+      amount: 0
+    };
+    onLinesChange([...externalLines, newLine]);
+  };
+
+  const handleRemoveLineItem = (index: number) => {
+    if (externalLines.length > 1 && index > 0) {
+      onLinesChange(externalLines.filter((_, i) => i !== index));
+    }
+  };
+
   const hasLineMismatch = Math.abs(lineTotal + (externalLines[0]?.amount || 0) - invoiceTotal) > 0.01;
   const maxLinesReached = externalLines.length >= 5;
 
@@ -48,15 +75,15 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
       <LineItemsHeader 
-        onAddLine={handleAddLine}
+        onAddLine={handleAddLineItem}
         maxLinesReached={maxLinesReached}
       />
       
       <LineItemsList
         lines={externalLines}
         glAccounts={glAccounts}
-        onLineChange={handleLineChange}
-        onRemoveLine={handleRemoveLine}
+        onLineChange={handleChange}
+        onRemoveLine={handleRemoveLineItem}
         showPreview={showPreview}
       />
 
