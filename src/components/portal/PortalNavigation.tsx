@@ -1,0 +1,87 @@
+
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { 
+  CreditCard, 
+  FileText, 
+  Calendar, 
+  Users, 
+  File, 
+  WrenchIcon, 
+  PiggyBank, 
+  User, 
+  BarChart, 
+  AlertTriangle, 
+  CheckSquare, 
+  Mail, 
+  BookOpen, 
+  Video, 
+  Sparkles, 
+  DollarSign, 
+  LayoutDashboard, 
+  Building
+} from 'lucide-react';
+
+interface NavItem {
+  title: string;
+  path: string;
+  icon: React.ReactNode;
+}
+
+interface PortalNavigationProps {
+  portalType: 'homeowner' | 'board' | 'vendor';
+}
+
+export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
+  const location = useLocation();
+
+  const homeownerNavItems: NavItem[] = [
+    { title: 'Dashboard', path: '/portal/homeowner', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: 'Payments', path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" /> },
+    { title: 'Requests', path: '/portal/homeowner/requests', icon: <FileText className="h-5 w-5" /> },
+    { title: 'Calendar & Events', path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" /> },
+    { title: 'Directory', path: '/portal/homeowner/directory', icon: <Users className="h-5 w-5" /> },
+    { title: 'Documents', path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" /> },
+  ];
+
+  const boardNavItems: NavItem[] = [
+    { title: 'Dashboard', path: '/portal/board/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: 'Invoices', path: '/portal/board/invoices', icon: <CreditCard className="h-5 w-5" /> },
+    { title: 'Work Orders', path: '/portal/board/work-orders', icon: <WrenchIcon className="h-5 w-5" /> },
+    { title: 'Collections', path: '/portal/board/collections', icon: <PiggyBank className="h-5 w-5" /> },
+    { title: 'Homeowners', path: '/portal/board/homeowners', icon: <User className="h-5 w-5" /> },
+    { title: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
+    { title: 'Reports', path: '/portal/board/reports', icon: <BarChart className="h-5 w-5" /> },
+    { title: 'Violations', path: '/portal/board/violations', icon: <AlertTriangle className="h-5 w-5" /> },
+    { title: 'Board Tasks', path: '/portal/board/tasks', icon: <CheckSquare className="h-5 w-5" /> },
+    { title: 'Email Community', path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
+    { title: 'Board Portal Training', path: '/portal/board/training', icon: <BookOpen className="h-5 w-5" /> },
+    { title: 'Board Member Video Education', path: '/portal/board/video-education', icon: <Video className="h-5 w-5" /> },
+    { title: 'Board Member AI Assistant', path: '/portal/board/ai-assistant', icon: <Sparkles className="h-5 w-5" /> },
+    { title: 'Board Reimbursement', path: '/portal/board/reimbursement', icon: <DollarSign className="h-5 w-5" /> },
+  ];
+
+  const navItems = portalType === 'homeowner' ? homeownerNavItems : boardNavItems;
+
+  return (
+    <div className="border rounded-lg p-4 mb-6">
+      <h2 className="font-semibold mb-4 text-lg">Portal Navigation</h2>
+      <nav className="space-y-2">
+        {navItems.map((item) => (
+          <Link
+            key={item.path}
+            to={item.path}
+            className={cn(
+              "flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 transition-colors",
+              location.pathname === item.path && "bg-gray-100 font-medium"
+            )}
+          >
+            {item.icon}
+            <span>{item.title}</span>
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+};

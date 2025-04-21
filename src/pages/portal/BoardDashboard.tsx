@@ -1,152 +1,120 @@
 
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CreditCard, WrenchIcon, Users, BarChart, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { PortalNavigation } from '@/components/portal/PortalNavigation';
+import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
-import { useSupabaseQuery } from '@/hooks/supabase';
-import { Building } from 'lucide-react';
-import DashboardWidget from '@/components/portal/DashboardWidget';
-import PermissionGuard from '@/components/auth/PermissionGuard';
-import { useWidgetSettings } from '@/hooks/portal/useWidgetSettings';
-import { WidgetType, PortalWidget } from '@/types/portal-types';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { useDraggableWidgets } from '@/hooks/portal/useDraggableWidgets';
-import { getWidgetComponent } from '@/components/portal/widgetRegistry';
-import WidgetMarketplace from '@/components/portal/WidgetMarketplace';
-import FinancialChartWidget from '@/components/portal/widgets/FinancialChartWidget';
-import DelinquentAccountsWidget from '@/components/portal/widgets/DelinquentAccountsWidget';
 
-const BoardDashboard: React.FC = () => {
-  const { user, currentAssociation } = useAuth();
+const BoardDashboard = () => {
+  const { user, profile } = useAuth();
   
-  // In a real application, we would fetch user-specific widget preferences first,
-  // then fall back to association defaults if none are set
-  const { data: userWidgets = [], isLoading: loadingUserWidgets } = useSupabaseQuery(
-    'user_portal_widgets',
-    {
-      select: '*',
-      filter: [{ column: 'user_id', value: user?.id }],
-      order: { column: 'position', ascending: true },
-    },
-    !!user?.id
-  );
-
-  // Transform data to match our PortalWidget type
-  const transformedWidgets: PortalWidget[] = userWidgets.map((widget: any) => ({
-    id: widget.id,
-    widgetType: widget.widget_type as WidgetType,
-    settings: widget.settings,
-    position: widget.position,
-    isEnabled: widget.is_enabled
-  }));
-
-  const { saveWidgetSettings, toggleWidget } = useWidgetSettings('user');
-  const { orderedWidgets, handleDragEnd } = useDraggableWidgets(transformedWidgets, 'user');
-
-  // Get enabled widgets
-  const enabledWidgets = orderedWidgets.filter(widget => widget.isEnabled);
-  const enabledWidgetTypes = enabledWidgets.map(widget => widget.widgetType);
-
-  const handleToggleWidget = async (widgetType: string, enabled: boolean) => {
-    const widget = orderedWidgets.find(w => w.widgetType === widgetType);
-    if (widget) {
-      await toggleWidget(widget.id, enabled);
-    }
-  };
+  const quickLinks = [
+    { title: 'View Invoices', path: '/portal/board/invoices', icon: <CreditCard className="h-5 w-5" />, color: 'bg-blue-100' },
+    { title: 'Work Orders', path: '/portal/board/work-orders', icon: <WrenchIcon className="h-5 w-5" />, color: 'bg-green-100' },
+    { title: 'Homeowners', path: '/portal/board/homeowners', icon: <Users className="h-5 w-5" />, color: 'bg-purple-100' },
+    { title: 'Violations', path: '/portal/board/violations', icon: <AlertTriangle className="h-5 w-5" />, color: 'bg-red-100' },
+  ];
 
   return (
-    <PermissionGuard menuId="board-portal">
-      <AppLayout>
-        <div className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building className="h-6 w-6" />
-              <h1 className="text-3xl font-bold tracking-tight">Board Member Dashboard</h1>
-            </div>
-            <WidgetMarketplace 
-              portalType="board"
-              enabledWidgets={enabledWidgetTypes}
-              onToggleWidget={handleToggleWidget}
-            />
+    <AppLayout>
+      <div className="container p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Board Member Portal</h1>
+            <p className="text-muted-foreground">
+              Welcome back, {profile?.name || user?.email || 'Board Member'}
+            </p>
+          </div>
+          <Button variant="outline" asChild>
+            <Link to="/dashboard">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Community Intelligence
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1">
+            <PortalNavigation portalType="board" />
           </div>
           
-          <p className="text-muted-foreground">
-            Welcome to your board member portal. Access important association information and management tools.
-          </p>
-          
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="widgets" direction="horizontal">
-              {(provided) => (
-                <div 
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                >
-                  <Draggable draggableId="financial-chart" index={0}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                      >
-                        <FinancialChartWidget 
-                          dragHandleProps={provided.dragHandleProps}
-                          saveSettings={(settings) => saveWidgetSettings('financial-chart', settings)}
-                        />
+          <div className="lg:col-span-3 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickLinks.map((link) => (
+                <Card key={link.path} className="hover:shadow-md transition-shadow">
+                  <Link to={link.path}>
+                    <CardHeader className="p-4">
+                      <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-2`}>
+                        {link.icon}
                       </div>
-                    )}
-                  </Draggable>
-                  
-                  <Draggable draggableId="delinquent-accounts" index={1}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                      >
-                        <DelinquentAccountsWidget 
-                          dragHandleProps={provided.dragHandleProps}
-                          saveSettings={(settings) => saveWidgetSettings('delinquent-accounts', settings)}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                  
-                  {enabledWidgets
-                    .filter(widget => !['financial-chart', 'delinquent-accounts'].includes(widget.widgetType))
-                    .map((widget, index) => {
-                      const WidgetComponent = getWidgetComponent(widget.widgetType);
-                      
-                      return (
-                        <Draggable key={widget.id} draggableId={widget.id} index={index + 2}>
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                            >
-                              <DashboardWidget 
-                                title={widget.widgetType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} 
-                                widgetType={widget.widgetType}
-                                isDraggable={true}
-                                dragHandleProps={provided.dragHandleProps}
-                                onSave={() => saveWidgetSettings(widget.widgetType, { ...widget.settings })}
-                              >
-                                <WidgetComponent 
-                                  widgetId={widget.id}
-                                  saveSettings={(settings) => saveWidgetSettings(widget.widgetType, settings)}
-                                  settings={widget.settings}
-                                />
-                              </DashboardWidget>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                  })}
-                  {provided.placeholder}
+                      <CardTitle className="text-base">{link.title}</CardTitle>
+                    </CardHeader>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Overview</CardTitle>
+                <CardDescription>Current community financial status</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">Operating Account</p>
+                    <p className="text-xl font-bold">$45,623.84</p>
+                  </div>
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">Reserve Account</p>
+                    <p className="text-xl font-bold">$128,450.00</p>
+                  </div>
+                  <div className="p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground">YTD Expenses</p>
+                    <p className="text-xl font-bold">$76,189.42</p>
+                  </div>
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+              </CardContent>
+            </Card>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Upcoming Tasks</CardTitle>
+                  <CardDescription>Your board responsibilities</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between p-2 border rounded-md">
+                      <p>Review October Budget</p>
+                      <p className="text-sm text-muted-foreground">Due Oct 5</p>
+                    </div>
+                    <div className="flex justify-between p-2 border rounded-md">
+                      <p>Approve Landscaping Contract</p>
+                      <p className="text-sm text-muted-foreground">Due Oct 10</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Community Insights</CardTitle>
+                  <CardDescription>AI-powered analysis</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AiQueryInput />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </AppLayout>
-    </PermissionGuard>
+      </div>
+    </AppLayout>
   );
 };
 

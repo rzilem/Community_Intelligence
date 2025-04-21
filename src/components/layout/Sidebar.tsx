@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { LogOut, X, Home, Building, Truck } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -81,6 +81,38 @@ const Sidebar: React.FC<SidebarProps> = ({
     return 0;
   };
 
+  // Homeowner Portal Menu Items
+  const homeownerPortalItems = [
+    { name: 'Dashboard', path: '/portal/homeowner', icon: LayoutDashboard },
+    { name: 'Payments', path: '/portal/homeowner/payments', icon: CreditCard },
+    { name: 'Requests', path: '/portal/homeowner/requests', icon: FileText },
+    { name: 'Calendar & Events', path: '/portal/homeowner/calendar', icon: Calendar },
+    { name: 'Directory', path: '/portal/homeowner/directory', icon: Users },
+    { name: 'Documents', path: '/portal/homeowner/documents', icon: File },
+  ];
+
+  // Board Portal Menu Items
+  const boardPortalItems = [
+    { name: 'Dashboard', path: '/portal/board/dashboard', icon: LayoutDashboard },
+    { name: 'Invoices', path: '/portal/board/invoices', icon: CreditCard },
+    { name: 'Work Orders', path: '/portal/board/work-orders', icon: WrenchIcon },
+    { name: 'Collections', path: '/portal/board/collections', icon: PiggyBank },
+    { name: 'Homeowners', path: '/portal/board/homeowners', icon: Users },
+    { name: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: Building },
+    { name: 'Reports', path: '/portal/board/reports', icon: BarChart },
+    { name: 'Violations', path: '/portal/board/violations', icon: AlertTriangle },
+    { name: 'Board Tasks', path: '/portal/board/tasks', icon: CheckSquare },
+    { name: 'Email Community', path: '/portal/board/email', icon: Mail },
+    { name: 'Board Portal Training', path: '/portal/board/training', icon: BookOpen },
+    { name: 'Board Member Video Education', path: '/portal/board/video-education', icon: Video },
+    { name: 'Board Member AI Assistant', path: '/portal/board/ai-assistant', icon: Sparkles },
+    { name: 'Board Reimbursement', path: '/portal/board/reimbursement', icon: DollarSign },
+  ];
+
+  // Check if current path is in homeowner or board portal
+  const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
+  const isBoardPortal = location.pathname.startsWith('/portal/board');
+
   return (
     <div
       className={cn(
@@ -106,6 +138,61 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
+          {/* Main Portal Selection */}
+          <div className="mb-2 pb-2 border-b border-white/10">
+            <Link
+              to="/portal"
+              className={cn(
+                "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+                location.pathname === '/portal' && "bg-white/10 font-medium"
+              )}
+            >
+              <Home size={20} />
+              <span>Portal Selection</span>
+            </Link>
+          </div>
+          
+          {/* Homeowner Portal Links - Shown only when in homeowner portal */}
+          {isHomeownerPortal && (
+            <div className="mb-2 pb-2 border-b border-white/10">
+              <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
+              {homeownerPortalItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+                    location.pathname === item.path && "bg-white/10 font-medium"
+                  )}
+                >
+                  <item.icon size={20} />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+          
+          {/* Board Portal Links - Shown only when in board portal */}
+          {isBoardPortal && (
+            <div className="mb-2 pb-2 border-b border-white/10">
+              <p className="px-3 py-1 text-white/60 text-xs uppercase">Board Portal</p>
+              {boardPortalItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+                    location.pathname === item.path && "bg-white/10 font-medium"
+                  )}
+                >
+                  <item.icon size={20} />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Portal Quick Links */}
           <SidebarNavItem
             name="Homeowner Portal"
             path="/portal/homeowner"
@@ -133,6 +220,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             isActive={location.pathname === '/portal/vendor'}
           />
 
+          {/* Main Navigation */}
           {mainNavItems.map((item) => (
             <SidebarNavItem
               key={item.path}
