@@ -11,7 +11,9 @@ import {
   Truck,
   Building,
   Users,
-  Star
+  Star,
+  Sparkles,
+  Layout
 } from 'lucide-react';
 import { WidgetDefinition } from '@/types/portal-types';
 
@@ -20,6 +22,8 @@ import FinancialChartWidget from './widgets/FinancialChartWidget';
 import DelinquentAccountsWidget from './widgets/DelinquentAccountsWidget';
 import AmenityBookingsWidget from './widgets/AmenityBookingsWidget';
 import UpcomingBidsWidget from './widgets/UpcomingBidsWidget';
+import AIInsightsWidget from './widgets/AIInsightsWidget';
+import CustomWidget from './widgets/CustomWidget';
 
 export const widgetRegistry: Record<string, WidgetDefinition> = {
   'payments': {
@@ -209,6 +213,24 @@ export const widgetRegistry: Record<string, WidgetDefinition> = {
         <button className="w-full bg-primary text-white py-2 px-4 rounded">Manage Preferred Status</button>
       </div>
     )
+  },
+  'analytics-widget': {
+    type: 'analytics-widget',
+    name: 'AI Insights',
+    description: 'Get AI-powered insights about your community',
+    icon: 'sparkles',
+    defaultEnabled: true,
+    availableFor: ['homeowner', 'board', 'vendor'],
+    component: AIInsightsWidget
+  },
+  'custom-widget': {
+    type: 'custom-widget',
+    name: 'Custom Widget',
+    description: 'Create your own custom widget',
+    icon: 'layout',
+    defaultEnabled: true,
+    availableFor: ['homeowner', 'board', 'vendor'],
+    component: CustomWidget
   }
 };
 

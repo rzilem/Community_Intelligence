@@ -6,7 +6,9 @@ import { WidgetType } from '@/types/portal-types';
 import { Loader2, Save, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWidgetNotifications } from '@/hooks/portal/useWidgetNotifications';
+import { useWidgetAnalytics } from '@/hooks/portal/useWidgetAnalytics';
 import ShareWidgetDialog from './widgets/ShareWidgetDialog';
+import CollaborationIndicator from './CollaborationIndicator';
 
 interface DashboardWidgetProps {
   title: string;
@@ -32,6 +34,20 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   dragHandleProps
 }) => {
   useWidgetNotifications(widgetType);
+  const { trackAction } = useWidgetAnalytics(widgetType, widgetType);
+  
+  // Track widget view
+  React.useEffect(() => {
+    const trackViewInteraction = async () => {
+      try {
+        await trackAction('view_content');
+      } catch (error) {
+        console.error('Error tracking widget view:', error);
+      }
+    };
+    
+    trackViewInteraction();
+  }, [trackAction]);
 
   return (
     <Card className={cn("shadow-sm h-full", className)}>
@@ -49,12 +65,16 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
             <span>{title}</span>
           </div>
           <div className="flex items-center gap-2">
+            <CollaborationIndicator widgetId={widgetType} />
             <ShareWidgetDialog widgetId={widgetType} widgetType={widgetType} />
             {onSave && (
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={onSave}
+                onClick={() => {
+                  onSave();
+                  trackAction('save_widget');
+                }}
                 disabled={isSaving}
               >
                 {isSaving ? (
