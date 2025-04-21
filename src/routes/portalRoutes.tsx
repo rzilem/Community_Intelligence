@@ -6,7 +6,7 @@ import VendorDashboard from '@/pages/portal/VendorDashboard';
 import PortalManagement from '@/pages/system/PortalManagement';
 import RequireAuth from '@/components/auth/RequireAuth';
 import PortalSelection from '@/pages/portal/PortalSelection';
-import CollectionsPage from '@/pages/portal/CollectionsPage';
+import CollectionsPage from '@/pages/portal/board/CollectionsPage';
 
 export const portalRoutes = [
   <Route 
