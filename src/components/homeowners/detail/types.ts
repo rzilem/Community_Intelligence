@@ -34,4 +34,5 @@ export interface Homeowner {
   propertyId?: string;
   association?: string;
   closingDate?: string;
+  lastPayment?: { amount: number; date: string }; // Added missing property
 }

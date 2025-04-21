@@ -38,9 +38,8 @@ export const convertDbResidentToHomeowner = (data: any): Homeowner => {
     propertyId: data.propertyId,
     propertyAddress: data.propertyAddress,
     association: data.association,
-    lastPayment: data.lastPayment,
-    aclStartDate: data.aclStartDate,
-    closingDate: data.closingDate
+    closingDate: data.closingDate,
+    lastPayment: data.lastPayment
   };
 };
 

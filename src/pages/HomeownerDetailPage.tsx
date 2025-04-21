@@ -71,7 +71,7 @@ const HomeownerDetailPage: React.FC = () => {
   // Convert violations to number if it's a string array for backward compatibility
   const violationsCount = typeof homeowner?.violations === 'number' 
     ? homeowner.violations 
-    : (Array.isArray(homeowner?.violations) ? homeowner?.violations.length : 0);
+    : 0; // Just default to 0 if violations is undefined or not a number
 
   // Extract the most recent contact date from the lastContact object
   // or use an empty string if it's not available
