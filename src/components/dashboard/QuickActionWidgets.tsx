@@ -6,6 +6,7 @@ import {
   FileText, AlarmClock, BarChart2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useResponsive } from '@/hooks/use-responsive';
 
 interface ActionItem {
   title: string;
@@ -17,6 +18,7 @@ interface ActionItem {
 
 const QuickActionWidgets: React.FC = () => {
   const navigate = useNavigate();
+  const { isMobile, isTablet } = useResponsive();
   
   const actions: ActionItem[] = [
     {
@@ -66,6 +68,9 @@ const QuickActionWidgets: React.FC = () => {
     toast.info("View all actions feature coming soon");
   };
   
+  // Determine grid columns based on screen size
+  const gridCols = isMobile ? 'grid-cols-2' : isTablet ? 'grid-cols-3' : 'grid-cols-5';
+  
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -79,11 +84,11 @@ const QuickActionWidgets: React.FC = () => {
         </button>
       </div>
       
-      <div className="grid grid-cols-5 gap-3">
+      <div className={`grid ${gridCols} gap-3`}>
         {actions.map((action, index) => (
           <button
             key={index}
-            className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all 
+            className={`flex flex-col items-center justify-center p-3 sm:p-4 rounded-lg border-2 transition-all 
               ${action.color} 
               hover:shadow-md hover:border-hoa-blue-500 
               focus:outline-none focus:ring-2 focus:ring-hoa-blue-300`}
@@ -91,7 +96,7 @@ const QuickActionWidgets: React.FC = () => {
             aria-label={action.description}
           >
             <div className="mb-2">{action.icon}</div>
-            <span className="text-sm font-medium">{action.title}</span>
+            <span className="text-xs sm:text-sm font-medium">{action.title}</span>
           </button>
         ))}
       </div>

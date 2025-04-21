@@ -47,9 +47,14 @@ export const useAssociations = () => {
 
       if (error) throw error;
 
-      // Map data to Association shape and include all relevant properties
-      setAssociations(
-        (data || []).map((row: any) => ({
+      console.log('Raw associations data:', data);
+
+      // Map data to Association shape and normalize is_archived to a boolean value
+      const normalizedAssociations = (data || []).map((row: any) => {
+        // Explicitly convert is_archived to boolean
+        const isArchived = row.is_archived === true || row.is_archived === 'true';
+        
+        return {
           id: row.id,
           name: row.name,
           address: row.address,
@@ -59,7 +64,7 @@ export const useAssociations = () => {
           contact_email: row.contact_email,
           created_at: row.created_at,
           updated_at: row.updated_at,
-          is_archived: row.is_archived,
+          is_archived: isArchived, // Normalized boolean value
           description: row.description,
           phone: row.phone,
           property_type: row.property_type,
@@ -74,8 +79,11 @@ export const useAssociations = () => {
           status: row.status,
           // include any other fields for stability/future safety
           ...row
-        }))
-      );
+        };
+      });
+
+      console.log('Normalized associations data:', normalizedAssociations);
+      setAssociations(normalizedAssociations);
     } catch (error: any) {
       console.error('Error fetching associations:', error);
       setError(error);
