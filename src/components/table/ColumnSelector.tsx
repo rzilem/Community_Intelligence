@@ -34,50 +34,20 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   storageKey = "column_selector_default"
 }) => {
   const [open, setOpen] = useState(false);
-  const [localColumns, setLocalColumns] = useState<string[]>(selectedColumns || []);
+  const [localColumns, setLocalColumns] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  // Initialize with selected columns or saved preferences
+  // Initialize with selected columns whenever they change
   useEffect(() => {
-    console.log('ColumnSelector initialized with selected columns:', selectedColumns);
+    console.log('ColumnSelector received selectedColumns:', selectedColumns);
     if (selectedColumns && selectedColumns.length > 0) {
       setLocalColumns(selectedColumns);
     } else {
-      // Fallback to localStorage if no columns were provided
-      const saved = localStorage.getItem(getStorageKey(storageKey));
-      if (saved) {
-        try {
-          const parsed: string[] = JSON.parse(saved);
-          // Filter to ensure we only use column IDs that exist
-          const valid = parsed.filter(id => columns.find(c => c.id === id));
-          if (valid.length > 0) {
-            setLocalColumns(valid);
-            onChange(valid); // Sync with parent
-          } else {
-            // Fallback to defaults if saved columns are invalid
-            const defaultCols = columns.filter(c => c.defaultVisible !== false).map(c => c.id);
-            setLocalColumns(defaultCols);
-            onChange(defaultCols); // Sync with parent
-          }
-        } catch (e) {
-          console.error('Error parsing saved column preferences:', e);
-          setLocalColumns(selectedColumns || []);
-        }
-      } else {
-        setLocalColumns(selectedColumns || []);
-      }
+      // If no selected columns, use defaults from the columns prop
+      const defaultCols = columns.filter(c => c.defaultVisible !== false).map(c => c.id);
+      setLocalColumns(defaultCols);
     }
-  }, [storageKey, columns]);
-
-  // Save changes when local columns change
-  useEffect(() => {
-    if (localColumns && localColumns.length > 0 && 
-        JSON.stringify(localColumns) !== JSON.stringify(selectedColumns)) {
-      console.log('Syncing column changes with parent:', localColumns);
-      onChange(localColumns);
-      localStorage.setItem(getStorageKey(storageKey), JSON.stringify(localColumns));
-    }
-  }, [localColumns]);
+  }, [selectedColumns, columns]);
 
   const handleColumnToggle = (columnId: string) => {
     let updatedColumns;
@@ -91,10 +61,10 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     } else {
       updatedColumns = [...localColumns, columnId];
     }
-    if (updatedColumns.length > 0) {
-      console.log('Updated columns after toggle:', updatedColumns);
-      setLocalColumns(updatedColumns);
-    }
+    
+    console.log('Column toggle - updated columns:', updatedColumns);
+    setLocalColumns(updatedColumns);
+    onChange(updatedColumns);
   };
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
@@ -116,7 +86,8 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
   const handleDragEnd = () => {
     if (draggedIndex !== null && onReorder) {
-      onReorder(draggedIndex, draggedIndex); // Notify parent about reordering
+      onReorder(draggedIndex, draggedIndex);
+      onChange(localColumns);
     }
     setDraggedIndex(null);
   };
@@ -124,21 +95,17 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   const handleResetToDefaults = () => {
     if (resetToDefaults) {
       resetToDefaults();
-      localStorage.removeItem(getStorageKey(storageKey));
       setOpen(false);
       toast.success("Column settings reset to defaults");
     }
   };
 
-  // Filter columns to ensure they all exist
-  const validColumns = columns.filter(col => true);
-
   // Get selected and unselected columns for display
-  const selectedColumnObjects = validColumns
+  const selectedColumnObjects = columns
     .filter(col => localColumns.includes(col.id))
     .sort((a, b) => localColumns.indexOf(a.id) - localColumns.indexOf(b.id));
 
-  const unselectedColumnObjects = validColumns
+  const unselectedColumnObjects = columns
     .filter(col => !localColumns.includes(col.id));
 
   return (

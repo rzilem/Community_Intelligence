@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -15,17 +15,29 @@ export const useAssociations = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchAssociations = async () => {
+  const fetchAssociations = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
+      console.log('Fetching associations...');
       const { data, error } = await supabase
         .rpc('get_user_associations');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching associations:', error);
+        setError(error as Error);
+        return;
+      }
 
       console.log('Raw associations data:', data);
+
+      // Prevent setting state to undefined/null data
+      if (!data) {
+        console.warn('No associations data returned');
+        setAssociations([]);
+        return;
+      }
 
       // Map data to Association shape and normalize is_archived to a boolean value
       const normalizedAssociations: Association[] = (data || []).map((row: any) => {
@@ -34,7 +46,7 @@ export const useAssociations = () => {
         
         return {
           id: row.id,
-          name: row.name,
+          name: row.name || 'Unnamed Association',
           address: row.address,
           city: row.city,
           state: row.state,
@@ -54,7 +66,7 @@ export const useAssociations = () => {
           logo_url: row.logo_url,
           primary_color: row.primary_color,
           secondary_color: row.secondary_color,
-          status: row.status,
+          status: row.status || 'active',
           // include any other fields for stability/future safety
           ...row
         };
@@ -68,7 +80,7 @@ export const useAssociations = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const createAssociation = async (association: Omit<Association, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -120,17 +132,12 @@ export const useAssociations = () => {
       
       // Update the local state with the updated association
       setAssociations(prev =>
-        prev.map(assoc => assoc.id === id ? { ...assoc, ...data as Association } : assoc)
+        prev.map(assoc => assoc.id === id ? { ...assoc, ...data } : assoc)
       );
-
-      // Also refresh the entire list to ensure consistency
-      fetchAssociations();
       
-      toast.success('Association updated successfully');
       return data;
     } catch (error: any) {
       console.error('Error updating association:', error);
-      toast.error(`Failed to update association: ${error.message}`);
       throw error;
     } finally {
       setIsUpdating(false);
@@ -153,28 +160,25 @@ export const useAssociations = () => {
       setAssociations(prev =>
         prev.map(assoc => assoc.id === id ? { ...assoc, is_archived: true } : assoc)
       );
-
-      toast.success('Association archived successfully');
       
-      // Refresh the associations list after archiving
-      fetchAssociations();
+      return true;
     } catch (error: any) {
       console.error('Error archiving association:', error);
-      toast.error(`Failed to archive association: ${error.message}`);
       throw error;
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const manuallyRefresh = () => {
+  const manuallyRefresh = useCallback(() => {
     console.log('Manually refreshing associations...');
     fetchAssociations();
-  };
+  }, [fetchAssociations]);
 
+  // Initial load
   useEffect(() => {
     fetchAssociations();
-  }, []);
+  }, [fetchAssociations]);
 
   return {
     associations,

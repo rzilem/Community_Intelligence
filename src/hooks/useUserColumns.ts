@@ -16,6 +16,7 @@ export const useUserColumns = (
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
+  const [error, setError] = useState<Error | null>(null);
   
   // Default visible columns are all columns unless specified
   const defaultVisibleIds = columns
@@ -25,38 +26,48 @@ export const useUserColumns = (
   // Load column preferences when component mounts or user/viewId changes
   useEffect(() => {
     const loadUserPreferences = async () => {
-      if (user?.id) {
-        setLoading(true);
-        try {
-          const { data: savedColumns } = await getUserColumnPreferences(user.id, viewId);
+      setLoading(true);
+      setError(null);
+      
+      try {
+        if (user?.id) {
+          console.log(`Loading column preferences for user ${user.id}, view ${viewId}`);
+          const { data: savedColumns, error: prefError } = await getUserColumnPreferences(user.id, viewId);
           
-          if (savedColumns && savedColumns.length > 0) {
+          if (prefError) {
+            console.error('Error loading column preferences:', prefError);
+            setVisibleColumnIds(defaultVisibleIds);
+          } else if (savedColumns && savedColumns.length > 0) {
             console.log('Loaded saved columns for view', viewId, savedColumns);
             setVisibleColumnIds(savedColumns);
           } else {
             console.log('No saved columns found, using defaults for view', viewId);
             setVisibleColumnIds(defaultVisibleIds);
           }
-        } catch (error) {
-          console.error('Failed to load column preferences:', error);
-          setVisibleColumnIds(defaultVisibleIds);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Fallback to localStorage when user is not authenticated
-        try {
-          const saved = localStorage.getItem(`columns-${viewId}`);
-          if (saved) {
-            const savedColumns = JSON.parse(saved);
-            setVisibleColumnIds(savedColumns);
-          } else {
+        } else {
+          // Fallback to localStorage when user is not authenticated
+          try {
+            const saved = localStorage.getItem(`columns-${viewId}`);
+            if (saved) {
+              const savedColumns = JSON.parse(saved);
+              if (Array.isArray(savedColumns) && savedColumns.length > 0) {
+                setVisibleColumnIds(savedColumns);
+              } else {
+                setVisibleColumnIds(defaultVisibleIds);
+              }
+            } else {
+              setVisibleColumnIds(defaultVisibleIds);
+            }
+          } catch (error) {
+            console.error('Error loading columns from localStorage:', error);
             setVisibleColumnIds(defaultVisibleIds);
           }
-        } catch (error) {
-          console.error('Error loading columns from localStorage:', error);
-          setVisibleColumnIds(defaultVisibleIds);
         }
+      } catch (err: any) {
+        console.error('Unexpected error in useUserColumns:', err);
+        setError(err);
+        setVisibleColumnIds(defaultVisibleIds);
+      } finally {
         setLoading(false);
       }
     };
@@ -65,19 +76,29 @@ export const useUserColumns = (
   }, [user?.id, viewId, defaultVisibleIds]);
 
   const updateVisibleColumns = async (columnIds: string[]) => {
+    if (!columnIds || columnIds.length === 0) {
+      console.warn('Attempted to update with empty column list, using defaults instead');
+      columnIds = defaultVisibleIds;
+    }
+    
     console.log('Updating visible columns for view', viewId, columnIds);
     setVisibleColumnIds(columnIds);
     
     if (user?.id) {
       try {
         await saveUserColumnPreferences(user.id, viewId, columnIds);
-        console.log('Column preferences saved successfully');
+        console.log('Column preferences saved successfully to database');
       } catch (error) {
-        console.error('Failed to save column preferences:', error);
+        console.error('Failed to save column preferences to database:', error);
       }
-    } else {
-      // If no user, just use local storage as fallback
+    }
+    
+    // Always save to localStorage as a fallback
+    try {
       localStorage.setItem(`columns-${viewId}`, JSON.stringify(columnIds));
+      console.log('Column preferences saved to localStorage');
+    } catch (error) {
+      console.error('Failed to save column preferences to localStorage:', error);
     }
   };
 
@@ -86,37 +107,18 @@ export const useUserColumns = (
     const [removed] = result.splice(startIndex, 1);
     result.splice(endIndex, 0, removed);
     
-    setVisibleColumnIds(result);
-    
-    if (user?.id) {
-      try {
-        await saveUserColumnPreferences(user.id, viewId, result);
-      } catch (error) {
-        console.error('Failed to save column preferences after reordering:', error);
-      }
-    } else {
-      localStorage.setItem(`columns-${viewId}`, JSON.stringify(result));
-    }
+    await updateVisibleColumns(result);
   };
 
   const resetToDefaults = async () => {
-    setVisibleColumnIds(defaultVisibleIds);
-    
-    if (user?.id) {
-      try {
-        await saveUserColumnPreferences(user.id, viewId, defaultVisibleIds);
-      } catch (error) {
-        console.error('Failed to reset column preferences to defaults:', error);
-      }
-    } else {
-      localStorage.removeItem(`columns-${viewId}`);
-    }
+    await updateVisibleColumns(defaultVisibleIds);
   };
 
   return {
     columns,
     visibleColumnIds,
     loading,
+    error,
     updateVisibleColumns,
     reorderColumns,
     resetToDefaults,

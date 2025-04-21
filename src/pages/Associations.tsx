@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Network, RefreshCw, Search, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import PaginatedAssociationTable from '@/components/associations/PaginatedAssoci
 import { Association } from '@/types/association-types';
 import ApiError from '@/components/ui/api-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +28,7 @@ const Associations = () => {
     deleteAssociation 
   } = useAssociations();
 
-  // Ensure associations is treated as array
+  // Ensure associations is treated as array and protect from undefined
   const associationsArray = Array.isArray(associations) ? associations : [];
 
   const filteredAssociations = associationsArray.filter(
@@ -39,27 +40,55 @@ const Associations = () => {
   const inactiveAssociations = filteredAssociations.filter(a => a.is_archived === true);
 
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
-    updateAssociation(id, data);
+    updateAssociation(id, data)
+      .then(() => {
+        toast.success("Association updated successfully");
+      })
+      .catch((err) => {
+        toast.error(`Failed to update association: ${err.message}`);
+      });
   };
 
   const handleDeleteAssociation = (id: string) => {
-    deleteAssociation(id);
+    deleteAssociation(id)
+      .then(() => {
+        toast.success("Association archived successfully");
+      })
+      .catch((err) => {
+        toast.error(`Failed to archive association: ${err.message}`);
+      });
   };
 
-  // Handle toggling paginated view
-  const togglePaginatedView = () => {
+  // Handle toggling paginated view with proper tab reset
+  const togglePaginatedView = useCallback(() => {
     setUsePagination(prev => !prev);
-  };
-
-  // Reset to the first tab when switching view modes
-  useEffect(() => {
+    // Reset to the first tab when switching view modes
     setCurrentTab('all');
-  }, [usePagination]);
+    
+    // If we're switching back from paginated view, refresh the data
+    if (usePagination) {
+      manuallyRefresh();
+    }
+  }, [usePagination, manuallyRefresh]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
     setCurrentTab(value);
   };
+
+  // Handle refreshing data
+  const handleRefresh = () => {
+    toast.info("Refreshing associations...");
+    manuallyRefresh();
+  };
+
+  // If no associations and not loading, refresh automatically once
+  useEffect(() => {
+    if (!isLoading && associationsArray.length === 0 && !error) {
+      console.log("No associations found, refreshing automatically...");
+      manuallyRefresh();
+    }
+  }, [isLoading, associationsArray.length, error, manuallyRefresh]);
 
   return (
     <AppLayout>
@@ -107,7 +136,7 @@ const Associations = () => {
                     <TooltipTrigger asChild>
                       <Button 
                         variant="outline"
-                        onClick={manuallyRefresh}
+                        onClick={handleRefresh}
                         disabled={isLoading}
                         title="Refresh association list"
                       >
@@ -127,73 +156,90 @@ const Associations = () => {
               <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
             )}
 
-            {usePagination ? (
-              <Tabs value={currentTab} onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="active">Active</TabsTrigger>
-                  <TabsTrigger value="inactive">Inactive</TabsTrigger>
-                </TabsList>
+            {isLoading && (
+              <div className="flex justify-center items-center py-8">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2">Loading associations...</span>
+              </div>
+            )}
 
-                <TabsContent value="all">
-                  <PaginatedAssociationTable 
-                    associationStatus="all" 
-                    onEdit={handleEditAssociation}
-                    onDelete={handleDeleteAssociation}
-                  />
-                </TabsContent>
+            {!isLoading && associationsArray.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-12 px-4 bg-muted/30 rounded-md">
+                <Network className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-center text-muted-foreground mb-4">No associations found</p>
+                <Button onClick={handleRefresh}>Refresh Data</Button>
+              </div>
+            )}
 
-                <TabsContent value="active">
-                  <PaginatedAssociationTable 
-                    associationStatus="active" 
-                    onEdit={handleEditAssociation}
-                    onDelete={handleDeleteAssociation}
-                  />
-                </TabsContent>
+            {!isLoading && associationsArray.length > 0 && (
+              usePagination ? (
+                <Tabs value={currentTab} onValueChange={handleTabChange}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value="active">Active</TabsTrigger>
+                    <TabsTrigger value="inactive">Inactive</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="inactive">
-                  <PaginatedAssociationTable 
-                    associationStatus="inactive" 
-                    onEdit={handleEditAssociation}
-                    onDelete={handleDeleteAssociation}
-                  />
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <Tabs value={currentTab} onValueChange={handleTabChange}>
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="all">
-                    All
-                    <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
-                      {filteredAssociations.length}
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger value="active">
-                    Active
-                    <span className="ml-1.5 rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs">
-                      {activeAssociations.length}
-                    </span>
-                  </TabsTrigger>
-                  <TabsTrigger value="inactive">
-                    Inactive
-                    <span className="ml-1.5 rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs">
-                      {inactiveAssociations.length}
-                    </span>
-                  </TabsTrigger>
-                </TabsList>
+                  <TabsContent value="all">
+                    <PaginatedAssociationTable 
+                      associationStatus="all" 
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
+                  </TabsContent>
 
-                <TabsContent value="all">
-                  <AssociationTable associations={filteredAssociations} isLoading={isLoading} />
-                </TabsContent>
+                  <TabsContent value="active">
+                    <PaginatedAssociationTable 
+                      associationStatus="active" 
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
+                  </TabsContent>
 
-                <TabsContent value="active">
-                  <AssociationTable associations={activeAssociations} isLoading={isLoading} />
-                </TabsContent>
+                  <TabsContent value="inactive">
+                    <PaginatedAssociationTable 
+                      associationStatus="inactive" 
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <Tabs value={currentTab} onValueChange={handleTabChange}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="all">
+                      All
+                      <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
+                        {filteredAssociations.length}
+                      </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="active">
+                      Active
+                      <span className="ml-1.5 rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs">
+                        {activeAssociations.length}
+                      </span>
+                    </TabsTrigger>
+                    <TabsTrigger value="inactive">
+                      Inactive
+                      <span className="ml-1.5 rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs">
+                        {inactiveAssociations.length}
+                      </span>
+                    </TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="inactive">
-                  <AssociationTable associations={inactiveAssociations} isLoading={isLoading} />
-                </TabsContent>
-              </Tabs>
+                  <TabsContent value="all">
+                    <AssociationTable associations={filteredAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                  </TabsContent>
+
+                  <TabsContent value="active">
+                    <AssociationTable associations={activeAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                  </TabsContent>
+
+                  <TabsContent value="inactive">
+                    <AssociationTable associations={inactiveAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                  </TabsContent>
+                </Tabs>
+              )
             )}
           </CardContent>
         </Card>

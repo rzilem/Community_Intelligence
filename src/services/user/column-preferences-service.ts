@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserSettings } from '@/types/profile-types';
+import { toast } from 'sonner';
 
 /**
  * Save column preferences for a specific view for a user
@@ -11,6 +12,11 @@ export const saveUserColumnPreferences = async (
   columnIds: string[]
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    if (!columnIds || !Array.isArray(columnIds) || columnIds.length === 0) {
+      console.error('Invalid column IDs provided to saveUserColumnPreferences:', columnIds);
+      return { success: false, error: 'Invalid column IDs' };
+    }
+    
     console.log(`Saving column preferences for user ${userId}, view ${viewId}`, columnIds);
     
     // First try to get existing user settings
@@ -19,6 +25,11 @@ export const saveUserColumnPreferences = async (
       .select('*')
       .eq('user_id', userId)
       .single();
+    
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Error fetching user settings:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
     
     // Initialize column preferences with empty object if not exist
     let columnPreferences: Record<string, string[]> = {};
@@ -55,7 +66,7 @@ export const saveUserColumnPreferences = async (
       
       if (error) {
         console.error('Error updating user settings:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
       
       console.log('Updated user_settings successfully');
@@ -72,7 +83,7 @@ export const saveUserColumnPreferences = async (
       
       if (error) {
         console.error('Error creating user settings:', error);
-        throw error;
+        return { success: false, error: error.message };
       }
       
       console.log('Created new user_settings successfully');
@@ -107,7 +118,8 @@ export const getUserColumnPreferences = async (
         console.log('No user settings found');
         return { data: undefined };
       }
-      throw error;
+      console.error('Error fetching user settings:', error);
+      return { error: error.message };
     }
     
     // Process column preferences safely
@@ -129,9 +141,13 @@ export const getUserColumnPreferences = async (
     
     console.log('Retrieved column preferences:', columnPreferences[viewId]);
     
-    return { 
-      data: columnPreferences[viewId]
-    };
+    // Validate that we have an array
+    if (columnPreferences[viewId] && Array.isArray(columnPreferences[viewId])) {
+      return { data: columnPreferences[viewId] };
+    } else {
+      console.log('Retrieved invalid column preferences, returning undefined');
+      return { data: undefined };
+    }
   } catch (error: any) {
     console.error('Error fetching user column preferences:', error);
     return { error: error.message };
