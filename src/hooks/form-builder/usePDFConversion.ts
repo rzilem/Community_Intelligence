@@ -23,14 +23,15 @@ export function usePDFConversion(associationId?: string) {
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
-      // Create a worker and initialize it - using the correct Tesseract.js API
+      // Correctly use the Tesseract.js v5 API
       const worker = await createWorker();
-      // These methods are accessed via the worker instance directly in tesseract.js v5
+      
+      // Configure for better form field recognition using the correct API
       await worker.load();
       await worker.loadLanguage('eng');
       await worker.initialize('eng');
       
-      // Configure for better form field recognition
+      // Set parameters for better recognition
       await worker.setParameters({
         tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:-_()',
       });
@@ -44,7 +45,7 @@ export function usePDFConversion(associationId?: string) {
     }
   };
 
-  const analyzePDFContent = async (text: string) => {
+  const analyzePDFContent = async (text: string): Promise<FormField[]> => {
     // Basic field detection logic
     const fields: FormField[] = [];
     
@@ -111,13 +112,14 @@ export function usePDFConversion(associationId?: string) {
       });
 
       // Create form template from detected fields
+      // Convert FormField[] to stringified JSON before sending to Supabase
       const { error: templateError } = await supabase
         .from('form_templates')
         .insert({
           association_id: associationId,
           name: file.name.replace('.pdf', ''),
           description: 'Converted from PDF',
-          fields: detectedFields,
+          fields: JSON.stringify(detectedFields),
           metadata: {
             source_pdf: uploadData.path,
             conversion_date: new Date().toISOString()
