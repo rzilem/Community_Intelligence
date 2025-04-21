@@ -919,6 +919,60 @@ export type Database = {
           },
         ]
       }
+      collections_account_documents: {
+        Row: {
+          collections_account_id: string
+          created_at: string
+          document_name: string
+          document_url: string
+          id: string
+          opened_date: string | null
+          sent_date: string | null
+          status: string
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          collections_account_id: string
+          created_at?: string
+          document_name: string
+          document_url: string
+          id?: string
+          opened_date?: string | null
+          sent_date?: string | null
+          status?: string
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          collections_account_id?: string
+          created_at?: string
+          document_name?: string
+          document_url?: string
+          id?: string
+          opened_date?: string | null
+          sent_date?: string | null
+          status?: string
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_account_documents_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_account_documents_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collections_account_history: {
         Row: {
           action_date: string
@@ -1046,6 +1100,154 @@ export type Database = {
           },
         ]
       }
+      collections_payment_plans: {
+        Row: {
+          collections_account_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          monthly_amount: number
+          notes: string | null
+          plan_type: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          collections_account_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          monthly_amount: number
+          notes?: string | null
+          plan_type: string
+          start_date: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          collections_account_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          plan_type?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_payment_plans_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_payments: {
+        Row: {
+          amount: number
+          collections_account_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          payment_plan_id: string | null
+          reference_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          collections_account_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date: string
+          payment_method: string
+          payment_plan_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          collections_account_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_plan_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_payments_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_payments_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "collections_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_step_templates: {
+        Row: {
+          created_at: string
+          document_type: string
+          id: string
+          step_id: string
+          template_content: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          step_id: string
+          template_content: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          step_id?: string
+          template_content?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_step_templates_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collections_steps: {
         Row: {
           association_id: string
@@ -1054,7 +1256,12 @@ export type Database = {
           description: string | null
           id: string
           is_automated: boolean | null
+          is_closing_step: boolean | null
           name: string
+          order_no: number | null
+          portal_reply: string | null
+          reply_to: string | null
+          send_to: string | null
           step_order: number
           step_type: string
           template_id: string | null
@@ -1067,7 +1274,12 @@ export type Database = {
           description?: string | null
           id?: string
           is_automated?: boolean | null
+          is_closing_step?: boolean | null
           name: string
+          order_no?: number | null
+          portal_reply?: string | null
+          reply_to?: string | null
+          send_to?: string | null
           step_order: number
           step_type?: string
           template_id?: string | null
@@ -1080,7 +1292,12 @@ export type Database = {
           description?: string | null
           id?: string
           is_automated?: boolean | null
+          is_closing_step?: boolean | null
           name?: string
+          order_no?: number | null
+          portal_reply?: string | null
+          reply_to?: string | null
+          send_to?: string | null
           step_order?: number
           step_type?: string
           template_id?: string | null

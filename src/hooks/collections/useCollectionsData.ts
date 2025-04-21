@@ -24,12 +24,54 @@ export interface CollectionAccount {
 
 export interface CollectionStep {
   id: string;
+  association_id: string;
   name: string;
   description: string | null;
   days_after_delinquent: number;
   step_order: number;
   step_type: string;
   is_automated: boolean;
+  order_no?: number;
+  send_to?: string;
+  reply_to?: string;
+  portal_reply?: string;
+  is_closing_step?: boolean;
+}
+
+export interface CollectionDocument {
+  id: string;
+  collections_account_id: string;
+  step_id: string;
+  document_name: string;
+  document_url: string;
+  sent_date: string | null;
+  opened_date: string | null;
+  status: string;
+}
+
+export interface CollectionPaymentPlan {
+  id: string;
+  collections_account_id: string;
+  plan_type: string;
+  start_date: string;
+  end_date: string;
+  total_amount: number;
+  monthly_amount: number;
+  status: string;
+  notes?: string;
+  created_by: string;
+}
+
+export interface CollectionPayment {
+  id: string;
+  collections_account_id: string;
+  payment_plan_id?: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string;
+  reference_number?: string;
+  status: string;
+  notes?: string;
 }
 
 export function useCollectionsData(associationId: string) {
@@ -69,10 +111,49 @@ export function useCollectionsData(associationId: string) {
     !!selectedAccount
   );
 
+  const { data: documents } = useSupabaseQuery<CollectionDocument[]>(
+    'collections_account_documents',
+    {
+      select: '*',
+      filter: [
+        { column: 'collections_account_id', value: selectedAccount }
+      ],
+      order: { column: 'created_at', ascending: false }
+    },
+    !!selectedAccount
+  );
+
+  const { data: paymentPlans } = useSupabaseQuery<CollectionPaymentPlan[]>(
+    'collections_payment_plans',
+    {
+      select: '*',
+      filter: [
+        { column: 'collections_account_id', value: selectedAccount }
+      ],
+      order: { column: 'created_at', ascending: false }
+    },
+    !!selectedAccount
+  );
+
+  const { data: payments } = useSupabaseQuery<CollectionPayment[]>(
+    'collections_payments',
+    {
+      select: '*',
+      filter: [
+        { column: 'collections_account_id', value: selectedAccount }
+      ],
+      order: { column: 'payment_date', ascending: false }
+    },
+    !!selectedAccount
+  );
+
   return {
     accounts: accounts || [],
     steps: steps || [],
     history: history || [],
+    documents: documents || [],
+    paymentPlans: paymentPlans || [],
+    payments: payments || [],
     isLoading: accountsLoading || stepsLoading,
     selectedAccount,
     setSelectedAccount,
