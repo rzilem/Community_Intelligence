@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
@@ -67,7 +66,6 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
-  // Calculate violations count based on the type of the violations property
   const getViolationsCount = (): number => {
     if (!homeowner?.violations) return 0;
     
@@ -82,8 +80,6 @@ const HomeownerDetailPage: React.FC = () => {
     return 0;
   };
 
-  // Extract the most recent contact date from the lastContact object
-  // or use an empty string if it's not available
   const getLastContactString = () => {
     if (!homeowner?.lastContact) return '';
     
@@ -91,7 +87,6 @@ const HomeownerDetailPage: React.FC = () => {
       return homeowner.lastContact;
     }
     
-    // If it's an object with dates, find the most recent one
     const dates = [
       homeowner.lastContact.called,
       homeowner.lastContact.visit,
@@ -100,7 +95,6 @@ const HomeownerDetailPage: React.FC = () => {
     
     if (dates.length === 0) return '';
     
-    // Sort dates in descending order and take the first one
     return dates.sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0] || '';
   };
 
@@ -116,13 +110,13 @@ const HomeownerDetailPage: React.FC = () => {
               id={id || homeowner?.id || ''}
               name={homeowner?.name}
               status={homeowner?.status}
-              tags={homeowner?.tags}
-              violations={violationsCount}
+              tags={homeowner?.tags || []}
+              violations={getViolationsCount()}
               avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}
             />
-
+            
             {isEditing && isAdmin ? (
               <HomeownerEditForm 
                 homeowner={homeowner}

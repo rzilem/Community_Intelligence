@@ -7,11 +7,12 @@ export interface Homeowner {
   moveInDate?: string;
   moveOutDate?: string;
   property?: string;
+  propertyAddress?: string; // Added to match form usage
   unit?: string;
+  unitNumber?: string; // Added to match form usage
   balance?: string;
   status?: string;
   tags?: string[];
-  // Allow violations to be either a number or a string array
   violations?: number | string[];
   lastContact?: {
     email?: string;
@@ -29,5 +30,5 @@ export interface NoteType {
   content: string;
   author: string;
   date: string;
-  type?: 'manual' | 'system';
+  type: 'manual' | 'system';
 }
