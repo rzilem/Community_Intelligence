@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,8 +63,7 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
         { column: 'property_id', operator: 'eq', value: null },
         { column: 'resident_type', operator: 'eq', value: 'owner' }
       ]
-    },
-    [associationId]
+    }
   );
 
   const boardRoles = [
@@ -231,7 +231,7 @@ const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
             last_name: manualLastName,
             email: manualEmail,
             user_type: memberType
-          });
+          }, associationId);
           
           if (newUserData) {
             userId = newUserData.id;

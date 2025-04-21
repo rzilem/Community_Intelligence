@@ -53,7 +53,7 @@ export const associationMemberService = {
             association_id: member.association_id,
             role_type: member.role_type,
             role_name: member.role_name,
-            member_type: member.member_type || 'homeowner', // Added proper handling for member_type
+            member_type: member.member_type || 'homeowner',
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
@@ -110,7 +110,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
-        member_type: data.member_type || 'homeowner', // Handling optional field
+        member_type: data.member_type || 'homeowner',
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -160,7 +160,7 @@ export const associationMemberService = {
         association_id: data.association_id,
         role_type: data.role_type,
         role_name: data.role_name,
-        member_type: data.member_type || 'homeowner', // Handling optional field
+        member_type: data.member_type || 'homeowner',
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
@@ -252,7 +252,7 @@ export const associationMemberService = {
           first_name: userData.first_name,
           last_name: userData.last_name,
           email: userData.email,
-          role: userData.user_type // Use role field instead of user_type
+          role: userData.user_type // Use user_type as role
         })
         .select()
         .single();
