@@ -25,6 +25,7 @@ import BoardAIAssistantPage from '@/pages/portal/board/AIAssistantPage';
 import BoardReimbursementPage from '@/pages/portal/board/ReimbursementPage';
 import BoardDashboardPage from '@/pages/portal/board/MemberDashboardPage';
 import OperationsPage from '@/pages/portal/board/OperationsPage';
+import CommunityPulsePage from '@/pages/portal/board/CommunityPulsePage';
 
 // Homeowner Portal Routes
 export const homeownerPortalRoutes = [
@@ -77,6 +78,15 @@ export const homeownerPortalRoutes = [
 
 // Board Portal Routes
 export const boardPortalRoutes = [
+  <Route 
+    key="board-community-pulse"
+    path="/portal/board/community-pulse"
+    element={
+      <RequireAuth menuId="board-portal">
+        <CommunityPulsePage />
+      </RequireAuth>
+    }
+  />,
   <Route 
     key="board-operations"
     path="/portal/board/operations"

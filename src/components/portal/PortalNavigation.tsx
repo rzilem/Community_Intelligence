@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -20,7 +19,8 @@ import {
   Sparkles, 
   DollarSign, 
   LayoutDashboard, 
-  Building
+  Building,
+  Activity
 } from 'lucide-react';
 
 interface NavItem {
@@ -47,13 +47,9 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
 
   const boardNavItems: NavItem[] = [
     { title: 'Dashboard', path: '/portal/board/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { title: 'Invoices', path: '/portal/board/invoices', icon: <CreditCard className="h-5 w-5" /> },
-    { title: 'Work Orders', path: '/portal/board/work-orders', icon: <WrenchIcon className="h-5 w-5" /> },
-    { title: 'Collections', path: '/portal/board/collections', icon: <PiggyBank className="h-5 w-5" /> },
+    { title: 'Community Pulse', path: '/portal/board/community-pulse', icon: <Activity className="h-5 w-5" /> },
     { title: 'Homeowners', path: '/portal/board/homeowners', icon: <User className="h-5 w-5" /> },
     { title: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
-    { title: 'Reports', path: '/portal/board/reports', icon: <BarChart className="h-5 w-5" /> },
-    { title: 'Violations', path: '/portal/board/violations', icon: <AlertTriangle className="h-5 w-5" /> },
     { title: 'Board Tasks', path: '/portal/board/tasks', icon: <CheckSquare className="h-5 w-5" /> },
     { title: 'Email Community', path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
     { title: 'Board Portal Training', path: '/portal/board/training', icon: <BookOpen className="h-5 w-5" /> },
