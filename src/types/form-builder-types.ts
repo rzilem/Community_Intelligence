@@ -59,24 +59,15 @@ export interface FormField {
 export interface FormTemplate {
   id: string;
   title: string;
+  name: string;
   description?: string;
   fields: FormField[];
-  submitButtonText: string;
-  successMessage?: string;
-  redirectUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  status: 'draft' | 'published' | 'archived';
-  isPortalWidget: boolean;
-  endpointType: FormEndpointType;
-  endpointUrl?: string;
-  integrationTarget?: FormIntegrationTarget;
-  settings: {
-    requireApproval: boolean;
-    notifyAdmins: boolean;
-    autoSave: boolean;
-    style?: Record<string, any>;
-  };
+  created_at: string;
+  updated_at: string;
+  association_id?: string;
+  is_public: boolean;
+  metadata?: Record<string, any>;
+  category?: string;
 }
 
 export interface FormSubmission {
