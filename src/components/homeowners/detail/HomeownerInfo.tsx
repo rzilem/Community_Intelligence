@@ -10,7 +10,7 @@ interface HomeownerInfoProps {
   moveInDate?: string;
   property?: string;
   unit?: string;
-  balance?: number;
+  balance?: number | string; // Updated to accept either number or string
   lastContact?: string;
 }
 
@@ -24,6 +24,9 @@ export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
   balance,
   lastContact
 }) => {
+  // Convert balance to number if it's a string
+  const numericBalance = typeof balance === 'string' ? parseFloat(balance) : balance;
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
@@ -63,8 +66,8 @@ export const HomeownerInfo: React.FC<HomeownerInfoProps> = ({
         <div className="space-y-2">
           <div className="flex">
             <span className="text-gray-500 w-32">Current Balance:</span>
-            <span className={balance && balance > 0 ? 'text-red-600 font-medium' : ''}>
-              {balance !== undefined ? formatCurrency(balance) : 'Not available'}
+            <span className={numericBalance && numericBalance > 0 ? 'text-red-600 font-medium' : ''}>
+              {numericBalance !== undefined ? formatCurrency(numericBalance) : 'Not available'}
             </span>
           </div>
         </div>
