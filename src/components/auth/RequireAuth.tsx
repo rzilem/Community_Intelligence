@@ -27,12 +27,20 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Special case for resale portal routes
+  const isResalePortalRoute = location.pathname.startsWith('/resale-portal');
+  const resalePortalRoles = ['admin', 'manager', 'title-agent', 'real-estate-agent'];
+  
+  // Use resale portal roles if it's a resale portal route
+  const effectiveAllowedRoles = isResalePortalRoute ? resalePortalRoles : allowedRoles;
+
   console.log('[RequireAuth] Current auth state:', { 
     isAuthenticated, 
     user: user?.email, 
     loading, 
     userRole,
-    currentPath: location.pathname
+    currentPath: location.pathname,
+    effectiveAllowedRoles
   });
 
   useEffect(() => {
@@ -53,7 +61,8 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     }
     
     // Check if the user needs to have an associated HOA to access this page
-    if (requireAssociation && (!userAssociations || userAssociations.length === 0)) {
+    // Skip this check for resale portal routes
+    if (!isResalePortalRoute && requireAssociation && (!userAssociations || userAssociations.length === 0)) {
       console.log('[RequireAuth] User has no HOA associations, redirecting to dashboard');
       toast.error('You need to be associated with an HOA to access this page');
       navigate('/dashboard');
@@ -61,8 +70,8 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     }
 
     // Check role-based access
-    if (allowedRoles.length > 0 && userRole && !allowedRoles.includes(userRole)) {
-      console.log(`[RequireAuth] User role ${userRole} not in allowed roles, redirecting`);
+    if (effectiveAllowedRoles.length > 0 && userRole && !effectiveAllowedRoles.includes(userRole)) {
+      console.log(`[RequireAuth] User role ${userRole} not in allowed roles (${effectiveAllowedRoles.join(', ')}), redirecting`);
       toast.error('You do not have permission to access this page');
       navigate('/dashboard');
       return;
@@ -86,14 +95,15 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     userRole, 
     navigate, 
     location, 
-    allowedRoles, 
+    effectiveAllowedRoles, 
     requireAssociation, 
     userAssociations, 
     currentAssociation,
     menuId,
     submenuId,
     requiredAccess,
-    checkPermission
+    checkPermission,
+    isResalePortalRoute
   ]);
 
   if (loading) {

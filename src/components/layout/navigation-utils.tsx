@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   LayoutDashboard,
@@ -141,6 +140,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Resale Calendar', path: '/resale-management/calendar', icon: Calendar },
         { name: 'Order Queue', path: '/resale-management/order-queue', icon: ListOrdered },
         { name: 'Analytics', path: '/resale-management/analytics', icon: BarChart },
+        { name: 'Resale Portal', path: '/resale-portal', icon: ScrollText },
       ]
     });
   }

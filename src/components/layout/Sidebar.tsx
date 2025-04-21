@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard } from 'lucide-react';
+import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -28,7 +27,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { notifications } = useNotificationContext();
   
   useEffect(() => {
-    // Initialize active section based on current path
     mainNavItems.forEach(item => {
       if (item.submenu) {
         const isSubmenuActive = item.submenu.some(
@@ -43,16 +41,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [location.pathname, mainNavItems]);
 
   const toggleSection = (section: string) => {
-    // If clicking the currently active section, close it
     if (activeSection === section) {
       setActiveSection(null);
     } else {
-      // Otherwise, set it as the new active section (and close the previous one)
       setActiveSection(section);
     }
   };
 
-  // Helper function to check if a main nav item has the current path in its submenu
   const hasActiveSubmenu = (item: NavItemProps) => {
     if (!item.submenu) return false;
     
@@ -61,11 +56,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Function to get notification count for a specific section
   const getNotificationCount = (itemPath: string): number => {
     const section = itemPath.replace('/', '');
     
-    // Count notifications by type
     if (section === 'lead-management') {
       return notifications.filter(n => n.type === 'lead' && !n.read).length;
     } else if (section === 'accounting') {
@@ -81,7 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     return 0;
   };
 
-  // Homeowner Portal Menu Items
   const homeownerPortalItems = [
     { name: 'Dashboard', path: '/portal/homeowner', icon: LayoutDashboard },
     { name: 'Payments', path: '/portal/homeowner/payments', icon: CreditCard },
@@ -91,7 +83,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'Documents', path: '/portal/homeowner/documents', icon: File },
   ];
 
-  // Board Portal Menu Items
   const boardPortalItems = [
     { name: 'Dashboard', path: '/portal/board/dashboard', icon: LayoutDashboard },
     { name: 'Invoices', path: '/portal/board/invoices', icon: CreditCard },
@@ -109,9 +100,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'Board Reimbursement', path: '/portal/board/reimbursement', icon: DollarSign },
   ];
 
-  // Check if current path is in homeowner or board portal
+  const resalePortalItems = [
+    { name: 'Dashboard', path: '/resale-portal', icon: LayoutDashboard },
+    { name: 'My Orders', path: '/resale-portal/my-orders', icon: FileText },
+    { name: 'New Order', path: '/resale-portal/order', icon: FileText },
+    { name: 'Account Settings', path: '/resale-portal/settings', icon: Users },
+  ];
+
   const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
   const isBoardPortal = location.pathname.startsWith('/portal/board');
+  const isResalePortal = location.pathname.startsWith('/resale-portal');
 
   return (
     <div
@@ -138,7 +136,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
-          {/* Main Portal Selection */}
           <div className="mb-2 pb-2 border-b border-white/10">
             <Link
               to="/portal"
@@ -152,7 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </Link>
           </div>
           
-          {/* Homeowner Portal Links - Shown only when in homeowner portal */}
           {isHomeownerPortal && (
             <div className="mb-2 pb-2 border-b border-white/10">
               <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
@@ -172,7 +168,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
           
-          {/* Board Portal Links - Shown only when in board portal */}
           {isBoardPortal && (
             <div className="mb-2 pb-2 border-b border-white/10">
               <p className="px-3 py-1 text-white/60 text-xs uppercase">Board Portal</p>
@@ -191,8 +186,26 @@ const Sidebar: React.FC<SidebarProps> = ({
               ))}
             </div>
           )}
+          
+          {isResalePortal && (
+            <div className="mb-2 pb-2 border-b border-white/10">
+              <p className="px-3 py-1 text-white/60 text-xs uppercase">Resale Portal</p>
+              {resalePortalItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+                    location.pathname === item.path && "bg-white/10 font-medium"
+                  )}
+                >
+                  <item.icon size={20} />
+                  <span>{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
 
-          {/* Portal Quick Links */}
           <SidebarNavItem
             name="Homeowner Portal"
             path="/portal/homeowner"
@@ -220,7 +233,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             isActive={location.pathname === '/portal/vendor'}
           />
 
-          {/* Main Navigation */}
+          <SidebarNavItem
+            name="Resale Portal"
+            path="/resale-portal"
+            icon={ScrollText}
+            isOpen={activeSection === 'resale-portal'}
+            toggleSection={() => toggleSection('resale-portal')}
+            isActive={location.pathname === '/resale-portal'}
+          />
+
           {mainNavItems.map((item) => (
             <SidebarNavItem
               key={item.path}

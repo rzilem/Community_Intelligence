@@ -127,6 +127,17 @@ export const menuPermissions: MenuPermission[] = [
     ]
   },
   {
+    id: 'resale-portal',
+    name: 'Resale Portal',
+    description: 'Access to resale portal features for title companies and real estate agents',
+    submenuPermissions: [
+      { id: 'resale-dashboard', name: 'Resale Dashboard', parentId: 'resale-portal' },
+      { id: 'order-documents', name: 'Order Documents', parentId: 'resale-portal' },
+      { id: 'my-orders', name: 'My Orders', parentId: 'resale-portal' },
+      { id: 'account-settings', name: 'Account Settings', parentId: 'resale-portal' },
+    ]
+  },
+  {
     id: 'system',
     name: 'System',
     description: 'Access to system settings and configuration',
@@ -323,6 +334,52 @@ export const defaultRoles: Role[] = [
       let access: 'full' | 'read' | 'none' = 'none';
       
       if (['vendor-portal'].includes(menu.id)) {
+        access = 'full';
+      }
+      
+      const menuPermission: RolePermission = { menuId: menu.id, access };
+      const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
+        menuId: menu.id,
+        submenuId: submenu.id,
+        access
+      }));
+      
+      return [menuPermission, ...submenuPermissions];
+    })
+  },
+  {
+    id: 'title-agent',
+    name: 'Title Agent',
+    description: 'Access to resale portal for ordering and managing resale documents',
+    accessLevel: 'medium',
+    systemRole: true,
+    permissions: menuPermissions.flatMap(menu => {
+      let access: 'full' | 'read' | 'none' = 'none';
+      
+      if (['resale-portal'].includes(menu.id)) {
+        access = 'full';
+      }
+      
+      const menuPermission: RolePermission = { menuId: menu.id, access };
+      const submenuPermissions: RolePermission[] = (menu.submenuPermissions || []).map(submenu => ({
+        menuId: menu.id,
+        submenuId: submenu.id,
+        access
+      }));
+      
+      return [menuPermission, ...submenuPermissions];
+    })
+  },
+  {
+    id: 'real-estate-agent',
+    name: 'Real Estate Agent',
+    description: 'Access to resale portal for ordering and managing resale documents',
+    accessLevel: 'medium',
+    systemRole: true,
+    permissions: menuPermissions.flatMap(menu => {
+      let access: 'full' | 'read' | 'none' = 'none';
+      
+      if (['resale-portal'].includes(menu.id)) {
         access = 'full';
       }
       

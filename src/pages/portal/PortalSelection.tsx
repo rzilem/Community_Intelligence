@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Building, Home, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, BarChart, CheckSquare } from 'lucide-react';
+import { Building, Home, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, BarChart, CheckSquare, ScrollText } from 'lucide-react';
 import { Button }  from '@/components/ui/button';
 import { Card, CardDescription, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth';
@@ -49,6 +49,18 @@ const PortalSelection = () => {
         { name: "Bids & Opportunities", icon: FileText, path: "/portal/vendor/bids" },
         { name: "Invoices & Payments", icon: CreditCard, path: "/portal/vendor/invoices" },
       ]
+    },
+    {
+      title: "Resale Portal",
+      description: "Order, track, and manage resale documents and certificates",
+      icon: ScrollText,
+      path: "/resale-portal",
+      color: "bg-orange-500",
+      features: [
+        { name: "Order Documents", icon: FileText, path: "/resale-portal/order" },
+        { name: "My Orders", icon: FileText, path: "/resale-portal/my-orders" },
+        { name: "Account Settings", icon: Users, path: "/resale-portal/settings" },
+      ]
     }
   ];
 
@@ -62,7 +74,7 @@ const PortalSelection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {portals.map((portal) => (
             <Card 
               key={portal.title}
