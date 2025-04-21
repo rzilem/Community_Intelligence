@@ -71,7 +71,8 @@ export const useMemberOperations = (associationId: string) => {
           role_type: roleType,
           role_name: roleName,
           member_type: memberType,
-          user_id: editingMember.user_id
+          user_id: userId,
+          association_id: associationId
         });
       } else {
         await associationMemberService.addAssociationMember({
