@@ -7,9 +7,10 @@ import { PropertiesTab } from './tabs/PropertiesTab';
 import { FinancialsTab } from './tabs/FinancialsTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { CommunicationsTab } from './tabs/CommunicationsTab';
-import { MembersTab } from './tabs/MembersTab';
+import MembersTab from '../../associations/profile/MembersTab'; // Fixed import path
 import { AssociationSettingsTab } from './AssociationSettingsTab';
 import { AIAnalysisSection } from './AIAnalysisSection';
+import { toast } from 'sonner';
 
 interface AssociationTabsProps {
   association: Association;
@@ -28,6 +29,21 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
   activeTab,
   setActiveTab
 }) => {
+  // Add onSave function for the SettingsTab
+  const handleSaveSettings = async (data: Partial<Association>) => {
+    try {
+      // In a real application, this would call an API to update the association
+      // For now, we'll just show a success toast
+      console.log('Saving association settings:', data);
+      toast.success('Association settings updated successfully');
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error saving association settings:', error);
+      toast.error('Failed to save association settings');
+      return Promise.reject(error);
+    }
+  };
+
   return (
     <div className="mt-6 space-y-6">
       {/* AI Analysis Section - Now with real data and loading/error states */}
@@ -49,7 +65,7 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
         </TabsList>
 
         <TabsContent value="details" className="h-[600px]">
-          <GeneralInfoTab association={association} />
+          <GeneralInfoTab association={association} aiIssues={aiIssues} />
         </TabsContent>
 
         <TabsContent value="properties" className="h-[600px]">
@@ -73,7 +89,10 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
         </TabsContent>
 
         <TabsContent value="settings" className="h-[600px]">
-          <AssociationSettingsTab association={association} />
+          <AssociationSettingsTab 
+            association={association} 
+            onSave={handleSaveSettings} 
+          />
         </TabsContent>
       </Tabs>
     </div>
