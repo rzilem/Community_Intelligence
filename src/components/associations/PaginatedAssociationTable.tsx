@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, Copy, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ApiError from "@/components/ui/api-error";
-import { Association } from "@/hooks/associations/useAssociations";
+import { Association } from '@/types/association-types';
 import { usePaginatedData } from "@/hooks/usePaginatedData";
 
 interface PaginatedAssociationTableProps {
@@ -31,9 +31,11 @@ const PaginatedAssociationTable: React.FC<PaginatedAssociationTableProps> = ({
   onToggleSelect,
   selectedAssociations = []
 }) => {
-  const filters = associationStatus !== 'all'
-    ? { is_archived: associationStatus === 'inactive' }
-    : {};
+  // Create filters based on status
+  const filters: Record<string, any> = {};
+  if (associationStatus !== 'all') {
+    filters.is_archived = associationStatus === 'inactive';
+  }
 
   const {
     data: associations,

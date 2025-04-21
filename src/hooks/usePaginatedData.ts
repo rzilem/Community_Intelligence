@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { KnownTables } from '@/hooks/supabase/supabase-utils';
 
 interface PaginationOptions {
   limit?: number;
@@ -23,7 +24,7 @@ interface PaginatedResult<T> {
 }
 
 export function usePaginatedData<T = any>(
-  table: string,
+  table: KnownTables,
   options: PaginationOptions = {},
   filters: Record<string, any> = {},
   orderBy?: { column: string; ascending?: boolean }
@@ -82,7 +83,8 @@ export function usePaginatedData<T = any>(
       
       if (dataError) throw dataError;
       
-      setData(pageData || []);
+      // Use type assertion to properly handle generic type
+      setData(pageData as T[] || []);
       setCount(totalCount || 0);
     } catch (err: any) {
       console.error(`Error fetching paginated data from ${table}:`, err);
