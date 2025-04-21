@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { GeneralInfoTab } from './GeneralInfoTab';
 import { PlaceholderTab } from './PlaceholderTab';
 import { Association, AssociationAIIssue } from '@/types/association-types';
 import MembersTab from './MembersTab';
+import AssociationSettingsTab from './AssociationSettingsTab';
 
 interface AssociationTabsProps {
   association: Association;
@@ -19,6 +19,17 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
   activeTab, 
   setActiveTab 
 }) => {
+  const [settingsSaving, setSettingsSaving] = React.useState(false);
+
+  const handleSaveSettings = async (data: Partial<typeof association>) => {
+    setSettingsSaving(true);
+    try {
+      window.location.reload();
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
   return (
     <Tabs defaultValue="details" className="w-full mt-6" value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid grid-cols-2 md:grid-cols-7 mb-4">
@@ -56,7 +67,10 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
       </TabsContent>
       
       <TabsContent value="settings">
-        <PlaceholderTab title="Association Settings" />
+        <AssociationSettingsTab 
+          association={association} 
+          onSave={handleSaveSettings}
+        />
       </TabsContent>
     </Tabs>
   );
