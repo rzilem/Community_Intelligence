@@ -26,9 +26,20 @@ export function useSupabaseUpdate<T = any>(
     mutationFn: async ({ id, data }: { id: string; data: Partial<T> }): Promise<T> => {
       console.log(`Updating ${table} with ID ${id}:`, data);
       
+      // Make sure we're not sending any 'unassigned' string values to the database
+      // Convert any 'unassigned' values to null
+      const cleanData = Object.fromEntries(
+        Object.entries(data as any).map(([key, value]) => [
+          key, 
+          value === 'unassigned' ? null : value
+        ])
+      );
+      
+      console.log(`Cleaned data for ${table} update:`, cleanData);
+      
       const { data: result, error } = await supabase
         .from(table as any)
-        .update(data as any)
+        .update(cleanData)
         .eq(idField, id)
         .select()
         .single();

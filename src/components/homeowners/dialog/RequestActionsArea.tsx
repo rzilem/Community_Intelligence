@@ -12,14 +12,14 @@ interface RequestActionsAreaProps {
   request: HomeownerRequest;
   onSubmit: (values: any) => void;
   isPending: boolean;
-  onCancel: () => void; // Added this prop
+  onCancel: () => void; 
 }
 
 const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   request,
   onSubmit,
   isPending,
-  onCancel // Added parameter
+  onCancel
 }) => {
   const [showSpamDialog, setShowSpamDialog] = React.useState(false);
   const [aiResponse, setAiResponse] = React.useState('');
@@ -28,7 +28,7 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   const generateAIResponse = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch('https://your-project-id.supabase.co/functions/v1/generate-response', {
+      const response = await fetch('https://cahergndkwfqltxyikyr.supabase.co/functions/v1/generate-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -103,9 +103,8 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
         />
 
         <div className="flex justify-end space-x-2">
-          <Button variant="outline" onClick={() => setAiResponse('')}>
-            <Edit className="mr-2" />
-            Edit Manually
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
           </Button>
           <Button 
             className="bg-blue-500 hover:bg-blue-600" 

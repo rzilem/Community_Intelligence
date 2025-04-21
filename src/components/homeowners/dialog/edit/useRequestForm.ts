@@ -98,6 +98,7 @@ export const useRequestForm = (
     
     console.log('Form submitted with values:', values);
     
+    // Convert 'unassigned' values to null to prevent database UUID errors
     const updatedData: Partial<HomeownerRequest> = {
       title: values.title,
       description: values.description,

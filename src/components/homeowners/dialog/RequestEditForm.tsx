@@ -26,7 +26,11 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
         {request && (
           <RequestActionsArea
             request={request}
-            onSubmit={onSubmit}
+            onSubmit={(actionValues) => {
+              // When actions are triggered, merge with form values and submit
+              const formValues = form.getValues();
+              onSubmit({ ...formValues, ...actionValues });
+            }}
             isPending={isPending}
             onCancel={onCancel}
           />
