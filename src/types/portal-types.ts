@@ -1,4 +1,3 @@
-
 export type WidgetType = 
   | 'payments'
   | 'requests'
@@ -27,7 +26,8 @@ export type WidgetType =
   | 'analytics-widget'
   | 'notifications-widget'
   | 'shared-widget'
-  | 'custom-widget';
+  | 'custom-widget'
+  | 'form-widget';
 
 export interface PortalWidget {
   id: string;
