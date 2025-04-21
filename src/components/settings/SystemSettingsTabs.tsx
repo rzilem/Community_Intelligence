@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Palette, Bell, Shield, Database, Puzzle } from 'lucide-react';
+import { Palette, Bell, Shield, Database, Puzzle, FileText } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SystemSettingsTabsProps {
@@ -12,7 +12,7 @@ const SystemSettingsTabs: React.FC<SystemSettingsTabsProps> = ({ activeTab, onTa
   return (
     <div className="flex items-center justify-between mb-6">
       <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList className="grid grid-cols-5 w-full md:w-auto">
+        <TabsList className="grid grid-cols-6 w-full md:w-auto">
           <TabsTrigger value="appearance" className="flex items-center gap-2">
             <Palette className="h-4 w-4" /> 
             <span className="hidden sm:inline">Appearance</span>
@@ -32,6 +32,10 @@ const SystemSettingsTabs: React.FC<SystemSettingsTabsProps> = ({ activeTab, onTa
           <TabsTrigger value="integrations" className="flex items-center gap-2">
             <Puzzle className="h-4 w-4" /> 
             <span className="hidden sm:inline">Integrations</span>
+          </TabsTrigger>
+          <TabsTrigger value="forms" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" /> 
+            <span className="hidden sm:inline">Forms</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

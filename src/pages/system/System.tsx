@@ -73,6 +73,12 @@ const System = () => {
       icon: <Shield className="h-5 w-5" />,
       description: 'Configure user roles, permissions, and access controls.',
       link: '/system/permissions'
+    },
+    {
+      title: 'Form Builder',
+      icon: <FileText className="h-5 w-5" />,
+      description: 'Create and manage custom forms for portals and external websites.',
+      link: '/system/form-builder'
     }
   ];
 

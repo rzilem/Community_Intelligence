@@ -10,6 +10,7 @@ import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
+import FormBuilder from "@/pages/system/FormBuilder";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
@@ -60,5 +61,9 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/workflow-schedule",
     element: <RequireAuth menuId="system" submenuId="workflow-schedule"><WorkflowSchedule /></RequireAuth>
+  },
+  {
+    path: "/system/form-builder",
+    element: <RequireAuth menuId="system" submenuId="form-builder"><FormBuilder /></RequireAuth>
   }
 ];
