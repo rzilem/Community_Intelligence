@@ -25,10 +25,10 @@ export const useCollaborationWidget = (widgetId: string) => {
     const widgetChannel = supabase.channel(`widget:${widgetId}`);
     
     // Track the current user's presence
-    const userInfo = {
+    const userInfo: CollaboratorInfo = {
       userId: user.id,
       name: user.email?.split('@')[0] || 'Anonymous',
-      email: user.email,
+      email: user.email || '',
       lastActive: new Date().toISOString(),
       cursor: null
     };
@@ -42,22 +42,22 @@ export const useCollaborationWidget = (widgetId: string) => {
         
         // Transform the state into a usable array
         Object.keys(state).forEach(key => {
-          state[key].forEach((presence: CollaboratorInfo) => {
+          state[key].forEach((presence: any) => {
             if (presence.userId !== user.id) {
-              collaboratorsList.push(presence);
+              collaboratorsList.push(presence as CollaboratorInfo);
             }
           });
         });
         
         setCollaborators(collaboratorsList);
       })
-      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+      .on('presence', { event: 'join' }, ({ key, newPresences }: { key: string, newPresences: any[] }) => {
         // Someone joined
         if (key !== user.id) {
           toast.info(`${newPresences[0]?.name || 'Someone'} is now viewing this widget`);
         }
       })
-      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }: { key: string, leftPresences: any[] }) => {
         // Someone left
         if (key !== user.id) {
           toast.info(`${leftPresences[0]?.name || 'Someone'} has left this widget`);

@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { PortalWidget } from '@/types/portal-types';
-import { Import, Export, FileJson, Copy, Upload } from 'lucide-react';
+import { FileJson, Copy, Upload, Download } from 'lucide-react';
 import { useWidgetSettings } from '@/hooks/portal/useWidgetSettings';
 
 interface WidgetExportImportProps {
@@ -108,7 +108,7 @@ const WidgetExportImport: React.FC<WidgetExportImportProps> = ({
             </p>
             
             <Button onClick={handleExport} className="w-full">
-              <Export className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4 mr-2" />
               Generate Export Data
             </Button>
             

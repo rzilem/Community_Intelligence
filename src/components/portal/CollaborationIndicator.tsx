@@ -10,6 +10,13 @@ interface CollaborationIndicatorProps {
   widgetId: string;
 }
 
+// Define the window property for cursor tracking
+declare global {
+  interface Window {
+    lastCursorUpdate?: number;
+  }
+}
+
 const CollaborationIndicator: React.FC<CollaborationIndicatorProps> = ({ 
   widgetId 
 }) => {

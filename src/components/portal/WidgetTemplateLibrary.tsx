@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAvailableWidgets } from './widgetRegistry';
 import { useWidgetSettings } from '@/hooks/portal/useWidgetSettings';
 import { toast } from 'sonner';
-import { Template, Download } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 
 interface TemplateSet {
   id: string;
@@ -80,7 +80,7 @@ const WidgetTemplateLibrary: React.FC<WidgetTemplateLibraryProps> = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="flex items-center gap-1">
-          <Template className="h-4 w-4" />
+          <FileText className="h-4 w-4" />
           <span>Templates</span>
         </Button>
       </DialogTrigger>
