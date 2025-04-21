@@ -26,7 +26,10 @@ const PropertySelect: React.FC<PropertySelectProps> = ({ associationId, property
     }
   }, [propertyId]);
 
-  const { properties, isLoading, error } = usePropertyList(associationId);
+  // Only fetch properties if associationId is a valid UUID (not 'unassigned')
+  const { properties, isLoading, error } = usePropertyList(
+    associationId && associationId !== 'unassigned' ? associationId : undefined
+  );
 
   const handlePropertyChange = (value: string) => {
     setSelectedProperty(value);

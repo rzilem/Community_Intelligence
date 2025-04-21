@@ -29,12 +29,15 @@ export function useSupabaseQuery<T = any>(
         .from(table as any)
         .select(select);
 
-      // Apply filters
+      // Apply filters - skip if value is 'unassigned' since that's not a valid UUID
       filter.forEach(({ column, value, operator = 'eq' }) => {
-        if (value === null || value === undefined) {
-          // Skip filters with null/undefined values to prevent query errors
+        if (value === null || value === undefined || value === 'unassigned') {
+          // Skip filters with null/undefined/'unassigned' values to prevent query errors
+          console.log(`Skipping filter for column ${column} with value:`, value);
           return;
         }
+        
+        console.log(`Applying filter: ${column} ${operator} ${value}`);
         
         if (operator === 'eq') {
           query = query.eq(column, value);
@@ -123,7 +126,7 @@ export function useSupabaseQuery<T = any>(
       // Return data as an array to ensure consistent typing
       return (data || []) as T;
     },
-    enabled: enabled,
+    enabled,
     meta: {
       onSuccess,
       onError
