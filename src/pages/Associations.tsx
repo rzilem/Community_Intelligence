@@ -5,59 +5,52 @@ import { Network, RefreshCw, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssociations } from '@/hooks/associations';
 import AssociationTable from '@/components/associations/AssociationTable';
 import { Association } from '@/types/association-types';
 import ApiError from '@/components/ui/api-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 const PAGE_SIZE = 10;
 
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentTab, setCurrentTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [includeInactive, setIncludeInactive] = useState(false);
 
-  const { 
-    associations, 
-    isLoading, 
+  const {
+    associations,
+    isLoading,
     error,
     manuallyRefresh,
     updateAssociation,
-    deleteAssociation 
+    deleteAssociation
   } = useAssociations();
 
-  // Convert associations to array safely
   const associationsArray = Array.isArray(associations) ? associations : [];
 
-  // Search + tab filter
-  const filteredAssociations = associationsArray.filter(
-    association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                   (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  let displayedAssociations: Association[] = [];
-  if (currentTab === 'active') {
-    displayedAssociations = filteredAssociations.filter(a => a.is_archived === false);
-  } else if (currentTab === 'inactive') {
-    displayedAssociations = filteredAssociations.filter(a => a.is_archived === true);
-  } else {
-    displayedAssociations = filteredAssociations;
-  }
+  // Filter by search & by includeInactive/active
+  const filteredAssociations = associationsArray.filter(association => {
+    const matchesSearch =
+      association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()));
+    const includeArchived = includeInactive ? true : !association.is_archived;
+    return matchesSearch && includeArchived;
+  });
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil(displayedAssociations.length / PAGE_SIZE));
-  const paginatedAssociations = displayedAssociations.slice(
+  const totalPages = Math.max(1, Math.ceil(filteredAssociations.length / PAGE_SIZE));
+  const paginatedAssociations = filteredAssociations.slice(
     (currentPage - 1) * PAGE_SIZE,
     (currentPage - 1) * PAGE_SIZE + PAGE_SIZE
   );
 
-  // When changing tabs or search, reset to page 1
+  // When filters or search change, reset to page 1
   useEffect(() => {
     setCurrentPage(1);
-  }, [currentTab, searchTerm]);
+  }, [searchTerm, includeInactive]);
 
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
     updateAssociation(id, data)
@@ -108,11 +101,22 @@ const Associations = () => {
                   className="pl-10"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-4 items-center">
+                <div className="flex items-center">
+                  <Checkbox
+                    id="include-inactive"
+                    checked={includeInactive}
+                    onCheckedChange={checked => setIncludeInactive(Boolean(checked))}
+                    className="mr-2"
+                  />
+                  <label htmlFor="include-inactive" className="text-sm select-none cursor-pointer">
+                    Include inactive
+                  </label>
+                </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={handleRefresh}
                         disabled={isLoading}
@@ -151,55 +155,13 @@ const Associations = () => {
 
             {!isLoading && associationsArray.length > 0 && (
               <>
-                <Tabs value={currentTab} onValueChange={setCurrentTab}>
-                  <TabsList className="grid w-full grid-cols-3 mb-2">
-                    <TabsTrigger value="all">
-                      All
-                      <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
-                        {filteredAssociations.length}
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="active">
-                      Active
-                      <span className="ml-1.5 rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs">
-                        {filteredAssociations.filter(a => a.is_archived === false).length}
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="inactive">
-                      Inactive
-                      <span className="ml-1.5 rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs">
-                        {filteredAssociations.filter(a => a.is_archived === true).length}
-                      </span>
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="all">
-                    <AssociationTable 
-                      associations={paginatedAssociations}
-                      isLoading={isLoading}
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-                  <TabsContent value="active">
-                    <AssociationTable 
-                      associations={paginatedAssociations}
-                      isLoading={isLoading}
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-                  <TabsContent value="inactive">
-                    <AssociationTable 
-                      associations={paginatedAssociations}
-                      isLoading={isLoading}
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-                </Tabs>
-
-                {displayedAssociations.length > PAGE_SIZE && (
+                <AssociationTable
+                  associations={paginatedAssociations}
+                  isLoading={isLoading}
+                  onEdit={handleEditAssociation}
+                  onDelete={handleDeleteAssociation}
+                />
+                {filteredAssociations.length > PAGE_SIZE && (
                   <div className="flex justify-center mt-4 gap-2">
                     <Button
                       size="sm"
@@ -229,3 +191,4 @@ const Associations = () => {
 
 export default Associations;
 
+// End of file -- This file is getting long. Consider refactoring into smaller components for maintainability.
