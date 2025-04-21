@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { z } from 'zod';
 import { UseFormReturn } from 'react-hook-form';
 import { Form } from '@/components/ui/form';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
@@ -18,6 +17,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
   request, 
   onSubmit, 
   isPending,
+  onCancel,
   form
 }) => {
   return (
@@ -28,6 +28,7 @@ const RequestEditForm: React.FC<RequestEditFormProps> = ({
             request={request}
             onSubmit={onSubmit}
             isPending={isPending}
+            onCancel={onCancel}
           />
         )}
       </form>
