@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { Activity } from 'lucide-react';
-import { DashboardTabs } from '@/components/operations/DashboardTabs';
+import DashboardTabs from '@/components/operations/DashboardTabs';
 import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
 import WorkOrdersTabContent from '@/components/work-orders/WorkOrdersTabContent';
 import ViolationsTabContent from '@/components/violations/ViolationsTabContent';

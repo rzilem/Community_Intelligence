@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -10,7 +11,8 @@ import {
   Building,
   Activity,
   BookOpen,
-  LayoutDashboard
+  LayoutDashboard,
+  Mail
 } from 'lucide-react';
 
 interface NavItem {
