@@ -6,12 +6,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAssociations } from '@/hooks/associations';
-import AssociationTable from '@/components/associations/AssociationTable';
 import { Association } from '@/types/association-types';
 import ApiError from '@/components/ui/api-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import AssociationTableWithPagination from '@/components/associations/AssociationTableWithPagination';
 
 const PAGE_SIZE = 10;
 
@@ -31,13 +31,17 @@ const Associations = () => {
 
   const associationsArray = Array.isArray(associations) ? associations : [];
 
-  // Filter by search & by includeInactive/active
-  const filteredAssociations = associationsArray.filter(association => {
+  // Filter by search & archived/active status
+  const filteredAssociations = associationsArray.filter((association) => {
     const matchesSearch =
       association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()));
-    const includeArchived = includeInactive ? true : !association.is_archived;
-    return matchesSearch && includeArchived;
+
+    // By default show only active unless checkbox is checked
+    const showAssociation =
+      includeInactive ? true : !association.is_archived;
+
+    return matchesSearch && showAssociation;
   });
 
   // Pagination
@@ -47,7 +51,7 @@ const Associations = () => {
     (currentPage - 1) * PAGE_SIZE + PAGE_SIZE
   );
 
-  // When filters or search change, reset to page 1
+  // Reset to page 1 on search/filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, includeInactive]);
@@ -138,50 +142,16 @@ const Associations = () => {
               <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
             )}
 
-            {isLoading && (
-              <div className="flex justify-center items-center py-8">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading associations...</span>
-              </div>
-            )}
-
-            {!isLoading && associationsArray.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 px-4 bg-muted/30 rounded-md">
-                <Network className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-center text-muted-foreground mb-4">No associations found</p>
-                <Button onClick={handleRefresh}>Refresh Data</Button>
-              </div>
-            )}
-
-            {!isLoading && associationsArray.length > 0 && (
-              <>
-                <AssociationTable
-                  associations={paginatedAssociations}
-                  isLoading={isLoading}
-                  onEdit={handleEditAssociation}
-                  onDelete={handleDeleteAssociation}
-                />
-                {filteredAssociations.length > PAGE_SIZE && (
-                  <div className="flex justify-center mt-4 gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                      disabled={currentPage === 1}
-                    >Previous</Button>
-                    <span className="px-2 text-sm text-muted-foreground">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                      disabled={currentPage === totalPages}
-                    >Next</Button>
-                  </div>
-                )}
-              </>
-            )}
+            <AssociationTableWithPagination
+              associations={paginatedAssociations}
+              currentPage={currentPage}
+              pageSize={PAGE_SIZE}
+              totalPages={totalPages}
+              onEdit={handleEditAssociation}
+              onDelete={handleDeleteAssociation}
+              setCurrentPage={setCurrentPage}
+              isLoading={isLoading}
+            />
           </CardContent>
         </Card>
       </div>
@@ -190,5 +160,3 @@ const Associations = () => {
 };
 
 export default Associations;
-
-// End of file -- This file is getting long. Consider refactoring into smaller components for maintainability.
