@@ -919,6 +919,183 @@ export type Database = {
           },
         ]
       }
+      collections_account_history: {
+        Row: {
+          action_date: string
+          action_details: Json | null
+          action_type: string
+          amount: number | null
+          collections_account_id: string
+          created_at: string
+          document_url: string | null
+          id: string
+          notes: string | null
+          performed_by: string | null
+          step_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_date?: string
+          action_details?: Json | null
+          action_type: string
+          amount?: number | null
+          collections_account_id: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          step_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_date?: string
+          action_details?: Json | null
+          action_type?: string
+          amount?: number | null
+          collections_account_id?: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          step_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_account_history_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_account_history_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_accounts: {
+        Row: {
+          account_number: string | null
+          association_id: string
+          balance_amount: number
+          created_at: string
+          delinquent_since: string
+          id: string
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          property_id: string
+          resident_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          association_id: string
+          balance_amount?: number
+          created_at?: string
+          delinquent_since: string
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          property_id: string
+          resident_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          association_id?: string
+          balance_amount?: number
+          created_at?: string
+          delinquent_since?: string
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          property_id?: string
+          resident_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_accounts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_accounts_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_steps: {
+        Row: {
+          association_id: string
+          created_at: string
+          days_after_delinquent: number | null
+          description: string | null
+          id: string
+          is_automated: boolean | null
+          name: string
+          step_order: number
+          step_type: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          days_after_delinquent?: number | null
+          description?: string | null
+          id?: string
+          is_automated?: boolean | null
+          name: string
+          step_order: number
+          step_type?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          days_after_delinquent?: number | null
+          description?: string | null
+          id?: string
+          is_automated?: boolean | null
+          name?: string
+          step_order?: number
+          step_type?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_steps_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
