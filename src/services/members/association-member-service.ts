@@ -35,7 +35,7 @@ export const associationMemberService = {
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
-            member_type: member.member_type
+            member_type: member.member_type || 'homeowner' // Default to homeowner if not specified
           } as AssociationMember;
         })
       );
@@ -83,7 +83,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: data.member_type
+        member_type: memberData.member_type
       } as AssociationMember;
     } catch (error) {
       console.error('Error in addAssociationMember:', error);
@@ -127,7 +127,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: data.member_type
+        member_type: memberData.member_type || 'homeowner'
       } as AssociationMember;
     } catch (error) {
       console.error('Error in updateAssociationMember:', error);

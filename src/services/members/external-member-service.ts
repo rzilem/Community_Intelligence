@@ -5,6 +5,12 @@ import { ExternalMember } from '@/types/member-types';
 export const externalMemberService = {
   createExternalUser: async (userData: ExternalMember, currentAssociationId: string) => {
     try {
+      // First check if user already exists
+      const existingUser = await externalMemberService.findUserByEmail(userData.email);
+      if (existingUser) {
+        return existingUser;
+      }
+      
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({

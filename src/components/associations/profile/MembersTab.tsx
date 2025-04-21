@@ -8,6 +8,7 @@ import { MemberDialog } from '../members/MemberDialog';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { useMemberOperations } from '@/hooks/members/useMemberOperations';
 import { ResidentWithProfile } from '@/types/resident-types';
+import { AssociationMember } from '@/types/member-types';
 
 const boardRoles = [
   'President',
