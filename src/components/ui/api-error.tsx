@@ -10,6 +10,7 @@ export interface ApiErrorProps {
   title?: string;
   className?: string;
   compact?: boolean;
+  showDetails?: boolean;
 }
 
 const ApiError: React.FC<ApiErrorProps> = ({
@@ -17,7 +18,8 @@ const ApiError: React.FC<ApiErrorProps> = ({
   onRetry,
   title = 'Error',
   className = '',
-  compact = false
+  compact = false,
+  showDetails = true
 }) => {
   if (!error) return null;
 
@@ -25,6 +27,7 @@ const ApiError: React.FC<ApiErrorProps> = ({
   const errorDetails = error.message || 'An unexpected error occurred';
   const errorCode = (error as any).code || '';
   const errorHint = (error as any).hint || '';
+  const pgError = (error as any).details || '';
 
   return (
     <Alert variant="destructive" className={`mb-4 ${className}`}>
@@ -33,11 +36,14 @@ const ApiError: React.FC<ApiErrorProps> = ({
       <AlertDescription className="mt-2">
         <div className="text-sm space-y-1">
           <p>{errorDetails}</p>
-          {!compact && errorCode && (
+          {showDetails && !compact && errorCode && (
             <p className="text-xs opacity-80">Code: {errorCode}</p>
           )}
-          {!compact && errorHint && (
+          {showDetails && !compact && errorHint && (
             <p className="text-xs opacity-80">Hint: {errorHint}</p>
+          )}
+          {showDetails && !compact && pgError && (
+            <p className="text-xs opacity-80">Details: {pgError}</p>
           )}
         </div>
         

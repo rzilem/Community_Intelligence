@@ -1,142 +1,81 @@
+
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { GeneralInfoTab } from './GeneralInfoTab';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Association, AssociationAIIssue } from '@/types/association-types';
-import MembersTab from './MembersTab';
-import AssociationSettingsTab from './AssociationSettingsTab';
-import { 
-  FileText, 
-  CreditCard, 
-  Building2, 
-  Users, 
-  MessageSquare, 
-  Settings 
-} from 'lucide-react';
-import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
-import { FinancialsTab } from './tabs/FinancialsTab';
+import { GeneralInfoTab } from './GeneralInfoTab';
 import { PropertiesTab } from './tabs/PropertiesTab';
+import { FinancialsTab } from './tabs/FinancialsTab';
 import { DocumentsTab } from './tabs/DocumentsTab';
 import { CommunicationsTab } from './tabs/CommunicationsTab';
+import { MembersTab } from './tabs/MembersTab';
+import { AssociationSettingsTab } from './AssociationSettingsTab';
+import { AIAnalysisSection } from './AIAnalysisSection';
 
 interface AssociationTabsProps {
   association: Association;
   aiIssues: AssociationAIIssue[];
+  aiIssuesLoading?: boolean;
+  aiIssuesError?: Error | null;
   activeTab: string;
-  setActiveTab: (value: string) => void;
+  setActiveTab: (tab: string) => void;
 }
 
-export const AssociationTabs: React.FC<AssociationTabsProps> = ({ 
-  association, 
-  aiIssues, 
-  activeTab, 
-  setActiveTab 
+export const AssociationTabs: React.FC<AssociationTabsProps> = ({
+  association,
+  aiIssues,
+  aiIssuesLoading = false,
+  aiIssuesError = null,
+  activeTab,
+  setActiveTab
 }) => {
-  const [settingsSaving, setSettingsSaving] = React.useState(false);
-
-  const updateAssociationMutation = useSupabaseUpdate<Association>('associations', {
-    showSuccessToast: true,
-    invalidateQueries: [['associations'], [`association-${association.id}`]]
-  });
-
-  const handleSaveSettings = async (data: Partial<Association>) => {
-    setSettingsSaving(true);
-    try {
-      await updateAssociationMutation.mutateAsync({
-        id: association.id,
-        data
-      });
-    } catch (error) {
-      console.error('Error updating association settings:', error);
-    } finally {
-      setSettingsSaving(false);
-    }
-  };
-
   return (
-    <Tabs defaultValue="details" className="w-full mt-6" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="w-full max-w-[1400px] flex justify-between mb-8 border-b rounded-none bg-transparent p-0 h-auto">
-        <TabsTrigger 
-          value="details" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <FileText className="h-4 w-4" />
-          Details
-        </TabsTrigger>
-        <TabsTrigger 
-          value="financials" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <CreditCard className="h-4 w-4" />
-          Financials
-        </TabsTrigger>
-        <TabsTrigger 
-          value="properties" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <Building2 className="h-4 w-4" />
-          Properties
-        </TabsTrigger>
-        <TabsTrigger 
-          value="documents" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <FileText className="h-4 w-4" />
-          Documents
-        </TabsTrigger>
-        <TabsTrigger 
-          value="members" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <Users className="h-4 w-4" />
-          Members
-        </TabsTrigger>
-        <TabsTrigger 
-          value="communications" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <MessageSquare className="h-4 w-4" />
-          Communications
-        </TabsTrigger>
-        <TabsTrigger 
-          value="settings" 
-          className="flex items-center gap-2 rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium tracking-tight data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary hover:text-primary transition-colors"
-        >
-          <Settings className="h-4 w-4" />
-          Settings
-        </TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="details">
-        <GeneralInfoTab association={association} aiIssues={aiIssues} />
-      </TabsContent>
-      
-      <TabsContent value="financials">
-        <FinancialsTab />
-      </TabsContent>
-      
-      <TabsContent value="properties">
-        <PropertiesTab associationId={association.id} />
-      </TabsContent>
-      
-      <TabsContent value="documents">
-        <DocumentsTab associationId={association.id} />
-      </TabsContent>
-      
-      <TabsContent value="members">
-        <MembersTab associationId={association.id} />
-      </TabsContent>
-      
-      <TabsContent value="communications">
-        <CommunicationsTab associationId={association.id} />
-      </TabsContent>
-      
-      <TabsContent value="settings">
-        <AssociationSettingsTab 
-          association={association} 
-          onSave={handleSaveSettings}
-          saving={settingsSaving}
-        />
-      </TabsContent>
-    </Tabs>
+    <div className="mt-6 space-y-6">
+      {/* AI Analysis Section - Now with real data and loading/error states */}
+      <AIAnalysisSection 
+        aiIssues={aiIssues} 
+        isLoading={aiIssuesLoading}
+        error={aiIssuesError}
+      />
+
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:grid-cols-7 lg:w-full">
+          <TabsTrigger value="details">General Info</TabsTrigger>
+          <TabsTrigger value="properties">Properties</TabsTrigger>
+          <TabsTrigger value="financials">Financials</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="communications">Communications</TabsTrigger>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="details" className="h-[600px]">
+          <GeneralInfoTab association={association} />
+        </TabsContent>
+
+        <TabsContent value="properties" className="h-[600px]">
+          <PropertiesTab associationId={association.id} />
+        </TabsContent>
+
+        <TabsContent value="financials" className="h-[600px]">
+          <FinancialsTab associationId={association.id} />
+        </TabsContent>
+
+        <TabsContent value="documents" className="h-[600px]">
+          <DocumentsTab associationId={association.id} />
+        </TabsContent>
+
+        <TabsContent value="communications" className="h-[600px]">
+          <CommunicationsTab associationId={association.id} />
+        </TabsContent>
+
+        <TabsContent value="members" className="h-[600px]">
+          <MembersTab associationId={association.id} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="h-[600px]">
+          <AssociationSettingsTab association={association} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
