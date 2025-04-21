@@ -12,12 +12,14 @@ interface RequestActionsAreaProps {
   request: HomeownerRequest;
   onSubmit: (values: any) => void;
   isPending: boolean;
+  onCancel: () => void; // Added this prop
 }
 
 const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   request,
   onSubmit,
-  isPending
+  isPending,
+  onCancel // Added parameter
 }) => {
   const [showSpamDialog, setShowSpamDialog] = React.useState(false);
   const [aiResponse, setAiResponse] = React.useState('');
