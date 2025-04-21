@@ -28,24 +28,26 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 h-full flex flex-col">
-      <div className="flex justify-between items-center gap-4">
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-          <TabsTrigger value="email">Original Email</TabsTrigger>
-          <TabsTrigger value="attachments">Attachments</TabsTrigger>
-        </TabsList>
-        
-        <QuickEditMenu 
-          assignedTo={assignedTo}
-          associationId={associationId}
-          propertyId={propertyId}
-          onAssignChange={onAssignChange}
-          onAssociationChange={onAssociationChange}
-          onPropertyChange={onPropertyChange}
-        />
+      <div className="flex justify-between items-center gap-4 w-full px-2">
+        <div className="flex-1 flex items-center gap-4 min-w-0">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+            <TabsTrigger value="email">Original Email</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="flex-shrink-0">
+          <QuickEditMenu 
+            assignedTo={assignedTo}
+            associationId={associationId}
+            propertyId={propertyId}
+            onAssignChange={onAssignChange}
+            onAssociationChange={onAssociationChange}
+            onPropertyChange={onPropertyChange}
+          />
+        </div>
       </div>
-      
       <div className="flex-1 overflow-hidden">
         {children}
       </div>
@@ -54,3 +56,4 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
 };
 
 export default RequestDialogTabs;
+
