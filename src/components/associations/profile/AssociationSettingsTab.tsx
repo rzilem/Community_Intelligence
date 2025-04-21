@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Association } from "@/types/association-types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,9 +19,7 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
   onSave,
   saving = false,
 }) => {
-  // Include every property, defaulting undefined or null to empty string/false/0 as appropriate
   const [form, setForm] = useState({
-    // Main/general
     name: association.name ?? "",
     contact_email: association.contact_email ?? "",
     phone: association.phone ?? "",
@@ -36,31 +33,43 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     founded_date: association.founded_date ?? "",
     insurance_expiration: association.insurance_expiration ?? "",
     fire_inspection_due: association.fire_inspection_due ?? "",
-    // Assessment basic
     payment_due_day: association.payment_due_day ?? "",
     late_fee_percentage: association.late_fee_percentage ?? "",
     grace_period_days: association.grace_period_days ?? "",
     email_notifications: association.email_notifications ?? false,
     sms_notifications: association.sms_notifications ?? false,
     auto_reminders: association.auto_reminders ?? false,
-    // --- ACH Settings ---
     ach_auto_draft_day: association.ach_auto_draft_day ?? "",
-    ach_generate_in_advance: association.ach_generate_in_advance ?? "",
+    ach_generate_in_advance: association.ach_generate_in_advance !== null && association.ach_generate_in_advance !== undefined 
+      ? String(association.ach_generate_in_advance) 
+      : "",
     ach_draft_amount: association.ach_draft_amount ?? "",
     ach_include_charges: association.ach_include_charges ?? "",
-    // --- ARC Settings ---
     arc_model: association.arc_model ?? "",
-    additional_arc_models: association.additional_arc_models ?? "",
+    additional_arc_models: association.additional_arc_models ? 
+      (typeof association.additional_arc_models === 'string' 
+        ? association.additional_arc_models 
+        : JSON.stringify(association.additional_arc_models)) 
+      : "",
     require_arc_voting: association.require_arc_voting ?? false,
-    approval_threshold: association.approval_threshold ?? "",
-    decline_threshold: association.decline_threshold ?? "",
+    approval_threshold: association.approval_threshold !== null && association.approval_threshold !== undefined 
+      ? String(association.approval_threshold) 
+      : "",
+    decline_threshold: association.decline_threshold !== null && association.decline_threshold !== undefined 
+      ? String(association.decline_threshold) 
+      : "",
     arc_name: association.arc_name ?? "",
-    // --- Collections Settings ---
     collections_active: association.collections_active ?? "",
     collections_model: association.collections_model ?? "",
     processing_days: association.processing_days ?? "",
-    additional_collections_models: association.additional_collections_models ?? "",
-    minimum_balance: association.minimum_balance ?? "",
+    additional_collections_models: association.additional_collections_models ? 
+      (typeof association.additional_collections_models === 'string' 
+        ? association.additional_collections_models 
+        : JSON.stringify(association.additional_collections_models)) 
+      : "",
+    minimum_balance: association.minimum_balance !== null && association.minimum_balance !== undefined 
+      ? String(association.minimum_balance) 
+      : "",
     age_of_balance: association.age_of_balance ?? "",
     balance_threshold_type: association.balance_threshold_type ?? "",
     balance_threshold: association.balance_threshold ?? "",
@@ -69,7 +78,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     new_association_grace_period: association.new_association_grace_period ?? "",
     new_owner_grace_period: association.new_owner_grace_period ?? "",
     board_approval_required: association.board_approval_required ?? false,
-    // --- Statements Settings ---
     association_address_setting: association.association_address_setting ?? "",
     statement_format: association.statement_format ?? "",
     remittance_coupon_message: association.remittance_coupon_message ?? "",
@@ -79,7 +87,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
     include_all_properties_default: association.include_all_properties_default ?? false,
     include_credit_balances_default: association.include_credit_balances_default ?? false,
     include_qr_code: association.include_qr_code ?? false,
-    // --- Miscellaneous ---
     association_time_zone: association.association_time_zone ?? "",
   });
 
@@ -94,9 +101,24 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onSave(form);
+      const formattedData: Partial<Association> = {
+        ...form,
+        ach_generate_in_advance: form.ach_generate_in_advance ? parseInt(form.ach_generate_in_advance, 10) : null,
+        approval_threshold: form.approval_threshold ? parseInt(form.approval_threshold, 10) : null,
+        decline_threshold: form.decline_threshold ? parseInt(form.decline_threshold, 10) : null,
+        minimum_balance: form.minimum_balance ? parseFloat(form.minimum_balance) : null,
+        additional_arc_models: form.additional_arc_models ? 
+          (typeof form.additional_arc_models === 'string' ? 
+            JSON.parse(form.additional_arc_models) : form.additional_arc_models) : null,
+        additional_collections_models: form.additional_collections_models ? 
+          (typeof form.additional_collections_models === 'string' ? 
+            JSON.parse(form.additional_collections_models) : form.additional_collections_models) : null,
+      };
+      
+      await onSave(formattedData);
       toast.success("Association settings updated successfully");
     } catch (err: any) {
+      console.error("Error saving association settings:", err);
       toast.error(err.message || "Failed to update settings");
     }
   };
@@ -107,7 +129,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
         <CardContent className="p-6">
           <h2 className="text-2xl font-bold mb-6">Association Settings</h2>
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* General Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Association Name</Label>
@@ -255,10 +276,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* Assessment Settings Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Assessment Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -321,10 +340,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* Communication Preferences Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Communication Preferences</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -364,10 +381,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* ACH Settings Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">ACH Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -415,10 +430,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* ARC Settings Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">ARC Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -472,7 +485,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
                     onChange={handleChange}
                   />
                 </div>
-                {/* JSON fields for additional models */}
                 <div className="space-y-2">
                   <Label htmlFor="additional_arc_models">Additional ARC Models (JSON)</Label>
                   <Input
@@ -486,10 +498,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* Collections Settings Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Collections Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -604,7 +614,6 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
                     Board Approval Required
                   </Label>
                 </div>
-                {/* Extra JSON collections model */}
                 <div className="space-y-2">
                   <Label htmlFor="additional_collections_models">Additional Collections Models (JSON)</Label>
                   <Input
@@ -618,10 +627,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* Statements Settings Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Statements Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -714,10 +721,8 @@ export const AssociationSettingsTab: React.FC<AssociationSettingsTabProps> = ({
               </div>
             </div>
 
-            {/* Divider */}
             <hr className="my-8 border-t border-muted" />
 
-            {/* Miscellaneous Section */}
             <div>
               <h3 className="text-xl font-semibold mb-4">Miscellaneous</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

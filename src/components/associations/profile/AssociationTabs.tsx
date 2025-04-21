@@ -7,6 +7,7 @@ import { Association, AssociationAIIssue } from '@/types/association-types';
 import MembersTab from './MembersTab';
 import AssociationSettingsTab from './AssociationSettingsTab';
 import { Settings } from 'lucide-react';
+import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
 
 interface AssociationTabsProps {
   association: Association;
@@ -23,12 +24,21 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
 }) => {
   const [settingsSaving, setSettingsSaving] = React.useState(false);
 
-  const handleSaveSettings = async (data: Partial<typeof association>) => {
+  // Use the Supabase update hook to save association settings
+  const updateAssociationMutation = useSupabaseUpdate<Association>('associations', {
+    showSuccessToast: true,
+    invalidateQueries: [['associations'], [`association-${association.id}`]]
+  });
+
+  const handleSaveSettings = async (data: Partial<Association>) => {
     setSettingsSaving(true);
     try {
-      // In a real implementation, you would save the data to the database here
-      console.log('Saving settings:', data);
-      window.location.reload();
+      await updateAssociationMutation.mutateAsync({
+        id: association.id,
+        data
+      });
+    } catch (error) {
+      console.error('Error updating association settings:', error);
     } finally {
       setSettingsSaving(false);
     }
