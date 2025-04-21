@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Transaction, Payment } from '@/types/transaction-payment-types';
 import { JournalEntry } from '@/types/accounting-types';
@@ -62,7 +61,7 @@ const mockTransactions: Transaction[] = [
   }
 ];
 
-// Mock payments data
+// Mock payments data - now includes scheduled payments from approved invoices
 const mockPayments: Payment[] = [
   {
     id: 'PAY-001',
@@ -73,7 +72,8 @@ const mockPayments: Payment[] = [
     method: 'ach',
     associationName: 'Oak Terrace HOA',
     category: 'Landscaping',
-    associationId: 'assoc-1'
+    associationId: 'assoc-1',
+    invoiceId: 'INV-001'
   },
   {
     id: 'PAY-002',
@@ -84,7 +84,9 @@ const mockPayments: Payment[] = [
     method: 'check',
     associationName: 'Pine Ridge HOA',
     category: 'Maintenance',
-    associationId: 'assoc-2'
+    associationId: 'assoc-2',
+    invoiceId: 'INV-002',
+    scheduledDate: '2025-04-08'
   },
   {
     id: 'PAY-003',
@@ -95,7 +97,8 @@ const mockPayments: Payment[] = [
     method: 'check',
     associationName: 'Oak Terrace HOA',
     category: 'Insurance',
-    associationId: 'assoc-1'
+    associationId: 'assoc-1',
+    invoiceId: 'INV-003'
   },
   {
     id: 'PAY-004',
@@ -106,7 +109,9 @@ const mockPayments: Payment[] = [
     method: 'ach',
     associationName: 'Maple Court HOA',
     category: 'Utilities',
-    associationId: 'assoc-3'
+    associationId: 'assoc-3',
+    invoiceId: 'INV-004',
+    scheduledDate: '2025-04-15'
   },
   {
     id: 'PAY-005',
@@ -117,7 +122,34 @@ const mockPayments: Payment[] = [
     method: 'credit',
     associationName: 'Pine Ridge HOA',
     category: 'Security',
-    associationId: 'assoc-2'
+    associationId: 'assoc-2',
+    invoiceId: 'INV-005'
+  },
+  {
+    id: 'PAY-006',
+    vendor: 'ABC Roofing',
+    amount: 7500.00,
+    date: '2025-04-20',
+    status: 'scheduled',
+    method: 'check',
+    associationName: 'Oak Terrace HOA',
+    category: 'Repairs',
+    associationId: 'assoc-1',
+    invoiceId: 'INV-006',
+    scheduledDate: '2025-04-25'
+  },
+  {
+    id: 'PAY-007',
+    vendor: 'XYZ Landscaping',
+    amount: 950.00,
+    date: '2025-04-21',
+    status: 'scheduled',
+    method: 'ach',
+    associationName: 'Pine Ridge HOA',
+    category: 'Landscaping',
+    associationId: 'assoc-2',
+    invoiceId: 'INV-007',
+    scheduledDate: '2025-04-28'
   }
 ];
 
@@ -200,5 +232,49 @@ export const useTransactionPaymentData = (associationId?: string) => {
     }
   }, [associationId]);
 
-  return { transactions, payments, journalEntries };
+  // Function to handle updating payment status
+  const updatePaymentStatus = (paymentId: string, status: Payment['status']) => {
+    setPayments(prevPayments => 
+      prevPayments.map(payment => 
+        payment.id === paymentId 
+          ? { 
+              ...payment, 
+              status, 
+              processedDate: status === 'processed' ? new Date().toISOString() : payment.processedDate 
+            } 
+          : payment
+      )
+    );
+
+    // In a real app, this would update the database and potentially the related invoice
+    console.log(`Payment ${paymentId} status updated to ${status}`);
+  };
+
+  // Function to create a new payment from an approved invoice
+  const createPaymentFromInvoice = (invoice: any) => {
+    const newPayment: Payment = {
+      id: `PAY-${Math.floor(Math.random() * 1000)}`,
+      vendor: invoice.vendor,
+      amount: invoice.amount,
+      date: new Date().toISOString(),
+      status: 'scheduled',
+      method: invoice.payment_method || 'check',
+      associationName: invoice.association_name || 'Unknown Association',
+      category: 'Vendor Payment',
+      associationId: invoice.association_id,
+      invoiceId: invoice.id,
+      scheduledDate: invoice.due_date
+    };
+
+    setPayments(prev => [newPayment, ...prev]);
+    return newPayment;
+  };
+
+  return { 
+    transactions, 
+    payments, 
+    journalEntries,
+    updatePaymentStatus,
+    createPaymentFromInvoice
+  };
 };

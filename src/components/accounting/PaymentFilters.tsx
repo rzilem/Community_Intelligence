@@ -4,13 +4,21 @@ import { Search, Filter, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TooltipButton from '@/components/ui/tooltip-button';
-import { PaymentFilterProps } from '@/types/transaction-payment-types';
+
+interface PaymentFilterProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  filterStatus: string;
+  setFilterStatus: (value: string) => void;
+  onCreatePayment?: () => void;
+}
 
 const PaymentFilters: React.FC<PaymentFilterProps> = ({ 
   searchTerm, 
   setSearchTerm, 
   filterStatus, 
-  setFilterStatus 
+  setFilterStatus,
+  onCreatePayment
 }) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
@@ -42,7 +50,11 @@ const PaymentFilters: React.FC<PaymentFilterProps> = ({
         <TooltipButton tooltip="Export payments as CSV">
           <Download className="h-4 w-4 mr-2" /> Export
         </TooltipButton>
-        <TooltipButton variant="default" tooltip="Create a new payment">
+        <TooltipButton 
+          variant="default" 
+          tooltip="Create a new payment"
+          onClick={onCreatePayment}
+        >
           <PlusCircle className="h-4 w-4 mr-2" /> New Payment
         </TooltipButton>
       </div>
