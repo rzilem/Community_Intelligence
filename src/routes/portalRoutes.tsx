@@ -6,6 +6,7 @@ import VendorDashboard from '@/pages/portal/VendorDashboard';
 import PortalManagement from '@/pages/system/PortalManagement';
 import RequireAuth from '@/components/auth/RequireAuth';
 import PortalSelection from '@/pages/portal/PortalSelection';
+import CollectionsPage from '@/pages/portal/CollectionsPage';
 
 export const portalRoutes = [
   <Route 
@@ -50,6 +51,15 @@ export const portalRoutes = [
     element={
       <RequireAuth menuId="system" submenuId="settings" requiredAccess="full">
         <PortalManagement />
+      </RequireAuth>
+    }
+  />,
+  <Route 
+    key="collections-page"
+    path="/portal/board/collections"
+    element={
+      <RequireAuth menuId="board-portal">
+        <CollectionsPage />
       </RequireAuth>
     }
   />,

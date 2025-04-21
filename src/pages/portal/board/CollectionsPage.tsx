@@ -1,25 +1,28 @@
 
 import React from 'react';
-import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { PiggyBank } from 'lucide-react';
+import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth';
 import { useCollectionsData } from '@/hooks/collections/useCollectionsData';
 import { CollectionsTable } from '@/components/collections/CollectionsTable';
 import { CollectionsTimeline } from '@/components/collections/CollectionsTimeline';
+import { formatCurrency } from '@/lib/utils';
 
 const CollectionsPage = () => {
   const { currentAssociation } = useAuth();
   const [activeTab, setActiveTab] = React.useState('accounts');
+  const [selectedAccount, setSelectedAccount] = React.useState<string | null>(null);
   
   const {
     accounts,
     steps,
     history,
+    documents,
+    paymentPlans,
+    payments,
     isLoading,
-    selectedAccount,
-    setSelectedAccount,
   } = useCollectionsData(currentAssociation?.id || '');
 
   const totalDelinquent = accounts.reduce((sum, account) => sum + Number(account.balance_amount), 0);
@@ -38,10 +41,7 @@ const CollectionsPage = () => {
           <Card>
             <CardContent className="p-6">
               <div className="text-2xl font-bold text-red-600">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD'
-                }).format(totalDelinquent)}
+                {formatCurrency(totalDelinquent)}
               </div>
               <p className="text-sm text-muted-foreground">
                 Total Delinquent Balance
@@ -78,8 +78,13 @@ const CollectionsPage = () => {
             <Card>
               <CardContent className="p-6">
                 <CollectionsTimeline 
-                  steps={steps}
-                  currentStep={2} // This will need to be dynamic based on the selected account
+                  steps={steps.map(step => ({
+                    id: step.id,
+                    name: step.name,
+                    description: step.description || undefined,
+                    completed: false,
+                  }))}
+                  currentStep={2}
                 />
               </CardContent>
             </Card>
