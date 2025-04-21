@@ -5,11 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Copy, Upload } from 'lucide-react';
-import { FormTemplate } from '@/types/form-builder-types';
-
-interface PDFFormConverterProps {
-  associationId?: string;
-}
+import { PDFFormConverterProps, FormTemplate } from '@/types/form-builder-types';
 
 export const PDFFormConverter: React.FC<PDFFormConverterProps> = ({ associationId }) => {
   const [activeTab, setActiveTab] = useState<'upload' | 'templates'>('upload');

@@ -1,4 +1,3 @@
-
 export type FormFieldType = 
   | 'text'
   | 'textarea'
@@ -99,4 +98,18 @@ export interface FormWidgetSettings {
   showDescription?: boolean;
   buttonText?: string;
   position?: number;
+}
+
+export interface PDFFormConverterProps {
+  associationId?: string;
+}
+
+export interface FormBuilderTemplatesProps {
+  associationId?: string;
+}
+
+export interface NewFormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  associationId?: string;
 }

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FileText, Plus, Settings } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ const FormBuilder = () => {
         </TabsContent>
         
         <TabsContent value="submissions">
-          <FormSubmissions associationId={selectedAssociationId} />
+          <FormSubmissions />
         </TabsContent>
         
         <TabsContent value="settings">
