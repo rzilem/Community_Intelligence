@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -60,16 +59,11 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAssociation, setSelectedAssociation] = useState<Association | null>(null);
   
-  const { 
-    visibleColumnIds, 
-    updateVisibleColumns, 
-    reorderColumns, 
-    resetToDefaults,
-    loading: columnsLoading 
-  } = useUserColumns(
-    associationTableColumns, 
-    'associations-table'
-  );
+  // Memoized values to prevent unnecessary renders
+  const isSelected = useMemo(() => {
+    const selectedMap = new Map(selectedAssociations.map(a => [a.id, true]));
+    return (association: Association) => selectedMap.has(association.id);
+  }, [selectedAssociations]);
 
   const handleEditClick = (association: Association) => {
     setSelectedAssociation(association);
@@ -95,33 +89,18 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     setEditDialogOpen(false);
   };
 
-  const isSelected = (association: Association) => {
-    return selectedAssociations.some(a => a.id === association.id);
-  };
-
   // Format date for display
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   };
 
-  if (isLoading || columnsLoading) {
+  if (isLoading) {
     return <LoadingState variant="skeleton" count={3} />;
   }
   
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <ColumnSelector
-          columns={associationTableColumns}
-          selectedColumns={visibleColumnIds}
-          onChange={updateVisibleColumns}
-          onReorder={reorderColumns}
-          resetToDefaults={resetToDefaults}
-          className="mb-2"
-          storageKey="associations-table"
-        />
-      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -148,7 +127,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
           <TableBody>
             {associations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumnIds.length + (onToggleSelect ? 1 : 0)} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                   No associations found
                 </TableCell>
               </TableRow>
@@ -288,4 +267,4 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   );
 };
 
-export default AssociationTable;
+export default React.memo(AssociationTable);

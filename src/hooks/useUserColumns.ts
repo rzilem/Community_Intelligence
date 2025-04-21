@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getUserColumnPreferences, saveUserColumnPreferences } from '@/services/user/column-preferences-service';
 import { useAuth } from '@/contexts/auth';
 
@@ -17,14 +17,18 @@ export const useUserColumns = (
   const [loading, setLoading] = useState(true);
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
   const [error, setError] = useState<Error | null>(null);
+  const [isFetched, setIsFetched] = useState(false);
   
-  // Default visible columns are all columns unless specified
-  const defaultVisibleIds = columns
-    .filter(col => col.defaultVisible !== false)
-    .map(col => col.id);
+  // Memoize default visible columns to prevent recalculations
+  const defaultVisibleIds = useMemo(() => 
+    columns.filter(col => col.defaultVisible !== false).map(col => col.id)
+  , [columns]);
 
-  // Load column preferences when component mounts or user/viewId changes
+  // Load column preferences only once when component mounts or user/viewId changes
   useEffect(() => {
+    // Skip if already fetched
+    if (isFetched) return;
+    
     const loadUserPreferences = async () => {
       setLoading(true);
       setError(null);
@@ -32,6 +36,7 @@ export const useUserColumns = (
       try {
         if (user?.id) {
           console.log(`Loading column preferences for user ${user.id}, view ${viewId}`);
+          
           const { data: savedColumns, error: prefError } = await getUserColumnPreferences(user.id, viewId);
           
           if (prefError) {
@@ -63,6 +68,9 @@ export const useUserColumns = (
             setVisibleColumnIds(defaultVisibleIds);
           }
         }
+        
+        // Mark as fetched so we don't repeat unnecessarily
+        setIsFetched(true);
       } catch (err: any) {
         console.error('Unexpected error in useUserColumns:', err);
         setError(err);
@@ -73,7 +81,7 @@ export const useUserColumns = (
     };
 
     loadUserPreferences();
-  }, [user?.id, viewId, defaultVisibleIds]);
+  }, [user?.id, viewId, defaultVisibleIds, isFetched]);
 
   const updateVisibleColumns = async (columnIds: string[]) => {
     if (!columnIds || columnIds.length === 0) {

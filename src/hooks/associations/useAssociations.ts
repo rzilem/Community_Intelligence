@@ -14,6 +14,7 @@ export const useAssociations = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchAssociations = useCallback(async () => {
     try {
@@ -27,6 +28,7 @@ export const useAssociations = () => {
       if (error) {
         console.error('Error fetching associations:', error);
         setError(error as Error);
+        setAssociations([]); // Set empty array to prevent undefined errors
         return;
       }
 
@@ -77,6 +79,7 @@ export const useAssociations = () => {
     } catch (error: any) {
       console.error('Error fetching associations:', error);
       setError(error);
+      setAssociations([]); // Set empty array to prevent undefined errors
     } finally {
       setIsLoading(false);
     }
@@ -100,8 +103,8 @@ export const useAssociations = () => {
 
       toast.success('Association created successfully');
       
-      // Refresh the associations list after creating a new one
-      fetchAssociations();
+      // Trigger a refresh rather than immediately calling fetchAssociations
+      setRefreshTrigger(prev => prev + 1);
       
       return data;
     } catch (error: any) {
@@ -130,7 +133,7 @@ export const useAssociations = () => {
 
       console.log('Updated association data:', data);
       
-      // Update the local state with the updated association
+      // Update the local state directly without triggering a full refetch
       setAssociations(prev =>
         prev.map(assoc => assoc.id === id ? { ...assoc, ...data } : assoc)
       );
@@ -172,13 +175,13 @@ export const useAssociations = () => {
 
   const manuallyRefresh = useCallback(() => {
     console.log('Manually refreshing associations...');
-    fetchAssociations();
-  }, [fetchAssociations]);
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
-  // Initial load
+  // Initial load and refresh when triggered
   useEffect(() => {
     fetchAssociations();
-  }, [fetchAssociations]);
+  }, [fetchAssociations, refreshTrigger]);
 
   return {
     associations,

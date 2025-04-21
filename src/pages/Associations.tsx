@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Network, RefreshCw, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import AssociationTable, { associationTableColumns } from '@/components/associations/AssociationTable';
 import { useUserColumns } from '@/hooks/useUserColumns';
-import ColumnSelector from '@/components/table/ColumnSelector';
 
 const PAGE_SIZE = 10;
 
@@ -31,31 +30,42 @@ const Associations = () => {
     deleteAssociation
   } = useAssociations();
 
-  const associationsArray = Array.isArray(associations) ? associations : [];
+  // Use useMemo to ensure stable reference to avoid unnecessary re-renders
+  const associationsArray = useMemo(() => 
+    Array.isArray(associations) ? associations : []
+  , [associations]);
 
   // Filter by search & archived/active status
-  const filteredAssociations = associationsArray.filter((association) => {
-    const matchesSearch =
-      association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()));
-    const showAssociation =
-      includeInactive ? true : !association.is_archived;
-    return matchesSearch && showAssociation;
-  });
+  const filteredAssociations = useMemo(() => 
+    associationsArray.filter((association) => {
+      const matchesSearch =
+        association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()));
+      const showAssociation =
+        includeInactive ? true : !association.is_archived;
+      return matchesSearch && showAssociation;
+    })
+  , [associationsArray, searchTerm, includeInactive]);
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredAssociations.length / PAGE_SIZE));
-  const paginatedAssociations = filteredAssociations.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    (currentPage - 1) * PAGE_SIZE + PAGE_SIZE
-  );
+  // Pagination calculation with useMemo to avoid recalculating on every render
+  const totalPages = useMemo(() => 
+    Math.max(1, Math.ceil(filteredAssociations.length / PAGE_SIZE))
+  , [filteredAssociations.length]);
+
+  // Only recalculate paginated associations when necessary
+  const paginatedAssociations = useMemo(() => 
+    filteredAssociations.slice(
+      (currentPage - 1) * PAGE_SIZE,
+      (currentPage - 1) * PAGE_SIZE + PAGE_SIZE
+    )
+  , [filteredAssociations, currentPage]);
 
   // Reset to page 1 on search/filter change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, includeInactive]);
 
-  // Restore column selector functionality
+  // Column selector with memoization for stability
   const {
     visibleColumnIds,
     updateVisibleColumns,
@@ -175,6 +185,10 @@ const Associations = () => {
               </div>
             </div>
 
+            {error && (
+              <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
+            )}
+
             <div className="flex justify-end mb-4">
               <ColumnSelector
                 columns={associationTableColumns}
@@ -186,10 +200,6 @@ const Associations = () => {
                 storageKey="associations-table"
               />
             </div>
-
-            {error && (
-              <ApiError error={error} onRetry={manuallyRefresh} title="Failed to load associations" className="mb-4" />
-            )}
 
             <AssociationTable
               associations={paginatedAssociations}
@@ -209,4 +219,3 @@ const Associations = () => {
 };
 
 export default Associations;
-
