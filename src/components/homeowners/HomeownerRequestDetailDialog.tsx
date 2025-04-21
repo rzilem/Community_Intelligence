@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -17,6 +18,7 @@ import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
 import ActivityFeedTab from './detail/tabs/ActivityFeedTab';
 import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import HistoryTimeline from './history/HistoryTimeline';
+import AttachmentsTab from './dialog/tabs/AttachmentsTab';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -81,6 +83,12 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
   
   const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
   
+  // Prepare a request object with attachments if none exist
+  const requestWithAttachments = {
+    ...request,
+    attachments: request.attachments || []
+  };
+  
   return (
     <Dialog 
       open={open} 
@@ -136,9 +144,7 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             
             <TabsContent value="attachments" className="h-full m-0">
               <ScrollArea className="h-full">
-                <div className="p-4">
-                  Attachments content will go here
-                </div>
+                <AttachmentsTab request={requestWithAttachments} />
               </ScrollArea>
             </TabsContent>
           </div>

@@ -3,6 +3,13 @@ export type HomeownerRequestStatus = 'open' | 'in-progress' | 'resolved' | 'clos
 export type HomeownerRequestPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type HomeownerRequestType = 'maintenance' | 'compliance' | 'billing' | 'general' | 'amenity';
 
+export interface RequestAttachment {
+  name: string;
+  url: string;
+  size: number;
+  type?: string;
+}
+
 export interface HomeownerRequest {
   id: string;
   title: string;
@@ -19,6 +26,7 @@ export interface HomeownerRequest {
   resolved_at?: string;
   html_content?: string; // For original email content
   tracking_number?: string; 
+  attachments?: RequestAttachment[]; // Added attachments property
   
   // Virtual properties for UI (not in database)
   createdAt?: string; // Alias for created_at
