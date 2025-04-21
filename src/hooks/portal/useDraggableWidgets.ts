@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { PortalWidget } from '@/types/portal-types';
 import { useWidgetSettings } from './useWidgetSettings';
 import { useResponsive } from '@/hooks/use-responsive';

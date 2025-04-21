@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { WidgetType } from '@/types/portal-types';
 import { Loader2, Save, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWidgetNotifications } from '@/hooks/portal/useWidgetNotifications';
+import ShareWidgetDialog from './widgets/ShareWidgetDialog';
 
 interface DashboardWidgetProps {
   title: string;
@@ -29,6 +31,8 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
   isDraggable = false,
   dragHandleProps
 }) => {
+  useWidgetNotifications(widgetType);
+
   return (
     <Card className={cn("shadow-sm h-full", className)}>
       <CardHeader className="pb-2">
@@ -45,6 +49,7 @@ const DashboardWidget: React.FC<DashboardWidgetProps> = ({
             <span>{title}</span>
           </div>
           <div className="flex items-center gap-2">
+            <ShareWidgetDialog widgetId={widgetType} widgetType={widgetType} />
             {onSave && (
               <Button 
                 variant="ghost" 
