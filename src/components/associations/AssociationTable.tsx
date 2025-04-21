@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,21 +23,19 @@ import ColumnSelector from '@/components/table/ColumnSelector';
 import { useUserColumns } from '@/hooks/useUserColumns';
 
 export const associationTableColumns = [
-  { id: 'name', label: 'Association Name' },
-  { id: 'property_type', label: 'Type' },
-  { id: 'location', label: 'Location' },
-  { id: 'contact_email', label: 'Contact' },
-  { id: 'status', label: 'Status' },
-  { id: 'total_units', label: 'Units' },
-  { id: 'phone', label: 'Phone' },
-  { id: 'created_at', label: 'Created' },
-  { id: 'founded_date', label: 'Founded' },
-  { id: 'insurance_expiration', label: 'Insurance Exp.' },
-  { id: 'fire_inspection_due', label: 'Fire Insp. Due' },
-  { id: 'actions', label: 'Actions' }
+  { id: 'name', label: 'Association Name', defaultVisible: true },
+  { id: 'property_type', label: 'Type', defaultVisible: true },
+  { id: 'location', label: 'Location', defaultVisible: true },
+  { id: 'contact_email', label: 'Contact', defaultVisible: true },
+  { id: 'status', label: 'Status', defaultVisible: true },
+  { id: 'total_units', label: 'Units', defaultVisible: false },
+  { id: 'phone', label: 'Phone', defaultVisible: false },
+  { id: 'created_at', label: 'Created', defaultVisible: false },
+  { id: 'founded_date', label: 'Founded', defaultVisible: false },
+  { id: 'insurance_expiration', label: 'Insurance Exp.', defaultVisible: false },
+  { id: 'fire_inspection_due', label: 'Fire Insp. Due', defaultVisible: false },
+  { id: 'actions', label: 'Actions', defaultVisible: true }
 ];
-
-const defaultColumns = ['name', 'property_type', 'location', 'contact_email', 'status', 'actions'];
 
 interface AssociationTableProps {
   associations: Association[];
@@ -121,13 +119,14 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
           onReorder={reorderColumns}
           resetToDefaults={resetToDefaults}
           className="mb-2"
+          storageKey="associations-table"
         />
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {onToggleSelect && visibleColumnIds.some(col => col === 'select') && (
+              {onToggleSelect && (
                 <TableHead className="w-[50px]">
                   <span className="sr-only">Select</span>
                 </TableHead>
@@ -143,7 +142,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
               {visibleColumnIds.includes('insurance_expiration') && <TableHead>Insurance Exp.</TableHead>}
               {visibleColumnIds.includes('fire_inspection_due') && <TableHead>Fire Insp. Due</TableHead>}
               {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
-              {visibleColumnIds.includes('actions') && <TableHead className="w-[100px]">Actions</TableHead>}
+              {visibleColumnIds.includes('actions') && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -159,7 +158,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                   key={association.id}
                   className={isSelected(association) ? "bg-muted/50" : ""}
                 >
-                  {onToggleSelect && visibleColumnIds.includes('select') && (
+                  {onToggleSelect && (
                     <TableCell>
                       <Checkbox 
                         checked={isSelected(association)}
@@ -225,24 +224,28 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                     </TableCell>
                   )}
                   {visibleColumnIds.includes('actions') && (
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <TooltipButton
-                          size="icon"
-                          variant="ghost"
-                          tooltip="Edit Association"
-                          onClick={() => handleEditClick(association)}
-                        >
-                          <PencilLine className="h-4 w-4" />
-                        </TooltipButton>
-                        <TooltipButton
-                          size="icon"
-                          variant="ghost"
-                          tooltip="Delete Association"
-                          onClick={() => handleDeleteClick(association)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </TooltipButton>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {onEdit && (
+                          <TooltipButton
+                            size="icon"
+                            variant="ghost"
+                            tooltip="Edit Association"
+                            onClick={() => handleEditClick(association)}
+                          >
+                            <PencilLine className="h-4 w-4" />
+                          </TooltipButton>
+                        )}
+                        {onDelete && (
+                          <TooltipButton
+                            size="icon"
+                            variant="ghost"
+                            tooltip="Delete Association"
+                            onClick={() => handleDeleteClick(association)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </TooltipButton>
+                        )}
                       </div>
                     </TableCell>
                   )}

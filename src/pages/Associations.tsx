@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Network, RefreshCw, Search, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [usePagination, setUsePagination] = useState(false);
+  const [currentTab, setCurrentTab] = useState('all');
 
   const { 
     associations, 
@@ -43,6 +44,21 @@ const Associations = () => {
 
   const handleDeleteAssociation = (id: string) => {
     deleteAssociation(id);
+  };
+
+  // Handle toggling paginated view
+  const togglePaginatedView = () => {
+    setUsePagination(prev => !prev);
+  };
+
+  // Reset to the first tab when switching view modes
+  useEffect(() => {
+    setCurrentTab('all');
+  }, [usePagination]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
   };
 
   return (
@@ -75,7 +91,7 @@ const Associations = () => {
                     <TooltipTrigger asChild>
                       <Button 
                         variant="outline"
-                        onClick={() => setUsePagination(!usePagination)}
+                        onClick={togglePaginatedView}
                       >
                         {usePagination ? "Standard View" : "Paginated View"}
                       </Button>
@@ -112,7 +128,7 @@ const Associations = () => {
             )}
 
             {usePagination ? (
-              <Tabs defaultValue="all">
+              <Tabs value={currentTab} onValueChange={handleTabChange}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="active">Active</TabsTrigger>
@@ -144,7 +160,7 @@ const Associations = () => {
                 </TabsContent>
               </Tabs>
             ) : (
-              <Tabs defaultValue="all">
+              <Tabs value={currentTab} onValueChange={handleTabChange}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="all">
                     All

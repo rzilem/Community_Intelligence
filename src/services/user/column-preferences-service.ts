@@ -11,6 +11,8 @@ export const saveUserColumnPreferences = async (
   columnIds: string[]
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    console.log(`Saving column preferences for user ${userId}, view ${viewId}`, columnIds);
+    
     // First try to get existing user settings
     const { data: settings, error: fetchError } = await supabase
       .from('user_settings')
@@ -51,7 +53,12 @@ export const saveUserColumnPreferences = async (
         .update({ column_preferences: columnPreferences })
         .eq('user_id', userId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating user settings:', error);
+        throw error;
+      }
+      
+      console.log('Updated user_settings successfully');
     } else {
       // Create new settings
       const { error } = await supabase
@@ -63,7 +70,12 @@ export const saveUserColumnPreferences = async (
           notifications_enabled: true
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating user settings:', error);
+        throw error;
+      }
+      
+      console.log('Created new user_settings successfully');
     }
     
     return { success: true };
@@ -81,6 +93,8 @@ export const getUserColumnPreferences = async (
   viewId: string
 ): Promise<{ data?: string[]; error?: string }> => {
   try {
+    console.log(`Getting column preferences for user ${userId}, view ${viewId}`);
+    
     const { data, error } = await supabase
       .from('user_settings')
       .select('column_preferences')
@@ -90,6 +104,7 @@ export const getUserColumnPreferences = async (
     if (error) {
       if (error.code === 'PGRST116') {
         // No settings found - not an error, just return undefined
+        console.log('No user settings found');
         return { data: undefined };
       }
       throw error;
@@ -111,6 +126,8 @@ export const getUserColumnPreferences = async (
         columnPreferences = {};
       }
     }
+    
+    console.log('Retrieved column preferences:', columnPreferences[viewId]);
     
     return { 
       data: columnPreferences[viewId]

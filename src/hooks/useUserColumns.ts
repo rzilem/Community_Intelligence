@@ -22,15 +22,19 @@ export const useUserColumns = (
     .filter(col => col.defaultVisible !== false)
     .map(col => col.id);
 
+  // Load column preferences when component mounts or user/viewId changes
   useEffect(() => {
     const loadUserPreferences = async () => {
       if (user?.id) {
         setLoading(true);
         try {
           const { data: savedColumns } = await getUserColumnPreferences(user.id, viewId);
+          
           if (savedColumns && savedColumns.length > 0) {
+            console.log('Loaded saved columns for view', viewId, savedColumns);
             setVisibleColumnIds(savedColumns);
           } else {
+            console.log('No saved columns found, using defaults for view', viewId);
             setVisibleColumnIds(defaultVisibleIds);
           }
         } catch (error) {
@@ -40,19 +44,37 @@ export const useUserColumns = (
           setLoading(false);
         }
       } else {
-        setVisibleColumnIds(defaultVisibleIds);
+        // Fallback to localStorage when user is not authenticated
+        try {
+          const saved = localStorage.getItem(`columns-${viewId}`);
+          if (saved) {
+            const savedColumns = JSON.parse(saved);
+            setVisibleColumnIds(savedColumns);
+          } else {
+            setVisibleColumnIds(defaultVisibleIds);
+          }
+        } catch (error) {
+          console.error('Error loading columns from localStorage:', error);
+          setVisibleColumnIds(defaultVisibleIds);
+        }
         setLoading(false);
       }
     };
 
     loadUserPreferences();
-  }, [user?.id, viewId]);
+  }, [user?.id, viewId, defaultVisibleIds]);
 
   const updateVisibleColumns = async (columnIds: string[]) => {
+    console.log('Updating visible columns for view', viewId, columnIds);
     setVisibleColumnIds(columnIds);
     
     if (user?.id) {
-      await saveUserColumnPreferences(user.id, viewId, columnIds);
+      try {
+        await saveUserColumnPreferences(user.id, viewId, columnIds);
+        console.log('Column preferences saved successfully');
+      } catch (error) {
+        console.error('Failed to save column preferences:', error);
+      }
     } else {
       // If no user, just use local storage as fallback
       localStorage.setItem(`columns-${viewId}`, JSON.stringify(columnIds));
@@ -67,7 +89,11 @@ export const useUserColumns = (
     setVisibleColumnIds(result);
     
     if (user?.id) {
-      await saveUserColumnPreferences(user.id, viewId, result);
+      try {
+        await saveUserColumnPreferences(user.id, viewId, result);
+      } catch (error) {
+        console.error('Failed to save column preferences after reordering:', error);
+      }
     } else {
       localStorage.setItem(`columns-${viewId}`, JSON.stringify(result));
     }
@@ -77,7 +103,11 @@ export const useUserColumns = (
     setVisibleColumnIds(defaultVisibleIds);
     
     if (user?.id) {
-      await saveUserColumnPreferences(user.id, viewId, defaultVisibleIds);
+      try {
+        await saveUserColumnPreferences(user.id, viewId, defaultVisibleIds);
+      } catch (error) {
+        console.error('Failed to reset column preferences to defaults:', error);
+      }
     } else {
       localStorage.removeItem(`columns-${viewId}`);
     }
