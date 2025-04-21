@@ -1,6 +1,7 @@
 
 import { useSupabaseCreate, useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
+import { FormField, FormFieldType } from '@/types/form-builder-types';
 import { toast } from 'sonner';
 import { createWorker } from 'tesseract.js';
 
@@ -22,7 +23,10 @@ export function usePDFConversion(associationId?: string) {
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
+      // Create a worker and initialize it - using the correct Tesseract.js API
       const worker = await createWorker();
+      // These methods are accessed via the worker instance directly in tesseract.js v5
+      await worker.load();
       await worker.loadLanguage('eng');
       await worker.initialize('eng');
       

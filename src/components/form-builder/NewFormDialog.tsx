@@ -9,13 +9,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { FileText, ClipboardList, FileCheck, BarChart4 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { NewFormDialogProps } from '@/types/form-builder-types';
 
-interface NewFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export const NewFormDialog: React.FC<NewFormDialogProps> = ({ open, onOpenChange }) => {
+export const NewFormDialog: React.FC<NewFormDialogProps> = ({ 
+  open, 
+  onOpenChange,
+  associationId 
+}) => {
   const navigate = useNavigate();
   const [formType, setFormType] = useState('');
   const [formName, setFormName] = useState('');
@@ -35,6 +35,11 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({ open, onOpenChange
     
     if (!formCategory) {
       toast.error('Please select a category');
+      return;
+    }
+
+    if (!associationId) {
+      toast.error('Please select an association');
       return;
     }
     

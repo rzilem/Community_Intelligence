@@ -1,3 +1,4 @@
+
 export type FormFieldType = 
   | 'text'
   | 'textarea'
@@ -58,7 +59,7 @@ export interface FormField {
 
 export interface FormTemplate {
   id: string;
-  title: string;
+  title?: string;
   name: string;
   description?: string;
   fields: FormField[];
