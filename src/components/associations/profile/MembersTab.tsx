@@ -1,20 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { AssociationMember, MemberType } from '@/types/member-types';
-import { toast } from 'sonner';
-import { MemberForm } from '../members/MemberForm';
 import { MemberList } from '../members/MemberList';
+import { MemberDialog } from '../members/MemberDialog';
 import { useSupabaseQuery } from '@/hooks/supabase';
+import { useMemberOperations } from '@/hooks/members/useMemberOperations';
 import { ResidentWithProfile } from '@/types/resident-types';
-import { associationMemberService } from '@/services/members/association-member-service';
-import { externalMemberService } from '@/services/members/external-member-service';
-
-interface MembersTabProps {
-  associationId: string;
-}
 
 const boardRoles = [
   'President',
@@ -42,24 +35,26 @@ const committeeRoles = [
   'Member'
 ];
 
+interface MembersTabProps {
+  associationId: string;
+}
+
 export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
   const [activeTab, setActiveTab] = useState('board');
-  const [members, setMembers] = useState<AssociationMember[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  const [selectedUserId, setSelectedUserId] = useState('');
   const [roleType, setRoleType] = useState<'board' | 'committee'>('board');
-  const [roleName, setRoleName] = useState('');
-  const [editingMember, setEditingMember] = useState<AssociationMember | null>(null);
-  const [memberType, setMemberType] = useState<MemberType>('homeowner');
-  
-  const [manualFirstName, setManualFirstName] = useState('');
-  const [manualLastName, setManualLastName] = useState('');
-  const [manualEmail, setManualEmail] = useState('');
 
-  const { data: associationHomeowners = [], isLoading: isLoadingHomeowners } = useSupabaseQuery<ResidentWithProfile[]>(
+  const { 
+    members,
+    isLoading,
+    editingMember,
+    setEditingMember,
+    fetchMembers,
+    handleSaveMember,
+    handleDeleteMember
+  } = useMemberOperations(associationId);
+
+  const { data: associationHomeowners = [] } = useSupabaseQuery<ResidentWithProfile[]>(
     'residents',
     {
       select: `
@@ -81,146 +76,22 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     }
   );
 
-  const filteredHomeowners = searchQuery
-    ? associationHomeowners.filter(homeowner => {
-        const query = searchQuery.toLowerCase();
-        const firstName = homeowner.user?.profile?.first_name?.toLowerCase() || '';
-        const lastName = homeowner.user?.profile?.last_name?.toLowerCase() || '';
-        const email = homeowner.user?.profile?.email?.toLowerCase() || '';
-        
-        return firstName.includes(query) || 
-               lastName.includes(query) || 
-               email.includes(query) ||
-               `${firstName} ${lastName}`.includes(query);
-      })
-    : associationHomeowners;
-
   useEffect(() => {
     if (associationId) {
       fetchMembers();
     }
   }, [associationId]);
 
-  const fetchMembers = async () => {
-    try {
-      setIsLoading(true);
-      const data = await associationMemberService.getAssociationMembers(associationId);
-      setMembers(data);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-      toast.error('Failed to load association members');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleAddMember = () => {
     setEditingMember(null);
-    setSelectedUserId('');
-    setRoleType('board');
-    setRoleName('');
-    setMemberType('homeowner');
-    setManualFirstName('');
-    setManualLastName('');
-    setManualEmail('');
-    setSearchQuery('');
+    setRoleType(activeTab as 'board' | 'committee');
     setIsDialogOpen(true);
   };
 
   const handleEditMember = (member: AssociationMember) => {
     setEditingMember(member);
-    setSelectedUserId(member.user_id);
     setRoleType(member.role_type);
-    setRoleName(member.role_name);
-    setMemberType(member.member_type);
     setIsDialogOpen(true);
-  };
-
-  const handleDeleteMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      await associationMemberService.removeAssociationMember(memberId);
-      fetchMembers();
-    } catch (error) {
-      console.error('Error removing member:', error);
-      toast.error('Failed to remove member');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSaveMember = async () => {
-    if (memberType === 'homeowner' && !selectedUserId) {
-      toast.error('Please select a homeowner');
-      return;
-    }
-
-    if ((memberType === 'developer' || memberType === 'builder') && 
-        (!manualFirstName || !manualLastName || !manualEmail)) {
-      toast.error('Please fill out all required fields');
-      return;
-    }
-
-    if (!roleName) {
-      toast.error('Please select a role');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      
-      let userId = selectedUserId;
-      
-      if (memberType !== 'homeowner') {
-        const existingUserData = await externalMemberService.findUserByEmail(manualEmail);
-        
-        if (existingUserData) {
-          userId = existingUserData.id;
-        } else {
-          const newUserData = await externalMemberService.createExternalUser({
-            first_name: manualFirstName,
-            last_name: manualLastName,
-            email: manualEmail,
-            user_type: memberType
-          }, associationId);
-          
-          if (newUserData) {
-            userId = newUserData.id;
-          } else {
-            throw new Error('Failed to create user');
-          }
-        }
-      }
-      
-      if (editingMember) {
-        await associationMemberService.updateAssociationMember(editingMember.id, {
-          role_type: roleType,
-          role_name: roleName,
-          member_type: memberType,
-          user_id: editingMember.user_id
-        });
-      } else {
-        await associationMemberService.addAssociationMember({
-          user_id: userId,
-          association_id: associationId,
-          role_type: roleType,
-          role_name: roleName,
-          member_type: memberType
-        });
-      }
-
-      fetchMembers();
-      setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving member:', error);
-      toast.error('Failed to save member');
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const filteredMembers = members.filter(member => member.role_type === activeTab);
@@ -268,64 +139,18 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           </TabsContent>
         </Tabs>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingMember 
-                  ? `Edit ${editingMember.role_type === 'board' ? 'Board' : 'Committee'} Member` 
-                  : `Add ${roleType === 'board' ? 'Board' : 'Committee'} Member`}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <MemberForm
-              memberType={memberType}
-              setMemberType={setMemberType}
-              selectedUserId={selectedUserId}
-              setSelectedUserId={setSelectedUserId}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              filteredHomeowners={filteredHomeowners}
-              manualFirstName={manualFirstName}
-              setManualFirstName={setManualFirstName}
-              manualLastName={manualLastName}
-              setManualLastName={setManualLastName}
-              manualEmail={manualEmail}
-              setManualEmail={setManualEmail}
-              roleType={roleType}
-              setRoleType={setRoleType}
-              roleName={roleName}
-              setRoleName={setRoleName}
-              boardRoles={boardRoles}
-              committeeRoles={committeeRoles}
-              isLoading={isLoading}
-              homeowners={associationHomeowners}
-            />
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSaveMember} 
-                disabled={
-                  (memberType === 'homeowner' && !selectedUserId) || 
-                  ((memberType === 'developer' || memberType === 'builder') && 
-                    (!manualFirstName || !manualLastName || !manualEmail)) ||
-                  !roleName || 
-                  isLoading
-                }
-              >
-                {isLoading 
-                  ? 'Saving...' 
-                  : editingMember 
-                    ? 'Update' 
-                    : 'Add Member'
-                }
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <MemberDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          editingMember={editingMember}
+          onSave={handleSaveMember}
+          isLoading={isLoading}
+          roleType={roleType}
+          setRoleType={setRoleType}
+          homeowners={associationHomeowners}
+          boardRoles={boardRoles}
+          committeeRoles={committeeRoles}
+        />
       </CardContent>
     </Card>
   );

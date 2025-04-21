@@ -1,12 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { ExternalMember } from '@/types/member-types';
 
 export const externalMemberService = {
   createExternalUser: async (userData: ExternalMember, currentAssociationId: string) => {
     try {
-      // Update the profiles insert method - using a single object instead of an array
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -25,11 +23,11 @@ export const externalMemberService = {
 
       const { data: associationUserData, error: assocUserError } = await supabase
         .from('association_users')
-        .insert([{
+        .insert({
           user_id: profileData.id,
           association_id: currentAssociationId,
           role: userData.user_type
-        }])
+        })
         .select()
         .single();
 
