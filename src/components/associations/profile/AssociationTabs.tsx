@@ -46,48 +46,48 @@ export const AssociationTabs: React.FC<AssociationTabsProps> = ({
 
   return (
     <Tabs defaultValue="details" className="w-full mt-6" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="w-full max-w-4xl flex flex-wrap mb-6 border-b rounded-none bg-transparent p-0 h-auto">
+      <TabsList className="w-full max-w-6xl flex flex-nowrap mb-6 border-b rounded-none bg-transparent p-0 h-auto overflow-x-auto scrollbar-hide">
         <TabsTrigger 
           value="details" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Details
         </TabsTrigger>
         <TabsTrigger 
           value="financials" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Financials
         </TabsTrigger>
         <TabsTrigger 
           value="properties" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Properties
         </TabsTrigger>
         <TabsTrigger 
           value="documents" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Documents
         </TabsTrigger>
         <TabsTrigger 
           value="members" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Members
         </TabsTrigger>
         <TabsTrigger 
           value="communications" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
           Communications
         </TabsTrigger>
         <TabsTrigger 
           value="settings" 
-          className="rounded-none border-b-2 border-transparent px-6 py-3 text-sm font-medium data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
+          className="rounded-none border-b-2 border-transparent px-4 py-2 text-xs font-medium tracking-tight whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary"
         >
-          <Settings className="h-4 w-4 mr-2" />
+          <Settings className="h-3 w-3 mr-1" />
           Settings
         </TabsTrigger>
       </TabsList>
