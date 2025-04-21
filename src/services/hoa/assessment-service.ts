@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Assessment, AssessmentType } from '@/types/assessment-types';
 import { toast } from 'sonner';
@@ -18,13 +17,13 @@ export const fetchAssessmentsByProperty = async (propertyId: string): Promise<As
   return (data as any[]).map(assessment => ({
     id: assessment.id,
     property_id: assessment.property_id,
-    association_id: "placeholder-association-id", // Required by type but not in DB
+    association_id: assessment.association_id || "placeholder-association-id",
     assessment_type_id: assessment.assessment_type_id,
-    assessment_type: "monthly", // Required by type but mapping from DB
+    assessment_type: assessment.assessment_type || "monthly",
     amount: assessment.amount,
     due_date: assessment.due_date,
     paid: assessment.paid,
-    status: assessment.paid ? "paid" : "unpaid", // Derive status from paid field
+    status: assessment.paid ? "paid" : "unpaid",
     payment_date: assessment.payment_date,
     late_fee: assessment.late_fee,
     created_at: assessment.created_at,
@@ -49,13 +48,13 @@ export const fetchAssessmentById = async (id: string): Promise<Assessment> => {
   return {
     id: assessment.id,
     property_id: assessment.property_id,
-    association_id: "placeholder-association-id", // Required by type but not in DB
+    association_id: assessment.association_id || "placeholder-association-id",
     assessment_type_id: assessment.assessment_type_id,
-    assessment_type: "monthly", // Required by type but mapping from DB
+    assessment_type: assessment.assessment_type || "monthly",
     amount: assessment.amount,
     due_date: assessment.due_date,
     paid: assessment.paid,
-    status: assessment.paid ? "paid" : "unpaid", // Derive status from paid field
+    status: assessment.paid ? "paid" : "unpaid",
     payment_date: assessment.payment_date,
     late_fee: assessment.late_fee,
     created_at: assessment.created_at,
@@ -89,13 +88,13 @@ export const createAssessment = async (assessment: Partial<Assessment>): Promise
   return {
     id: newAssessment.id,
     property_id: newAssessment.property_id,
-    association_id: "placeholder-association-id", // Required by type but not in DB
+    association_id: newAssessment.association_id || "placeholder-association-id",
     assessment_type_id: newAssessment.assessment_type_id,
-    assessment_type: "monthly", // Required by type but mapping from DB
+    assessment_type: newAssessment.assessment_type || "monthly",
     amount: newAssessment.amount,
     due_date: newAssessment.due_date,
     paid: newAssessment.paid,
-    status: newAssessment.paid ? "paid" : "unpaid", // Derive status from paid field
+    status: newAssessment.paid ? "paid" : "unpaid",
     payment_date: newAssessment.payment_date,
     late_fee: newAssessment.late_fee,
     created_at: newAssessment.created_at,
@@ -104,7 +103,6 @@ export const createAssessment = async (assessment: Partial<Assessment>): Promise
 };
 
 export const updateAssessment = async (id: string, assessment: Partial<Assessment>): Promise<Assessment> => {
-  // Create an object that only includes properties that exist in the database schema
   const dbAssessment = {
     property_id: assessment.property_id,
     assessment_type_id: assessment.assessment_type_id,
@@ -133,13 +131,13 @@ export const updateAssessment = async (id: string, assessment: Partial<Assessmen
   return {
     id: updatedAssessment.id,
     property_id: updatedAssessment.property_id,
-    association_id: "placeholder-association-id", // Required by type but not in DB
+    association_id: updatedAssessment.association_id || "placeholder-association-id",
     assessment_type_id: updatedAssessment.assessment_type_id,
-    assessment_type: "monthly", // Required by type but mapping from DB
+    assessment_type: updatedAssessment.assessment_type || "monthly",
     amount: updatedAssessment.amount,
     due_date: updatedAssessment.due_date,
     paid: updatedAssessment.paid,
-    status: updatedAssessment.paid ? "paid" : "unpaid", // Derive status from paid field
+    status: updatedAssessment.paid ? "paid" : "unpaid",
     payment_date: updatedAssessment.payment_date,
     late_fee: updatedAssessment.late_fee,
     created_at: updatedAssessment.created_at,
@@ -161,7 +159,6 @@ export const deleteAssessment = async (id: string): Promise<void> => {
   toast.success('Assessment deleted successfully');
 };
 
-// Assessment Types
 export const fetchAssessmentTypesByHOA = async (hoaId: string): Promise<AssessmentType[]> => {
   const { data, error } = await supabase
     .from('assessment_types' as any)

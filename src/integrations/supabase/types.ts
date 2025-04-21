@@ -331,10 +331,14 @@ export type Database = {
           id: string
           insurance_expiration: string | null
           is_archived: boolean | null
+          logo_url: string | null
           name: string
           phone: string | null
+          primary_color: string | null
           property_type: string | null
+          secondary_color: string | null
           state: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
           website: string | null
@@ -352,10 +356,14 @@ export type Database = {
           id?: string
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          logo_url?: string | null
           name: string
           phone?: string | null
+          primary_color?: string | null
           property_type?: string | null
+          secondary_color?: string | null
           state?: string | null
+          status?: string | null
           total_units?: number | null
           updated_at?: string
           website?: string | null
@@ -373,10 +381,14 @@ export type Database = {
           id?: string
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          logo_url?: string | null
           name?: string
           phone?: string | null
+          primary_color?: string | null
           property_type?: string | null
+          secondary_color?: string | null
           state?: string | null
+          status?: string | null
           total_units?: number | null
           updated_at?: string
           website?: string | null
@@ -1974,11 +1986,15 @@ export type Database = {
           city: string | null
           created_at: string
           id: string
+          lot_size: number | null
+          notes: string | null
           property_type: string
           square_feet: number | null
           state: string | null
+          status: string | null
           unit_number: string | null
           updated_at: string
+          year_built: number | null
           zip: string | null
         }
         Insert: {
@@ -1989,11 +2005,15 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          lot_size?: number | null
+          notes?: string | null
           property_type: string
           square_feet?: number | null
           state?: string | null
+          status?: string | null
           unit_number?: string | null
           updated_at?: string
+          year_built?: number | null
           zip?: string | null
         }
         Update: {
@@ -2004,11 +2024,15 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          lot_size?: number | null
+          notes?: string | null
           property_type?: string
           square_feet?: number | null
           state?: string | null
+          status?: string | null
           unit_number?: string | null
           updated_at?: string
+          year_built?: number | null
           zip?: string | null
         }
         Relationships: [
@@ -2554,10 +2578,14 @@ export type Database = {
           id: string
           insurance_expiration: string | null
           is_archived: boolean | null
+          logo_url: string | null
           name: string
           phone: string | null
+          primary_color: string | null
           property_type: string | null
+          secondary_color: string | null
           state: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
           website: string | null
@@ -2590,10 +2618,14 @@ export type Database = {
           id: string
           insurance_expiration: string | null
           is_archived: boolean | null
+          logo_url: string | null
           name: string
           phone: string | null
+          primary_color: string | null
           property_type: string | null
+          secondary_color: string | null
           state: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
           website: string | null

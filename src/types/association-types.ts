@@ -16,7 +16,6 @@ export interface Association {
   total_units?: number;
   [key: string]: any; // Allow for additional fields
 }
-
 export interface AssociationAIIssue {
   id: string;
   association_id: string;

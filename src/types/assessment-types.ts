@@ -7,7 +7,7 @@ export type Assessment = {
   amount: number;
   due_date: string;
   assessment_type: 'monthly' | 'quarterly' | 'annual' | 'special';
-  assessment_type_id?: string; // Added to match the service implementation
+  assessment_type_id?: string;
   status: 'paid' | 'unpaid' | 'partial' | 'late';
   paid?: boolean;
   payment_date?: string;
