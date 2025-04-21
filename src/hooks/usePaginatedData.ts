@@ -44,7 +44,7 @@ export function usePaginatedData<T = any>(
     try {
       // Get total count for pagination
       let countQuery = supabase
-        .from(table)
+        .from(table as any)
         .select('id', { count: 'exact', head: true });
       
       // Apply filters to count query
@@ -63,7 +63,7 @@ export function usePaginatedData<T = any>(
       const to = from + limit - 1;
       
       let query = supabase
-        .from(table)
+        .from(table as any)
         .select('*')
         .range(from, to);
       
