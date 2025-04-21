@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PencilLine, Trash2 } from 'lucide-react';
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import AssociationEditDialog from './AssociationEditDialog';
 import { LoadingState } from '@/components/ui/loading-state';
-import ColumnSelector from '@/components/table/ColumnSelector';
 import { useUserColumns } from '@/hooks/useUserColumns';
 
 export const associationTableColumns = [
@@ -44,6 +44,7 @@ interface AssociationTableProps {
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
   onViewProfile?: (id: string) => void;
+  visibleColumnIds?: string[]; // Add this prop to receive visible columns from parent
 }
 
 const AssociationTable: React.FC<AssociationTableProps> = ({ 
@@ -53,11 +54,21 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   onDelete,
   onToggleSelect,
   selectedAssociations = [],
-  onViewProfile
+  onViewProfile,
+  visibleColumnIds: propVisibleColumnIds // Rename to avoid conflicts
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAssociation, setSelectedAssociation] = useState<Association | null>(null);
+  
+  // Use the user columns hook if no visibleColumnIds are provided as props
+  const { visibleColumnIds: hookVisibleColumnIds } = useUserColumns(
+    associationTableColumns,
+    'associations-table'
+  );
+  
+  // Use prop values if provided, otherwise use the hook values
+  const visibleColumnIds = propVisibleColumnIds || hookVisibleColumnIds;
   
   // Memoized values to prevent unnecessary renders
   const isSelected = useMemo(() => {

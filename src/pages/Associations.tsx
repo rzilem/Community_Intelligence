@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import AssociationTable, { associationTableColumns } from '@/components/associations/AssociationTable';
 import { useUserColumns } from '@/hooks/useUserColumns';
+import ColumnSelector from '@/components/table/ColumnSelector';
 
 const PAGE_SIZE = 10;
 
@@ -207,6 +208,7 @@ const Associations = () => {
               onEdit={handleEditAssociation}
               onDelete={handleDeleteAssociation}
               selectedAssociations={[]}
+              visibleColumnIds={visibleColumnIds}
               // Don't include selection logic here unless needed.
             />
 
