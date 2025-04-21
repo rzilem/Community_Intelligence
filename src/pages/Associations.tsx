@@ -1,23 +1,24 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Network, RefreshCw, Search, AlertCircle } from 'lucide-react';
+import { Network, RefreshCw, Search } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAssociations } from '@/hooks/associations';
 import AssociationTable from '@/components/associations/AssociationTable';
-import PaginatedAssociationTable from '@/components/associations/PaginatedAssociationTable';
 import { Association } from '@/types/association-types';
 import ApiError from '@/components/ui/api-error';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
+const PAGE_SIZE = 10;
+
 const Associations = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [usePagination, setUsePagination] = useState(false);
   const [currentTab, setCurrentTab] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { 
     associations, 
@@ -28,16 +29,35 @@ const Associations = () => {
     deleteAssociation 
   } = useAssociations();
 
-  // Ensure associations is treated as array and protect from undefined
+  // Convert associations to array safely
   const associationsArray = Array.isArray(associations) ? associations : [];
 
+  // Search + tab filter
   const filteredAssociations = associationsArray.filter(
     association => association.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                    (association.address && association.address.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const activeAssociations = filteredAssociations.filter(a => a.is_archived === false);
-  const inactiveAssociations = filteredAssociations.filter(a => a.is_archived === true);
+  let displayedAssociations: Association[] = [];
+  if (currentTab === 'active') {
+    displayedAssociations = filteredAssociations.filter(a => a.is_archived === false);
+  } else if (currentTab === 'inactive') {
+    displayedAssociations = filteredAssociations.filter(a => a.is_archived === true);
+  } else {
+    displayedAssociations = filteredAssociations;
+  }
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(displayedAssociations.length / PAGE_SIZE));
+  const paginatedAssociations = displayedAssociations.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    (currentPage - 1) * PAGE_SIZE + PAGE_SIZE
+  );
+
+  // When changing tabs or search, reset to page 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [currentTab, searchTerm]);
 
   const handleEditAssociation = (id: string, data: Partial<Association>) => {
     updateAssociation(id, data)
@@ -59,36 +79,10 @@ const Associations = () => {
       });
   };
 
-  // Handle toggling paginated view with proper tab reset
-  const togglePaginatedView = useCallback(() => {
-    setUsePagination(prev => !prev);
-    // Reset to the first tab when switching view modes
-    setCurrentTab('all');
-    
-    // If we're switching back from paginated view, refresh the data
-    if (usePagination) {
-      manuallyRefresh();
-    }
-  }, [usePagination, manuallyRefresh]);
-
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setCurrentTab(value);
-  };
-
-  // Handle refreshing data
   const handleRefresh = () => {
     toast.info("Refreshing associations...");
     manuallyRefresh();
   };
-
-  // If no associations and not loading, refresh automatically once
-  useEffect(() => {
-    if (!isLoading && associationsArray.length === 0 && !error) {
-      console.log("No associations found, refreshing automatically...");
-      manuallyRefresh();
-    }
-  }, [isLoading, associationsArray.length, error, manuallyRefresh]);
 
   return (
     <AppLayout>
@@ -115,22 +109,6 @@ const Associations = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="outline"
-                        onClick={togglePaginatedView}
-                      >
-                        {usePagination ? "Standard View" : "Paginated View"}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Toggle between standard and paginated views</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -172,41 +150,9 @@ const Associations = () => {
             )}
 
             {!isLoading && associationsArray.length > 0 && (
-              usePagination ? (
-                <Tabs value={currentTab} onValueChange={handleTabChange}>
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value="active">Active</TabsTrigger>
-                    <TabsTrigger value="inactive">Inactive</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="all">
-                    <PaginatedAssociationTable 
-                      associationStatus="all" 
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="active">
-                    <PaginatedAssociationTable 
-                      associationStatus="active" 
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="inactive">
-                    <PaginatedAssociationTable 
-                      associationStatus="inactive" 
-                      onEdit={handleEditAssociation}
-                      onDelete={handleDeleteAssociation}
-                    />
-                  </TabsContent>
-                </Tabs>
-              ) : (
-                <Tabs value={currentTab} onValueChange={handleTabChange}>
-                  <TabsList className="grid w-full grid-cols-3">
+              <>
+                <Tabs value={currentTab} onValueChange={setCurrentTab}>
+                  <TabsList className="grid w-full grid-cols-3 mb-2">
                     <TabsTrigger value="all">
                       All
                       <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
@@ -216,30 +162,63 @@ const Associations = () => {
                     <TabsTrigger value="active">
                       Active
                       <span className="ml-1.5 rounded-full bg-green-100 text-green-800 px-2 py-0.5 text-xs">
-                        {activeAssociations.length}
+                        {filteredAssociations.filter(a => a.is_archived === false).length}
                       </span>
                     </TabsTrigger>
                     <TabsTrigger value="inactive">
                       Inactive
                       <span className="ml-1.5 rounded-full bg-gray-100 text-gray-700 px-2 py-0.5 text-xs">
-                        {inactiveAssociations.length}
+                        {filteredAssociations.filter(a => a.is_archived === true).length}
                       </span>
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="all">
-                    <AssociationTable associations={filteredAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                    <AssociationTable 
+                      associations={paginatedAssociations}
+                      isLoading={isLoading}
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
                   </TabsContent>
-
                   <TabsContent value="active">
-                    <AssociationTable associations={activeAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                    <AssociationTable 
+                      associations={paginatedAssociations}
+                      isLoading={isLoading}
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
                   </TabsContent>
-
                   <TabsContent value="inactive">
-                    <AssociationTable associations={inactiveAssociations} isLoading={isLoading} onEdit={handleEditAssociation} onDelete={handleDeleteAssociation} />
+                    <AssociationTable 
+                      associations={paginatedAssociations}
+                      isLoading={isLoading}
+                      onEdit={handleEditAssociation}
+                      onDelete={handleDeleteAssociation}
+                    />
                   </TabsContent>
                 </Tabs>
-              )
+
+                {displayedAssociations.length > PAGE_SIZE && (
+                  <div className="flex justify-center mt-4 gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                      disabled={currentPage === 1}
+                    >Previous</Button>
+                    <span className="px-2 text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                      disabled={currentPage === totalPages}
+                    >Next</Button>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -249,3 +228,4 @@ const Associations = () => {
 };
 
 export default Associations;
+
