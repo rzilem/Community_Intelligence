@@ -43,14 +43,14 @@ export function usePaginatedData<T = any>(
     
     try {
       // Get total count for pagination
-      const countQuery = supabase
+      let countQuery = supabase
         .from(table)
         .select('id', { count: 'exact', head: true });
       
       // Apply filters to count query
       Object.entries(filters).forEach(([column, value]) => {
         if (value !== undefined && value !== null) {
-          countQuery.eq(column, value);
+          countQuery = countQuery.eq(column, value);
         }
       });
       
@@ -70,13 +70,13 @@ export function usePaginatedData<T = any>(
       // Apply filters
       Object.entries(filters).forEach(([column, value]) => {
         if (value !== undefined && value !== null) {
-          query.eq(column, value);
+          query = query.eq(column, value);
         }
       });
       
       // Apply ordering
       if (orderBy) {
-        query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
+        query = query.order(orderBy.column, { ascending: orderBy.ascending ?? true });
       }
       
       const { data: pageData, error: dataError } = await query;
