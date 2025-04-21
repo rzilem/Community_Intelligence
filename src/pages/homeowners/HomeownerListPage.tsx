@@ -12,6 +12,7 @@ import { useHomeownersData } from './hooks/useHomeownersData';
 import { useHomeownerFilters } from './hooks/useHomeownerFilters';
 import HomeownerListFilters from './components/HomeownerListFilters';
 import HomeownerTable from './components/HomeownerTable';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const HomeownerListPage = () => {
   const navigate = useNavigate();
@@ -26,7 +27,8 @@ const HomeownerListPage = () => {
     associations,
     isLoadingAssociations,
     fetchResidentsByAssociationId,
-    setError
+    setError,
+    totalCount
   } = useHomeownersData();
 
   const {
@@ -42,25 +44,24 @@ const HomeownerListPage = () => {
     extractStreetAddress
   } = useHomeownerFilters(residents);
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterAssociation, filterStatus, filterType]);
-
-  // Count residents with invalid associations
-  const invalidAssociationCount = residents.filter(
-    resident => !resident.hasValidAssociation
-  ).length;
-
+  // Fetch data when filters change with pagination
   useEffect(() => {
     if (!isLoadingAssociations) {
-      fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
+      fetchResidentsByAssociationId(
+        filterAssociation === 'all' ? null : filterAssociation,
+        currentPage,
+        pageSize
+      );
     }
-  }, [filterAssociation, isLoadingAssociations]);
+  }, [filterAssociation, isLoadingAssociations, currentPage, pageSize]);
 
   const handleRetry = () => {
     setError(null);
-    fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
+    fetchResidentsByAssociationId(
+      filterAssociation === 'all' ? null : filterAssociation,
+      currentPage,
+      pageSize
+    );
   };
 
   const handlePageChange = (page: number) => {
@@ -76,6 +77,11 @@ const HomeownerListPage = () => {
     setPageSize(size);
     setCurrentPage(1); // Reset to first page when changing page size
   };
+
+  // Count residents with invalid associations
+  const invalidAssociationCount = residents.filter(
+    resident => !resident.hasValidAssociation
+  ).length;
 
   return (
     <AppLayout>
@@ -142,19 +148,29 @@ const HomeownerListPage = () => {
             />
             
             <div id="homeowner-table-top"></div>
-            <HomeownerTable
-              loading={loading}
-              filteredHomeowners={filteredHomeowners}
-              visibleColumnIds={visibleColumnIds}
-              extractStreetAddress={extractStreetAddress}
-              allResidentsCount={residents.length}
-              error={error}
-              onRetry={handleRetry}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-            />
+            
+            {loading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : (
+              <HomeownerTable
+                loading={loading}
+                filteredHomeowners={residents} // Use direct residents instead of filtered
+                visibleColumnIds={visibleColumnIds}
+                extractStreetAddress={extractStreetAddress}
+                allResidentsCount={totalCount}
+                error={error}
+                onRetry={handleRetry}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

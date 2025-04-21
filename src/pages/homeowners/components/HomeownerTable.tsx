@@ -43,11 +43,10 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Calculate pagination
-  const totalPages = Math.max(1, Math.ceil(filteredHomeowners.length / pageSize));
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, filteredHomeowners.length);
-  const paginatedHomeowners = filteredHomeowners.slice(startIndex, endIndex);
+  // Since pagination is now handled on the server side,
+  // we don't need to paginate here
+  const paginatedHomeowners = filteredHomeowners;
+  const totalPages = Math.max(1, Math.ceil(allResidentsCount / pageSize));
 
   if (loading) {
     return <LoadingState text="Loading owners..." />;
