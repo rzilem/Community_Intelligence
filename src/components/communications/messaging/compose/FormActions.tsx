@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Calendar, Eye, EyeOff, Send, Undo2 } from 'lucide-react';
 
 interface FormActionsProps {
   isPreviewMode: boolean;
@@ -9,6 +10,7 @@ interface FormActionsProps {
   handleSendMessage: () => void;
   canSend: boolean;
   isLoading: boolean;
+  isScheduled?: boolean;
 }
 
 const FormActions: React.FC<FormActionsProps> = ({
@@ -17,31 +19,57 @@ const FormActions: React.FC<FormActionsProps> = ({
   handleReset,
   handleSendMessage,
   canSend,
-  isLoading
+  isLoading,
+  isScheduled = false
 }) => {
   return (
-    <div className="flex justify-between pt-4">
-      <Button 
-        variant="outline" 
-        onClick={togglePreview}
+    <div className="flex flex-wrap gap-2 justify-end">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleReset}
       >
-        {isPreviewMode ? 'Edit Message' : 'Preview with Sample Data'}
+        <Undo2 className="mr-2 h-4 w-4" />
+        Reset
       </Button>
       
-      <div className="flex gap-3">
-        <Button 
-          variant="outline" 
-          onClick={handleReset}
-        >
-          Cancel
-        </Button>
-        <Button 
-          disabled={!canSend || isLoading}
-          onClick={handleSendMessage}
-        >
-          {isLoading ? 'Sending...' : 'Send Message'}
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={togglePreview}
+      >
+        {isPreviewMode ? (
+          <>
+            <EyeOff className="mr-2 h-4 w-4" />
+            Edit Message
+          </>
+        ) : (
+          <>
+            <Eye className="mr-2 h-4 w-4" />
+            Preview
+          </>
+        )}
+      </Button>
+      
+      <Button
+        type="button"
+        disabled={!canSend || isLoading}
+        onClick={handleSendMessage}
+      >
+        {isLoading ? (
+          'Processing...'
+        ) : isScheduled ? (
+          <>
+            <Calendar className="mr-2 h-4 w-4" />
+            Schedule Message
+          </>
+        ) : (
+          <>
+            <Send className="mr-2 h-4 w-4" />
+            Send Message
+          </>
+        )}
+      </Button>
     </div>
   );
 };

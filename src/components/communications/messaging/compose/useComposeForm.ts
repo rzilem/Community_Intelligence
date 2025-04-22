@@ -13,6 +13,8 @@ export interface ComposeFormState {
   selectedAssociationId: string;
   isLoading: boolean;
   previewMode: boolean;
+  scheduleMessage: boolean;
+  scheduledDate: Date | null;
   previewData: {
     resident: {
       name: string;
@@ -66,6 +68,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
   const [previewData] = useState({
     resident: {
       name: 'John Smith',
@@ -117,6 +121,11 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       return;
     }
 
+    if (scheduleMessage && !scheduledDate) {
+      toast.error('Please select a date and time to schedule your message');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -129,7 +138,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
         content: processedContent,
         association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
-        type: messageType
+        type: messageType,
+        scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined
       });
 
       // Reset form
@@ -137,8 +147,10 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       setMessageContent('');
       setSelectedGroups([]);
       setPreviewMode(false);
+      setScheduleMessage(false);
+      setScheduledDate(null);
       onMessageSent();
-      toast.success('Message sent successfully');
+      toast.success(scheduleMessage ? 'Message scheduled successfully' : 'Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message. Please try again.');
@@ -152,10 +164,22 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setMessageContent('');
     setSelectedGroups([]);
     setPreviewMode(false);
+    setScheduleMessage(false);
+    setScheduledDate(null);
   };
 
   const togglePreview = () => {
     setPreviewMode(!previewMode);
+  };
+
+  const toggleSchedule = () => {
+    setScheduleMessage(!scheduleMessage);
+    if (!scheduleMessage) {
+      // When turning on scheduling, default to tomorrow at current time
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setScheduledDate(tomorrow);
+    }
   };
 
   const previewContent = previewMode 
@@ -175,6 +199,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       selectedAssociationId,
       isLoading,
       previewMode,
+      scheduleMessage,
+      scheduledDate,
       previewData
     },
     previewContent,
@@ -183,9 +209,11 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setSubject,
     setMessageContent,
     setSelectedGroups,
+    setScheduledDate,
     handleAssociationChange,
     handleSendMessage,
     handleReset,
-    togglePreview
+    togglePreview,
+    toggleSchedule
   };
 }
