@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageTemplate } from '@/components/layout/PageTemplate';
+import PageTemplate from '@/components/layout/PageTemplate';
 import { MessageSquare } from 'lucide-react';
 import ForumCategoryList from '@/components/forum/ForumCategoryList';
 import { useSupabaseQuery } from '@/hooks/supabase';

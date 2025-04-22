@@ -1,6 +1,13 @@
-
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import HomeownerListPage from './pages/homeowners/HomeownerListPage';
+import HomeownerDetailPage from './pages/HomeownerDetailPage';
+import ResidentDetailPage from './pages/ResidentDetailPage';
+import ResidentListPage from './pages/residents/ResidentListPage';
+import UserProfile from './pages/user/UserProfile';
+import HomeownerDashboard from './pages/portal/HomeownerDashboard';
+import HomeownerPortalPage from './pages/portal/HomeownerPortalPage';
+import ForumPage from './pages/forum/ForumPage';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';
@@ -14,13 +21,9 @@ import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
 import { resalePortalRoutes } from './resalePortalRoutes';
 
-/**
- * Main application router component that consolidates all routes
- */
 export const AppRouter = () => {
   const location = useLocation();
   
-  // Log routing for debugging purposes
   React.useEffect(() => {
     console.log('Route changed:', location.pathname);
   }, [location]);
@@ -35,6 +38,9 @@ export const AppRouter = () => {
           element={route.element} 
         />
       ))}
+      
+      {/* Add Forum Route */}
+      <Route path="/forum" element={<ForumPage />} />
       
       {/* Portal routes */}
       {portalRoutes}
