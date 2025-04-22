@@ -3504,6 +3504,48 @@ export type Database = {
           },
         ]
       }
+      scheduled_messages: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          recipient_groups: string[]
+          scheduled_date: string
+          sent: boolean
+          sent_at: string | null
+          subject: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id?: string
+          recipient_groups: string[]
+          scheduled_date: string
+          sent?: boolean
+          sent_at?: string | null
+          subject: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          recipient_groups?: string[]
+          scheduled_date?: string
+          sent?: boolean
+          sent_at?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string | null
