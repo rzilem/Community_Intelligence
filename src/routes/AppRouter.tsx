@@ -1,13 +1,6 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import HomeownerListPage from './pages/homeowners/HomeownerListPage';
-import HomeownerDetailPage from './pages/HomeownerDetailPage';
-import ResidentDetailPage from './pages/ResidentDetailPage';
-import ResidentListPage from './pages/residents/ResidentListPage';
-import UserProfile from './pages/user/UserProfile';
-import HomeownerDashboard from './pages/portal/HomeownerDashboard';
-import HomeownerPortalPage from './pages/portal/HomeownerPortalPage';
-import ForumPage from './pages/forum/ForumPage';
+import ForumPage from '../pages/forum/ForumPage';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';

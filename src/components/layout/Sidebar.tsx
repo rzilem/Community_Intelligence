@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText } from 'lucide-react';
+import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -241,6 +241,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             toggleSection={() => toggleSection('resale-portal')}
             isActive={location.pathname === '/resale-portal'}
           />
+
+          <Link
+            to="/forum"
+            className={cn(
+              "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+              location.pathname === '/forum' && "bg-white/10 font-medium"
+            )}
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span>Community Forum</span>
+          </Link>
 
           {mainNavItems.map((item) => (
             <SidebarNavItem

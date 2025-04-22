@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { getFilteredNavItems } from './navigation-utils';
@@ -31,6 +31,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
+
+  useRealTimeNotifications();
 
   const handleSignOut = async () => {
     try {
