@@ -17,9 +17,10 @@ const formSchema = z.object({
     message: "Name must be at least 2 characters.",
   }),
   description: z.string().optional(),
+  form_type: z.string().optional(),
+  is_global: z.boolean().default(false),
+  association_ids: z.array(z.string()).optional(),
 });
-
-type FormValues = z.infer<typeof formSchema>;
 
 export const NewFormDialog: React.FC<NewFormDialogProps> = ({ 
   open, 
@@ -27,30 +28,33 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
   associationId 
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: associations = [] } = useSupabaseQuery('associations', {
+    select: 'id, name',
+    order: { column: 'name', ascending: true }
+  });
 
-  const form = useForm<FormValues>({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
+      form_type: undefined,
+      is_global: false,
+      association_ids: associationId ? [associationId] : []
     },
   });
 
-  const onSubmit = async (values: FormValues) => {
-    if (!associationId) {
-      toast.error("Please select an association first");
-      return;
-    }
-
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Create a new form template record
+      // Create the form template
       const { data, error } = await supabase
         .from('form_templates')
         .insert({
           name: values.name,
           description: values.description || null,
-          association_id: associationId,
+          form_type: values.form_type || null,
+          is_global: values.is_global,
           fields: [],
           is_public: false,
         })
@@ -59,12 +63,24 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
 
       if (error) throw error;
 
+      // If not global and has associations, create associations
+      if (!values.is_global && values.association_ids?.length) {
+        const associations = values.association_ids.map(association_id => ({
+          form_template_id: data.id,
+          association_id
+        }));
+
+        const { error: assocError } = await supabase
+          .from('form_template_associations')
+          .insert(associations);
+
+        if (assocError) throw assocError;
+      }
+
       toast.success("Form created successfully");
       form.reset();
       onOpenChange(false);
       
-      // Navigate to form editor (not implemented yet)
-      // You could add a callback prop to handle navigation
     } catch (error) {
       console.error('Error creating form:', error);
       toast.error("Failed to create form");
@@ -101,6 +117,31 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
             
             <FormField
               control={form.control}
+              name="form_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Form Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select form type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="portal_request">Portal Request</SelectItem>
+                      <SelectItem value="arc_application">ARC Application</SelectItem>
+                      <SelectItem value="pool_form">Pool Form</SelectItem>
+                      <SelectItem value="gate_request">Gate Request</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
@@ -115,24 +156,63 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
                 </FormItem>
               )}
             />
-            
-            {associationId ? (
-              <div className="pt-2 text-sm text-muted-foreground">
-                This form will be associated with the selected association.
-              </div>
-            ) : (
-              <div className="pt-2 text-sm text-amber-500">
-                Please select an association before creating a form.
-              </div>
+
+            <FormField
+              control={form.control}
+              name="is_global"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="font-normal">
+                    Make this form available to all associations
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
+
+            {!form.watch('is_global') && (
+              <FormField
+                control={form.control}
+                name="association_ids"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Associations</FormLabel>
+                    <FormControl>
+                      <div className="grid gap-2">
+                        {associations.map((association) => (
+                          <div key={association.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={field.value?.includes(association.id)}
+                              onCheckedChange={(checked) => {
+                                const newValue = checked
+                                  ? [...(field.value || []), association.id]
+                                  : (field.value || []).filter(id => id !== association.id);
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <Label>{association.name}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
             
-            <DialogFooter className="pt-4">
+            <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                disabled={!associationId || isSubmitting}
+                disabled={isSubmitting}
               >
                 {isSubmitting ? "Creating..." : "Create Form"}
               </Button>

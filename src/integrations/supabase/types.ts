@@ -1816,6 +1816,45 @@ export type Database = {
           },
         ]
       }
+      form_template_associations: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          form_template_id: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          form_template_id: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          form_template_id?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_template_associations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_template_associations_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_templates: {
         Row: {
           association_id: string | null
@@ -1823,7 +1862,9 @@ export type Database = {
           created_at: string | null
           description: string | null
           fields: Json
+          form_type: string | null
           id: string
+          is_global: boolean | null
           is_public: boolean | null
           metadata: Json | null
           name: string
@@ -1835,7 +1876,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           fields?: Json
+          form_type?: string | null
           id?: string
+          is_global?: boolean | null
           is_public?: boolean | null
           metadata?: Json | null
           name: string
@@ -1847,7 +1890,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           fields?: Json
+          form_type?: string | null
           id?: string
+          is_global?: boolean | null
           is_public?: boolean | null
           metadata?: Json | null
           name?: string

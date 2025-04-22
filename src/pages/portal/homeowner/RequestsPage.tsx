@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
@@ -12,11 +11,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
+import { useAuth } from '@/hooks/useAuth';
+import { useAssociationForms } from '@/hooks/useAssociationForms';
 
 const RequestsPage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const { currentAssociation } = useAuth();
+  
+  const { data: associationForms = [] } = useAssociationForms(
+    currentAssociation?.id,
+    'portal_request'
+  );
   
   const requests = [
     { id: 1, date: '09/15/2023', title: 'Broken Fence', category: 'Maintenance', status: 'Open', priority: 'Medium' },
@@ -30,7 +37,6 @@ const RequestsPage = () => {
     setIsDetailsDialogOpen(true);
   };
 
-  // Status badge color mapping
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Open':
@@ -44,7 +50,6 @@ const RequestsPage = () => {
     }
   };
 
-  // Priority icon mapping
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'High':
@@ -127,66 +132,45 @@ const RequestsPage = () => {
         </div>
       </div>
 
-      {/* Create Request Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Submit New Request</DialogTitle>
             <DialogDescription>
-              Fill out the form below to submit a new request.
+              Please select a form to submit your request.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" placeholder="Brief title of your request" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="compliance">Compliance</SelectItem>
-                  <SelectItem value="landscaping">Landscaping</SelectItem>
-                  <SelectItem value="amenities">Amenities</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" placeholder="Provide details about your request" rows={4} />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {associationForms.length > 0 ? (
+              associationForms.map(form => (
+                <Button
+                  key={form.id}
+                  variant="outline"
+                  className="w-full justify-start text-left"
+                  onClick={() => {
+                    console.log('Selected form:', form);
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  {form.name}
+                </Button>
+              ))
+            ) : (
+              <div className="text-center text-muted-foreground py-4">
+                No request forms are currently available.
+              </div>
+            )}
           </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => setIsCreateDialogOpen(false)}>Submit Request</Button>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Request Details Dialog */}
       {selectedRequest && (
         <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">

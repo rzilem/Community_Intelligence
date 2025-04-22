@@ -1,4 +1,3 @@
-
 export type FormFieldType = 
   | 'text'
   | 'textarea'
@@ -33,6 +32,13 @@ export type FormIntegrationTarget =
   | 'maintenance_request'
   | 'resale_order'
   | 'custom';
+
+export type FormType = 
+  | 'portal_request'
+  | 'arc_application'
+  | 'pool_form'
+  | 'gate_request'
+  | 'other';
 
 export interface FormField {
   id: string;
@@ -69,6 +75,9 @@ export interface FormTemplate {
   is_public: boolean;
   metadata?: Record<string, any>;
   category?: string;
+  is_global: boolean;
+  form_type: FormType | null;
+  associations?: { id: string; name: string }[];
 }
 
 export interface FormSubmission {
@@ -116,4 +125,12 @@ export interface FormFieldEditorProps {
   field: FormField;
   onChange: (field: FormField) => void;
   onDelete: () => void;
+}
+
+export interface FormTemplateAssociation {
+  id: string;
+  form_template_id: string;
+  association_id: string;
+  created_at: string;
+  updated_at: string;
 }
