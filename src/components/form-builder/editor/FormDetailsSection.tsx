@@ -1,70 +1,148 @@
 
 import React from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormTemplate, FormType } from "@/types/form-builder-types";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { FormAssociationSelect } from "@/components/form-builder/FormAssociationSelect";
-import type { FormTemplate } from "@/types/form-builder-types";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 interface FormDetailsSectionProps {
   template: FormTemplate;
-  onTemplateDetailsChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onIsPublicChange: (checked: boolean) => void;
+  onTemplateDetailsChange: (key: keyof FormTemplate, value: any) => void;
+  onIsPublicChange: (isPublic: boolean) => void;
 }
 
 const FormDetailsSection: React.FC<FormDetailsSectionProps> = ({
   template,
   onTemplateDetailsChange,
   onIsPublicChange,
-}) => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Form Details</CardTitle>
-      <CardDescription>Edit the basic details of your form.</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            type="text"
-            id="name"
-            name="name"
-            value={template.name}
-            onChange={onTemplateDetailsChange}
-          />
-        </div>
-        <div>
-          <Label htmlFor="is_public">Public Form</Label>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="is_public"
-              checked={template.is_public}
-              onCheckedChange={onIsPublicChange}
+}) => {
+  const formTypes: { value: FormType; label: string }[] = [
+    { value: "portal_request", label: "Portal Request" },
+    { value: "arc_application", label: "ARC Application" },
+    { value: "pool_form", label: "Pool Form" },
+    { value: "gate_request", label: "Gate Request" },
+    { value: "other", label: "Other" },
+  ];
+
+  const categories = [
+    { value: "maintenance", label: "Maintenance" },
+    { value: "legal", label: "Legal" },
+    { value: "approval", label: "Approval" },
+    { value: "survey", label: "Survey" },
+    { value: "general", label: "General" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Form Details</CardTitle>
+        <CardDescription>
+          Basic information about your form template
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Form Name</Label>
+            <Input
+              id="name"
+              value={template.name}
+              onChange={(e) => onTemplateDetailsChange("name", e.target.value)}
+              placeholder="Enter form name"
             />
-            <span>Allow anyone to submit this form</span>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="form_type">Form Type</Label>
+            <Select
+              value={template.form_type || "other"}
+              onValueChange={(value) => onTemplateDetailsChange("form_type", value)}
+            >
+              <SelectTrigger id="form_type">
+                <SelectValue placeholder="Select form type" />
+              </SelectTrigger>
+              <SelectContent>
+                {formTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          value={template.description || ''}
-          onChange={onTemplateDetailsChange}
-        />
-      </div>
-      <FormAssociationSelect
-        formId={template.id}
-        isGlobal={template.is_global}
-        associations={[]}
-        onUpdate={() => {}}
-      />
-    </CardContent>
-  </Card>
-);
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={template.category || "general"}
+              onValueChange={(value) => onTemplateDetailsChange("category", value)}
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="block mb-2">Visibility</Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is_public"
+                  checked={template.is_public}
+                  onCheckedChange={onIsPublicChange}
+                />
+                <Label htmlFor="is_public">
+                  Make form available to portal users
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                When enabled, this form will be shown to users in portals based on its form type
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={template.description || ""}
+            onChange={(e) =>
+              onTemplateDetailsChange("description", e.target.value)
+            }
+            placeholder="Describe the purpose of this form"
+            rows={3}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default FormDetailsSection;

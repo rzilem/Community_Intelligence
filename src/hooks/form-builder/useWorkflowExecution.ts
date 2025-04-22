@@ -1,264 +1,200 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { FormWorkflow, FormWorkflowStep, FormWorkflowAction } from '@/types/form-workflow-types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
-interface ExecutionOptions {
+interface WorkflowContext {
   formData: Record<string, any>;
-  userId?: string;
+  userId: string;
   associationId?: string;
 }
 
 export function useWorkflowExecution() {
   const [isExecuting, setIsExecuting] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
 
-  const executeWorkflow = async (workflow: FormWorkflow, options: ExecutionOptions): Promise<boolean> => {
-    if (!workflow || !workflow.isEnabled || workflow.steps.length === 0) {
+  const executeWorkflow = async (workflow: any, context: WorkflowContext) => {
+    if (!workflow || !workflow.id) {
+      console.error('Invalid workflow provided for execution');
       return false;
     }
 
     setIsExecuting(true);
-    setResults([]);
     
     try {
-      // Execute each enabled step
-      const enabledSteps = workflow.steps.filter(step => step.isEnabled);
-      
-      for (const step of enabledSteps) {
-        // Check if step conditions are met
-        const conditionsMet = evaluateConditions(step, options.formData);
-        
-        if (!conditionsMet) {
-          // Skip this step
-          setResults(prev => [...prev, {
-            stepId: step.id,
-            actionId: 'conditions',
-            success: false,
-            message: 'Conditions not met, step skipped'
-          }]);
-          continue;
-        }
-        
-        // Execute all actions in the step
-        for (const action of step.actions) {
-          try {
-            const result = await executeAction(action, {
-              formData: options.formData,
-              userId: options.userId,
-              associationId: options.associationId
-            });
-            
-            setResults(prev => [...prev, {
-              stepId: step.id,
-              actionId: action.id,
-              success: true,
-              message: `Successfully executed ${action.name}`,
-              details: result
-            }]);
-          } catch (error) {
-            console.error(`Error executing action ${action.name}:`, error);
-            
-            setResults(prev => [...prev, {
-              stepId: step.id,
-              actionId: action.id,
-              success: false,
-              message: `Failed to execute ${action.name}: ${error.message || 'Unknown error'}`,
-              error: error.message
-            }]);
-            
-            // Log the error to the database
-            await logExecution({
-              workflowId: workflow.id,
-              submissionId: options.formData.submissionId,
-              stepId: step.id,
-              actionId: action.id,
-              status: 'failed',
-              details: {
-                error: error.message,
-                action: action
-              }
-            });
-          }
+      // Execute each step in the workflow
+      if (workflow.steps && Array.isArray(workflow.steps)) {
+        // Execute steps in order
+        for (const step of workflow.steps) {
+          await executeWorkflowStep(step, context);
         }
       }
       
       return true;
     } catch (error) {
       console.error('Error executing workflow:', error);
-      toast.error('Failed to execute workflow');
       return false;
     } finally {
       setIsExecuting(false);
     }
   };
 
-  // Helper function to evaluate step conditions
-  const evaluateConditions = (step: FormWorkflowStep, formData: Record<string, any>): boolean => {
-    // If no conditions, always run the step
-    if (!step.conditions || step.conditions.length === 0) {
-      return true;
+  const executeWorkflowStep = async (step: any, context: WorkflowContext) => {
+    if (!step || !step.type) {
+      console.error('Invalid workflow step', step);
+      return;
     }
-    
-    // All conditions must be met
-    return step.conditions.every(condition => {
-      const fieldValue = getNestedValue(formData, condition.field);
-      
-      switch (condition.operator) {
-        case 'equals':
-          return String(fieldValue) === String(condition.value);
-        case 'not_equals':
-          return String(fieldValue) !== String(condition.value);
-        case 'contains':
-          return String(fieldValue).includes(String(condition.value));
-        case 'greater_than':
-          return Number(fieldValue) > Number(condition.value);
-        case 'less_than':
-          return Number(fieldValue) < Number(condition.value);
-        default:
-          return false;
-      }
-    });
-  };
 
-  // Helper function to get nested values using dot notation
-  const getNestedValue = (obj: Record<string, any>, path: string): any => {
-    return path.split('.').reduce((prev, curr) => {
-      return prev && prev[curr] !== undefined ? prev[curr] : undefined;
-    }, obj);
-  };
-
-  // Execute a single action
-  const executeAction = async (action: FormWorkflowAction, context: ExecutionOptions): Promise<any> => {
-    // Replace variables in config values
-    const processedConfig = processVariables(action.config, context);
-    
-    switch (action.type) {
-      case 'send_email':
-        // In a real implementation, call your email service here
-        console.log('Sending email:', processedConfig);
-        return { sent: true, to: processedConfig.to };
-        
-      case 'send_notification':
-        // Create a notification in the database
-        const { data, error } = await supabase
-          .from('portal_notifications')
-          .insert({
-            title: processedConfig.title || 'Form Notification',
-            content: processedConfig.message,
-            type: 'form_submission',
-            user_id: processedConfig.userId || context.userId,
-            association_id: context.associationId,
-            metadata: {
-              form_data: context.formData
-            }
-          });
-          
-        if (error) throw error;
-        return data;
-        
-      case 'create_request':
-        // Create a homeowner request
-        const { data: request, error: requestError } = await supabase
-          .from('homeowner_requests')
-          .insert({
-            title: processedConfig.title || 'Form Request',
-            description: processedConfig.description || context.formData.description,
-            type: processedConfig.requestType || 'general',
-            status: 'open',
-            priority: processedConfig.priority || 'medium',
-            resident_id: context.userId,
-            association_id: context.associationId
-          });
-          
-        if (requestError) throw requestError;
-        return request;
-        
-      case 'update_status':
-        // Update the form submission status
-        if (context.formData.submissionId) {
-          const { data: updated, error: updateError } = await supabase
-            .from('form_submissions')
-            .update({ status: processedConfig.status })
-            .eq('id', context.formData.submissionId);
-            
-          if (updateError) throw updateError;
-          return updated;
-        }
-        return { message: 'No submission ID provided, status not updated' };
-        
-      case 'webhook':
-        // Call a webhook
-        if (!processedConfig.url) {
-          throw new Error('Webhook URL is required');
-        }
-        
-        const webhookResponse = await fetch(processedConfig.url, {
-          method: processedConfig.method || 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(context.formData)
-        });
-        
-        if (!webhookResponse.ok) {
-          throw new Error(`Webhook returned ${webhookResponse.status}`);
-        }
-        
-        return { status: webhookResponse.status };
-        
+    switch (step.type) {
+      case 'email':
+        await executeEmailStep(step, context);
+        break;
+      case 'notification':
+        await executeNotificationStep(step, context);
+        break;
+      case 'update':
+        await executeUpdateStep(step, context);
+        break;
+      case 'create':
+        await executeCreateStep(step, context);
+        break;
       default:
-        throw new Error(`Unsupported action type: ${action.type}`);
+        console.warn(`Unsupported workflow step type: ${step.type}`);
     }
   };
 
-  // Process variables in config strings
-  const processVariables = (config: Record<string, any>, context: ExecutionOptions): Record<string, any> => {
-    const result: Record<string, any> = {};
+  const executeEmailStep = async (step: any, context: WorkflowContext) => {
+    // Implementation for sending an email
+    console.log('Executing email step:', step, 'with context:', context);
     
-    for (const [key, value] of Object.entries(config)) {
-      if (typeof value === 'string') {
-        // Replace placeholders like {{form.title}} with actual values
-        result[key] = value.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-          if (path === 'user.email') return context.userId || '';
-          if (path === 'form.title') return context.formData.title || '';
-          
-          return getNestedValue(context.formData, path) || match;
-        });
-      } else {
-        result[key] = value;
-      }
-    }
-    
-    return result;
+    // This would typically call an edge function or API to send an email
+    // For now, just log it
+    return true;
   };
 
-  // Log execution to the database
-  const logExecution = async (logData: {
-    workflowId: string;
-    submissionId: string;
-    stepId: string;
-    actionId: string;
-    status: 'success' | 'failed' | 'pending';
-    details?: any;
-  }) => {
+  const executeNotificationStep = async (step: any, context: WorkflowContext) => {
+    // Implementation for creating a notification
+    console.log('Executing notification step:', step, 'with context:', context);
+    
+    if (!context.userId || !context.associationId) {
+      console.error('Missing user or association ID for notification');
+      return false;
+    }
+    
+    // Create a notification record
     try {
-      // Use bracket-notation to avoid type error with custom RPC function
-      await (supabase.rpc as any)('log_workflow_execution', {
-        p_workflow_id: logData.workflowId,
-        p_submission_id: logData.submissionId,
-        p_step_id: logData.stepId,
-        p_action_id: logData.actionId,
-        p_status: logData.status,
-        p_details: logData.details
+      await supabase.from('portal_notifications').insert({
+        user_id: context.userId,
+        association_id: context.associationId,
+        title: replaceTokens(step.title || 'New Notification', context.formData),
+        content: replaceTokens(step.content || '', context.formData),
+        type: step.notificationType || 'info',
+        link: step.link || null,
+        metadata: step.metadata || {}
       });
+      
+      return true;
     } catch (error) {
-      console.error('Error logging workflow execution:', error);
+      console.error('Error creating notification:', error);
+      return false;
     }
+  };
+
+  const executeUpdateStep = async (step: any, context: WorkflowContext) => {
+    // Implementation for updating a record
+    console.log('Executing update step:', step, 'with context:', context);
+    
+    if (!step.table || !step.recordId) {
+      console.error('Missing table or record ID for update step');
+      return false;
+    }
+    
+    let recordId = replaceTokens(step.recordId, context.formData);
+    if (!recordId) {
+      console.error('Invalid record ID after token replacement');
+      return false;
+    }
+    
+    try {
+      // Prepare update data by replacing tokens in values
+      const updateData: Record<string, any> = {};
+      
+      if (step.fields && typeof step.fields === 'object') {
+        Object.entries(step.fields).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            updateData[key] = replaceTokens(value, context.formData);
+          } else {
+            updateData[key] = value;
+          }
+        });
+      }
+      
+      await supabase
+        .from(step.table)
+        .update(updateData)
+        .eq('id', recordId);
+        
+      return true;
+    } catch (error) {
+      console.error(`Error updating record in ${step.table}:`, error);
+      return false;
+    }
+  };
+
+  const executeCreateStep = async (step: any, context: WorkflowContext) => {
+    // Implementation for creating a record
+    console.log('Executing create step:', step, 'with context:', context);
+    
+    if (!step.table) {
+      console.error('Missing table for create step');
+      return false;
+    }
+    
+    try {
+      // Prepare insert data by replacing tokens in values
+      const insertData: Record<string, any> = {};
+      
+      if (step.fields && typeof step.fields === 'object') {
+        Object.entries(step.fields).forEach(([key, value]) => {
+          if (typeof value === 'string') {
+            insertData[key] = replaceTokens(value, context.formData);
+          } else {
+            insertData[key] = value;
+          }
+        });
+      }
+      
+      // Add default fields that might be useful
+      if (context.userId && !insertData.user_id) {
+        insertData.user_id = context.userId;
+      }
+      
+      if (context.associationId && !insertData.association_id) {
+        insertData.association_id = context.associationId;
+      }
+      
+      await supabase
+        .from(step.table)
+        .insert(insertData);
+        
+      return true;
+    } catch (error) {
+      console.error(`Error creating record in ${step.table}:`, error);
+      return false;
+    }
+  };
+
+  // Helper to replace tokens like {{field_name}} with actual values
+  const replaceTokens = (text: string, data: Record<string, any>): string => {
+    if (!text || typeof text !== 'string') return text;
+    
+    return text.replace(/\{\{([^}]+)\}\}/g, (match, token) => {
+      const value = data[token.trim()];
+      return value !== undefined ? value : match;
+    });
   };
 
   return {
     executeWorkflow,
-    isExecuting,
-    results
+    isExecuting
   };
 }

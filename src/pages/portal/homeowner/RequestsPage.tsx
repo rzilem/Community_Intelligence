@@ -17,6 +17,8 @@ import { toast } from 'sonner';
 
 const RequestsPage = () => {
   const { currentUser, currentAssociation } = useAuth();
+  
+  // Specifically request forms of type 'portal_request'
   const { data: associationForms = [], isLoading: formsLoading, error: formsError } = useAssociationFormTemplates(
     currentAssociation?.id,
     'portal_request'

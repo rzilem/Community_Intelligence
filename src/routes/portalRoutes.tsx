@@ -9,6 +9,8 @@ import RequireAuth from '@/components/auth/RequireAuth';
 import PortalSelection from '@/pages/portal/PortalSelection';
 import CollectionsPage from '@/pages/portal/board/CollectionsPage';
 import VendorBidsPage from '@/pages/portal/vendor/VendorBidsPage';
+import RequestsPage from '@/pages/portal/homeowner/RequestsPage';
+import BoardFormsPage from '@/pages/portal/board/FormsPage';
 
 export const portalRoutes = [
   <Route 
@@ -30,11 +32,29 @@ export const portalRoutes = [
     }
   />,
   <Route 
+    key="homeowner-requests"
+    path="/portal/homeowner/requests"
+    element={
+      <RequireAuth menuId="homeowner-portal">
+        <RequestsPage />
+      </RequireAuth>
+    }
+  />,
+  <Route 
     key="board-portal"
     path="/portal/board"
     element={
       <RequireAuth menuId="board-portal">
         <BoardDashboard />
+      </RequireAuth>
+    }
+  />,
+  <Route 
+    key="board-forms"
+    path="/portal/board/forms"
+    element={
+      <RequireAuth menuId="board-portal">
+        <BoardFormsPage />
       </RequireAuth>
     }
   />,
