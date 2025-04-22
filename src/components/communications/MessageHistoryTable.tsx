@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { RefreshCw, Eye, Send, Trash2 } from 'lucide-react';
 import { MessageHistoryItem } from '@/types/message-types';
 
-export function MessageHistoryTable() {
+const MessageHistoryTable: React.FC = () => {
   const [messages, setMessages] = React.useState<MessageHistoryItem[]>([]);
   const [loading, setLoading] = React.useState(false);
 
@@ -129,4 +129,7 @@ export function MessageHistoryTable() {
       </div>
     </div>
   );
-}
+};
+
+export default MessageHistoryTable;
+export { MessageHistoryTable }; // Added named export

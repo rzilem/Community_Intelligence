@@ -44,6 +44,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type: 'maintenance',
         read: false,
         timestamp: new Date().toISOString(),
+        description: 'A new maintenance request has been submitted.'
       },
       {
         id: uuidv4(),
@@ -51,6 +52,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type: 'payment',
         read: false,
         timestamp: new Date(Date.now() - 3600000).toISOString(),
+        description: 'Payment of $250 has been received.'
       },
       {
         id: uuidv4(),
@@ -58,6 +60,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type: 'document',
         read: true,
         timestamp: new Date(Date.now() - 86400000).toISOString(),
+        description: 'A new document has been uploaded to the portal.'
       },
       {
         id: uuidv4(),
@@ -65,6 +68,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         type: 'event',
         read: false,
         timestamp: new Date(Date.now() - 172800000).toISOString(),
+        description: 'Board meeting scheduled for next Monday.'
       }
     ];
     

@@ -44,7 +44,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
     'associations',
     {
       select: 'id, name',
-      filter: [],
+      filters: [], // Changed "filter" to "filters"
       order: { column: 'name', ascending: true }
     }
   );

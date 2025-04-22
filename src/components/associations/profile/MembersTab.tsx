@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,7 +69,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           )
         )
       `,
-      filter: [
+      filters: [
         { column: 'property_id', operator: 'eq', value: null },
         { column: 'resident_type', operator: 'eq', value: 'owner' }
       ]
@@ -148,7 +147,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           isLoading={isLoading}
           roleType={roleType}
           setRoleType={setRoleType}
-          homeowners={associationHomeowners}
+          homeowners={associationHomeowners || []}
           boardRoles={boardRoles}
           committeeRoles={committeeRoles}
         />

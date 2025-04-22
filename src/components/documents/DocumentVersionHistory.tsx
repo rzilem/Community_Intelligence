@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,7 +103,6 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({ documen
       
       <CardContent>
         {isLoading ? (
-          // Skeleton loaders for loading state
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4">
@@ -123,7 +121,7 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({ documen
           </div>
         ) : (
           <div className="space-y-4">
-            {versions.map((version: DocumentVersion) => (
+            {versions.map((version) => (
               <div key={version.id} className="flex items-start gap-4 p-3 rounded-lg border bg-card">
                 <div className="bg-primary/10 p-2 rounded-full">
                   <File className="h-5 w-5 text-primary" />
