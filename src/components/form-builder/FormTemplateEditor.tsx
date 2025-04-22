@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { XCircle, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -45,7 +44,8 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       toast.success('Form template updated successfully');
       onSave?.(template);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error updating form template:', error);
       toast.error('Failed to update form template');
     }
   });
@@ -55,7 +55,8 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       toast.success('Form template deleted successfully');
       onCancel?.();
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error deleting form template:', error);
       toast.error('Failed to delete form template');
     }
   });
@@ -73,7 +74,27 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
         return;
       }
 
-      setTemplate(data);
+      let parsedFields: FormField[] = [];
+      try {
+        if (typeof data.fields === 'string') {
+          parsedFields = JSON.parse(data.fields);
+        } else if (Array.isArray(data.fields)) {
+          parsedFields = data.fields;
+        } else {
+          console.warn('Unexpected fields format:', data.fields);
+          parsedFields = [];
+        }
+      } catch (e) {
+        console.error('Error parsing fields:', e);
+        parsedFields = [];
+      }
+
+      const formTemplate: FormTemplate = {
+        ...data,
+        fields: parsedFields
+      };
+      
+      setTemplate(formTemplate);
     };
 
     fetchTemplate();
