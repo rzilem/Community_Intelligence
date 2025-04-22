@@ -2,16 +2,21 @@
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CreditCard, FileText, Calendar, Users, File, ExternalLink } from 'lucide-react';
+import { CreditCard, FileText, Calendar, Users, File } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
+import AssociationPortalSelector from '@/components/portal/AssociationPortalSelector';
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
-  
+
+  // Handler for changing association and reloading (follows PortalPageLayout usage)
+  const handleAssociationChange = (associationId: string) => {
+    window.location.reload();
+  };
+
   const quickLinks = [
     { title: 'Make a Payment', path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" />, color: 'bg-blue-100' },
     { title: 'Submit a Request', path: '/portal/homeowner/requests', icon: <FileText className="h-5 w-5" />, color: 'bg-green-100' },
@@ -29,12 +34,8 @@ const HomeownerDashboard = () => {
               Welcome back, {profile?.name || user?.email || 'Homeowner'}
             </p>
           </div>
-          <Button variant="outline" asChild>
-            <Link to="/dashboard">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Community Intelligence
-            </Link>
-          </Button>
+          {/* Swap out Community Intelligence button for Association selector */}
+          <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -94,3 +95,4 @@ const HomeownerDashboard = () => {
 };
 
 export default HomeownerDashboard;
+
