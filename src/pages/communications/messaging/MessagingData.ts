@@ -1,89 +1,85 @@
 
-import { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
+// Mock data for message history and templates
 
-export interface MessageTemplate {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: 'email' | 'sms';
-}
-
-// Mock templates for the templates tab
-export const mockTemplates: MessageTemplate[] = [
+export const mockHistoryData = [
   {
     id: '1',
-    title: 'Welcome New Resident',
-    description: 'Introduction email for new residents with community guidelines and important contacts.',
-    date: '2025-03-15',
-    type: 'email' 
+    subject: 'Community Pool Closure Notice',
+    type: 'email',
+    recipients: 87,
+    sentDate: 'Today, 10:30 AM',
+    status: 'sent',
+    openRate: 62
   },
   {
     id: '2',
-    title: 'Maintenance Notice',
-    description: 'Template for upcoming maintenance work in the community.',
-    date: '2025-02-28',
-    type: 'email'
+    subject: 'Monthly HOA Payment Reminder',
+    type: 'email',
+    recipients: 145,
+    sentDate: 'Yesterday, 9:15 AM',
+    status: 'sent',
+    openRate: 78
   },
   {
     id: '3',
-    title: 'Emergency Alert',
-    description: 'Short text message for urgent community notifications.',
-    date: '2025-03-01',
-    type: 'sms'
+    subject: 'Annual Meeting Announcement',
+    type: 'email',
+    recipients: 145,
+    sentDate: '2025-04-15, 3:00 PM',
+    status: 'scheduled',
   },
   {
     id: '4',
-    title: 'Payment Reminder',
-    description: 'Friendly reminder about upcoming HOA dues.',
-    date: '2025-03-10',
-    type: 'email'
-  }
-];
-
-// Mock data for the message history table
-export const mockHistoryData: MessageHistoryItem[] = [
-  {
-    id: '1',
-    subject: 'Community Meeting Reminder',
-    type: 'email',
-    recipients: 145,
-    sentDate: '2025-04-01',
-    status: 'sent',
-    openRate: 72
-  },
-  {
-    id: '2',
-    subject: 'Upcoming Pool Closure',
-    type: 'email',
-    recipients: 145,
-    sentDate: '2025-03-25',
-    status: 'sent',
-    openRate: 68
-  },
-  {
-    id: '3',
-    subject: 'Maintenance Update',
+    subject: 'Maintenance Request Confirmation',
     type: 'sms',
-    recipients: 132,
-    sentDate: '2025-04-05',
-    status: 'scheduled'
-  },
-  {
-    id: '4',
-    subject: 'Emergency Water Shutdown',
-    type: 'sms',
-    recipients: 145,
-    sentDate: '2025-03-15',
-    status: 'sent',
-    openRate: 91
+    recipients: 1,
+    sentDate: '2025-04-14, 2:45 PM',
+    status: 'sent'
   },
   {
     id: '5',
-    subject: 'Failed Newsletter',
-    type: 'email',
+    subject: 'Emergency Water Shutdown',
+    type: 'sms',
     recipients: 145,
-    sentDate: '2025-03-10',
+    sentDate: '2025-04-12, 7:30 AM',
     status: 'failed'
+  }
+];
+
+export const mockTemplates = [
+  {
+    id: 'custom-1',
+    title: 'Board Meeting Announcement',
+    description: 'Standard template for announcing board meetings to residents',
+    created_at: '2025-03-15',
+    type: 'email'
+  },
+  {
+    id: 'custom-2',
+    title: 'Maintenance Confirmation',
+    description: 'Confirmation of maintenance request receipt',
+    created_at: '2025-02-28',
+    type: 'email'
+  },
+  {
+    id: 'custom-3',
+    title: 'Payment Receipt',
+    description: 'Confirmation of payment received',
+    created_at: '2025-02-20',
+    type: 'email'
+  },
+  {
+    id: 'custom-4',
+    title: 'Late Payment Reminder',
+    description: 'Reminder for overdue payments',
+    created_at: '2025-02-15',
+    type: 'sms'
+  },
+  {
+    id: 'custom-5',
+    title: 'Package Delivery Notice',
+    description: 'Notification of package delivery',
+    created_at: '2025-02-10',
+    type: 'sms'
   }
 ];

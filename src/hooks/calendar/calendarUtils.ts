@@ -9,6 +9,10 @@ export const getDefaultColorForType = (eventType: string): string => {
       return '#F59E0B'; // amber-500
     case 'community_event':
       return '#10B981'; // emerald-500
+    case 'scheduled_message':
+      return '#6366F1'; // indigo-500
+    case 'scheduled_campaign':
+      return '#8B5CF6'; // purple-500
     default:
       return '#6366F1'; // indigo-500
   }
@@ -24,6 +28,10 @@ export const getCalendarEventBackgroundClass = (eventType: string): string => {
       return 'bg-amber-100 text-amber-800 border-amber-300';
     case 'community_event':
       return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    case 'scheduled_message':
+      return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+    case 'scheduled_campaign':
+      return 'bg-purple-100 text-purple-800 border-purple-300';
     default:
       return 'bg-indigo-100 text-indigo-800 border-indigo-300';
   }
