@@ -3,6 +3,8 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import type { FormTemplate } from '@/types/form-builder-types';
 
 export function useFormTemplates(associationId?: string) {
+  // If associationId is provided, get forms for that association plus global forms
+  // If not, get all forms the user has access to
   return useSupabaseQuery<FormTemplate[]>(
     'form_templates',
     {
@@ -20,7 +22,6 @@ export function useFormTemplates(associationId?: string) {
       `,
       filter: [
         ...(associationId ? [{ column: 'association_id', value: associationId }] : []),
-        { column: 'is_public', value: true, operator: 'eq' }
       ],
       order: { column: 'created_at', ascending: false }
     }

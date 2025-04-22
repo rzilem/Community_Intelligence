@@ -20,7 +20,7 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
   associationId,
   onTemplateSelect 
 }) => {
-  const { data: templates = [] } = useFormTemplates(associationId);
+  const { data: templates = [], isLoading, error } = useFormTemplates(associationId);
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
@@ -48,6 +48,25 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
     toast.success(`Added ${fields.length} fields to library`);
     // This would typically update the backend through an API call
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8">Loading templates...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-red-500">Error loading templates: {error.message}</p>
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   if (templates.length === 0) {
     return (
@@ -100,6 +119,7 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
               <CardTitle className="text-xl">{template.name}</CardTitle>
               <CardDescription>
                 {template.category ? (template.category.charAt(0).toUpperCase() + template.category.slice(1)) : 'Uncategorized'}
+                {template.is_global && <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Global</span>}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
@@ -145,4 +165,4 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
       </div>
     </div>
   );
-};
+}
