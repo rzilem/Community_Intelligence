@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { useResidentNotes } from '@/hooks/homeowners/resident/useResidentNotes';
+import { UserWithProfile } from '@/types/user-types';
 
 export function useHomeownerPortal(residentId: string) {
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export function useHomeownerPortal(residentId: string) {
     if (!user || !residentId) return;
     
     try {
+      // Handle the user profile format correctly
       const userName = user.profile?.first_name && user.profile?.last_name 
         ? `${user.profile.first_name} ${user.profile.last_name}`
         : user.email || 'Customer Service';

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import CollaborationIndicator from '@/components/portal/CollaborationIndicator';
-import { useResidentNotes } from '@/hooks/homeowners/useResidentNotes';
+import { useResidentNotes } from '@/hooks/homeowners/resident/useResidentNotes';
 
 const HomeownerPortalPage: React.FC = () => {
   const [searchParams] = useSearchParams();
