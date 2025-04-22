@@ -70,12 +70,9 @@ export const useMemberOperations = (associationId: string) => {
         await associationMemberService.updateAssociationMember(editingMember.id, {
           role_type: roleType,
           role_name: roleName,
+          member_type: memberType,
           user_id: userId,
-          association_id: associationId,
-          first_name: '',
-          last_name: '',
-          email: '',
-          member_type: memberType
+          association_id: associationId
         });
       } else {
         await associationMemberService.addAssociationMember({
@@ -83,9 +80,6 @@ export const useMemberOperations = (associationId: string) => {
           association_id: associationId,
           role_type: roleType,
           role_name: roleName,
-          first_name: '',
-          last_name: '',
-          email: '',
           member_type: memberType
         });
       }

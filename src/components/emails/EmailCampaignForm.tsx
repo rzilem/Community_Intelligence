@@ -30,18 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Calendar as CalendarIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { LeadStatus } from '@/types/lead-types';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface EmailCampaignFormProps {
   isOpen: boolean;
@@ -62,11 +54,6 @@ const EmailCampaignForm: React.FC<EmailCampaignFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<LeadStatus | 'all'>('all');
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
-    campaign?.scheduled_date ? new Date(campaign.scheduled_date) : undefined
-  );
-  const [scheduledTime, setScheduledTime] = useState('09:00');
 
   const form = useForm({
     defaultValues: {
@@ -77,18 +64,6 @@ const EmailCampaignForm: React.FC<EmailCampaignFormProps> = ({
       status: campaign?.status || 'draft',
     }
   });
-
-  // Effect to update scheduling state based on campaign data
-  useEffect(() => {
-    if (campaign?.scheduled_date) {
-      setIsScheduled(true);
-      const date = new Date(campaign.scheduled_date);
-      setScheduledDate(date);
-      setScheduledTime(
-        `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-      );
-    }
-  }, [campaign]);
 
   // Effect to apply template content when selected
   useEffect(() => {
@@ -102,21 +77,6 @@ const EmailCampaignForm: React.FC<EmailCampaignFormProps> = ({
     const template = templates.find(t => t.id === templateId);
     setSelectedTemplate(template || null);
   };
-
-  // Generate time options (every 30 minutes)
-  const generateTimeOptions = () => {
-    const options = [];
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute of [0, 30]) {
-        const formattedHour = hour.toString().padStart(2, '0');
-        const formattedMinute = minute.toString().padStart(2, '0');
-        options.push(`${formattedHour}:${formattedMinute}`);
-      }
-    }
-    return options;
-  };
-
-  const timeOptions = generateTimeOptions();
 
   // Filter leads based on status
   const filteredLeads = filterStatus === 'all' 
@@ -142,18 +102,6 @@ const EmailCampaignForm: React.FC<EmailCampaignFormProps> = ({
   const handleSubmit = async (data: any) => {
     setIsSaving(true);
     try {
-      // Combine date and time if scheduled
-      if (isScheduled && scheduledDate) {
-        const [hours, minutes] = scheduledTime.split(':').map(Number);
-        const scheduledDateTime = new Date(scheduledDate);
-        scheduledDateTime.setHours(hours, minutes, 0, 0);
-        
-        data.scheduled_date = scheduledDateTime.toISOString();
-        data.status = 'scheduled';
-      } else {
-        data.scheduled_date = null;
-      }
-      
       await onSave(data, selectedLeadIds);
       onClose();
     } catch (error) {
@@ -245,70 +193,6 @@ const EmailCampaignForm: React.FC<EmailCampaignFormProps> = ({
                 </FormItem>
               )}
             />
-
-            <div className="space-y-4 p-4 border rounded-md bg-gray-50">
-              <div className="flex items-center justify-between">
-                <FormLabel htmlFor="schedule-switch" className="cursor-pointer">
-                  Schedule for later
-                </FormLabel>
-                <Checkbox 
-                  id="schedule-switch"
-                  checked={isScheduled}
-                  onCheckedChange={(checked) => setIsScheduled(checked as boolean)}
-                />
-              </div>
-
-              {isScheduled && (
-                <div className="space-y-4 pt-2">
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "justify-start text-left font-normal",
-                            !scheduledDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {scheduledDate ? format(scheduledDate, "PPP") : "Select date"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={scheduledDate}
-                          onSelect={setScheduledDate}
-                          initialFocus
-                          disabled={(date) => date < new Date()}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormItem>
-
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Time</FormLabel>
-                    <Select
-                      value={scheduledTime}
-                      onValueChange={setScheduledTime}
-                      disabled={!scheduledDate}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {format(new Date(`2000-01-01T${time}`), 'h:mm a')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                </div>
-              )}
-            </div>
 
             <div className="space-y-4">
               <div className="space-y-2">

@@ -15,7 +15,6 @@ import EventForm from './EventForm';
 // Import our custom hooks
 import { useCalendarEvents } from '@/hooks/calendar/useCalendarEvents';
 import { useAmenities } from '@/hooks/calendar/useAmenities';
-import { NewCalendarEvent } from '@/hooks/calendar/types';
 
 interface CalendarViewProps {
   className?: string;
@@ -85,7 +84,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={newEvent}
+                newEvent={{...newEvent, date}}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}

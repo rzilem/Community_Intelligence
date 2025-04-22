@@ -6,7 +6,6 @@ import MessageRecipients from './compose/MessageRecipients';
 import MessageContent from './compose/MessageContent';
 import MessagePreview from './compose/MessagePreview';
 import FormActions from './compose/FormActions';
-import MessageScheduling from './compose/MessageScheduling';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -28,10 +27,7 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
     handleAssociationChange,
     handleSendMessage,
     handleReset,
-    togglePreview,
-    setIsScheduled,
-    setScheduledDate,
-    setScheduledTime
+    togglePreview
   } = useComposeForm({ onMessageSent });
 
   const canSend = Boolean(state.subject && state.messageContent && state.selectedGroups.length > 0);
@@ -65,17 +61,6 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
         />
       )}
       
-      {!state.previewMode && (
-        <MessageScheduling
-          isScheduled={state.isScheduled}
-          onScheduleChange={setIsScheduled}
-          scheduledDate={state.scheduledDate}
-          onDateChange={setScheduledDate}
-          scheduledTime={state.scheduledTime}
-          onTimeChange={setScheduledTime}
-        />
-      )}
-      
       <FormActions 
         isPreviewMode={state.previewMode}
         togglePreview={togglePreview}
@@ -83,7 +68,6 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
         handleSendMessage={handleSendMessage}
         canSend={canSend}
         isLoading={state.isLoading}
-        isScheduled={state.isScheduled}
       />
     </div>
   );

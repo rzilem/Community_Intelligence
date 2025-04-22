@@ -35,12 +35,3 @@ export interface CampaignRecipient {
   created_at: string;
   updated_at: string;
 }
-
-export interface ScheduledCampaign {
-  id: string;
-  campaign_id: string;
-  scheduled_date: string;
-  status: 'pending' | 'processed' | 'cancelled';
-  created_at: string;
-  updated_at: string;
-}

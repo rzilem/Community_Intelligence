@@ -13,9 +13,6 @@ export interface ComposeFormState {
   selectedAssociationId: string;
   isLoading: boolean;
   previewMode: boolean;
-  isScheduled: boolean;
-  scheduledDate: Date | null;
-  scheduledTime: string;
   previewData: {
     resident: {
       name: string;
@@ -69,9 +66,6 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
-  const [scheduledTime, setScheduledTime] = useState('09:00');
   const [previewData] = useState({
     resident: {
       name: 'John Smith',
@@ -123,11 +117,6 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       return;
     }
 
-    if (isScheduled && !scheduledDate) {
-      toast.error('Please select a date for your scheduled message');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -135,28 +124,12 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       const processedContent = replaceMergeTags(messageContent, previewData);
       const processedSubject = replaceMergeTags(subject, previewData);
 
-      // Combine date and time if scheduled
-      let scheduledDateTime = null;
-      if (isScheduled && scheduledDate) {
-        const [hours, minutes] = scheduledTime.split(':').map(Number);
-        scheduledDateTime = new Date(scheduledDate);
-        scheduledDateTime.setHours(hours, minutes, 0, 0);
-        
-        // Check if scheduled date is in the past
-        if (scheduledDateTime <= new Date()) {
-          toast.error('Scheduled date and time must be in the future');
-          setIsLoading(false);
-          return;
-        }
-      }
-
       await communicationService.sendMessage({
         subject: processedSubject,
         content: processedContent,
         association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
-        type: messageType,
-        scheduled_for: scheduledDateTime ? scheduledDateTime.toISOString() : undefined
+        type: messageType
       });
 
       // Reset form
@@ -164,15 +137,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       setMessageContent('');
       setSelectedGroups([]);
       setPreviewMode(false);
-      setIsScheduled(false);
-      setScheduledDate(null);
       onMessageSent();
-      
-      if (isScheduled) {
-        toast.success('Message scheduled successfully');
-      } else {
-        toast.success('Message sent successfully');
-      }
+      toast.success('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message. Please try again.');
@@ -186,8 +152,6 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setMessageContent('');
     setSelectedGroups([]);
     setPreviewMode(false);
-    setIsScheduled(false);
-    setScheduledDate(null);
   };
 
   const togglePreview = () => {
@@ -211,9 +175,6 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       selectedAssociationId,
       isLoading,
       previewMode,
-      isScheduled,
-      scheduledDate,
-      scheduledTime,
       previewData
     },
     previewContent,
@@ -225,9 +186,6 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     handleAssociationChange,
     handleSendMessage,
     handleReset,
-    togglePreview,
-    setIsScheduled,
-    setScheduledDate,
-    setScheduledTime
+    togglePreview
   };
 }
