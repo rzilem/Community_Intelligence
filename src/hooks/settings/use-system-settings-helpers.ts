@@ -37,13 +37,17 @@ export const saveSystemSettings = async (settings: SystemSettings) => {
 };
 
 const updateSettingWithFunction = async (key: string, value: any) => {
-  console.log(`Updating ${key} settings:`, JSON.stringify(value, null, 2, (k, v) => {
+  // Create a replacer function to mask sensitive information in logs
+  const replacer = (k: string, v: any) => {
     // Mask API keys in logs
     if ((k === 'apiKey' || k === 'secret' || k === 'webhookSecret') && typeof v === 'string') {
       return v ? '[PRESENT]' : '[MISSING]';
     }
     return v;
-  }));
+  };
+
+  // Log the masked version of the value
+  console.log(`Updating ${key} settings:`, JSON.stringify(value, replacer, 2));
   
   try {
     // Ensure the value is properly serializable by explicitly converting to a clean object
