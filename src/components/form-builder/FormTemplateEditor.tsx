@@ -1,15 +1,15 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { XCircle } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
-import { FormField, FormTemplate, FormType } from '@/types/form-builder-types';
+import { FormField, FormTemplate } from '@/types/form-builder-types';
 import FormTemplateFieldsManager from './FormTemplateFieldsManager';
 import FormWorkflowIntegration from './FormWorkflowIntegration';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { supabase } from '@/integrations/supabase/client';
+import { useFormTemplate } from '@/hooks/form-builder/useFormTemplate';
 // Extracted and refactored:
 import FormDetailsSection from './editor/FormDetailsSection';
 import FieldSettingsSidebar from './editor/FieldSettingsSidebar';
@@ -21,23 +21,14 @@ interface FormTemplateEditorProps {
 }
 
 const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave, onCancel }) => {
-  const [template, setTemplate] = useState<FormTemplate>({
-    id: formId,
-    name: '',
-    fields: [],
-    created_at: '',
-    updated_at: '',
-    is_public: false,
-    is_global: false,
-    form_type: null,
-  });
+  const { template, loading, setTemplate } = useFormTemplate(formId);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const { mutate: updateTemplate } = useSupabaseUpdate<FormTemplate>('form_templates', {
     onSuccess: () => {
       toast.success('Form template updated successfully');
-      onSave?.(template);
+      template && onSave?.(template);
     },
     onError: (error: any) => {
       console.error('Error updating form template:', error);
@@ -56,76 +47,19 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
     },
   });
 
-  useEffect(() => {
-    const fetchTemplate = async () => {
-      const { data, error } = await supabase
-        .from('form_templates')
-        .select('*')
-        .eq('id', formId)
-        .single();
-
-      if (error) {
-        toast.error('Failed to load form template');
-        return;
-      }
-
-      // Parsing FormField[] as always
-      let parsedFields: FormField[] = [];
-      try {
-        if (typeof data.fields === 'string') {
-          parsedFields = JSON.parse(data.fields);
-        } else if (Array.isArray(data.fields)) {
-          parsedFields = data.fields as unknown as FormField[];
-        }
-      } catch (e) {
-        console.error('Error parsing fields:', e);
-        parsedFields = [];
-      }
-
-      // Fix for metadata if needed
-      let metadata: Record<string, any> | undefined = undefined;
-      try {
-        if (data.metadata && typeof data.metadata === 'string') {
-          metadata = JSON.parse(data.metadata);
-        } else if (data.metadata && typeof data.metadata === 'object') {
-          metadata = data.metadata;
-        }
-      } catch {
-        metadata = undefined;
-      }
-
-      // Cast form_type to FormType or null
-      let formType: FormType | null = null;
-      if (data.form_type && typeof data.form_type === 'string') {
-        // Check if the value matches one of the valid FormType values
-        const validFormTypes: FormType[] = [
-          'portal_request', 'arc_application', 'pool_form', 
-          'gate_request', 'other'
-        ];
-        
-        if (validFormTypes.includes(data.form_type as FormType)) {
-          formType = data.form_type as FormType;
-        }
-      }
-
-      // Compose template with correct types and conversion
-      setTemplate((prev) => ({
-        ...prev,
-        ...data,
-        form_type: formType,
-        fields: parsedFields,
-        metadata: metadata || {},
-      }));
-    };
-
-    fetchTemplate();
-  }, [formId]);
+  if (loading || !template) {
+    return <div className="p-8 text-center text-muted-foreground">Loading form template...</div>;
+  }
 
   const handleFieldChange = (field: FormField) => {
-    setTemplate((prevTemplate) => ({
-      ...prevTemplate,
-      fields: prevTemplate.fields.map((f) => (f.id === field.id ? field : f)),
-    }));
+    setTemplate((prev: FormTemplate | null) =>
+      prev
+        ? {
+            ...prev,
+            fields: prev.fields.map((f) => (f.id === field.id ? field : f)),
+          }
+        : prev
+    );
   };
 
   const handleAddField = () => {
@@ -136,35 +70,38 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       required: false,
     };
 
-    setTemplate((prevTemplate) => ({
-      ...prevTemplate,
-      fields: [...prevTemplate.fields, newField],
-    }));
-
+    setTemplate((prev: FormTemplate | null) =>
+      prev
+        ? { ...prev, fields: [...prev.fields, newField] }
+        : prev
+    );
     setSelectedFieldId(newField.id);
   };
 
   const handleDeleteField = (id: string) => {
-    setTemplate((prevTemplate) => ({
-      ...prevTemplate,
-      fields: prevTemplate.fields.filter((field) => field.id !== id),
-    }));
+    setTemplate((prev: FormTemplate | null) =>
+      prev
+        ? { ...prev, fields: prev.fields.filter((field) => field.id !== id) }
+        : prev
+    );
     setSelectedFieldId(null);
   };
 
   const handleTemplateDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setTemplate((prevTemplate) => ({
-      ...prevTemplate,
-      [name]: value,
-    }));
+    setTemplate((prev: FormTemplate | null) =>
+      prev
+        ? { ...prev, [name]: value }
+        : prev
+    );
   };
 
   const handleIsPublicChange = (checked: boolean) => {
-    setTemplate((prevTemplate) => ({
-      ...prevTemplate,
-      is_public: checked,
-    }));
+    setTemplate((prev: FormTemplate | null) =>
+      prev
+        ? { ...prev, is_public: checked }
+        : prev
+    );
   };
 
   const handleSave = async () => {
@@ -181,17 +118,14 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
   };
 
   const handleReorder = useCallback((activeId: string, overId: string) => {
-    setTemplate((prevTemplate) => {
-      const activeIndex = prevTemplate.fields.findIndex((field) => field.id === activeId);
-      const overIndex = prevTemplate.fields.findIndex((field) => field.id === overId);
-
-      if (activeIndex === -1 || overIndex === -1) {
-        return prevTemplate;
-      }
-
+    setTemplate((prev: FormTemplate | null) => {
+      if (!prev) return prev;
+      const activeIndex = prev.fields.findIndex((field) => field.id === activeId);
+      const overIndex = prev.fields.findIndex((field) => field.id === overId);
+      if (activeIndex === -1 || overIndex === -1) return prev;
       return {
-        ...prevTemplate,
-        fields: arrayMove(prevTemplate.fields, activeIndex, overIndex),
+        ...prev,
+        fields: arrayMove(prev.fields, activeIndex, overIndex),
       };
     });
   }, []);
@@ -220,7 +154,6 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       </div>
       {/* Sidebar */}
       <div className="space-y-4">
-        {/* Field Settings Sidebar component */}
         <FieldSettingsSidebar
           selectedFieldId={selectedFieldId}
           template={template}
