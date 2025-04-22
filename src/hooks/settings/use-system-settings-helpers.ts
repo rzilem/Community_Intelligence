@@ -53,7 +53,7 @@ const updateSettingWithFunction = async (key: string, value: any) => {
     // Ensure the value is properly serializable by explicitly converting to a clean object
     const safeValue = JSON.parse(JSON.stringify(value));
     
-    // Make the request
+    // Make the request to the Supabase Edge Function
     const { error } = await supabase.functions.invoke(`settings/${key}`, {
       method: 'POST',
       body: safeValue,

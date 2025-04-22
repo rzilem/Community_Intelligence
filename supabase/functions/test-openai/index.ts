@@ -39,9 +39,29 @@ serve(async (req) => {
     }
     
     // Extract the OpenAI API key
-    const openAISettings = settings?.value?.integrationSettings?.OpenAI;
-    const apiKey = openAISettings?.apiKey;
+    const integrationSettings = settings?.value?.integrationSettings;
+    if (!integrationSettings) {
+      console.error("No integration settings found");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'No integration settings configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
+    const openAISettings = integrationSettings.OpenAI;
+    if (!openAISettings) {
+      console.error("No OpenAI settings found");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'No OpenAI settings configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const apiKey = openAISettings.apiKey;
     if (!apiKey) {
       console.error("No OpenAI API key configured");
       return new Response(JSON.stringify({ 
@@ -51,6 +71,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log("Found OpenAI API key, testing connection...");
     
     // Test OpenAI connection using a simple models list request
     const openAIResponse = await fetch('https://api.openai.com/v1/models', {
