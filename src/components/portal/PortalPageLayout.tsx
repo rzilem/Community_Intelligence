@@ -47,7 +47,10 @@ export const PortalPageLayout: React.FC<PortalPageLayoutProps> = ({
             <h1 className="text-2xl font-bold">{title}</h1>
           </div>
           
-          <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
+          {/* Only render the selector if user and currentAssociation are defined */}
+          {user && currentAssociation && (
+            <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
+          )}
         </div>
         
         {description && (

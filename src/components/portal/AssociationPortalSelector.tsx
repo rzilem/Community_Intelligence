@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Building, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Command,
   CommandEmpty,
@@ -14,81 +15,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { useAuth } from '@/contexts/auth';
-import { cn } from '@/lib/utils';
-import { Association } from '@/types/association-types';
 
 interface AssociationPortalSelectorProps {
   onAssociationChange: (associationId: string) => void;
-  className?: string;
 }
 
-interface AssociationUser {
-  association_id: string;
-  role: string;
-  associations: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-  };
-}
-
-const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
-  onAssociationChange,
-  className
-}) => {
-  const { currentUser, currentAssociation, setCurrentAssociation } = useAuth();
+const AssociationPortalSelector = ({ onAssociationChange }: AssociationPortalSelectorProps) => {
+  const { currentAssociation, userAssociations } = useAuth();
   const [open, setOpen] = useState(false);
 
-  // Fetch associations that the user has access to
-  const { data: associations = [], isLoading } = useSupabaseQuery<AssociationUser[]>(
-    'association_users',
-    {
-      select: `
-        association_id,
-        role,
-        associations:association_id (
-          id,
-          name,
-          logo_url
-        )
-      `,
-      filter: [
-        { column: 'user_id', value: currentUser?.id },
-        { column: 'role', value: 'admin', operator: 'eq' }
-      ]
-    },
-    !!currentUser?.id
-  );
+  // Safety check: ensure userAssociations exists before using it
+  const associations = userAssociations || [];
+  
+  // If there's only one association or none, don't show the selector
+  if (associations.length <= 1) return null;
 
-  // Format associations for the dropdown
-  const formattedAssociations = associations.map(assoc => ({
-    id: assoc.association_id,
-    name: assoc.associations.name,
-    logo: assoc.associations.logo_url
-  }));
-
-  // When association is changed from the dropdown
-  const handleAssociationChange = (associationId: string) => {
-    const selectedAssociation = formattedAssociations.find(a => a.id === associationId);
-    if (selectedAssociation) {
-      // Create a partial Association object with just the required properties
-      setCurrentAssociation({
-        id: selectedAssociation.id,
-        name: selectedAssociation.name,
-        logo_url: selectedAssociation.logo,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      onAssociationChange(associationId);
-      setOpen(false);
-    }
-  };
-
-  if (formattedAssociations.length <= 1 || !currentUser) {
-    return null;
-  }
+  const currentAssociationName = currentAssociation?.name || 'Select Association';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -97,22 +40,26 @@ const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-48 justify-between", className)}
+          className="w-[200px] justify-between"
         >
-          {currentAssociation ? currentAssociation.name : "Select association..."}
+          <Building className="mr-2 h-4 w-4" />
+          <span className="truncate">{currentAssociationName}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-48 p-0">
+      <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Search associations..." />
+          <CommandInput placeholder="Search association..." />
           <CommandEmpty>No association found.</CommandEmpty>
           <CommandGroup>
-            {formattedAssociations.map((association) => (
+            {associations.map((association) => (
               <CommandItem
                 key={association.id}
                 value={association.id}
-                onSelect={() => handleAssociationChange(association.id)}
+                onSelect={(value) => {
+                  onAssociationChange(value);
+                  setOpen(false);
+                }}
               >
                 <Check
                   className={cn(
@@ -120,7 +67,7 @@ const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
                     currentAssociation?.id === association.id ? "opacity-100" : "opacity-0"
                   )}
                 />
-                {association.name}
+                <span className="truncate">{association.name}</span>
               </CommandItem>
             ))}
           </CommandGroup>
