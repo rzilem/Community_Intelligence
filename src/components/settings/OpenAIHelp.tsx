@@ -24,9 +24,14 @@ const OpenAIHelp: React.FC = () => {
               <li>Email template generation</li>
               <li>Invoice analysis</li>
               <li>Document summarization</li>
+              <li>Natural language interactions across HOA data</li>
+              <li>AI-driven workflow automation</li>
             </ul>
             <p className="text-xs text-muted-foreground pt-1">
-              Your API key is stored securely and used only for the features you enable.
+              Your API key is stored securely in Supabase and used only for the features you enable.
+            </p>
+            <p className="text-xs text-amber-600 pt-1">
+              Note: After saving your API key, click "Test Connection" to verify it's working correctly.
             </p>
           </div>
         </TooltipContent>
