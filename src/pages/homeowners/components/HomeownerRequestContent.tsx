@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
@@ -6,6 +5,9 @@ import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFil
 import { useUserColumns } from '@/hooks/useUserColumns';
 import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
+import LiveStatusDot from "@/components/common/LiveStatusDot";
+import { useHomeownerRequestsRealtime } from "@/hooks/homeowners/useHomeownerRequestsRealtime";
+import { useAuth } from "@/contexts/auth";
 
 interface HomeownerRequestContentProps {
   filteredRequests: HomeownerRequest[];
@@ -35,6 +37,13 @@ const HomeownerRequestContent = ({
   setType
 }: HomeownerRequestContentProps) => {
   const { visibleColumnIds } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests');
+  const { currentAssociation } = useAuth();
+  const [realtimeActive, setRealtimeActive] = React.useState(false);
+
+  useHomeownerRequestsRealtime(currentAssociation?.id, () => {
+    setRealtimeActive(true);
+    setTimeout(() => setRealtimeActive(false), 2000);
+  });
 
   const handleViewRequest = (request: HomeownerRequest) => {
     console.log('View request', request.id);
@@ -46,15 +55,19 @@ const HomeownerRequestContent = ({
 
   return (
     <>
-      <HomeownerRequestFilters 
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        priority={priority as any}
-        setPriority={setPriority as any}
-        type={type as any}
-        setType={setType as any}
-      />
-
+      <div className="flex items-center justify-between">
+        <HomeownerRequestFilters 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          priority={priority as any}
+          setPriority={setPriority as any}
+          type={type as any}
+          setType={setType as any}
+        />
+        <div>
+          {realtimeActive && <LiveStatusDot />}
+        </div>
+      </div>
       <Tabs 
         value={activeTab} 
         onValueChange={(value) => setActiveTab(value as HomeownerRequestStatus | 'all' | 'active')}
