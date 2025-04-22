@@ -25,8 +25,8 @@ const AssociationPortalSelector = ({ onAssociationChange }: AssociationPortalSel
   const { currentAssociation, userAssociations } = useAuth();
   const [open, setOpen] = useState(false);
 
-  // Safety check: ensure userAssociations exists before using it
-  const associations = userAssociations || [];
+  // Safety check: ensure userAssociations exists and is an array before using it
+  const associations = Array.isArray(userAssociations) ? userAssociations : [];
   
   // If there's only one association or none, don't show the selector
   if (associations.length <= 1) return null;
