@@ -1,18 +1,16 @@
-
-import React, { useState, useCallback } from 'react';
-import { XCircle } from 'lucide-react';
-import { arrayMove } from '@dnd-kit/sortable';
-import { toast } from 'sonner';
-import { FormField, FormTemplate } from '@/types/form-builder-types';
-import FormTemplateFieldsManager from './FormTemplateFieldsManager';
-import FormWorkflowIntegration from './FormWorkflowIntegration';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { useFormTemplate } from '@/hooks/form-builder/useFormTemplate';
-// Extracted and refactored:
-import FormDetailsSection from './editor/FormDetailsSection';
-import FieldSettingsSidebar from './editor/FieldSettingsSidebar';
+import React, { useState, useEffect, useCallback } from "react";
+import { XCircle } from "lucide-react";
+import { toast } from "sonner";
+import { FormTemplate } from "@/types/form-builder-types";
+import FormTemplateFieldsManager from "./FormTemplateFieldsManager";
+import FormWorkflowIntegration from "./FormWorkflowIntegration";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { useSupabaseUpdate, useSupabaseDelete } from "@/hooks/supabase";
+import { useFormTemplate } from "@/hooks/form-builder/useFormTemplate";
+import FormDetailsSection from "./editor/FormDetailsSection";
+import FieldSettingsSidebar from "./editor/FieldSettingsSidebar";
+import { useFormTemplateState } from "./editor/useFormTemplateState";
 
 interface FormTemplateEditorProps {
   formId: string;
@@ -21,9 +19,24 @@ interface FormTemplateEditorProps {
 }
 
 const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave, onCancel }) => {
-  const { template, loading, setTemplate } = useFormTemplate(formId);
+  const { template: loadedTemplate, loading } = useFormTemplate(formId);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const {
+    template,
+    setTemplate,
+    updateField,
+    addField,
+    deleteField,
+    updateTemplateDetails,
+    updateIsPublic,
+    reorderFields
+  } = useFormTemplateState(loadedTemplate);
+
+  useEffect(() => {
+    setTemplate(loadedTemplate);
+  }, [loadedTemplate, setTemplate]);
 
   const { mutate: updateTemplate } = useSupabaseUpdate<FormTemplate>('form_templates', {
     onSuccess: () => {
@@ -51,57 +64,9 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
     return <div className="p-8 text-center text-muted-foreground">Loading form template...</div>;
   }
 
-  const handleFieldChange = (field: FormField) => {
-    setTemplate((prev: FormTemplate | null) =>
-      prev
-        ? {
-            ...prev,
-            fields: prev.fields.map((f) => (f.id === field.id ? field : f)),
-          }
-        : prev
-    );
-  };
-
   const handleAddField = () => {
-    const newField: FormField = {
-      id: Math.random().toString(36).substring(7),
-      type: 'text',
-      label: 'New Field',
-      required: false,
-    };
-
-    setTemplate((prev: FormTemplate | null) =>
-      prev
-        ? { ...prev, fields: [...prev.fields, newField] }
-        : prev
-    );
-    setSelectedFieldId(newField.id);
-  };
-
-  const handleDeleteField = (id: string) => {
-    setTemplate((prev: FormTemplate | null) =>
-      prev
-        ? { ...prev, fields: prev.fields.filter((field) => field.id !== id) }
-        : prev
-    );
-    setSelectedFieldId(null);
-  };
-
-  const handleTemplateDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setTemplate((prev: FormTemplate | null) =>
-      prev
-        ? { ...prev, [name]: value }
-        : prev
-    );
-  };
-
-  const handleIsPublicChange = (checked: boolean) => {
-    setTemplate((prev: FormTemplate | null) =>
-      prev
-        ? { ...prev, is_public: checked }
-        : prev
-    );
+    const newId = addField();
+    setSelectedFieldId(newId);
   };
 
   const handleSave = async () => {
@@ -117,52 +82,33 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
     deleteTemplate(template.id);
   };
 
-  const handleReorder = useCallback((activeId: string, overId: string) => {
-    setTemplate((prev: FormTemplate | null) => {
-      if (!prev) return prev;
-      const activeIndex = prev.fields.findIndex((field) => field.id === activeId);
-      const overIndex = prev.fields.findIndex((field) => field.id === overId);
-      if (activeIndex === -1 || overIndex === -1) return prev;
-      return {
-        ...prev,
-        fields: arrayMove(prev.fields, activeIndex, overIndex),
-      };
-    });
-  }, []);
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-4">
-        {/* Form Details Section */}
         <FormDetailsSection
           template={template}
-          onTemplateDetailsChange={handleTemplateDetailsChange}
-          onIsPublicChange={handleIsPublicChange}
+          onTemplateDetailsChange={updateTemplateDetails}
+          onIsPublicChange={updateIsPublic}
         />
-
-        {/* Form Fields Section */}
         <div className="space-y-4">
           <FormTemplateFieldsManager
             fields={template.fields}
-            onReorder={handleReorder}
+            onReorder={reorderFields}
             selectedFieldId={selectedFieldId}
             onSelectField={setSelectedFieldId}
-            onDeleteField={handleDeleteField}
+            onDeleteField={deleteField}
             onAddField={handleAddField}
           />
         </div>
       </div>
-      {/* Sidebar */}
       <div className="space-y-4">
         <FieldSettingsSidebar
           selectedFieldId={selectedFieldId}
           template={template}
-          onFieldChange={handleFieldChange}
-          onDeleteField={handleDeleteField}
+          onFieldChange={updateField}
+          onDeleteField={deleteField}
         />
-
         <FormWorkflowIntegration formId={formId} />
-
         <div className="space-y-2">
           <Button variant="default" onClick={handleSave} disabled={isSaving} className="w-full">
             {isSaving ? 'Saving...' : 'Save Changes'}
