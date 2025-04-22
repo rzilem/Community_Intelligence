@@ -15,6 +15,7 @@ export interface UserAssociation {
 export interface AuthContextType {
   session: Session | null;
   user: User | null;
+  currentUser: User | null; // Add this line
   profile: Profile | null;
   loading: boolean;
   isLoading: boolean;

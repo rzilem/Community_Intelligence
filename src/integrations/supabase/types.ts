@@ -1816,6 +1816,79 @@ export type Database = {
           },
         ]
       }
+      form_submissions: {
+        Row: {
+          association_id: string
+          created_at: string
+          form_data: Json
+          form_template_id: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          property_id: string | null
+          status: string
+          submitted_at: string
+          tracking_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          form_data?: Json
+          form_template_id: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          property_id?: string | null
+          status?: string
+          submitted_at?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          form_data?: Json
+          form_template_id?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          property_id?: string | null
+          status?: string
+          submitted_at?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_template_associations: {
         Row: {
           association_id: string
