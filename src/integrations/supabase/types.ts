@@ -3407,6 +3407,44 @@ export type Database = {
         }
         Relationships: []
       }
+      resident_portal_settings: {
+        Row: {
+          created_at: string | null
+          dashboard_layout: Json | null
+          id: string
+          notification_preferences: Json | null
+          resident_id: string | null
+          theme_preference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          notification_preferences?: Json | null
+          resident_id?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          notification_preferences?: Json | null
+          resident_id?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_portal_settings_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residents: {
         Row: {
           client_portal_link: string | null
