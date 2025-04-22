@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useSearchParams } from 'react-router-dom';
@@ -22,7 +21,6 @@ const HomeownerPortalPage: React.FC = () => {
   const [accessTime] = useState(new Date());
 
   useEffect(() => {
-    // Log this portal access
     const logAccess = async () => {
       if (homeownerId && user) {
         console.log('Customer service portal access logged:', {
@@ -30,12 +28,26 @@ const HomeownerPortalPage: React.FC = () => {
           accessedBy: user.id,
           accessTime: accessTime.toISOString()
         });
-        // In a real implementation, this would call your API
       }
     };
     
     logAccess();
   }, [homeownerId, user, accessTime]);
+
+  if (!homeownerId) {
+    return (
+      <AppLayout>
+        <div className="p-6">
+          <Alert variant="destructive">
+            <AlertTitle>Error Loading Portal</AlertTitle>
+            <AlertDescription>
+              No homeowner ID provided. Please check the URL and try again.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (loading) {
     return (

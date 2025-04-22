@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
@@ -11,6 +10,7 @@ import HomeownerEditForm from '@/components/homeowners/detail/HomeownerEditForm'
 import { useAuth } from '@/contexts/auth/useAuth';
 import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
 import { toast } from 'sonner';
+import { HomeownerPortalCard } from '@/components/homeowners/detail/HomeownerPortalCard';
 
 const HomeownerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -112,7 +112,7 @@ const HomeownerDetailPage: React.FC = () => {
               name={homeowner?.name}
               status={homeowner?.status}
               tags={homeowner?.tags || []}
-              violations={violationsCount} // Now this properly accepts a number
+              violations={violationsCount}
               avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}
@@ -133,7 +133,7 @@ const HomeownerDetailPage: React.FC = () => {
                 property={homeowner?.property}
                 unit={homeowner?.unit}
                 balance={homeowner?.balance}
-                lastContact={lastContactValue} // This is a string, which is correct
+                lastContact={lastContactValue}
               />
             )}
           </div>
@@ -144,6 +144,10 @@ const HomeownerDetailPage: React.FC = () => {
               propertyId={homeowner?.id || ''}
             />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <HomeownerPortalCard residentId={id || homeowner?.id || ''} />
         </div>
 
         <HomeownerTabs 

@@ -3409,6 +3409,7 @@ export type Database = {
       }
       residents: {
         Row: {
+          client_portal_link: string | null
           created_at: string
           email: string | null
           emergency_contact: string | null
@@ -3424,6 +3425,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          client_portal_link?: string | null
           created_at?: string
           email?: string | null
           emergency_contact?: string | null
@@ -3439,6 +3441,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          client_portal_link?: string | null
           created_at?: string
           email?: string | null
           emergency_contact?: string | null
