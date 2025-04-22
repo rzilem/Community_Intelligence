@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import MessageHistoryTable from '@/components/communications/MessageHistoryTable';
+import { MessageHistoryTable } from '@/components/communications/MessageHistoryTable';
 import HistorySearch from './HistorySearch';
 import { MessageHistoryItem } from '@/types/message-types';
 
@@ -32,11 +32,7 @@ const HistorySection: React.FC<HistorySectionProps> = ({
       
       <Card>
         <CardContent className="p-6">
-          <MessageHistoryTable 
-            messages={messages} 
-            onViewMessage={onViewMessage}
-            onResend={onResendMessage}
-          />
+          <MessageHistoryTable />
         </CardContent>
       </Card>
     </>

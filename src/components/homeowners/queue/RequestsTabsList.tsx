@@ -19,43 +19,36 @@ const RequestsTabsList: React.FC<RequestsTabsListProps> = ({
   activeTab,
   onTabChange 
 }) => {
-  // Handle tab change if provided
-  const handleTabChange = (value: string) => {
-    if (onTabChange) {
-      onTabChange(value);
-    }
-  };
-
   return (
     <div className="flex justify-between mb-6">
       <TabsList>
         <TabsTrigger 
           value="all" 
-          onClick={() => handleTabChange("all")}
+          className={activeTab === "all" ? "active" : ""}
         >
           All Requests ({requestCounts.all || 0})
         </TabsTrigger>
         <TabsTrigger 
           value="open"
-          onClick={() => handleTabChange("open")}
+          className={activeTab === "open" ? "active" : ""}
         >
           Open ({requestCounts.open || 0})
         </TabsTrigger>
         <TabsTrigger 
           value="in-progress"
-          onClick={() => handleTabChange("in-progress")}
+          className={activeTab === "in-progress" ? "active" : ""}
         >
           In Progress ({requestCounts.inProgress || 0})
         </TabsTrigger>
         <TabsTrigger 
           value="resolved"
-          onClick={() => handleTabChange("resolved")}
+          className={activeTab === "resolved" ? "active" : ""}
         >
           Resolved ({requestCounts.closed || 0})
         </TabsTrigger>
         <TabsTrigger 
           value="closed"
-          onClick={() => handleTabChange("closed")}
+          className={activeTab === "closed" ? "active" : ""}
         >
           Closed ({requestCounts.closed || 0})
         </TabsTrigger>

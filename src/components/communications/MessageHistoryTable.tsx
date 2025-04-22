@@ -87,7 +87,7 @@ export const MessageHistoryTable: React.FC = () => {
 
   const renderStatusBadge = (status: string) => {
     if (status === 'sent') {
-      return <Badge variant="success">Sent</Badge>;
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Sent</Badge>;
     } else if (status === 'scheduled') {
       return <Badge variant="outline"><Calendar className="h-3 w-3 mr-1" />Scheduled</Badge>;
     } else {

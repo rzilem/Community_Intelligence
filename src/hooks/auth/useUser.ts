@@ -1,56 +1,56 @@
 
 import { useState, useEffect } from 'react';
+import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-export interface User {
+interface UserProfile {
   id: string;
-  email?: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  profile_image_url?: string;
+  phone_number?: string;
+  role?: string;
 }
 
 export const useUser = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { user, isLoading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Get the current user
-    const getCurrentUser = async () => {
+    const fetchUserProfile = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          setUser({
-            id: user.id,
-            email: user.email
-          });
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          throw error;
         }
-      } catch (error) {
-        console.error('Error getting user:', error);
+
+        setProfile(data);
+      } catch (err) {
+        console.error('Error fetching user profile:', err);
+        setError(err as Error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    getCurrentUser();
+    if (!authLoading) {
+      fetchUserProfile();
+    }
+  }, [user, authLoading]);
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          setUser({
-            id: session.user.id,
-            email: session.user.email
-          });
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  return { user, loading };
+  return { user, profile, isLoading: isLoading || authLoading, error };
 };
