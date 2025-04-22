@@ -1,61 +1,39 @@
 
-import { useState, useEffect } from 'react';
-import { useNotificationContext } from '@/contexts/notifications';
+import { useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationContext } from '@/contexts/notifications/NotificationContext';
+import { NotificationItem } from './useNotifications';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useRealTimeNotifications = () => {
-  const notificationContext = useNotificationContext();
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const { user } = useAuth();
+  const { notifications, setNotifications } = useContext(NotificationContext);
 
-  // Add a notification safely
-  const addNotification = (notification: any) => {
-    // Check if the context is available and has notifications
-    if (notificationContext) {
-      // Instead of using addNotification, we can update the existing notifications
-      console.log('Adding notification:', notification);
-      
-      // If the notification context has a dispatch method, use it
-      if (typeof notificationContext.setNotifications === 'function') {
-        notificationContext.setNotifications((prev: any[]) => [...prev, notification]);
-      } else {
-        // As a fallback, we can try to use the markAllAsRead function to trigger a re-render
-        console.log('Adding notification to local state');
-        setNotifications(prev => [...prev, notification]);
-      }
-    } else {
-      console.warn('Notification context not available');
-    }
-  };
-
-  // Initialize real-time subscription
   useEffect(() => {
-    // Subscribe to notifications
+    if (!user) return;
+
+    // Subscribe to new notifications
     const subscription = supabase
-      .channel('public:notifications')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications' 
-      }, (payload) => {
-        console.log('New notification received:', payload);
-        // Store the notification locally
-        setNotifications(prev => [...prev, payload.new]);
-        
-        // Add to global context if available
-        if (payload.new) {
-          addNotification(payload.new);
+      .channel('portal_notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'portal_notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newNotification = payload.new as NotificationItem;
+          setNotifications((prev) => [newNotification, ...prev]);
         }
-      })
+      )
       .subscribe();
 
-    // Cleanup subscription
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
-  }, [notificationContext]);
+  }, [user, setNotifications]);
 
-  return {
-    notifications,
-    addNotification
-  };
+  return { notifications };
 };

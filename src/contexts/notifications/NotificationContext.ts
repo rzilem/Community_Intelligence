@@ -8,7 +8,7 @@ export interface NotificationContextType {
   markAsRead: (notificationId: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (notificationId: string) => void;
-  setNotifications?: React.Dispatch<React.SetStateAction<NotificationItem[]>>;
+  setNotifications: React.Dispatch<React.SetStateAction<NotificationItem[]>>;
 }
 
 export const NotificationContext = createContext<NotificationContextType>({
@@ -17,4 +17,5 @@ export const NotificationContext = createContext<NotificationContextType>({
   markAsRead: () => {},
   markAllAsRead: () => {},
   deleteNotification: () => {},
+  setNotifications: () => {},
 });
