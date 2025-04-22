@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import CollaborationIndicator from '@/components/portal/CollaborationIndicator';
+import { useResidentNotes } from '@/hooks/homeowners/useResidentNotes';
 
 const HomeownerPortalPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -19,20 +20,35 @@ const HomeownerPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { homeowner, loading, error } = useHomeownerData(homeownerId || '');
   const [accessTime] = useState(new Date());
+  const { addNote } = homeownerId ? useResidentNotes(homeownerId) : { addNote: null };
 
   useEffect(() => {
     const logAccess = async () => {
-      if (homeownerId && user) {
-        console.log('Customer service portal access logged:', {
-          homeownerId,
-          accessedBy: user.id,
-          accessTime: accessTime.toISOString()
-        });
+      if (homeownerId && user && addNote) {
+        try {
+          const userName = user.profile?.first_name && user.profile?.last_name 
+            ? `${user.profile.first_name} ${user.profile.last_name}`
+            : user.email || 'Customer Service';
+          
+          await addNote({
+            type: 'system',
+            content: `Portal viewed by customer service (${userName})`,
+            author: 'System'
+          });
+          
+          console.log('Customer service portal access logged:', {
+            homeownerId,
+            accessedBy: user.id,
+            accessTime: accessTime.toISOString()
+          });
+        } catch (error) {
+          console.error('Error logging portal access:', error);
+        }
       }
     };
     
     logAccess();
-  }, [homeownerId, user, accessTime]);
+  }, [homeownerId, user, accessTime, addNote]);
 
   if (!homeownerId) {
     return (

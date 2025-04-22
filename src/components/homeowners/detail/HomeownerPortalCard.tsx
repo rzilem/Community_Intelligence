@@ -11,15 +11,19 @@ interface HomeownerPortalCardProps {
 }
 
 export const HomeownerPortalCard: React.FC<HomeownerPortalCardProps> = ({ residentId }) => {
-  const { portalUrl, loading, generatePortalLink } = useHomeownerPortal(residentId);
+  const { portalUrl, loading, generatePortalLink, logPortalAccess } = useHomeownerPortal(residentId);
   const navigate = useNavigate();
 
   const handlePortalAccess = async () => {
     if (portalUrl) {
+      // Log access before navigating
+      await logPortalAccess();
       navigate(portalUrl);
     } else {
       const newUrl = await generatePortalLink();
       if (newUrl) {
+        // Log access after generating new URL
+        await logPortalAccess();
         navigate(newUrl);
       }
     }

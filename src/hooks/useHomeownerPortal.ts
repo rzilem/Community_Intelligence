@@ -2,10 +2,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth/useAuth';
+import { useResidentNotes } from '@/hooks/homeowners/resident/useResidentNotes';
 
 export function useHomeownerPortal(residentId: string) {
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { addNote } = useResidentNotes(residentId);
 
   useEffect(() => {
     const fetchPortalLink = async () => {
@@ -30,6 +34,27 @@ export function useHomeownerPortal(residentId: string) {
       fetchPortalLink();
     }
   }, [residentId]);
+
+  const logPortalAccess = async () => {
+    if (!user || !residentId) return;
+    
+    try {
+      const userName = user.profile?.first_name && user.profile?.last_name 
+        ? `${user.profile.first_name} ${user.profile.last_name}`
+        : user.email || 'Customer Service';
+      
+      await addNote({
+        type: 'system',
+        content: `Customer portal accessed by ${userName}`,
+        author: 'System'
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error logging portal access:', error);
+      return false;
+    }
+  };
 
   const generatePortalLink = async () => {
     try {
@@ -56,6 +81,7 @@ export function useHomeownerPortal(residentId: string) {
   return {
     portalUrl,
     loading,
-    generatePortalLink
+    generatePortalLink,
+    logPortalAccess
   };
 }
