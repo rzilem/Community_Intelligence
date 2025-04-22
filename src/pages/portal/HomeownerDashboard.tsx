@@ -1,16 +1,17 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, FileText, Calendar, Users, File } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
 import AssociationPortalSelector from '@/components/portal/AssociationPortalSelector';
+import { toast } from 'sonner';
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
 
   // Handler for changing association and reloading (follows PortalPageLayout usage)
   const handleAssociationChange = (associationId: string) => {
@@ -18,8 +19,20 @@ const HomeownerDashboard = () => {
   };
 
   const quickLinks = [
-    { title: 'Make a Payment', path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" />, color: 'bg-blue-100' },
-    { title: 'Submit a Request', path: '/portal/homeowner/requests', icon: <FileText className="h-5 w-5" />, color: 'bg-green-100' },
+    { 
+      title: 'Make a Payment', 
+      path: '/portal/homeowner/payments', 
+      icon: <CreditCard className="h-5 w-5" />, 
+      color: 'bg-blue-100',
+      onClickToast: () => toast.info('Payment Portal', { description: 'Redirecting to payment options' })
+    },
+    { 
+      title: 'Submit a Request', 
+      path: '/portal/homeowner/requests', 
+      icon: <FileText className="h-5 w-5" />, 
+      color: 'bg-green-100',
+      onClickToast: () => toast.info('Request Portal', { description: 'Preparing request submission form' })
+    },
     { title: 'Calendar', path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" />, color: 'bg-purple-100' },
     { title: 'View Documents', path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" />, color: 'bg-amber-100' },
   ];
@@ -46,15 +59,21 @@ const HomeownerDashboard = () => {
           <div className="lg:col-span-3 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {quickLinks.map((link) => (
-                <Card key={link.path} className="hover:shadow-md transition-shadow">
-                  <Link to={link.path}>
-                    <CardHeader className="p-4">
-                      <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-2`}>
-                        {link.icon}
-                      </div>
-                      <CardTitle className="text-base">{link.title}</CardTitle>
-                    </CardHeader>
-                  </Link>
+                <Card 
+                  key={link.path} 
+                  className="hover:shadow-md transition-shadow"
+                  onClick={() => {
+                    link.onClickToast && link.onClickToast();
+                    // Standard navigation
+                    navigate(link.path);
+                  }}
+                >
+                  <CardHeader className="p-4">
+                    <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-2`}>
+                      {link.icon}
+                    </div>
+                    <CardTitle className="text-base">{link.title}</CardTitle>
+                  </CardHeader>
                 </Card>
               ))}
             </div>
@@ -95,4 +114,3 @@ const HomeownerDashboard = () => {
 };
 
 export default HomeownerDashboard;
-

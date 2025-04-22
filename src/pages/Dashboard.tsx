@@ -1,5 +1,5 @@
-
 import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
@@ -43,6 +43,15 @@ const Dashboard = () => {
       navigate('/auth?tab=login');
     }
   }, [isAuthenticated, loading, navigate]);
+  
+  useEffect(() => {
+    // Show welcome back toast when dashboard loads
+    if (profile) {
+      toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
+        description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
+      });
+    }
+  }, [profile, currentAssociation]);
   
   if (loading) {
     return (
