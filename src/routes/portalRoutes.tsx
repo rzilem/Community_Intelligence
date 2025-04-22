@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Route } from 'react-router-dom';
 import HomeownerDashboard from '@/pages/portal/HomeownerDashboard';
@@ -7,6 +8,7 @@ import PortalManagement from '@/pages/system/PortalManagement';
 import RequireAuth from '@/components/auth/RequireAuth';
 import PortalSelection from '@/pages/portal/PortalSelection';
 import CollectionsPage from '@/pages/portal/board/CollectionsPage';
+import VendorBidsPage from '@/pages/portal/vendor/VendorBidsPage';
 
 export const portalRoutes = [
   <Route 
@@ -42,6 +44,15 @@ export const portalRoutes = [
     element={
       <RequireAuth menuId="vendor-portal">
         <VendorDashboard />
+      </RequireAuth>
+    }
+  />,
+  <Route 
+    key="vendor-bids"
+    path="/portal/vendor/bids"
+    element={
+      <RequireAuth menuId="vendor-portal">
+        <VendorBidsPage />
       </RequireAuth>
     }
   />,

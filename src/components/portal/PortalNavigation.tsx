@@ -12,7 +12,9 @@ import {
   Activity,
   BookOpen,
   LayoutDashboard,
-  Mail
+  Mail,
+  Truck,
+  Star
 } from 'lucide-react';
 
 interface NavItem {
@@ -38,7 +40,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
   ];
 
   const boardNavItems: NavItem[] = [
-    { title: 'Dashboard', path: '/portal/board/dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: 'Dashboard', path: '/portal/board', icon: <LayoutDashboard className="h-5 w-5" /> },
     { title: 'Community Pulse', path: '/portal/board/community-pulse', icon: <Activity className="h-5 w-5" /> },
     { title: 'Homeowners', path: '/portal/board/homeowners', icon: <Users className="h-5 w-5" /> },
     { title: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
@@ -46,7 +48,28 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
     { title: 'Email Community', path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
   ];
 
-  const navItems = portalType === 'homeowner' ? homeownerNavItems : boardNavItems;
+  const vendorNavItems: NavItem[] = [
+    { title: 'Dashboard', path: '/portal/vendor', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: 'Bids & Opportunities', path: '/portal/vendor/bids', icon: <FileText className="h-5 w-5" /> },
+    { title: 'Invoices & Payments', path: '/portal/vendor/invoices', icon: <CreditCard className="h-5 w-5" /> },
+    { title: 'Vendor Status', path: '/portal/vendor/status', icon: <Star className="h-5 w-5" /> },
+  ];
+
+  let navItems: NavItem[] = [];
+  
+  switch(portalType) {
+    case 'homeowner':
+      navItems = homeownerNavItems;
+      break;
+    case 'board':
+      navItems = boardNavItems;
+      break;
+    case 'vendor':
+      navItems = vendorNavItems;
+      break;
+    default:
+      navItems = homeownerNavItems;
+  }
 
   return (
     <div className="border rounded-lg p-4 mb-6">

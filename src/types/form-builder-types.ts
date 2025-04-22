@@ -105,3 +105,15 @@ export interface NewFormDialogProps {
   onOpenChange: (open: boolean) => void;
   associationId?: string;
 }
+
+export interface FormTemplateEditorProps {
+  formId: string;
+  onSave?: (form: FormTemplate) => void;
+  onCancel?: () => void;
+}
+
+export interface FormFieldEditorProps {
+  field: FormField;
+  onChange: (field: FormField) => void;
+  onDelete: () => void;
+}
