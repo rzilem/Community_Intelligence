@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import MessageHistoryTable, { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
+import MessageHistoryTable from '@/components/communications/MessageHistoryTable';
 import HistorySearch from './HistorySearch';
+import { MessageHistoryItem } from '@/types/message-types';
 
 interface HistorySectionProps {
   messages: MessageHistoryItem[];

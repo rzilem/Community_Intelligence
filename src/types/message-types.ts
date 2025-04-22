@@ -5,6 +5,6 @@ export interface MessageHistoryItem {
   type: "email" | "sms";
   recipients: number;
   sentDate: string;
-  status: string;
+  status: "sent" | "scheduled" | "failed";
   openRate?: number;
 }

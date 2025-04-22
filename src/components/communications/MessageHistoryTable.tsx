@@ -19,16 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-
-export interface MessageHistoryItem {
-  id: string;
-  subject: string;
-  type: 'email' | 'sms';
-  recipients: number;
-  sentDate: string;
-  status: 'sent' | 'scheduled' | 'failed';
-  openRate?: number;
-}
+import { MessageHistoryItem } from '@/types/message-types';
 
 interface MessageHistoryTableProps {
   messages: MessageHistoryItem[];

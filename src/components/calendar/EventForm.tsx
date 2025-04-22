@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -20,7 +19,7 @@ interface EventFormProps {
     date: Date;
     startTime: string;
     endTime: string;
-    type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
+    type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event' | 'scheduled_message' | 'scheduled_campaign';
     amenityId: string;
     color: string;
     description?: string;
@@ -31,7 +30,7 @@ interface EventFormProps {
     date: Date;
     startTime: string;
     endTime: string;
-    type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
+    type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event' | 'scheduled_message' | 'scheduled_campaign';
     amenityId: string;
     color: string;
     description?: string;
@@ -162,6 +161,8 @@ export const EventForm: React.FC<EventFormProps> = ({
               <SelectItem value="hoa_meeting">HOA Meeting</SelectItem>
               <SelectItem value="maintenance">Maintenance</SelectItem>
               <SelectItem value="community_event">Community Event</SelectItem>
+              <SelectItem value="scheduled_message">Scheduled Message</SelectItem>
+              <SelectItem value="scheduled_campaign">Scheduled Campaign</SelectItem>
             </SelectContent>
           </Select>
         </div>
