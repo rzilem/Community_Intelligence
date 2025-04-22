@@ -1,120 +1,97 @@
 import React from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
-import ForumPage from '../pages/forum/ForumPage';
-import { mainRoutes } from './mainRoutes';
-import { communityManagementRoutes } from './communityManagementRoutes';
-import { accountingRoutes } from './accountingRoutes';
-import { communicationsRoutes } from './communicationsRoutes';
-import { leadManagementRoutes } from './leadManagementRoutes';
-import { operationsRoutes } from './operationsRoutes';
-import { recordsReportsRoutes } from './recordsReportsRoutes';
-import { resaleManagementRoutes } from './resaleManagementRoutes';
-import { systemRoutes } from './systemRoutes';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import HomeownerListPage from '@/pages/homeowners/HomeownerListPage';
+import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
+import ClientPortal from '@/pages/ClientPortal';
 import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
-import { resalePortalRoutes } from './resalePortalRoutes';
+import HomeownerPortalPage from '@/pages/portal/HomeownerPortalPage';
+import AssociationListPage from '@/pages/associations/AssociationListPage';
+import AssociationDetailPage from '@/pages/associations/AssociationDetailPage';
+import SystemSettingsPage from '@/pages/system/SystemSettingsPage';
+import UserManagementPage from '@/pages/system/UserManagementPage';
+import RoleManagementPage from '@/pages/system/RoleManagementPage';
+import AuditLogPage from '@/pages/system/AuditLogPage';
+import Dashboard from '@/pages/Dashboard';
+import Auth from '@/pages/Auth';
+import RequireAuth from '@/components/auth/RequireAuth';
+import { useAuth } from '@/contexts/auth';
+import ResetPassword from '@/pages/auth/ResetPassword';
+import { ResalePortalRoutes } from './resalePortalRoutes';
+import { MaintenanceRequestRoutes } from './maintenanceRequestRoutes';
+import { CommunicationRoutes } from './communicationRoutes';
+import { DirectoryRoutes } from './directoryRoutes';
+import { DocumentRoutes } from './documentRoutes';
+import { CalendarRoutes } from './calendarRoutes';
+import { TaskRoutes } from './taskRoutes';
+import { VendorRoutes } from './vendorRoutes';
+import { FinancialRoutes } from './financialRoutes';
+import { ResalePortalPublicRoutes } from './resalePortalPublicRoutes';
+import { FormRoutes } from './formRoutes';
 
 export const AppRouter = () => {
-  const location = useLocation();
-  
-  React.useEffect(() => {
-    console.log('Route changed:', location.pathname);
-  }, [location]);
-
   return (
     <Routes>
-      {/* Main routes */}
-      {mainRoutes.map((route, index) => (
-        <Route 
-          key={`main-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      <Route path="/" element={<Navigate to="/homeowners" replace />} />
+      <Route path="/homeowners" element={<HomeownerListPage />} />
+      <Route path="/homeowners/:id" element={<HomeownerDetailPage />} />
+      <Route path="/portal/homeowner" element={<HomeownerPortalPage />} />
       
-      {/* Add Forum Route */}
-      <Route path="/forum" element={<ForumPage />} />
+      {/* Client Portal for proposals */}
+      <Route path="/proposals/:proposalId" element={<ClientPortal />} />
       
-      {/* Portal routes */}
+      {/* Include portal routes */}
       {portalRoutes}
-      
-      {/* Portal page routes */}
       {portalPageRoutes}
       
-      {/* Resale Portal routes */}
-      {resalePortalRoutes}
+      {/* Resale Portal Public Routes (no authentication required) */}
+      {ResalePortalPublicRoutes}
+
+      {/* Resale Portal Routes (authentication required) */}
+      {ResalePortalRoutes}
+
+      {/* Main App Routes (authentication required) */}
+      <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+      <Route path="/associations" element={<RequireAuth><AssociationListPage /></RequireAuth>} />
+      <Route path="/associations/:id" element={<RequireAuth><AssociationDetailPage /></RequireAuth>} />
+      <Route path="/system/settings" element={<RequireAuth menuId="system" submenuId="settings" requiredAccess="full"><SystemSettingsPage /></RequireAuth>} />
+      <Route path="/system/users" element={<RequireAuth menuId="system" submenuId="users" requiredAccess="full"><UserManagementPage /></RequireAuth>} />
+      <Route path="/system/roles" element={<RequireAuth menuId="system" submenuId="roles" requiredAccess="full"><RoleManagementPage /></RequireAuth>} />
+      <Route path="/system/audit-log" element={<RequireAuth menuId="system" submenuId="audit-log" requiredAccess="full"><AuditLogPage /></RequireAuth>} />
+
+      {/* Include maintenance request routes */}
+      {MaintenanceRequestRoutes}
+
+      {/* Include communication routes */}
+      {CommunicationRoutes}
+
+      {/* Include directory routes */}
+      {DirectoryRoutes}
+
+      {/* Include document routes */}
+      {DocumentRoutes}
+
+      {/* Include calendar routes */}
+      {CalendarRoutes}
+
+      {/* Task Routes */}
+      {TaskRoutes}
+
+      {/* Vendor Routes */}
+      {VendorRoutes}
+
+      {/* Financial Routes */}
+      {FinancialRoutes}
+
+      {/* Form Routes */}
+      {FormRoutes}
+
+      {/* Authentication Routes (no authentication required) */}
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       
-      {/* Community Management routes */}
-      {communityManagementRoutes.map((route, index) => (
-        <Route 
-          key={`community-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Accounting routes */}
-      {accountingRoutes.map((route, index) => (
-        <Route 
-          key={`accounting-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Communications routes */}
-      {communicationsRoutes.map((route, index) => (
-        <Route 
-          key={`communications-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Lead Management routes */}
-      {leadManagementRoutes.map((route, index) => (
-        <Route 
-          key={`lead-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Operations routes */}
-      {operationsRoutes.map((route, index) => (
-        <Route 
-          key={`operations-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Records & Reports routes */}
-      {recordsReportsRoutes.map((route, index) => (
-        <Route 
-          key={`records-reports-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* Resale Management routes */}
-      {resaleManagementRoutes.map((route, index) => (
-        <Route 
-          key={`resale-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
-      
-      {/* System routes */}
-      {systemRoutes.map((route, index) => (
-        <Route 
-          key={`system-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {/* Catch-all route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
