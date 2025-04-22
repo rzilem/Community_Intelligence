@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { FormField, FormTemplate } from '@/types/form-builder-types';
 import FormFieldEditor from './FormFieldEditor';
 import FormFieldsList from './FormFieldsList';
+import FormTemplateFieldsManager from './FormTemplateFieldsManager';
 import { FormAssociationSelect } from './FormAssociationSelect';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,27 +75,44 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
         return;
       }
 
+      // Ensure fields JSON is always parsed to FormField[]
       let parsedFields: FormField[] = [];
       try {
-        if (typeof data.fields === 'string') {
+        if (
+          typeof data.fields === "string"
+        ) {
           parsedFields = JSON.parse(data.fields);
-        } else if (Array.isArray(data.fields)) {
-          parsedFields = data.fields;
-        } else {
-          console.warn('Unexpected fields format:', data.fields);
-          parsedFields = [];
+        } else if (
+          Array.isArray(data.fields) &&
+          data.fields.length > 0 &&
+          typeof data.fields[0] === "object"
+        ) {
+          parsedFields = data.fields as FormField[];
         }
       } catch (e) {
-        console.error('Error parsing fields:', e);
+        console.error("Error parsing fields:", e);
         parsedFields = [];
       }
 
-      const formTemplate: FormTemplate = {
+      // Fix for possible metadata type issue
+      let metadata: Record<string, any> | undefined = undefined;
+      try {
+        if (data.metadata && typeof data.metadata === "string") {
+          metadata = JSON.parse(data.metadata);
+        } else if (data.metadata && typeof data.metadata === "object") {
+          metadata = data.metadata;
+        }
+      } catch (e) {
+        metadata = undefined;
+      }
+
+      // Compose template with correct types
+      setTemplate((prev) => ({
+        ...prev,
         ...data,
-        fields: parsedFields
-      };
-      
-      setTemplate(formTemplate);
+        fields: parsedFields,
+        metadata: metadata || {},
+      }));
     };
 
     fetchTemplate();
@@ -264,8 +282,10 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
             <CardDescription>Drag and drop to reorder, edit, or delete fields.</CardDescription>
           </CardHeader>
           <CardContent>
-            <FormFieldsList
+            {/* Refactored field manager */}
+            <FormTemplateFieldsManager 
               fields={template.fields}
+              onReorder={handleReorder}
               selectedFieldId={selectedFieldId}
               onSelectField={setSelectedFieldId}
               onDeleteField={handleDeleteField}
@@ -274,7 +294,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
           </CardContent>
         </Card>
       </div>
-
+      {/* Sidebar */}
       <div className="space-y-4">
         {selectedFieldId && (
           <Card>
