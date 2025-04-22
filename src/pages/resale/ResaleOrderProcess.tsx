@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ResaleOrderSteps } from '@/components/resale/order-process/ResaleOrderSteps';
@@ -8,6 +9,7 @@ import { FileText, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { orderTypes } from '@/components/resale/order-process/types/resale-order-types';
 import { toast } from 'sonner';
+import { useResaleOrderForm } from '@/hooks/resale/useResaleOrderForm';
 
 const ResaleOrderProcess = () => {
   const navigate = useNavigate();
@@ -17,54 +19,19 @@ const ResaleOrderProcess = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [formData, setFormData] = useState({
-    propertyInfo: {
-      address: '',
-      unit: '',
-      city: '',
-      state: '',
-      zip: '',
-      community: '',
-      propertyType: 'condo',
-      propertyId: null as string | null,
-      associationId: null as string | null
-    },
-    contactInfo: {
-      role: 'title-company',
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-    },
-    orderDetails: {
-      rushOption: 'standard',
-      closingDate: '',
-      additionalNotes: '',
-    },
-    payment: {
-      cardName: '',
-      cardNumber: '',
-      expiration: '',
-      cvv: '',
-      billingZip: '',
-    }
-  });
+  const { form, onSubmit } = useResaleOrderForm();
 
   const handlePropertySelect = (property: Property | null) => {
     if (property) {
-      setFormData(prev => ({
-        ...prev,
-        propertyInfo: {
-          ...prev.propertyInfo,
-          address: property.address,
-          unit: property.unit_number || '',
-          city: property.city || '',
-          state: property.state || '',
-          zip: property.zip || '',
-          propertyId: property.id,
-          associationId: property.association_id
-        }
-      }));
+      form.setValue('propertyInfo', {
+        address: property.address,
+        unit: property.unit_number || '',
+        city: property.city || '',
+        state: property.state || '',
+        zip: property.zip || '',
+        propertyId: property.id,
+        associationId: property.association_id,
+      });
     } else {
       toast.error("Please select a valid property from the database.");
     }
@@ -79,7 +46,7 @@ const ResaleOrderProcess = () => {
   };
 
   const handleNext = () => {
-    if (currentStep === 1 && !formData.propertyInfo.propertyId) {
+    if (currentStep === 1 && !form.getValues('propertyInfo.propertyId')) {
       toast.error("Please select a valid property from the database");
       return;
     }
@@ -91,12 +58,8 @@ const ResaleOrderProcess = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    
-    setTimeout(() => {
-      toast.success("Order Submitted Successfully");
-      setIsSubmitting(false);
-      navigate('/resale-portal/my-orders');
-    }, 2000);
+    await onSubmit();
+    setIsSubmitting(false);
   };
 
   return (
@@ -116,8 +79,6 @@ const ResaleOrderProcess = () => {
         <div className="lg:col-span-2">
           <ResaleOrderSteps 
             currentStep={currentStep}
-            formData={formData}
-            setFormData={setFormData}
             onPropertySelect={handlePropertySelect}
             onBack={handleBack}
             onNext={handleNext}
@@ -129,7 +90,7 @@ const ResaleOrderProcess = () => {
         <div className="lg:col-span-1">
           <ResaleOrderSummary 
             orderType={orderType}
-            formData={formData}
+            formData={form.getValues()}
           />
         </div>
       </div>

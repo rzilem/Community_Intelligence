@@ -8,8 +8,7 @@ import { ContactStep } from './steps/ContactStep';
 import { OrderDetailsStep } from './steps/OrderDetailsStep';
 import { PaymentStep } from './steps/PaymentStep';
 import { Property } from '@/types/property-types';
-import { useResaleOrderForm } from '@/hooks/resale/useResaleOrderForm';
-import { UseFormReturn } from 'react-hook-form';
+import { useResaleOrderForm, ResaleOrderFormData } from '@/hooks/resale/useResaleOrderForm';
 
 interface ResaleOrderStepsProps {
   currentStep: number;
@@ -28,10 +27,11 @@ export const ResaleOrderSteps = ({
   onSubmit,
   isSubmitting
 }: ResaleOrderStepsProps) => {
-  const { form, isSubmitting: formSubmitting } = useResaleOrderForm();
+  const { form } = useResaleOrderForm();
   
   const handleNextClick = async () => {
-    const isValid = await form.trigger(getStepFields(currentStep));
+    const stepFields = getStepFields(currentStep);
+    const isValid = await form.trigger(stepFields);
     if (isValid) {
       onNext();
     }
@@ -83,7 +83,7 @@ export const ResaleOrderSteps = ({
         {currentStep < 4 ? (
           <Button 
             onClick={handleNextClick}
-            disabled={isSubmitting || formSubmitting}
+            disabled={isSubmitting}
           >
             Next
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -91,9 +91,9 @@ export const ResaleOrderSteps = ({
         ) : (
           <Button 
             onClick={onSubmit}
-            disabled={isSubmitting || formSubmitting}
+            disabled={isSubmitting}
           >
-            {isSubmitting || formSubmitting ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
@@ -111,7 +111,7 @@ export const ResaleOrderSteps = ({
   );
 };
 
-function getStepFields(step: number): Array<keyof ResaleOrderFormData> {
+function getStepFields(step: number): (keyof ResaleOrderFormData)[] {
   switch (step) {
     case 1:
       return ['propertyInfo'];

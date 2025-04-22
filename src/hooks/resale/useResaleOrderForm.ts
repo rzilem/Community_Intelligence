@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
-const resaleOrderSchema = z.object({
+// Updated zod schema to match the form structure
+export const resaleOrderSchema = z.object({
   propertyInfo: z.object({
     propertyId: z.string().min(1, "Please select a property"),
     associationId: z.string().min(1, "Association ID is required"),
