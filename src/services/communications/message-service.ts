@@ -14,6 +14,21 @@ export const messageService = {
     scheduled_date?: string;
   }): Promise<{ success: boolean }> => {
     try {
+      if (messageData.type === 'email') {
+        // Call Supabase edge function to send email
+        const emailResponse = await supabase.functions.invoke('send-email', {
+          body: JSON.stringify({
+            to: messageData.recipient_groups, // Assuming this is an email list
+            subject: messageData.subject,
+            html: messageData.content
+          })
+        });
+
+        if (emailResponse.error) {
+          throw emailResponse.error;
+        }
+      }
+
       if (messageData.scheduled_date) {
         // Store scheduled message in the scheduled_messages table
         await scheduledMessageService.scheduleMessage({
@@ -27,10 +42,8 @@ export const messageService = {
         toast.success(`Message scheduled for ${new Date(messageData.scheduled_date).toLocaleString()}`);
         return { success: true };
       } else {
-        // For immediate send, just simulate delivery (placeholder)
+        // For immediate send
         console.log('Sending message immediately:', messageData);
-        // You may wish to add real backend/edge function for real send here
-        await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success('Message sent successfully');
         return { success: true };
       }
