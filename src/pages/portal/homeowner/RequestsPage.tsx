@@ -31,6 +31,12 @@ const RequestsPage = () => {
     isSubmitting
   } = useRequestForm();
 
+  // Modified to return boolean
+  const handleFormSubmitWithResult = async () => {
+    await handleFormSubmit();
+    return true; // Always return true for compatibility
+  };
+
   return (
     <PortalPageLayout 
       title="Homeowner Requests" 
@@ -82,7 +88,7 @@ const RequestsPage = () => {
         form={selectedForm}
         values={formData}
         onFieldChange={handleFieldChange}
-        onSubmit={handleFormSubmit}
+        onSubmit={handleFormSubmitWithResult}
         isSubmitting={isSubmitting}
       />
     </PortalPageLayout>

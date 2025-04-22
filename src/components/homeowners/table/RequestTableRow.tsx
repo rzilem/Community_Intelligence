@@ -6,20 +6,30 @@ import { useResidentFromEmail } from '@/hooks/homeowners/useResidentFromEmail';
 import { RequestStatusBadge } from './RequestStatusBadge';
 import { RequestActions } from './RequestActions';
 
-interface RequestTableRowProps {
+export interface RequestTableRowProps {
   request: HomeownerRequest;
   columns: HomeownerRequestColumn[];
-  visibleColumnIds: string[];
-  onViewRequest: (request: HomeownerRequest) => void;
-  onEditRequest: (request: HomeownerRequest) => void;
+  visibleColumnIds?: string[];
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
+  onViewRequest?: (request: HomeownerRequest) => void;
+  onEditRequest?: (request: HomeownerRequest) => void;
+  onViewDetails?: () => void;
+  onViewHistory?: () => void;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
-const RequestTableRow: React.FC<RequestTableRowProps> = ({
+export const RequestTableRow: React.FC<RequestTableRowProps> = ({
   request,
   columns,
   visibleColumnIds,
+  isSelected,
+  onToggleSelect,
   onViewRequest,
   onEditRequest,
+  onViewDetails,
+  onViewHistory,
+  onStatusChange,
 }) => {
   const senderEmail = extractPrimarySenderEmail(request);
   
@@ -67,7 +77,7 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
         association_id: property.association_id
       });
     }
-  }, [resident, property, request]);
+  }, [resident, property, request, onEditRequest]);
 
   const renderCell = (columnId: string) => {
     switch (columnId) {
@@ -113,24 +123,72 @@ const RequestTableRow: React.FC<RequestTableRowProps> = ({
     }
   };
 
-  return (
-    <tr className="hover:bg-muted/50">
-      {visibleColumnIds.map((columnId) => (
-        <td 
-          key={columnId} 
-          className="py-2 px-4 last:border-r-0"
-        >
-          {renderCell(columnId)}
+  // Support both the queue view and table view formats
+  if (visibleColumnIds) {
+    // Table view format
+    return (
+      <tr className="hover:bg-muted/50">
+        {visibleColumnIds.map((columnId) => (
+          <td 
+            key={columnId} 
+            className="py-2 px-4 last:border-r-0"
+          >
+            {renderCell(columnId)}
+          </td>
+        ))}
+        <td className="py-2 px-4 text-center border-l border-border/20">
+          <RequestActions 
+            request={request}
+            onViewRequest={onViewRequest ? () => onViewRequest(request) : undefined}
+            onEditRequest={onEditRequest ? () => onEditRequest(request) : undefined}
+            onViewDetails={onViewDetails}
+            onViewHistory={onViewHistory}
+            onStatusChange={onStatusChange}
+          />
         </td>
-      ))}
-      <td className="py-2 px-4 text-center border-l border-border/20">
+      </tr>
+    );
+  }
+  
+  // Queue view format
+  return (
+    <div className={`p-4 flex items-center justify-between border-b hover:bg-muted/50 ${isSelected ? 'bg-muted/50' : ''}`}>
+      <div className="flex items-start gap-3">
+        {onToggleSelect && (
+          <input 
+            type="checkbox" 
+            className="mt-1" 
+            checked={isSelected} 
+            onChange={onToggleSelect}
+          />
+        )}
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="font-medium">{request.title || 'Untitled Request'}</div>
+            <RequestStatusBadge status={request.status} type="status" />
+            <RequestStatusBadge status={request.priority} type="priority" />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>#{request.tracking_number || 'No tracking'}</span>
+            <span className="text-xs">•</span>
+            <span>{formatRelativeDate(request.created_at)}</span>
+            <span className="text-xs">•</span>
+            <span>{resident?.name || 'Unassigned'}</span>
+          </div>
+          <div className="text-sm text-muted-foreground max-w-[600px] line-clamp-1">
+            {getDescription()}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
         <RequestActions 
           request={request}
-          onViewRequest={onViewRequest}
-          onEditRequest={onEditRequest}
+          onViewDetails={onViewDetails}
+          onViewHistory={onViewHistory} 
+          onStatusChange={onStatusChange}
         />
-      </td>
-    </tr>
+      </div>
+    </div>
   );
 };
 

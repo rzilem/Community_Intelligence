@@ -6,7 +6,7 @@ import { Filter, MoreHorizontal } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { EmptyRequestsRow } from '@/components/homeowners/table/EmptyRequestsRow';
-import RequestTableRow from '@/components/homeowners/table/RequestTableRow';
+import { RequestTableRow } from '@/components/homeowners/table/RequestTableRow';
 import { RequestsCardHeader } from '@/components/homeowners/queue/RequestsCardHeader';
 import { RequestsStatusFooter } from '@/components/homeowners/queue/RequestsStatusFooter';
 import HomeownerRequestBulkActions from '@/components/homeowners/HomeownerRequestBulkActions';

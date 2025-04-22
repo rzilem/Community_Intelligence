@@ -149,6 +149,7 @@ const HomeownerRequestsQueue = () => {
       <HomeownerRequestFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
+        setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
         priorityFilter={priorityFilter}
@@ -193,6 +194,7 @@ const HomeownerRequestsQueue = () => {
             selectedRequestIds={selectedRequestIds}
             setSelectedRequestIds={setSelectedRequestIds}
             toggleSelectRequest={handleToggleRequestSelection}
+            onToggleColumn={toggleColumn}
           />
         </TabsContent>
         

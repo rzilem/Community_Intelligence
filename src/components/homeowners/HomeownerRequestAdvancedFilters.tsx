@@ -2,24 +2,22 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
-interface HomeownerRequestAdvancedFiltersProps {
-  assignedTo: string;
-  setAssignedTo: React.Dispatch<React.SetStateAction<string>>;
-  dateRange: {
+export interface HomeownerRequestAdvancedFiltersProps {
+  assigneeFilter?: string;
+  onAssigneeChange?: React.Dispatch<React.SetStateAction<string>>;
+  assignedToFilter?: string;
+  onAssignedToChange?: React.Dispatch<React.SetStateAction<string>>;
+  dateRangeFilter: {
     startDate: Date | null;
     endDate: Date | null;
   };
-  setDateRange: React.Dispatch<React.SetStateAction<{
+  onDateRangeChange: React.Dispatch<React.SetStateAction<{
     startDate: Date | null;
     endDate: Date | null;
   }>>;
@@ -27,95 +25,113 @@ interface HomeownerRequestAdvancedFiltersProps {
 }
 
 const HomeownerRequestAdvancedFilters: React.FC<HomeownerRequestAdvancedFiltersProps> = ({
-  assignedTo,
-  setAssignedTo,
-  dateRange,
-  setDateRange,
+  assigneeFilter,
+  onAssigneeChange,
+  assignedToFilter,
+  onAssignedToChange,
+  dateRangeFilter,
+  onDateRangeChange,
   onClearFilters
 }) => {
+  const handleAssigneeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (onAssigneeChange) onAssigneeChange(value);
+    if (onAssignedToChange) onAssignedToChange(value);
+  };
+
+  const handleStartDateSelect = (date: Date | undefined) => {
+    onDateRangeChange(prev => ({
+      ...prev,
+      startDate: date || null
+    }));
+  };
+
+  const handleEndDateSelect = (date: Date | undefined) => {
+    onDateRangeChange(prev => ({
+      ...prev,
+      endDate: date || null
+    }));
+  };
+
+  const assigneeValue = assigneeFilter !== undefined ? assigneeFilter : assignedToFilter;
+
   return (
-    <div className="bg-muted/30 p-4 rounded-lg mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <label htmlFor="assigned-to" className="text-sm font-medium mb-1 block">
-          Assigned To
-        </label>
-        <Input 
-          id="assigned-to"
-          placeholder="Search by assignee..." 
-          value={assignedTo}
-          onChange={e => setAssignedTo(e.target.value)}
-          className="w-full"
-        />
-      </div>
-      
-      <div>
-        <label className="text-sm font-medium mb-1 block">
-          Created Date Range
-        </label>
-        <div className="flex gap-2">
+    <div className="p-4 bg-muted/40 rounded-md mb-4 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="assignee">Assigned To</Label>
+          <Input
+            id="assignee"
+            placeholder="Filter by assignee..."
+            value={assigneeValue || ''}
+            onChange={handleAssigneeChange}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label>Start Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dateRange.startDate && "text-muted-foreground"
-                )}
+                className="w-full justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.startDate ? (
-                  format(dateRange.startDate, "PPP")
+                {dateRangeFilter.startDate ? (
+                  format(dateRangeFilter.startDate, 'PPP')
                 ) : (
-                  <span>Start date</span>
+                  <span>Pick a start date</span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={dateRange.startDate || undefined}
-                onSelect={(date) => setDateRange({ ...dateRange, startDate: date })}
+                selected={dateRangeFilter.startDate || undefined}
+                onSelect={handleStartDateSelect}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-          
+        </div>
+        
+        <div className="space-y-2">
+          <Label>End Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !dateRange.endDate && "text-muted-foreground"
-                )}
+                className="w-full justify-start text-left font-normal"
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateRange.endDate ? (
-                  format(dateRange.endDate, "PPP")
+                {dateRangeFilter.endDate ? (
+                  format(dateRangeFilter.endDate, 'PPP')
                 ) : (
-                  <span>End date</span>
+                  <span>Pick an end date</span>
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
-                selected={dateRange.endDate || undefined}
-                onSelect={(date) => setDateRange({ ...dateRange, endDate: date })}
+                selected={dateRangeFilter.endDate || undefined}
+                onSelect={handleEndDateSelect}
                 initialFocus
+                disabled={(date) => 
+                  dateRangeFilter.startDate ? date < dateRangeFilter.startDate : false
+                }
               />
             </PopoverContent>
           </Popover>
         </div>
       </div>
       
-      <div className="flex items-end">
+      <div className="flex justify-end">
         <Button 
-          variant="outline" 
-          onClick={onClearFilters} 
-          className="w-full md:w-auto"
+          variant="ghost" 
+          onClick={onClearFilters}
         >
-          Clear Filters
+          Clear All Filters
         </Button>
       </div>
     </div>

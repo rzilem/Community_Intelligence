@@ -9,11 +9,19 @@ export const useRealTimeNotifications = () => {
 
   // Add a notification safely
   const addNotification = (notification: any) => {
-    // Check if the context has addNotification method
-    if (notificationContext && typeof notificationContext.addNotification === 'function') {
-      notificationContext.addNotification(notification);
+    // Check if the context is available and has notifications
+    if (notificationContext) {
+      // Instead of using addNotification, we can update the existing notifications
+      console.log('Adding notification:', notification);
+      
+      // If the notification context has a dispatch method, use it
+      if (typeof notificationContext.setNotifications === 'function') {
+        notificationContext.setNotifications((prev: any[]) => [...prev, notification]);
+      } else {
+        console.warn('Notification context missing setNotifications method');
+      }
     } else {
-      console.warn('Notification context not available or missing addNotification method');
+      console.warn('Notification context not available');
     }
   };
 
@@ -28,8 +36,13 @@ export const useRealTimeNotifications = () => {
         table: 'notifications' 
       }, (payload) => {
         console.log('New notification received:', payload);
-        // Call the safe addNotification function
-        addNotification(payload.new);
+        // Store the notification locally
+        setNotifications(prev => [...prev, payload.new]);
+        
+        // Add to global context if available
+        if (payload.new) {
+          addNotification(payload.new);
+        }
       })
       .subscribe();
 

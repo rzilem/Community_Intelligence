@@ -1,144 +1,111 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
+import { 
+  HomeownerRequestStatus, 
+  HomeownerRequestPriority, 
+  HomeownerRequestType 
+} from '@/types/homeowner-request-types';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface HomeownerRequestFiltersProps {
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  statusFilter?: HomeownerRequestStatus | 'all';
-  setStatusFilter?: (status: HomeownerRequestStatus | 'all') => void;
-  priorityFilter?: HomeownerRequestPriority | 'all';
-  setPriorityFilter?: (priority: HomeownerRequestPriority | 'all') => void;
-  typeFilter?: HomeownerRequestType | 'all';
-  setTypeFilter?: (type: HomeownerRequestType | 'all') => void;
-  
-  // Alternative prop names
-  onSearchChange?: (term: string) => void;
-  onStatusChange?: (status: HomeownerRequestStatus | 'all') => void;
-  onPriorityChange?: (priority: HomeownerRequestPriority | 'all') => void;
-  onTypeChange?: (type: HomeownerRequestType | 'all') => void;
-  
-  priority?: HomeownerRequestPriority | 'all' | '';
-  setPriority?: (priority: HomeownerRequestPriority | 'all' | '') => void;
-  type?: HomeownerRequestType | 'all' | '';
-  setType?: (type: HomeownerRequestType | 'all' | '') => void;
+  onSearchChange: React.Dispatch<React.SetStateAction<string>>;
+  setSearchTerm?: React.Dispatch<React.SetStateAction<string>>;
+  statusFilter: HomeownerRequestStatus | 'all';
+  onStatusChange: React.Dispatch<React.SetStateAction<HomeownerRequestStatus | 'all'>>;
+  priorityFilter: HomeownerRequestPriority | 'all';
+  onPriorityChange: React.Dispatch<React.SetStateAction<HomeownerRequestPriority | 'all'>>;
+  typeFilter: HomeownerRequestType | 'all';
+  onTypeChange: React.Dispatch<React.SetStateAction<HomeownerRequestType | 'all'>>;
 }
 
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   searchTerm,
+  onSearchChange,
   setSearchTerm,
   statusFilter,
-  setStatusFilter,
-  priorityFilter,
-  setPriorityFilter,
-  typeFilter,
-  setTypeFilter,
-  onSearchChange,
   onStatusChange,
+  priorityFilter,
   onPriorityChange,
-  onTypeChange,
-  priority,
-  setPriority,
-  type,
-  setType
+  typeFilter,
+  onTypeChange
 }) => {
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Ensure we use either onSearchChange or setSearchTerm for compatibility
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (setSearchTerm) setSearchTerm(value);
     if (onSearchChange) onSearchChange(value);
-  };
-  
-  const handleStatusChange = (value: string) => {
-    if (setStatusFilter) setStatusFilter(value as HomeownerRequestStatus | 'all');
-    if (onStatusChange) onStatusChange(value as HomeownerRequestStatus | 'all');
-  };
-  
-  const handlePriorityChange = (value: string) => {
-    if (setPriorityFilter) setPriorityFilter(value as HomeownerRequestPriority | 'all');
-    if (setPriority) setPriority(value as HomeownerRequestPriority | 'all' | '');
-    if (onPriorityChange) onPriorityChange(value as HomeownerRequestPriority | 'all');
-  };
-  
-  const handleTypeChange = (value: string) => {
-    if (setTypeFilter) setTypeFilter(value as HomeownerRequestType | 'all');
-    if (setType) setType(value as HomeownerRequestType | 'all' | '');
-    if (onTypeChange) onTypeChange(value as HomeownerRequestType | 'all');
+    if (setSearchTerm) setSearchTerm(value);
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-2 mb-4">
-      <div className="flex-1">
+    <div className="flex flex-col md:flex-row gap-3 mb-4">
+      <div className="w-full md:w-2/5">
         <Input
           placeholder="Search requests..."
           value={searchTerm}
-          onChange={handleSearch}
+          onChange={handleSearchChange}
           className="w-full"
         />
       </div>
       
-      {(setStatusFilter || onStatusChange) && (
-        <div className="w-full md:w-40">
-          <Select 
-            value={statusFilter || 'all'} 
-            onValueChange={handleStatusChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-3/5">
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => onStatusChange(value as HomeownerRequestStatus | 'all')}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="open">Open</SelectItem>
               <SelectItem value="in-progress">In Progress</SelectItem>
               <SelectItem value="resolved">Resolved</SelectItem>
               <SelectItem value="closed">Closed</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      
-      {(setPriorityFilter || setPriority || onPriorityChange) && (
-        <div className="w-full md:w-40">
-          <Select 
-            value={(priorityFilter || priority || 'all')} 
-            onValueChange={handlePriorityChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Priority" />
-            </SelectTrigger>
-            <SelectContent>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        
+        <Select
+          value={priorityFilter}
+          onValueChange={(value) => onPriorityChange(value as HomeownerRequestPriority | 'all')}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
               <SelectItem value="all">All Priorities</SelectItem>
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
               <SelectItem value="urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      
-      {(setTypeFilter || setType || onTypeChange) && (
-        <div className="w-full md:w-40">
-          <Select 
-            value={(typeFilter || type || 'all')} 
-            onValueChange={handleTypeChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Type" />
-            </SelectTrigger>
-            <SelectContent>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        
+        <Select
+          value={typeFilter}
+          onValueChange={(value) => onTypeChange(value as HomeownerRequestType | 'all')}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="maintenance">Maintenance</SelectItem>
               <SelectItem value="compliance">Compliance</SelectItem>
               <SelectItem value="billing">Billing</SelectItem>
               <SelectItem value="general">General</SelectItem>
               <SelectItem value="amenity">Amenity</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };
