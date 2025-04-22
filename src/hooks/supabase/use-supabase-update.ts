@@ -7,6 +7,7 @@ export function useSupabaseUpdate<T = any>(
   table: KnownTables,
   options: {
     onSuccess?: (data: T) => void;
+    onError?: (error: any) => void;
     showSuccessToast?: boolean;
     showErrorToast?: boolean;
     invalidateQueries?: string[] | string[][];
@@ -16,6 +17,7 @@ export function useSupabaseUpdate<T = any>(
   const queryClient = useQueryClient();
   const { 
     onSuccess, 
+    onError,
     showSuccessToast: shouldShowSuccessToast = true,
     showErrorToast: shouldShowErrorToast = true,
     invalidateQueries = [[table]],
@@ -76,6 +78,11 @@ export function useSupabaseUpdate<T = any>(
       // Call custom onSuccess handler if provided
       if (onSuccess) {
         onSuccess(data);
+      }
+    },
+    onError: (error) => {
+      if (onError) {
+        onError(error);
       }
     }
   });

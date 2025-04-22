@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { XCircle, GripVertical } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
@@ -5,8 +6,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { arrayMove } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 import { FormField, FormTemplate } from '@/types/form-builder-types';
-import { FormFieldEditor } from './FormFieldEditor';
-import { FormFieldsList } from './FormFieldsList';
+import FormFieldEditor from './FormFieldEditor';
+import FormFieldsList from './FormFieldsList';
 import { FormAssociationSelect } from './FormAssociationSelect';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +17,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { FormWorkflowIntegration } from './FormWorkflowIntegration';
+import FormWorkflowIntegration from './FormWorkflowIntegration';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FormTemplateEditorProps {
   formId: string;
@@ -274,7 +276,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
         <FormWorkflowIntegration formId={formId} />
 
         <div className="space-y-2">
-          <Button variant="primary" onClick={handleSave} disabled={isSaving} className="w-full">
+          <Button variant="default" onClick={handleSave} disabled={isSaving} className="w-full">
             {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
           <Button variant="destructive" onClick={handleDelete} className="w-full">
