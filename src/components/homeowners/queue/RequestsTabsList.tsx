@@ -1,26 +1,44 @@
 
 import React from 'react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HomeownerRequestStatus } from '@/types/homeowner-request-types';
 
 interface RequestsTabsListProps {
-  activeTab: HomeownerRequestStatus | 'all' | 'active';
-  onTabChange: (value: string) => void;
+  requestCounts: {
+    all: number;
+    open: number;
+    inProgress: number;
+    closed: number;
+    rejected: number;
+  };
+  activeTab: string;
+  onTabChange?: (value: string) => void;
 }
 
-const RequestsTabsList: React.FC<RequestsTabsListProps> = ({ activeTab, onTabChange }) => {
+const RequestsTabsList: React.FC<RequestsTabsListProps> = ({ 
+  requestCounts, 
+  activeTab,
+  onTabChange 
+}) => {
   return (
     <div className="flex justify-between mb-6">
-      <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList>
-          <TabsTrigger value="all">All Requests</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="open">Open</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <TabsList>
+        <TabsTrigger value="all">
+          All Requests ({requestCounts.all || 0})
+        </TabsTrigger>
+        <TabsTrigger value="open">
+          Open ({requestCounts.open || 0})
+        </TabsTrigger>
+        <TabsTrigger value="in-progress">
+          In Progress ({requestCounts.inProgress || 0})
+        </TabsTrigger>
+        <TabsTrigger value="resolved">
+          Resolved ({requestCounts.closed || 0})
+        </TabsTrigger>
+        <TabsTrigger value="closed">
+          Closed ({requestCounts.closed || 0})
+        </TabsTrigger>
+      </TabsList>
     </div>
   );
 };

@@ -33,7 +33,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   
   const {
     form,
-    isPending,
+    isSubmitting,
     comments,
     loadingComments,
     fetchComments,
@@ -120,7 +120,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
                 <RequestFormFields form={form} />
                 <RequestFormActions 
                   trackingNumber={request.tracking_number}
-                  isPending={isPending}
+                  isPending={isSubmitting}
                   onCancel={onCancel}
                 />
               </form>

@@ -1,4 +1,3 @@
-
 export const getDefaultColorForType = (eventType: string): string => {
   switch (eventType) {
     case 'amenity_booking':
@@ -34,4 +33,50 @@ export const formatTimeRange = (start: string, end: string): string => {
   const endTime = new Date(end);
   
   return `${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+
+export const createCalendarEvent = (data: any) => {
+  const {
+    title,
+    start_time,
+    end_time,
+    event_type,
+    description,
+    location,
+    association_id,
+    visibility
+  } = data;
+  
+  // These would typically be API calls to create the event
+  console.log('Creating calendar event:', data);
+  
+  return {
+    id: `event-${Math.random().toString(36).substr(2, 9)}`,
+    title,
+    start_time,
+    end_time,
+    event_type: event_type || 'general',
+    description,
+    location,
+    hoa_id: association_id,
+    visibility: visibility || 'private',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+};
+
+export const connectFormToCalendar = (formData: any, eventType: string = 'general') => {
+  // This function would handle the logic to create a calendar event from form data
+  const calendarEventData = {
+    title: formData.title || 'Untitled Event',
+    start_time: formData.start_date || new Date().toISOString(),
+    end_time: formData.end_date || new Date(Date.now() + 3600000).toISOString(),
+    event_type: eventType,
+    description: formData.description || '',
+    location: formData.location || '',
+    association_id: formData.association_id,
+    visibility: formData.visibility || 'private'
+  };
+  
+  return createCalendarEvent(calendarEventData);
 };
