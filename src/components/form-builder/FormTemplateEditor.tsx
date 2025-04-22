@@ -1,24 +1,18 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { XCircle, GripVertical } from 'lucide-react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { XCircle } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
 import { FormField, FormTemplate } from '@/types/form-builder-types';
-import FormFieldEditor from './FormFieldEditor';
-import FormFieldsList from './FormFieldsList';
 import FormTemplateFieldsManager from './FormTemplateFieldsManager';
-import { FormAssociationSelect } from './FormAssociationSelect';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import FormWorkflowIntegration from './FormWorkflowIntegration';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import FormWorkflowIntegration from './FormWorkflowIntegration';
 import { supabase } from '@/integrations/supabase/client';
+// Extracted and refactored:
+import FormDetailsSection from './editor/FormDetailsSection';
+import FieldSettingsSidebar from './editor/FieldSettingsSidebar';
 
 interface FormTemplateEditorProps {
   formId: string;
@@ -35,7 +29,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
     updated_at: '',
     is_public: false,
     is_global: false,
-    form_type: null
+    form_type: null,
   });
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,10 +39,10 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       toast.success('Form template updated successfully');
       onSave?.(template);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating form template:', error);
       toast.error('Failed to update form template');
-    }
+    },
   });
 
   const { mutate: deleteTemplate } = useSupabaseDelete('form_templates', {
@@ -56,10 +50,10 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
       toast.success('Form template deleted successfully');
       onCancel?.();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting form template:', error);
       toast.error('Failed to delete form template');
-    }
+    },
   });
 
   useEffect(() => {
@@ -75,38 +69,32 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
         return;
       }
 
-      // Ensure fields JSON is always parsed to FormField[]
+      // Parsing FormField[] as always
       let parsedFields: FormField[] = [];
       try {
-        if (
-          typeof data.fields === "string"
-        ) {
+        if (typeof data.fields === 'string') {
           parsedFields = JSON.parse(data.fields);
-        } else if (
-          Array.isArray(data.fields) &&
-          data.fields.length > 0 &&
-          typeof data.fields[0] === "object"
-        ) {
-          parsedFields = data.fields as FormField[];
+        } else if (Array.isArray(data.fields)) {
+          parsedFields = data.fields as unknown as FormField[];
         }
       } catch (e) {
-        console.error("Error parsing fields:", e);
+        console.error('Error parsing fields:', e);
         parsedFields = [];
       }
 
-      // Fix for possible metadata type issue
+      // Fix for metadata if needed
       let metadata: Record<string, any> | undefined = undefined;
       try {
-        if (data.metadata && typeof data.metadata === "string") {
+        if (data.metadata && typeof data.metadata === 'string') {
           metadata = JSON.parse(data.metadata);
-        } else if (data.metadata && typeof data.metadata === "object") {
+        } else if (data.metadata && typeof data.metadata === 'object') {
           metadata = data.metadata;
         }
-      } catch (e) {
+      } catch {
         metadata = undefined;
       }
 
-      // Compose template with correct types
+      // Compose template with correct types and conversion
       setTemplate((prev) => ({
         ...prev,
         ...data,
@@ -193,126 +181,37 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
     });
   }, []);
 
-  const SortableItem = ({ field }: { field: FormField }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-    } = useSortable({ id: field.id });
-
-    const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-    };
-
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className="flex items-center justify-between p-2 rounded hover:bg-muted cursor-pointer"
-      >
-        <div className="flex items-center">
-          <GripVertical className="h-4 w-4 mr-2 opacity-50 cursor-grab" />
-          <span className="font-medium">{field.label}</span>
-          <span className="text-xs text-muted-foreground ml-2">
-            ({field.type})
-          </span>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Form Details</CardTitle>
-            <CardDescription>Edit the basic details of your form.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={template.name}
-                  onChange={handleTemplateDetailsChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="is_public">Public Form</Label>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_public"
-                    checked={template.is_public}
-                    onCheckedChange={handleIsPublicChange}
-                  />
-                  <span>Allow anyone to submit this form</span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={template.description || ''}
-                onChange={handleTemplateDetailsChange}
-              />
-            </div>
-            <FormAssociationSelect
-              formId={template.id}
-              isGlobal={template.is_global}
-              associations={[]}
-              onUpdate={() => {}}
-            />
-          </CardContent>
-        </Card>
+        {/* Form Details Section */}
+        <FormDetailsSection
+          template={template}
+          onTemplateDetailsChange={handleTemplateDetailsChange}
+          onIsPublicChange={handleIsPublicChange}
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Form Fields</CardTitle>
-            <CardDescription>Drag and drop to reorder, edit, or delete fields.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Refactored field manager */}
-            <FormTemplateFieldsManager 
-              fields={template.fields}
-              onReorder={handleReorder}
-              selectedFieldId={selectedFieldId}
-              onSelectField={setSelectedFieldId}
-              onDeleteField={handleDeleteField}
-              onAddField={handleAddField}
-            />
-          </CardContent>
-        </Card>
+        {/* Form Fields Section */}
+        <div className="space-y-4">
+          <FormTemplateFieldsManager
+            fields={template.fields}
+            onReorder={handleReorder}
+            selectedFieldId={selectedFieldId}
+            onSelectField={setSelectedFieldId}
+            onDeleteField={handleDeleteField}
+            onAddField={handleAddField}
+          />
+        </div>
       </div>
       {/* Sidebar */}
       <div className="space-y-4">
-        {selectedFieldId && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Field Settings</CardTitle>
-              <CardDescription>Customize the settings for the selected field.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {template.fields.find((field) => field.id === selectedFieldId) && (
-                <FormFieldEditor
-                  field={template.fields.find((field) => field.id === selectedFieldId) as FormField}
-                  onChange={handleFieldChange}
-                  onDelete={() => handleDeleteField(selectedFieldId)}
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
+        {/* Field Settings Sidebar component */}
+        <FieldSettingsSidebar
+          selectedFieldId={selectedFieldId}
+          template={template}
+          onFieldChange={handleFieldChange}
+          onDeleteField={handleDeleteField}
+        />
 
         <FormWorkflowIntegration formId={formId} />
 
