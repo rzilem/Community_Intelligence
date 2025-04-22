@@ -1,82 +1,221 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Search, Send, User, UserPlus, Calendar } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { DatePicker } from '@/components/ui/date-picker';
+import { MessageHistoryTable } from '@/components/communications/MessageHistoryTable';
+import { messageService } from '@/services/communications/message-service';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useSupabaseQuery } from '@/hooks/supabase';
+import { format } from 'date-fns';
 
-// Import the mock data
-import { mockHistoryData, mockTemplates } from './messaging/MessagingData';
-
-// Import component sections
-import ComposeForm from '@/components/communications/messaging/ComposeForm';
-import HistorySection from '@/components/communications/messaging/HistorySection';
-import TemplatesSection from '@/components/communications/messaging/TemplatesSection';
-
-const MessagingPage = () => {
+const MessagingPage: React.FC = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('compose');
-  const [searchHistory, setSearchHistory] = useState('');
-  const [searchTemplates, setSearchTemplates] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [messageData, setMessageData] = useState({
+    subject: '',
+    content: '',
+    type: 'email' as 'email' | 'sms',
+    scheduledFor: undefined as Date | undefined,
+    recipientGroups: [] as string[]
+  });
 
-  const handleViewMessage = (id: string) => {
-    console.log(`Viewing message ${id}`);
-    // Implementation for viewing message details
-  };
+  // Query for recipient groups (can be expanded based on your data model)
+  const { data: recipientGroups = [] } = useSupabaseQuery(
+    'recipient_groups',
+    {
+      select: 'id, name, group_type',
+      order: { column: 'name', ascending: true }
+    }
+  );
 
-  const handleResendMessage = (id: string) => {
-    console.log(`Resending message ${id}`);
-    // Implementation for resending a failed message
-  };
+  const handleSendMessage = async () => {
+    if (!messageData.subject.trim()) {
+      toast({
+        title: 'Subject Required',
+        description: 'Please enter a subject for your message.',
+        variant: 'destructive'
+      });
+      return;
+    }
 
-  const handleUseTemplate = (id: string) => {
-    console.log(`Using template ${id}`);
-    // Implementation for using a template
-    setActiveTab('compose');
-    // In a real app, we'd load the template content here
-    const template = mockTemplates.find(t => t.id === id);
-    if (template) {
-      console.log(`Loading template: ${template.title}`);
-      // This would be handled by ComposeForm now
+    if (!messageData.content.trim()) {
+      toast({
+        title: 'Content Required',
+        description: 'Please enter content for your message.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    if (messageData.recipientGroups.length === 0) {
+      toast({
+        title: 'Recipients Required',
+        description: 'Please select at least one recipient group.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await messageService.sendMessage({
+        subject: messageData.subject,
+        content: messageData.content,
+        association_id: 'default-association', // This would come from your app state
+        recipient_groups: messageData.recipientGroups,
+        type: messageData.type,
+        scheduled_for: messageData.scheduledFor ? messageData.scheduledFor.toISOString() : undefined
+      });
+
+      if (result.success) {
+        toast({
+          title: messageData.scheduledFor ? 'Message Scheduled' : 'Message Sent',
+          description: messageData.scheduledFor 
+            ? `Your message has been scheduled for ${format(messageData.scheduledFor, 'PPP')}` 
+            : 'Your message has been sent successfully.'
+        });
+
+        // Reset form
+        setMessageData({
+          subject: '',
+          content: '',
+          type: 'email',
+          scheduledFor: undefined,
+          recipientGroups: []
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: `Failed to send message: ${error.message}`,
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleTemplateAction = (action: string, id: string) => {
-    console.log(`${action} template ${id}`);
-    // Implementation for template actions
-  };
-
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="compose" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6 rounded-lg bg-muted">
-          <TabsTrigger value="compose" className="text-base">Compose Message</TabsTrigger>
-          <TabsTrigger value="history" className="text-base">Message History</TabsTrigger>
-          <TabsTrigger value="templates" className="text-base">Message Templates</TabsTrigger>
+    <div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-2 md:w-auto md:inline-flex">
+          <TabsTrigger value="compose">Compose</TabsTrigger>
+          <TabsTrigger value="history">Message History</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="compose" className="space-y-6">
-          <h2 className="text-2xl font-semibold">Compose Message</h2>
-          <ComposeForm 
-            onMessageSent={() => setActiveTab('history')}
-            onUseTemplate={() => setActiveTab('templates')}
-          />
+
+        <TabsContent value="compose" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>New Message</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Message Type</label>
+                    <Select 
+                      value={messageData.type}
+                      onValueChange={(value) => setMessageData({...messageData, type: value as 'email' | 'sms'})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select message type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="sms">SMS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Schedule (Optional)</label>
+                    <DatePicker 
+                      date={messageData.scheduledFor} 
+                      setDate={(date) => setMessageData({...messageData, scheduledFor: date})}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Subject</label>
+                  <Input 
+                    placeholder="Message subject"
+                    value={messageData.subject}
+                    onChange={(e) => setMessageData({...messageData, subject: e.target.value})}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Recipients</label>
+                  <Select 
+                    value={messageData.recipientGroups.length > 0 ? messageData.recipientGroups[0] : ''}
+                    onValueChange={(value) => setMessageData({...messageData, recipientGroups: [value]})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select recipient group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {recipientGroups.map((group: any) => (
+                        <SelectItem key={group.id} value={group.id}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="all-residents">All Residents</SelectItem>
+                      <SelectItem value="board-members">Board Members</SelectItem>
+                      <SelectItem value="homeowners">Homeowners</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Message Content</label>
+                  <Textarea 
+                    placeholder="Type your message here..."
+                    rows={10}
+                    value={messageData.content}
+                    onChange={(e) => setMessageData({...messageData, content: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  className="w-full md:w-auto" 
+                  onClick={handleSendMessage}
+                  disabled={loading}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {loading ? 'Sending...' : messageData.scheduledFor ? 'Schedule Message' : 'Send Message'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
-        
+
         <TabsContent value="history">
-          <HistorySection 
-            messages={mockHistoryData}
-            searchHistory={searchHistory}
-            onSearchChange={setSearchHistory}
-            onViewMessage={handleViewMessage}
-            onResendMessage={handleResendMessage}
-          />
-        </TabsContent>
-        
-        <TabsContent value="templates">
-          <TemplatesSection 
-            templates={mockTemplates}
-            searchTemplates={searchTemplates}
-            onSearchChange={setSearchTemplates}
-            onUseTemplate={handleUseTemplate}
-            onTemplateAction={handleTemplateAction}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Message History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <MessageHistoryTable />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

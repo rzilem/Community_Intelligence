@@ -1,97 +1,54 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
-
-export type Notification = {
-  id: string;
-  user_id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  is_read: boolean;
-  created_at: string;
-};
+import { useAuth } from '@/hooks/auth/useAuth';
+import { toast } from 'sonner';
 
 export interface NotificationItem {
   id: string;
   title: string;
-  description?: string;
-  type: 'invoice' | 'lead' | 'request' | 'event' | 'message' | 'info';
-  severity?: 'info' | 'success' | 'warning' | 'error';
-  read: boolean;
-  timestamp: string;
-  route?: string;
+  content: string;
+  type: string;
+  user_id: string;
+  association_id: string;
+  created_at: string;
+  read_at: string | null;
+  link?: string;
+  metadata?: Record<string, any>;
 }
 
 export const useNotifications = () => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
-      setAllNotifications([]);
-      setLoading(false);
+      setUnreadCount(0);
+      setIsLoading(false);
       return;
     }
 
     const fetchNotifications = async () => {
-      setLoading(true);
+      setIsLoading(true);
       try {
-        // This would be a real query to a notifications table
-        // For now, we'll return mock data
-        const mockNotifications: Notification[] = [
-          {
-            id: '1',
-            user_id: user.id,
-            title: 'Payment Received',
-            message: 'Your monthly assessment payment was received.',
-            type: 'success',
-            is_read: false,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '2',
-            user_id: user.id,
-            title: 'Maintenance Scheduled',
-            message: 'Pool maintenance scheduled for tomorrow.',
-            type: 'info',
-            is_read: false,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: '3',
-            user_id: user.id,
-            title: 'Board Meeting',
-            message: 'Upcoming board meeting on Friday at 7PM.',
-            type: 'info',
-            is_read: true,
-            created_at: new Date().toISOString()
-          }
-        ];
+        const { data, error } = await supabase
+          .from('portal_notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
         
-        setNotifications(mockNotifications);
-        
-        // Convert to NotificationItems for the notification center
-        const notificationItems: NotificationItem[] = mockNotifications.map(notification => ({
-          id: notification.id,
-          title: notification.title,
-          description: notification.message,
-          type: 'info',
-          severity: notification.type,
-          read: notification.is_read,
-          timestamp: notification.created_at,
-          route: `/notifications/${notification.id}`
-        }));
-        
-        setAllNotifications(notificationItems);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
+        setNotifications(data as NotificationItem[]);
+        setUnreadCount(data.filter(n => !n.read_at).length);
+      } catch (error: any) {
+        console.error('Error fetching notifications:', error.message);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
@@ -99,61 +56,75 @@ export const useNotifications = () => {
   }, [user]);
 
   const markAsRead = async (notificationId: string) => {
-    // In a real app, this would update the database
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
-    );
-    
-    setAllNotifications(prev =>
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
+    try {
+      const { error } = await supabase
+        .from('portal_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+      
+      setNotifications(prev => 
+        prev.map(n => 
+          n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n
+        )
+      );
+      
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error: any) {
+      console.error('Error marking notification as read:', error.message);
+    }
   };
 
   const markAllAsRead = async () => {
-    // In a real app, this would update the database
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, is_read: true }))
-    );
-    
-    setAllNotifications(prev =>
-      prev.map(n => ({ ...n, read: true }))
-    );
+    try {
+      const { error } = await supabase
+        .from('portal_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', user?.id)
+        .is('read_at', null);
+
+      if (error) throw error;
+      
+      setNotifications(prev => 
+        prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
+      );
+      
+      setUnreadCount(0);
+    } catch (error: any) {
+      console.error('Error marking all notifications as read:', error.message);
+    }
   };
 
   const deleteNotification = async (notificationId: string) => {
-    // In a real app, this would update the database
-    setNotifications(prev => 
-      prev.filter(n => n.id !== notificationId)
-    );
-    
-    setAllNotifications(prev =>
-      prev.filter(n => n.id !== notificationId)
-    );
-  };
+    try {
+      const { error } = await supabase
+        .from('portal_notifications')
+        .delete()
+        .eq('id', notificationId)
+        .eq('user_id', user?.id);
 
-  const getUnreadCount = () => {
-    return notifications.filter(n => !n.is_read).length;
-  };
-
-  const getTotalCount = () => {
-    return notifications.length;
-  };
-  
-  const getCountForSection = (section: string) => {
-    // In a real app, this would filter by section
-    // For now, just return a random number
-    return Math.floor(Math.random() * 3);
+      if (error) throw error;
+      
+      const deleted = notifications.find(n => n.id === notificationId);
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+      
+      if (deleted && !deleted.read_at) {
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (error: any) {
+      console.error('Error deleting notification:', error.message);
+    }
   };
 
   return {
     notifications,
-    allNotifications,
-    loading,
+    isLoading,
+    unreadCount,
     markAsRead,
     markAllAsRead,
     deleteNotification,
-    getUnreadCount,
-    getTotalCount,
-    getCountForSection
+    setNotifications
   };
 };

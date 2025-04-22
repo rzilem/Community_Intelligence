@@ -1,19 +1,41 @@
 
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState, createContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { NotificationContext } from '@/contexts/notifications/NotificationContext';
-import { NotificationItem } from './useNotifications';
-import { useAuth } from '@/contexts/AuthContext';
+import { NotificationItem, useNotifications } from './useNotifications';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { toast } from 'sonner';
+
+// Create context for global access
+export const NotificationContext = createContext<ReturnType<typeof useNotifications>>({
+  notifications: [],
+  isLoading: false,
+  unreadCount: 0,
+  markAsRead: () => Promise.resolve(),
+  markAllAsRead: () => Promise.resolve(),
+  deleteNotification: () => Promise.resolve(),
+  setNotifications: () => {}
+});
+
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const notificationState = useNotifications();
+  
+  return (
+    <NotificationContext.Provider value={notificationState}>
+      {children}
+    </NotificationContext.Provider>
+  );
+};
 
 export const useRealTimeNotifications = () => {
   const { user } = useAuth();
-  const { notifications, setNotifications } = useContext(NotificationContext);
+  const notificationContext = useContext(NotificationContext);
+  const [toastCooldown, setToastCooldown] = useState(false);
 
   useEffect(() => {
     if (!user) return;
 
     // Subscribe to new notifications
-    const subscription = supabase
+    const channel = supabase
       .channel('portal_notifications')
       .on(
         'postgres_changes',
@@ -25,15 +47,35 @@ export const useRealTimeNotifications = () => {
         },
         (payload) => {
           const newNotification = payload.new as NotificationItem;
-          setNotifications((prev) => [newNotification, ...prev]);
+          notificationContext.setNotifications(prev => [newNotification, ...prev]);
+          
+          // Show toast notification only if not in cooldown
+          if (!toastCooldown) {
+            toast(newNotification.title, {
+              description: newNotification.content,
+              action: {
+                label: 'View',
+                onClick: () => {
+                  // This would navigate to the notification link if present
+                  if (newNotification.link) {
+                    window.location.href = newNotification.link;
+                  }
+                }
+              }
+            });
+            
+            // Set cooldown to prevent too many toasts
+            setToastCooldown(true);
+            setTimeout(() => setToastCooldown(false), 5000);
+          }
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(channel);
     };
-  }, [user, setNotifications]);
+  }, [user, notificationContext.setNotifications, toastCooldown]);
 
-  return { notifications };
+  return notificationContext;
 };

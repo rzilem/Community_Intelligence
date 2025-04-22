@@ -10,20 +10,37 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { FormBuilderTemplatesProps, FormTemplate } from '@/types/form-builder-types';
 import { useFormTemplates } from '@/hooks/form-builder/useFormTemplates';
 import FieldTemplatesLibrary from './FieldTemplatesLibrary';
+import { useSupabaseDelete } from '@/hooks/supabase';
 import { toast } from 'sonner';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ExtendedFormBuilderTemplatesProps extends FormBuilderTemplatesProps {
   onTemplateSelect?: (template: FormTemplate) => void;
+  onEditTemplate?: (template: FormTemplate) => void;
 }
 
 export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> = ({ 
   associationId,
-  onTemplateSelect 
+  onTemplateSelect,
+  onEditTemplate
 }) => {
-  const { data: templates = [] } = useFormTemplates(associationId);
+  const { data: templates = [], isLoading, refetch } = useFormTemplates(associationId);
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
+
+  const { mutate: deleteTemplate, isLoading: isDeleting } = useSupabaseDelete('form_templates');
 
   // Filter templates based on search and category
   const filteredTemplates = templates.filter(template => {
@@ -39,6 +56,26 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
     }
   };
   
+  const handleEditTemplate = (template: FormTemplate) => {
+    if (onEditTemplate) {
+      onEditTemplate(template);
+    }
+  };
+  
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+    
+    try {
+      await deleteTemplate(templateToDelete.id);
+      toast.success(`Template "${templateToDelete.name}" deleted successfully`);
+      refetch();
+    } catch (error: any) {
+      toast.error(`Failed to delete template: ${error.message}`);
+    } finally {
+      setTemplateToDelete(null);
+    }
+  };
+  
   const handleAddField = (field: any) => {
     toast.success(`Field "${field.label}" added to library`);
     // This would typically update the backend through an API call
@@ -48,6 +85,17 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
     toast.success(`Added ${fields.length} fields to library`);
     // This would typically update the backend through an API call
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Form Templates</CardTitle>
+          <CardDescription>Loading templates...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
 
   if (templates.length === 0) {
     return (
@@ -114,15 +162,21 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
               </div>
             </CardContent>
             <CardFooter className="pt-2 border-t flex justify-between">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={(e) => {
+                e.stopPropagation();
+                handleEditTemplate(template);
+              }}>
                 <Edit className="h-4 w-4 mr-2" /> Edit
               </Button>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                   <Button variant="ghost" size="sm">Actions</Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectTemplate(template);
+                  }}>
                     <Eye className="mr-2 h-4 w-4" /> Preview
                   </DropdownMenuItem>
                   <DropdownMenuItem>
@@ -134,7 +188,10 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
                   <DropdownMenuItem>
                     <ExternalLink className="mr-2 h-4 w-4" /> Preview
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuItem className="text-destructive" onClick={(e) => {
+                    e.stopPropagation();
+                    setTemplateToDelete(template);
+                  }}>
                     <Trash className="mr-2 h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -143,6 +200,27 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
           </Card>
         ))}
       </div>
+
+      <AlertDialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the form template "{templateToDelete?.name}".
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteTemplate}
+              className="bg-destructive text-destructive-foreground"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Template'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

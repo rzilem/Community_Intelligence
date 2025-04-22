@@ -7,12 +7,14 @@ import { accountingRoutes } from "./accountingRoutes";
 import { reportRoutes } from "./reportRoutes";
 import { communityRoutes } from "./communityRoutes";
 import { financialRoutes } from "./financialRoutes";
+import { communicationsRoutes } from "./communicationsRoutes";
 import ResidentListPage from "@/pages/residents/ResidentListPage";
 import HomeownerListPage from "@/pages/homeowners/HomeownerListPage";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 import HomeownerPortalPage from "@/pages/portal/HomeownerPortalPage";
 import HomeownersPage from "@/pages/portal/board/HomeownersPage";
 import ReportsPage from "@/pages/portal/board/ReportsPage";
+import FormBuilder from "@/pages/system/FormBuilder";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -44,6 +46,10 @@ export const router = createBrowserRouter([
     path: "/portal/board/reports",
     element: <RequireAuth><ReportsPage /></RequireAuth>,
   },
+  {
+    path: "/system/form-builder",
+    element: <RequireAuth><FormBuilder /></RequireAuth>,
+  },
   ...documentRoutes,
   ...maintenanceRoutes,
   ...amenityRoutes,
@@ -51,4 +57,5 @@ export const router = createBrowserRouter([
   ...reportRoutes,
   ...communityRoutes,
   ...financialRoutes,
+  ...communicationsRoutes,
 ]);
