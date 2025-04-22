@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import CollaborationIndicator from '@/components/portal/CollaborationIndicator';
 import { useResidentNotes } from '@/hooks/homeowners/resident/useResidentNotes';
+import { UserWithProfile } from '@/types/user-types';
 
 const HomeownerPortalPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -26,9 +27,10 @@ const HomeownerPortalPage: React.FC = () => {
     const logAccess = async () => {
       if (homeownerId && user && addNote) {
         try {
-          const userName = user.profile?.first_name && user.profile?.last_name 
-            ? `${user.profile.first_name} ${user.profile.last_name}`
-            : user.email || 'Customer Service';
+          const currentUser = user as unknown as UserWithProfile;
+          const userName = currentUser.profile?.first_name && currentUser.profile?.last_name 
+            ? `${currentUser.profile.first_name} ${currentUser.profile.last_name}`
+            : currentUser.email || 'Customer Service';
           
           await addNote({
             type: 'system',

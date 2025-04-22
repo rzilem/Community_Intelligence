@@ -15,6 +15,10 @@ export interface Resident {
   emergency_contact?: string;
   created_at?: string;
   updated_at?: string;
+  property?: {
+    address?: string;
+    unit_number?: string;
+  };
 }
 
 export interface ResidentWithProfile extends Resident {

@@ -16,15 +16,27 @@ export const formatCommentAsNote = (comment: any): NoteType => {
 };
 
 export const formatResidentAsHomeowner = (resident: Resident): Homeowner => {
+  // Map resident_type to the compatible Homeowner type format
+  let residentType: 'owner' | 'tenant' | 'family-member' | 'other' = 'other';
+  
+  if (resident.resident_type === 'owner') {
+    residentType = 'owner';
+  } else if (resident.resident_type === 'tenant') {
+    residentType = 'tenant';
+  } else if (resident.resident_type === 'family') {
+    residentType = 'family-member';
+  }
+  
   return {
     id: resident.id,
     name: resident.name || '',
     email: resident.email || '',
     phone: resident.phone || '',
-    property: resident?.property?.address || '',
-    unit: resident?.property?.unit_number || '',
+    // Safely access nested property with optional chaining
+    property: resident.property_id ? resident.property?.address || '' : '',
+    unit: resident.property_id ? resident.property?.unit_number || '' : '',
     moveInDate: resident.move_in_date || '',
-    type: resident.resident_type,
+    type: residentType,
     status: resident.move_out_date ? 'Inactive' : 'Active',
     balance: '0.00', // Default balance
     avatarUrl: '',

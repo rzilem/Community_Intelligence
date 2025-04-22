@@ -40,10 +40,11 @@ export function useHomeownerPortal(residentId: string) {
     if (!user || !residentId) return;
     
     try {
-      // Handle the user profile format correctly
-      const userName = user.profile?.first_name && user.profile?.last_name 
-        ? `${user.profile.first_name} ${user.profile.last_name}`
-        : user.email || 'Customer Service';
+      // Cast the user to UserWithProfile to access profile properties safely
+      const currentUser = user as unknown as UserWithProfile;
+      const userName = currentUser.profile?.first_name && currentUser.profile?.last_name 
+        ? `${currentUser.profile.first_name} ${currentUser.profile.last_name}`
+        : currentUser.email || 'Customer Service';
       
       await addNote({
         type: 'system',
