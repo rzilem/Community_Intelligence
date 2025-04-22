@@ -3,11 +3,13 @@ import React from 'react';
 import { FormField } from '@/types/form-builder-types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Plus, Loader2 } from 'lucide-react';
+import { Sparkles, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AISuggestedFieldsProps {
   suggestedFields: FormField[];
   isLoading: boolean;
+  error?: string | null;
   onAddField: (field: FormField) => void;
   onGenerateFields: () => void;
 }
@@ -15,6 +17,7 @@ interface AISuggestedFieldsProps {
 const AISuggestedFields: React.FC<AISuggestedFieldsProps> = ({
   suggestedFields,
   isLoading,
+  error,
   onAddField,
   onGenerateFields
 }) => {
@@ -32,6 +35,32 @@ const AISuggestedFields: React.FC<AISuggestedFieldsProps> = ({
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Generating field suggestions...</p>
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-dashed border-destructive/50 bg-destructive/5">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            Error Generating Suggestions
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4">
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={onGenerateFields}
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
         </CardContent>
       </Card>
     );

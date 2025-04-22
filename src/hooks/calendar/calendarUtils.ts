@@ -1,47 +1,37 @@
 
-import { format } from 'date-fns';
-import { CalendarEvent } from '@/types/calendar-types';
-import { CalendarEventUI } from './types';
-
-// Convert database events to UI events
-export const mapDbEventsToUiEvents = (calendarEvents: CalendarEvent[]): CalendarEventUI[] => {
-  if (!calendarEvents || calendarEvents.length === 0) {
-    return [];
-  }
-
-  return calendarEvents.map(event => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    location: event.location,
-    date: new Date(event.start_time),
-    startTime: format(new Date(event.start_time), 'HH:mm'),
-    endTime: format(new Date(event.end_time), 'HH:mm'),
-    type: event.event_type as any,
-    amenityId: event.amenity_id || undefined,
-    color: event.color || getDefaultColorForType(event.event_type)
-  }));
-};
-
-// Get default color based on event type
 export const getDefaultColorForType = (eventType: string): string => {
   switch (eventType) {
     case 'amenity_booking':
-      return '#3b6aff'; // blue
+      return '#3B82F6'; // blue-500
     case 'hoa_meeting':
-      return '#0d766d'; // teal
+      return '#EF4444'; // red-500
     case 'maintenance':
-      return '#f97316'; // orange
+      return '#F59E0B'; // amber-500
     case 'community_event':
-      return '#8B5CF6'; // purple
+      return '#10B981'; // emerald-500
     default:
-      return '#3b6aff'; // default blue
+      return '#6366F1'; // indigo-500
   }
 };
 
-// Filter events for a specific date
-export const filterEventsForDate = (events: CalendarEventUI[], date: Date): CalendarEventUI[] => {
-  return events.filter(
-    event => event.date.toDateString() === date.toDateString()
-  );
+export const getCalendarEventBackgroundClass = (eventType: string): string => {
+  switch (eventType) {
+    case 'amenity_booking':
+      return 'bg-blue-100 text-blue-800 border-blue-300';
+    case 'hoa_meeting':
+      return 'bg-red-100 text-red-800 border-red-300';
+    case 'maintenance':
+      return 'bg-amber-100 text-amber-800 border-amber-300';
+    case 'community_event':
+      return 'bg-emerald-100 text-emerald-800 border-emerald-300';
+    default:
+      return 'bg-indigo-100 text-indigo-800 border-indigo-300';
+  }
+};
+
+export const formatTimeRange = (start: string, end: string): string => {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  
+  return `${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };

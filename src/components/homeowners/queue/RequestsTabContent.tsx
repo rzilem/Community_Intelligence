@@ -1,155 +1,161 @@
 
 import React from 'react';
-import { TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { HomeownerRequest, RequestAttachment } from '@/types/homeowner-request-types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import RequestTableRow from '../table/RequestTableRow';
+import EmptyRequestsRow from '../table/EmptyRequestsRow';
+import RequestTableHeader from '../table/RequestTableHeader';
+import RequestsCardHeader from './RequestsCardHeader';
+import RequestsStatusFooter from './RequestsStatusFooter';
+import HomeownerRequestDetailDialog from '../HomeownerRequestDetailDialog';
+import HomeownerRequestHistoryDialog from '../history/HomeownerRequestHistoryDialog';
+import { HomeownerRequestBulkActions } from '../HomeownerRequestBulkActions';
 
 interface RequestsTabContentProps {
-  value: string;
-  isLoading: boolean;
+  status: string;
+  title: string;
   requests: HomeownerRequest[];
-  columns: HomeownerRequestColumn[];
-  visibleColumnIds: string[];
-  selectedRequests?: HomeownerRequest[];
-  onToggleSelection?: (request: HomeownerRequest) => void;
+  totalCount: number;
+  isLoading: boolean;
+  onStatusChange: (id: string, status: string) => void;
+  columns: string[];
+  selectedRequestIds: string[];
+  setSelectedRequestIds: (ids: string[]) => void;
+  toggleSelectRequest: (id: string) => void;
 }
 
 const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
-  value,
-  isLoading,
+  status,
+  title,
   requests,
+  totalCount,
+  isLoading,
+  onStatusChange,
   columns,
-  visibleColumnIds,
-  selectedRequests = [],
-  onToggleSelection
+  selectedRequestIds,
+  setSelectedRequestIds,
+  toggleSelectRequest
 }) => {
-  // Get visible columns based on IDs
-  const visibleColumns = columns.filter(col => visibleColumnIds.includes(col.id));
+  const [detailRequestId, setDetailRequestId] = React.useState<string | null>(null);
+  const [historyRequestId, setHistoryRequestId] = React.useState<string | null>(null);
   
-  // Check if a request is selected
-  const isSelected = (request: HomeownerRequest) => {
-    return selectedRequests.some(r => r.id === request.id);
+  const handleViewDetail = (requestId: string) => {
+    setDetailRequestId(requestId);
+  };
+  
+  const handleViewHistory = (requestId: string) => {
+    setHistoryRequestId(requestId);
   };
 
-  // Format date fields
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM d, yyyy h:mm a');
-    } catch (error) {
-      return dateString;
+  const handleCloseDetail = () => {
+    setDetailRequestId(null);
+  };
+
+  const handleCloseHistory = () => {
+    setHistoryRequestId(null);
+  };
+  
+  const detailRequest = requests.find(req => req.id === detailRequestId);
+  const historyRequest = requests.find(req => req.id === historyRequestId);
+
+  // Function to handle bulk actions
+  const handleBulkAction = (action: string) => {
+    if (action === 'approve' || action === 'reject' || action === 'close') {
+      selectedRequestIds.forEach(id => {
+        const newStatus = action === 'approve' ? 'approved' : 
+                         action === 'reject' ? 'rejected' : 'closed';
+        onStatusChange(id, newStatus);
+      });
+      setSelectedRequestIds([]);
     }
   };
 
-  // Get badge color based on status
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-blue-100 text-blue-800';
-      case 'in-progress':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'resolved':
-        return 'bg-green-100 text-green-800';
-      case 'closed':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Get badge color based on priority
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      case 'medium':
-        return 'bg-blue-100 text-blue-800';
-      case 'high':
-        return 'bg-orange-100 text-orange-800';
-      case 'urgent':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Get cell content based on column type
-  const getCellContent = (request: HomeownerRequest, columnId: string) => {
-    switch (columnId) {
-      case 'status':
-        return (
-          <Badge className={getStatusColor(request.status)}>
-            {request.status.replace('-', ' ')}
-          </Badge>
-        );
-      case 'priority':
-        return (
-          <Badge className={getPriorityColor(request.priority)}>
-            {request.priority}
-          </Badge>
-        );
-      case 'created_at':
-      case 'updated_at':
-      case 'resolved_at':
-        return request[columnId] ? formatDate(request[columnId]) : '-';
-      default:
-        return request[columnId as keyof HomeownerRequest] || '-';
-    }
+  // Function to safely render attachments
+  const renderAttachments = (attachments: RequestAttachment[] | undefined) => {
+    if (!attachments) return null;
+    return <>{attachments.length} files</>;
   };
 
   return (
-    <TabsContent value={value} className="space-y-4">
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : requests.length > 0 ? (
-        <div className="rounded-md border overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  {onToggleSelection && (
-                    <TableHead className="w-[40px]">
-                      <span className="sr-only">Select</span>
-                    </TableHead>
-                  )}
-                  {visibleColumns.map((column) => (
-                    <TableHead key={column.id}>{column.label}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {requests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-muted/50 cursor-pointer">
-                    {onToggleSelection && (
-                      <TableCell className="w-[40px]">
-                        <Checkbox 
-                          checked={isSelected(request)}
-                          onCheckedChange={() => onToggleSelection(request)}
-                        />
-                      </TableCell>
-                    )}
-                    {visibleColumns.map((column) => (
-                      <TableCell key={`${request.id}-${column.id}`}>
-                        {getCellContent(request, column.id)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-muted-foreground">
-          No requests found matching your criteria.
+    <Card className="h-full flex flex-col">
+      <RequestsCardHeader
+        title={title}
+        count={totalCount}
+        isLoading={isLoading}
+      />
+      
+      {/* Bulk actions bar (visible when items are selected) */}
+      {selectedRequestIds.length > 0 && (
+        <div className="px-4 py-2 bg-muted border-b">
+          <HomeownerRequestBulkActions 
+            selectedCount={selectedRequestIds.length}
+            onAction={handleBulkAction}
+            onClearSelection={() => setSelectedRequestIds([])}
+          />
         </div>
       )}
-    </TabsContent>
+      
+      <CardContent className="p-0 flex-grow overflow-auto">
+        <div className="min-w-full divide-y divide-gray-200">
+          <RequestTableHeader 
+            columns={columns} 
+            enableSelection={true}
+            selectedAll={selectedRequestIds.length === requests.length && requests.length > 0}
+            onSelectAll={() => {
+              if (selectedRequestIds.length === requests.length) {
+                setSelectedRequestIds([]);
+              } else {
+                setSelectedRequestIds(requests.map(req => req.id));
+              }
+            }}
+          />
+          
+          <div className="divide-y divide-gray-200">
+            {isLoading ? (
+              <div className="p-4 text-center">Loading...</div>
+            ) : requests.length === 0 ? (
+              <EmptyRequestsRow columns={columns.length + 1} message={`No ${status.toLowerCase()} requests`} />
+            ) : (
+              requests.map(request => (
+                <RequestTableRow
+                  key={request.id}
+                  request={request}
+                  columns={columns}
+                  onViewDetail={() => handleViewDetail(request.id)}
+                  onViewHistory={() => handleViewHistory(request.id)}
+                  isSelected={selectedRequestIds.includes(request.id)}
+                  onToggleSelect={() => toggleSelectRequest(request.id)}
+                  renderAttachments={() => renderAttachments(request.attachments)}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </CardContent>
+      
+      <RequestsStatusFooter 
+        total={totalCount}
+        status={status}
+      />
+      
+      {detailRequest && (
+        <HomeownerRequestDetailDialog
+          isOpen={!!detailRequestId}
+          onClose={handleCloseDetail}
+          request={detailRequest}
+          onStatusChange={onStatusChange}
+        />
+      )}
+      
+      {historyRequest && (
+        <HomeownerRequestHistoryDialog
+          isOpen={!!historyRequestId}
+          onClose={handleCloseHistory}
+          requestId={historyRequest.id}
+        />
+      )}
+    </Card>
   );
 };
 

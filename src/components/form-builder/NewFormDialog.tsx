@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,8 @@ import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/supabase';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -31,6 +34,8 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
   associationId 
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  
   const { data: associations = [] } = useSupabaseQuery('associations', {
     select: 'id, name',
     order: { column: 'name', ascending: true }
@@ -49,7 +54,10 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+    setFormError(null);
+    
     try {
+      // First, create the form template
       const { data, error } = await supabase
         .from('form_templates')
         .insert({
@@ -65,6 +73,7 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
 
       if (error) throw error;
 
+      // If not global and has association IDs, create the associations
       if (!values.is_global && values.association_ids?.length) {
         const associations = values.association_ids.map(association_id => ({
           form_template_id: data.id,
@@ -84,6 +93,7 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
       
     } catch (error) {
       console.error('Error creating form:', error);
+      setFormError(error.message || "Failed to create form");
       toast.error("Failed to create form");
     } finally {
       setIsSubmitting(false);
@@ -99,6 +109,13 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
             Fill out the details below to create a new form template.
           </DialogDescription>
         </DialogHeader>
+        
+        {formError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -208,14 +225,19 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
             )}
             
             <DialogFooter className="mt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating..." : "Create Form"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : "Create Form"}
               </Button>
             </DialogFooter>
           </form>

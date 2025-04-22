@@ -7,14 +7,18 @@ import { toast } from 'sonner';
 export const useAIFieldSuggestions = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [suggestedFields, setSuggestedFields] = useState<FormField[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const getSuggestedFields = async (formTitle: string, formType: FormType | null, description?: string) => {
     if (!formTitle) {
       toast.error('Please provide a form title to get suggestions');
+      setError('Form title is required');
       return [];
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
       // Call the Supabase Edge Function for AI suggestions
       const { data, error } = await supabase.functions.invoke('suggest-form-fields', {
@@ -29,15 +33,22 @@ export const useAIFieldSuggestions = () => {
         throw error;
       }
 
-      const fields = data.fields || [];
+      const fields = data?.fields || [];
       setSuggestedFields(fields);
       
       // Show success message
-      toast.success(`Generated ${fields.length} field suggestions`);
+      if (fields.length > 0) {
+        toast.success(`Generated ${fields.length} field suggestions`);
+      } else {
+        toast.info('No field suggestions generated. Try adding more context to your form title or description.');
+      }
+      
       return fields;
     } catch (error) {
       console.error('Error getting AI field suggestions:', error);
-      toast.error('Failed to get field suggestions');
+      const errorMessage = error.message || 'Failed to get field suggestions';
+      setError(errorMessage);
+      toast.error(errorMessage);
       return [];
     } finally {
       setIsLoading(false);
@@ -46,12 +57,14 @@ export const useAIFieldSuggestions = () => {
 
   const clearSuggestions = () => {
     setSuggestedFields([]);
+    setError(null);
   };
 
   return {
     suggestedFields,
     getSuggestedFields,
     clearSuggestions,
-    isLoading
+    isLoading,
+    error
   };
 };

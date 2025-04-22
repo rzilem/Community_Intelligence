@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
 export const useRealTimeNotifications = () => {
-  const { addNotification } = useNotificationContext();
+  const { addNotification } = useNotificationContext() || { addNotification: () => {} };
   const { user, currentAssociation } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
 
@@ -26,15 +26,17 @@ export const useRealTimeNotifications = () => {
         },
         (payload) => {
           const newRequest = payload.new;
-          addNotification({
-            id: newRequest.id,
-            title: 'New Request',
-            message: `A new request has been submitted: ${newRequest.title}`,
-            type: 'request',
-            createdAt: new Date().toISOString(),
-            read: false,
-            data: newRequest
-          });
+          if (addNotification) {
+            addNotification({
+              id: newRequest.id,
+              title: 'New Request',
+              message: `A new request has been submitted: ${newRequest.title}`,
+              type: 'request',
+              createdAt: new Date().toISOString(),
+              read: false,
+              data: newRequest
+            });
+          }
           
           toast.info(`New request: ${newRequest.title}`);
         }
@@ -54,15 +56,17 @@ export const useRealTimeNotifications = () => {
         },
         (payload) => {
           const newEvent = payload.new;
-          addNotification({
-            id: newEvent.id,
-            title: 'New Calendar Event',
-            message: `A new event has been added: ${newEvent.title}`,
-            type: 'event',
-            createdAt: new Date().toISOString(),
-            read: false,
-            data: newEvent
-          });
+          if (addNotification) {
+            addNotification({
+              id: newEvent.id,
+              title: 'New Calendar Event',
+              message: `A new event has been added: ${newEvent.title}`,
+              type: 'event',
+              createdAt: new Date().toISOString(),
+              read: false,
+              data: newEvent
+            });
+          }
           
           toast.info(`New calendar event: ${newEvent.title}`);
         }

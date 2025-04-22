@@ -1,212 +1,83 @@
 
 import React, { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { CheckIcon, Loader2, CalendarIcon } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Form } from '@/components/ui/form';
-import { FormTemplate } from '@/types/form-builder-types';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { FormTemplate, FormType } from '@/types/form-builder-types';
 import { useFormCalendarIntegration } from '@/hooks/portal/useFormCalendarIntegration';
-import { cn } from '@/lib/utils';
 
 interface FormSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => Promise<boolean>;
   form: FormTemplate | null;
-  formData: Record<string, any>;
-  onFieldChange: (fieldId: string, value: any) => void;
-  onSubmit: () => Promise<boolean>;
-  isSubmitting: boolean;
 }
 
 const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   open,
   onOpenChange,
-  form,
-  formData,
-  onFieldChange,
-  onSubmit,
-  isSubmitting
+  onSuccess,
+  form
 }) => {
-  const [isAddingToCalendar, setIsAddingToCalendar] = useState(false);
-  const [calendarSuccess, setCalendarSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { createCalendarEvent, isCreating } = useFormCalendarIntegration();
   
-  // Check if this is a form that can be added to the calendar (amenity booking, event registration, etc.)
-  const isCalendarCompatible = form?.form_type === 'amenity_booking';
-  
-  // Function to handle form submission
   const handleSubmit = async () => {
-    const success = await onSubmit();
+    setIsSubmitting(true);
     
-    // If successful and user wants to add to calendar
-    if (success && isAddingToCalendar && isCalendarCompatible) {
-      try {
-        // Create calendar event from form data
-        const eventSuccess = await createCalendarEvent({
-          title: formData.title || form?.name || 'Booking',
-          description: formData.description || '',
-          date: new Date(formData.date || Date.now()),
-          startTime: formData.startTime || '12:00',
-          endTime: formData.endTime || '13:00',
-          location: formData.location || '',
+    try {
+      // If form submission was successful
+      const success = await onSuccess();
+      
+      // Check if this is an amenity booking form
+      if (success && form && form.form_type === 'pool_form') {
+        // Extract form fields and create a calendar event
+        await createCalendarEvent({
+          title: `Pool Booking`,
+          description: `Booked through portal form`,
+          date: new Date(),
+          startTime: '09:00',
+          endTime: '11:00',
           type: 'amenity_booking',
-          amenityId: formData.amenityId || ''
         });
-        
-        setCalendarSuccess(eventSuccess);
-      } catch (error) {
-        console.error('Error creating calendar event:', error);
-        setCalendarSuccess(false);
       }
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  if (!form) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{form.name}</DialogTitle>
-          {form.description && <DialogDescription>{form.description}</DialogDescription>}
+          <DialogTitle>Form Submitted</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          {form.fields.map((field) => {
-            switch (field.type) {
-              case 'text':
-              case 'email':
-              case 'phone':
-              case 'number':
-                return (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id}>
-                      {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                    <Input
-                      id={field.id}
-                      type={field.type === 'number' ? 'number' : 'text'}
-                      placeholder={field.placeholder}
-                      value={formData[field.id] || ''}
-                      onChange={(e) => onFieldChange(field.id, e.target.value)}
-                      required={field.required}
-                    />
-                  </div>
-                );
-              case 'textarea':
-                return (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id}>
-                      {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                    <Textarea
-                      id={field.id}
-                      placeholder={field.placeholder}
-                      value={formData[field.id] || ''}
-                      onChange={(e) => onFieldChange(field.id, e.target.value)}
-                      required={field.required}
-                    />
-                  </div>
-                );
-              case 'date':
-                return (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id}>
-                      {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                    <div className="flex items-center">
-                      <CalendarIcon className="mr-2 h-4 w-4 opacity-70" /> 
-                      <Input
-                        id={field.id}
-                        type="date"
-                        value={formData[field.id] || ''}
-                        onChange={(e) => onFieldChange(field.id, e.target.value)}
-                        required={field.required}
-                      />
-                    </div>
-                  </div>
-                );
-              case 'time':
-                return (
-                  <div key={field.id} className="space-y-2">
-                    <Label htmlFor={field.id}>
-                      {field.label}
-                      {field.required && <span className="text-red-500">*</span>}
-                    </Label>
-                    <Input
-                      id={field.id}
-                      type="time"
-                      value={formData[field.id] || ''}
-                      onChange={(e) => onFieldChange(field.id, e.target.value)}
-                      required={field.required}
-                    />
-                  </div>
-                );
-              default:
-                return null;
-            }
-          })}
-          
-          {/* Calendar integration option for compatible forms */}
-          {isCalendarCompatible && (
-            <div className={cn(
-              "border rounded-lg p-3 mt-4", 
-              isAddingToCalendar ? "bg-primary/5 border-primary/30" : "bg-muted/20"
-            )}>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label htmlFor="calendar-integration">Add to Calendar</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Create a calendar event when submitting this form
-                  </p>
-                </div>
-                <Switch
-                  id="calendar-integration"
-                  checked={isAddingToCalendar}
-                  onCheckedChange={setIsAddingToCalendar}
-                />
-              </div>
-            </div>
+        <div className="py-4">
+          <p>Your form has been successfully submitted.</p>
+          {form?.form_type === 'pool_form' && (
+            <p className="text-sm text-muted-foreground mt-2">
+              This will also create a calendar event for your pool booking.
+            </p>
           )}
         </div>
-        
-        <DialogFooter>
-          <Button
-            variant="outline"
+        <div className="flex justify-end space-x-2">
+          <Button 
+            variant="outline" 
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting || isCreating}
           >
-            Cancel
+            Close
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || isCreating}>
-            {isSubmitting || isCreating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isSubmitting && !isCreating ? 'Submitting...' : ''}
-                {isCreating ? 'Adding to Calendar...' : ''}
-              </>
-            ) : (
-              <>Submit</>
-            )}
+          <Button 
+            onClick={handleSubmit}
+            disabled={isSubmitting || isCreating}
+          >
+            {isSubmitting || isCreating ? 'Processing...' : 'OK'}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
