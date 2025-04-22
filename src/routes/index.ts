@@ -3,11 +3,16 @@ import { createBrowserRouter } from "react-router-dom";
 import { documentRoutes } from "./documentRoutes";
 import { maintenanceRoutes } from "./maintenanceRoutes";
 import { amenityRoutes } from "./amenityRoutes";
+import { accountingRoutes } from "./accountingRoutes";
+import { reportRoutes } from "./reportRoutes";
+import { communityRoutes } from "./communityRoutes";
+import { financialRoutes } from "./financialRoutes";
 import ResidentListPage from "@/pages/residents/ResidentListPage";
 import HomeownerListPage from "@/pages/homeowners/HomeownerListPage";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 import HomeownerPortalPage from "@/pages/portal/HomeownerPortalPage";
 import HomeownersPage from "@/pages/portal/board/HomeownersPage";
+import ReportsPage from "@/pages/portal/board/ReportsPage";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 
 export const router = createBrowserRouter([
@@ -29,13 +34,21 @@ export const router = createBrowserRouter([
   },
   {
     path: "/portal/homeowner",
-    element: <RequireAuth><HomeownerPortalPage /></RequireAuth>
+    element: <RequireAuth><HomeownerPortalPage /></RequireAuth>,
   },
   {
     path: "/portal/board/homeowners",
-    element: <RequireAuth><HomeownersPage /></RequireAuth>
+    element: <RequireAuth><HomeownersPage /></RequireAuth>,
+  },
+  {
+    path: "/portal/board/reports",
+    element: <RequireAuth><ReportsPage /></RequireAuth>,
   },
   ...documentRoutes,
   ...maintenanceRoutes,
   ...amenityRoutes,
+  ...accountingRoutes,
+  ...reportRoutes,
+  ...communityRoutes,
+  ...financialRoutes,
 ]);
