@@ -7,6 +7,7 @@ import { UserAssociation } from './types';
 
 export interface AuthContextType {
   user: User | null;
+  currentUser: User | null;
   profile: Profile | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<void>;
@@ -25,6 +26,7 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  currentUser: null,
   profile: null,
   session: null,
   signIn: async () => {},

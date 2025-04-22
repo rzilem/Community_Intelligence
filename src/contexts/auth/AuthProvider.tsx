@@ -187,6 +187,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const contextValue = {
     user,
+    currentUser: user, // Add this line to map user to currentUser
     profile,
     session,
     signIn,
