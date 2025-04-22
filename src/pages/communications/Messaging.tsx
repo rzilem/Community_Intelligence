@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
@@ -9,6 +8,9 @@ import { mockHistoryData, mockTemplates } from './messaging/MessagingData';
 import ComposeForm from '@/components/communications/messaging/ComposeForm';
 import HistorySection from '@/components/communications/messaging/HistorySection';
 import TemplatesSection from '@/components/communications/messaging/TemplatesSection';
+
+// Add this import at the top of the file
+import { MessageHistoryItem } from '@/types/messaging-types';
 
 const MessagingPage = () => {
   const [activeTab, setActiveTab] = useState('compose');

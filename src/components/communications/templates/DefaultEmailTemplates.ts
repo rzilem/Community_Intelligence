@@ -1,522 +1,761 @@
+export const welcomeEmailTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Our Community!</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .cta-button { display: inline-block; padding: 10px 20px; background-color: #3498db; color: #fff; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to {{community_name}}!</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>We're thrilled to welcome you to our vibrant community! We hope you'll quickly feel at home and enjoy all the amenities and activities we have to offer.</p>
+        
+        <p>Here are a few things to get you started:</p>
+        
+        <ul>
+            <li><strong>Get to know your neighbors:</strong> Join our community events and meet new people.</li>
+            <li><strong>Explore our amenities:</strong> Take advantage of our pool, gym, and other facilities.</li>
+            <li><strong>Stay informed:</strong> Check our website and newsletters for important updates and announcements.</li>
+        </ul>
+        
+        <p>If you have any questions or need assistance, please don't hesitate to contact our management office.</p>
+        
+        <p>We look forward to seeing you around!</p>
+        
+        <p>Sincerely,<br>
+        The {{community_name}} Team</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{community_name}}</p>
+            <p>{{community_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
 
-export const defaultEmailTemplates = [
-  {
-    id: 'welcome',
-    title: 'Welcome New Resident',
-    description: 'Send a welcome email to new residents with important community information.',
-    type: 'email',
-    subject: 'Welcome to {association.name}!',
-    content: `
+export const paymentReminderTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to {association.name}</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      line-height: 1.6; 
-      color: #333333; 
-      margin: 0; 
-      padding: 0; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
-    .header { 
-      background-color: #9b87f5; 
-      padding: 20px; 
-      text-align: center; 
-      color: white; 
-      border-radius: 5px 5px 0 0;
-    }
-    .content { 
-      background-color: #ffffff; 
-      padding: 20px; 
-      border: 1px solid #e5deff; 
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #8E9196; 
-    }
-    .button {
-      display: inline-block;
-      background-color: #7E69AB;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    h1, h2 { color: #1A1F2C; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Payment Reminder</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .cta-button { display: inline-block; padding: 10px 20px; background-color: #3498db; color: #fff; text-decoration: none; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Welcome to {association.name}!</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Payment Reminder</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>This is a friendly reminder that your payment is due soon. Please make sure to submit your payment before the due date to avoid any late fees.</p>
+        
+        <div class="details">
+            <p><strong>Amount Due:</strong> {{amount_due}}</p>
+            <p><strong>Due Date:</strong> {{due_date}}</p>
+            <p><strong>Account Number:</strong> {{account_number}}</p>
+        </div>
+        
+        <p>You can make a payment through our online portal or by mail. If you have already submitted your payment, please disregard this notice.</p>
+        
+        <p><a href="{{payment_portal_link}}" class="cta-button">Make a Payment</a></p>
+        
+        <p>Thank you for your prompt attention to this matter.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
     </div>
-    <div class="content">
-      <p>Dear {resident.name},</p>
-      
-      <p>On behalf of the Board of Directors and management, we're delighted to welcome you to {association.name}. We hope you'll find our community a wonderful place to live!</p>
-      
-      <h2>Important Information</h2>
-      <ul>
-        <li><strong>Association Website:</strong> <a href="{association.website}">{association.website}</a></li>
-        <li><strong>Contact Email:</strong> <a href="mailto:{association.contact_email}">{association.contact_email}</a></li>
-        <li><strong>Community Phone:</strong> {association.phone}</li>
-      </ul>
-      
-      <p>Your monthly assessment is ${'{payment.amount}'} and is due on the 1st of each month. Late payments are subject to a ${'{payment.lateFee}'} fee.</p>
-      
-      <p>Please take some time to review the association rules and regulations, which you can find on our community portal.</p>
-      
-      <div style="text-align: center;">
-        <a href="#" class="button">Access Community Portal</a>
-      </div>
-      
-      <p>We look forward to meeting you!</p>
-      
-      <p>Sincerely,<br>
-      The Board of Directors<br>
-      {association.name}</p>
-    </div>
-    <div class="footer">
-      <p>{association.name} | {association.address}, {association.city}, {association.state} {association.zip}</p>
-    </div>
-  </div>
 </body>
 </html>
-    `
-  },
-  {
-    id: 'payment-reminder',
-    title: 'Monthly Payment Reminder',
-    description: 'Send a friendly reminder about upcoming monthly assessment payments.',
-    type: 'email',
-    subject: '{association.name} - Monthly Assessment Due',
-    content: `
+`;
+
+export const maintenanceRequestUpdateTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monthly Assessment Reminder</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      line-height: 1.6; 
-      color: #333333; 
-      margin: 0; 
-      padding: 0; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
-    .header { 
-      background-color: #3B82F6; 
-      padding: 20px; 
-      text-align: center; 
-      color: white; 
-      border-radius: 5px 5px 0 0;
-    }
-    .content { 
-      background-color: #ffffff; 
-      padding: 20px; 
-      border: 1px solid #D3E4FD; 
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #8E9196; 
-    }
-    .button {
-      display: inline-block;
-      background-color: #3B82F6;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    .highlight-box {
-      background-color: #F1F0FB;
-      border: 1px solid #D3E4FD;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    h1, h2 { color: #1A1F2C; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Maintenance Request Update</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Monthly Assessment Reminder</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Maintenance Request Update</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>We're providing an update on your recent maintenance request. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Request Number:</strong> {{request_number}}</p>
+            <p><strong>Status:</strong> {{status}}</p>
+            <p><strong>Description:</strong> {{description}}</p>
+            <p><strong>Assigned Technician:</strong> {{technician_name}}</p>
+            <p><strong>Estimated Completion Date:</strong> {{completion_date}}</p>
+        </div>
+        
+        <p>We're working diligently to resolve your request and will keep you updated on any changes. If you have any questions or concerns, please contact our office.</p>
+        
+        <p>Thank you for your patience.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
     </div>
-    <div class="content">
-      <p>Dear {resident.name},</p>
-      
-      <p>This is a friendly reminder that your monthly assessment for {association.name} is due on {'{payment.dueDate}'}.</p>
-      
-      <div class="highlight-box">
-        <p><strong>Payment Details:</strong></p>
-        <ul>
-          <li>Amount Due: ${'{payment.amount}'}</li>
-          <li>Due Date: {'{payment.dueDate}'}</li>
-          <li>Late Fee: ${'{payment.lateFee}'} (applied after the 10th of the month)</li>
-        </ul>
-      </div>
-      
-      <p>You can make your payment through our resident portal or by mailing a check to our office.</p>
-      
-      <div style="text-align: center;">
-        <a href="#" class="button">Make Payment Now</a>
-      </div>
-      
-      <p>If you have already made your payment, please disregard this notice and thank you for your prompt attention.</p>
-      
-      <p>Thank you for being part of our community!</p>
-      
-      <p>Sincerely,<br>
-      {association.name} Management</p>
-    </div>
-    <div class="footer">
-      <p>{association.name} | {association.address}, {association.city}, {association.state} {association.zip}</p>
-    </div>
-  </div>
 </body>
 </html>
-    `
-  },
-  {
-    id: 'violation-notice',
-    title: 'Compliance Violation Notice',
-    description: 'Send a notice about a compliance violation that needs to be addressed.',
-    type: 'email',
-    subject: 'Important: Compliance Notice - {association.name}',
-    content: `
+`;
+
+export const communityEventAnnouncementTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Compliance Notice</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      line-height: 1.6; 
-      color: #333333; 
-      margin: 0; 
-      padding: 0; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
-    .header { 
-      background-color: #EF4444; 
-      padding: 20px; 
-      text-align: center; 
-      color: white; 
-      border-radius: 5px 5px 0 0;
-    }
-    .content { 
-      background-color: #ffffff; 
-      padding: 20px; 
-      border: 1px solid #FFDEE2; 
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #8E9196; 
-    }
-    .button {
-      display: inline-block;
-      background-color: #6366F1;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    .violation-box {
-      background-color: #FEF7CD;
-      border: 1px solid #FEC6A1;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    h1, h2 { color: #1A1F2C; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Community Event Announcement</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .cta-button { display: inline-block; padding: 10px 20px; background-color: #3498db; color: #fff; text-decoration: none; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Community Compliance Notice</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Community Event Announcement</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>We're excited to announce an upcoming community event! Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Event:</strong> {{event_name}}</p>
+            <p><strong>Date:</strong> {{event_date}}</p>
+            <p><strong>Time:</strong> {{event_time}}</p>
+            <p><strong>Location:</strong> {{event_location}}</p>
+            <p><strong>Description:</strong> {{event_description}}</p>
+        </div>
+        
+        <p>We encourage you to join us for a fun-filled day of activities and socializing. It's a great opportunity to meet your neighbors and strengthen our community bonds.</p>
+        
+        <p><a href="{{rsvp_link}}" class="cta-button">RSVP Now</a></p>
+        
+        <p>We look forward to seeing you there!</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
     </div>
-    <div class="content">
-      <p>Dear {resident.name},</p>
-      
-      <p>During a recent inspection of the community, we observed a violation of the {association.name} rules and regulations at your property.</p>
-      
-      <div class="violation-box">
-        <p><strong>Violation Details:</strong></p>
-        <ul>
-          <li>Violation Type: {compliance.violation}</li>
-          <li>Property Address: {property.address}, {property.unit_number}, {property.city}, {property.state} {property.zip}</li>
-          <li>Potential Fine: ${compliance.fine}</li>
-          <li>Compliance Deadline: {compliance.deadline}</li>
-        </ul>
-      </div>
-      
-      <p>Please take corrective action by the deadline noted above to avoid potential fines or further enforcement action. If you have questions or need clarification, please contact management.</p>
-      
-      <p>If you believe this notice was sent in error or if you need additional time to address the issue, please submit an appeal or extension request through the community portal.</p>
-      
-      <div style="text-align: center;">
-        <a href="#" class="button">Submit Appeal or Extension Request</a>
-      </div>
-      
-      <p>Thank you for your prompt attention to this matter and for helping maintain the standards of our community.</p>
-      
-      <p>Sincerely,<br>
-      {association.name} Management</p>
-    </div>
-    <div class="footer">
-      <p>{association.name} | {association.address}, {association.city}, {association.state} {association.zip}</p>
-    </div>
-  </div>
 </body>
 </html>
-    `
-  },
-  {
-    id: 'community-event',
-    title: 'Community Event Announcement',
-    description: 'Announce an upcoming community event to all residents.',
-    type: 'email',
-    subject: 'Upcoming Event at {association.name}',
-    content: `
+`;
+
+export const amenityBookingConfirmationTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Community Event Announcement</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      line-height: 1.6; 
-      color: #333333; 
-      margin: 0; 
-      padding: 0; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
-    .header { 
-      background-color: #10B981; 
-      padding: 20px; 
-      text-align: center; 
-      color: white; 
-      border-radius: 5px 5px 0 0;
-    }
-    .content { 
-      background-color: #ffffff; 
-      padding: 20px; 
-      border: 1px solid #F2FCE2; 
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #8E9196; 
-    }
-    .button {
-      display: inline-block;
-      background-color: #10B981;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    .event-box {
-      background-color: #F2FCE2;
-      border: 1px solid #D6BCFA;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    h1, h2 { color: #1A1F2C; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Amenity Booking Confirmation</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Community Event Announcement</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Amenity Booking Confirmation</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>This is a confirmation of your amenity booking. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Amenity:</strong> {{amenity_name}}</p>
+            <p><strong>Date:</strong> {{booking_date}}</p>
+            <p><strong>Time:</strong> {{booking_time}}</p>
+            <p><strong>Duration:</strong> {{booking_duration}}</p>
+        </div>
+        
+        <p>Please arrive on time and follow all the rules and regulations for the amenity. If you need to cancel or reschedule, please contact our office at least 24 hours in advance.</p>
+        
+        <p>We hope you enjoy your time!</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
     </div>
-    <div class="content">
-      <p>Dear {resident.name},</p>
-      
-      <p>We're excited to announce an upcoming event at {association.name}!</p>
-      
-      <div class="event-box">
-        <h2>Summer Pool Party</h2>
-        <p><strong>Date:</strong> Saturday, July 15, 2023</p>
-        <p><strong>Time:</strong> 1:00 PM - 4:00 PM</p>
-        <p><strong>Location:</strong> Community Pool</p>
-        <p><strong>Details:</strong> Join us for our annual summer pool party! We'll have food, drinks, games, and activities for residents of all ages. This is a great opportunity to meet your neighbors and enjoy our community amenities.</p>
-      </div>
-      
-      <p>Please RSVP by July 10th so we can plan accordingly. Family members are welcome!</p>
-      
-      <div style="text-align: center;">
-        <a href="#" class="button">RSVP Now</a>
-      </div>
-      
-      <p>We look forward to seeing you there!</p>
-      
-      <p>Best regards,<br>
-      {association.name} Social Committee</p>
-    </div>
-    <div class="footer">
-      <p>{association.name} | {association.address}, {association.city}, {association.state} {association.zip}</p>
-    </div>
-  </div>
 </body>
 </html>
-    `
-  },
-  {
-    id: 'maintenance-update',
-    title: 'Maintenance Update',
-    description: 'Inform residents about upcoming or completed maintenance work.',
-    type: 'email',
-    subject: 'Maintenance Update - {association.name}',
-    content: `
+`;
+
+export const boardMeetingReminderTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Maintenance Update</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      line-height: 1.6; 
-      color: #333333; 
-      margin: 0; 
-      padding: 0; 
-    }
-    .container { 
-      max-width: 600px; 
-      margin: 0 auto; 
-      padding: 20px; 
-    }
-    .header { 
-      background-color: #F59E0B; 
-      padding: 20px; 
-      text-align: center; 
-      color: white; 
-      border-radius: 5px 5px 0 0;
-    }
-    .content { 
-      background-color: #ffffff; 
-      padding: 20px; 
-      border: 1px solid #FDE1D3; 
-      border-top: none;
-      border-radius: 0 0 5px 5px;
-    }
-    .footer { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-size: 12px; 
-      color: #8E9196; 
-    }
-    .button {
-      display: inline-block;
-      background-color: #F59E0B;
-      color: white;
-      text-decoration: none;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    .maintenance-box {
-      background-color: #FDE1D3;
-      border: 1px solid #FEC6A1;
-      padding: 15px;
-      border-radius: 5px;
-      margin: 20px 0;
-    }
-    h1, h2 { color: #1A1F2C; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Board Meeting Reminder</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2c3e50; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Maintenance Update</h1>
+    <div class="container">
+        <div class="header">
+            <h1>Board Meeting Reminder</h1>
+        </div>
+        
+        <p>Dear Board Members,</p>
+        
+        <p>This is a reminder about the upcoming board meeting. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Date:</strong> {{meeting_date}}</p>
+            <p><strong>Time:</strong> {{meeting_time}}</p>
+            <p><strong>Location:</strong> {{meeting_location}}</p>
+            <p><strong>Agenda:</strong> {{meeting_agenda}}</p>
+        </div>
+        
+        <p>Please come prepared to discuss and make decisions on important community matters. If you're unable to attend, please notify the secretary as soon as possible.</p>
+        
+        <p>We look forward to a productive meeting.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
     </div>
-    <div class="content">
-      <p>Dear {resident.name},</p>
-      
-      <p>We want to inform you about upcoming maintenance work scheduled for our community.</p>
-      
-      <div class="maintenance-box">
-        <h2>Upcoming Maintenance: Roof Inspection</h2>
-        <p><strong>Date:</strong> Monday, June 5, 2023 - Friday, June 9, 2023</p>
-        <p><strong>Time:</strong> 8:00 AM - 5:00 PM</p>
-        <p><strong>Areas Affected:</strong> All buildings</p>
-        <p><strong>Details:</strong> Our contractors will be conducting routine roof inspections on all buildings. This work will involve ladder placement and crews on the roofs. Please be aware of workers in these areas during this time.</p>
-      </div>
-      
-      <p>No action is required on your part, but please be aware of the following:</p>
-      <ul>
-        <li>There may be some noise during normal working hours</li>
-        <li>Contractor vehicles will be present in the community</li>
-        <li>All workers will be identified with company uniforms</li>
-      </ul>
-      
-      <p>If you have any questions or concerns, please contact the management office.</p>
-      
-      <div style="text-align: center;">
-        <a href="#" class="button">Contact Management</a>
-      </div>
-      
-      <p>Thank you for your cooperation as we maintain our community.</p>
-      
-      <p>Sincerely,<br>
-      {association.name} Management</p>
-    </div>
-    <div class="footer">
-      <p>{association.name} | {association.address}, {association.city}, {association.state} {association.zip}</p>
-    </div>
-  </div>
 </body>
 </html>
-    `
-  }
-];
+`;
+
+export const emergencyAlertTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Alert</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #c0392b; }
+        .alert { background-color: #f2dede; border: 1px solid #ebccd1; color: #a94442; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Emergency Alert</h1>
+        </div>
+        
+        <div class="alert">
+            <p><strong>Subject:</strong> {{alert_subject}}</p>
+            <p><strong>Message:</strong> {{alert_message}}</p>
+        </div>
+        
+        <p>Please take necessary precautions and stay safe. Follow any instructions provided by local authorities. We will provide updates as soon as they become available.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const ruleViolationNoticeTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rule Violation Notice</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #c0392b; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Rule Violation Notice</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>This is a notice regarding a violation of community rules. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Violation Type:</strong> {{violation_type}}</p>
+            <p><strong>Description:</strong> {{description}}</p>
+            <p><strong>Date of Violation:</strong> {{violation_date}}</p>
+        </div>
+        
+        <p>Please correct this violation within the specified timeframe to avoid further action. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const packageDeliveryAlertTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Package Delivery Alert</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #27ae60; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Package Delivery Alert</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>This is to inform you that a package has been delivered to your property. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Delivery Date:</strong> {{delivery_date}}</p>
+            <p><strong>Delivery Time:</strong> {{delivery_time}}</p>
+            <p><strong>Location:</strong> {{delivery_location}}</p>
+        </div>
+        
+        <p>Please pick up your package at your earliest convenience. We're not responsible for any lost or damaged packages after 48 hours.</p>
+        
+        <p>Thank you for your attention.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const visitorManagementNotificationTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Visitor Management Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2980b9; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Visitor Management Notification</h1>
+        </div>
+        
+        <p>Dear {{resident_name}},</p>
+        
+        <p>This is a notification regarding a visitor at your property. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Visitor Name:</strong> {{visitor_name}}</p>
+            <p><strong>Arrival Date:</strong> {{arrival_date}}</p>
+            <p><strong>Arrival Time:</strong> {{arrival_time}}</p>
+        </div>
+        
+        <p>Please ensure that your visitor follows all community rules and regulations. If you have any questions or need assistance, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const generalAnnouncementTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>General Announcement</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #34495e; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>General Announcement</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>We're sharing an important announcement with you. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Subject:</strong> {{announcement_subject}}</p>
+            <p><strong>Message:</strong> {{announcement_message}}</p>
+        </div>
+        
+        <p>Please take note of this announcement and act accordingly. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your attention.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const maintenanceScheduleNotificationTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Maintenance Schedule Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #e67e22; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Maintenance Schedule Notification</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>This is a notification regarding scheduled maintenance at your property. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Area:</strong> {{maintenance_area}}</p>
+            <p><strong>Date:</strong> {{maintenance_date}}</p>
+            <p><strong>Time:</strong> {{maintenance_time}}</p>
+            <p><strong>Description:</strong> {{maintenance_description}}</p>
+        </div>
+        
+        <p>Please take necessary precautions and plan accordingly. We apologize for any inconvenience this may cause. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const waterShutOffNotificationTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Water Shut-Off Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #c0392b; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Water Shut-Off Notification</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>This is a notification regarding a temporary water shut-off at your property. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Date:</strong> {{shutoff_date}}</p>
+            <p><strong>Time:</strong> {{shutoff_time}}</p>
+            <p><strong>Duration:</strong> {{shutoff_duration}}</p>
+            <p><strong>Reason:</strong> {{shutoff_reason}}</p>
+        </div>
+        
+        <p>Please take necessary precautions and store water for your needs. We apologize for any inconvenience this may cause. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const trashCollectionReminderTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Trash Collection Reminder</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #2ecc71; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Trash Collection Reminder</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>This is a reminder about the upcoming trash collection. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Date:</strong> {{collection_date}}</p>
+            <p><strong>Time:</strong> {{collection_time}}</p>
+            <p><strong>Location:</strong> {{collection_location}}</p>
+        </div>
+        
+        <p>Please place your trash bins at the designated location before the scheduled time. Follow all community rules and regulations for trash disposal. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const parkingRegulationsReminderTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Parking Regulations Reminder</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #3498db; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Parking Regulations Reminder</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>This is a reminder about the community's parking regulations. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Regulation:</strong> {{parking_regulation}}</p>
+            <p><strong>Description:</strong> {{regulation_description}}</p>
+        </div>
+        
+        <p>Please adhere to these regulations to ensure a safe and orderly parking environment. Violators may be subject to fines or towing. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const landscapingMaintenanceNotificationTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Landscaping Maintenance Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        h1 { color: #26ae60; }
+        .details { background-color: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Landscaping Maintenance Notification</h1>
+        </div>
+        
+        <p>Dear Residents,</p>
+        
+        <p>This is a notification regarding upcoming landscaping maintenance at your property. Here are the details:</p>
+        
+        <div class="details">
+            <p><strong>Date:</strong> {{maintenance_date}}</p>
+            <p><strong>Time:</strong> {{maintenance_time}}</p>
+            <p><strong>Area:</strong> {{maintenance_area}}</p>
+            <p><strong>Description:</strong> {{maintenance_description}}</p>
+        </div>
+        
+        <p>Please take necessary precautions and keep the area clear for the maintenance crew. We apologize for any inconvenience this may cause. If you have any questions or need clarification, please contact our office.</p>
+        
+        <p>Thank you for your cooperation.</p>
+        
+        <p>Sincerely,<br>
+        {{association_name}} Management</p>
+        
+        <div class="footer">
+            <p>This email was sent by {{association_name}}</p>
+            <p>{{association_address}}</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export

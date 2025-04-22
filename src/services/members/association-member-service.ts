@@ -49,7 +49,6 @@ export const associationMemberService = {
 
   addAssociationMember: async (memberData: MemberFormData): Promise<AssociationMember> => {
     try {
-      // Exclude member_type from insertion if it doesn't exist in the table
       const { data, error } = await supabase
         .from('association_member_roles')
         .insert({
@@ -57,7 +56,6 @@ export const associationMemberService = {
           association_id: memberData.association_id,
           role_type: memberData.role_type,
           role_name: memberData.role_name
-          // member_type is omitted as it doesn't exist in the database table
         })
         .select()
         .single();
@@ -84,7 +82,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type // Add to the returned object even if not in DB
+        member_type: memberData.member_type || 'homeowner'
       } as AssociationMember;
     } catch (error) {
       console.error('Error in addAssociationMember:', error);
@@ -94,14 +92,12 @@ export const associationMemberService = {
 
   updateAssociationMember: async (id: string, memberData: Partial<MemberFormData>): Promise<AssociationMember> => {
     try {
-      // Exclude member_type from update if it doesn't exist in the table
       const { data, error } = await supabase
         .from('association_member_roles')
         .update({ 
           role_type: memberData.role_type,
           role_name: memberData.role_name,
           user_id: memberData.user_id
-          // member_type is omitted as it doesn't exist in the database table
         })
         .eq('id', id)
         .select()
@@ -129,7 +125,7 @@ export const associationMemberService = {
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type || 'homeowner' // Add to the returned object even if not in DB
+        member_type: memberData.member_type || 'homeowner'
       } as AssociationMember;
     } catch (error) {
       console.error('Error in updateAssociationMember:', error);

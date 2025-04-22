@@ -41,7 +41,7 @@ interface MembersTabProps {
 }
 
 export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
-  const [activeTab, setActiveTab] = useState('board');
+  const [activeTab, setActiveTab] = useState<'board' | 'committee'>('board');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [roleType, setRoleType] = useState<'board' | 'committee'>('board');
 
@@ -85,13 +85,13 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
 
   const handleAddMember = () => {
     setEditingMember(null);
-    setRoleType(activeTab as 'board' | 'committee');
+    setRoleType(activeTab);
     setIsDialogOpen(true);
   };
 
   const handleEditMember = (member: AssociationMember) => {
     setEditingMember(member);
-    setRoleType(member.role_type);
+    setRoleType(member.role_type as 'board' | 'committee');
     setIsDialogOpen(true);
   };
 
@@ -103,7 +103,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
         <CardTitle>Association Members</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="board" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="board" value={activeTab} onValueChange={(value) => setActiveTab(value as 'board' | 'committee')} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="board">Board Members</TabsTrigger>
             <TabsTrigger value="committee">Committee Members</TabsTrigger>

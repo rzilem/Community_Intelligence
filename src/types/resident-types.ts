@@ -22,4 +22,13 @@ export interface ResidentWithProfile extends Resident {
   first_name?: string;
   last_name?: string;
   profile_image_url?: string;
+  user?: {
+    profile?: {
+      id?: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      phone_number?: string;
+    }
+  };
 }
