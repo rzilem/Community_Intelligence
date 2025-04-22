@@ -55,7 +55,7 @@ const AssociationPortalSelector = ({ onAssociationChange }: AssociationPortalSel
             {associations.map((association) => (
               <CommandItem
                 key={association.id}
-                value={association.id}
+                value={association.association_id || association.id}
                 onSelect={(value) => {
                   onAssociationChange(value);
                   setOpen(false);
@@ -64,10 +64,10 @@ const AssociationPortalSelector = ({ onAssociationChange }: AssociationPortalSel
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    currentAssociation?.id === association.id ? "opacity-100" : "opacity-0"
+                    currentAssociation?.id === (association.association_id || association.id) ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <span className="truncate">{association.name}</span>
+                <span className="truncate">{association.associations?.name || 'Unnamed Association'}</span>
               </CommandItem>
             ))}
           </CommandGroup>
