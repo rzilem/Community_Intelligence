@@ -39,12 +39,9 @@ export function useFormTemplateState(initialTemplate: FormTemplate | null) {
     );
   };
 
-  const updateTemplateDetails = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
+  const updateTemplateDetails = (key: keyof FormTemplate, value: any) => {
     setTemplate((prev) =>
-      prev ? { ...prev, [name]: value } : prev
+      prev ? { ...prev, [key]: value } : prev
     );
   };
 

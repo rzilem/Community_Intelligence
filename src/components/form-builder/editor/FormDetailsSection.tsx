@@ -18,7 +18,6 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 
 interface FormDetailsSectionProps {
@@ -48,6 +47,11 @@ const FormDetailsSection: React.FC<FormDetailsSectionProps> = ({
     { value: "general", label: "General" },
   ];
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
+    onTemplateDetailsChange(id as keyof FormTemplate, value);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -63,7 +67,7 @@ const FormDetailsSection: React.FC<FormDetailsSectionProps> = ({
             <Input
               id="name"
               value={template.name}
-              onChange={(e) => onTemplateDetailsChange("name", e.target.value)}
+              onChange={handleInputChange}
               placeholder="Enter form name"
             />
           </div>
@@ -133,9 +137,7 @@ const FormDetailsSection: React.FC<FormDetailsSectionProps> = ({
           <Textarea
             id="description"
             value={template.description || ""}
-            onChange={(e) =>
-              onTemplateDetailsChange("description", e.target.value)
-            }
+            onChange={handleInputChange}
             placeholder="Describe the purpose of this form"
             rows={3}
           />

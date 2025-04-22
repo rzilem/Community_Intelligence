@@ -17,10 +17,21 @@ import {
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { useAuth } from '@/contexts/auth';
 import { cn } from '@/lib/utils';
+import { Association } from '@/types/association-types';
 
 interface AssociationPortalSelectorProps {
   onAssociationChange: (associationId: string) => void;
   className?: string;
+}
+
+interface AssociationUser {
+  association_id: string;
+  role: string;
+  associations: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+  };
 }
 
 const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
@@ -31,7 +42,7 @@ const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
   const [open, setOpen] = useState(false);
 
   // Fetch associations that the user has access to
-  const { data: associations = [], isLoading } = useSupabaseQuery<any[]>(
+  const { data: associations = [], isLoading } = useSupabaseQuery<AssociationUser[]>(
     'association_users',
     {
       select: `
@@ -62,10 +73,13 @@ const AssociationPortalSelector: React.FC<AssociationPortalSelectorProps> = ({
   const handleAssociationChange = (associationId: string) => {
     const selectedAssociation = formattedAssociations.find(a => a.id === associationId);
     if (selectedAssociation) {
+      // Create a partial Association object with just the required properties
       setCurrentAssociation({
         id: selectedAssociation.id,
         name: selectedAssociation.name,
-        logo_url: selectedAssociation.logo
+        logo_url: selectedAssociation.logo,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       });
       onAssociationChange(associationId);
       setOpen(false);
