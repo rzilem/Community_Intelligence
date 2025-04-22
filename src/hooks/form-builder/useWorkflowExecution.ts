@@ -242,9 +242,15 @@ export function useWorkflowExecution() {
     details?: any;
   }) => {
     try {
-      await supabase
-        .from('form_workflow_execution_logs')
-        .insert(logData);
+      // Use RPC call to avoid table name issues
+      await supabase.rpc('log_workflow_execution', {
+        p_workflow_id: logData.workflowId,
+        p_submission_id: logData.submissionId,
+        p_step_id: logData.stepId,
+        p_action_id: logData.actionId,
+        p_status: logData.status,
+        p_details: logData.details
+      });
     } catch (error) {
       console.error('Error logging workflow execution:', error);
     }

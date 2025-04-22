@@ -27,6 +27,7 @@ export interface FormWorkflowCondition {
   field: string;
   operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
   value: string | number | boolean;
+  customField?: string; // Added for custom field support
 }
 
 export interface FormWorkflowStep {
@@ -48,6 +49,9 @@ export interface FormWorkflow {
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+  logging?: boolean; // Added for workflow logging option
+  retryFailed?: boolean; // Added for retry failed actions
+  maxRetries?: number; // Added for max retries setting
 }
 
 export interface FormWorkflowExecutionLog {

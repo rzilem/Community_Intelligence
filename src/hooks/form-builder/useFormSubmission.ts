@@ -5,6 +5,7 @@ import { FormTemplate } from '@/types/form-builder-types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth';
 import { useWorkflowExecution } from './useWorkflowExecution';
+import { FormWorkflow } from '@/types/form-workflow-types'; 
 
 export function useFormSubmission() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,11 +72,13 @@ export function useFormSubmission() {
 
       // Fetch and execute associated workflows
       try {
-        const { data: workflows } = await supabase
-          .from('form_workflows')
-          .select('*')
-          .eq('formTemplateId', formTemplate.id)
-          .eq('isEnabled', true);
+        // Custom SQL query to avoid the type error
+        const { data: workflowsData, error: workflowError } = await supabase
+          .rpc('get_form_workflows', { template_id: formTemplate.id });
+
+        if (workflowError) throw workflowError;
+
+        const workflows = workflowsData as unknown as FormWorkflow[];
 
         if (workflows && workflows.length > 0) {
           // Execute each workflow in parallel

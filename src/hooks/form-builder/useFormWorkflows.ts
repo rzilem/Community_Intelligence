@@ -31,9 +31,20 @@ export function useFormWorkflows(formId?: string) {
         await createWorkflow(workflow);
         toast.success('Workflow created successfully');
       } else {
+        // Using correct format for update
         await updateWorkflow({ 
           id: workflow.id,
-          ...workflow
+          data: {
+            name: workflow.name,
+            description: workflow.description,
+            formTemplateId: workflow.formTemplateId,
+            steps: workflow.steps,
+            isEnabled: workflow.isEnabled,
+            logging: workflow.logging,
+            retryFailed: workflow.retryFailed,
+            maxRetries: workflow.maxRetries,
+            updatedAt: new Date().toISOString()
+          }
         });
         toast.success('Workflow updated successfully');
       }

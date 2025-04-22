@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FormTemplate } from '@/types/form-builder-types';
+import { FormTemplate, FormField, FormFieldType } from '@/types/form-builder-types';
 import FormFieldsList from './FormFieldsList';
 import FormFieldEditor from './FormFieldEditor';
-import FormAssociationSelect from './FormAssociationSelect';
+import { FormAssociationSelect } from './FormAssociationSelect';
 import FormWorkflowIntegration from './FormWorkflowIntegration';
 import { Button } from '@/components/ui/button';
 import { Save, Plus } from 'lucide-react';
@@ -40,9 +40,9 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
 
   const handleAddField = () => {
-    const newField = {
+    const newField: FormField = {
       id: crypto.randomUUID(),
-      type: 'text',
+      type: 'text' as FormFieldType,
       label: 'New Field',
       placeholder: '',
       required: false,
@@ -57,7 +57,7 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({
     setSelectedFieldId(newField.id);
   };
 
-  const handleUpdateField = (fieldId: string, updates: any) => {
+  const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
     setFormData(prev => ({
       ...prev,
       fields: prev.fields.map(field => 
@@ -165,6 +165,8 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({
                 formId={formId}
                 isGlobal={formData.is_global}
                 onGlobalChange={(isGlobal) => setFormData(prev => ({ ...prev, is_global: isGlobal }))}
+                associations={[]}
+                onUpdate={() => {}}
               />
             </CardContent>
           </Card>

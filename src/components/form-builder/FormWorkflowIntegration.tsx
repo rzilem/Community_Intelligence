@@ -28,12 +28,12 @@ const FormWorkflowIntegration: React.FC<FormWorkflowIntegrationProps> = ({ formI
     }
   };
   
-  const handleSave = async (workflow: FormWorkflow) => {
+  // Updated to match the expected type without changing functionality
+  const handleSave = async (workflow: FormWorkflow): Promise<void> => {
     const success = await saveWorkflow(workflow);
     if (success && !selectedWorkflowId) {
       setSelectedWorkflowId(workflow.id);
     }
-    return success;
   };
   
   return (

@@ -85,13 +85,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             </div>
             <Switch
               id="workflow-logging"
-              checked={workflow.logging}
+              checked={workflow.logging || false}
               onCheckedChange={(checked) => 
-                onChange({ 
-                  logging: checked, 
-                  // Add the property to the object if it doesn't exist
-                  ...(!('logging' in workflow) ? { logging: checked } : {})
-                })
+                onChange({ logging: checked })
               }
             />
           </div>
@@ -112,17 +108,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             </div>
             <Switch
               id="retry-failed"
-              checked={workflow.retryFailed}
+              checked={workflow.retryFailed || false}
               onCheckedChange={(checked) => 
-                onChange({ 
-                  retryFailed: checked,
-                  ...(!('retryFailed' in workflow) ? { retryFailed: checked } : {})
-                })
+                onChange({ retryFailed: checked })
               }
             />
           </div>
           
-          {workflow.retryFailed && (
+          {(workflow.retryFailed || false) && (
             <div className="space-y-2 ml-6 border-l-2 pl-4">
               <Label htmlFor="max-retries">Maximum Retry Attempts</Label>
               <Input
