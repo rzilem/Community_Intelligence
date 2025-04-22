@@ -18,7 +18,9 @@ export const useRealTimeNotifications = () => {
       if (typeof notificationContext.setNotifications === 'function') {
         notificationContext.setNotifications((prev: any[]) => [...prev, notification]);
       } else {
-        console.warn('Notification context missing setNotifications method');
+        // As a fallback, we can try to use the markAllAsRead function to trigger a re-render
+        console.log('Adding notification to local state');
+        setNotifications(prev => [...prev, notification]);
       }
     } else {
       console.warn('Notification context not available');

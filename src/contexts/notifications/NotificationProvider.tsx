@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useEffect, useState } from 'react';
 import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
@@ -128,7 +127,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         unreadCount, 
         markAsRead, 
         markAllAsRead, 
-        deleteNotification 
+        deleteNotification,
+        setNotifications 
       }}
     >
       {children}
