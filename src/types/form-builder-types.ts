@@ -1,3 +1,4 @@
+
 export type FormFieldType = 
   | 'text'
   | 'textarea'
@@ -78,6 +79,11 @@ export interface FormTemplate {
   is_global: boolean;
   form_type: FormType | null;
   associations?: { id: string; name: string }[];
+  analytics?: {
+    submission_count: number;
+    completion_rate: number;
+    average_completion_time: string;
+  };
 }
 
 export interface FormSubmission {
@@ -133,4 +139,20 @@ export interface FormTemplateAssociation {
   association_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface FormAnalyticsData {
+  id: string;
+  form_id: string;
+  submission_count: number;
+  completion_rate: number;
+  average_completion_time: string;
+  field_completion_rates: Record<string, number>;
+  submission_trend: Array<{ date: string; count: number }>;
+}
+
+export interface FieldTemplateCategory {
+  id: string;
+  name: string;
+  fields: FormField[];
 }
