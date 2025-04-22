@@ -1,39 +1,27 @@
 
 import { ResidentType } from './resident-types';
 
-export type MemberRole = 'board' | 'committee';
-export type MemberType = 'homeowner' | 'developer' | 'builder';
+export type MemberType = 'Board Member' | 'Resident' | 'Property Manager' | 'Committee Member' | 'Other';
 
-export interface AssociationMemberRole {
+export interface AssociationMember {
   id: string;
   user_id: string;
   association_id: string;
-  role_type: MemberRole;
   role_name: string;
-  // Note: member_type doesn't exist in the DB table but we include it in our interface
-  member_type?: MemberType;  
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AssociationMember extends AssociationMemberRole {
+  role_type: string;
   first_name?: string;
   last_name?: string;
   email?: string;
-  member_type: MemberType; // Required in the interface but optional in DB
-}
-
-export interface ExternalMember {
-  first_name: string;
-  last_name: string;
-  email: string;
-  user_type: 'developer' | 'builder';
+  phone?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MemberFormData {
-  user_id: string;
-  association_id: string;
-  role_type: MemberRole;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
   role_name: string;
-  member_type: MemberType;
+  role_type: string;
 }

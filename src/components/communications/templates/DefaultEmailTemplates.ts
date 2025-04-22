@@ -75,7 +75,7 @@ export const defaultEmailTemplates = [
         <li><strong>Community Phone:</strong> {association.phone}</li>
       </ul>
       
-      <p>Your monthly assessment is ${payment.amount} and is due on the 1st of each month. Late payments are subject to a ${payment.lateFee} fee.</p>
+      <p>Your monthly assessment is ${'{payment.amount}'} and is due on the 1st of each month. Late payments are subject to a ${'{payment.lateFee}'} fee.</p>
       
       <p>Please take some time to review the association rules and regulations, which you can find on our community portal.</p>
       
@@ -170,14 +170,14 @@ export const defaultEmailTemplates = [
     <div class="content">
       <p>Dear {resident.name},</p>
       
-      <p>This is a friendly reminder that your monthly assessment for {association.name} is due on {payment.dueDate}.</p>
+      <p>This is a friendly reminder that your monthly assessment for {association.name} is due on {'{payment.dueDate}'}.</p>
       
       <div class="highlight-box">
         <p><strong>Payment Details:</strong></p>
         <ul>
-          <li>Amount Due: ${payment.amount}</li>
-          <li>Due Date: {payment.dueDate}</li>
-          <li>Late Fee: ${payment.lateFee} (applied after the 10th of the month)</li>
+          <li>Amount Due: ${'{payment.amount}'}</li>
+          <li>Due Date: {'{payment.dueDate}'}</li>
+          <li>Late Fee: ${'{payment.lateFee}'} (applied after the 10th of the month)</li>
         </ul>
       </div>
       
