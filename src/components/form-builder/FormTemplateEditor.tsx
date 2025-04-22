@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { XCircle } from 'lucide-react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { toast } from 'sonner';
-import { FormField, FormTemplate } from '@/types/form-builder-types';
+import { FormField, FormTemplate, FormType } from '@/types/form-builder-types';
 import FormTemplateFieldsManager from './FormTemplateFieldsManager';
 import FormWorkflowIntegration from './FormWorkflowIntegration';
 import { Button } from '@/components/ui/button';
@@ -94,10 +94,25 @@ const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({ formId, onSave,
         metadata = undefined;
       }
 
+      // Cast form_type to FormType or null
+      let formType: FormType | null = null;
+      if (data.form_type && typeof data.form_type === 'string') {
+        // Check if the value matches one of the valid FormType values
+        const validFormTypes: FormType[] = [
+          'portal_request', 'arc_application', 'pool_form', 
+          'gate_request', 'other'
+        ];
+        
+        if (validFormTypes.includes(data.form_type as FormType)) {
+          formType = data.form_type as FormType;
+        }
+      }
+
       // Compose template with correct types and conversion
       setTemplate((prev) => ({
         ...prev,
         ...data,
+        form_type: formType,
         fields: parsedFields,
         metadata: metadata || {},
       }));
