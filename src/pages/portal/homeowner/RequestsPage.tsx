@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,14 +10,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
-import { useAuth } from '@/hooks/useAuth';
-import { useAssociationForms } from '@/hooks/useAssociationForms';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useAssociationForms } from '@/hooks/form-builder/useAssociationForms';
+import { useFormSubmission } from '@/hooks/form-builder/useFormSubmission';
 
 const RequestsPage = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isSubmitFormDialogOpen, setIsSubmitFormDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedForm, setSelectedForm] = useState<any>(null);
   const { currentAssociation } = useAuth();
+  const { submitForm, isSubmitting } = useFormSubmission();
   
   const { data: associationForms = [] } = useAssociationForms(
     currentAssociation?.id,
@@ -31,6 +34,13 @@ const RequestsPage = () => {
     { id: 3, date: '08/27/2023', title: 'Parking Violation', category: 'Compliance', status: 'Resolved', priority: 'Low' },
     { id: 4, date: '08/15/2023', title: 'Tree Removal Request', category: 'Landscaping', status: 'Open', priority: 'Medium' },
   ];
+
+  const handleFormSelection = async (formTemplate: any) => {
+    // Show form submission dialog with dynamic form based on template
+    setSelectedForm(formTemplate);
+    setIsCreateDialogOpen(false);
+    setIsSubmitFormDialogOpen(true);
+  };
 
   const handleViewDetails = (request: any) => {
     setSelectedRequest(request);
@@ -94,7 +104,7 @@ const RequestsPage = () => {
               <CardTitle>Your Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              {/*<Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
@@ -126,7 +136,7 @@ const RequestsPage = () => {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+              </Table>*/}
             </CardContent>
           </Card>
         </div>
@@ -148,9 +158,7 @@ const RequestsPage = () => {
                   key={form.id}
                   variant="outline"
                   className="w-full justify-start text-left"
-                  onClick={() => {
-                    console.log('Selected form:', form);
-                  }}
+                  onClick={() => handleFormSelection(form)}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   {form.name}

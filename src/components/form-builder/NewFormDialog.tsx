@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,15 @@ import { NewFormDialogProps } from '@/types/form-builder-types';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -47,7 +50,6 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
     try {
-      // Create the form template
       const { data, error } = await supabase
         .from('form_templates')
         .insert({
@@ -63,7 +65,6 @@ export const NewFormDialog: React.FC<NewFormDialogProps> = ({
 
       if (error) throw error;
 
-      // If not global and has associations, create associations
       if (!values.is_global && values.association_ids?.length) {
         const associations = values.association_ids.map(association_id => ({
           form_template_id: data.id,
