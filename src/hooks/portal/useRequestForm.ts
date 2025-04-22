@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useFormSubmission } from '@/hooks/form-builder/useFormSubmission';
 import { FormTemplate } from '@/types/form-builder-types';
+import { toast } from 'sonner';
 
 export const useRequestForm = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -21,6 +22,13 @@ export const useRequestForm = () => {
     formTemplate.fields.forEach((field: any) => {
       initialData[field.id] = field.defaultValue || '';
     });
+    
+    // Add title and description fields for homeowner request generation
+    initialData.title = '';
+    initialData.description = '';
+    initialData.type = 'general';
+    initialData.priority = 'medium';
+    
     setFormData(initialData);
   };
 
@@ -32,14 +40,30 @@ export const useRequestForm = () => {
   };
 
   const handleFormSubmit = async () => {
-    if (!selectedForm) return;
+    if (!selectedForm) {
+      toast.error('No form selected');
+      return false;
+    }
+    
+    // Add validation here if needed
+    // Make sure required fields are filled
+    const requiredFields = selectedForm.fields.filter(f => f.required);
+    const missingFields = requiredFields.filter(f => !formData[f.id]);
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.map(f => f.label).join(', ')}`);
+      return false;
+    }
     
     const success = await submitForm(selectedForm, formData);
     if (success) {
       setIsSubmitFormDialogOpen(false);
       setSelectedForm(null);
       setFormData({});
+      return true;
     }
+    
+    return false;
   };
 
   return {
