@@ -3232,6 +3232,63 @@ export type Database = {
         }
         Relationships: []
       }
+      resale_orders: {
+        Row: {
+          amount: number
+          association_id: string | null
+          contact_info: Json
+          created_at: string
+          id: string
+          order_details: Json
+          order_number: string
+          payment_info: Json | null
+          payment_status: string
+          property_id: string | null
+          property_info: Json
+          rush_option: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          association_id?: string | null
+          contact_info: Json
+          created_at?: string
+          id?: string
+          order_details: Json
+          order_number: string
+          payment_info?: Json | null
+          payment_status?: string
+          property_id?: string | null
+          property_info: Json
+          rush_option?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          association_id?: string | null
+          contact_info?: Json
+          created_at?: string
+          id?: string
+          order_details?: Json
+          order_number?: string
+          payment_info?: Json | null
+          payment_status?: string
+          property_id?: string | null
+          property_info?: Json
+          rush_option?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       residents: {
         Row: {
           created_at: string
@@ -3637,6 +3694,10 @@ export type Database = {
           p_property_type?: string
           p_total_units?: number
         }
+        Returns: string
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_associations: {

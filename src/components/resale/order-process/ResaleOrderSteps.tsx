@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,36 +7,31 @@ import { ContactStep } from './steps/ContactStep';
 import { OrderDetailsStep } from './steps/OrderDetailsStep';
 import { PaymentStep } from './steps/PaymentStep';
 import { Property } from '@/types/property-types';
+import { useResaleOrderForm } from '@/hooks/resale/useResaleOrderForm';
+import { Loader2 } from 'lucide-react';
 
 interface ResaleOrderStepsProps {
   currentStep: number;
-  formData: any;
-  setFormData: (data: any) => void;
   onPropertySelect: (property: Property | null) => void;
   onBack: () => void;
   onNext: () => void;
-  onSubmit: () => void;
   isSubmitting: boolean;
 }
 
 export const ResaleOrderSteps = ({
   currentStep,
-  formData,
-  setFormData,
   onPropertySelect,
   onBack,
   onNext,
-  onSubmit,
   isSubmitting
 }: ResaleOrderStepsProps) => {
-  const handleInputChange = (section: string, field: string, value: string) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value
-      }
-    }));
+  const { form, onSubmit } = useResaleOrderForm();
+  
+  const handleNextClick = async () => {
+    const isValid = await form.trigger(getFieldsToValidate(currentStep));
+    if (isValid) {
+      onNext();
+    }
   };
 
   return (
@@ -54,26 +48,23 @@ export const ResaleOrderSteps = ({
       <CardContent>
         {currentStep === 1 && (
           <PropertyStep
-            formData={formData}
+            form={form}
             onPropertySelect={onPropertySelect}
           />
         )}
         {currentStep === 2 && (
           <ContactStep
-            formData={formData}
-            onInputChange={handleInputChange}
+            form={form}
           />
         )}
         {currentStep === 3 && (
           <OrderDetailsStep
-            formData={formData}
-            onInputChange={handleInputChange}
+            form={form}
           />
         )}
         {currentStep === 4 && (
           <PaymentStep
-            formData={formData}
-            onInputChange={handleInputChange}
+            form={form}
           />
         )}
       </CardContent>
@@ -87,7 +78,10 @@ export const ResaleOrderSteps = ({
         </Button>
         
         {currentStep < 4 ? (
-          <Button onClick={onNext}>
+          <Button 
+            onClick={handleNextClick}
+            disabled={isSubmitting}
+          >
             Next
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
@@ -113,3 +107,18 @@ export const ResaleOrderSteps = ({
     </Card>
   );
 };
+
+function getFieldsToValidate(step: number) {
+  switch (step) {
+    case 1:
+      return ['propertyInfo'];
+    case 2:
+      return ['contactInfo'];
+    case 3:
+      return ['orderDetails'];
+    case 4:
+      return ['payment'];
+    default:
+      return [];
+  }
+}

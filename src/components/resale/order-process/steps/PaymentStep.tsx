@@ -2,67 +2,110 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from '@/components/ui/form';
+import { UseFormReturn } from 'react-hook-form';
+import { ResaleOrderFormData } from '@/hooks/resale/useResaleOrderForm';
 
 interface PaymentStepProps {
-  formData: any;
-  onInputChange: (section: string, field: string, value: string) => void;
+  form: UseFormReturn<ResaleOrderFormData>;
 }
 
-export const PaymentStep = ({ formData, onInputChange }: PaymentStepProps) => {
+export const PaymentStep = ({ form }: PaymentStepProps) => {
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="cardName">Name on Card</Label>
-        <Input
-          id="cardName"
-          value={formData.payment.cardName}
-          onChange={(e) => onInputChange('payment', 'cardName', e.target.value)}
-          placeholder="Enter the name on your card"
+    <Form {...form}>
+      <div className="space-y-4">
+        <FormField
+          control={form.control}
+          name="payment.cardName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name on Card</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter the name on your card"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div>
-        <Label htmlFor="cardNumber">Card Number</Label>
-        <Input
-          id="cardNumber"
-          value={formData.payment.cardNumber}
-          onChange={(e) => onInputChange('payment', 'cardNumber', e.target.value)}
-          placeholder="Enter your card number"
+        <FormField
+          control={form.control}
+          name="payment.cardNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Card Number</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter your card number"
+                  maxLength={16}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="expiration">Expiration Date</Label>
-          <Input
-            id="expiration"
-            value={formData.payment.expiration}
-            onChange={(e) => onInputChange('payment', 'expiration', e.target.value)}
-            placeholder="MM/YY"
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="payment.expiration"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Expiration Date</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="MM/YY"
+                    maxLength={5}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="payment.cvv"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>CVV</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="password"
+                    maxLength={4}
+                    placeholder="Enter CVV"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
         </div>
-        <div>
-          <Label htmlFor="cvv">CVV</Label>
-          <Input
-            id="cvv"
-            value={formData.payment.cvv}
-            onChange={(e) => onInputChange('payment', 'cvv', e.target.value)}
-            type="password"
-            maxLength={4}
-            placeholder="Enter CVV"
-          />
-        </div>
-      </div>
 
-      <div>
-        <Label htmlFor="billingZip">Billing Zip Code</Label>
-        <Input
-          id="billingZip"
-          value={formData.payment.billingZip}
-          onChange={(e) => onInputChange('payment', 'billingZip', e.target.value)}
-          placeholder="Enter billing zip code"
+        <FormField
+          control={form.control}
+          name="payment.billingZip"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Billing Zip Code</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Enter billing zip code"
+                  maxLength={5}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
       </div>
-    </div>
+    </Form>
   );
 };
