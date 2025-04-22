@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
@@ -6,6 +5,7 @@ import { fetchUserProfile } from '@/services/user-service';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthMethods } from './hooks/useAuthMethods';
 import { useLoadUserData } from './hooks/useLoadUserData';
+import { toast } from 'sonner';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const authState = useAuthState();
