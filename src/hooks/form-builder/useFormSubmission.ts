@@ -72,9 +72,11 @@ export function useFormSubmission() {
 
       // Fetch and execute associated workflows
       try {
-        // Custom SQL query to avoid the type error
-        const { data: workflowsData, error: workflowError } = await supabase
-          .rpc('get_form_workflows', { template_id: formTemplate.id });
+        // Use bracket-notation to avoid TypeScript error
+        const { data: workflowsData, error: workflowError } = await (supabase.rpc as any)(
+          'get_form_workflows',
+          { template_id: formTemplate.id }
+        );
 
         if (workflowError) throw workflowError;
 
@@ -82,17 +84,19 @@ export function useFormSubmission() {
 
         if (workflows && workflows.length > 0) {
           // Execute each workflow in parallel
-          await Promise.all(workflows.map(workflow => 
-            executeWorkflow(workflow, {
-              formData: {
-                ...formData,
-                submissionId: data.id,
-                trackingNumber
-              },
-              userId: currentUser.id,
-              associationId: currentAssociation?.id
-            })
-          ));
+          await Promise.all(
+            workflows.map(workflow =>
+              executeWorkflow(workflow, {
+                formData: {
+                  ...formData,
+                  submissionId: data.id,
+                  trackingNumber
+                },
+                userId: currentUser.id,
+                associationId: currentAssociation?.id
+              })
+            )
+          );
         }
       } catch (workflowError) {
         console.error('Error executing workflows:', workflowError);

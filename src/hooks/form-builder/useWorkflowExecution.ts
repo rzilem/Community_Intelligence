@@ -242,8 +242,8 @@ export function useWorkflowExecution() {
     details?: any;
   }) => {
     try {
-      // Use RPC call to avoid table name issues
-      await supabase.rpc('log_workflow_execution', {
+      // Use bracket-notation to avoid type error with custom RPC function
+      await (supabase.rpc as any)('log_workflow_execution', {
         p_workflow_id: logData.workflowId,
         p_submission_id: logData.submissionId,
         p_step_id: logData.stepId,
