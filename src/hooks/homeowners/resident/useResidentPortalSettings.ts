@@ -40,16 +40,9 @@ export function useResidentPortalSettings(residentId: string) {
         // Transform the data to match the expected type
         const formattedSettings: ResidentPortalSettings = {
           ...newSettings,
-          notification_preferences: newSettings.notification_preferences 
-            ? (typeof newSettings.notification_preferences === 'object' 
-                ? newSettings.notification_preferences as Record<string, boolean> 
-                : JSON.parse(newSettings.notification_preferences as string))
-            : {},
-          dashboard_layout: newSettings.dashboard_layout 
-            ? (typeof newSettings.dashboard_layout === 'object'
-                ? newSettings.dashboard_layout as Array<{ id: string; type: string; position: number }>
-                : JSON.parse(newSettings.dashboard_layout as string))
-            : []
+          notification_preferences: parseJsonField(newSettings.notification_preferences, {}),
+          dashboard_layout: parseJsonField(newSettings.dashboard_layout, []),
+          theme_preference: validateThemePreference(newSettings.theme_preference)
         };
         
         setSettings(formattedSettings);
@@ -57,16 +50,9 @@ export function useResidentPortalSettings(residentId: string) {
         // Transform the data to match the expected type
         const formattedSettings: ResidentPortalSettings = {
           ...data,
-          notification_preferences: data.notification_preferences 
-            ? (typeof data.notification_preferences === 'object' 
-                ? data.notification_preferences as Record<string, boolean> 
-                : JSON.parse(data.notification_preferences as string))
-            : {},
-          dashboard_layout: data.dashboard_layout 
-            ? (typeof data.dashboard_layout === 'object'
-                ? data.dashboard_layout as Array<{ id: string; type: string; position: number }>
-                : JSON.parse(data.dashboard_layout as string))
-            : []
+          notification_preferences: parseJsonField(data.notification_preferences, {}),
+          dashboard_layout: parseJsonField(data.dashboard_layout, []),
+          theme_preference: validateThemePreference(data.theme_preference)
         };
         
         setSettings(formattedSettings);
@@ -77,6 +63,24 @@ export function useResidentPortalSettings(residentId: string) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to parse JSON fields
+  const parseJsonField = (field: any, defaultValue: any) => {
+    if (!field) return defaultValue;
+    if (typeof field === 'object') return field;
+    try {
+      return JSON.parse(field as string);
+    } catch (e) {
+      console.error('Error parsing JSON field:', e);
+      return defaultValue;
+    }
+  };
+
+  // Helper function to validate theme preference
+  const validateThemePreference = (theme: any): 'light' | 'dark' | 'system' => {
+    const validThemes: Array<'light' | 'dark' | 'system'> = ['light', 'dark', 'system'];
+    return validThemes.includes(theme as any) ? (theme as 'light' | 'dark' | 'system') : 'light';
   };
 
   const updatePortalSettings = async (updates: Partial<ResidentPortalSettings>) => {
