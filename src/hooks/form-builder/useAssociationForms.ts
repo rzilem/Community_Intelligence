@@ -16,7 +16,12 @@ export function useAssociationForms(associationId?: string, formType?: FormType)
       `,
       filter: [
         ...(formType ? [{ column: 'form_type', value: formType }] : []),
-        { column: 'is_public', value: true }
+        { column: 'is_public', value: true },
+        {
+          column: 'is_global',
+          value: true,
+          operator: 'eq'
+        }
       ]
     }
   );

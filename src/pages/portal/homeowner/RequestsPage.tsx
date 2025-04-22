@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
@@ -10,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useAssociationForms } from '@/hooks/form-builder/useAssociationForms';
+import { useAuth } from '@/contexts/auth';
+import { useAssociationFormTemplates } from '@/hooks/form-builder/useAssociationFormTemplates';
 import { useFormSubmission } from '@/hooks/form-builder/useFormSubmission';
 
 const RequestsPage = () => {
@@ -20,10 +21,11 @@ const RequestsPage = () => {
   const [isSubmitFormDialogOpen, setIsSubmitFormDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedForm, setSelectedForm] = useState<any>(null);
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const { currentAssociation } = useAuth();
   const { submitForm, isSubmitting } = useFormSubmission();
   
-  const { data: associationForms = [] } = useAssociationForms(
+  const { data: associationForms = [], isLoading: formsLoading } = useAssociationFormTemplates(
     currentAssociation?.id,
     'portal_request'
   );
@@ -35,11 +37,35 @@ const RequestsPage = () => {
     { id: 4, date: '08/15/2023', title: 'Tree Removal Request', category: 'Landscaping', status: 'Open', priority: 'Medium' },
   ];
 
-  const handleFormSelection = async (formTemplate: any) => {
-    // Show form submission dialog with dynamic form based on template
+  const handleFormSelection = (formTemplate: any) => {
     setSelectedForm(formTemplate);
     setIsCreateDialogOpen(false);
     setIsSubmitFormDialogOpen(true);
+    // Initialize form data with empty values based on the form fields
+    const initialData: Record<string, any> = {};
+    formTemplate.fields.forEach((field: any) => {
+      initialData[field.id] = field.defaultValue || '';
+    });
+    setFormData(initialData);
+  };
+
+  const handleFieldChange = (fieldId: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldId]: value
+    }));
+  };
+
+  const handleFormSubmit = async () => {
+    if (!selectedForm) return;
+    
+    const success = await submitForm(selectedForm, formData);
+    if (success) {
+      setIsSubmitFormDialogOpen(false);
+      setSelectedForm(null);
+      setFormData({});
+      // We would reload requests here in a real implementation
+    }
   };
 
   const handleViewDetails = (request: any) => {
@@ -104,39 +130,7 @@ const RequestsPage = () => {
               <CardTitle>Your Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              {/*<Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {requests.map((request) => (
-                    <TableRow key={request.id}>
-                      <TableCell>{request.date}</TableCell>
-                      <TableCell>{request.title}</TableCell>
-                      <TableCell>{request.category}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {getPriorityIcon(request.priority)}
-                          <span>{request.priority}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" onClick={() => handleViewDetails(request)}>
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>*/}
+              {/* Table content would go here */}
             </CardContent>
           </Card>
         </div>
@@ -152,7 +146,11 @@ const RequestsPage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {associationForms.length > 0 ? (
+            {formsLoading ? (
+              <div className="py-4 text-center text-muted-foreground">
+                Loading available forms...
+              </div>
+            ) : associationForms.length > 0 ? (
               associationForms.map(form => (
                 <Button
                   key={form.id}
@@ -178,6 +176,80 @@ const RequestsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedForm && (
+        <Dialog open={isSubmitFormDialogOpen} onOpenChange={setIsSubmitFormDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>{selectedForm.name}</DialogTitle>
+              <DialogDescription>
+                {selectedForm.description}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {selectedForm.fields.map((field: any) => (
+                <div key={field.id} className="space-y-2">
+                  <Label htmlFor={field.id}>
+                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                  </Label>
+                  
+                  {field.type === 'text' && (
+                    <Input
+                      id={field.id}
+                      placeholder={field.placeholder || ''}
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                    />
+                  )}
+                  
+                  {field.type === 'textarea' && (
+                    <Textarea
+                      id={field.id}
+                      placeholder={field.placeholder || ''}
+                      value={formData[field.id] || ''}
+                      onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                      required={field.required}
+                    />
+                  )}
+                  
+                  {field.type === 'select' && (
+                    <Select
+                      value={formData[field.id] || ''}
+                      onValueChange={(value) => handleFieldChange(field.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={field.placeholder || 'Select an option'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options?.map((option: any) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  {field.helpText && (
+                    <p className="text-sm text-muted-foreground">{field.helpText}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsSubmitFormDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleFormSubmit} disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Submit Request'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {selectedRequest && (
         <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
