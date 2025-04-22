@@ -2,72 +2,119 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { FormTemplate } from '@/types/form-builder-types';
-import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth';
+import { useWorkflowExecution } from './useWorkflowExecution';
 
-export const useFormSubmission = () => {
+export function useFormSubmission() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { currentUser, currentAssociation } = useAuth();
+  const { executeWorkflow } = useWorkflowExecution();
 
-  const submitForm = async (formTemplate: FormTemplate, formData: Record<string, any>) => {
-    if (!currentUser || !currentAssociation) {
+  const submitForm = async (formTemplate: FormTemplate, formData: Record<string, any>): Promise<boolean> => {
+    if (!currentUser?.id) {
       toast.error('You must be logged in to submit a form');
       return false;
     }
 
-    setIsSubmitting(true);
+    if (!formTemplate || !formTemplate.id) {
+      toast.error('Invalid form template');
+      return false;
+    }
+
     try {
-      // Create a submission record with the form data and metadata
-      const { data, error } = await supabase.from('form_submissions').insert({
-        form_template_id: formTemplate.id,
-        user_id: currentUser.id,
-        association_id: currentAssociation.id,
-        property_id: formData.property_id || null,
-        form_data: formData,
-        status: 'pending',
-        tracking_number: `REQ-${Date.now().toString().substring(7)}`,
-        submitted_at: new Date().toISOString()
-      }).select();
+      setIsSubmitting(true);
 
-      if (error) {
-        console.error('Error submitting form:', error);
-        toast.error('Error submitting form: ' + error.message);
-        return false;
-      }
+      // Generate tracking number
+      const trackingNumber = generateTrackingNumber();
 
-      // Also create a homeowner request entry if the form type is appropriate
-      if (formTemplate.form_type === 'portal_request') {
-        const { error: requestError } = await supabase.from('homeowner_requests').insert({
-          title: formData.title || `${formTemplate.name} Request`,
-          description: formData.description || 'Submitted via portal form',
-          status: 'open',
-          priority: formData.priority || 'medium',
-          type: formData.type || 'general',
-          association_id: currentAssociation.id,
-          resident_id: currentUser.id,
-          property_id: formData.property_id || null,
-          tracking_number: data?.[0]?.tracking_number || `REQ-${Date.now().toString().substring(7)}`
-        });
+      // Submit form data
+      const { data, error } = await supabase
+        .from('form_submissions')
+        .insert({
+          form_template_id: formTemplate.id,
+          user_id: currentUser.id,
+          association_id: currentAssociation?.id,
+          form_data: formData,
+          tracking_number: trackingNumber,
+          status: 'pending',
+          submitted_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
-        if (requestError) {
+      if (error) throw error;
+
+      toast.success('Form submitted successfully');
+
+      // If the form leads to a homeowner request, create it
+      if (formTemplate.form_type === 'portal_request' && formData.title) {
+        try {
+          await supabase
+            .from('homeowner_requests')
+            .insert({
+              title: formData.title,
+              description: formData.description || '',
+              type: formData.type || 'general',
+              priority: formData.priority || 'medium',
+              status: 'open',
+              tracking_number: trackingNumber,
+              resident_id: currentUser.id,
+              association_id: currentAssociation?.id,
+              property_id: formData.property_id
+            });
+        } catch (requestError) {
           console.error('Error creating homeowner request:', requestError);
-          // Still return true as the submission was saved
+          // Don't fail the whole process if request creation fails
         }
       }
 
-      toast.success('Form submitted successfully');
+      // Fetch and execute associated workflows
+      try {
+        const { data: workflows } = await supabase
+          .from('form_workflows')
+          .select('*')
+          .eq('formTemplateId', formTemplate.id)
+          .eq('isEnabled', true);
+
+        if (workflows && workflows.length > 0) {
+          // Execute each workflow in parallel
+          await Promise.all(workflows.map(workflow => 
+            executeWorkflow(workflow, {
+              formData: {
+                ...formData,
+                submissionId: data.id,
+                trackingNumber
+              },
+              userId: currentUser.id,
+              associationId: currentAssociation?.id
+            })
+          ));
+        }
+      } catch (workflowError) {
+        console.error('Error executing workflows:', workflowError);
+        // Continue even if workflow execution fails
+      }
+
       return true;
     } catch (error) {
-      console.error('Error in form submission:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Error submitting form:', error);
+      toast.error('Failed to submit form');
       return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Generate a tracking number format: FORM-YYYY-XXXXX
+  const generateTrackingNumber = () => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(10000 + Math.random() * 90000);
+    return `FORM-${year}-${random}`;
+  };
+
   return {
     submitForm,
     isSubmitting
   };
-};
+}
