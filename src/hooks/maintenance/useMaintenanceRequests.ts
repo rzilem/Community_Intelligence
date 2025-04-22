@@ -1,60 +1,39 @@
 
 import { useState } from 'react';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { MaintenanceRequest } from '@/types/maintenance-types';
+import { toast } from 'sonner';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
-interface UseMaintenanceRequestsParams {
-  associationId?: string;
-  propertyId?: string;
-  status?: 'open' | 'in_progress' | 'closed' | string;
-  enabled?: boolean;
-}
-
-export function useMaintenanceRequests({
-  associationId,
-  propertyId,
-  status,
-  enabled = true
-}: UseMaintenanceRequestsParams = {}) {
+export function useMaintenanceRequests(associationId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Build filters based on inputs
-  const filters = [];
-  
-  if (associationId) {
-    filters.push({ column: 'association_id', value: associationId });
-  }
-  
-  if (propertyId) {
-    filters.push({ column: 'property_id', value: propertyId });
-  }
-  
-  if (status) {
-    filters.push({ column: 'status', value: status });
-  }
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const { 
-    data: requests, 
-    isLoading, 
-    refetch 
-  } = useSupabaseQuery<MaintenanceRequest[]>(
-    'maintenance_requests',
-    {
-      select: '*, property:property_id(*)',
-      filter: filters,
-      order: { column: 'created_at', ascending: false }
-    },
-    enabled
-  );
+  const {
+    data: requests = [],
+    isLoading,
+    refetch
+  } = useSupabaseQuery<MaintenanceRequest[]>({
+    tableName: 'maintenance_requests',
+    select: '*, properties:property_id(*)',
+    filters: associationId ? [{ column: 'association_id', value: associationId }] : [],
+    orderBy: { column: 'created_at', ascending: false }
+  });
 
-  const createRequest = async (data: Partial<MaintenanceRequest>) => {
+  const createRequest = async (request: Omit<MaintenanceRequest, 'id' | 'created_at' | 'updated_at'>) => {
     setIsSubmitting(true);
     try {
-      const { data: newRequest, error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_requests')
-        .insert(data)
+        .insert({
+          title: request.title,
+          description: request.description,
+          priority: request.priority,
+          status: request.status || 'open',
+          property_id: request.property_id,
+          assigned_to: request.assigned_to,
+          association_id: request.association_id
+        })
         .select()
         .single();
 
@@ -62,7 +41,7 @@ export function useMaintenanceRequests({
       
       toast.success('Maintenance request created successfully');
       refetch();
-      return newRequest;
+      return data;
     } catch (error) {
       console.error('Error creating maintenance request:', error);
       toast.error('Failed to create maintenance request');
@@ -72,12 +51,12 @@ export function useMaintenanceRequests({
     }
   };
 
-  const updateRequest = async (id: string, data: Partial<MaintenanceRequest>) => {
-    setIsSubmitting(true);
+  const updateRequest = async (id: string, updates: Partial<MaintenanceRequest>) => {
+    setIsUpdating(true);
     try {
-      const { data: updatedRequest, error } = await supabase
+      const { data, error } = await supabase
         .from('maintenance_requests')
-        .update(data)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
@@ -86,13 +65,13 @@ export function useMaintenanceRequests({
       
       toast.success('Maintenance request updated successfully');
       refetch();
-      return updatedRequest;
+      return data;
     } catch (error) {
       console.error('Error updating maintenance request:', error);
       toast.error('Failed to update maintenance request');
       return null;
     } finally {
-      setIsSubmitting(false);
+      setIsUpdating(false);
     }
   };
 
@@ -116,9 +95,10 @@ export function useMaintenanceRequests({
   };
 
   return {
-    requests: requests || [],
+    requests,
     isLoading,
     isSubmitting,
+    isUpdating,
     createRequest,
     updateRequest,
     deleteRequest,

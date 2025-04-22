@@ -3,112 +3,118 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
 import { MaintenanceRequest } from '@/types/maintenance-types';
-import { formatDate } from '@/lib/utils';
-import { Edit, Trash } from 'lucide-react';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { formatDistanceToNow } from 'date-fns';
 
 interface MaintenanceRequestListProps {
   requests: MaintenanceRequest[];
+  isLoading: boolean;
   onEdit: (request: MaintenanceRequest) => void;
   onDelete: (id: string) => void;
 }
 
-export function MaintenanceRequestList({
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'open':
+      return 'bg-red-100 text-red-800';
+    case 'in_progress':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'closed':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const getPriorityColor = (priority: string) => {
+  switch (priority) {
+    case 'high':
+      return 'bg-red-100 text-red-800';
+    case 'medium':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'low':
+      return 'bg-blue-100 text-blue-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+const MaintenanceRequestList: React.FC<MaintenanceRequestListProps> = ({
   requests,
+  isLoading,
   onEdit,
   onDelete
-}: MaintenanceRequestListProps) {
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+}) => {
+  if (isLoading) {
+    return <div className="flex justify-center py-8">Loading...</div>;
+  }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-        return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
-        return 'bg-purple-100 text-purple-800';
-      case 'closed':
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  if (!requests.length) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No maintenance requests found.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-md border overflow-hidden">
+    <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
             <TableHead>Property</TableHead>
-            <TableHead>Priority</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Priority</TableHead>
             <TableHead>Created</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
-                No maintenance requests found.
+          {requests.map((request) => (
+            <TableRow key={request.id}>
+              <TableCell className="font-medium">{request.title}</TableCell>
+              <TableCell>{request.property_id}</TableCell>
+              <TableCell>
+                <Badge className={getStatusColor(request.status)}>
+                  {request.status.replace('_', ' ')}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge className={getPriorityColor(request.priority)}>
+                  {request.priority}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {request.created_at
+                  ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true })
+                  : 'N/A'}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(request)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => onDelete(request.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
-          ) : (
-            requests.map((request) => (
-              <TableRow key={request.id}>
-                <TableCell className="font-medium">{request.title}</TableCell>
-                <TableCell>
-                  {request.property?.address || 'Unknown Property'}
-                </TableCell>
-                <TableCell>
-                  <Badge className={getPriorityColor(request.priority)}>
-                    {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(request.status)}>
-                    {request.status.replace('_', ' ').charAt(0).toUpperCase() + request.status.replace('_', ' ').slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatDate(request.created_at)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <TooltipButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(request)}
-                      tooltip="Edit request"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </TooltipButton>
-                    <TooltipButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDelete(request.id)}
-                      tooltip="Delete request"
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </TooltipButton>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>
   );
-}
+};
+
+export default MaintenanceRequestList;

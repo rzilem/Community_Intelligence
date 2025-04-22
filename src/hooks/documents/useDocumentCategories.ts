@@ -9,17 +9,16 @@ export function useDocumentCategories({ associationId, enabled = true }: UseCate
   const [isCreating, setIsCreating] = useState(false);
 
   const { 
-    data: categories, 
+    data: categories = [], 
     isLoading, 
     refetch 
-  } = useSupabaseQuery<DocumentCategory[]>(
-    'document_categories',
-    {
-      select: '*',
-      filter: [{ column: 'association_id', value: associationId }],
-      order: { column: 'name', ascending: true }
-    },
-    enabled && !!associationId
+  } = useSupabaseQuery<DocumentCategory[]>({
+    tableName: 'document_categories',
+    select: '*',
+    filters: [{ column: 'association_id', value: associationId }],
+    orderBy: { column: 'name', ascending: true }
+  },
+  enabled && !!associationId
   );
 
   const createCategory = async (name: string) => {
@@ -73,7 +72,7 @@ export function useDocumentCategories({ associationId, enabled = true }: UseCate
   };
 
   return {
-    categories: categories || [],
+    categories,
     isLoading,
     isCreating,
     createCategory,
