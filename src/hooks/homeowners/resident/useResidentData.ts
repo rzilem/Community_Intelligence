@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Homeowner } from '@/components/homeowners/detail/types';
 import { formatResidentAsHomeowner } from './residentUtils';
+import { ResidentType } from '@/types/resident-types';
 
 export function useResidentData(residentId: string) {
   const [resident, setResident] = useState<Homeowner | null>(null);
@@ -28,8 +29,14 @@ export function useResidentData(residentId: string) {
         console.error('Error fetching resident:', error);
         setError('Failed to fetch resident');
       } else {
+        // Ensure the resident_type is of the correct type before passing to formatResidentAsHomeowner
+        const typedResident = {
+          ...data,
+          resident_type: data.resident_type as ResidentType
+        };
+        
         // Format the resident data to match the Homeowner type
-        const formattedResident = formatResidentAsHomeowner(data);
+        const formattedResident = formatResidentAsHomeowner(typedResident);
         setResident(formattedResident);
       }
     } catch (err) {
