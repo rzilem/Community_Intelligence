@@ -70,9 +70,9 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           )
         )
       `,
-      filters: [
-        { column: 'property_id', value: null },
-        { column: 'resident_type', value: 'owner' }
+      filter: [
+        { column: 'property_id', operator: 'eq', value: null },
+        { column: 'resident_type', operator: 'eq', value: 'owner' }
       ]
     }
   );
@@ -81,7 +81,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     if (associationId) {
       fetchMembers();
     }
-  }, [associationId, fetchMembers]);
+  }, [associationId]);
 
   const handleAddMember = () => {
     setEditingMember(null);

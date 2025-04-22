@@ -1,82 +1,48 @@
 
-import { useState } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { DocumentCategory, UseCategoriesParams } from '@/types/document-types';
-import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
+import { PostgrestError } from '@supabase/supabase-js';
 
-export function useDocumentCategories({ associationId, enabled = true }: UseCategoriesParams) {
-  const [isCreating, setIsCreating] = useState(false);
-
-  const { 
-    data: categories = [], 
-    isLoading, 
-    refetch 
-  } = useSupabaseQuery<DocumentCategory[]>({
-    tableName: 'document_categories',
-    select: '*',
-    filters: [{ column: 'association_id', value: associationId }],
-    orderBy: { column: 'name', ascending: true }
-  },
-  enabled && !!associationId
+export function useDocumentCategories({ associationId, enabled = true }: UseCategoriesParams = {}) {
+  const {
+    data: categories,
+    isLoading,
+    error,
+    refetch
+  } = useSupabaseQuery<DocumentCategory[]>(
+    'document_categories',
+    {
+      select: '*',
+      filter: associationId ? [{ column: 'association_id', value: associationId }] : [],
+      order: { column: 'name', ascending: true }
+    },
+    enabled && !!associationId
   );
 
-  const createCategory = async (name: string) => {
-    if (!associationId) {
-      toast.error('No association selected');
-      return null;
+  useEffect(() => {
+    if (error) {
+      // Type guard to check if error has a code property (PostgrestError)
+      if ('code' in error && error.code === '42P01' && !localStorage.getItem('document_categories_error_shown')) {
+        toast.error('Document categories functionality is not fully available yet');
+        localStorage.setItem('document_categories_error_shown', 'true');
+        
+        // Clear the error message after 1 hour to allow retrying
+        setTimeout(() => {
+          localStorage.removeItem('document_categories_error_shown');
+        }, 60 * 60 * 1000);
+      } else if (!('code' in error) || error.code !== '42P01') {
+        toast.error('Failed to load document categories');
+      }
+      console.error('Error loading document categories:', error);
     }
-
-    setIsCreating(true);
-    try {
-      const { data, error } = await supabase
-        .from('document_categories')
-        .insert({ 
-          name, 
-          association_id: associationId 
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      toast.success('Category created successfully');
-      refetch();
-      return data;
-    } catch (error) {
-      console.error('Error creating category:', error);
-      toast.error('Failed to create category');
-      return null;
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const deleteCategory = async (categoryId: string) => {
-    try {
-      const { error } = await supabase
-        .from('document_categories')
-        .delete()
-        .eq('id', categoryId);
-
-      if (error) throw error;
-      
-      toast.success('Category deleted successfully');
-      refetch();
-      return true;
-    } catch (error) {
-      console.error('Error deleting category:', error);
-      toast.error('Failed to delete category');
-      return false;
-    }
-  };
+  }, [error]);
 
   return {
-    categories,
+    categories: categories || [],
     isLoading,
-    isCreating,
-    createCategory,
-    deleteCategory,
-    refetchCategories: refetch
+    error,
+    refetch
   };
 }

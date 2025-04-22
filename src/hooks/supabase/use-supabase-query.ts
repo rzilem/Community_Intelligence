@@ -1,74 +1,136 @@
 
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { KnownTables, QueryOptions, showErrorToast } from './supabase-utils';
 
-interface QueryFilter {
-  column: string;
-  value: string | null;
-}
+export function useSupabaseQuery<T = any>(
+  table: KnownTables, 
+  options: QueryOptions<T> = {}, 
+  enabled: boolean | (() => boolean) = true
+) {
+  const { 
+    select = '*', 
+    filter = [], 
+    limit,
+    order,
+    single = false,
+    onSuccess,
+    onError,
+  } = options;
 
-interface QueryOptions {
-  select?: string;
-  order?: { column: string; ascending: boolean };
-  limit?: number;
-  filters?: Array<QueryFilter>;
-  equal?: Record<string, any>;
-  range?: { from: number; to: number };
-  enabled?: boolean;
-}
+  const queryKey = [table, select, filter, limit, order, single];
 
-export const useSupabaseQuery = <T = any>(
-  tableName: string,
-  options: QueryOptions = {},
-  queryOptions?: Omit<UseQueryOptions<T[], Error>, 'queryKey' | 'queryFn'>
-) => {
-  const queryKey = [tableName, options];
-  
-  return useQuery<T[], Error>({
-    queryKey,
+  return useQuery({
+    queryKey: queryKey,
     queryFn: async () => {
+      console.log(`Executing query for table: ${table} with filters:`, filter);
+      
       let query = supabase
-        .from(tableName)
-        .select(options.select || '*');
+        .from(table as any)
+        .select(select);
 
-      // Apply filters if any
-      if (options.filters) {
-        options.filters.forEach(filter => {
-          query = query.eq(filter.column, filter.value);
-        });
-      }
-
-      // Apply equals conditions if any
-      if (options.equal) {
-        Object.entries(options.equal).forEach(([column, value]) => {
+      // Apply filters - skip if value is 'unassigned' since that's not a valid UUID
+      filter.forEach(({ column, value, operator = 'eq' }) => {
+        if (value === null || value === undefined || value === 'unassigned') {
+          // Skip filters with null/undefined/'unassigned' values to prevent query errors
+          console.log(`Skipping filter for column ${column} with value:`, value);
+          return;
+        }
+        
+        console.log(`Applying filter: ${column} ${operator} ${value}`);
+        
+        if (operator === 'eq') {
           query = query.eq(column, value);
-        });
+        } else if (operator === 'neq') {
+          query = query.neq(column, value);
+        } else if (operator === 'gt') {
+          query = query.gt(column, value);
+        } else if (operator === 'lt') {
+          query = query.lt(column, value);
+        } else if (operator === 'gte') {
+          query = query.gte(column, value);
+        } else if (operator === 'lte') {
+          query = query.lte(column, value);
+        } else if (operator === 'like') {
+          query = query.like(column, value);
+        } else if (operator === 'ilike') {
+          query = query.ilike(column, value);
+        } else if (operator === 'is') {
+          query = query.is(column, value);
+        }
+      });
+
+      // Apply limit
+      if (limit) {
+        query = query.limit(limit);
       }
 
-      // Apply range if specified
-      if (options.range) {
-        query = query.range(options.range.from, options.range.to);
+      // Apply ordering - fix the order handling to support both object and array formats
+      if (order) {
+        if (Array.isArray(order)) {
+          // Handle array of order objects
+          order.forEach(orderItem => {
+            query = query.order(orderItem.column, { ascending: orderItem.ascending ?? true });
+          });
+        } else {
+          // Handle single order object
+          query = query.order(order.column, { ascending: order.ascending ?? true });
+        }
       }
 
-      // Apply order if specified
-      if (options.order) {
-        query = query.order(options.order.column, { ascending: options.order.ascending });
+      // Get single result if requested
+      if (single) {
+        console.log('Executing single() query');
+        try {
+          const { data, error } = await query.single();
+          
+          if (error) {
+            console.error(`Error fetching from ${table}:`, error);
+            
+            // Use custom error handler if provided, otherwise show toast
+            if (onError) {
+              onError(error);
+            } else {
+              showErrorToast('fetching', table, error);
+            }
+            
+            return null; // Return null instead of throwing so the UI can handle it gracefully
+          }
+          
+          console.log(`Data fetched from ${table} (single):`, data);
+          return data as T;
+        } catch (error: any) {
+          console.error(`Error with single() from ${table}:`, error);
+          return null; // Return null on any error
+        }
       }
 
-      // Apply limit if specified
-      if (options.limit) {
-        query = query.limit(options.limit);
-      }
-
+      // Get multiple results
+      console.log('Executing regular query');
       const { data, error } = await query;
-
+      
       if (error) {
-        throw error;
+        console.error(`Error fetching from ${table}:`, error);
+        
+        // Use custom error handler if provided, otherwise show toast
+        if (onError) {
+          onError(error);
+        } else {
+          showErrorToast('fetching', table, error);
+        }
+        
+        return [] as T; // Return empty array instead of throwing
       }
-
-      return data as T[];
+      
+      console.log(`Data fetched from ${table}:`, data);
+      // Return data as an array to ensure consistent typing
+      return (data || []) as T;
     },
-    enabled: options.enabled !== false,
-    ...queryOptions
+    enabled,
+    meta: {
+      onSuccess,
+      onError
+    },
+    retry: false,  // Don't retry if the query fails to avoid spamming the console with errors
   });
-};
+}

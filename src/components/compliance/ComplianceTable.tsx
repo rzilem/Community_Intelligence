@@ -1,23 +1,19 @@
-
-import React, { useState } from 'react';
-import { ArrowUpDown, MoreHorizontal, Eye, Edit, Trash2, Check } from 'lucide-react';
+import React from 'react';
+import { Compliance } from '@/types/app-types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/date-utils';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle, Shield, Clock, MoreVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { format } from 'date-fns';
-import { Compliance } from '@/types/compliance-types';
-import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
-import { toast } from 'sonner';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Shield, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useSupabaseUpdate } from '@/hooks/supabase';
 
 interface ComplianceTableProps {
   issues: Compliance[];
@@ -113,14 +109,14 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
                   : issue.description}
               </TableCell>
               <TableCell>{getStatusBadge(issue.status)}</TableCell>
-              <TableCell>{format(new Date(issue.created_at || ''), 'MM/dd/yyyy')}</TableCell>
-              <TableCell>{issue.due_date ? format(new Date(issue.due_date), 'MM/dd/yyyy') : 'N/A'}</TableCell>
+              <TableCell>{formatDate(issue.created_at || '')}</TableCell>
+              <TableCell>{issue.due_date ? formatDate(issue.due_date) : 'N/A'}</TableCell>
               <TableCell className="text-right">{issue.fine_amount ? `$${issue.fine_amount}` : '-'}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
+                      <MoreVertical className="h-4 w-4" />
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </DropdownMenuTrigger>

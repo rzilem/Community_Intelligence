@@ -3,19 +3,14 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink, FileText, Home, User, Settings } from 'lucide-react';
+import { ArrowLeft, ExternalLink, FileText, Home, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHomeownerData } from '@/hooks/homeowners/useHomeownerData';
-import { useResidentPortalSettings } from '@/hooks/homeowners/resident/useResidentPortalSettings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import CollaborationIndicator from '@/components/portal/CollaborationIndicator';
-import { useResidentNotes } from '@/hooks/homeowners/resident/useResidentNotes';
-import { UserWithProfile } from '@/types/user-types';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 const HomeownerPortalPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,69 +19,22 @@ const HomeownerPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { homeowner, loading, error } = useHomeownerData(homeownerId || '');
   const [accessTime] = useState(new Date());
-  const { addNote } = homeownerId ? useResidentNotes(homeownerId) : { addNote: null };
-  const { 
-    settings: portalSettings, 
-    loading: settingsLoading, 
-    updatePortalSettings 
-  } = useResidentPortalSettings(homeownerId || '');
 
   useEffect(() => {
+    // Log this portal access
     const logAccess = async () => {
-      if (homeownerId && user && addNote) {
-        try {
-          const currentUser = user as unknown as UserWithProfile;
-          const userName = currentUser.profile?.first_name && currentUser.profile?.last_name 
-            ? `${currentUser.profile.first_name} ${currentUser.profile.last_name}`
-            : currentUser.email || 'Customer Service';
-          
-          await addNote({
-            type: 'system',
-            content: `Portal viewed by customer service (${userName})`,
-            author: 'System'
-          });
-          
-          console.log('Customer service portal access logged:', {
-            homeownerId,
-            accessedBy: user.id,
-            accessTime: accessTime.toISOString()
-          });
-        } catch (error) {
-          console.error('Error logging portal access:', error);
-        }
+      if (homeownerId && user) {
+        console.log('Customer service portal access logged:', {
+          homeownerId,
+          accessedBy: user.id,
+          accessTime: accessTime.toISOString()
+        });
+        // In a real implementation, this would call your API
       }
     };
     
     logAccess();
-  }, [homeownerId, user, accessTime, addNote]);
-
-  const handleNotificationToggle = (notificationType: string) => {
-    if (!portalSettings?.notification_preferences) return;
-
-    const updatedPreferences = {
-      ...portalSettings.notification_preferences,
-      [notificationType]: !portalSettings.notification_preferences[notificationType]
-    };
-
-    updatePortalSettings({ 
-      notification_preferences: updatedPreferences 
-    });
-  };
-
-  if (!homeownerId) {
-    return (
-      <AppLayout>
-        <div className="p-6">
-          <Alert variant="destructive">
-            <AlertTitle>Error Loading Portal</AlertTitle>
-            <AlertDescription>
-              No homeowner ID provided. Please check the URL and try again.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AppLayout>
-    );
-  }
+  }, [homeownerId, user, accessTime]);
 
   if (loading) {
     return (
@@ -169,10 +117,6 @@ const HomeownerPortalPage: React.FC = () => {
             <TabsTrigger value="documents" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
               <span>Documents</span>
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-1">
-              <Settings className="h-4 w-4" />
-              <span>Settings</span>
             </TabsTrigger>
           </TabsList>
           
@@ -293,59 +237,6 @@ const HomeownerPortalPage: React.FC = () => {
                       <p className="text-sm text-muted-foreground">Last updated: Oct 1, 2023</p>
                     </div>
                     <Button variant="outline" disabled>View</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <Card>
-              <CardHeader>
-                <CardTitle>Portal Settings</CardTitle>
-                <CardDescription>Customize your portal experience</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Notifications</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="email-notifications"
-                          checked={portalSettings?.notification_preferences?.email ?? false}
-                          onCheckedChange={() => handleNotificationToggle('email')}
-                        />
-                        <Label htmlFor="email-notifications">Email Notifications</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="sms-notifications"
-                          checked={portalSettings?.notification_preferences?.sms ?? false}
-                          onCheckedChange={() => handleNotificationToggle('sms')}
-                        />
-                        <Label htmlFor="sms-notifications">SMS Notifications</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-2">Theme</h3>
-                    <div className="space-y-2">
-                      {['light', 'dark', 'system'].map(theme => (
-                        <div key={theme} className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id={`theme-${theme}`}
-                            name="theme"
-                            value={theme}
-                            checked={portalSettings?.theme_preference === theme}
-                            onChange={() => updatePortalSettings({ theme_preference: theme as any })}
-                          />
-                          <Label htmlFor={`theme-${theme}`}>{theme.charAt(0).toUpperCase() + theme.slice(1)} Theme</Label>
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 </div>
               </CardContent>

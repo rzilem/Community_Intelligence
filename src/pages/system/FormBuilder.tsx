@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { FileText, Plus, Eye, Save, ArrowLeft } from 'lucide-react';
+import { FileText, Plus, Eye } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,6 @@ import FormPreview from '@/components/form-builder/FormPreview';
 import FormSubmissionPDFExport from '@/components/form-builder/FormSubmissionPDFExport';
 import { useFormTemplates } from '@/hooks/form-builder/useFormTemplates';
 import { FormTemplate } from '@/types/form-builder-types';
-import { FormEditor } from '@/components/form-builder/FormEditor';
 
 const FormBuilder = () => {
   const [activeTab, setActiveTab] = useState('templates');
@@ -23,9 +22,8 @@ const FormBuilder = () => {
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   
-  const { data: templates = [], isLoading: templatesLoading, refetch } = useFormTemplates(selectedAssociationId);
+  const { data: templates = [] } = useFormTemplates(selectedAssociationId);
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
@@ -34,40 +32,6 @@ const FormBuilder = () => {
   const handleTemplateSelect = (template: FormTemplate) => {
     setSelectedTemplate(template);
   };
-
-  const handleEditComplete = () => {
-    setIsEditing(false);
-    refetch();
-  };
-
-  if (isEditing && selectedTemplate) {
-    return (
-      <PageTemplate 
-        title="Edit Form Template" 
-        icon={<FileText className="h-8 w-8" />}
-        backLink={{
-          label: "Back to Form Builder",
-          href: "#",
-          onClick: () => setIsEditing(false)
-        }}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
-              <ArrowLeft className="h-4 w-4 mr-2" /> Cancel
-            </Button>
-            <Button>
-              <Save className="h-4 w-4 mr-2" /> Save Changes
-            </Button>
-          </div>
-        }
-      >
-        <FormEditor 
-          templateId={selectedTemplate.id} 
-          onComplete={handleEditComplete} 
-        />
-      </PageTemplate>
-    );
-  }
 
   return (
     <PageTemplate 
@@ -81,11 +45,6 @@ const FormBuilder = () => {
               <Button variant="outline" size="sm" onClick={() => setShowPreview(!showPreview)}>
                 <Eye className="h-4 w-4 mr-2" />
                 {showPreview ? "Hide Preview" : "Show Preview"}
-              </Button>
-              
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                <FileText className="h-4 w-4 mr-2" />
-                Edit Form
               </Button>
               
               {activeTab === 'submissions' && (
@@ -126,10 +85,6 @@ const FormBuilder = () => {
               <FormBuilderTemplates 
                 associationId={selectedAssociationId} 
                 onTemplateSelect={handleTemplateSelect}
-                onEditTemplate={(template) => {
-                  setSelectedTemplate(template);
-                  setIsEditing(true);
-                }}
               />
             </TabsContent>
 
@@ -138,10 +93,7 @@ const FormBuilder = () => {
             </TabsContent>
             
             <TabsContent value="submissions">
-              <FormSubmissions 
-                associationId={selectedAssociationId}
-                templateId={selectedTemplate?.id}
-              />
+              <FormSubmissions />
             </TabsContent>
             
             <TabsContent value="analytics">
@@ -169,11 +121,6 @@ const FormBuilder = () => {
         open={isNewFormDialogOpen} 
         onOpenChange={setIsNewFormDialogOpen}
         associationId={selectedAssociationId}
-        onFormCreated={(newTemplate) => {
-          refetch();
-          setSelectedTemplate(newTemplate);
-          setIsEditing(true);
-        }}
       />
     </PageTemplate>
   );

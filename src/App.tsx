@@ -1,21 +1,40 @@
 
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes/index";
-import { NotificationProvider } from './hooks/useRealTimeNotifications';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import './App.css';
+import React from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { AuthProvider } from "./contexts/auth";
+import { NotificationProvider } from "./contexts/notifications";
+import { AppRouter } from "./routes/AppRouter";
 
-// Create a client
-const queryClient = new QueryClient();
+// Create the query client outside of the component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      retry: 1,
+    },
+  },
+});
 
-function App() {
+const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <RouterProvider router={router} />
-      </NotificationProvider>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <Toaster />
+              <Sonner />
+              <AppRouter />
+            </NotificationProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
-}
+};
 
 export default App;

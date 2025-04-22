@@ -1,116 +1,134 @@
-
-import React, { useState, useEffect } from 'react';
-import { NotificationContext } from './index';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
-import { v4 as uuidv4 } from 'uuid';
+import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
+import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
+import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
+import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
+import { useAuth } from '@/contexts/auth';
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface NotificationProviderProps {
+  children: ReactNode;
+}
+
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const { user } = useAuth();
   
-  // Calculate unread count
-  const unreadCount = notifications.filter(notification => !notification.read_at).length;
-  
-  // Mark a notification as read
+  // Get notifications from different sources
+  const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
+  const { unreadInvoicesCount, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
+  const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
+  const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
+
+  // Aggregate notifications when user or notification counts change
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+
+    const aggregatedNotifications: NotificationItem[] = [];
+    
+    // Add lead notifications
+    if (recentLeads && recentLeads.length > 0) {
+      recentLeads.forEach(lead => {
+        aggregatedNotifications.push({
+          id: `lead-${lead.id}`,
+          title: `New Lead: ${lead.name || 'Unnamed Lead'}`,
+          description: lead.association_name || lead.city || 'No location provided',
+          type: 'lead',
+          severity: 'info',
+          read: false,
+          timestamp: lead.created_at,
+          route: `/lead-management/leads?id=${lead.id}`
+        });
+      });
+    }
+    
+    // Add mock notifications for other types (these would be replaced with real data in a full implementation)
+    if (unreadInvoicesCount > 0) {
+      for (let i = 0; i < unreadInvoicesCount; i++) {
+        aggregatedNotifications.push({
+          id: `invoice-${i}`,
+          title: `New Invoice Received`,
+          description: 'Review pending invoice',
+          type: 'invoice',
+          severity: 'info',
+          read: false,
+          timestamp: new Date().toISOString(),
+          route: '/accounting/invoice-queue'
+        });
+      }
+    }
+    
+    if (unreadRequestsCount > 0) {
+      for (let i = 0; i < unreadRequestsCount; i++) {
+        aggregatedNotifications.push({
+          id: `request-${i}`,
+          title: 'New Homeowner Request',
+          description: 'Homeowner request needs attention',
+          type: 'request',
+          severity: 'info',
+          read: false,
+          timestamp: new Date().toISOString(),
+          route: '/community-management/homeowner-requests'
+        });
+      }
+    }
+    
+    if (unreadEventsCount > 0) {
+      for (let i = 0; i < unreadEventsCount; i++) {
+        aggregatedNotifications.push({
+          id: `event-${i}`,
+          title: 'Resale Calendar Update',
+          description: 'New event on the resale calendar',
+          type: 'event',
+          severity: 'info',
+          read: false,
+          timestamp: new Date().toISOString(),
+          route: '/resale-management/calendar'
+        });
+      }
+    }
+    
+    // Sort by timestamp (newest first)
+    aggregatedNotifications.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    
+    setNotifications(aggregatedNotifications);
+  }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
+
   const markAsRead = (notificationId: string) => {
     setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, read_at: new Date().toISOString(), read: true } 
-          : notification
-      )
+      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
     );
   };
-  
-  // Mark all notifications as read
+
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ 
-        ...notification, 
-        read_at: new Date().toISOString(), 
-        read: true 
-      }))
-    );
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    markLeadsAsRead();
+    markInvoicesAsRead();
+    markRequestsAsRead();
+    markEventsAsRead();
   };
-  
-  // Delete a notification
+
   const deleteNotification = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.filter(notification => notification.id !== notificationId)
-    );
+    setNotifications(prev => prev.filter(n => n.id !== notificationId));
   };
-  
-  // Add some demo notifications on initial load
-  useEffect(() => {
-    const demoNotifications: NotificationItem[] = [
-      {
-        id: uuidv4(),
-        user_id: 'system',
-        title: 'New maintenance request',
-        type: 'maintenance',
-        read: false,
-        read_at: null,
-        timestamp: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        content: 'A new maintenance request has been submitted.',
-        association_id: 'demo'
-      },
-      {
-        id: uuidv4(),
-        user_id: 'system',
-        title: 'Payment received',
-        type: 'payment',
-        read: false,
-        read_at: null,
-        timestamp: new Date(Date.now() - 3600000).toISOString(),
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        content: 'Payment of $250 has been received.',
-        association_id: 'demo'
-      },
-      {
-        id: uuidv4(),
-        user_id: 'system',
-        title: 'New document uploaded',
-        type: 'document',
-        read: true,
-        read_at: new Date(Date.now() - 86400000 - 1000).toISOString(),
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        content: 'A new document has been uploaded to the portal.',
-        association_id: 'demo'
-      },
-      {
-        id: uuidv4(),
-        user_id: 'system',
-        title: 'Board meeting scheduled',
-        type: 'event',
-        read: false,
-        read_at: null,
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-        created_at: new Date(Date.now() - 172800000).toISOString(),
-        content: 'Board meeting scheduled for next Monday.',
-        association_id: 'demo'
-      }
-    ];
-    
-    setNotifications(demoNotifications);
-  }, []);
-  
-  // Sort notifications by date (newest first)
-  const sortedNotifications = React.useMemo(() => {
-    return [...notifications].sort((a, b) => 
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-  }, [notifications]);
-  
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <NotificationContext.Provider 
-      value={{
-        notifications: sortedNotifications,
-        unreadCount,
-        markAsRead,
-        markAllAsRead,
+      value={{ 
+        notifications, 
+        unreadCount, 
+        markAsRead, 
+        markAllAsRead, 
         deleteNotification,
-        setNotifications
+        setNotifications 
       }}
     >
       {children}

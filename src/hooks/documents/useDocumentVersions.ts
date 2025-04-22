@@ -1,92 +1,188 @@
 
 import { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { DocumentVersion } from '@/types/document-versioning-types';
-import { useSupabaseQuery } from '@/hooks/supabase';
+import { DocumentVersion, DocumentWithVersions } from '@/types/document-versioning-types';
+import { toast } from 'sonner';
 
-export function useDocumentVersions(documentId: string) {
-  const [isUploading, setIsUploading] = useState(false);
+export const useDocumentVersions = (documentId?: string) => {
+  const [isUploadingVersion, setIsUploadingVersion] = useState(false);
 
-  const {
-    data: versions = [],
-    isLoading,
-    refetch
-  } = useSupabaseQuery<DocumentVersion[]>({
-    tableName: 'document_versions',
-    select: '*',
-    filters: [{ column: 'document_id', value: documentId }],
-    orderBy: { column: 'version_number', ascending: false }
-  },
-  !!documentId
-  );
+  const { 
+    data: versions, 
+    isLoading: versionsLoading,
+    refetch: refetchVersions
+  } = useQuery({
+    queryKey: ['document-versions', documentId],
+    queryFn: async () => {
+      if (!documentId) return [];
+      
+      try {
+        // Use a more type-safe approach to query document versions
+        const { data, error } = await supabase
+          .from('document_versions')
+          .select('*')
+          .eq('document_id', documentId)
+          .order('version_number', { ascending: false });
+          
+        if (error) throw error;
+        
+        // Return the data as DocumentVersion[]
+        return (data || []) as DocumentVersion[];
+      } catch (error: any) {
+        console.error('Error fetching document versions:', error);
+        toast.error(`Error loading versions: ${error.message}`);
+        return [];
+      }
+    },
+    enabled: !!documentId
+  });
 
-  const addVersion = async (file: File, notes?: string) => {
-    if (!documentId) {
-      throw new Error('Document ID is required');
-    }
-
-    setIsUploading(true);
+  const uploadNewVersion = async (file: File, documentId: string, notes?: string) => {
+    setIsUploadingVersion(true);
     try {
-      // Get the current max version number
-      const { data: versionData, error: versionError } = await supabase
-        .from('document_versions')
-        .select('version_number')
-        .eq('document_id', documentId)
-        .order('version_number', { ascending: false })
-        .limit(1)
+      // Get the current document to determine next version number
+      const { data: document, error: docError } = await supabase
+        .from('documents')
+        .select('current_version')
+        .eq('id', documentId)
         .single();
-
-      const nextVersionNumber = versionData ? versionData.version_number + 1 : 1;
-
-      // Upload the file to storage
-      const filePath = `documents/${documentId}/v${nextVersionNumber}/${file.name}`;
-      const { data: storageData, error: storageError } = await supabase.storage
+        
+      if (docError) throw docError;
+      
+      // Safely handle the current_version
+      const currentVersion = document && typeof document.current_version === 'number' 
+        ? document.current_version 
+        : 0;
+      
+      const nextVersion = currentVersion + 1;
+      
+      // Upload file to storage
+      const fileName = `${documentId}/v${nextVersion}_${file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('documents')
-        .upload(filePath, file);
-
-      if (storageError) throw storageError;
-
-      // Get the public URL
-      const { data: publicUrlData } = supabase.storage
+        .upload(fileName, file);
+        
+      if (uploadError) throw uploadError;
+      
+      // Get public URL
+      const { data: urlData } = await supabase.storage
         .from('documents')
-        .getPublicUrl(filePath);
-
+        .getPublicUrl(fileName);
+        
+      const fileUrl = urlData.publicUrl;
+      
+      // Get user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
       // Create version record
-      const { data, error } = await supabase
+      const { data: versionData, error: versionError } = await supabase
         .from('document_versions')
         .insert({
           document_id: documentId,
-          version_number: nextVersionNumber,
-          url: publicUrlData.publicUrl,
+          version_number: nextVersion,
+          url: fileUrl,
           file_size: file.size,
-          notes,
-          created_by: (await supabase.auth.getUser()).data.user?.id || '',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update the document's current version
-      await supabase
+          created_by: user.id,
+          notes: notes || `Version ${nextVersion}`
+        });
+        
+      if (versionError) throw versionError;
+      
+      // Update document with new version info
+      const { error: updateError } = await supabase
         .from('documents')
-        .update({ current_version: nextVersionNumber, url: publicUrlData.publicUrl })
+        .update({
+          url: fileUrl,
+          file_size: file.size,
+          current_version: nextVersion,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', documentId);
-
-      return data;
-    } catch (error) {
-      console.error('Error adding document version:', error);
-      throw error;
+        
+      if (updateError) throw updateError;
+      
+      await refetchVersions();
+      toast.success(`Version ${nextVersion} uploaded successfully`);
+      return true;
+    } catch (error: any) {
+      console.error('Error uploading new version:', error);
+      toast.error(`Error uploading new version: ${error.message}`);
+      return false;
     } finally {
-      setIsUploading(false);
+      setIsUploadingVersion(false);
     }
   };
 
-  return {
-    versions,
-    isLoading,
-    isUploading,
-    addVersion,
-    refetchVersions: refetch
+  const uploadVersionMutation = useMutation({
+    mutationFn: ({ 
+      file, 
+      documentId, 
+      notes 
+    }: { 
+      file: File; 
+      documentId: string; 
+      notes?: string 
+    }) => uploadNewVersion(file, documentId, notes)
+  });
+
+  const revertToVersion = async (documentId: string, versionId: string, versionNumber: number) => {
+    try {
+      // Get version details
+      const { data: version, error: versionError } = await supabase
+        .from('document_versions')
+        .select('url, file_size')
+        .eq('id', versionId)
+        .single();
+        
+      if (versionError) throw versionError;
+      
+      // Ensure we have valid data before proceeding
+      if (!version || !version.url || typeof version.file_size !== 'number') {
+        throw new Error('Invalid version data');
+      }
+      
+      // Update document with version info
+      const { error: updateError } = await supabase
+        .from('documents')
+        .update({
+          url: version.url,
+          file_size: version.file_size,
+          current_version: versionNumber,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', documentId);
+        
+      if (updateError) throw updateError;
+      
+      toast.success(`Reverted to version ${versionNumber}`);
+      return true;
+    } catch (error: any) {
+      console.error('Error reverting to version:', error);
+      toast.error(`Error reverting to version: ${error.message}`);
+      return false;
+    }
   };
-}
+
+  const revertVersionMutation = useMutation({
+    mutationFn: ({ 
+      documentId, 
+      versionId, 
+      versionNumber 
+    }: { 
+      documentId: string; 
+      versionId: string; 
+      versionNumber: number 
+    }) => revertToVersion(documentId, versionId, versionNumber)
+  });
+
+  return {
+    versions: versions || [],
+    versionsLoading,
+    isUploadingVersion: isUploadingVersion || uploadVersionMutation.isPending,
+    uploadNewVersion: uploadVersionMutation.mutate,
+    revertToVersion: revertVersionMutation.mutate,
+    refetchVersions
+  };
+};

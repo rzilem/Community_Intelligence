@@ -1,5 +1,6 @@
 
-export interface Compliance {
+// Compliance related types
+export type Compliance = {
   id: string;
   association_id: string;
   property_id: string;
@@ -7,9 +8,9 @@ export interface Compliance {
   violation_type: string;
   description?: string;
   status: 'open' | 'in-progress' | 'resolved' | 'escalated';
-  due_date?: string;
   fine_amount?: number;
+  due_date?: string;
   resolved_date?: string;
-  created_at: string;
-  updated_at: string;
-}
+  created_at?: string;
+  updated_at?: string;
+};

@@ -27,12 +27,12 @@ const NotificationCenter: React.FC = () => {
   };
   
   const handleNotificationClick = (notification: NotificationItem) => {
-    if (!notification.read_at) {
+    if (!notification.read) {
       markAsRead(notification.id);
     }
     
-    if (notification.link || notification.route) {
-      navigate(notification.link || notification.route || '');
+    if (notification.route) {
+      navigate(notification.route);
       setOpen(false);
     }
   };
@@ -46,7 +46,7 @@ const NotificationCenter: React.FC = () => {
   // Group notifications by date
   const groupedNotifications = filteredNotifications.reduce<Record<string, NotificationItem[]>>(
     (groups, notification) => {
-      const dateKey = new Date(notification.created_at).toDateString();
+      const dateKey = new Date(notification.timestamp).toDateString();
       if (!groups[dateKey]) {
         groups[dateKey] = [];
       }
@@ -179,27 +179,27 @@ const NotificationCenter: React.FC = () => {
                           key={notification.id}
                           className={cn(
                             "px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-start gap-2",
-                            !notification.read_at && "bg-blue-50/40"
+                            !notification.read && "bg-blue-50/40"
                           )}
                           onClick={() => handleNotificationClick(notification)}
                         >
                           <div className={cn(
                             "h-2 w-2 mt-1.5 rounded-full flex-shrink-0",
-                            !notification.read_at ? "bg-blue-500" : "bg-gray-200"
+                            !notification.read ? "bg-blue-500" : "bg-gray-200"
                           )} />
                           <div className="flex-1 space-y-1">
                             <p className="text-sm font-medium">{notification.title}</p>
-                            {notification.content && (
-                              <p className="text-xs text-gray-500">{notification.content}</p>
+                            {notification.description && (
+                              <p className="text-xs text-gray-500">{notification.description}</p>
                             )}
                             <p className="text-xs text-gray-400">
-                              {new Date(notification.created_at).toLocaleTimeString([], {
+                              {new Date(notification.timestamp).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
                             </p>
                           </div>
-                          {!notification.read_at && (
+                          {!notification.read && (
                             <Button 
                               variant="ghost" 
                               size="icon" 

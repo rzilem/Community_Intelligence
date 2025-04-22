@@ -7,17 +7,27 @@ import { format } from 'date-fns';
 import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { BankStatement } from '@/types/bank-statement-types';
+
+interface BankStatement {
+  id: string;
+  statement_date: string;
+  filename: string;
+  file_url: string;
+  file_size: number;
+  import_status: 'pending' | 'processing' | 'processed' | 'failed';
+  balance_ending?: number;
+  created_at: string;
+}
 
 interface BankStatementTableProps {
   accountId: string;
 }
 
 const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) => {
-  const { data: statements = [], isLoading, refetch } = useSupabaseQuery<BankStatement[]>(
+  const { data: statements, isLoading, refetch } = useSupabaseQuery<BankStatement[]>(
     'bank_statements',
     {
-      filters: [{ column: 'bank_account_id', value: accountId }],
+      filter: [{ column: 'bank_account_id', value: accountId }],
       order: { column: 'statement_date', ascending: false },
     }
   );
@@ -118,7 +128,7 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
                     <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span className="text-sm">{statement.filename}</span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      ({formatFileSize(statement.file_size || 0)})
+                      ({formatFileSize(statement.file_size)})
                     </span>
                   </div>
                 </TableCell>
@@ -128,7 +138,7 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => handleDownload(statement.file_url || '', statement.filename || '')}
+                      onClick={() => handleDownload(statement.file_url, statement.filename)}
                     >
                       <Download className="h-4 w-4" />
                     </Button>

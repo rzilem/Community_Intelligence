@@ -11,7 +11,6 @@ import { useAuth } from '@/contexts/auth';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 
 interface LoginDetailsTabProps {
   homeownerId: string;
@@ -21,7 +20,6 @@ interface LoginDetailsTabProps {
 
 const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, lastLoginDate }) => {
   const { isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isManualPasswordOpen, setIsManualPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -87,9 +85,9 @@ const LoginDetailsTab: React.FC<LoginDetailsTabProps> = ({ homeownerId, email, l
     try {
       await addSystemNote(homeownerId, 'Customer service accessed homeowner portal');
       
-      navigate(`/portal/homeowner?id=${homeownerId}`);
+      window.open(`/portal/homeowner?id=${homeownerId}`, '_blank');
       
-      toast.success('Accessing homeowner portal...');
+      toast.success('Opening homeowner portal...');
     } catch (error: any) {
       console.error('Error accessing portal:', error);
       toast.error('Failed to access homeowner portal');

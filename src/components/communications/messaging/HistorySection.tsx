@@ -1,43 +1,44 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageHistoryTable } from '@/components/communications/MessageHistoryTable';
+import { Card, CardContent } from '@/components/ui/card';
+import MessageHistoryTable, { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
+import HistorySearch from './HistorySearch';
 
 interface HistorySectionProps {
-  associationId: string;
+  messages: MessageHistoryItem[];
+  searchHistory: string;
+  onSearchChange: (value: string) => void;
+  onViewMessage: (id: string) => void;
+  onResendMessage: (id: string) => void;
 }
 
-const HistorySection: React.FC<HistorySectionProps> = ({ associationId }) => {
-  const [activeTab, setActiveTab] = React.useState('all');
-
+const HistorySection: React.FC<HistorySectionProps> = ({
+  messages,
+  searchHistory,
+  onSearchChange,
+  onViewMessage,
+  onResendMessage
+}) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Message History</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="p-6">
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">All Messages</TabsTrigger>
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="sms">SMS</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all">
-            <MessageHistoryTable />
-          </TabsContent>
-          
-          <TabsContent value="email">
-            <MessageHistoryTable />
-          </TabsContent>
-          
-          <TabsContent value="sms">
-            <MessageHistoryTable />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Message History</h2>
+        <HistorySearch 
+          searchValue={searchHistory} 
+          onSearchChange={onSearchChange} 
+        />
+      </div>
+      
+      <Card>
+        <CardContent className="p-6">
+          <MessageHistoryTable 
+            messages={messages} 
+            onViewMessage={onViewMessage}
+            onResend={onResendMessage}
+          />
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

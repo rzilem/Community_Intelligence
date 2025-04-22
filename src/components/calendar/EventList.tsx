@@ -11,7 +11,7 @@ interface Event {
   location?: string;
   startTime: string;
   endTime: string;
-  type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event' | 'scheduled_message' | 'scheduled_campaign';
+  type: 'amenity_booking' | 'hoa_meeting' | 'maintenance' | 'community_event';
   color?: string;
 }
 
@@ -86,17 +86,13 @@ export const EventList: React.FC<EventListProps> = ({
                       "bg-hoa-blue-100 text-hoa-blue-800": event.type === 'amenity_booking',
                       "bg-hoa-teal-100 text-hoa-teal-800": event.type === 'hoa_meeting',
                       "bg-yellow-100 text-yellow-800": event.type === 'maintenance',
-                      "bg-purple-100 text-purple-800": event.type === 'community_event',
-                      "bg-indigo-100 text-indigo-800": event.type === 'scheduled_message',
-                      "bg-pink-100 text-pink-800": event.type === 'scheduled_campaign'
+                      "bg-purple-100 text-purple-800": event.type === 'community_event'
                     }
                   )}>
                     {event.type === 'amenity_booking' && "Amenity Booking"}
                     {event.type === 'hoa_meeting' && "HOA Meeting"}
                     {event.type === 'maintenance' && "Maintenance"}
                     {event.type === 'community_event' && "Community Event"}
-                    {event.type === 'scheduled_message' && "Scheduled Message"}
-                    {event.type === 'scheduled_campaign' && "Scheduled Campaign"}
                   </span>
                 </div>
               </div>
