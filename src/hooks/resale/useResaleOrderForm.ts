@@ -84,10 +84,14 @@ export function useResaleOrderForm() {
         return;
       }
 
+      // Generate order number
+      const { data: orderNumber } = await supabase.rpc('generate_order_number');
+
       // Insert the order into the database
       const { error: orderError } = await supabase
         .from('resale_orders')
         .insert({
+          order_number: orderNumber,
           user_id: user.id,
           property_id: data.propertyInfo.propertyId,
           association_id: data.propertyInfo.associationId,

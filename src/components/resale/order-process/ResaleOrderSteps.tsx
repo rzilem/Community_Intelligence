@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,13 +9,14 @@ import { OrderDetailsStep } from './steps/OrderDetailsStep';
 import { PaymentStep } from './steps/PaymentStep';
 import { Property } from '@/types/property-types';
 import { useResaleOrderForm } from '@/hooks/resale/useResaleOrderForm';
-import { Loader2 } from 'lucide-react';
+import { UseFormReturn } from 'react-hook-form';
 
 interface ResaleOrderStepsProps {
   currentStep: number;
   onPropertySelect: (property: Property | null) => void;
   onBack: () => void;
   onNext: () => void;
+  onSubmit: () => void;
   isSubmitting: boolean;
 }
 
@@ -23,12 +25,13 @@ export const ResaleOrderSteps = ({
   onPropertySelect,
   onBack,
   onNext,
+  onSubmit,
   isSubmitting
 }: ResaleOrderStepsProps) => {
-  const { form, onSubmit } = useResaleOrderForm();
+  const { form, isSubmitting: formSubmitting } = useResaleOrderForm();
   
   const handleNextClick = async () => {
-    const isValid = await form.trigger(getFieldsToValidate(currentStep));
+    const isValid = await form.trigger(getStepFields(currentStep));
     if (isValid) {
       onNext();
     }
@@ -48,8 +51,8 @@ export const ResaleOrderSteps = ({
       <CardContent>
         {currentStep === 1 && (
           <PropertyStep
-            form={form}
             onPropertySelect={onPropertySelect}
+            form={form}
           />
         )}
         {currentStep === 2 && (
@@ -80,7 +83,7 @@ export const ResaleOrderSteps = ({
         {currentStep < 4 ? (
           <Button 
             onClick={handleNextClick}
-            disabled={isSubmitting}
+            disabled={isSubmitting || formSubmitting}
           >
             Next
             <ArrowRight className="h-4 w-4 ml-2" />
@@ -88,9 +91,9 @@ export const ResaleOrderSteps = ({
         ) : (
           <Button 
             onClick={onSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || formSubmitting}
           >
-            {isSubmitting ? (
+            {isSubmitting || formSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 Processing...
@@ -108,7 +111,7 @@ export const ResaleOrderSteps = ({
   );
 };
 
-function getFieldsToValidate(step: number) {
+function getStepFields(step: number): Array<keyof ResaleOrderFormData> {
   switch (step) {
     case 1:
       return ['propertyInfo'];
