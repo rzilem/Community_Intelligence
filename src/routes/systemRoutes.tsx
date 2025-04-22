@@ -65,5 +65,9 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/form-builder",
     element: <RequireAuth menuId="system" submenuId="form-builder"><FormBuilder /></RequireAuth>
+  },
+  {
+    path: "/system/form-builder/edit/:formId",
+    element: <RequireAuth menuId="system" submenuId="form-builder"><FormBuilder /></RequireAuth>
   }
 ];

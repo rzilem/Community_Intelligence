@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Eye } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -13,10 +14,13 @@ import AssociationSelector from '@/components/associations/AssociationSelector';
 import FormAnalyticsDashboard from '@/components/form-builder/FormAnalyticsDashboard';
 import FormPreview from '@/components/form-builder/FormPreview';
 import FormSubmissionPDFExport from '@/components/form-builder/FormSubmissionPDFExport';
+import FormTemplateEditor from '@/components/form-builder/FormTemplateEditor';
 import { useFormTemplates } from '@/hooks/form-builder/useFormTemplates';
 import { FormTemplate } from '@/types/form-builder-types';
 
 const FormBuilder = () => {
+  const { formId } = useParams<{ formId: string }>();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('templates');
   const [isNewFormDialogOpen, setIsNewFormDialogOpen] = useState(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
@@ -25,6 +29,9 @@ const FormBuilder = () => {
   
   const { data: templates = [] } = useFormTemplates(selectedAssociationId);
 
+  // If we're on the edit path and have a formId, show the editor
+  const isEditMode = formId !== undefined;
+
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
   };
@@ -32,6 +39,34 @@ const FormBuilder = () => {
   const handleTemplateSelect = (template: FormTemplate) => {
     setSelectedTemplate(template);
   };
+
+  const handleFormSave = (form: FormTemplate) => {
+    // Redirect back to templates view after saving
+    navigate('/system/form-builder');
+  };
+
+  const handleCancel = () => {
+    // Go back to templates view
+    navigate('/system/form-builder');
+  };
+
+  // If in edit mode, render the form editor
+  if (isEditMode && formId) {
+    return (
+      <PageTemplate 
+        title="Edit Form Template" 
+        icon={<FileText className="h-8 w-8" />}
+        description="Edit your form template fields and settings."
+        backLink="/system/form-builder"
+      >
+        <FormTemplateEditor 
+          formId={formId} 
+          onSave={handleFormSave}
+          onCancel={handleCancel}
+        />
+      </PageTemplate>
+    );
+  }
 
   return (
     <PageTemplate 
