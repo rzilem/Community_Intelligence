@@ -1,7 +1,8 @@
 
 // Mock data for message history and templates
+import { MessageHistoryItem } from '@/types/message-types';
 
-export const mockHistoryData = [
+export const mockHistoryData: MessageHistoryItem[] = [
   {
     id: '1',
     subject: 'Community Pool Closure Notice',
@@ -26,7 +27,7 @@ export const mockHistoryData = [
     type: 'email',
     recipients: 145,
     sentDate: '2025-04-15, 3:00 PM',
-    status: 'scheduled',
+    status: 'scheduled'
   },
   {
     id: '4',
