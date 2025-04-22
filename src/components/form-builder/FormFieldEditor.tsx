@@ -27,9 +27,19 @@ const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
   onChange,
   onDelete,
 }) => {
-  const handleTypeChange = (type: FormFieldType) => {
-    onChange({ type });
-  };
+  // Define field types with their display names
+  const fieldTypes: { value: FormFieldType; label: string }[] = [
+    { value: 'text', label: 'Text' },
+    { value: 'textarea', label: 'Text Area' },
+    { value: 'email', label: 'Email' },
+    { value: 'phone', label: 'Phone' },
+    { value: 'number', label: 'Number' },
+    { value: 'date', label: 'Date' },
+    { value: 'select', label: 'Dropdown' },
+    { value: 'checkbox', label: 'Checkbox' },
+    { value: 'radio', label: 'Radio Buttons' },
+    { value: 'file', label: 'File Upload' },
+  ];
 
   return (
     <Card>
@@ -53,22 +63,17 @@ const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
           <Label htmlFor="field-type">Field Type</Label>
           <Select
             value={field.type}
-            onValueChange={(value) => handleTypeChange(value as FormFieldType)}
+            onValueChange={(value) => onChange({ type: value as FormFieldType })}
           >
-            <SelectTrigger id="field-type">
+            <SelectTrigger id="field-type" className="w-full">
               <SelectValue placeholder="Select field type" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="text">Text</SelectItem>
-              <SelectItem value="textarea">Text Area</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="phone">Phone</SelectItem>
-              <SelectItem value="number">Number</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-              <SelectItem value="select">Dropdown</SelectItem>
-              <SelectItem value="checkbox">Checkbox</SelectItem>
-              <SelectItem value="radio">Radio Buttons</SelectItem>
-              <SelectItem value="file">File Upload</SelectItem>
+            <SelectContent position="popper" className="w-full z-50">
+              {fieldTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

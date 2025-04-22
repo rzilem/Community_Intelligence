@@ -7,7 +7,7 @@ import FormFieldEditor from "../FormFieldEditor";
 interface FieldSettingsSidebarProps {
   selectedFieldId: string | null;
   template: FormTemplate;
-  onFieldChange: (field: FormField) => void;
+  onFieldChange: (updatedField: FormField) => void;
   onDeleteField: (id: string) => void;
 }
 
@@ -21,6 +21,11 @@ const FieldSettingsSidebar: React.FC<FieldSettingsSidebarProps> = ({
 
   if (!selectedFieldId || !selectedField) return null;
 
+  const handleFieldChange = (updates: Partial<FormField>) => {
+    const updatedField = { ...selectedField, ...updates };
+    onFieldChange(updatedField);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -30,7 +35,7 @@ const FieldSettingsSidebar: React.FC<FieldSettingsSidebarProps> = ({
       <CardContent>
         <FormFieldEditor
           field={selectedField}
-          onChange={onFieldChange}
+          onChange={handleFieldChange}
           onDelete={() => onDeleteField(selectedFieldId)}
         />
       </CardContent>
