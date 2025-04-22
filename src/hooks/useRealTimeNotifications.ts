@@ -1,55 +1,79 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useNotificationContext } from '@/contexts/notifications';
 import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
 
-export interface FormNotification {
-  id: string;
-  type: 'submission' | 'approval' | 'comment';
-  title: string;
-  message: string;
-  timestamp: string;
-}
-
-export function useRealTimeNotifications() {
-  const [notifications, setNotifications] = useState<FormNotification[]>([]);
-  const { currentAssociation } = useAuth();
+export const useRealTimeNotifications = () => {
+  const { addNotification } = useNotificationContext();
+  const { user, currentAssociation } = useAuth();
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
-    if (!currentAssociation?.id) return;
+    if (!user || !currentAssociation || isSubscribed) return;
 
-    const channel = supabase
-      .channel('form-changes')
+    // Subscribe to homeowner requests
+    const requestsSubscription = supabase
+      .channel('homeowner-requests')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'form_templates',
+          table: 'homeowner_requests',
           filter: `association_id=eq.${currentAssociation.id}`
         },
         (payload) => {
-          const notification: FormNotification = {
-            id: payload.new.id,
-            type: 'submission',
-            title: 'New Form Submission',
-            message: `A new form "${payload.new.name}" has been submitted`,
-            timestamp: new Date().toISOString()
-          };
-
-          setNotifications(prev => [notification, ...prev]);
-          toast.message(notification.title, {
-            description: notification.message
+          const newRequest = payload.new;
+          addNotification({
+            id: newRequest.id,
+            title: 'New Request',
+            message: `A new request has been submitted: ${newRequest.title}`,
+            type: 'request',
+            createdAt: new Date().toISOString(),
+            read: false,
+            data: newRequest
           });
+          
+          toast.info(`New request: ${newRequest.title}`);
         }
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentAssociation?.id]);
+    // Subscribe to calendar events
+    const eventsSubscription = supabase
+      .channel('calendar-events')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'calendar_events',
+          filter: `hoa_id=eq.${currentAssociation.id}`
+        },
+        (payload) => {
+          const newEvent = payload.new;
+          addNotification({
+            id: newEvent.id,
+            title: 'New Calendar Event',
+            message: `A new event has been added: ${newEvent.title}`,
+            type: 'event',
+            createdAt: new Date().toISOString(),
+            read: false,
+            data: newEvent
+          });
+          
+          toast.info(`New calendar event: ${newEvent.title}`);
+        }
+      )
+      .subscribe();
 
-  return { notifications };
-}
+    setIsSubscribed(true);
+
+    return () => {
+      requestsSubscription.unsubscribe();
+      eventsSubscription.unsubscribe();
+    };
+  }, [user, currentAssociation, addNotification, isSubscribed]);
+};
