@@ -37,7 +37,7 @@ export const saveSystemSettings = async (settings: SystemSettings) => {
 };
 
 const updateSettingWithFunction = async (key: string, value: any) => {
-  console.log(`Updating ${key} settings:`, JSON.stringify(value, (k, v) => {
+  console.log(`Updating ${key} settings:`, JSON.stringify(value, null, 2, (k, v) => {
     // Mask API keys in logs
     if ((k === 'apiKey' || k === 'secret' || k === 'webhookSecret') && typeof v === 'string') {
       return v ? '[PRESENT]' : '[MISSING]';
@@ -46,9 +46,10 @@ const updateSettingWithFunction = async (key: string, value: any) => {
   }));
   
   try {
-    // Ensure the value is properly serializable
+    // Ensure the value is properly serializable by explicitly converting to a clean object
     const safeValue = JSON.parse(JSON.stringify(value));
     
+    // Make the request
     const { error } = await supabase.functions.invoke(`settings/${key}`, {
       method: 'POST',
       body: safeValue,
@@ -62,6 +63,6 @@ const updateSettingWithFunction = async (key: string, value: any) => {
     return { success: true };
   } catch (error) {
     console.error(`Error in updateSettingWithFunction for ${key}:`, error);
-    throw new Error(`Failed to process ${key} settings: ${error.message}`);
+    throw new Error(`Failed to process ${key} settings: ${error.message || 'Unknown error'}`);
   }
 };

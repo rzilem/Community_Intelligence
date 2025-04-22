@@ -2,7 +2,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
 
-// Set up CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -15,91 +14,82 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Testing OpenAI connection");
+    console.log("Testing OpenAI connection...");
     
     // Create a Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Get integration settings from the database
-    const { data: settingsData, error: settingsError } = await supabase
+    // First, get the OpenAI API key from system settings
+    const { data: settings, error: settingsError } = await supabase
       .from('system_settings')
       .select('value')
       .eq('key', 'integrations')
       .single();
-      
+    
     if (settingsError) {
-      console.error("Error fetching settings:", settingsError);
-      throw new Error(`Failed to fetch integration settings: ${settingsError.message}`);
+      console.error("Error fetching OpenAI settings:", settingsError);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Could not retrieve API settings: ' + settingsError.message 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
-    if (!settingsData || !settingsData.value) {
-      throw new Error("No integration settings found");
+    // Extract the OpenAI API key
+    const openAISettings = settings?.value?.integrationSettings?.OpenAI;
+    const apiKey = openAISettings?.apiKey;
+    
+    if (!apiKey) {
+      console.error("No OpenAI API key configured");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'No OpenAI API key configured' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
-    const integrationSettings = settingsData.value.integrationSettings || {};
-    const openAIConfig = integrationSettings.OpenAI || {};
-    
-    if (!openAIConfig.apiKey) {
-      throw new Error("No OpenAI API key configured");
-    }
-    
-    // Test the OpenAI API with a simple request
-    const openAIApiKey = openAIConfig.apiKey;
-    const model = openAIConfig.model || "gpt-4o-mini";
-    
-    console.log(`Testing OpenAI with model: ${model}`);
-    
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    // Test OpenAI connection using a simple models list request
+    const openAIResponse = await fetch('https://api.openai.com/v1/models', {
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${openAIApiKey}`
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant."
-          },
-          {
-            role: "user",
-            content: "Hello! Please respond with 'Connection to OpenAI is working correctly.'"
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 50
-      })
     });
     
-    const data = await response.json();
+    const openAIData = await openAIResponse.json();
     
-    if (response.status !== 200) {
-      console.error("OpenAI API error:", data);
-      throw new Error(`OpenAI API error: ${data.error?.message || "Unknown error"}`);
+    if (!openAIResponse.ok) {
+      console.error("OpenAI API test failed:", openAIData);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: openAIData.error?.message || 'API request failed' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     
-    const aiResponse = data.choices[0].message.content;
-    
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        response: aiResponse,
-        model: model
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // If we got here, the connection was successful
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'OpenAI connection successful',
+      modelCount: openAIData.data?.length || 0
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Error testing OpenAI:", error);
+    console.error("Error testing OpenAI connection:", error);
     
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || "An error occurred testing the OpenAI connection"
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: error.message || 'An unexpected error occurred'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    });
   }
 });

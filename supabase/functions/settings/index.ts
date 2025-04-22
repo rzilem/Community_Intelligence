@@ -89,7 +89,7 @@ serve(async (req) => {
           let requestData = null;
           try {
             const rawBody = await req.text();
-            console.log(`Raw request body: ${rawBody}`);
+            console.log(`Raw request body for '${action}':`, rawBody);
             
             if (rawBody.trim() === '') {
               requestData = {};
@@ -107,7 +107,7 @@ serve(async (req) => {
             });
           }
           
-          console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
+          console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData, null, 2));
           
           // Log specific integration data for debugging
           if (action === 'integrations' && requestData.integrationSettings) {
@@ -115,7 +115,7 @@ serve(async (req) => {
               console.log(`Integration ${integration} config:`, JSON.stringify({
                 ...requestData.integrationSettings[integration],
                 apiKey: requestData.integrationSettings[integration].apiKey ? "PRESENT" : "MISSING"
-              }));
+              }, null, 2));
             });
           }
           
