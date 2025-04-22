@@ -62,7 +62,7 @@ const ActionEditor: React.FC<ActionEditorProps> = ({ action, onChange, onDelete 
                 onChange={(e) => updateConfig('to', e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Use <code>{{'{{'}}user.email{{'}}'}}</code> for the form submitter's email
+                Use <code>{`{{user.email}}`}</code> for the form submitter's email
               </p>
             </div>
             <div className="space-y-2">
@@ -84,7 +84,7 @@ const ActionEditor: React.FC<ActionEditorProps> = ({ action, onChange, onDelete 
                 onChange={(e) => updateConfig('body', e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Use form field values with <code>{{'{{'}}field.name{{'}}'}}</code>
+                Use form field values with <code>{`{{field.name}}`}</code>
               </p>
             </div>
           </>
@@ -151,7 +151,7 @@ const ActionEditor: React.FC<ActionEditorProps> = ({ action, onChange, onDelete 
                 onChange={(e) => updateConfig('title', e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Use <code>{{'{{'}}form.title{{'}}'}}</code> to use the form submission title
+                Use <code>{`{{form.title}}`}</code> to use the form submission title
               </p>
             </div>
             <div className="space-y-2">
