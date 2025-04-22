@@ -42,19 +42,14 @@ const HomeownerRequestsQueue = () => {
   // Get columns config and requests data
   const { columns, visibleColumns, toggleColumn } = useRequestColumns();
   const { 
-    requests, 
+    homeownerRequests: requests, 
+    filteredRequests,
     isLoading, 
-    requestCounts, 
-    updateRequestStatus,
-    refreshRequests
-  } = useHomeownerRequests({
-    searchTerm,
-    statusFilter,
-    priorityFilter,
-    typeFilter,
-    assignedToFilter,
-    dateRange: dateRangeFilter
-  });
+    error,
+    handleRefresh: refreshRequests,
+    handleStatusChange: updateRequestStatus,
+    requestCounts
+  } = useHomeownerRequests();
   
   // Reset selected requests when tab or filters change
   useEffect(() => {
@@ -73,20 +68,20 @@ const HomeownerRequestsQueue = () => {
 
   const getFilteredRequests = () => {
     if (view === 'table') {
-      return requests;
+      return filteredRequests;
     }
     
     // For queue view, filter by active tab
     if (activeTab === 'all') {
-      return requests;
+      return filteredRequests;
     }
     
     const tabStatus = getStatusFromTab(activeTab);
     if (tabStatus === 'all' || tabStatus === 'active') {
-      return requests;
+      return filteredRequests;
     }
     
-    return requests.filter(req => req.status === tabStatus);
+    return filteredRequests.filter(req => req.status === tabStatus);
   };
 
   const handleToggleRequestSelection = (id: string) => {
@@ -136,22 +131,22 @@ const HomeownerRequestsQueue = () => {
       {/* Basic filters */}
       <HomeownerRequestFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
-        onStatusChange={(value) => setStatusFilter(value as HomeownerRequestStatus | 'all')}
-        priorityFilter={priorityFilter || 'all'}
-        onPriorityChange={(value) => setPriorityFilter(value as HomeownerRequestPriority | 'all')}
-        typeFilter={typeFilter || 'all'}
-        onTypeChange={(value) => setTypeFilter(value as HomeownerRequestType | 'all')}
+        setStatusFilter={setStatusFilter}
+        priorityFilter={priorityFilter}
+        setPriorityFilter={setPriorityFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
       />
       
       {/* Advanced filters */}
       {showFilters && (
         <HomeownerRequestAdvancedFilters
-          assignedToFilter={assignedToFilter}
-          onAssignedToChange={setAssignedToFilter}
-          dateRangeFilter={dateRangeFilter}
-          onDateRangeChange={setDateRangeFilter}
+          assignedTo={assignedToFilter}
+          setAssignedTo={setAssignedToFilter}
+          dateRange={dateRangeFilter}
+          setDateRange={setDateRangeFilter}
           onClearFilters={handleClearFilters}
         />
       )}
@@ -186,6 +181,7 @@ const HomeownerRequestsQueue = () => {
             <RequestsTabsList
               requestCounts={requestCounts}
               activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab as any)}
             />
             
             <div className="mt-4 grid gap-4 grid-cols-1">

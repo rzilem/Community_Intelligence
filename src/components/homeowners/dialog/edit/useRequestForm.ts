@@ -1,125 +1,134 @@
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { HomeownerRequest, HomeownerRequestStatus } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 
-const requestSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  status: z.string(),
-  priority: z.string(),
-  type: z.string(),
-  assigned_to: z.string().optional().nullable(),
-  property_id: z.string().optional().nullable(),
-  resident_id: z.string().optional().nullable(),
-  note: z.string().optional(),
-  association_id: z.string().optional().nullable()
-});
+interface UseRequestFormProps {
+  initialRequest?: Partial<HomeownerRequest>;
+  onSubmit: (request: HomeownerRequest) => Promise<boolean>;
+  onCancel: () => void;
+}
 
-export const useRequestForm = (
-  request: HomeownerRequest | null, 
-  onClose?: (open: boolean) => void,
-  onSuccess?: () => void
-) => {
+export const useRequestForm = ({ initialRequest, onSubmit, onCancel }: UseRequestFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  
-  const form = useForm<z.infer<typeof requestSchema>>({
-    resolver: zodResolver(requestSchema),
-    defaultValues: {
-      title: request?.title || '',
-      description: request?.description || '',
-      status: request?.status || 'open',
-      priority: request?.priority || 'medium',
-      type: request?.type || 'general',
-      assigned_to: request?.assigned_to || null,
-      property_id: request?.property_id || null,
-      resident_id: request?.resident_id || null,
-      association_id: request?.association_id || null,
-      note: ''
-    }
+  const [request, setRequest] = useState<Partial<HomeownerRequest>>({
+    title: '',
+    description: '',
+    status: 'open' as HomeownerRequestStatus,
+    priority: 'medium' as HomeownerRequestPriority,
+    type: 'general' as HomeownerRequestType,
+    property_id: '',
+    association_id: '',
+    ...initialRequest
   });
-  
-  const fetchComments = async () => {
-    if (!request?.id) return;
-    
-    setLoadingComments(true);
-    
-    try {
-      // Placeholder for actual API call to fetch comments
-      // In a real implementation, you'd fetch comments from your database
-      const mockComments = [
-        {
-          id: '1',
-          content: 'This is a sample comment',
-          created_at: new Date().toISOString(),
-          user_id: 'user-1',
-          parent_id: request.id,
-          parent_type: 'homeowner_request',
-          user: {
-            first_name: 'John',
-            last_name: 'Doe',
-            email: 'john.doe@example.com'
-          }
-        }
-      ];
-      
-      setComments(mockComments);
-    } catch (error) {
-      console.error('Error fetching comments:', error);
-    } finally {
-      setLoadingComments(false);
+
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    status?: string;
+    priority?: string;
+    type?: string;
+    property_id?: string;
+    association_id?: string;
+  }>({});
+
+  const updateField = (field: keyof HomeownerRequest, value: any) => {
+    setRequest(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error when field is updated
+    if (errors[field as keyof typeof errors]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: undefined
+      }));
     }
   };
-  
-  const handleSubmit = async (values: z.infer<typeof requestSchema>) => {
+
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (!request.title) {
+      newErrors.title = 'Title is required';
+    }
+
+    if (!request.description) {
+      newErrors.description = 'Description is required';
+    }
+
+    if (!request.status) {
+      newErrors.status = 'Status is required';
+    }
+
+    if (!request.priority) {
+      newErrors.priority = 'Priority is required';
+    }
+
+    if (!request.type) {
+      newErrors.type = 'Type is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!validateForm()) {
+      return false;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
-      // This is a placeholder for actual API call logic
-      // In a real implementation, you'd update the request in your database
-      
-      const updatedRequest: HomeownerRequest = {
-        ...request,
-        ...values,
-        id: request?.id || 'temp-id',
+      // Create full request object with all required fields
+      const fullRequest: HomeownerRequest = {
+        id: request.id || `req-${Date.now()}`,
+        title: request.title || '',
+        description: request.description || '',
+        status: request.status as HomeownerRequestStatus,
+        priority: request.priority as HomeownerRequestPriority,
+        type: request.type as HomeownerRequestType,
+        created_at: request.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        created_at: request?.created_at || new Date().toISOString(),
-        association_id: values.association_id || request?.association_id || null,
-        resolved_at: values.status === 'closed' ? new Date().toISOString() : null,
-        tracking_number: request?.tracking_number || `REQ-${Math.floor(Math.random() * 10000)}`,
-        attachments: request?.attachments || [],
-        status: values.status as HomeownerRequestStatus
+        association_id: request.association_id || '',
+        resolved_at: request.resolved_at || undefined,
+        tracking_number: request.tracking_number || `TRK-${Date.now()}`,
+        attachments: request.attachments || [],
+        property_id: request.property_id,
+        resident_id: request.resident_id,
+        assigned_to: request.assigned_to,
+        html_content: request.html_content,
+        
+        // Virtual properties
+        createdAt: request.createdAt,
+        updatedAt: request.updatedAt,
+        residentId: request.residentId,
+        propertyId: request.propertyId,
+        associationId: request.associationId,
+        resolvedAt: request.resolvedAt
       };
-      
-      // If onSuccess callback is provided, call it
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      // If onClose callback is provided, call it to close the dialog
-      if (onClose) {
-        onClose(false);
-      }
-      
-      return updatedRequest;
+
+      const success = await onSubmit(fullRequest);
+      return success;
     } catch (error) {
-      console.error('Error submitting request form:', error);
-      throw error instanceof Error ? error : new Error('Failed to submit request');
+      console.error('Error submitting request:', error);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return {
-    form,
+    request,
+    updateField,
+    handleSubmit,
+    handleCancel: onCancel,
     isSubmitting,
-    comments,
-    loadingComments,
-    fetchComments,
-    handleSubmit
+    errors
   };
 };

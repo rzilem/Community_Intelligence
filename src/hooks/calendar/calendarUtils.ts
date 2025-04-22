@@ -1,3 +1,4 @@
+
 export const getDefaultColorForType = (eventType: string): string => {
   switch (eventType) {
     case 'amenity_booking':
@@ -79,4 +80,51 @@ export const connectFormToCalendar = (formData: any, eventType: string = 'genera
   };
   
   return createCalendarEvent(calendarEventData);
+};
+
+// Add the missing functions
+
+/**
+ * Maps database calendar events to UI calendar events
+ * @param dbEvents The calendar events from the database
+ * @returns An array of calendar events formatted for the UI
+ */
+export const mapDbEventsToUiEvents = (dbEvents: any[]): any[] => {
+  return dbEvents.map(event => {
+    const startDate = new Date(event.start_time);
+    const endDate = new Date(event.end_time);
+    
+    return {
+      id: event.id,
+      title: event.title,
+      date: new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()),
+      startTime: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      endTime: endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      description: event.description || '',
+      location: event.location || '',
+      type: event.event_type || 'amenity_booking',
+      amenityId: event.amenity_id || '',
+      color: event.color || getDefaultColorForType(event.event_type)
+    };
+  });
+};
+
+/**
+ * Filters events for a specific date
+ * @param events The calendar events to filter
+ * @param date The date to filter events for
+ * @returns An array of events for the specified date
+ */
+export const filterEventsForDate = (events: any[], date: Date): any[] => {
+  // Set time to midnight to compare only dates
+  const targetDate = new Date(date);
+  targetDate.setHours(0, 0, 0, 0);
+  
+  return events.filter(event => {
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+    
+    // Compare dates (ignoring time)
+    return eventDate.getTime() === targetDate.getTime();
+  });
 };

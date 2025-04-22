@@ -1,16 +1,17 @@
 
-import React from 'react';
-import { HomeownerRequest, RequestAttachment } from '@/types/homeowner-request-types';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import RequestTableRow from '../table/RequestTableRow';
-import EmptyRequestsRow from '../table/EmptyRequestsRow';
-import RequestTableHeader from '../table/RequestTableHeader';
-import RequestsCardHeader from './RequestsCardHeader';
-import RequestsStatusFooter from './RequestsStatusFooter';
-import HomeownerRequestDetailDialog from '../HomeownerRequestDetailDialog';
-import HomeownerRequestHistoryDialog from '../history/HomeownerRequestHistoryDialog';
-import { HomeownerRequestBulkActions } from '../HomeownerRequestBulkActions';
+import { Filter, MoreHorizontal } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
+import { EmptyRequestsRow } from '@/components/homeowners/table/EmptyRequestsRow';
+import { RequestTableRow } from '@/components/homeowners/table/RequestTableRow';
+import { RequestsCardHeader } from '@/components/homeowners/queue/RequestsCardHeader';
+import { RequestsStatusFooter } from '@/components/homeowners/queue/RequestsStatusFooter';
+import HomeownerRequestBulkActions from '@/components/homeowners/HomeownerRequestBulkActions';
+import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 
 interface RequestsTabContentProps {
   status: string;
@@ -19,9 +20,9 @@ interface RequestsTabContentProps {
   totalCount: number;
   isLoading: boolean;
   onStatusChange: (id: string, status: string) => void;
-  columns: string[];
+  columns: HomeownerRequestColumn[];
   selectedRequestIds: string[];
-  setSelectedRequestIds: (ids: string[]) => void;
+  setSelectedRequestIds: React.Dispatch<React.SetStateAction<string[]>>;
   toggleSelectRequest: (id: string) => void;
 }
 
@@ -37,123 +38,101 @@ const RequestsTabContent: React.FC<RequestsTabContentProps> = ({
   setSelectedRequestIds,
   toggleSelectRequest
 }) => {
-  const [detailRequestId, setDetailRequestId] = React.useState<string | null>(null);
-  const [historyRequestId, setHistoryRequestId] = React.useState<string | null>(null);
-  
-  const handleViewDetail = (requestId: string) => {
-    setDetailRequestId(requestId);
-  };
-  
-  const handleViewHistory = (requestId: string) => {
-    setHistoryRequestId(requestId);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
+
+  const handleViewDetails = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setDetailOpen(true);
   };
 
-  const handleCloseDetail = () => {
-    setDetailRequestId(null);
+  const handleViewHistory = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setHistoryOpen(true);
   };
 
-  const handleCloseHistory = () => {
-    setHistoryRequestId(null);
-  };
-  
-  const detailRequest = requests.find(req => req.id === detailRequestId);
-  const historyRequest = requests.find(req => req.id === historyRequestId);
-
-  // Function to handle bulk actions
-  const handleBulkAction = (action: string) => {
-    if (action === 'approve' || action === 'reject' || action === 'close') {
-      selectedRequestIds.forEach(id => {
-        const newStatus = action === 'approve' ? 'approved' : 
-                         action === 'reject' ? 'rejected' : 'closed';
-        onStatusChange(id, newStatus);
-      });
+  const handleBulkSelectAll = () => {
+    if (selectedRequestIds.length === requests.length) {
       setSelectedRequestIds([]);
+    } else {
+      setSelectedRequestIds(requests.map(req => req.id));
     }
   };
 
-  // Function to safely render attachments
-  const renderAttachments = (attachments: RequestAttachment[] | undefined) => {
-    if (!attachments) return null;
-    return <>{attachments.length} files</>;
-  };
-
   return (
-    <Card className="h-full flex flex-col">
-      <RequestsCardHeader
-        title={title}
-        count={totalCount}
-        isLoading={isLoading}
-      />
+    <Card>
+      <CardHeader className="px-4 py-3 border-b">
+        <RequestsCardHeader 
+          title={title}
+          count={totalCount}
+          isLoading={isLoading}
+        />
+      </CardHeader>
       
-      {/* Bulk actions bar (visible when items are selected) */}
       {selectedRequestIds.length > 0 && (
-        <div className="px-4 py-2 bg-muted border-b">
+        <div className="p-2 bg-muted/50 border-b flex justify-between items-center">
+          <span className="text-sm font-medium ml-2">
+            {selectedRequestIds.length} {selectedRequestIds.length === 1 ? 'request' : 'requests'} selected
+          </span>
           <HomeownerRequestBulkActions 
-            selectedCount={selectedRequestIds.length}
-            onAction={handleBulkAction}
+            selectedRequestIds={selectedRequestIds}
             onClearSelection={() => setSelectedRequestIds([])}
           />
         </div>
       )}
-      
-      <CardContent className="p-0 flex-grow overflow-auto">
-        <div className="min-w-full divide-y divide-gray-200">
-          <RequestTableHeader 
-            columns={columns} 
-            enableSelection={true}
-            selectedAll={selectedRequestIds.length === requests.length && requests.length > 0}
-            onSelectAll={() => {
-              if (selectedRequestIds.length === requests.length) {
-                setSelectedRequestIds([]);
-              } else {
-                setSelectedRequestIds(requests.map(req => req.id));
-              }
-            }}
-          />
-          
-          <div className="divide-y divide-gray-200">
-            {isLoading ? (
-              <div className="p-4 text-center">Loading...</div>
-            ) : requests.length === 0 ? (
-              <EmptyRequestsRow columns={columns.length + 1} message={`No ${status.toLowerCase()} requests`} />
-            ) : (
-              requests.map(request => (
-                <RequestTableRow
-                  key={request.id}
-                  request={request}
-                  columns={columns}
-                  onViewDetail={() => handleViewDetail(request.id)}
-                  onViewHistory={() => handleViewHistory(request.id)}
-                  isSelected={selectedRequestIds.includes(request.id)}
-                  onToggleSelect={() => toggleSelectRequest(request.id)}
-                  renderAttachments={() => renderAttachments(request.attachments)}
-                />
-              ))
-            )}
+
+      <CardContent className="p-0">
+        {isLoading ? (
+          <div className="p-4 space-y-3">
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
           </div>
-        </div>
+        ) : requests.length === 0 ? (
+          <EmptyRequestsRow 
+            message={`No ${status} requests found.`}
+          />
+        ) : (
+          <div className="divide-y">
+            {requests.map(request => (
+              <RequestTableRow
+                key={request.id}
+                request={request}
+                columns={columns}
+                isSelected={selectedRequestIds.includes(request.id)}
+                onToggleSelect={() => toggleSelectRequest(request.id)}
+                onViewDetails={() => handleViewDetails(request)}
+                onViewHistory={() => handleViewHistory(request)}
+                onStatusChange={onStatusChange}
+              />
+            ))}
+          </div>
+        )}
       </CardContent>
-      
-      <RequestsStatusFooter 
-        total={totalCount}
-        status={status}
-      />
-      
-      {detailRequest && (
-        <HomeownerRequestDetailDialog
-          isOpen={!!detailRequestId}
-          onClose={handleCloseDetail}
-          request={detailRequest}
-          onStatusChange={onStatusChange}
+
+      {!isLoading && requests.length > 0 && (
+        <RequestsStatusFooter 
+          status={status}
+          count={totalCount}
         />
       )}
-      
-      {historyRequest && (
-        <HomeownerRequestHistoryDialog
-          isOpen={!!historyRequestId}
-          onClose={handleCloseHistory}
-          requestId={historyRequest.id}
-        />
+
+      {selectedRequest && (
+        <>
+          <HomeownerRequestDetailDialog
+            open={detailOpen}
+            onOpenChange={setDetailOpen}
+            request={selectedRequest}
+            onStatusChange={onStatusChange}
+          />
+          
+          <HomeownerRequestHistoryDialog
+            open={historyOpen}
+            onOpenChange={setHistoryOpen}
+            requestId={selectedRequest.id}
+          />
+        </>
       )}
     </Card>
   );

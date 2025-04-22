@@ -1,70 +1,100 @@
 
 import React from 'react';
-import FilterSearchInput from './filters/FilterSearchInput';
-import FilterSelect from './filters/FilterSelect';
-import { HomeownerRequestPriority, HomeownerRequestType, HomeownerRequestStatus } from '@/types/homeowner-request-types';
+import { Input } from '@/components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  HomeownerRequestStatus, 
+  HomeownerRequestPriority, 
+  HomeownerRequestType 
+} from '@/types/homeowner-request-types';
 
 interface HomeownerRequestFiltersProps {
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  priority: HomeownerRequestPriority | 'all';
-  setPriority: (priority: string) => void;
-  type: HomeownerRequestType | 'all';
-  setType: (type: string) => void;
-  status?: HomeownerRequestStatus | 'all' | 'active';
-  setStatus?: (status: string) => void;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+  statusFilter: HomeownerRequestStatus | 'all';
+  setStatusFilter: React.Dispatch<React.SetStateAction<HomeownerRequestStatus | 'all'>>;
+  priorityFilter: HomeownerRequestPriority | 'all';
+  setPriorityFilter: React.Dispatch<React.SetStateAction<HomeownerRequestPriority | 'all'>>;
+  typeFilter: HomeownerRequestType | 'all';
+  setTypeFilter: React.Dispatch<React.SetStateAction<HomeownerRequestType | 'all'>>;
 }
-
-const priorityOptions = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'urgent', label: 'Urgent' }
-];
-
-const typeOptions = [
-  { value: 'all', label: 'All Types' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'compliance', label: 'Compliance' },
-  { value: 'billing', label: 'Billing' },
-  { value: 'general', label: 'General' },
-  { value: 'amenity', label: 'Amenity' }
-];
 
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   searchTerm,
   setSearchTerm,
-  priority,
-  setPriority,
-  type,
-  setType,
-  status,
-  setStatus
+  statusFilter,
+  setStatusFilter,
+  priorityFilter,
+  setPriorityFilter,
+  typeFilter,
+  setTypeFilter
 }) => {
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <FilterSearchInput 
-        value={searchTerm} 
-        onChange={setSearchTerm} 
-      />
+    <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="w-full sm:max-w-sm">
+        <Input 
+          placeholder="Search requests..." 
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+      </div>
       
-      <div className="flex gap-2">
-        <FilterSelect
-          value={priority}
-          onChange={setPriority}
-          options={priorityOptions}
-          placeholder="Priority"
-          label="Priority"
-        />
+      <div className="flex flex-wrap gap-3">
+        <Select 
+          value={statusFilter} 
+          onValueChange={(value) => setStatusFilter(value as HomeownerRequestStatus | 'all')}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in-progress">In Progress</SelectItem>
+            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
         
-        <FilterSelect
-          value={type}
-          onChange={setType}
-          options={typeOptions}
-          placeholder="Type"
-          label="Type"
-        />
+        <Select 
+          value={priorityFilter} 
+          onValueChange={(value) => setPriorityFilter(value as HomeownerRequestPriority | 'all')}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priorities</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Select 
+          value={typeFilter} 
+          onValueChange={(value) => setTypeFilter(value as HomeownerRequestType | 'all')}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="compliance">Compliance</SelectItem>
+            <SelectItem value="billing">Billing</SelectItem>
+            <SelectItem value="general">General</SelectItem>
+            <SelectItem value="amenity">Amenity</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
