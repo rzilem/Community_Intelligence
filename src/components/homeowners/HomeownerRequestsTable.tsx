@@ -15,6 +15,11 @@ interface HomeownerRequestsTableProps {
   error?: Error | null;
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
+  onStatusChange?: (id: string, status: string) => void;
+  onRefresh?: () => void;
+  selectedRequestIds?: string[];
+  setSelectedRequestIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  toggleSelectRequest?: (id: string) => void;
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
@@ -25,6 +30,11 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   error,
   onViewRequest,
   onEditRequest,
+  onStatusChange,
+  onRefresh,
+  selectedRequestIds,
+  setSelectedRequestIds,
+  toggleSelectRequest,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -59,7 +69,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
           <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
           <TableBody>
             {paginatedRequests.length === 0 ? (
-              <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
+              <EmptyRequestsRow message="No requests found" colSpan={visibleColumnIds.length + 1} />
             ) : (
               paginatedRequests.map((request) => (
                 <RequestTableRow

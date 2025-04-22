@@ -1,81 +1,114 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { FormTemplate, FormType } from '@/types/form-builder-types';
-import { useFormCalendarIntegration } from '@/hooks/portal/useFormCalendarIntegration';
+import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 
 interface FormSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => Promise<boolean>;
-  form: FormTemplate | null;
+  form: any; // Change this to your form type
+  formData?: Record<string, any>;
+  values?: Record<string, any>; // Alternative name for formData
+  onFieldChange: (fieldId: string, value: any) => void;
+  onSubmit: () => Promise<boolean>;
+  isSubmitting: boolean;
 }
 
 const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   open,
   onOpenChange,
-  onSuccess,
-  form
+  form,
+  formData = {},
+  values = {},
+  onFieldChange,
+  onSubmit,
+  isSubmitting
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { createCalendarEvent, isCreating } = useFormCalendarIntegration();
+  // Use either formData or values, with formData taking precedence
+  const fieldValues = Object.keys(formData).length > 0 ? formData : values;
   
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // If form submission was successful
-      const success = await onSuccess();
-      
-      // Check if this is an amenity booking form
-      if (success && form && form.form_type === 'pool_form') {
-        // Extract form fields and create a calendar event
-        await createCalendarEvent({
-          title: `Pool Booking`,
-          description: `Booked through portal form`,
-          date: new Date(),
-          startTime: '09:00',
-          endTime: '11:00',
-          type: 'amenity_booking',
-        });
-      }
-      
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-    } finally {
-      setIsSubmitting(false);
+  const renderFormField = (field: any) => {
+    switch(field.type) {
+      case 'text':
+        return (
+          <div className="mb-4" key={field.id}>
+            <label className="block text-sm font-medium mb-1">{field.label}</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-md"
+              value={fieldValues[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+              required={field.required}
+            />
+          </div>
+        );
+      case 'textarea':
+        return (
+          <div className="mb-4" key={field.id}>
+            <label className="block text-sm font-medium mb-1">{field.label}</label>
+            <textarea
+              className="w-full px-3 py-2 border rounded-md"
+              value={fieldValues[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+              required={field.required}
+              rows={4}
+            />
+          </div>
+        );
+      default:
+        return (
+          <div className="mb-4" key={field.id}>
+            <label className="block text-sm font-medium mb-1">{field.label}</label>
+            <input
+              type="text"
+              className="w-full px-3 py-2 border rounded-md"
+              value={fieldValues[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+            />
+          </div>
+        );
     }
   };
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Form Submitted</DialogTitle>
+          <DialogTitle>{form?.title || 'Submit Form'}</DialogTitle>
         </DialogHeader>
+        
+        <Separator className="my-4" />
+        
         <div className="py-4">
-          <p>Your form has been successfully submitted.</p>
-          {form?.form_type === 'pool_form' && (
-            <p className="text-sm text-muted-foreground mt-2">
-              This will also create a calendar event for your pool booking.
-            </p>
+          {form?.fields?.map(renderFormField)}
+          
+          {!form?.fields && (
+            <div className="text-center text-muted-foreground">
+              No fields found in this form.
+            </div>
           )}
         </div>
+        
         <div className="flex justify-end space-x-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSubmitting || isCreating}
+            disabled={isSubmitting}
           >
-            Close
+            Cancel
           </Button>
           <Button 
-            onClick={handleSubmit}
-            disabled={isSubmitting || isCreating}
+            onClick={onSubmit} 
+            disabled={isSubmitting}
           >
-            {isSubmitting || isCreating ? 'Processing...' : 'OK'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : 'Submit'}
           </Button>
         </div>
       </DialogContent>

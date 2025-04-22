@@ -80,7 +80,7 @@ const RequestsPage = () => {
         open={isSubmitFormDialogOpen}
         onOpenChange={setIsSubmitFormDialogOpen}
         form={selectedForm}
-        formData={formData}
+        values={formData}
         onFieldChange={handleFieldChange}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}

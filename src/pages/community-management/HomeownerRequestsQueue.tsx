@@ -47,9 +47,21 @@ const HomeownerRequestsQueue = () => {
     isLoading, 
     error,
     handleRefresh: refreshRequests,
-    handleStatusChange: updateRequestStatus,
-    requestCounts
+    handleBulkStatusChange: updateRequestStatus, // Using handleBulkStatusChange as onStatusChange
+    activeTab: requestsActiveTab,
+    setActiveTab: setRequestsActiveTab,
+    // Using dummy data for requestCounts if not available
+    lastRefreshed
   } = useHomeownerRequests();
+  
+  // Set up request counts object based on filtered data
+  const requestCounts = {
+    all: filteredRequests.length,
+    open: filteredRequests.filter(r => r.status === 'open').length,
+    inProgress: filteredRequests.filter(r => r.status === 'in-progress').length,
+    closed: filteredRequests.filter(r => r.status === 'closed').length,
+    rejected: filteredRequests.filter(r => r.status === 'rejected').length
+  };
   
   // Reset selected requests when tab or filters change
   useEffect(() => {
@@ -104,6 +116,11 @@ const HomeownerRequestsQueue = () => {
     });
   };
 
+  // Function to handle status changes for individual requests
+  const handleStatusChange = (id: string, status: string) => {
+    updateRequestStatus(status, [id]);
+  };
+
   return (
     <PageTemplate
       title="Homeowner Requests"
@@ -131,22 +148,22 @@ const HomeownerRequestsQueue = () => {
       {/* Basic filters */}
       <HomeownerRequestFilters
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        onSearchChange={setSearchTerm}
         statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
+        onStatusChange={setStatusFilter}
         priorityFilter={priorityFilter}
-        setPriorityFilter={setPriorityFilter}
+        onPriorityChange={setPriorityFilter}
         typeFilter={typeFilter}
-        setTypeFilter={setTypeFilter}
+        onTypeChange={setTypeFilter}
       />
       
       {/* Advanced filters */}
       {showFilters && (
         <HomeownerRequestAdvancedFilters
-          assignedTo={assignedToFilter}
-          setAssignedTo={setAssignedToFilter}
-          dateRange={dateRangeFilter}
-          setDateRange={setDateRangeFilter}
+          assignedToFilter={assignedToFilter}
+          onAssignedToChange={setAssignedToFilter}
+          dateRangeFilter={dateRangeFilter}
+          onDateRangeChange={setDateRangeFilter}
           onClearFilters={handleClearFilters}
         />
       )}
@@ -166,9 +183,12 @@ const HomeownerRequestsQueue = () => {
           <HomeownerRequestsTable
             requests={getFilteredRequests()}
             isLoading={isLoading}
+            error={error}
             columns={visibleColumns}
-            onToggleColumn={toggleColumn}
-            onStatusChange={updateRequestStatus}
+            visibleColumnIds={visibleColumns.map(col => col.id)}
+            onViewRequest={(req) => console.log('View request', req.id)}
+            onEditRequest={(req) => console.log('Edit request', req.id)}
+            onStatusChange={handleStatusChange}
             onRefresh={refreshRequests}
             selectedRequestIds={selectedRequestIds}
             setSelectedRequestIds={setSelectedRequestIds}
@@ -201,7 +221,7 @@ const HomeownerRequestsQueue = () => {
                     : requestCounts.rejected
                 }
                 isLoading={isLoading}
-                onStatusChange={updateRequestStatus}
+                onStatusChange={handleStatusChange}
                 columns={visibleColumns}
                 selectedRequestIds={selectedRequestIds}
                 setSelectedRequestIds={setSelectedRequestIds}

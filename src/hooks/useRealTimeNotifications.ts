@@ -1,83 +1,46 @@
 
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import { useNotificationContext } from '@/contexts/notifications';
-import { useAuth } from '@/contexts/auth';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useRealTimeNotifications = () => {
-  const { addNotification } = useNotificationContext() || { addNotification: () => {} };
-  const { user, currentAssociation } = useAuth();
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const notificationContext = useNotificationContext();
+  const [notifications, setNotifications] = useState<any[]>([]);
 
+  // Add a notification safely
+  const addNotification = (notification: any) => {
+    // Check if the context has addNotification method
+    if (notificationContext && typeof notificationContext.addNotification === 'function') {
+      notificationContext.addNotification(notification);
+    } else {
+      console.warn('Notification context not available or missing addNotification method');
+    }
+  };
+
+  // Initialize real-time subscription
   useEffect(() => {
-    if (!user || !currentAssociation || isSubscribed) return;
-
-    // Subscribe to homeowner requests
-    const requestsSubscription = supabase
-      .channel('homeowner-requests')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'homeowner_requests',
-          filter: `association_id=eq.${currentAssociation.id}`
-        },
-        (payload) => {
-          const newRequest = payload.new;
-          if (addNotification) {
-            addNotification({
-              id: newRequest.id,
-              title: 'New Request',
-              message: `A new request has been submitted: ${newRequest.title}`,
-              type: 'request',
-              createdAt: new Date().toISOString(),
-              read: false,
-              data: newRequest
-            });
-          }
-          
-          toast.info(`New request: ${newRequest.title}`);
-        }
-      )
+    // Subscribe to notifications
+    const subscription = supabase
+      .channel('public:notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications' 
+      }, (payload) => {
+        console.log('New notification received:', payload);
+        // Call the safe addNotification function
+        addNotification(payload.new);
+      })
       .subscribe();
 
-    // Subscribe to calendar events
-    const eventsSubscription = supabase
-      .channel('calendar-events')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'calendar_events',
-          filter: `hoa_id=eq.${currentAssociation.id}`
-        },
-        (payload) => {
-          const newEvent = payload.new;
-          if (addNotification) {
-            addNotification({
-              id: newEvent.id,
-              title: 'New Calendar Event',
-              message: `A new event has been added: ${newEvent.title}`,
-              type: 'event',
-              createdAt: new Date().toISOString(),
-              read: false,
-              data: newEvent
-            });
-          }
-          
-          toast.info(`New calendar event: ${newEvent.title}`);
-        }
-      )
-      .subscribe();
-
-    setIsSubscribed(true);
-
+    // Cleanup subscription
     return () => {
-      requestsSubscription.unsubscribe();
-      eventsSubscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [user, currentAssociation, addNotification, isSubscribed]);
+  }, [notificationContext]);
+
+  return {
+    notifications,
+    addNotification
+  };
 };
