@@ -6,61 +6,60 @@ import { Association } from '@/types/association-types';
 import { UserAssociation } from './types';
 
 interface AuthContextValue {
-  // User and Session state
+  // Session and authentication state
+  session: Session | null;
   user: User | null;
   currentUser: User | null; // For backward compatibility
-  profile: Profile | null;
-  session: Session | null;
-  
-  // Authentication methods
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { first_name: string; last_name: string }) => Promise<void>;
-  signOut: () => Promise<void>;
-  
-  // Loading state
+  isAuthenticated: boolean;
   loading: boolean;
-  isLoading: boolean;
-  
-  // Role and permissions
+  isLoading: boolean; // For backward compatibility
+
+  // Profile and role information
+  profile: Profile | null;
   userRole: string | null;
   isAdmin: boolean;
-  isAuthenticated: boolean;
-  
+
   // Association management
   userAssociations: UserAssociation[];
   currentAssociation: Association | null;
   setCurrentAssociation: (association: Association | null) => void;
-  
+
+  // Authentication methods
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: { 
+    first_name: string; 
+    last_name: string 
+  }) => Promise<void>;
+  signOut: () => Promise<void>;
+
   // Profile management
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
-  // User and Session defaults
+  // Session and authentication defaults
+  session: null,
   user: null,
   currentUser: null,
-  profile: null,
-  session: null,
-  
-  // Authentication method stubs
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  
-  // Loading state defaults
+  isAuthenticated: false,
   loading: true,
   isLoading: true,
-  
-  // Role and permissions defaults
+
+  // Profile and role defaults
+  profile: null,
   userRole: null,
   isAdmin: false,
-  isAuthenticated: false,
-  
+
   // Association defaults
   userAssociations: [],
   currentAssociation: null,
   setCurrentAssociation: () => {},
-  
+
+  // Authentication method stubs
+  signIn: async () => {},
+  signUp: async () => {},
+  signOut: async () => {},
+
   // Profile management stub
   refreshProfile: async () => {},
 });
