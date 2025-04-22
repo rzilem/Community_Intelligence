@@ -1,5 +1,5 @@
 
-export type DocumentVersion = {
+export interface DocumentVersion {
   id: string;
   document_id: string;
   version_number: number;
@@ -7,22 +7,12 @@ export type DocumentVersion = {
   file_size: number;
   notes?: string;
   created_at: string;
-  created_by: string;
-};
+  created_by?: string;
+}
 
-export type DocumentWithVersions = {
+export interface DocumentWithVersions {
   id: string;
   name: string;
-  url: string;
-  file_type: string;
-  file_size: number;
-  description?: string;
-  category?: string;
-  tags?: string[];
-  current_version: number;
-  is_public?: boolean;
-  is_archived?: boolean;
-  uploaded_by?: string;
-  uploaded_at: string;
-  versions: DocumentVersion[];
-};
+  current_version?: number;
+  versions?: DocumentVersion[];
+}

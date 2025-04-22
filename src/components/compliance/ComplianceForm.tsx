@@ -135,7 +135,7 @@ const ComplianceForm: React.FC<ComplianceFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {properties.map((property) => (
+                  {properties && properties.map((property) => (
                     <SelectItem key={property.id} value={property.id}>
                       {property.address}
                     </SelectItem>

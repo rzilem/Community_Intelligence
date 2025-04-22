@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowUpDown, MoreHorizontal, Eye, Edit, Trash2, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,12 +9,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 import { Compliance } from '@/types/compliance-types';
 import { useSupabaseUpdate } from '@/hooks/supabase/use-supabase-update';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Shield, Clock, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface ComplianceTableProps {
   issues: Compliance[];
@@ -109,8 +113,8 @@ export const ComplianceTable: React.FC<ComplianceTableProps> = ({
                   : issue.description}
               </TableCell>
               <TableCell>{getStatusBadge(issue.status)}</TableCell>
-              <TableCell>{format(issue.created_at || '')}</TableCell>
-              <TableCell>{issue.due_date ? format(issue.due_date) : 'N/A'}</TableCell>
+              <TableCell>{format(new Date(issue.created_at || ''), 'MM/dd/yyyy')}</TableCell>
+              <TableCell>{issue.due_date ? format(new Date(issue.due_date), 'MM/dd/yyyy') : 'N/A'}</TableCell>
               <TableCell className="text-right">{issue.fine_amount ? `$${issue.fine_amount}` : '-'}</TableCell>
               <TableCell>
                 <DropdownMenu>

@@ -2,11 +2,16 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface QueryFilter {
+  column: string;
+  value: string | null;
+}
+
 interface QueryOptions {
   select?: string;
   order?: { column: string; ascending: boolean };
   limit?: number;
-  filters?: Array<{ column: string; value: string }>;
+  filters?: Array<QueryFilter>;
   equal?: Record<string, any>;
   range?: { from: number; to: number };
   enabled?: boolean;

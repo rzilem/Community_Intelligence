@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,8 +71,8 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
         )
       `,
       filters: [
-        { column: 'property_id', operator: 'eq', value: null },
-        { column: 'resident_type', operator: 'eq', value: 'owner' }
+        { column: 'property_id', value: null },
+        { column: 'resident_type', value: 'owner' }
       ]
     }
   );
@@ -80,7 +81,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
     if (associationId) {
       fetchMembers();
     }
-  }, [associationId]);
+  }, [associationId, fetchMembers]);
 
   const handleAddMember = () => {
     setEditingMember(null);
@@ -147,7 +148,7 @@ export const MembersTab: React.FC<MembersTabProps> = ({ associationId }) => {
           isLoading={isLoading}
           roleType={roleType}
           setRoleType={setRoleType}
-          homeowners={associationHomeowners || []}
+          homeowners={associationHomeowners}
           boardRoles={boardRoles}
           committeeRoles={committeeRoles}
         />
