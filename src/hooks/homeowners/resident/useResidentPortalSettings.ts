@@ -37,9 +37,39 @@ export function useResidentPortalSettings(residentId: string) {
           throw insertError;
         }
 
-        setSettings(newSettings);
+        // Transform the data to match the expected type
+        const formattedSettings: ResidentPortalSettings = {
+          ...newSettings,
+          notification_preferences: newSettings.notification_preferences 
+            ? (typeof newSettings.notification_preferences === 'object' 
+                ? newSettings.notification_preferences as Record<string, boolean> 
+                : JSON.parse(newSettings.notification_preferences as string))
+            : {},
+          dashboard_layout: newSettings.dashboard_layout 
+            ? (typeof newSettings.dashboard_layout === 'object'
+                ? newSettings.dashboard_layout as Array<{ id: string; type: string; position: number }>
+                : JSON.parse(newSettings.dashboard_layout as string))
+            : []
+        };
+        
+        setSettings(formattedSettings);
       } else {
-        setSettings(data);
+        // Transform the data to match the expected type
+        const formattedSettings: ResidentPortalSettings = {
+          ...data,
+          notification_preferences: data.notification_preferences 
+            ? (typeof data.notification_preferences === 'object' 
+                ? data.notification_preferences as Record<string, boolean> 
+                : JSON.parse(data.notification_preferences as string))
+            : {},
+          dashboard_layout: data.dashboard_layout 
+            ? (typeof data.dashboard_layout === 'object'
+                ? data.dashboard_layout as Array<{ id: string; type: string; position: number }>
+                : JSON.parse(data.dashboard_layout as string))
+            : []
+        };
+        
+        setSettings(formattedSettings);
       }
     } catch (err) {
       console.error('Error in fetchPortalSettings:', err);
