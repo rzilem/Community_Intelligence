@@ -37,6 +37,7 @@ const FieldSettingsSidebar: React.FC<FieldSettingsSidebarProps> = ({
           field={selectedField}
           onChange={handleFieldChange}
           onDelete={() => onDeleteField(selectedFieldId)}
+          allFields={template.fields}
         />
       </CardContent>
     </Card>

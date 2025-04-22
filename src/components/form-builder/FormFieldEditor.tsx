@@ -14,18 +14,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, EyeOff } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface FormFieldEditorProps {
   field: FormField;
   onChange: (updates: Partial<FormField>) => void;
   onDelete: () => void;
+  allFields?: FormField[]; // Added to support conditional logic
 }
 
 const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
   field,
   onChange,
   onDelete,
+  allFields = [],
 }) => {
   // Define field types with their display names
   const fieldTypes: { value: FormFieldType; label: string }[] = [
@@ -40,6 +43,12 @@ const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
     { value: 'radio', label: 'Radio Buttons' },
     { value: 'file', label: 'File Upload' },
   ];
+
+  // Get previous fields that this field could depend on
+  const availableDependencyFields = allFields.filter(f => 
+    f.id !== field.id && 
+    (f.type === 'select' || f.type === 'radio' || f.type === 'checkbox')
+  );
 
   return (
     <Card>
@@ -129,6 +138,93 @@ const FormFieldEditor: React.FC<FormFieldEditorProps> = ({
               placeholder="Instructions for this field"
             />
           </div>
+        )}
+
+        {/* Conditional Logic Section */}
+        {availableDependencyFields.length > 0 && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-medium">Conditional Display</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="field-dependency">Show this field when</Label>
+                <Select
+                  value={field.conditionalDisplay?.dependsOn || ""}
+                  onValueChange={(value) => {
+                    if (!value) {
+                      const updatedField = {...field};
+                      delete updatedField.conditionalDisplay;
+                      onChange(updatedField);
+                      return;
+                    }
+                    
+                    onChange({
+                      conditionalDisplay: {
+                        dependsOn: value,
+                        showWhen: field.conditionalDisplay?.showWhen || ""
+                      }
+                    });
+                  }}
+                >
+                  <SelectTrigger id="field-dependency" className="w-full">
+                    <SelectValue placeholder="Select a field" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="w-full z-50">
+                    <SelectItem value="">No dependency</SelectItem>
+                    {availableDependencyFields.map((depField) => (
+                      <SelectItem key={depField.id} value={depField.id}>
+                        {depField.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {field.conditionalDisplay?.dependsOn && (
+                <div className="space-y-2">
+                  <Label htmlFor="field-showWhen">Has value</Label>
+                  <Select
+                    value={String(field.conditionalDisplay?.showWhen || "")}
+                    onValueChange={(value) => {
+                      onChange({
+                        conditionalDisplay: {
+                          ...field.conditionalDisplay,
+                          showWhen: value
+                        }
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="field-showWhen" className="w-full">
+                      <SelectValue placeholder="Select a value" />
+                    </SelectTrigger>
+                    <SelectContent position="popper" className="w-full z-50">
+                      {(() => {
+                        const dependentField = availableDependencyFields.find(
+                          f => f.id === field.conditionalDisplay?.dependsOn
+                        );
+                        
+                        if (!dependentField || !dependentField.options) {
+                          return (
+                            <SelectItem value="true">Is checked/selected</SelectItem>
+                          );
+                        }
+                        
+                        return dependentField.options.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ));
+                      })()}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </CardContent>
     </Card>

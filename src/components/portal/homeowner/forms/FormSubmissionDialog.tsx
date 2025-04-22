@@ -1,27 +1,27 @@
 
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
-import { FormTemplate, FormField } from '@/types/form-builder-types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { FormTemplate, FormField } from '@/types/form-builder-types';
+import { Loader2 } from 'lucide-react';
 
 interface FormSubmissionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   form: FormTemplate | null;
   values: Record<string, any>;
-  onFieldChange: (fieldId: string, value: any) => void;
+  onFieldChange: (id: string, value: any) => void;
   onSubmit: () => Promise<boolean>;
   isSubmitting: boolean;
 }
 
-const FormSubmissionDialog = ({
+const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   open,
   onOpenChange,
   form,
@@ -29,187 +29,249 @@ const FormSubmissionDialog = ({
   onFieldChange,
   onSubmit,
   isSubmitting
-}: FormSubmissionDialogProps) => {
-  if (!form) return null;
+}) => {
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  
+  // Reset errors when form changes or dialog opens/closes
+  useEffect(() => {
+    setFormErrors({});
+  }, [form, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit();
+    
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    const visibleFields = getVisibleFields(form?.fields || []);
+    
+    visibleFields.forEach(field => {
+      if (field.required && (!values[field.id] || values[field.id] === '')) {
+        errors[field.id] = 'This field is required';
+      }
+    });
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
+    // Clear errors and submit
+    setFormErrors({});
+    const success = await onSubmit();
+    if (success) {
+      onOpenChange(false);
+    }
+  };
+
+  // Determine if a field should be visible based on conditional logic
+  const shouldShowField = (field: FormField): boolean => {
+    if (!field.conditionalDisplay) return true;
+    
+    const { dependsOn, showWhen } = field.conditionalDisplay;
+    const dependentValue = values[dependsOn];
+    
+    // Handle boolean values (checkbox)
+    if (typeof showWhen === 'boolean') {
+      return Boolean(dependentValue) === showWhen;
+    }
+    
+    // Handle array values (multiple select)
+    if (Array.isArray(dependentValue)) {
+      return dependentValue.includes(showWhen);
+    }
+    
+    // Handle string/number values
+    return String(dependentValue) === String(showWhen);
+  };
+
+  // Get visible fields based on current values and conditional logic
+  const getVisibleFields = (fields: FormField[]): FormField[] => {
+    return fields.filter(shouldShowField);
   };
 
   const renderField = (field: FormField) => {
+    const error = formErrors[field.id];
+    
     switch (field.type) {
       case 'text':
+      case 'email':
+      case 'phone':
+      case 'number':
         return (
-          <Input
-            id={field.id}
-            placeholder={field.placeholder || ''}
-            value={values[field.id] || ''}
-            onChange={(e) => onFieldChange(field.id, e.target.value)}
-            required={field.required}
-          />
-        );
-      case 'textarea':
-        return (
-          <Textarea
-            id={field.id}
-            placeholder={field.placeholder || ''}
-            value={values[field.id] || ''}
-            onChange={(e) => onFieldChange(field.id, e.target.value)}
-            required={field.required}
-            className="min-h-[100px]"
-          />
-        );
-      case 'select':
-        return (
-          <Select
-            value={values[field.id] || ''}
-            onValueChange={(value) => onFieldChange(field.id, value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={field.placeholder || 'Select an option'} />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
-      case 'checkbox':
-        return (
-          <div className="flex items-center space-x-2">
-            <Checkbox
+          <div className="space-y-2" key={field.id}>
+            <Label htmlFor={field.id} className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
               id={field.id}
-              checked={!!values[field.id]}
-              onCheckedChange={(checked) => onFieldChange(field.id, checked)}
+              type={field.type === 'number' ? 'number' : 'text'}
+              placeholder={field.placeholder}
+              value={values[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+              className={error ? 'border-red-500' : ''}
             />
-            <label
-              htmlFor={field.id}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {field.placeholder || field.label}
-            </label>
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </div>
         );
+        
+      case 'textarea':
+        return (
+          <div className="space-y-2" key={field.id}>
+            <Label htmlFor={field.id} className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Textarea
+              id={field.id}
+              placeholder={field.placeholder}
+              value={values[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+              className={error ? 'border-red-500' : ''}
+            />
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+        );
+        
+      case 'select':
+        return (
+          <div className="space-y-2" key={field.id}>
+            <Label htmlFor={field.id} className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Select
+              value={values[field.id] || ''}
+              onValueChange={(value) => onFieldChange(field.id, value)}
+            >
+              <SelectTrigger id={field.id} className={error ? 'border-red-500' : ''}>
+                <SelectValue placeholder={field.placeholder || "Select an option"} />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {field.options?.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+        );
+        
+      case 'checkbox':
+        return (
+          <div className="flex items-start space-x-2" key={field.id}>
+            <Checkbox
+              id={field.id}
+              checked={values[field.id] || false}
+              onCheckedChange={(checked) => onFieldChange(field.id, checked)}
+              className={error ? 'border-red-500' : ''}
+            />
+            <div>
+              <Label htmlFor={field.id} className="cursor-pointer">
+                {field.label}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
+              </Label>
+              {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </div>
+          </div>
+        );
+        
       case 'radio':
         return (
-          <RadioGroup
-            value={values[field.id] || ''}
-            onValueChange={(value) => onFieldChange(field.id, value)}
-          >
-            {field.options?.map((option) => (
-              <div key={option.value} className="flex items-center space-x-2">
-                <RadioGroupItem value={option.value} id={`${field.id}-${option.value}`} />
-                <Label htmlFor={`${field.id}-${option.value}`}>{option.label}</Label>
-              </div>
-            ))}
-          </RadioGroup>
+          <div className="space-y-2" key={field.id}>
+            <Label className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <RadioGroup
+              value={values[field.id] || ''}
+              onValueChange={(value) => onFieldChange(field.id, value)}
+              className={error ? 'border border-red-500 rounded-md p-2' : ''}
+            >
+              {field.options?.map(option => (
+                <div className="flex items-center space-x-2" key={option.value}>
+                  <RadioGroupItem value={option.value} id={`${field.id}-${option.value}`} />
+                  <Label htmlFor={`${field.id}-${option.value}`}>{option.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
         );
+        
+      case 'date':
+        return (
+          <div className="space-y-2" key={field.id}>
+            <Label htmlFor={field.id} className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <Input
+              id={field.id}
+              type="date"
+              placeholder={field.placeholder}
+              value={values[field.id] || ''}
+              onChange={(e) => onFieldChange(field.id, e.target.value)}
+              className={error ? 'border-red-500' : ''}
+            />
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+        );
+        
+      case 'file':
+        return (
+          <div className="space-y-2" key={field.id}>
+            <Label htmlFor={field.id} className="block">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="border-2 border-dashed rounded-md p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                File upload is not yet implemented
+              </p>
+            </div>
+            {field.helpText && <p className="text-xs text-muted-foreground">{field.helpText}</p>}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+          </div>
+        );
+        
       default:
         return (
-          <Input
-            id={field.id}
-            placeholder={field.placeholder || ''}
-            value={values[field.id] || ''}
-            onChange={(e) => onFieldChange(field.id, e.target.value)}
-            required={field.required}
-          />
+          <div key={field.id}>
+            <p>Unsupported field type: {field.type}</p>
+          </div>
         );
     }
   };
 
+  if (!form) return null;
+
+  const visibleFields = getVisibleFields(form.fields || []);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{form.name}</DialogTitle>
-          <DialogDescription>
-            {form.description || 'Please fill out the form below.'}
-          </DialogDescription>
+          {form.description && <p className="text-sm text-muted-foreground mt-2">{form.description}</p>}
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            {/* Form title - used for homeowner request */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Request Title <span className="text-red-500">*</span></Label>
-              <Input
-                id="title"
-                value={values.title || ''}
-                onChange={(e) => onFieldChange('title', e.target.value)}
-                placeholder="Enter a title for your request"
-                required
-              />
-            </div>
-
-            {/* Homeowner request info */}
-            <div className="space-y-2">
-              <Label htmlFor="type">Request Type</Label>
-              <Select
-                value={values.type || 'general'}
-                onValueChange={(value) => onFieldChange('type', value)}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select request type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="complaint">Complaint</SelectItem>
-                  <SelectItem value="architectural">Architectural</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={values.priority || 'medium'}
-                onValueChange={(value) => onFieldChange('priority', value)}
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dynamic form fields */}
-            {form.fields.map((field) => (
-              <div key={field.id} className="space-y-2">
-                <Label htmlFor={field.id}>
-                  {field.label}
-                  {field.required && <span className="text-red-500"> *</span>}
-                </Label>
-                {renderField(field)}
-                {field.helpText && (
-                  <p className="text-xs text-muted-foreground">{field.helpText}</p>
-                )}
-              </div>
-            ))}
-
-            {/* Form description - used for homeowner request */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Additional Details <span className="text-red-500">*</span></Label>
-              <Textarea
-                id="description"
-                value={values.description || ''}
-                onChange={(e) => onFieldChange('description', e.target.value)}
-                placeholder="Please provide any additional details about your request"
-                className="min-h-[100px]"
-                required
-              />
-            </div>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {visibleFields.length > 0 ? (
+            visibleFields.map(field => renderField(field))
+          ) : (
+            <p className="text-muted-foreground text-center py-4">
+              This form has no fields.
+            </p>
+          )}
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -221,9 +283,7 @@ const FormSubmissionDialog = ({
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Submitting...
                 </>
-              ) : (
-                'Submit Request'
-              )}
+              ) : 'Submit'}
             </Button>
           </DialogFooter>
         </form>

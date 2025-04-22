@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { FormWorkflow } from '@/types/form-workflow-types';
+import { toast } from 'sonner';
 
 interface WorkflowContext {
   formData: Record<string, any>;
@@ -10,22 +10,28 @@ interface WorkflowContext {
 }
 
 export function useWorkflowExecution() {
-  const [isExecuting, setIsExecuting] = useState(false);
-
-  const executeWorkflow = async (workflow: any, context: WorkflowContext) => {
-    if (!workflow || !workflow.id) {
-      console.error('Invalid workflow provided for execution');
-      return false;
-    }
-
-    setIsExecuting(true);
+  const executeWorkflow = async (workflow: FormWorkflow, context: WorkflowContext) => {
+    if (!workflow.isEnabled) return;
     
     try {
-      // Execute each step in the workflow
-      if (workflow.steps && Array.isArray(workflow.steps)) {
-        // Execute steps in order
-        for (const step of workflow.steps) {
-          await executeWorkflowStep(step, context);
+      console.log(`Executing workflow: ${workflow.name}`);
+      
+      // Execute each workflow step
+      for (const step of workflow.steps) {
+        if (!step.isEnabled) continue;
+        
+        // Check if step conditions are met
+        const conditionsMet = evaluateStepConditions(step.conditions, context.formData);
+        if (!conditionsMet) {
+          console.log(`Skipping step ${step.name} - conditions not met`);
+          continue;
+        }
+        
+        // Execute actions in order
+        const sortedActions = [...step.actions].sort((a, b) => a.order - b.order);
+        
+        for (const action of sortedActions) {
+          await executeAction(action, context);
         }
       }
       
@@ -33,168 +39,123 @@ export function useWorkflowExecution() {
     } catch (error) {
       console.error('Error executing workflow:', error);
       return false;
-    } finally {
-      setIsExecuting(false);
     }
   };
-
-  const executeWorkflowStep = async (step: any, context: WorkflowContext) => {
-    if (!step || !step.type) {
-      console.error('Invalid workflow step', step);
-      return;
-    }
-
-    switch (step.type) {
-      case 'email':
-        await executeEmailStep(step, context);
-        break;
-      case 'notification':
-        await executeNotificationStep(step, context);
-        break;
-      case 'update':
-        await executeUpdateStep(step, context);
-        break;
-      case 'create':
-        await executeCreateStep(step, context);
-        break;
-      default:
-        console.warn(`Unsupported workflow step type: ${step.type}`);
-    }
-  };
-
-  const executeEmailStep = async (step: any, context: WorkflowContext) => {
-    // Implementation for sending an email
-    console.log('Executing email step:', step, 'with context:', context);
+  
+  const evaluateStepConditions = (conditions: any[], formData: Record<string, any>): boolean => {
+    // If no conditions, always execute
+    if (!conditions || conditions.length === 0) return true;
     
-    // This would typically call an edge function or API to send an email
-    // For now, just log it
-    return true;
-  };
-
-  const executeNotificationStep = async (step: any, context: WorkflowContext) => {
-    // Implementation for creating a notification
-    console.log('Executing notification step:', step, 'with context:', context);
-    
-    if (!context.userId || !context.associationId) {
-      console.error('Missing user or association ID for notification');
-      return false;
-    }
-    
-    // Create a notification record
-    try {
-      await supabase.from('portal_notifications').insert({
-        user_id: context.userId,
-        association_id: context.associationId,
-        title: replaceTokens(step.title || 'New Notification', context.formData),
-        content: replaceTokens(step.content || '', context.formData),
-        type: step.notificationType || 'info',
-        link: step.link || null,
-        metadata: step.metadata || {}
-      });
+    // All conditions must be met (AND logic)
+    return conditions.every(condition => {
+      const fieldValue = formData[condition.field];
       
-      return true;
-    } catch (error) {
-      console.error('Error creating notification:', error);
-      return false;
-    }
-  };
-
-  const executeUpdateStep = async (step: any, context: WorkflowContext) => {
-    // Implementation for updating a record
-    console.log('Executing update step:', step, 'with context:', context);
-    
-    if (!step.table || !step.recordId) {
-      console.error('Missing table or record ID for update step');
-      return false;
-    }
-    
-    let recordId = replaceTokens(step.recordId, context.formData);
-    if (!recordId) {
-      console.error('Invalid record ID after token replacement');
-      return false;
-    }
-    
-    try {
-      // Prepare update data by replacing tokens in values
-      const updateData: Record<string, any> = {};
-      
-      if (step.fields && typeof step.fields === 'object') {
-        Object.entries(step.fields).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            updateData[key] = replaceTokens(value, context.formData);
-          } else {
-            updateData[key] = value;
-          }
-        });
+      switch (condition.operator) {
+        case 'equals':
+          return fieldValue === condition.value;
+        case 'not_equals':
+          return fieldValue !== condition.value;
+        case 'contains':
+          return String(fieldValue).includes(String(condition.value));
+        case 'greater_than':
+          return Number(fieldValue) > Number(condition.value);
+        case 'less_than':
+          return Number(fieldValue) < Number(condition.value);
+        default:
+          return false;
       }
-      
-      await supabase
-        .from(step.table)
-        .update(updateData)
-        .eq('id', recordId);
-        
-      return true;
-    } catch (error) {
-      console.error(`Error updating record in ${step.table}:`, error);
-      return false;
-    }
-  };
-
-  const executeCreateStep = async (step: any, context: WorkflowContext) => {
-    // Implementation for creating a record
-    console.log('Executing create step:', step, 'with context:', context);
-    
-    if (!step.table) {
-      console.error('Missing table for create step');
-      return false;
-    }
-    
-    try {
-      // Prepare insert data by replacing tokens in values
-      const insertData: Record<string, any> = {};
-      
-      if (step.fields && typeof step.fields === 'object') {
-        Object.entries(step.fields).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            insertData[key] = replaceTokens(value, context.formData);
-          } else {
-            insertData[key] = value;
-          }
-        });
-      }
-      
-      // Add default fields that might be useful
-      if (context.userId && !insertData.user_id) {
-        insertData.user_id = context.userId;
-      }
-      
-      if (context.associationId && !insertData.association_id) {
-        insertData.association_id = context.associationId;
-      }
-      
-      await supabase
-        .from(step.table)
-        .insert(insertData);
-        
-      return true;
-    } catch (error) {
-      console.error(`Error creating record in ${step.table}:`, error);
-      return false;
-    }
-  };
-
-  // Helper to replace tokens like {{field_name}} with actual values
-  const replaceTokens = (text: string, data: Record<string, any>): string => {
-    if (!text || typeof text !== 'string') return text;
-    
-    return text.replace(/\{\{([^}]+)\}\}/g, (match, token) => {
-      const value = data[token.trim()];
-      return value !== undefined ? value : match;
     });
   };
-
+  
+  const executeAction = async (action: any, context: WorkflowContext) => {
+    try {
+      console.log(`Executing action: ${action.name} (${action.type})`);
+      
+      switch (action.type) {
+        case 'send_email':
+          // Email sending logic would go here
+          console.log('Would send email with:', action.config);
+          break;
+          
+        case 'send_notification':
+          await createNotification({
+            userId: context.userId,
+            associationId: context.associationId,
+            title: replaceVariables(action.config.title, context.formData),
+            content: replaceVariables(action.config.content, context.formData),
+            type: action.config.notificationType || 'info'
+          });
+          break;
+          
+        case 'create_request':
+          // Create a request based on form data
+          if (context.associationId) {
+            await createHomeownerRequest({
+              ...action.config,
+              formData: context.formData,
+              userId: context.userId,
+              associationId: context.associationId
+            });
+          }
+          break;
+          
+        default:
+          console.log(`Action type ${action.type} not implemented`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Error executing action ${action.name}:`, error);
+      return false;
+    }
+  };
+  
+  const createNotification = async ({ userId, associationId, title, content, type }: any) => {
+    try {
+      await supabase.from('portal_notifications').insert({
+        user_id: userId,
+        association_id: associationId,
+        title,
+        content, 
+        type
+      });
+    } catch (error) {
+      console.error('Error creating notification:', error);
+    }
+  };
+  
+  const createHomeownerRequest = async ({ formData, userId, associationId, ...config }: any) => {
+    try {
+      // Generate tracking number
+      const year = new Date().getFullYear();
+      const random = Math.floor(10000 + Math.random() * 90000);
+      const trackingNumber = `REQ-${year}-${random}`;
+      
+      // Create homeowner request
+      await supabase.from('homeowner_requests').insert({
+        title: formData.title || formData.subject || config.defaultTitle || 'New Request',
+        description: formData.description || formData.message || '',
+        type: formData.type || config.defaultType || 'general',
+        priority: formData.priority || config.defaultPriority || 'medium',
+        status: 'open',
+        resident_id: userId,
+        association_id: associationId,
+        tracking_number: trackingNumber
+      });
+    } catch (error) {
+      console.error('Error creating homeowner request:', error);
+    }
+  };
+  
+  const replaceVariables = (text: string, data: Record<string, any>): string => {
+    if (!text) return '';
+    
+    return text.replace(/\{([^}]+)\}/g, (match, key) => {
+      return data[key] !== undefined ? data[key] : match;
+    });
+  };
+  
   return {
-    executeWorkflow,
-    isExecuting
+    executeWorkflow
   };
 }
