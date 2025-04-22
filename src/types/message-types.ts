@@ -2,9 +2,14 @@
 export interface MessageHistoryItem {
   id: string;
   subject: string;
-  type: "email" | "sms";
-  recipients: number;
-  sentDate: string;
-  status: "sent" | "scheduled" | "failed";
-  openRate?: number;
+  content: string;
+  type: 'email' | 'sms';
+  status: 'sent' | 'scheduled' | 'failed' | 'draft';
+  sentAt: string;
+  scheduledFor?: string;
+  recipientCount: number;
+  deliveredCount?: number;
+  openedCount?: number;
+  clickedCount?: number;
+  recipientGroups: string[];
 }
