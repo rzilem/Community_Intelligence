@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Eye } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -29,7 +28,6 @@ const FormBuilder = () => {
   
   const { data: templates = [] } = useFormTemplates(selectedAssociationId);
 
-  // If we're on the edit path and have a formId, show the editor
   const isEditMode = formId !== undefined;
 
   const handleAssociationChange = (associationId: string) => {
@@ -41,16 +39,13 @@ const FormBuilder = () => {
   };
 
   const handleFormSave = (form: FormTemplate) => {
-    // Redirect back to templates view after saving
     navigate('/system/form-builder');
   };
 
   const handleCancel = () => {
-    // Go back to templates view
     navigate('/system/form-builder');
   };
 
-  // If in edit mode, render the form editor
   if (isEditMode && formId) {
     return (
       <PageTemplate 
