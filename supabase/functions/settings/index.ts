@@ -86,7 +86,27 @@ serve(async (req) => {
       if (action) {
         try {
           // Parse the request body
-          const requestData = await req.json();
+          let requestData = null;
+          try {
+            const rawBody = await req.text();
+            console.log(`Raw request body: ${rawBody}`);
+            
+            if (rawBody.trim() === '') {
+              requestData = {};
+            } else {
+              requestData = JSON.parse(rawBody);
+            }
+          } catch (parseError) {
+            console.error("Error parsing request JSON:", parseError);
+            return new Response(JSON.stringify({ 
+              success: false,
+              error: 'Invalid JSON in request body: ' + (parseError.message || 'Unknown parsing error')
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            });
+          }
+          
           console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
           
           // Log specific integration data for debugging
@@ -131,11 +151,11 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
-        } catch (parseError) {
-          console.error("Error parsing request JSON:", parseError);
+        } catch (error) {
+          console.error("Error processing request:", error);
           return new Response(JSON.stringify({ 
             success: false,
-            error: 'Invalid JSON in request body: ' + (parseError.message || 'Unknown parsing error')
+            error: 'Error processing request: ' + (error.message || 'Unknown error')
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,

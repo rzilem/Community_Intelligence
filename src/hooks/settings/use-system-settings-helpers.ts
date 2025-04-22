@@ -45,15 +45,23 @@ const updateSettingWithFunction = async (key: string, value: any) => {
     return v;
   }));
   
-  const { error } = await supabase.functions.invoke(`settings/${key}`, {
-    method: 'POST',
-    body: value,
-  });
-  
-  if (error) {
-    console.error(`Error updating ${key} settings:`, error);
-    throw new Error(`Failed to update ${key} settings: ${error.message}`);
+  try {
+    // Ensure the value is properly serializable
+    const safeValue = JSON.parse(JSON.stringify(value));
+    
+    const { error } = await supabase.functions.invoke(`settings/${key}`, {
+      method: 'POST',
+      body: safeValue,
+    });
+    
+    if (error) {
+      console.error(`Error updating ${key} settings:`, error);
+      throw new Error(`Failed to update ${key} settings: ${error.message}`);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error(`Error in updateSettingWithFunction for ${key}:`, error);
+    throw new Error(`Failed to process ${key} settings: ${error.message}`);
   }
-  
-  return { success: true };
 };
