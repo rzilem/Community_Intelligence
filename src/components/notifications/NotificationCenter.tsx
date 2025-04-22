@@ -8,18 +8,16 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
+import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useSupabaseMutation } from '@/hooks/supabase/use-supabase-mutation';
-import { supabase } from '@/integrations/supabase/client';
 
 export const NotificationCenter = () => {
   const { user } = useAuth();
-  const { notifications, unreadCount, markAllAsRead, markAsRead } = useRealTimeNotifications();
+  const { notifications = [], unreadCount = 0, markAllAsRead, markAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
   
   // Automatically mark as read when popover is closed
@@ -33,7 +31,7 @@ export const NotificationCenter = () => {
     markAsRead(notificationId);
   };
 
-  const renderNotifications = (items: NotificationItem[]) => {
+  const renderNotifications = (items: NotificationItem[] = []) => {
     if (items.length === 0) {
       return (
         <div className="text-center py-6 text-muted-foreground">

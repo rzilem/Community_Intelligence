@@ -8,14 +8,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   
   // Calculate unread count
-  const unreadCount = notifications.filter(notification => !notification.read).length;
+  const unreadCount = notifications.filter(notification => !notification.read_at).length;
   
   // Mark a notification as read
   const markAsRead = (notificationId: string) => {
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === notificationId 
-          ? { ...notification, read: true } 
+          ? { ...notification, read_at: new Date().toISOString(), read: true } 
           : notification
       )
     );
@@ -24,7 +24,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Mark all notifications as read
   const markAllAsRead = () => {
     setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
+      prev.map(notification => ({ 
+        ...notification, 
+        read_at: new Date().toISOString(), 
+        read: true 
+      }))
     );
   };
   
@@ -40,35 +44,51 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const demoNotifications: NotificationItem[] = [
       {
         id: uuidv4(),
+        user_id: 'system',
         title: 'New maintenance request',
         type: 'maintenance',
         read: false,
+        read_at: null,
         timestamp: new Date().toISOString(),
-        description: 'A new maintenance request has been submitted.'
+        created_at: new Date().toISOString(),
+        content: 'A new maintenance request has been submitted.',
+        association_id: 'demo'
       },
       {
         id: uuidv4(),
+        user_id: 'system',
         title: 'Payment received',
         type: 'payment',
         read: false,
+        read_at: null,
         timestamp: new Date(Date.now() - 3600000).toISOString(),
-        description: 'Payment of $250 has been received.'
+        created_at: new Date(Date.now() - 3600000).toISOString(),
+        content: 'Payment of $250 has been received.',
+        association_id: 'demo'
       },
       {
         id: uuidv4(),
+        user_id: 'system',
         title: 'New document uploaded',
         type: 'document',
         read: true,
+        read_at: new Date(Date.now() - 86400000 - 1000).toISOString(),
         timestamp: new Date(Date.now() - 86400000).toISOString(),
-        description: 'A new document has been uploaded to the portal.'
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        content: 'A new document has been uploaded to the portal.',
+        association_id: 'demo'
       },
       {
         id: uuidv4(),
+        user_id: 'system',
         title: 'Board meeting scheduled',
         type: 'event',
         read: false,
+        read_at: null,
         timestamp: new Date(Date.now() - 172800000).toISOString(),
-        description: 'Board meeting scheduled for next Monday.'
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        content: 'Board meeting scheduled for next Monday.',
+        association_id: 'demo'
       }
     ];
     
@@ -76,9 +96,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
   
   // Sort notifications by date (newest first)
-  const sortedNotifications = [...notifications].sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  const sortedNotifications = React.useMemo(() => {
+    return [...notifications].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [notifications]);
   
   return (
     <NotificationContext.Provider 

@@ -37,6 +37,8 @@ export const useNotifications = () => {
 
         if (error) {
           console.error('Error fetching notifications:', error);
+          setNotifications([]);
+          setUnreadCount(0);
           return;
         }
 
@@ -52,9 +54,14 @@ export const useNotifications = () => {
           
           setNotifications(transformedData);
           setUnreadCount(transformedData.filter(n => !n.read_at).length);
+        } else {
+          setNotifications([]);
+          setUnreadCount(0);
         }
       } catch (error) {
         console.error('Unexpected error in fetchNotifications:', error);
+        setNotifications([]);
+        setUnreadCount(0);
       } finally {
         setIsLoading(false);
       }
@@ -100,7 +107,7 @@ export const useNotifications = () => {
             : n
         )
       );
-      setUnreadCount(prev => prev - 1);
+      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error('Unexpected error in markAsRead:', error);
     }
@@ -150,7 +157,7 @@ export const useNotifications = () => {
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       
       if (deletedNotification && !deletedNotification.read_at) {
-        setUnreadCount(prev => prev - 1);
+        setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
       console.error('Unexpected error in deleteNotification:', error);
