@@ -30,24 +30,36 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChange })
     try {
       // Show toast to indicate language is changing
       const language = languages.find(l => l.code === code)?.name || code;
-      toast.success(`Switching to ${language}...`);
       
-      // Update language state for immediate feedback
-      setPreferredLanguage(code);
-      
-      // Update database preference if user is logged in
-      if (user?.id) {
-        try {
-          await translationService.updateUserLanguagePreference(user.id, code);
-        } catch (dbError) {
-          console.error('Error updating language preference in database:', dbError);
-          // Still continue with the language change even if DB update fails
-        }
+      if (code !== 'en') {
+        // For non-English languages, show that translation is disabled
+        toast.info(`Translation functionality is temporarily disabled`, {
+          description: "The UI will remain in English"
+        });
+        return; // Don't actually change the language
+      } else {
+        toast.success(`Switched to ${language}`);
       }
       
-      // Call the optional callback if provided
-      if (onLanguageChange) {
-        onLanguageChange(code);
+      // Only allow switching to English for now
+      if (code === 'en') {
+        // Update language state for immediate feedback
+        setPreferredLanguage(code);
+        
+        // Update database preference if user is logged in
+        if (user?.id) {
+          try {
+            await translationService.updateUserLanguagePreference(user.id, code);
+          } catch (dbError) {
+            console.error('Error updating language preference in database:', dbError);
+            // Still continue with the language change even if DB update fails
+          }
+        }
+        
+        // Call the optional callback if provided
+        if (onLanguageChange) {
+          onLanguageChange(code);
+        }
       }
     } catch (error) {
       console.error('Error updating language:', error);
@@ -78,6 +90,9 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChange })
               <span>{language.name}</span>
               {preferredLanguage === language.code && (
                 <span className="text-primary">✓</span>
+              )}
+              {language.code !== 'en' && (
+                <span className="text-xs text-muted-foreground">(disabled)</span>
               )}
             </div>
           </DropdownMenuItem>

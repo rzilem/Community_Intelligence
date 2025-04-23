@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Languages, Check, Loader2 } from 'lucide-react';
+import React from 'react';
+import { Languages, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -22,8 +22,7 @@ const MultilingualOptions: React.FC<MultilingualOptionsProps> = ({
   content,
   onTranslated
 }) => {
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = React.useState<string[]>([]);
   const languages = translationService.getSupportedLanguages().filter(l => l.code !== 'en');
   
   const toggleLanguage = (code: string) => {
@@ -35,36 +34,13 @@ const MultilingualOptions: React.FC<MultilingualOptionsProps> = ({
   };
   
   const handleTranslate = async () => {
-    if (selectedLanguages.length === 0 || isTranslating) return;
+    if (selectedLanguages.length === 0) return;
     
-    setIsTranslating(true);
-    toast.loading('Preparing multilingual communication...');
+    // Translation functionality is temporarily disabled
+    toast.info('Translation is temporarily disabled');
     
-    try {
-      // Example of adding multilingual content to the message
-      // In a real implementation, this would be handled by the backend
-      // to send separate messages or include translations
-      
-      let translatedSubject = subject;
-      let translatedContent = content;
-      
-      // For demo purposes, we're adding translations to the content
-      for (const langCode of selectedLanguages) {
-        const langName = languages.find(l => l.code === langCode)?.name || langCode;
-        
-        translatedContent += `\n\n--- ${langName} ---\n`;
-        const translated = await translationService.translateText(content, langCode);
-        translatedContent += translated;
-      }
-      
-      onTranslated(translatedSubject, translatedContent);
-      toast.success(`Added translations for ${selectedLanguages.length} language(s)`);
-    } catch (error) {
-      console.error('Translation error:', error);
-      toast.error('Failed to generate translations');
-    } finally {
-      setIsTranslating(false);
-    }
+    // Still call the callback with the original content to maintain UI flow
+    onTranslated(subject, content);
   };
   
   return (
@@ -104,25 +80,15 @@ const MultilingualOptions: React.FC<MultilingualOptionsProps> = ({
           
           <Button 
             onClick={handleTranslate} 
-            disabled={selectedLanguages.length === 0 || isTranslating}
+            disabled={selectedLanguages.length === 0}
             className="w-full"
           >
-            {isTranslating ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Translating...
-              </>
-            ) : (
-              <>
-                <Check className="mr-2 h-4 w-4" />
-                Add Translations
-              </>
-            )}
+            <Check className="mr-2 h-4 w-4" />
+            Add Translations
           </Button>
           
           <p className="text-xs text-muted-foreground">
-            Translations are powered by AI and may not be 100% accurate. 
-            For critical communications, professional review is recommended.
+            Translation functionality is temporarily disabled.
           </p>
         </div>
       </PopoverContent>
