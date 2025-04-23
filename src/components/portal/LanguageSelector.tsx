@@ -28,11 +28,11 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChange })
     if (code === preferredLanguage) return; // Skip if same language
     
     try {
-      // Update language state first for immediate feedback
-      setPreferredLanguage(code);
-      
       // Show toast to indicate language is changing
       toast.success(`Switching to ${languages.find(l => l.code === code)?.name || code}...`);
+      
+      // Update language state for immediate feedback
+      setPreferredLanguage(code);
       
       // Update database preference if user is logged in
       if (user?.id) {

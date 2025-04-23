@@ -1,114 +1,62 @@
 
-import React, { useState } from 'react';
-import { Sparkles, Send, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from '@/hooks/use-translation';
 
-interface AiQueryInputProps {
-  onQuery?: (query: string) => Promise<void>;
-  placeholder?: string;
-  className?: string;
-  compact?: boolean;
-}
+export const AiQueryInput: React.FC<{ placeholder?: string }> = ({ placeholder: customPlaceholder }) => {
+  const [query, setQuery] = useState('');
+  const [placeholder, setPlaceholder] = useState(customPlaceholder || 'Ask Community Intelligence anything...');
+  const { translateText, preferredLanguage, translateVersion } = useTranslation();
 
-export const AiQueryInput: React.FC<AiQueryInputProps> = ({
-  onQuery,
-  placeholder = "Ask Community Intelligence anything...",
-  className,
-  compact = false,
-}) => {
-  const [query, setQuery] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    
-    setIsLoading(true);
-
-    try {
-      // In a real implementation, this would connect to Supabase and OpenAI
-      if (onQuery) {
-        await onQuery(query);
-      } else {
-        // Demo fallback
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success("AI feature coming soon! Your query has been logged.");
+  useEffect(() => {
+    const updatePlaceholder = async () => {
+      if (!customPlaceholder) {
+        const defaultPlaceholder = 'Ask Community Intelligence anything...';
+        if (preferredLanguage === 'en') {
+          setPlaceholder(defaultPlaceholder);
+          return;
+        }
+        
+        try {
+          const translated = await translateText(defaultPlaceholder);
+          if (translated) {
+            setPlaceholder(translated);
+          }
+        } catch (error) {
+          console.error('Error translating placeholder:', error);
+        }
       }
-      setQuery('');
-    } catch (error) {
-      console.error("Error processing AI query:", error);
-      toast.error("There was an error processing your request.");
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    
+    updatePlaceholder();
+  }, [customPlaceholder, preferredLanguage, translateText, translateVersion]);
+
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
   };
 
-  if (compact) {
-    return (
-      <form onSubmit={handleSubmit} className={cn("relative flex items-center w-full", className)}>
-        <Sparkles size={18} className="absolute left-3 text-muted-foreground" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          className="flex h-10 w-full rounded-md border border-input bg-background pl-10 pr-12 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isLoading}
-        />
-        <Button 
-          type="submit"
-          size="icon"
-          variant="ghost"
-          className="absolute right-1 h-8 w-8"
-          disabled={isLoading || !query.trim()}
-        >
-          {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-        </Button>
-      </form>
-    );
-  }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Process query
+    console.log('Processing query:', query);
+    // Reset query
+    setQuery('');
+  };
 
   return (
-    <Card className={cn("p-4 border border-border", className)}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Sparkles size={16} className="text-hoa-blue" />
-          <span className="ai-gradient-text">Community Intelligence AI</span>
-        </div>
-        
-        <Textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          className="min-h-24 focus-visible:ring-hoa-blue-200"
-          disabled={isLoading}
-        />
-        
-        <div className="flex justify-end">
-          <Button 
-            type="submit"
-            disabled={isLoading || !query.trim()}
-            className="bg-gradient-to-r from-hoa-blue to-hoa-teal hover:opacity-90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className="mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} className="mr-2" />
-                Ask AI
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
-    </Card>
+    <form onSubmit={handleSubmit} className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={handleQueryChange}
+        placeholder={placeholder}
+        className="w-full p-4 pl-5 pr-16 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+      />
+      <button
+        type="submit"
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white px-3 py-1 rounded-md"
+      >
+        Ask
+      </button>
+    </form>
   );
 };
-
-export default AiQueryInput;

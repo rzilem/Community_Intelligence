@@ -7,7 +7,7 @@ export const useTranslation = () => {
   const { profile } = useAuth();
   const [preferredLanguage, setPreferredLanguage] = useState(profile?.preferred_language || 'en');
   const [translationCache, setTranslationCache] = useState<Record<string, Record<string, string>>>({});
-  const [translateVersion, setTranslateVersion] = useState(0); // Add a version to trigger re-translation
+  const [translateVersion, setTranslateVersion] = useState(0); // Version to trigger re-translation
 
   useEffect(() => {
     if (profile?.preferred_language) {
@@ -43,7 +43,7 @@ export const useTranslation = () => {
       return translatedText;
     } catch (error) {
       console.error('Translation error:', error);
-      return text;
+      return text; // Return original text on error
     }
   }, [preferredLanguage, translationCache]);
 
@@ -53,11 +53,11 @@ export const useTranslation = () => {
     setTranslateVersion(v => v + 1); // Increment version to trigger re-translation
   }, []);
 
-  // Properly handle generic types in translateTexts
+  // Handle generic types in translateTexts with proper type safety
   const translateTexts = useCallback(async <T extends Record<string, any>>(texts: T): Promise<T> => {
     if (preferredLanguage === 'en') return texts;
     
-    const result = { ...texts } as T;
+    const result = { ...texts };
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, value]) => {
@@ -71,13 +71,13 @@ export const useTranslation = () => {
       return result;
     } catch (error) {
       console.error('Batch translation error:', error);
-      return texts;
+      return texts; // Return original texts on error
     }
   }, [preferredLanguage, translateText]);
 
   return {
     preferredLanguage,
-    setPreferredLanguage: changeLanguage, // Use the new function that forces re-translation
+    setPreferredLanguage: changeLanguage, // Use the function that forces re-translation
     translateText,
     translateTexts,
     translateVersion // Expose the version for components to listen to changes

@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 // Add simple mock translations for cases where API is not available
-const mockTranslations = {
+const mockTranslations: Record<string, Record<string, string>> = {
   'es': {
     'Welcome back': 'Bienvenido de nuevo',
     'Homeowner Portal': 'Portal del Propietario',
@@ -25,7 +25,8 @@ const mockTranslations = {
     'Directory': 'Directorio',
     'Documents': 'Documentos',
     'My Profile': 'Mi Perfil',
-    'Portal Navigation': 'Navegación del Portal'
+    'Portal Navigation': 'Navegación del Portal',
+    'Ask Community Intelligence anything...': 'Pregunta cualquier cosa a Community Intelligence...'
   },
   'fr': {
     'Welcome back': 'Bienvenue',
@@ -49,7 +50,18 @@ const mockTranslations = {
     'Directory': 'Annuaire',
     'Documents': 'Documents',
     'My Profile': 'Mon Profil',
-    'Portal Navigation': 'Navigation du Portail'
+    'Portal Navigation': 'Navigation du Portail',
+    'Ask Community Intelligence anything...': 'Demandez n\'importe quoi à Community Intelligence...'
+  },
+  'de': {
+    'Welcome back': 'Willkommen zurück',
+    'Homeowner Portal': 'Eigentümerportal',
+    'Ask Community Intelligence anything...': 'Frag Community Intelligence alles...'
+  },
+  'zh': {
+    'Welcome back': '欢迎回来',
+    'Homeowner Portal': '业主门户',
+    'Ask Community Intelligence anything...': '向社区智能提问任何问题...'
   }
 };
 
@@ -75,12 +87,10 @@ export const translationService = {
       });
       
       if (error) {
-        console.error('Translation API error:', error);
         throw new Error(error.message);
       }
       
       if (!data?.translatedText) {
-        console.error('Translation missing in response:', data);
         throw new Error('No translation returned from API');
       }
       
