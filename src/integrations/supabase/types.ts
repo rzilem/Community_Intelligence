@@ -2743,6 +2743,36 @@ export type Database = {
           },
         ]
       }
+      message_translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language_code?: string
+          message_id?: string
+          original_text?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       onboarding_documents: {
         Row: {
           created_at: string
@@ -3109,6 +3139,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone_number: string | null
+          preferred_language: string | null
           profile_image_url: string | null
           role: string
           updated_at: string
@@ -3120,6 +3151,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string
@@ -3131,6 +3163,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string

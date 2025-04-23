@@ -14,60 +14,32 @@ import { translationService } from '@/services/translation-service';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 
-interface LanguageSelectorProps {
-  variant?: 'default' | 'outline' | 'ghost';
-  size?: 'sm' | 'default' | 'lg';
-}
-
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ 
-  variant = 'outline',
-  size = 'sm'
-}) => {
-  const { user } = useAuth();
+const LanguageSelector: React.FC = () => {
+  const { user, profile } = useAuth();
   const languages = translationService.getSupportedLanguages();
-  const [selectedLanguage, setSelectedLanguage] = React.useState('en');
-  
-  // Load user's language preference
-  React.useEffect(() => {
-    const loadLanguagePreference = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data } = await supabase
-          .from('profiles')
-          .select('preferred_language')
-          .eq('id', user.id)
-          .single();
-          
-        if (data?.preferred_language) {
-          setSelectedLanguage(data.preferred_language);
-        }
-      } catch (error) {
-        console.error('Error loading language preference:', error);
-      }
-    };
-    
-    loadLanguagePreference();
-  }, [user]);
+  const [selectedLanguage, setSelectedLanguage] = React.useState(profile?.preferred_language || 'en');
   
   const handleLanguageChange = async (code: string) => {
-    setSelectedLanguage(code);
-    
-    if (user?.id) {
-      await translationService.updateUserLanguagePreference(user.id, code);
-      toast.success(`Language changed to ${languages.find(l => l.code === code)?.name}`);
+    if (!user?.id) {
+      toast.error('Please log in to change language preference');
+      return;
     }
     
-    // Here we would trigger the app-wide language change
-    // This would be implemented with i18n library
+    try {
+      await translationService.updateUserLanguagePreference(user.id, code);
+      setSelectedLanguage(code);
+      toast.success(`Language changed to ${languages.find(l => l.code === code)?.name}`);
+    } catch (error) {
+      toast.error('Failed to update language preference');
+    }
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size} className="gap-2">
+        <Button variant="outline" size="sm" className="gap-2">
           <Globe className="h-4 w-4" />
-          <span className="hidden sm:block">
+          <span>
             {languages.find(l => l.code === selectedLanguage)?.name || 'Language'}
           </span>
         </Button>
