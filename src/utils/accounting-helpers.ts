@@ -55,7 +55,7 @@ export const getAccountBalanceClass = (accountType: string, amount: number): str
  * Checks if an account is an income statement account (revenue or expense)
  */
 export const isIncomeStatementAccount = (accountType: string): boolean => {
-  return ['Revenue', 'Expense'].includes(accountType);
+  return ['Revenue', 'Expense', 'Income'].includes(accountType as string);
 };
 
 /**
@@ -70,4 +70,26 @@ export const groupAccountsByCategory = (accounts: GLAccount[]): Record<string, G
     groups[category].push(account);
     return groups;
   }, {});
+};
+
+/**
+ * Ensure the type property of GLAccount is valid
+ */
+export const ensureValidAccountType = (account: any): GLAccount => {
+  // If type is not one of the valid values, default to 'Expense'
+  const validTypes: GLAccount['type'][] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Income', 'Expense'];
+  
+  const validAccount = { 
+    ...account,
+    type: validTypes.includes(account.type as GLAccount['type']) ? account.type : 'Expense'
+  } as GLAccount;
+  
+  return validAccount;
+};
+
+/**
+ * Ensure an array of accounts has valid types
+ */
+export const ensureValidAccountTypes = (accounts: any[]): GLAccount[] => {
+  return accounts.map(ensureValidAccountType);
 };

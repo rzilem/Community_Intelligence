@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -113,7 +112,7 @@ export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
       const accountData = {
         code: formData.code,
         name: formData.name,
-        type: formData.type,
+        type: formData.type as GLAccount['type'], // Ensure type safety
         description: formData.description || formData.name,
         category: formData.category || null,
         association_id: associationId

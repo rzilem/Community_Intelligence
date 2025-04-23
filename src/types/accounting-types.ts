@@ -40,6 +40,7 @@ export interface GLAccount {
   balance?: number;
   is_active: boolean;
   association_id?: string;
+  account_number?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -57,8 +58,10 @@ export interface GLAccountGroup {
 
 export interface JournalEntry {
   id: string;
-  entryNumber: string;
+  entryNumber: string; 
   entryDate: string;
+  date: string; // For compatibility
+  reference: string; // For compatibility
   description: string;
   status: 'draft' | 'posted' | 'voided';
   postDate?: string;

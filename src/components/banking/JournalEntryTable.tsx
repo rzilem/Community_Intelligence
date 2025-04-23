@@ -5,17 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-export interface JournalEntry {
-  id: string;
-  date: string;
-  reference: string;
-  description: string;
-  amount: number;
-  status: 'draft' | 'posted' | 'reconciled';
-  createdBy: string;
-  createdAt: string;
-}
+import { JournalEntry } from '@/types/accounting-types'; 
 
 interface JournalEntryTableProps {
   entries: JournalEntry[];
@@ -52,33 +42,34 @@ const JournalEntryTable: React.FC<JournalEntryTableProps> = ({ entries, onEdit, 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map((entry) => (
-            <TableRow key={entry.id}>
-              <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-              <TableCell>{entry.reference}</TableCell>
-              <TableCell className="max-w-[300px] truncate">{entry.description}</TableCell>
-              <TableCell className="text-right">
-                ${entry.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline" className={getStatusColor(entry.status)}>
-                  {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
-                </Badge>
-              </TableCell>
-              <TableCell>{entry.createdBy}</TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button variant="ghost" size="sm" onClick={() => onView(entry)}>
-                  <Eye className="h-4 w-4" />
-                </Button>
-                {entry.status === 'draft' && (
-                  <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}>
-                    <Edit2 className="h-4 w-4" />
+          {entries.length > 0 ? (
+            entries.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
+                <TableCell>{entry.reference || entry.entryNumber}</TableCell>
+                <TableCell className="max-w-[300px] truncate">{entry.description}</TableCell>
+                <TableCell className="text-right">
+                  ${entry.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={getStatusColor(entry.status)}>
+                    {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{entry.createdBy}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button variant="ghost" size="sm" onClick={() => onView(entry)}>
+                    <Eye className="h-4 w-4" />
                   </Button>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-          {entries.length === 0 && (
+                  {entry.status === 'draft' && (
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(entry)}>
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
             <TableRow>
               <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                 No journal entries found

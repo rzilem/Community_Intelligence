@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { JournalEntry } from '@/types/accounting-types';
 
 export interface JournalEntryDetail {
   id?: string;
@@ -11,17 +12,6 @@ export interface JournalEntryDetail {
   description?: string;
   debit: number;
   credit: number;
-}
-
-export interface JournalEntry {
-  id?: string;
-  entry_number?: string;
-  date: string;
-  reference?: string;
-  description?: string;
-  status: 'draft' | 'posted' | 'reconciled';
-  association_id: string;
-  details: JournalEntryDetail[];
 }
 
 export const useJournalEntries = (associationId?: string) => {
@@ -58,7 +48,22 @@ export const useJournalEntries = (associationId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data || [];
+      
+      // Map to match the JournalEntry interface
+      return (data || []).map(entry => ({
+        id: entry.id,
+        entryNumber: entry.entry_number,
+        entryDate: entry.date,
+        date: entry.date, // For compatibility
+        reference: entry.reference || entry.entry_number, // For compatibility
+        description: entry.description,
+        status: entry.status as JournalEntry['status'],
+        associationId: entry.association_id,
+        createdBy: entry.created_by,
+        createdAt: entry.created_at,
+        updatedAt: entry.created_at,  // Placeholder if updated_at is not available
+        amount: 0, // We'll populate this with details later
+      }));
     },
     enabled: !!associationId
   });
@@ -100,11 +105,33 @@ export const useJournalEntries = (associationId?: string) => {
       
       if (detailsError) throw detailsError;
       
-      return { ...entry, details: details || [] };
+      // Map to match our interface
+      const mappedEntry: JournalEntry = {
+        id: entry.id,
+        entryNumber: entry.entry_number,
+        entryDate: entry.date,
+        date: entry.date, // For compatibility
+        reference: entry.reference || entry.entry_number, // For compatibility
+        description: entry.description,
+        status: entry.status as JournalEntry['status'],
+        associationId: entry.association_id,
+        createdBy: entry.created_by,
+        createdAt: entry.created_at,
+        updatedAt: entry.created_at, // Placeholder
+        amount: calculateTotalAmount(details || []),
+        details: details || []
+      };
+      
+      return mappedEntry;
     } catch (error) {
       console.error('Error fetching journal entry with details:', error);
       throw error;
     }
+  };
+
+  // Calculate total amount from details
+  const calculateTotalAmount = (details: JournalEntryDetail[]): number => {
+    return details.reduce((sum, detail) => sum + (Number(detail.debit) || 0), 0);
   };
 
   // Create journal entry
@@ -115,11 +142,12 @@ export const useJournalEntries = (associationId?: string) => {
         const { data: entry, error: entryError } = await supabase
           .from('journal_entries')
           .insert({
-            date: journalEntry.date,
+            entry_number: journalEntry.entryNumber,
+            date: journalEntry.entryDate,
             reference: journalEntry.reference,
             description: journalEntry.description,
             status: journalEntry.status,
-            association_id: journalEntry.association_id
+            association_id: journalEntry.associationId
           })
           .select('id')
           .single();
@@ -127,15 +155,15 @@ export const useJournalEntries = (associationId?: string) => {
         if (entryError) throw entryError;
         
         // Insert journal entry details
-        const details = journalEntry.details.map(detail => ({
-          journal_entry_id: entry.id,
-          gl_account_id: detail.gl_account_id,
-          description: detail.description,
-          debit: detail.debit,
-          credit: detail.credit
-        }));
-        
-        if (details.length > 0) {
+        if (journalEntry.details && journalEntry.details.length > 0) {
+          const details = journalEntry.details.map(detail => ({
+            journal_entry_id: entry.id,
+            gl_account_id: detail.gl_account_id,
+            description: detail.description,
+            debit: detail.debit,
+            credit: detail.credit
+          }));
+          
           const { error: detailsError } = await supabase
             .from('journal_entry_details')
             .insert(details);
