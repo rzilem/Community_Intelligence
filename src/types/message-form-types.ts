@@ -1,4 +1,3 @@
-
 import { MessageCategory } from './communication-types';
 
 export interface MessageFormFieldProps {
@@ -13,7 +12,7 @@ export interface MessageTypeButtonProps {
   onSelect: () => void;
   icon: React.ComponentType;
   label: string;
-  className?: string;
+  className?: string;  // Added optional className prop
 }
 
 export interface MessagePreviewProps {
