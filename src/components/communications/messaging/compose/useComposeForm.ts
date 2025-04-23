@@ -73,7 +73,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
         recipient_groups: selectedGroups,
         type: messageType,
         scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined,
-        category
+        category: category as MessageCategory,  // Explicit cast to fix typing error
       });
 
       // Reset form
@@ -83,7 +83,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       setPreviewMode(false);
       setScheduleMessage(false);
       setScheduledDate(null);
-      setCategory('general');
+      setCategory('general' as MessageCategory); // Cast here as well
       onMessageSent();
       toast.success(scheduleMessage ? 'Message scheduled successfully' : 'Message sent successfully');
     } catch (error) {
@@ -101,7 +101,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setPreviewMode(false);
     setScheduleMessage(false);
     setScheduledDate(null);
-    setCategory('general');
+    setCategory('general' as MessageCategory);
   };
 
   const toggleSchedule = () => {
