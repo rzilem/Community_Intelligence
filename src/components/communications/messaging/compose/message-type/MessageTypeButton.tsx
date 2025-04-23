@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { MessageTypeButtonProps } from '@/types/message-form-types';
 import { cn } from '@/lib/utils';
 
-export const MessageTypeButton: React.FC<MessageTypeButtonProps> = ({
+export const MessageTypeButton: React.FC<MessageTypeButtonProps & React.HTMLAttributes<HTMLButtonElement>> = ({
   type,
   isSelected,
   onSelect,
   icon: Icon,
   label,
-  className
+  className,
+  ...props
 }) => {
   return (
     <Button 
@@ -22,6 +23,7 @@ export const MessageTypeButton: React.FC<MessageTypeButtonProps> = ({
         className
       )}
       onClick={onSelect}
+      {...props}
     >
       <Icon className="h-5 w-5" />
       {label}
