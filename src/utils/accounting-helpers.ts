@@ -76,12 +76,23 @@ export const groupAccountsByCategory = (accounts: GLAccount[]): Record<string, G
  * Ensure the type property of GLAccount is valid
  */
 export const ensureValidAccountType = (account: any): GLAccount => {
-  // If type is not one of the valid values, default to 'Expense'
   const validTypes: GLAccount['type'][] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Income', 'Expense'];
+  
+  // Convert string type to valid enum value
+  let accountType = account.type;
+  if (typeof account.type === 'string' && !validTypes.includes(account.type as GLAccount['type'])) {
+    // Try to match by capitalizing first letter
+    const capitalizedType = account.type.charAt(0).toUpperCase() + account.type.slice(1).toLowerCase();
+    if (validTypes.includes(capitalizedType as GLAccount['type'])) {
+      accountType = capitalizedType;
+    } else {
+      accountType = 'Expense'; // Default fallback
+    }
+  }
   
   const validAccount = { 
     ...account,
-    type: validTypes.includes(account.type as GLAccount['type']) ? account.type : 'Expense'
+    type: accountType
   } as GLAccount;
   
   return validAccount;

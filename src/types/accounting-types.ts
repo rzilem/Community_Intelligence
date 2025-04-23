@@ -63,7 +63,7 @@ export interface JournalEntry {
   date: string; // For compatibility
   reference: string; // For compatibility
   description: string;
-  status: 'draft' | 'posted' | 'voided';
+  status: 'draft' | 'posted' | 'voided' | 'reconciled'; // Adding reconciled status
   postDate?: string;
   amount: number;
   debitAccountId?: string;
@@ -76,6 +76,16 @@ export interface JournalEntry {
   updatedAt: string;
   memo?: string;
   attachments?: any[];
+  details?: JournalEntryDetail[];
+}
+
+export interface JournalEntryDetail {
+  id?: string;
+  journal_entry_id?: string;
+  gl_account_id: string;
+  description?: string;
+  debit: number;
+  credit: number;
 }
 
 export interface ReportCategory {
@@ -97,6 +107,7 @@ export interface BudgetSummary {
   netIncome: number;
   changeFromLastYear: number;
   changePercentage: number;
+  netIncomeChange: number; // Adding missing property
   insights: string[];
 }
 

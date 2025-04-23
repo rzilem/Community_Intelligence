@@ -1,5 +1,6 @@
 
 import { GLAccount } from '@/types/accounting-types';
+import { ensureValidAccountType } from './accounting-helpers';
 
 /**
  * Ensures that GL accounts have the required is_active property.
@@ -12,12 +13,7 @@ export const ensureGLAccountsHaveIsActive = (accounts: any[]): GLAccount[] => {
       account.is_active = true;
     }
     
-    // Ensure that the type property is valid according to the GLAccount type
-    const validTypes: GLAccount['type'][] = ['Asset', 'Liability', 'Equity', 'Revenue', 'Income', 'Expense'];
-    if (!validTypes.includes(account.type as GLAccount['type'])) {
-      account.type = 'Expense'; // Default to Expense if not valid
-    }
-    
-    return account as GLAccount;
+    // Use the ensureValidAccountType utility to ensure correct type values
+    return ensureValidAccountType(account);
   });
 };

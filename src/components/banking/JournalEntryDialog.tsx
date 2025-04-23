@@ -9,11 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { JournalEntry } from './JournalEntryTable';
+import { JournalEntry, GLAccount } from '@/types/accounting-types';
 import { useGLAccounts, getFormattedGLAccountLabel } from '@/hooks/accounting/useGLAccounts';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { LoadingState } from '@/components/ui/loading-state';
-import { GLAccount } from '@/types/accounting-types';
 
 interface JournalEntryLineItem {
   accountId: string;
@@ -62,11 +61,11 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
   // Use provided accounts if available, otherwise use fetched accounts
   const accounts = providedAccounts || fetchedAccounts;
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: entry ? {
-      date: entry.date,
-      reference: entry.reference,
+      date: entry.entryDate || entry.date,
+      reference: entry.entryNumber || entry.reference,
       description: entry.description,
       lineItems: []
     } : {
@@ -80,14 +79,16 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
   const lineItems = form.watch('lineItems') || [];
   
   const addLineItem = () => {
-    form.setValue('lineItems', [
+    const updatedItems = [
       ...lineItems,
       { accountId: '', description: '', debit: 0, credit: 0 }
-    ]);
+    ];
+    form.setValue('lineItems', updatedItems);
   };
 
   const removeLineItem = (index: number) => {
-    form.setValue('lineItems', lineItems.filter((_, i) => i !== index));
+    const updatedItems = lineItems.filter((_, i) => i !== index);
+    form.setValue('lineItems', updatedItems);
   };
 
   const totalDebits = lineItems.reduce((sum, item) => sum + (Number(item.debit) || 0), 0);
@@ -175,7 +176,11 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
                   <div className="col-span-3">
                     <Select
                       value={item.accountId}
-                      onValueChange={(value) => form.setValue(`lineItems.${index}.accountId`, value)}
+                      onValueChange={(value) => {
+                        const updatedItems = [...lineItems];
+                        updatedItems[index].accountId = value;
+                        form.setValue('lineItems', updatedItems);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select account" />
@@ -193,7 +198,11 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
                   <div className="col-span-3">
                     <Input
                       value={item.description}
-                      onChange={(e) => form.setValue(`lineItems.${index}.description`, e.target.value)}
+                      onChange={(e) => {
+                        const updatedItems = [...lineItems];
+                        updatedItems[index].description = e.target.value;
+                        form.setValue('lineItems', updatedItems);
+                      }}
                       placeholder="Description"
                     />
                   </div>
@@ -206,10 +215,12 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
                       value={item.debit || ''}
                       onChange={(e) => {
                         const value = e.target.value ? parseFloat(e.target.value) : 0;
-                        form.setValue(`lineItems.${index}.debit`, value);
+                        const updatedItems = [...lineItems];
+                        updatedItems[index].debit = value;
                         if (value > 0) {
-                          form.setValue(`lineItems.${index}.credit`, 0);
+                          updatedItems[index].credit = 0;
                         }
+                        form.setValue('lineItems', updatedItems);
                       }}
                     />
                   </div>
@@ -222,10 +233,12 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
                       value={item.credit || ''}
                       onChange={(e) => {
                         const value = e.target.value ? parseFloat(e.target.value) : 0;
-                        form.setValue(`lineItems.${index}.credit`, value);
+                        const updatedItems = [...lineItems];
+                        updatedItems[index].credit = value;
                         if (value > 0) {
-                          form.setValue(`lineItems.${index}.debit`, 0);
+                          updatedItems[index].debit = 0;
                         }
+                        form.setValue('lineItems', updatedItems);
                       }}
                     />
                   </div>

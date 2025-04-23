@@ -5,12 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, FileCheck, FileText } from 'lucide-react';
-import { JournalEntry as JournalEntryType } from '@/hooks/accounting/useJournalEntries';
+import { JournalEntry, JournalEntryDetail as JournalEntryDetailType } from '@/types/accounting-types';
 import { LoadingState } from '@/components/ui/loading-state';
 import { format } from 'date-fns';
 
 interface JournalEntryDetailProps {
-  entry: JournalEntryType;
+  entry: JournalEntry;
   isLoading?: boolean;
   onStatusChange?: (id: string, status: string) => void;
   onBack?: () => void;
@@ -55,9 +55,9 @@ export const JournalEntryDetail: React.FC<JournalEntryDetailProps> = ({
     <Card>
       <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <CardTitle>Journal Entry {entry.entry_number}</CardTitle>
+          <CardTitle>Journal Entry {entry.entryNumber || entry.reference}</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            {entry.date ? format(new Date(entry.date), 'MMMM d, yyyy') : 'No date'}
+            {entry.entryDate || entry.date ? format(new Date(entry.entryDate || entry.date), 'MMMM d, yyyy') : 'No date'}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export const JournalEntryDetail: React.FC<JournalEntryDetailProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground">Reference</p>
-                <p className="font-medium">{entry.reference || 'N/A'}</p>
+                <p className="font-medium">{entry.reference || entry.entryNumber || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Description</p>
