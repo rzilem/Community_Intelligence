@@ -10,10 +10,10 @@ import MultilingualOptions from '../MultilingualOptions';
 
 interface MessageContentProps {
   content: string;
-  setContent: (content: string) => void;
+  onChange: (content: string) => void;
 }
 
-const MessageContent: React.FC<MessageContentProps> = ({ content, setContent }) => {
+const MessageContent: React.FC<MessageContentProps> = ({ content, onChange }) => {
   const [activeTab, setActiveTab] = React.useState('compose');
   const { generateTemplate, isGenerating } = useAITemplateGenerator();
   const [subject, setSubject] = React.useState('');
@@ -23,12 +23,12 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, setContent }) 
     const result = await generateTemplate(prompt, 'email');
     
     if (result) {
-      setContent(result);
+      onChange(result);
     }
   };
 
   const handleTranslated = (translatedSubject: string, translatedContent: string) => {
-    setContent(translatedContent);
+    onChange(translatedContent);
   };
 
   return (
@@ -64,7 +64,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, setContent }) 
         <TabsContent value="compose" className="mt-0">
           <Textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             placeholder="Type your message content here..."
             className="min-h-[200px] font-normal"
           />
@@ -73,7 +73,7 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, setContent }) 
         <TabsContent value="html" className="mt-0">
           <Textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => onChange(e.target.value)}
             placeholder="Enter HTML content here..."
             className="min-h-[200px] font-mono text-sm"
           />
