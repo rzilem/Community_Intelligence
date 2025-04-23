@@ -1,12 +1,32 @@
-
 import { toast } from 'sonner';
 import { useSupabaseCreate, useSupabaseDelete } from '@/hooks/supabase';
 import { NewCalendarEvent } from './types';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDefaultColorForType } from './calendarUtils';
+import { checkAmenityBookingConflict } from './checkAmenityBookingConflict';
+import { useSupabaseQuery } from '@/hooks/supabase';
 
 export const useCalendarEventMutations = () => {
   const { currentAssociation, user } = useAuth();
+
+  // Fetch all events for the selected amenity and date
+  const fetchEventsForAmenityDay = async (amenityId: string, date: Date) => {
+    if (!currentAssociation || !amenityId) return [];
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const { data, error } = await (window as any).supabase
+      .from('calendar_events')
+      .select('*')
+      .eq('hoa_id', currentAssociation.id)
+      .eq('amenity_id', amenityId)
+      .gte('start_time', dayStart.toISOString())
+      .lte('end_time', dayEnd.toISOString());
+
+    return data || [];
+  };
 
   // Create event mutation
   const { mutate: createEvent, isPending: isCreating } = useSupabaseCreate('calendar_events', {
@@ -20,7 +40,7 @@ export const useCalendarEventMutations = () => {
     invalidateQueries: [['calendar_events']]
   });
 
-  const handleCreateEvent = (newEvent: NewCalendarEvent, resetForm: () => void, refetch: () => void): boolean => {
+  const handleCreateEvent = async (newEvent: NewCalendarEvent, resetForm: () => void, refetch: () => void): Promise<boolean> => {
     if (!currentAssociation) {
       toast.error("Please select an association first");
       return false;
@@ -45,6 +65,15 @@ export const useCalendarEventMutations = () => {
       return false;
     }
 
+    // Only check for conflict for amenity_booking types
+    if (newEvent.type === 'amenity_booking' && newEvent.amenityId) {
+      const eventsForDay = await fetchEventsForAmenityDay(newEvent.amenityId, newEvent.date);
+      if (checkAmenityBookingConflict(eventsForDay, startDate, endDate)) {
+        toast.error("This amenity is already booked for the selected time slot. Please choose a different time.");
+        return false;
+      }
+    }
+
     // Create the event object to save to Supabase
     const eventToSave = {
       hoa_id: currentAssociation.id,
@@ -60,7 +89,6 @@ export const useCalendarEventMutations = () => {
       color: newEvent.color || getDefaultColorForType(newEvent.type)
     };
 
-    // Save to Supabase
     createEvent(eventToSave, {
       onSuccess: () => {
         toast.success("Event booked successfully!");
@@ -74,8 +102,8 @@ export const useCalendarEventMutations = () => {
         return false;
       }
     });
-    
-    return true; // Default return for optimistic UI updates
+
+    return true;
   };
 
   const handleDeleteEvent = (eventId: string, refetch: () => void) => {

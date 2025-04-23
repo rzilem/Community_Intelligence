@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -8,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from '@/lib/utils';
+import { toast } from "sonner";
 
 interface Amenity {
   id: string;
@@ -51,7 +51,6 @@ export const EventForm: React.FC<EventFormProps> = ({
   isCreating,
   hasAssociation
 }) => {
-  // Color options for events
   const colorOptions = [
     { value: '#3b6aff', label: 'Blue', bgClass: 'bg-hoa-blue-500' },
     { value: '#0d766d', label: 'Teal', bgClass: 'bg-hoa-teal-500' },
@@ -62,6 +61,16 @@ export const EventForm: React.FC<EventFormProps> = ({
     { value: '#F59E0B', label: 'Yellow', bgClass: 'bg-yellow-500' },
     { value: '#EC4899', label: 'Pink', bgClass: 'bg-pink-500' }
   ];
+
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  const handleCreateWrapper = async () => {
+    setErrorMsg(null);
+    const ok = await handleCreateEvent();
+    if (ok === false) {
+      setErrorMsg("Unable to book – possible conflict or missing info.");
+    }
+  };
 
   return (
     <DialogContent className="sm:max-w-[425px]">
@@ -199,11 +208,16 @@ export const EventForm: React.FC<EventFormProps> = ({
             </RadioGroup>
           </div>
         </div>
+        {errorMsg && (
+          <div className="text-red-600 text-xs rounded bg-red-50 p-2 mt-2">
+            {errorMsg}
+          </div>
+        )}
       </div>
       <DialogFooter>
         <Button 
           type="button"
-          onClick={handleCreateEvent} 
+          onClick={handleCreateWrapper}
           disabled={!newEvent.title || !newEvent.startTime || !newEvent.endTime || !hasAssociation || isCreating}
         >
           {isCreating ? 'Saving...' : 'Book Now'}
