@@ -1,4 +1,3 @@
-
 /**
  * Replace merge tags in a string with values from a data object
  * @param text Text containing merge tags
@@ -105,3 +104,32 @@ export function getAvailableMergeTags() {
     ],
   };
 }
+
+export const MERGE_TAGS = {
+  resident: [
+    { tag: '{{resident.name}}', description: 'Full name of the resident' },
+    { tag: '{{resident.email}}', description: 'Email address' },
+    { tag: '{{resident.phone}}', description: 'Phone number' },
+    { tag: '{{resident.move_in_date}}', description: 'Move-in date' },
+    { tag: '{{resident.resident_type}}', description: 'Type (Owner/Tenant)' }
+  ],
+  property: [
+    { tag: '{{property.address}}', description: 'Property address' },
+    { tag: '{{property.unit_number}}', description: 'Unit number' }
+  ],
+  association: [
+    { tag: '{{association.name}}', description: 'Association name' },
+    { tag: '{{association.contact_email}}', description: 'Contact email' }
+  ]
+};
+
+export type MergeTagCategory = keyof typeof MERGE_TAGS;
+
+export type MergeTag = {
+  tag: string;
+  description: string;
+};
+
+export const getMergeTagsByCategory = (category: MergeTagCategory): MergeTag[] => {
+  return MERGE_TAGS[category] || [];
+};

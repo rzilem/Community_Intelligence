@@ -2596,6 +2596,97 @@ export type Database = {
           },
         ]
       }
+      message_history: {
+        Row: {
+          association_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          recipient_groups: string[] | null
+          sent_at: string | null
+          subject: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          recipient_groups?: string[] | null
+          sent_at?: string | null
+          subject: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          recipient_groups?: string[] | null
+          sent_at?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_history_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          association_id: string | null
+          category: Database["public"]["Enums"]["message_category"] | null
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_ai_generated: boolean | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"] | null
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"] | null
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_documents: {
         Row: {
           created_at: string
