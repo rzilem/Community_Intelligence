@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -157,11 +156,11 @@ const UserProfile = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
-        </div>
-      </PageTemplate>
-    </AppLayout>
-  );
-};
+          
+        </Tabs>
+      </div>
+    </PageTemplate>
+  </AppLayout>
+);
 
 export default UserProfile;
