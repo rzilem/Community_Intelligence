@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, FileText, Calendar, Users, File } from 'lucide-react';
+import { CreditCard, FileText, Calendar, File } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
 import AssociationPortalSelector from '@/components/portal/AssociationPortalSelector';
+import LanguageSelector from '@/components/portal/LanguageSelector';
+import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const { translateText, preferredLanguage } = useTranslation();
 
   // Handler for changing association and reloading (follows PortalPageLayout usage)
   const handleAssociationChange = (associationId: string) => {
@@ -47,8 +51,10 @@ const HomeownerDashboard = () => {
               Welcome back, {profile?.name || user?.email || 'Homeowner'}
             </p>
           </div>
-          {/* Swap out Community Intelligence button for Association selector */}
-          <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
+          <div className="flex items-center gap-4">
+            <LanguageSelector />
+            <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

@@ -12,12 +12,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { translationService } from '@/services/translation-service';
 import { useAuth } from '@/contexts/auth';
+import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
 const LanguageSelector: React.FC = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { preferredLanguage } = useTranslation();
   const languages = translationService.getSupportedLanguages();
-  const [selectedLanguage, setSelectedLanguage] = React.useState(profile?.preferred_language || 'en');
   
   const handleLanguageChange = async (code: string) => {
     if (!user?.id) {
@@ -27,9 +28,11 @@ const LanguageSelector: React.FC = () => {
     
     try {
       await translationService.updateUserLanguagePreference(user.id, code);
-      setSelectedLanguage(code);
       toast.success(`Language changed to ${languages.find(l => l.code === code)?.name}`);
+      // Reload the page to apply language changes
+      window.location.reload();
     } catch (error) {
+      console.error('Error updating language:', error);
       toast.error('Failed to update language preference');
     }
   };
@@ -40,7 +43,7 @@ const LanguageSelector: React.FC = () => {
         <Button variant="outline" size="sm" className="gap-2">
           <Globe className="h-4 w-4" />
           <span>
-            {languages.find(l => l.code === selectedLanguage)?.name || 'Language'}
+            {languages.find(l => l.code === preferredLanguage)?.name || 'Language'}
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -55,7 +58,7 @@ const LanguageSelector: React.FC = () => {
           >
             <div className="flex items-center justify-between w-full">
               <span>{language.name}</span>
-              {selectedLanguage === language.code && (
+              {preferredLanguage === language.code && (
                 <span className="text-primary">✓</span>
               )}
             </div>

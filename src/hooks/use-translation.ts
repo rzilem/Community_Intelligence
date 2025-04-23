@@ -8,8 +8,10 @@ export const useTranslation = () => {
   const [preferredLanguage, setPreferredLanguage] = useState(profile?.preferred_language || 'en');
 
   useEffect(() => {
-    setPreferredLanguage(profile?.preferred_language || 'en');
-  }, [profile]);
+    if (profile?.preferred_language) {
+      setPreferredLanguage(profile.preferred_language);
+    }
+  }, [profile?.preferred_language]);
 
   const translateText = async (text: string, targetLanguage?: string) => {
     const language = targetLanguage || preferredLanguage;
@@ -21,7 +23,7 @@ export const useTranslation = () => {
       return translatedText;
     } catch (error) {
       console.error('Translation error:', error);
-      return text;
+      return text; // Fallback to original text
     }
   };
 
