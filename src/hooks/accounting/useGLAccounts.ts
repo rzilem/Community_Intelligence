@@ -10,6 +10,22 @@ interface UseGLAccountsOptions {
   activeOnly?: boolean;
 }
 
+// Utility function to get formatted account categories from accounts array
+export const getFormattedAccountCategories = (accounts: GLAccount[]): string[] => {
+  // Extract unique categories and filter out null/undefined values
+  const categories = [...new Set(accounts
+    .map(account => account.category)
+    .filter(Boolean))] as string[];
+  
+  // Sort categories alphabetically
+  return categories.sort((a, b) => a.localeCompare(b));
+};
+
+// Utility function to format GL account label with code and name
+export const getFormattedGLAccountLabel = (account: GLAccount): string => {
+  return `${account.code} - ${account.name}`;
+};
+
 export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
   const { associationId, includeMaster = false, activeOnly = true } = options;
   const queryClient = useQueryClient();

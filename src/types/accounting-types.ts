@@ -1,4 +1,3 @@
-
 export interface ReportCategory {
   title: string;
   reports: string[];
@@ -40,7 +39,7 @@ export interface JournalEntryDetail {
   gl_account?: GLAccount;
 }
 
-// Budget-related types
+// Budget-related types with camelCase properties
 export interface BudgetEntry {
   id: string;
   glAccountId: string;
@@ -49,6 +48,7 @@ export interface BudgetEntry {
   previousYearActual?: number;
   previousYearBudget?: number;
   notes?: string;
+  budget_id?: string; // Added for compatibility
 }
 
 export interface MonthlyAmount {
@@ -68,6 +68,7 @@ export interface Budget {
   description: string;
   associationId: string;
   fundType: 'operating' | 'reserve' | 'capital';
+  entries?: BudgetEntry[]; // Added for getBudgetDetails
 }
 
 export interface GLAccountGroup {

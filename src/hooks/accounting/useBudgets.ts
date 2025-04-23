@@ -12,14 +12,16 @@ export const useBudgets = (associationId?: string) => {
     queryFn: async () => {
       if (!associationId) return [];
       
+      // Note: We're using "gl_budgets" table name (assuming it exists in Supabase)
+      // This would need to be created first in Supabase
       const { data, error } = await supabase
-        .from('budgets')
+        .from('gl_budgets')
         .select('*')
         .eq('association_id', associationId)
         .order('year', { ascending: false });
       
       if (error) throw error;
-      return data || [];
+      return data as unknown as Budget[] || [];
     },
     enabled: !!associationId
   });
@@ -28,7 +30,7 @@ export const useBudgets = (associationId?: string) => {
     try {
       // Get budget
       const { data: budget, error: budgetError } = await supabase
-        .from('budgets')
+        .from('gl_budgets')
         .select('*')
         .eq('id', budgetId)
         .single();
@@ -37,7 +39,7 @@ export const useBudgets = (associationId?: string) => {
       
       // Get budget entries
       const { data: entries, error: entriesError } = await supabase
-        .from('budget_entries')
+        .from('gl_budget_entries')
         .select(`
           *,
           gl_account:gl_account_id (id, code, name, type, category)
@@ -46,9 +48,36 @@ export const useBudgets = (associationId?: string) => {
       
       if (entriesError) throw entriesError;
       
+      // Convert from snake_case db fields to camelCase JS properties
+      const formattedBudget: Budget = {
+        id: budget.id,
+        name: budget.name,
+        year: budget.year,
+        status: budget.status,
+        totalRevenue: budget.total_revenue || 0,
+        totalExpenses: budget.total_expenses || 0,
+        createdBy: budget.created_by,
+        createdAt: budget.created_at,
+        description: budget.description,
+        associationId: budget.association_id,
+        fundType: budget.fund_type
+      };
+      
+      // Convert entries to match our frontend model
+      const formattedEntries: BudgetEntry[] = entries ? entries.map((entry: any) => ({
+        id: entry.id,
+        glAccountId: entry.gl_account_id,
+        monthlyAmounts: entry.monthly_amounts || [],
+        annualTotal: entry.annual_total || 0,
+        previousYearActual: entry.previous_year_actual,
+        previousYearBudget: entry.previous_year_budget,
+        notes: entry.notes,
+        gl_account: entry.gl_account
+      })) : [];
+      
       return {
-        ...budget,
-        entries: entries || []
+        ...formattedBudget,
+        entries: formattedEntries
       };
     } catch (error) {
       console.error('Error fetching budget details:', error);
@@ -58,14 +87,26 @@ export const useBudgets = (associationId?: string) => {
 
   const createBudget = useMutation({
     mutationFn: async (budget: Partial<Budget>) => {
+      // Convert camelCase JS properties to snake_case db fields
+      const dbBudget = {
+        name: budget.name,
+        year: budget.year,
+        status: budget.status,
+        total_revenue: budget.totalRevenue,
+        total_expenses: budget.totalExpenses,
+        description: budget.description,
+        association_id: budget.associationId,
+        fund_type: budget.fundType
+      };
+      
       const { data, error } = await supabase
-        .from('budgets')
-        .insert(budget)
+        .from('gl_budgets')
+        .insert(dbBudget)
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+      return data as unknown as Budget;
     },
     onSuccess: () => {
       toast.success('Budget created successfully');
@@ -78,14 +119,25 @@ export const useBudgets = (associationId?: string) => {
 
   const createBudgetEntry = useMutation({
     mutationFn: async (entry: Partial<BudgetEntry>) => {
+      // Convert camelCase JS properties to snake_case db fields
+      const dbEntry = {
+        budget_id: entry.budget_id, // Keep this as snake_case for compatibility
+        gl_account_id: entry.glAccountId,
+        annual_total: entry.annualTotal,
+        monthly_amounts: entry.monthlyAmounts,
+        previous_year_actual: entry.previousYearActual,
+        previous_year_budget: entry.previousYearBudget,
+        notes: entry.notes
+      };
+      
       const { data, error } = await supabase
-        .from('budget_entries')
-        .insert(entry)
+        .from('gl_budget_entries')
+        .insert(dbEntry)
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+      return data as unknown as BudgetEntry;
     },
     onSuccess: (_, variables) => {
       toast.success('Budget entry created successfully');
@@ -98,15 +150,26 @@ export const useBudgets = (associationId?: string) => {
 
   const updateBudget = useMutation({
     mutationFn: async ({ id, ...budget }: Partial<Budget> & { id: string }) => {
+      // Convert camelCase JS properties to snake_case db fields
+      const dbBudget = {
+        name: budget.name,
+        year: budget.year,
+        status: budget.status,
+        total_revenue: budget.totalRevenue,
+        total_expenses: budget.totalExpenses,
+        description: budget.description,
+        fund_type: budget.fundType
+      };
+      
       const { data, error } = await supabase
-        .from('budgets')
-        .update(budget)
+        .from('gl_budgets')
+        .update(dbBudget)
         .eq('id', id)
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+      return data as unknown as Budget;
     },
     onSuccess: () => {
       toast.success('Budget updated successfully');
