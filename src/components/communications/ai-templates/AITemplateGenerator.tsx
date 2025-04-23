@@ -19,7 +19,7 @@ const AITemplateGenerator: React.FC<AITemplateGeneratorProps> = ({ onSave }) => 
   const [formality, setFormality] = useState('neutral');
   const [length, setLength] = useState([2]); // 1-3 scale: brief, normal, detailed
   
-  const { generateTemplate, isGenerating, error } = useAITemplateGenerator();
+  const { generateTemplate, generatedContent, setGeneratedContent, isGenerating, error } = useAITemplateGenerator();
 
   const handleGenerate = async () => {
     if (!prompt) return;
@@ -32,9 +32,9 @@ const AITemplateGenerator: React.FC<AITemplateGeneratorProps> = ({ onSave }) => 
     
     const fullPrompt = `Create a message template with the following requirements: ${prompt}. The tone should be ${formalityLevel} and the content should be ${contentLength}.`;
     
-    const generatedContent = await generateTemplate(fullPrompt, 'email');
-    if (generatedContent) {
-      // Populate the preview area
+    const generatedText = await generateTemplate(fullPrompt, 'email');
+    if (generatedText) {
+      // The result is already stored in the hook's state
     }
   };
 
@@ -120,6 +120,19 @@ const AITemplateGenerator: React.FC<AITemplateGeneratorProps> = ({ onSave }) => 
           </div>
         </div>
       </Card>
+      
+      {generatedContent && (
+        <div>
+          <Label htmlFor="generated-content">Generated Template</Label>
+          <Textarea
+            id="generated-content"
+            value={generatedContent}
+            onChange={(e) => setGeneratedContent(e.target.value)}
+            rows={8}
+            className="mt-2"
+          />
+        </div>
+      )}
       
       <div className="flex gap-2">
         <Button 

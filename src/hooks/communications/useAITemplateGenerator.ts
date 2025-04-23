@@ -41,8 +41,8 @@ export const useAITemplateGenerator = () => {
   return {
     generateTemplate,
     generatedContent,
+    setGeneratedContent,
     isGenerating,
-    error,
-    setGeneratedContent
+    error
   };
 };
