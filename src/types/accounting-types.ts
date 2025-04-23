@@ -1,4 +1,3 @@
-
 export interface Budget {
   id: string;
   name: string;
@@ -107,8 +106,9 @@ export interface BudgetSummary {
   netIncome: number;
   changeFromLastYear: number;
   changePercentage: number;
-  netIncomeChange: number; // Added missing property
+  netIncomeChange: number; 
   insights: string[];
+  previousYearTotalRevenue?: number; // Added this field to fix BudgetPlanning.tsx errors
 }
 
 export interface Invoice {

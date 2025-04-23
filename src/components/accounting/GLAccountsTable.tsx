@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, PlusCircle, SortAsc, SortDesc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountGroups from './GLAccountGroups';
-import { GLAccountDialog } from './GLAccountDialog';
+import GLAccountDialog from './GLAccountDialog'; // Fixed import
 import GLAccountImportExport from './GLAccountImportExport';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { Slider } from '@/components/ui/slider';

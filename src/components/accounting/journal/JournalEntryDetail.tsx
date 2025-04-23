@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -62,13 +61,13 @@ export const JournalEntryDetail: React.FC<JournalEntryDetailProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <Badge 
-            variant={entry.status === 'posted' ? 'outline' : entry.status === 'reconciled' ? 'default' : 'secondary'}
+            variant={entry.status === 'posted' ? 'outline' : entry.status === 'draft' ? 'secondary' : 'default'}
             className={
               entry.status === 'posted' 
                 ? 'bg-green-50 text-green-700 border-green-200' 
-                : entry.status === 'reconciled'
-                  ? 'bg-blue-50 text-blue-700 border-blue-200'
-                  : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                : entry.status === 'draft'
+                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                  : 'bg-red-50 text-red-700 border-red-200'
             }
           >
             {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
@@ -169,9 +168,9 @@ export const JournalEntryDetail: React.FC<JournalEntryDetailProps> = ({
                 )}
                 {entry.status === 'posted' && onStatusChange && (
                   <Button
-                    onClick={() => onStatusChange(entry.id!, 'reconciled')}
+                    onClick={() => onStatusChange(entry.id!, 'voided')}
                   >
-                    Mark as Reconciled
+                    Mark as Voided
                   </Button>
                 )}
               </div>

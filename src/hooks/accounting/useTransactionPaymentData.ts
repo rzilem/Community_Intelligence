@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { Transaction, Payment } from '@/types/transaction-payment-types';
 import { JournalEntry } from '@/types/accounting-types';
 import mockTransactions from './mock/mockTransactions';
 import mockPayments from './mock/mockPayments';
-import mockJournalEntries from './mock/mockJournalEntries';
+import { mockJournalEntries } from './mock/mockJournalEntries';
 
 /**
  * A hook to provide transaction, payment, and journal entry data for accounting dashboard.

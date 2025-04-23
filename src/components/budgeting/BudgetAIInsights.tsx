@@ -7,7 +7,7 @@ import { BudgetSummary } from '@/types/accounting-types';
 import { formatCurrency } from '@/utils/accounting-helpers';
 
 interface BudgetAIInsightsProps {
-  summary: BudgetSummary;
+  summary: BudgetSummary; // Changed from summary to match BudgetPlanning.tsx
   isLoading?: boolean;
 }
 

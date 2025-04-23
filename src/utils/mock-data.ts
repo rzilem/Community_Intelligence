@@ -1,6 +1,5 @@
-
 import { Transaction, Payment } from '@/types/transaction-payment-types';
-import { JournalEntry } from '@/hooks/accounting/useJournalEntries';
+import { JournalEntry } from '@/types/accounting-types';
 
 // Mock transactions data
 export const mockTransactions: Transaction[] = [

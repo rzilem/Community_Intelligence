@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import JournalEntryTable, { JournalEntry } from '@/components/banking/JournalEntryTable';
+import JournalEntryTable from '@/components/banking/JournalEntryTable';
 import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
-import { GLAccount } from '@/types/accounting-types';
+import { GLAccount, JournalEntry } from '@/types/accounting-types'; // Fixed import
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
 // Updated mock GL accounts to match the GLAccount interface
