@@ -3457,6 +3457,7 @@ export type Database = {
           move_out_date: string | null
           name: string | null
           phone: string | null
+          preferences: Json | null
           property_id: string | null
           resident_type: string
           updated_at: string
@@ -3473,6 +3474,7 @@ export type Database = {
           move_out_date?: string | null
           name?: string | null
           phone?: string | null
+          preferences?: Json | null
           property_id?: string | null
           resident_type: string
           updated_at?: string
@@ -3489,6 +3491,7 @@ export type Database = {
           move_out_date?: string | null
           name?: string | null
           phone?: string | null
+          preferences?: Json | null
           property_id?: string | null
           resident_type?: string
           updated_at?: string
