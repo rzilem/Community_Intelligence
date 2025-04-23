@@ -1,9 +1,9 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { communicationService } from '@/services/communication-service';
 import { replaceMergeTags } from '@/utils/mergeTags';
 import { ResidentType } from '@/types/resident-types';
+import { MessageCategory } from '@/types/communication-types';
 
 // Add new: categories consistent with enum in DB
 const MESSAGE_CATEGORIES = [
@@ -67,7 +67,7 @@ export interface ComposeFormState {
     };
   };
   // New: category
-  category: string;
+  category: MessageCategory;
 }
 
 interface UseComposeFormProps {
@@ -84,7 +84,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
   const [previewMode, setPreviewMode] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
-  const [category, setCategory] = useState('general'); // default to general
+  const [category, setCategory] = useState<MessageCategory>('general'); // Fix here - explicit type
   const [previewData] = useState({
     resident: {
       name: 'John Smith',
@@ -155,7 +155,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
         recipient_groups: selectedGroups,
         type: messageType,
         scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined,
-        category // Pass along newly selected category!
+        category // Pass along selected category which is now of type MessageCategory
       });
 
       // Reset form

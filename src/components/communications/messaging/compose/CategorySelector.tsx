@@ -5,9 +5,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MessageCategory } from '@/types/communication-types';
 
 interface CategorySelectorProps {
-  category: string;
+  category: MessageCategory;
   categories: { value: string; label: string }[];
-  onCategoryChange: (value: string) => void;
+  onCategoryChange: (value: MessageCategory) => void;
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -23,7 +23,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
       
       <Select 
         value={category} 
-        onValueChange={onCategoryChange}
+        onValueChange={(value) => onCategoryChange(value as MessageCategory)}
       >
         <SelectTrigger id="category-select" className="w-full">
           <SelectValue placeholder="Select message category" />
