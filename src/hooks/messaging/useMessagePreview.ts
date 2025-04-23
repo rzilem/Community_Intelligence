@@ -6,6 +6,8 @@ import { replaceMergeTags } from '@/utils/mergeTags';
 export interface UseMessagePreviewOptions {
   initialContent?: string;
   initialSubject?: string;
+  content?: string;
+  subject?: string;
   previewData?: Partial<MessagePreviewData>;
 }
 

@@ -65,44 +65,17 @@ export function extractMergeTags(text: string): string[] {
   return tags;
 }
 
-/**
- * Get available merge tags by category
- * @returns Object with merge tags grouped by category
- */
-export function getAvailableMergeTags() {
-  return {
-    resident: [
-      { tag: '{{resident.name}}', description: 'Full name of the resident' },
-      { tag: '{{resident.email}}', description: 'Email address' },
-      { tag: '{{resident.phone}}', description: 'Phone number' },
-      { tag: '{{resident.move_in_date}}', description: 'Move-in date' },
-      { tag: '{{resident.resident_type}}', description: 'Type (Owner/Tenant)' },
-    ],
-    property: [
-      { tag: '{{property.address}}', description: 'Street address' },
-      { tag: '{{property.unit_number}}', description: 'Unit/apartment number' },
-      { tag: '{{property.city}}', description: 'City' },
-      { tag: '{{property.state}}', description: 'State' },
-      { tag: '{{property.zip}}', description: 'ZIP/Postal code' },
-    ],
-    association: [
-      { tag: '{{association.name}}', description: 'Association name' },
-      { tag: '{{association.contact_email}}', description: 'Contact email' },
-      { tag: '{{association.phone}}', description: 'Phone number' },
-      { tag: '{{association.website}}', description: 'Website URL' },
-    ],
-    payment: [
-      { tag: '{{payment.amount}}', description: 'Payment amount' },
-      { tag: '{{payment.dueDate}}', description: 'Due date' },
-      { tag: '{{payment.lateFee}}', description: 'Late fee amount' },
-      { tag: '{{payment.pastDue}}', description: 'Past due amount' },
-    ],
-    compliance: [
-      { tag: '{{compliance.violation}}', description: 'Violation type' },
-      { tag: '{{compliance.fine}}', description: 'Fine amount' },
-      { tag: '{{compliance.deadline}}', description: 'Compliance deadline' },
-    ],
-  };
+export type MergeTagCategory = 
+  | 'resident'
+  | 'property'
+  | 'association'
+  | 'payment'
+  | 'compliance'
+  | 'date';
+
+export interface MergeTag {
+  tag: string;
+  description: string;
 }
 
 export const MERGE_TAGS = {
@@ -115,21 +88,35 @@ export const MERGE_TAGS = {
   ],
   property: [
     { tag: '{{property.address}}', description: 'Property address' },
-    { tag: '{{property.unit_number}}', description: 'Unit number' }
+    { tag: '{{property.unit_number}}', description: 'Unit number' },
+    { tag: '{{property.city}}', description: 'City' },
+    { tag: '{{property.state}}', description: 'State' },
+    { tag: '{{property.zip}}', description: 'ZIP code' }
   ],
   association: [
     { tag: '{{association.name}}', description: 'Association name' },
-    { tag: '{{association.contact_email}}', description: 'Contact email' }
+    { tag: '{{association.contact_email}}', description: 'Contact email' },
+    { tag: '{{association.phone}}', description: 'Phone number' }
+  ],
+  payment: [
+    { tag: '{{payment.amount}}', description: 'Payment amount' },
+    { tag: '{{payment.dueDate}}', description: 'Due date' },
+    { tag: '{{payment.lateFee}}', description: 'Late fee amount' }
+  ],
+  compliance: [
+    { tag: '{{compliance.violation}}', description: 'Violation description' },
+    { tag: '{{compliance.fine}}', description: 'Fine amount' },
+    { tag: '{{compliance.deadline}}', description: 'Compliance deadline' }
   ]
-};
-
-export type MergeTagCategory = keyof typeof MERGE_TAGS;
-
-export type MergeTag = {
-  tag: string;
-  description: string;
 };
 
 export const getMergeTagsByCategory = (category: MergeTagCategory): MergeTag[] => {
   return MERGE_TAGS[category] || [];
+};
+
+export const getAvailableMergeTags = () => {
+  return Object.entries(MERGE_TAGS).reduce((acc, [category, tags]) => {
+    acc[category as MergeTagCategory] = tags;
+    return acc;
+  }, {} as Record<MergeTagCategory, MergeTag[]>);
 };
