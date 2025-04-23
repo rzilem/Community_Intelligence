@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -50,26 +49,8 @@ interface NavigationTranslations {
 
 export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
   const location = useLocation();
-  const { translateText, preferredLanguage } = useTranslation();
-  const [translations, setTranslations] = useState<NavigationTranslations>({
-    dashboard: 'Dashboard',
-    payments: 'Payments',
-    requests: 'Requests',
-    calendarEvents: 'Calendar & Events',
-    directory: 'Directory',
-    documents: 'Documents',
-    myProfile: 'My Profile',
-    communityPulse: 'Community Pulse',
-    homeowners: 'Homeowners',
-    bankAccounts: 'Bank Accounts',
-    knowledgeBase: 'Knowledge Base',
-    emailCommunity: 'Email Community',
-    bidsOpportunities: 'Bids & Opportunities',
-    invoicesPayments: 'Invoices & Payments',
-    vendorStatus: 'Vendor Status',
-    portalNavigation: 'Portal Navigation'
-  });
-
+  const { translateText, translateTexts, preferredLanguage } = useTranslation();
+  
   // Default navigation item titles
   const defaultTitles: NavigationTranslations = {
     dashboard: 'Dashboard',
@@ -89,6 +70,8 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
     vendorStatus: 'Vendor Status',
     portalNavigation: 'Portal Navigation'
   };
+  
+  const [translations, setTranslations] = useState<NavigationTranslations>(defaultTitles);
 
   // Translate navigation items when language changes
   useEffect(() => {
@@ -99,11 +82,9 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
       }
       
       try {
-        const translated: Partial<NavigationTranslations> = {};
-        for (const [key, text] of Object.entries(defaultTitles)) {
-          translated[key as keyof NavigationTranslations] = await translateText(text);
-        }
-        setTranslations({...defaultTitles, ...translated});
+        // Use the updated translateTexts function that preserves the original type
+        const translatedTitles = await translateTexts(defaultTitles);
+        setTranslations(translatedTitles);
       } catch (error) {
         console.error('Error translating navigation items:', error);
         setTranslations(defaultTitles); // Fallback to default English titles
@@ -111,7 +92,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
     };
     
     translateNavItems();
-  }, [preferredLanguage, translateText]);
+  }, [preferredLanguage, translateTexts]);
 
   // Define navigation items for each portal type
   const homeownerNavItems: NavItem[] = [

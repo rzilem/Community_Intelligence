@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +11,6 @@ import LanguageSelector from '@/components/portal/LanguageSelector';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
-// Define the translations type to match the state shape
 interface DashboardTranslations {
   welcomeBack: string;
   homeownerPortal: string;
@@ -35,7 +33,6 @@ const HomeownerDashboard = () => {
   const navigate = useNavigate();
   const { translateText, translateTexts, preferredLanguage } = useTranslation();
   
-  // Static text that needs translation
   const defaultTexts: DashboardTranslations = {
     welcomeBack: 'Welcome back',
     homeownerPortal: 'Homeowner Portal',
@@ -55,7 +52,6 @@ const HomeownerDashboard = () => {
   
   const [translations, setTranslations] = useState<DashboardTranslations>(defaultTexts);
 
-  // Translate all UI text when language changes
   const updateTranslations = useCallback(async () => {
     if (preferredLanguage === 'en') {
       setTranslations(defaultTexts);
@@ -63,33 +59,21 @@ const HomeownerDashboard = () => {
     }
     
     try {
-      // Cast the result to ensure type safety
       const newTranslations = await translateTexts(defaultTexts);
-      
-      // Create a new object that preserves the structure of DashboardTranslations
-      const typedTranslations: DashboardTranslations = {
-        ...defaultTexts, // Start with default texts as fallback
-        ...newTranslations // Override with translated texts where available
-      };
-      
-      setTranslations(typedTranslations);
+      setTranslations(newTranslations);
     } catch (error) {
       console.error('Translation error:', error);
     }
   }, [preferredLanguage, translateTexts]);
 
-  // Update translations whenever language changes
   useEffect(() => {
     updateTranslations();
   }, [preferredLanguage, updateTranslations]);
 
-  // Handler for changing language from selector
   const handleLanguageChange = (code: string) => {
-    // Force update translations immediately
     updateTranslations();
   };
 
-  // Handler for changing association
   const handleAssociationChange = (associationId: string) => {
     window.location.reload();
   };
