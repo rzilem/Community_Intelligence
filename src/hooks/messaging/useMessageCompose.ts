@@ -43,7 +43,7 @@ export function useMessageCompose({
   
   const preview = useMessagePreview({
     subject,
-    messageContent
+    content: messageContent // Fixed: renamed messageContent to content
   });
   
   const scheduling = useMessageScheduling();

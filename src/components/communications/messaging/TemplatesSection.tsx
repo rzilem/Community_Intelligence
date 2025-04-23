@@ -1,11 +1,18 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import TemplateSearch from './TemplateSearch';
 import TemplatesGrid from './TemplatesGrid';
-import AITemplateCreator from '../ai-templates/AITemplateCreator';
+import AITemplateGenerator from '../ai-templates/AITemplateGenerator';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface TemplatesSectionProps {
   templates: any[];
@@ -24,13 +31,11 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
 }) => {
   const { toast } = useToast();
   
-  const handleSaveTemplate = (title: string, content: string, type: string) => {
-    console.log('Saving template:', { title, content, type });
+  const handleSaveTemplate = (template: { title: string; content: string; type: string }) => {
     // In a real implementation, you would save this to the database
-    // For now, just show a toast notification
     toast({
       title: 'Template Created',
-      description: `"${title}" has been saved as a ${type} template.`,
+      description: `"${template.title}" has been saved as a ${template.type} template.`,
     });
     
     // Refresh template list or add to local state
@@ -47,9 +52,23 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
             onSearchChange={onSearchChange}
           />
           
-          <AITemplateCreator 
-            onSaveTemplate={handleSaveTemplate}
-          />
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                AI Template Creator
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create AI-Powered Template</DialogTitle>
+                <DialogDescription>
+                  Describe the template you need, and our AI will generate it for you.
+                </DialogDescription>
+              </DialogHeader>
+              <AITemplateGenerator onSave={handleSaveTemplate} />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       
