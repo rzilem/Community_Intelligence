@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Budget, BudgetEntry } from '@/types/accounting-types';
@@ -12,8 +11,6 @@ export const useBudgets = (associationId?: string) => {
     queryFn: async () => {
       if (!associationId) return [];
       
-      // Note: We're using "gl_budgets" table name (assuming it exists in Supabase)
-      // This would need to be created first in Supabase
       const { data, error } = await supabase
         .from('gl_budgets')
         .select('*')
@@ -21,7 +18,21 @@ export const useBudgets = (associationId?: string) => {
         .order('year', { ascending: false });
       
       if (error) throw error;
-      return data as unknown as Budget[] || [];
+      
+      // Convert from snake_case to camelCase
+      return (data || []).map(budget => ({
+        id: budget.id,
+        name: budget.name,
+        year: budget.year,
+        status: budget.status,
+        totalRevenue: budget.total_revenue || 0,
+        totalExpenses: budget.total_expenses || 0,
+        createdBy: budget.created_by,
+        createdAt: budget.created_at,
+        description: budget.description,
+        associationId: budget.association_id,
+        fundType: budget.fund_type
+      }));
     },
     enabled: !!associationId
   });
@@ -48,7 +59,7 @@ export const useBudgets = (associationId?: string) => {
       
       if (entriesError) throw entriesError;
       
-      // Convert from snake_case db fields to camelCase JS properties
+      // Convert from snake_case to camelCase
       const formattedBudget: Budget = {
         id: budget.id,
         name: budget.name,
@@ -60,25 +71,20 @@ export const useBudgets = (associationId?: string) => {
         createdAt: budget.created_at,
         description: budget.description,
         associationId: budget.association_id,
-        fundType: budget.fund_type
+        fundType: budget.fund_type,
+        entries: entries ? entries.map((entry: any) => ({
+          id: entry.id,
+          glAccountId: entry.gl_account_id,
+          monthlyAmounts: entry.monthly_amounts || [],
+          annualTotal: entry.annual_total || 0,
+          previousYearActual: entry.previous_year_actual,
+          previousYearBudget: entry.previous_year_budget,
+          notes: entry.notes,
+          gl_account: entry.gl_account
+        })) : []
       };
       
-      // Convert entries to match our frontend model
-      const formattedEntries: BudgetEntry[] = entries ? entries.map((entry: any) => ({
-        id: entry.id,
-        glAccountId: entry.gl_account_id,
-        monthlyAmounts: entry.monthly_amounts || [],
-        annualTotal: entry.annual_total || 0,
-        previousYearActual: entry.previous_year_actual,
-        previousYearBudget: entry.previous_year_budget,
-        notes: entry.notes,
-        gl_account: entry.gl_account
-      })) : [];
-      
-      return {
-        ...formattedBudget,
-        entries: formattedEntries
-      };
+      return formattedBudget;
     } catch (error) {
       console.error('Error fetching budget details:', error);
       throw error;
