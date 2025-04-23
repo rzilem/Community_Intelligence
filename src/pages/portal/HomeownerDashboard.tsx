@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, FileText, Calendar, File } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
-import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
 import AssociationPortalSelector from '@/components/portal/AssociationPortalSelector';
 import LanguageSelector from '@/components/portal/LanguageSelector';
 import { useTranslation } from '@/hooks/use-translation';
-import { toast } from 'sonner';
+import { QuickLinksSection } from '@/components/portal/dashboard/QuickLinksSection';
+import { CommunityUpdatesCard } from '@/components/portal/dashboard/CommunityUpdatesCard';
+import { AIChatCard } from '@/components/portal/dashboard/AIChatCard';
 
 interface DashboardTranslations {
   welcomeBack: string;
@@ -30,8 +28,7 @@ interface DashboardTranslations {
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
-  const { translateText, translateTexts, preferredLanguage } = useTranslation();
+  const { translateTexts, preferredLanguage } = useTranslation();
   
   const defaultTexts: DashboardTranslations = {
     welcomeBack: 'Welcome back',
@@ -59,53 +56,24 @@ const HomeownerDashboard = () => {
     }
     
     try {
-      const newTranslations = await translateTexts(defaultTexts);
+      const newTranslations = await translateTexts<DashboardTranslations>(defaultTexts);
       setTranslations(newTranslations);
     } catch (error) {
       console.error('Translation error:', error);
     }
   }, [preferredLanguage, translateTexts]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     updateTranslations();
   }, [preferredLanguage, updateTranslations]);
 
-  const handleLanguageChange = (code: string) => {
+  const handleLanguageChange = () => {
     updateTranslations();
   };
 
-  const handleAssociationChange = (associationId: string) => {
+  const handleAssociationChange = () => {
     window.location.reload();
   };
-
-  const quickLinks = [
-    { 
-      title: translations.makePayment, 
-      path: '/portal/homeowner/payments', 
-      icon: <CreditCard className="h-5 w-5" />, 
-      color: 'bg-blue-100',
-      onClickToast: () => toast.info(translations.makePayment, { description: 'Redirecting to payment options' })
-    },
-    { 
-      title: translations.submitRequest, 
-      path: '/portal/homeowner/requests', 
-      icon: <FileText className="h-5 w-5" />, 
-      color: 'bg-green-100',
-      onClickToast: () => toast.info(translations.submitRequest, { description: 'Preparing request submission form' })
-    },
-    { 
-      title: translations.calendar, 
-      path: '/portal/homeowner/calendar', 
-      icon: <Calendar className="h-5 w-5" />, 
-      color: 'bg-purple-100' 
-    },
-    { 
-      title: translations.viewDocuments, 
-      path: '/portal/homeowner/documents', 
-      icon: <File className="h-5 w-5" />, 
-      color: 'bg-amber-100' 
-    },
-  ];
 
   return (
     <AppLayout>
@@ -129,54 +97,9 @@ const HomeownerDashboard = () => {
           </div>
           
           <div className="lg:col-span-3 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickLinks.map((link) => (
-                <Card 
-                  key={link.path} 
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => {
-                    link.onClickToast && link.onClickToast();
-                    navigate(link.path);
-                  }}
-                >
-                  <CardHeader className="p-4">
-                    <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-2`}>
-                      {link.icon}
-                    </div>
-                    <CardTitle className="text-base">{link.title}</CardTitle>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>{translations.communityUpdates}</CardTitle>
-                <CardDescription>{translations.latestAnnouncements}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border-b pb-2">
-                    <p className="font-medium">{translations.annualMeeting}</p>
-                    <p className="text-sm text-muted-foreground">{translations.annualMeetingDesc}</p>
-                  </div>
-                  <div className="border-b pb-2">
-                    <p className="font-medium">{translations.poolClosing}</p>
-                    <p className="text-sm text-muted-foreground">{translations.poolClosingDesc}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>{translations.askCommunityIntel}</CardTitle>
-                <CardDescription>{translations.getInstantAnswers}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AiQueryInput />
-              </CardContent>
-            </Card>
+            <QuickLinksSection translations={translations} />
+            <CommunityUpdatesCard translations={translations} />
+            <AIChatCard translations={translations} />
           </div>
         </div>
       </div>

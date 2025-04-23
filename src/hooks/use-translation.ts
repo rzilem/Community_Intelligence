@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { translationService } from '@/services/translation-service';
 import { useAuth } from '@/contexts/auth';
@@ -49,35 +48,25 @@ export const useTranslation = () => {
     }
   }, [preferredLanguage, translationCache]);
 
-  // Force immediate translation of multiple text items
-  // This overload preserves the original object structure with the same keys
   const translateTexts = useCallback(async <T extends Record<string, string>>(texts: T): Promise<T> => {
     const language = preferredLanguage;
     if (language === 'en') return texts;
     
-    const translations = { ...texts }; // Create a copy to preserve the original structure and keys
+    const translations = { ...texts };
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, text]) => {
-        // Check cache first
-        const cachedTranslation = getCachedTranslation(text, language);
-        if (cachedTranslation) {
-          translations[key] = cachedTranslation;
-          return;
-        }
-        
-        const translatedText = await translationService.translateText(text, language);
-        cacheTranslation(text, language, translatedText);
-        translations[key] = translatedText;
+        const translatedText = await translateText(text, language);
+        translations[key as keyof T] = translatedText as T[keyof T];
       });
       
       await Promise.all(translationPromises);
       return translations;
     } catch (error) {
       console.error('Batch translation error:', error);
-      return texts; // Return original texts on error
+      return texts;
     }
-  }, [preferredLanguage, translationCache]);
+  }, [preferredLanguage, translateText]);
 
   return {
     preferredLanguage,
