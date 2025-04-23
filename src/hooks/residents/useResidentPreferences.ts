@@ -16,7 +16,7 @@ export const useResidentPreferences = (residentId: string) => {
         .single();
 
       if (error) throw error;
-      setPreferences(data.preferences || {});
+      setPreferences(data?.preferences as ResidentPreferences || {});
     } catch (error) {
       console.error('Error fetching preferences:', error);
       toast.error('Failed to load resident preferences');
