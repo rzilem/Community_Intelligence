@@ -12,7 +12,7 @@ interface GLAccountBalanceChartProps {
   type?: string;
 }
 
-const GLAccountBalanceChart: React.FC<GLAccountBalanceChartProps> = ({
+export const GLAccountBalanceChart: React.FC<GLAccountBalanceChartProps> = ({
   accounts,
   title = "GL Account Balances",
   description = "Top account balances by category",
