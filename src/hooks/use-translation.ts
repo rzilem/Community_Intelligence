@@ -46,19 +46,22 @@ export const useTranslation = () => {
     }
   }, [preferredLanguage]);
 
+  // Update translateTexts to handle generic types properly
   const translateTexts = useCallback(async <T extends Record<string, string>>(texts: T): Promise<T> => {
     if (preferredLanguage === 'en') return texts;
     
-    const translations = { ...texts };
+    const translations = { ...texts } as T;
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, text]) => {
-        const translatedText = await translateText(text, preferredLanguage);
-        translations[key] = translatedText;
+        if (typeof text === 'string') {
+          const translatedText = await translateText(text, preferredLanguage);
+          (translations as Record<string, string>)[key] = translatedText;
+        }
       });
       
       await Promise.all(translationPromises);
-      return translations as T;
+      return translations;
     } catch (error) {
       console.error('Batch translation error:', error);
       return texts;
