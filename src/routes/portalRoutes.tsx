@@ -11,6 +11,9 @@ import CollectionsPage from '@/pages/portal/board/CollectionsPage';
 import VendorBidsPage from '@/pages/portal/vendor/VendorBidsPage';
 import RequestsPage from '@/pages/portal/homeowner/RequestsPage';
 import BoardFormsPage from '@/pages/portal/board/FormsPage';
+import HomeownerProfilePage from '@/pages/portal/homeowner/ProfilePage';
+import BoardProfilePage from '@/pages/portal/board/ProfilePage';
+import VendorProfilePage from '@/pages/portal/vendor/ProfilePage';
 
 export const portalRoutes = [
   <Route 
@@ -41,6 +44,15 @@ export const portalRoutes = [
     }
   />,
   <Route 
+    key="homeowner-profile"
+    path="/portal/homeowner/profile"
+    element={
+      <RequireAuth menuId="homeowner-portal">
+        <HomeownerProfilePage />
+      </RequireAuth>
+    }
+  />,
+  <Route 
     key="board-portal"
     path="/portal/board"
     element={
@@ -59,6 +71,15 @@ export const portalRoutes = [
     }
   />,
   <Route 
+    key="board-profile"
+    path="/portal/board/profile"
+    element={
+      <RequireAuth menuId="board-portal">
+        <BoardProfilePage />
+      </RequireAuth>
+    }
+  />,
+  <Route 
     key="vendor-portal"
     path="/portal/vendor"
     element={
@@ -73,6 +94,15 @@ export const portalRoutes = [
     element={
       <RequireAuth menuId="vendor-portal">
         <VendorBidsPage />
+      </RequireAuth>
+    }
+  />,
+  <Route 
+    key="vendor-profile"
+    path="/portal/vendor/profile"
+    element={
+      <RequireAuth menuId="vendor-portal">
+        <VendorProfilePage />
       </RequireAuth>
     }
   />,
