@@ -15,11 +15,11 @@ export const useTranslation = () => {
     }
   }, [profile?.preferred_language]);
 
-  const getCachedTranslation = (text: string, language: string): string | null => {
+  const getCachedTranslation = useCallback((text: string, language: string): string | null => {
     return translationCache[language]?.[text] || null;
-  };
+  }, [translationCache]);
 
-  const cacheTranslation = (text: string, language: string, translation: string) => {
+  const cacheTranslation = useCallback((text: string, language: string, translation: string) => {
     setTranslationCache(prevCache => ({
       ...prevCache,
       [language]: {
@@ -27,25 +27,30 @@ export const useTranslation = () => {
         [text]: translation
       }
     }));
-  };
+  }, []);
 
   const translateText = useCallback(async (text: string, targetLanguage?: string) => {
+    if (!text) return '';
+    
     const language = targetLanguage || preferredLanguage;
     
-    if (language === 'en' || !text) return text;
+    if (language === 'en') return text;
     
     const cachedTranslation = getCachedTranslation(text, language);
     if (cachedTranslation) return cachedTranslation;
 
     try {
       const translatedText = await translationService.translateText(text, language);
-      cacheTranslation(text, language, translatedText);
-      return translatedText;
+      if (translatedText) {
+        cacheTranslation(text, language, translatedText);
+        return translatedText;
+      }
+      return text; // Return original text if translation failed
     } catch (error) {
       console.error('Translation error:', error);
       return text; // Return original text on error
     }
-  }, [preferredLanguage, translationCache]);
+  }, [preferredLanguage, getCachedTranslation, cacheTranslation]);
 
   // Update preferredLanguage and force re-translation
   const changeLanguage = useCallback((language: string) => {
@@ -55,9 +60,10 @@ export const useTranslation = () => {
 
   // Handle generic types in translateTexts with proper type safety
   const translateTexts = useCallback(async <T extends Record<string, any>>(texts: T): Promise<T> => {
+    if (!texts || typeof texts !== 'object') return texts;
     if (preferredLanguage === 'en') return texts;
     
-    const result = { ...texts };
+    const result = { ...texts } as T;
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, value]) => {

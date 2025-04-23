@@ -29,14 +29,20 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChange })
     
     try {
       // Show toast to indicate language is changing
-      toast.success(`Switching to ${languages.find(l => l.code === code)?.name || code}...`);
+      const language = languages.find(l => l.code === code)?.name || code;
+      toast.success(`Switching to ${language}...`);
       
       // Update language state for immediate feedback
       setPreferredLanguage(code);
       
       // Update database preference if user is logged in
       if (user?.id) {
-        await translationService.updateUserLanguagePreference(user.id, code);
+        try {
+          await translationService.updateUserLanguagePreference(user.id, code);
+        } catch (dbError) {
+          console.error('Error updating language preference in database:', dbError);
+          // Still continue with the language change even if DB update fails
+        }
       }
       
       // Call the optional callback if provided

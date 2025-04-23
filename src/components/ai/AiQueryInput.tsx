@@ -2,7 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/use-translation';
 
-export const AiQueryInput: React.FC<{ placeholder?: string }> = ({ placeholder: customPlaceholder }) => {
+export const AiQueryInput: React.FC<{ placeholder?: string; compact?: boolean }> = ({ 
+  placeholder: customPlaceholder,
+  compact = false 
+}) => {
   const [query, setQuery] = useState('');
   const [placeholder, setPlaceholder] = useState(customPlaceholder || 'Ask Community Intelligence anything...');
   const { translateText, preferredLanguage, translateVersion } = useTranslation();
@@ -49,11 +52,11 @@ export const AiQueryInput: React.FC<{ placeholder?: string }> = ({ placeholder: 
         value={query}
         onChange={handleQueryChange}
         placeholder={placeholder}
-        className="w-full p-4 pl-5 pr-16 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+        className={`w-full ${compact ? 'p-3' : 'p-4'} pl-5 pr-16 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
       />
       <button
         type="submit"
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white px-3 py-1 rounded-md"
+        className={`absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white px-3 py-1 rounded-md ${compact ? 'text-sm' : ''}`}
       >
         Ask
       </button>
