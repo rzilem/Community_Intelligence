@@ -32,6 +32,18 @@ serve(async (req) => {
       throw new Error("OpenAI API key not configured");
     }
 
+    // For demo/testing when API key may not be configured, return mock translations
+    if (apiKey === "demo" || apiKey === "test") {
+      return new Response(
+        JSON.stringify({
+          translatedText: `[${targetLanguage} translation] ${text}`,
+          sourceLanguage: "auto-detect",
+          targetLanguage
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Call OpenAI API for translation
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -57,8 +69,14 @@ serve(async (req) => {
 
     const data = await response.json();
     
-    if (!data.choices || !data.choices[0]) {
-      throw new Error("Invalid response from OpenAI API");
+    if (!response.ok) {
+      console.error("OpenAI API error:", data);
+      throw new Error(`OpenAI API error: ${data.error?.message || "Unknown error"}`);
+    }
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error("Invalid response structure:", data);
+      throw new Error("Invalid response structure from OpenAI API");
     }
     
     const translatedText = data.choices[0].message.content;

@@ -51,7 +51,7 @@ export interface NavigationTranslations {
 
 export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
   const location = useLocation();
-  const { translateTexts, preferredLanguage } = useTranslation();
+  const { translateTexts, preferredLanguage, translateVersion } = useTranslation();
   
   const defaultTitles: NavigationTranslations = {
     dashboard: 'Dashboard',
@@ -82,7 +82,9 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
       }
       
       try {
-        const translatedTitles = await translateTexts(defaultTitles);
+        console.log(`Updating translations for PortalNavigation to ${preferredLanguage}`);
+        const translatedTitles = await translateTexts<NavigationTranslations>(defaultTitles);
+        console.log('New nav translations:', translatedTitles);
         setTranslations(translatedTitles);
       } catch (error) {
         console.error('Error translating navigation items:', error);
@@ -91,7 +93,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
     };
     
     translateNavItems();
-  }, [preferredLanguage, translateTexts, defaultTitles]);
+  }, [preferredLanguage, translateTexts, defaultTitles, translateVersion]);
 
   // Use the translations for navigation items
   const homeownerNavItems: NavItem[] = [

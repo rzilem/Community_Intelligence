@@ -30,7 +30,7 @@ export interface DashboardTranslations {
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
-  const { translateTexts, preferredLanguage } = useTranslation();
+  const { translateTexts, preferredLanguage, translateVersion } = useTranslation();
   
   const defaultTexts: DashboardTranslations = {
     welcomeBack: 'Welcome back',
@@ -52,25 +52,28 @@ const HomeownerDashboard = () => {
   const [translations, setTranslations] = useState<DashboardTranslations>(defaultTexts);
 
   const updateTranslations = useCallback(async () => {
-    if (preferredLanguage === 'en') {
-      setTranslations(defaultTexts);
-      return;
-    }
-    
     try {
-      const newTranslations = await translateTexts(defaultTexts);
+      if (preferredLanguage === 'en') {
+        setTranslations(defaultTexts);
+        return;
+      }
+      
+      console.log(`Updating translations for HomeownerDashboard to ${preferredLanguage}`);
+      const newTranslations = await translateTexts<DashboardTranslations>(defaultTexts);
+      console.log('New translations:', newTranslations);
       setTranslations(newTranslations);
     } catch (error) {
       console.error('Translation error:', error);
     }
   }, [preferredLanguage, translateTexts, defaultTexts]);
 
+  // Update translations when language or translation version changes
   useEffect(() => {
     updateTranslations();
-  }, [preferredLanguage, updateTranslations]);
+  }, [preferredLanguage, updateTranslations, translateVersion]);
 
   const handleLanguageChange = () => {
-    updateTranslations();
+    // No need to do anything here, the hook handles this
   };
 
   const handleAssociationChange = () => {
