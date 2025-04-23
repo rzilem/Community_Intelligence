@@ -3,7 +3,7 @@ import React from 'react';
 import { useMessageContext } from '@/contexts/message/MessageContext';
 import { MessageTypeSelector } from './compose/message-type/MessageTypeSelector';
 import { MessageSubject } from './compose/content/MessageSubject';
-import { MessageContent } from './compose/content/MessageContent';
+import MessageContent from './compose/content/MessageContent';
 import MessagePreview from './compose/MessagePreview';
 import FormActions from './compose/FormActions';
 import ScheduleSelector from './compose/ScheduleSelector';

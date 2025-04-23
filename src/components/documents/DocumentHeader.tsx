@@ -12,7 +12,7 @@ interface DocumentHeaderProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onUploadClick: () => void;
-  isUploadDisabled: boolean;
+  isUploadDisabled?: boolean;
 }
 
 const DocumentHeader: React.FC<DocumentHeaderProps> = ({
@@ -21,10 +21,10 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   searchTerm,
   onSearchChange,
   onUploadClick,
-  isUploadDisabled
+  isUploadDisabled = false
 }) => {
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4 w-full">
       {/* Tabs */}
       <Tabs defaultValue={activeTab} onValueChange={(value) => onTabChange(value as DocumentTab)}>
         <TabsList>
@@ -34,7 +34,7 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
       </Tabs>
 
       {/* Search and upload */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
         <Input
           placeholder="Search documents..."
           value={searchTerm}

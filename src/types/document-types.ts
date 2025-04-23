@@ -14,6 +14,8 @@ export type Document = {
   is_archived?: boolean;
   uploaded_by?: string;
   uploaded_at: string;
+  uploaded_date?: string;
+  created_at?: string;
   last_accessed?: string;
   current_version?: number;
 };

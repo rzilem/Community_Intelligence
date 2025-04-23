@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { File, Filter, Upload } from 'lucide-react';
+import { File, Filter } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import DocumentHeader from '@/components/documents/DocumentHeader';
@@ -9,19 +9,35 @@ import DocumentFilters from '@/components/documents/DocumentFilters';
 import DocumentContent from '@/components/documents/DocumentContent';
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog';
 import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
-import DocumentCategories from '@/components/documents/DocumentCategories';
 import { supabase } from '@/integrations/supabase/client';
-import { Document } from '@/types/document-types';
+import { Document, DocumentCategory } from '@/types/document-types';
 import { useQuery } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/use-responsive';
+import { useDocumentCategories } from '@/hooks/documents/useDocumentCategories';
+import { useDocumentColumns } from '@/hooks/documents/useDocumentColumns';
 
 const Documents = () => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibleColumns, setVisibleColumns] = useState(['name', 'category', 'uploaded_at', 'file_type', 'file_size']);
+  const [activeTab, setActiveTab] = useState<'documents' | 'templates'>('documents');
   const { isMobile } = useResponsive();
+  
+  // Use hook for document columns
+  const { 
+    columns, 
+    visibleColumnIds, 
+    updateVisibleColumns 
+  } = useDocumentColumns();
+  
+  // Use hook for document categories
+  const { 
+    categories, 
+    isLoading: categoriesLoading 
+  } = useDocumentCategories({ 
+    associationId: selectedAssociationId || undefined 
+  });
   
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents', selectedAssociationId, selectedCategory],
@@ -36,9 +52,14 @@ const Documents = () => {
         query = query.eq('category', selectedCategory);
       }
       
-      const { data, error } = await query.order('uploaded_at', { ascending: false });
+      const { data, error } = await query.order('uploaded_date', { ascending: false });
       if (error) throw error;
-      return data as Document[];
+      
+      // Map the database fields to match our Document type
+      return (data || []).map(doc => ({
+        ...doc,
+        uploaded_at: doc.uploaded_date || doc.created_at // Ensure uploaded_at is populated
+      })) as Document[];
     }
   });
 
@@ -96,34 +117,22 @@ const Documents = () => {
       description="Manage and organize your association documents."
     >
       <div className="space-y-6">
-        <DocumentHeader 
-          onAssociationChange={(id) => setSelectedAssociationId(id)}
-          onSearch={(term) => setSearchTerm(term)}
-          onUploadClick={() => setIsUploadOpen(true)}
-        />
-        
-        <Tabs defaultValue="all">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'documents' | 'templates')}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <TabsList>
-              <TabsTrigger value="all">All Documents</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-              <TabsTrigger value="shared">Shared</TabsTrigger>
-            </TabsList>
+            <DocumentHeader 
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              onUploadClick={() => setIsUploadOpen(true)}
+              isUploadDisabled={!selectedAssociationId}
+            />
             
             <div className="flex items-center space-x-2">
               <DocumentColumnSelector
-                columns={[
-                  { id: 'name', label: 'Name' },
-                  { id: 'category', label: 'Category' },
-                  { id: 'description', label: 'Description' },
-                  { id: 'uploaded_at', label: 'Date Uploaded' },
-                  { id: 'file_type', label: 'File Type' },
-                  { id: 'file_size', label: 'File Size' },
-                  { id: 'uploaded_by', label: 'Uploaded By' },
-                  { id: 'last_accessed', label: 'Last Accessed' },
-                ]}
-                visibleColumns={visibleColumns}
-                onColumnsChange={setVisibleColumns}
+                columns={columns}
+                selectedColumns={visibleColumnIds}
+                onChange={updateVisibleColumns}
               />
               
               <Button variant="outline" size="sm">
@@ -133,20 +142,23 @@ const Documents = () => {
           </div>
           
           <div className="mt-6">
-            <TabsContent value="all" className="mt-0 space-y-6">
+            <TabsContent value="documents" className="mt-0 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1">
-                  <DocumentCategories
-                    associationId={selectedAssociationId}
+                  <DocumentFilters
+                    categories={categories}
                     selectedCategory={selectedCategory}
-                    onCategorySelect={setSelectedCategory}
+                    onSelectCategory={setSelectedCategory}
+                    onCreateCategory={() => console.log('Create category')}
+                    categoriesLoading={categoriesLoading}
+                    onAssociationChange={(id) => setSelectedAssociationId(id)}
                   />
                 </div>
                 <div className="md:col-span-3">
                   <DocumentContent
                     isLoading={isLoading}
                     documents={filteredDocuments}
-                    visibleColumns={visibleColumns}
+                    visibleColumns={visibleColumnIds}
                     onViewDocument={handleViewDocument}
                     onDownloadDocument={handleDownloadDocument}
                     onDeleteDocument={handleDeleteDocument}
@@ -162,21 +174,19 @@ const Documents = () => {
                 <p className="text-muted-foreground">Templates functionality coming soon.</p>
               </div>
             </TabsContent>
-            
-            <TabsContent value="shared">
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-medium">Shared Documents</h3>
-                <p className="text-muted-foreground">Shared documents functionality coming soon.</p>
-              </div>
-            </TabsContent>
           </div>
         </Tabs>
       </div>
       
       <DocumentUploadDialog 
-        open={isUploadOpen} 
-        onOpenChange={setIsUploadOpen}
-        associationId={selectedAssociationId || ''} 
+        isOpen={isUploadOpen} 
+        onClose={() => setIsUploadOpen(false)}
+        onUpload={(file, category, description) => {
+          console.log('Upload file:', file, category, description);
+          setIsUploadOpen(false);
+        }}
+        categories={categories}
+        isUploading={false}
       />
     </PageTemplate>
   );
