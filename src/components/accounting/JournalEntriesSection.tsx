@@ -36,10 +36,9 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | undefined>();
   
   const filteredEntries = journalEntries.filter(entry => {
-    // Check if entryNumber/reference exist and handle both cases
-    const entryRef = entry.entryNumber || entry.reference || '';
+    // Match based on entryNumber and other fields
     const matchesSearch = 
-      entryRef.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.entryNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (entry.createdBy && entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase()));
     
@@ -50,10 +49,6 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
 
   const handleCreateEntry = (data: any) => {
     console.log('Creating journal entry:', data);
-    
-    // In a real implementation, this would update the journal entries in the database
-    // and then refresh the data. For now, we'll just console.log the data.
-    
     setIsDialogOpen(false);
   };
 
@@ -71,10 +66,6 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
     if (!selectedEntry) return;
     
     console.log('Updating journal entry:', data);
-    
-    // In a real implementation, this would update the journal entry in the database
-    // and then refresh the data. For now, we'll just console.log the data.
-    
     setSelectedEntry(undefined);
     setIsDialogOpen(false);
   };
@@ -101,7 +92,7 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="posted">Posted</SelectItem>
-                <SelectItem value="reconciled">Reconciled</SelectItem>
+                <SelectItem value="voided">Voided</SelectItem>
               </SelectContent>
             </Select>
 

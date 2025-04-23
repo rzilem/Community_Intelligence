@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Edit2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,8 +19,8 @@ const JournalEntryTable: React.FC<JournalEntryTableProps> = ({ entries, onEdit, 
         return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
       case 'posted':
         return 'bg-green-100 text-green-800 hover:bg-green-200';
-      case 'reconciled':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'voided':
+        return 'bg-red-100 text-red-800 hover:bg-red-200';
       default:
         return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
@@ -45,8 +44,8 @@ const JournalEntryTable: React.FC<JournalEntryTableProps> = ({ entries, onEdit, 
           {entries.length > 0 ? (
             entries.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell>{new Date(entry.date).toLocaleDateString()}</TableCell>
-                <TableCell>{entry.reference || entry.entryNumber}</TableCell>
+                <TableCell>{new Date(entry.entryDate).toLocaleDateString()}</TableCell>
+                <TableCell>{entry.entryNumber}</TableCell>
                 <TableCell className="max-w-[300px] truncate">{entry.description}</TableCell>
                 <TableCell className="text-right">
                   ${entry.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

@@ -63,7 +63,7 @@ export interface JournalEntry {
   date: string; // For compatibility
   reference: string; // For compatibility
   description: string;
-  status: 'draft' | 'posted' | 'voided' | 'reconciled'; // Adding reconciled status
+  status: 'draft' | 'posted' | 'voided'; // Modified to match allowed types
   postDate?: string;
   amount: number;
   debitAccountId?: string;
@@ -107,7 +107,7 @@ export interface BudgetSummary {
   netIncome: number;
   changeFromLastYear: number;
   changePercentage: number;
-  netIncomeChange: number; // Adding missing property
+  netIncomeChange: number; // Added missing property
   insights: string[];
 }
 

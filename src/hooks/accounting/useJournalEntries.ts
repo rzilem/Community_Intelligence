@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { JournalEntry } from '@/types/accounting-types';
+import { mockJournalEntries } from './mock/mockJournalEntries';
 
 export interface JournalEntryDetail {
   id?: string;
@@ -14,115 +14,71 @@ export interface JournalEntryDetail {
   credit: number;
 }
 
+// Mock implementation of getJournalEntryDetails
+const getMockJournalEntryDetails = (entryId: string): JournalEntryDetail[] => {
+  // Create some mock details
+  return [
+    {
+      id: `detail-1-${entryId}`,
+      journal_entry_id: entryId,
+      gl_account_id: '1',
+      description: 'Cash payment',
+      debit: 1000,
+      credit: 0
+    },
+    {
+      id: `detail-2-${entryId}`,
+      journal_entry_id: entryId,
+      gl_account_id: '6',
+      description: 'Expense payment',
+      debit: 0,
+      credit: 1000
+    }
+  ];
+};
+
 export const useJournalEntries = (associationId?: string) => {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
 
-  // Fetch journal entries
+  // Use mock data instead of fetching from Supabase
   const { data: entries, isLoading, error } = useQuery({
     queryKey: ['journalEntries', associationId, filter],
     queryFn: async () => {
-      let query = supabase
-        .from('journal_entries')
-        .select(`
-          id, 
-          entry_number, 
-          date,
-          reference, 
-          description,
-          status,
-          created_at,
-          association_id,
-          created_by
-        `)
-        .order('date', { ascending: false });
-        
+      // Filter the mock entries based on the associationId and filter criteria
+      let filteredEntries = [...mockJournalEntries];
+      
       if (associationId) {
-        query = query.eq('association_id', associationId);
+        filteredEntries = filteredEntries.filter(entry => entry.associationId === associationId);
       }
       
       if (filter !== 'all') {
-        query = query.eq('status', filter);
+        filteredEntries = filteredEntries.filter(entry => entry.status === filter);
       }
       
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      
-      // Map to match the JournalEntry interface
-      return (data || []).map(entry => ({
-        id: entry.id,
-        entryNumber: entry.entry_number,
-        entryDate: entry.date,
-        date: entry.date, // For compatibility
-        reference: entry.reference || entry.entry_number, // For compatibility
-        description: entry.description,
-        status: entry.status as JournalEntry['status'],
-        associationId: entry.association_id,
-        createdBy: entry.created_by,
-        createdAt: entry.created_at,
-        updatedAt: entry.created_at,  // Placeholder if updated_at is not available
-        amount: 0, // We'll populate this with details later
-      }));
+      return filteredEntries;
     },
-    enabled: !!associationId
+    enabled: true // Changed from !!associationId to always enable the query
   });
 
-  // Fetch journal entry details
+  // Fetch journal entry details (mock implementation)
   const getJournalEntryWithDetails = async (entryId: string) => {
     try {
-      // Fetch journal entry
-      const { data: entry, error: entryError } = await supabase
-        .from('journal_entries')
-        .select(`
-          id, 
-          entry_number, 
-          date,
-          reference, 
-          description,
-          status,
-          created_at,
-          association_id,
-          created_by
-        `)
-        .eq('id', entryId)
-        .single();
+      // Find the entry in our mock data
+      const entry = mockJournalEntries.find(e => e.id === entryId);
       
-      if (entryError) throw entryError;
+      if (!entry) {
+        throw new Error('Journal entry not found');
+      }
       
-      // Fetch journal entry details
-      const { data: details, error: detailsError } = await supabase
-        .from('journal_entry_details')
-        .select(`
-          id,
-          journal_entry_id,
-          gl_account_id,
-          description,
-          debit,
-          credit
-        `)
-        .eq('journal_entry_id', entryId);
+      // Get mock details
+      const details = getMockJournalEntryDetails(entryId);
       
-      if (detailsError) throw detailsError;
-      
-      // Map to match our interface
-      const mappedEntry: JournalEntry = {
-        id: entry.id,
-        entryNumber: entry.entry_number,
-        entryDate: entry.date,
-        date: entry.date, // For compatibility
-        reference: entry.reference || entry.entry_number, // For compatibility
-        description: entry.description,
-        status: entry.status as JournalEntry['status'],
-        associationId: entry.association_id,
-        createdBy: entry.created_by,
-        createdAt: entry.created_at,
-        updatedAt: entry.created_at, // Placeholder
-        amount: calculateTotalAmount(details || []),
-        details: details || []
+      // Return the combined entry with details
+      return {
+        ...entry,
+        details
       };
-      
-      return mappedEntry;
     } catch (error) {
       console.error('Error fetching journal entry with details:', error);
       throw error;
@@ -134,44 +90,15 @@ export const useJournalEntries = (associationId?: string) => {
     return details.reduce((sum, detail) => sum + (Number(detail.debit) || 0), 0);
   };
 
-  // Create journal entry
+  // Create journal entry (mock implementation)
   const createJournalEntry = useMutation({
     mutationFn: async (journalEntry: JournalEntry) => {
       try {
-        // Insert journal entry
-        const { data: entry, error: entryError } = await supabase
-          .from('journal_entries')
-          .insert({
-            entry_number: journalEntry.entryNumber,
-            date: journalEntry.entryDate,
-            reference: journalEntry.reference,
-            description: journalEntry.description,
-            status: journalEntry.status,
-            association_id: journalEntry.associationId
-          })
-          .select('id')
-          .single();
+        // In a real implementation, this would insert data into Supabase
+        console.log('Creating journal entry:', journalEntry);
         
-        if (entryError) throw entryError;
-        
-        // Insert journal entry details
-        if (journalEntry.details && journalEntry.details.length > 0) {
-          const details = journalEntry.details.map(detail => ({
-            journal_entry_id: entry.id,
-            gl_account_id: detail.gl_account_id,
-            description: detail.description,
-            debit: detail.debit,
-            credit: detail.credit
-          }));
-          
-          const { error: detailsError } = await supabase
-            .from('journal_entry_details')
-            .insert(details);
-          
-          if (detailsError) throw detailsError;
-        }
-        
-        return entry;
+        // Mock successful creation by returning a new ID
+        return { id: `mock-${Date.now()}` };
       } catch (error) {
         console.error('Error creating journal entry:', error);
         throw error;
@@ -186,16 +113,19 @@ export const useJournalEntries = (associationId?: string) => {
     }
   });
 
-  // Update journal entry status
+  // Update journal entry status (mock implementation)
   const updateJournalEntryStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase
-        .from('journal_entries')
-        .update({ status })
-        .eq('id', id);
-      
-      if (error) throw error;
-      return { id, status };
+      try {
+        // In a real implementation, this would update data in Supabase
+        console.log(`Updating journal entry ${id} status to ${status}`);
+        
+        // Mock successful update
+        return { id, status };
+      } catch (error) {
+        console.error('Error updating journal entry status:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       toast.success(`Journal entry ${data.status}`);
