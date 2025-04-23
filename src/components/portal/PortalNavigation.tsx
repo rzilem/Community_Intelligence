@@ -28,7 +28,7 @@ interface PortalNavigationProps {
   portalType: 'homeowner' | 'board' | 'vendor';
 }
 
-interface NavigationTranslations {
+export interface NavigationTranslations extends Record<string, string> {
   dashboard: string;
   payments: string;
   requests: string;
@@ -49,9 +49,8 @@ interface NavigationTranslations {
 
 export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
   const location = useLocation();
-  const { translateText, translateTexts, preferredLanguage } = useTranslation();
+  const { translateTexts, preferredLanguage } = useTranslation();
   
-  // Default navigation item titles
   const defaultTitles: NavigationTranslations = {
     dashboard: 'Dashboard',
     payments: 'Payments',
@@ -73,7 +72,6 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
   
   const [translations, setTranslations] = useState<NavigationTranslations>(defaultTitles);
 
-  // Translate navigation items when language changes
   useEffect(() => {
     const translateNavItems = async () => {
       if (preferredLanguage === 'en') {
@@ -82,19 +80,17 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
       }
       
       try {
-        // Use the updated translateTexts function that preserves the original type
-        const translatedTitles = await translateTexts(defaultTitles);
+        const translatedTitles = await translateTexts<NavigationTranslations>(defaultTitles);
         setTranslations(translatedTitles);
       } catch (error) {
         console.error('Error translating navigation items:', error);
-        setTranslations(defaultTitles); // Fallback to default English titles
+        setTranslations(defaultTitles);
       }
     };
     
     translateNavItems();
   }, [preferredLanguage, translateTexts]);
 
-  // Define navigation items for each portal type
   const homeownerNavItems: NavItem[] = [
     { title: translations.dashboard, path: '/portal/homeowner', icon: <LayoutDashboard className="h-5 w-5" /> },
     { title: translations.payments, path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" /> },

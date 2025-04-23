@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { translationService } from '@/services/translation-service';
 import { useAuth } from '@/contexts/auth';
@@ -13,7 +14,6 @@ export const useTranslation = () => {
     }
   }, [profile?.preferred_language]);
 
-  // Caching mechanism to improve performance and reduce API calls
   const getCachedTranslation = (text: string, language: string): string | null => {
     return translationCache[language]?.[text] || null;
   };
@@ -33,35 +33,32 @@ export const useTranslation = () => {
     
     if (language === 'en') return text;
     
-    // Check cache first
     const cachedTranslation = getCachedTranslation(text, language);
     if (cachedTranslation) return cachedTranslation;
 
     try {
       const translatedText = await translationService.translateText(text, language);
-      // Cache the result for future use
       cacheTranslation(text, language, translatedText);
       return translatedText;
     } catch (error) {
       console.error('Translation error:', error);
-      return text; // Fallback to original text
+      return text;
     }
-  }, [preferredLanguage, translationCache]);
+  }, [preferredLanguage]);
 
   const translateTexts = useCallback(async <T extends Record<string, string>>(texts: T): Promise<T> => {
-    const language = preferredLanguage;
-    if (language === 'en') return texts;
+    if (preferredLanguage === 'en') return texts;
     
     const translations = { ...texts };
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, text]) => {
-        const translatedText = await translateText(text, language);
-        translations[key as keyof T] = translatedText as T[keyof T];
+        const translatedText = await translateText(text, preferredLanguage);
+        translations[key] = translatedText;
       });
       
       await Promise.all(translationPromises);
-      return translations;
+      return translations as T;
     } catch (error) {
       console.error('Batch translation error:', error);
       return texts;

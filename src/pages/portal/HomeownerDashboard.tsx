@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
@@ -9,7 +10,7 @@ import { QuickLinksSection } from '@/components/portal/dashboard/QuickLinksSecti
 import { CommunityUpdatesCard } from '@/components/portal/dashboard/CommunityUpdatesCard';
 import { AIChatCard } from '@/components/portal/dashboard/AIChatCard';
 
-interface DashboardTranslations {
+export interface DashboardTranslations extends Record<string, string> {
   welcomeBack: string;
   homeownerPortal: string;
   makePayment: string;
