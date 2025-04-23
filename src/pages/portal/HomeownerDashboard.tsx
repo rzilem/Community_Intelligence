@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, FileText, Calendar, File } from 'lucide-react';
@@ -15,8 +15,10 @@ import { toast } from 'sonner';
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const { translateText, preferredLanguage } = useTranslation();
-  const [translations, setTranslations] = useState({
+  const { translateText, translateTexts, preferredLanguage } = useTranslation();
+  
+  // Static text that needs translation
+  const defaultTexts = {
     welcomeBack: 'Welcome back',
     homeownerPortal: 'Homeowner Portal',
     makePayment: 'Make a Payment',
@@ -31,22 +33,35 @@ const HomeownerDashboard = () => {
     poolClosingDesc: 'The community pool will close for the season on September 30',
     askCommunityIntel: 'Ask Community Intelligence',
     getInstantAnswers: 'Get instant answers about your community'
-  });
+  };
+  
+  const [translations, setTranslations] = useState(defaultTexts);
 
   // Translate all UI text when language changes
-  useEffect(() => {
-    const translateUI = async () => {
-      const newTranslations = { ...translations };
-      
-      for (const key of Object.keys(translations)) {
-        newTranslations[key] = await translateText(translations[key]);
-      }
-      
-      setTranslations(newTranslations);
-    };
+  const updateTranslations = useCallback(async () => {
+    if (preferredLanguage === 'en') {
+      setTranslations(defaultTexts);
+      return;
+    }
     
-    translateUI();
-  }, [preferredLanguage]);
+    try {
+      const newTranslations = await translateTexts(defaultTexts);
+      setTranslations(newTranslations);
+    } catch (error) {
+      console.error('Translation error:', error);
+    }
+  }, [preferredLanguage, translateTexts]);
+
+  // Update translations whenever language changes
+  useEffect(() => {
+    updateTranslations();
+  }, [preferredLanguage, updateTranslations]);
+
+  // Handler for changing language from selector
+  const handleLanguageChange = (code: string) => {
+    // Force update translations immediately
+    updateTranslations();
+  };
 
   // Handler for changing association
   const handleAssociationChange = (associationId: string) => {
@@ -93,7 +108,7 @@ const HomeownerDashboard = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <LanguageSelector />
+            <LanguageSelector onLanguageChange={handleLanguageChange} />
             <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
           </div>
         </div>

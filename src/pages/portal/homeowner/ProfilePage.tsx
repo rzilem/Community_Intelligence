@@ -4,16 +4,19 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth';
-import { UserCircle, Settings, Lock, Bell } from 'lucide-react';
+import { UserCircle, Settings, Lock, Globe } from 'lucide-react';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import UserProfileForm from '@/components/users/UserProfileForm';
 import UserSecurityForm from '@/components/users/UserSecurityForm';
 import UserPreferencesForm from '@/components/users/UserPreferencesForm';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/use-translation';
+import LanguageSettingsCard from '@/components/settings/preferences/LanguageSettingsCard';
 
 const HomeownerProfilePage: React.FC = () => {
   const { user, profile, refreshProfile } = useAuth();
+  const { preferredLanguage, setPreferredLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState("info");
   const [imageVersion, setImageVersion] = useState(Date.now());
 
@@ -42,6 +45,13 @@ const HomeownerProfilePage: React.FC = () => {
     await refreshProfile();
   };
 
+  const handleLanguageChange = (code: string) => {
+    if (user?.id) {
+      setPreferredLanguage(code);
+      toast.success(`Language preference updated to ${code}`);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="container p-6 space-y-6">
@@ -66,6 +76,10 @@ const HomeownerProfilePage: React.FC = () => {
                 <TabsTrigger value="preferences" className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
                   Preferences
+                </TabsTrigger>
+                <TabsTrigger value="language" className="flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  Language
                 </TabsTrigger>
               </TabsList>
               
@@ -130,6 +144,13 @@ const HomeownerProfilePage: React.FC = () => {
                     <UserPreferencesForm userId={user.id} />
                   </CardContent>
                 </Card>
+              </TabsContent>
+              
+              <TabsContent value="language">
+                <LanguageSettingsCard 
+                  value={preferredLanguage}
+                  onChange={handleLanguageChange}
+                />
               </TabsContent>
             </Tabs>
           </div>

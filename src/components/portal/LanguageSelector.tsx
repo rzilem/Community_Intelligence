@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +15,11 @@ import { useAuth } from '@/contexts/auth';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
-const LanguageSelector: React.FC = () => {
+interface LanguageSelectorProps {
+  onLanguageChange?: (code: string) => void;
+}
+
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({ onLanguageChange }) => {
   const { user } = useAuth();
   const { preferredLanguage, setPreferredLanguage } = useTranslation();
   const languages = translationService.getSupportedLanguages();
@@ -30,6 +34,12 @@ const LanguageSelector: React.FC = () => {
       await translationService.updateUserLanguagePreference(user.id, code);
       // Update language immediately without page reload
       setPreferredLanguage(code);
+      
+      // Call the optional callback if provided
+      if (onLanguageChange) {
+        onLanguageChange(code);
+      }
+      
       toast.success(`Language changed to ${languages.find(l => l.code === code)?.name}`);
     } catch (error) {
       console.error('Error updating language:', error);
