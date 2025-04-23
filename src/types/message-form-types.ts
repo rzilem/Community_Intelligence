@@ -1,3 +1,4 @@
+import React from 'react';
 import { MessageCategory } from './communication-types';
 
 export interface MessageFormFieldProps {
@@ -6,13 +7,12 @@ export interface MessageFormFieldProps {
   error?: string;
 }
 
-export interface MessageTypeButtonProps {
+export interface MessageTypeButtonProps extends React.HTMLAttributes<HTMLButtonElement> {
   type: 'email' | 'sms';
   isSelected: boolean;
   onSelect: () => void;
-  icon: React.ComponentType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   label: string;
-  className?: string;  // Added optional className prop
 }
 
 export interface MessagePreviewProps {
