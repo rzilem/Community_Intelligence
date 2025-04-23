@@ -29,6 +29,7 @@ export const useTranslation = () => {
 
   return {
     preferredLanguage,
+    setPreferredLanguage,
     translateText
   };
 };

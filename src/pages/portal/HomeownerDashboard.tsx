@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, FileText, Calendar, File } from 'lucide-react';
@@ -16,29 +16,70 @@ const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { translateText, preferredLanguage } = useTranslation();
+  const [translations, setTranslations] = useState({
+    welcomeBack: 'Welcome back',
+    homeownerPortal: 'Homeowner Portal',
+    makePayment: 'Make a Payment',
+    submitRequest: 'Submit a Request',
+    calendar: 'Calendar',
+    viewDocuments: 'View Documents',
+    communityUpdates: 'Community Updates',
+    latestAnnouncements: 'Latest announcements and news',
+    annualMeeting: 'Annual Meeting Scheduled',
+    annualMeetingDesc: 'October 15, 2023 at 7:00 PM in the Community Center',
+    poolClosing: 'Pool Closing for Season',
+    poolClosingDesc: 'The community pool will close for the season on September 30',
+    askCommunityIntel: 'Ask Community Intelligence',
+    getInstantAnswers: 'Get instant answers about your community'
+  });
 
-  // Handler for changing association and reloading (follows PortalPageLayout usage)
+  // Translate all UI text when language changes
+  useEffect(() => {
+    const translateUI = async () => {
+      const newTranslations = { ...translations };
+      
+      for (const key of Object.keys(translations)) {
+        newTranslations[key] = await translateText(translations[key]);
+      }
+      
+      setTranslations(newTranslations);
+    };
+    
+    translateUI();
+  }, [preferredLanguage]);
+
+  // Handler for changing association
   const handleAssociationChange = (associationId: string) => {
     window.location.reload();
   };
 
   const quickLinks = [
     { 
-      title: 'Make a Payment', 
+      title: translations.makePayment, 
       path: '/portal/homeowner/payments', 
       icon: <CreditCard className="h-5 w-5" />, 
       color: 'bg-blue-100',
-      onClickToast: () => toast.info('Payment Portal', { description: 'Redirecting to payment options' })
+      onClickToast: () => toast.info(translations.makePayment, { description: 'Redirecting to payment options' })
     },
     { 
-      title: 'Submit a Request', 
+      title: translations.submitRequest, 
       path: '/portal/homeowner/requests', 
       icon: <FileText className="h-5 w-5" />, 
       color: 'bg-green-100',
-      onClickToast: () => toast.info('Request Portal', { description: 'Preparing request submission form' })
+      onClickToast: () => toast.info(translations.submitRequest, { description: 'Preparing request submission form' })
     },
-    { title: 'Calendar', path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" />, color: 'bg-purple-100' },
-    { title: 'View Documents', path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" />, color: 'bg-amber-100' },
+    { 
+      title: translations.calendar, 
+      path: '/portal/homeowner/calendar', 
+      icon: <Calendar className="h-5 w-5" />, 
+      color: 'bg-purple-100' 
+    },
+    { 
+      title: translations.viewDocuments, 
+      path: '/portal/homeowner/documents', 
+      icon: <File className="h-5 w-5" />, 
+      color: 'bg-amber-100' 
+    },
   ];
 
   return (
@@ -46,9 +87,9 @@ const HomeownerDashboard = () => {
       <div className="container p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Homeowner Portal</h1>
+            <h1 className="text-3xl font-bold">{translations.homeownerPortal}</h1>
             <p className="text-muted-foreground">
-              Welcome back, {profile?.name || user?.email || 'Homeowner'}
+              {translations.welcomeBack}, {profile?.name || user?.email || 'Homeowner'}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -67,10 +108,9 @@ const HomeownerDashboard = () => {
               {quickLinks.map((link) => (
                 <Card 
                   key={link.path} 
-                  className="hover:shadow-md transition-shadow"
+                  className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => {
                     link.onClickToast && link.onClickToast();
-                    // Standard navigation
                     navigate(link.path);
                   }}
                 >
@@ -86,18 +126,18 @@ const HomeownerDashboard = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Community Updates</CardTitle>
-                <CardDescription>Latest announcements and news</CardDescription>
+                <CardTitle>{translations.communityUpdates}</CardTitle>
+                <CardDescription>{translations.latestAnnouncements}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="border-b pb-2">
-                    <p className="font-medium">Annual Meeting Scheduled</p>
-                    <p className="text-sm text-muted-foreground">October 15, 2023 at 7:00 PM in the Community Center</p>
+                    <p className="font-medium">{translations.annualMeeting}</p>
+                    <p className="text-sm text-muted-foreground">{translations.annualMeetingDesc}</p>
                   </div>
                   <div className="border-b pb-2">
-                    <p className="font-medium">Pool Closing for Season</p>
-                    <p className="text-sm text-muted-foreground">The community pool will close for the season on September 30</p>
+                    <p className="font-medium">{translations.poolClosing}</p>
+                    <p className="text-sm text-muted-foreground">{translations.poolClosingDesc}</p>
                   </div>
                 </div>
               </CardContent>
@@ -105,8 +145,8 @@ const HomeownerDashboard = () => {
             
             <Card>
               <CardHeader>
-                <CardTitle>Ask Community Intelligence</CardTitle>
-                <CardDescription>Get instant answers about your community</CardDescription>
+                <CardTitle>{translations.askCommunityIntel}</CardTitle>
+                <CardDescription>{translations.getInstantAnswers}</CardDescription>
               </CardHeader>
               <CardContent>
                 <AiQueryInput />

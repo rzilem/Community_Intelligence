@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 
 const LanguageSelector: React.FC = () => {
   const { user } = useAuth();
-  const { preferredLanguage } = useTranslation();
+  const { preferredLanguage, setPreferredLanguage } = useTranslation();
   const languages = translationService.getSupportedLanguages();
   
   const handleLanguageChange = async (code: string) => {
@@ -28,9 +28,9 @@ const LanguageSelector: React.FC = () => {
     
     try {
       await translationService.updateUserLanguagePreference(user.id, code);
+      // Update language immediately without page reload
+      setPreferredLanguage(code);
       toast.success(`Language changed to ${languages.find(l => l.code === code)?.name}`);
-      // Reload the page to apply language changes
-      window.location.reload();
     } catch (error) {
       console.error('Error updating language:', error);
       toast.error('Failed to update language preference');
