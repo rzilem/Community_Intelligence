@@ -38,7 +38,7 @@ interface EventFormProps {
     location?: string;
   }>>;
   amenityOptions: Amenity[];
-  handleCreateEvent: () => boolean;
+  handleCreateEvent: () => Promise<boolean>;
   isCreating: boolean;
   hasAssociation: boolean;
 }
