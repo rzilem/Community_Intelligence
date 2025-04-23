@@ -10,6 +10,7 @@ import ScheduleSelector from './compose/ScheduleSelector';
 import CategorySelector from './compose/CategorySelector';
 import MessageRecipients from './compose/MessageRecipients';
 import { useMessageService } from '@/hooks/messaging/useMessageService';
+import { MESSAGE_CATEGORIES } from '@/hooks/messaging/useMessageCategory';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -101,6 +102,7 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
           
           <CategorySelector
             category={category}
+            categories={MESSAGE_CATEGORIES}
             onCategoryChange={setCategory}
           />
           
