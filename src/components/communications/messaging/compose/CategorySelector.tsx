@@ -3,10 +3,11 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCategory } from '@/types/communication-types';
+import { CategoryOption } from '@/hooks/messaging/useMessageCategory';
 
 interface CategorySelectorProps {
   category: MessageCategory;
-  categories: { value: string; label: string }[];
+  categories: CategoryOption[];
   onCategoryChange: (value: MessageCategory) => void;
 }
 

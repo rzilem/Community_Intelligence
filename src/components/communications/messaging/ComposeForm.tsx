@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useComposeForm } from './compose/useComposeForm';
+import { useMessageCompose } from '@/hooks/messaging/useMessageCompose';
 import MessageHeader from './compose/MessageHeader';
 import MessageRecipients from './compose/MessageRecipients';
 import MessageContent from './compose/MessageContent';
@@ -20,41 +20,27 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
 }) => {
   const {
     state,
+    actions,
     previewContent,
     previewSubject,
-    setMessageType,
-    setSubject,
-    setMessageContent,
-    setSelectedGroups,
-    setScheduledDate,
-    setCategory,
     categories,
-    handleAssociationChange,
-    handleSendMessage,
-    handleReset,
-    togglePreview,
-    toggleSchedule
-  } = useComposeForm({ onMessageSent });
-
-  const canSend = Boolean(
-    state.subject && 
-    state.messageContent && 
-    state.selectedGroups.length > 0 && 
-    (!state.scheduleMessage || state.scheduledDate)
-  );
+    canSend
+  } = useMessageCompose({
+    onMessageSent
+  });
 
   return (
     <div className="bg-white rounded-lg border p-6 space-y-6">
       <MessageHeader 
         messageType={state.messageType} 
-        onTypeChange={setMessageType} 
+        onTypeChange={actions.setMessageType} 
       />
       
       <MessageRecipients 
         selectedAssociationId={state.selectedAssociationId}
         selectedGroups={state.selectedGroups}
-        onAssociationChange={handleAssociationChange}
-        onSelectionChange={setSelectedGroups}
+        onAssociationChange={actions.handleAssociationChange}
+        onSelectionChange={actions.setSelectedGroups}
       />
       
       {state.previewMode ? (
@@ -67,31 +53,31 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
           <MessageContent 
             subject={state.subject}
             content={state.messageContent}
-            onSubjectChange={setSubject}
-            onContentChange={setMessageContent}
+            onSubjectChange={actions.setSubject}
+            onContentChange={actions.setMessageContent}
             onUseTemplate={onUseTemplate}
           />
           
           <CategorySelector
             category={state.category}
             categories={categories}
-            onCategoryChange={setCategory}
+            onCategoryChange={actions.setCategory}
           />
           
           <ScheduleSelector
             scheduleMessage={state.scheduleMessage}
             scheduledDate={state.scheduledDate}
-            onToggleSchedule={toggleSchedule}
-            onScheduledDateChange={setScheduledDate}
+            onToggleSchedule={actions.toggleSchedule}
+            onScheduledDateChange={actions.setScheduledDate}
           />
         </>
       )}
       
       <FormActions 
         isPreviewMode={state.previewMode}
-        togglePreview={togglePreview}
-        handleReset={handleReset}
-        handleSendMessage={handleSendMessage}
+        togglePreview={actions.togglePreview}
+        handleReset={actions.handleReset}
+        handleSendMessage={actions.handleSendMessage}
         canSend={canSend}
         isLoading={state.isLoading}
         isScheduled={state.scheduleMessage}
