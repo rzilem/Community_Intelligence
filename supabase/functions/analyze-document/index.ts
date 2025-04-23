@@ -23,7 +23,7 @@ serve(async (req) => {
     }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { documentUrl, documentName, documentType } = await req.json();
+    const { documentUrl, documentName, documentType, associationId } = await req.json();
     
     if (!documentUrl) {
       throw new Error('Document URL is required');
@@ -110,7 +110,8 @@ serve(async (req) => {
         document_url: documentUrl,
         document_name: documentName,
         document_type: documentType,
-        analysis_results: analysis
+        analysis_results: analysis,
+        association_id: associationId
       })
       .select()
       .single();
@@ -123,7 +124,7 @@ serve(async (req) => {
     for (const action of analysis.suggestedActions || []) {
       if (action.automated) {
         try {
-          await processAutomatedAction(supabase, action, analysis, documentName);
+          await processAutomatedAction(supabase, action, analysis, documentName, associationId);
         } catch (error) {
           console.error('Error processing automated action:', error);
         }
@@ -132,7 +133,10 @@ serve(async (req) => {
     
     return new Response(JSON.stringify({
       success: true,
-      analysis,
+      analysis: {
+        ...analysis,
+        associationId
+      },
       analysisId: storedAnalysis.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -149,7 +153,7 @@ serve(async (req) => {
   }
 });
 
-async function processAutomatedAction(supabase: any, action: any, analysis: any, documentName: string) {
+async function processAutomatedAction(supabase: any, action: any, analysis: any, documentName: string, associationId: string) {
   switch (action.type) {
     case 'create_request':
       await supabase.from('homeowner_requests').insert({
@@ -157,7 +161,8 @@ async function processAutomatedAction(supabase: any, action: any, analysis: any,
         description: action.description,
         type: 'general',
         priority: action.priority,
-        status: 'open'
+        status: 'open',
+        association_id: associationId
       });
       break;
 
@@ -167,7 +172,8 @@ async function processAutomatedAction(supabase: any, action: any, analysis: any,
         content: `Based on document analysis of ${documentName}: ${action.context}`,
         type: 'email',
         recipient_groups: analysis.notificationTargets,
-        category: 'general'
+        category: 'general',
+        association_id: associationId
       });
       break;
 
@@ -179,7 +185,8 @@ async function processAutomatedAction(supabase: any, action: any, analysis: any,
           description: action.context,
           start_time: meetingDate,
           end_time: new Date(new Date(meetingDate).getTime() + 60 * 60 * 1000).toISOString(),
-          event_type: 'meeting'
+          event_type: 'meeting',
+          hoa_id: associationId
         });
       }
       break;

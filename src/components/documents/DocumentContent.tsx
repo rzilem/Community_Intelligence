@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Document } from '@/types/document-types';
 import DocumentsLoadingSkeleton from '@/components/documents/content/DocumentsLoadingSkeleton';
@@ -14,7 +15,7 @@ interface DocumentContentProps {
   onViewDocument: (document: Document) => void;
   onDownloadDocument: (document: Document) => void;
   onDeleteDocument: (document: Document) => void;
-  onAnalyzeDocument?: (document: Document) => void;
+  onAnalyzeDocument?: (document: Document) => Promise<any>;
 }
 
 const DocumentContent: React.FC<DocumentContentProps> = ({
@@ -35,7 +36,9 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
       setAnalyzedDocument(doc);
       try {
         const result = await onAnalyzeDocument(doc);
-        setCurrentAnalysis(result?.analysis);
+        if (result && result.analysis) {
+          setCurrentAnalysis(result.analysis);
+        }
       } catch (error) {
         console.error('Error analyzing document:', error);
       }
@@ -56,6 +59,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
         <DocumentAnalysisActions 
           analysis={currentAnalysis} 
           documentName={analyzedDocument.name}
+          associationId={analyzedDocument.association_id}
         />
       )}
       

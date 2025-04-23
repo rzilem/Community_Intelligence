@@ -22,11 +22,13 @@ interface DocumentAnalysisActionsProps {
     notificationTargets?: string[];
   };
   documentName: string;
+  associationId: string;
 }
 
 const DocumentAnalysisActions: React.FC<DocumentAnalysisActionsProps> = ({
   analysis,
-  documentName
+  documentName,
+  associationId
 }) => {
   const handleManualAction = async (action: SuggestedAction) => {
     try {
@@ -44,13 +46,13 @@ const DocumentAnalysisActions: React.FC<DocumentAnalysisActionsProps> = ({
 
         case 'send_message':
           await supabase.from('scheduled_messages').insert({
-            association_id: analysis.associationId, // Add association_id
+            association_id: associationId,
             subject: `Action Required: ${action.description}`,
             content: `Based on document analysis of ${documentName}: ${action.context}`,
             type: 'email',
             recipient_groups: analysis.notificationTargets || [],
             category: 'general',
-            scheduled_date: new Date().toISOString() // Add scheduled_date
+            scheduled_date: new Date().toISOString()
           });
           toast.success('Message scheduled successfully');
           break;
@@ -58,7 +60,7 @@ const DocumentAnalysisActions: React.FC<DocumentAnalysisActionsProps> = ({
         case 'schedule_meeting':
           if (analysis.importantDates?.[0]?.date) {
             await supabase.from('calendar_events').insert({
-              hoa_id: analysis.associationId, // Add hoa_id
+              hoa_id: associationId,
               title: action.description,
               description: action.context,
               start_time: analysis.importantDates[0].date,
