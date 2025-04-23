@@ -1,39 +1,34 @@
 
-import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { GLAccount } from '@/types/accounting-types';
 import { toast } from 'sonner';
 
-type UseGLAccountsOptions = {
+interface UseGLAccountsOptions {
   associationId?: string;
   includeMaster?: boolean;
-  includeCategories?: boolean;
-  onlyActive?: boolean;
-  onError?: (error: Error) => void;
-  isActiveFilter?: boolean | null;
+  activeOnly?: boolean;
+}
+
+export const getFormattedGLAccountLabel = (account: GLAccount): string => {
+  return `${account.code} - ${account.name}`;
 };
 
 export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
-  const { 
-    associationId, 
-    includeMaster = true, 
-    includeCategories = false,
-    onlyActive = false,
-    onError,
-    isActiveFilter = null,
-  } = options;
-  
-  const [accounts, setAccounts] = useState<GLAccount[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const { associationId, includeMaster = false, activeOnly = true } = options;
+  const queryClient = useQueryClient();
 
-  const fetchGLAccounts = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      let query = supabase.from('gl_accounts').select('*');
+  const { data: accounts = [], isLoading, error } = useQuery({
+    queryKey: ['glAccounts', associationId, includeMaster, activeOnly],
+    queryFn: async () => {
+      let query = supabase
+        .from('gl_accounts')
+        .select('*')
+        .order('code');
+      
+      if (activeOnly) {
+        query = query.eq('is_active', true);
+      }
       
       if (associationId) {
         if (includeMaster) {
@@ -41,74 +36,61 @@ export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
         } else {
           query = query.eq('association_id', associationId);
         }
-      } else if (!includeMaster) {
-        setAccounts([]);
-        setIsLoading(false);
-        return;
-      } else {
-        query = query.is('association_id', null);
-      }
-
-      if (typeof isActiveFilter === 'boolean') {
-        query = query.eq('is_active', isActiveFilter);
       }
       
-      const { data, error } = await query.order('code', { ascending: true });
-      if (error) {
-        throw new Error(`Error fetching GL accounts: ${error.message}`);
-      }
+      const { data, error } = await query;
       
-      const fetchedAccounts = data as GLAccount[];
-      setAccounts(fetchedAccounts);
-
-      if (includeCategories) {
-        const uniqueCategories = Array.from(
-          new Set(
-            fetchedAccounts
-              .filter(acc => acc.category)
-              .map(acc => acc.category as string)
-          )
-        ).sort();
-        setCategories(uniqueCategories);
-      }
-    } catch (err: any) {
-      console.error('Error in fetchGLAccounts:', err);
-      const error = new Error(err.message || 'Failed to load GL accounts');
-      setError(error);
-      
-      if (onError) {
-        onError(error);
-      } else {
-        toast.error(error.message);
-      }
-    } finally {
-      setIsLoading(false);
+      if (error) throw error;
+      return data || [];
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchGLAccounts();
-  }, [associationId, includeMaster, includeCategories, onlyActive, isActiveFilter]);
-  
-  return { 
-    accounts, 
-    categories,
-    isLoading, 
+  const createGLAccount = useMutation({
+    mutationFn: async (account: Partial<GLAccount>) => {
+      const { data, error } = await supabase
+        .from('gl_accounts')
+        .insert(account)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('GL account created successfully');
+      queryClient.invalidateQueries({ queryKey: ['glAccounts'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to create GL account: ${error.message}`);
+    }
+  });
+
+  const updateGLAccount = useMutation({
+    mutationFn: async ({ id, ...account }: Partial<GLAccount> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('gl_accounts')
+        .update(account)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('GL account updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['glAccounts'] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update GL account: ${error.message}`);
+    }
+  });
+
+  return {
+    accounts,
+    isLoading,
     error,
-    refreshAccounts: fetchGLAccounts 
+    createGLAccount,
+    updateGLAccount
   };
-};
-
-export const getFormattedGLAccountLabel = (account: GLAccount): string => {
-  return `${account.code} - ${account.name}`;
-};
-
-export const getFormattedAccountCategories = (accounts: GLAccount[]): string[] => {
-  return Array.from(
-    new Set(
-      accounts
-        .filter(acc => acc.category)
-        .map(acc => acc.category as string)
-    )
-  ).sort();
 };

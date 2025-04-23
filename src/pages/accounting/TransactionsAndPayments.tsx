@@ -1,96 +1,122 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { CreditCard, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/auth';
 import TransactionsSection from '@/components/accounting/TransactionsSection';
 import PaymentsSection from '@/components/accounting/PaymentsSection';
-import JournalEntriesSection from '@/components/accounting/JournalEntriesSection';
-import { useTransactionPaymentData } from '@/hooks/accounting/useTransactionPaymentData';
-import AssociationSelector from '@/components/associations/AssociationSelector';
-import { useToast } from '@/components/ui/use-toast';
-import { useSupabaseQuery } from '@/hooks/supabase';
+import { Plus, FileText, CreditCard } from 'lucide-react';
+import { Transaction, Payment } from '@/types/transaction-payment-types';
+import { AiQueryInput } from '@/components/ai/AiQueryInput';
+
+// Import mock data for demonstration
+import { mockTransactions, mockPayments } from '@/utils/mock-data';
 
 const TransactionsAndPayments = () => {
-  const [mainTab, setMainTab] = useState('transactions');
-  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
-  const { transactions, payments, journalEntries, updatePaymentStatus } = useTransactionPaymentData(selectedAssociationId);
-  const { toast } = useToast();
+  const { currentAssociation } = useAuth();
+  const [activeTab, setActiveTab] = useState('transactions');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState<'transaction' | 'payment'>('transaction');
 
-  // Fetch approved invoices that need payment
-  const { data: approvedInvoices } = useSupabaseQuery(
-    'invoices',
-    {
-      select: '*',
-      filter: [
-        { column: 'status', value: 'approved', operator: 'eq' },
-        { column: 'payment_id', value: null, operator: 'is' }
-      ]
-    }
-  );
+  const handleNewTransaction = () => {
+    setDialogType('transaction');
+    setIsDialogOpen(true);
+  };
 
-  // Process approved invoices into scheduled payments
-  useEffect(() => {
-    if (approvedInvoices && approvedInvoices.length > 0) {
-      console.log('Found approved invoices that need payment scheduling:', approvedInvoices);
-      // In a real implementation, this would create payment records in the database
-    }
-  }, [approvedInvoices]);
-
-  const handleAssociationChange = (associationId: string) => {
-    setSelectedAssociationId(associationId);
+  const handleNewPayment = () => {
+    setDialogType('payment');
+    setIsDialogOpen(true);
   };
 
   const handleProcessPayment = (paymentId: string) => {
-    // Update the payment status to processed
-    updatePaymentStatus(paymentId, 'processed');
-    
-    // Show success message
-    toast({
-      title: "Payment Processed",
-      description: `Payment ${paymentId} has been successfully processed.`,
-    });
+    console.log(`Processing payment: ${paymentId}`);
+    // In a real implementation, this would update the payment status in the database
   };
 
   return (
-    <PageTemplate 
-      title="Transactions & Payments" 
-      icon={<CreditCard className="h-8 w-8" />}
-      description="Manage all financial transactions, vendor payments, and journal entries."
+    <PageTemplate
+      title="Transactions & Payments"
+      icon={<FileText className="h-8 w-8" />}
+      description="Manage financial transactions and vendor payments"
     >
       <div className="mb-6">
-        <AssociationSelector 
-          onAssociationChange={handleAssociationChange}
-          initialAssociationId={selectedAssociationId}
-          label="Filter by Association"
+        <AiQueryInput 
+          placeholder="Search transactions or ask accounting questions..." 
+          compact={true}
         />
       </div>
 
-      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
-          <TabsTrigger value="transactions">Transactions</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="journal-entries">Journal Entries</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="transactions">
-          <TransactionsSection transactions={transactions} />
-        </TabsContent>
-        
-        <TabsContent value="payments">
-          <PaymentsSection 
-            payments={payments} 
-            onProcessPayment={handleProcessPayment}
-          />
-        </TabsContent>
-        
-        <TabsContent value="journal-entries">
-          <JournalEntriesSection 
-            journalEntries={journalEntries} 
-            associationId={selectedAssociationId} 
-          />
-        </TabsContent>
-      </Tabs>
+      <div className="flex justify-between items-center mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex gap-2">
+          {activeTab === 'transactions' && (
+            <Button onClick={handleNewTransaction}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Transaction
+            </Button>
+          )}
+          {activeTab === 'payments' && (
+            <Button onClick={handleNewPayment}>
+              <Plus className="h-4 w-4 mr-1" />
+              New Payment
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <TabsContent value="transactions" className="p-0 mt-0">
+        <TransactionsSection transactions={mockTransactions} />
+      </TabsContent>
+
+      <TabsContent value="payments" className="p-0 mt-0">
+        <PaymentsSection 
+          payments={mockPayments}
+          onProcessPayment={handleProcessPayment}
+        />
+      </TabsContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {dialogType === 'transaction' ? 'New Transaction' : 'New Payment'}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogType === 'transaction' 
+                ? 'Record a new financial transaction' 
+                : 'Schedule a new vendor payment'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            {dialogType === 'transaction' ? (
+              <p className="text-center text-muted-foreground">
+                Transaction form will be implemented here
+              </p>
+            ) : (
+              <p className="text-center text-muted-foreground">
+                Payment form will be implemented here
+              </p>
+            )}
+          </div>
+          
+          <div className="flex justify-end">
+            <Button onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="ml-2" variant="default">
+              {dialogType === 'transaction' ? 'Record Transaction' : 'Schedule Payment'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PageTemplate>
   );
 };
