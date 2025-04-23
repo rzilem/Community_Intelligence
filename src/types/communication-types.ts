@@ -1,5 +1,14 @@
-
 export type AnnouncementPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type MessageCategory =
+  | 'general'
+  | 'maintenance'
+  | 'compliance'
+  | 'events'
+  | 'financial'
+  | 'emergency'
+  | 'announcement'
+  | 'community';
 
 export interface Announcement {
   id: string;
@@ -11,6 +20,7 @@ export interface Announcement {
   publish_date: string;
   expiry_date: string;
   priority: AnnouncementPriority;
+  category: MessageCategory;
   created_at: string;
   updated_at: string;
 }

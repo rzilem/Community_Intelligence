@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Announcement } from '@/types/communication-types';
+import { Announcement, MessageCategory } from '@/types/communication-types';
 import { useAnnouncements } from '@/hooks/communications/useAnnouncements';
 import { useAssociations } from '@/hooks/associations/useAssociations';
 import { useUser } from '@/hooks/auth/useUser';
@@ -24,6 +24,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { addDays } from 'date-fns';
 import { toast } from 'sonner';
 
+const MESSAGE_CATEGORIES: { value: MessageCategory; label: string }[] = [
+  { value: 'general', label: 'General' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'compliance', label: 'Compliance' },
+  { value: 'events', label: 'Events' },
+  { value: 'financial', label: 'Financial' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'announcement', label: 'Announcements' },
+  { value: 'community', label: 'Community News' },
+];
+
 interface AnnouncementFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +43,7 @@ interface AnnouncementFormProps {
     content: string;
     priority: Announcement['priority'];
     expiry_date: string;
+    category: MessageCategory;
   }) => Promise<void>;
 }
 
@@ -40,14 +52,16 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ isOpen, onClose, on
   const [content, setContent] = useState('');
   const [priority, setPriority] = useState<Announcement['priority']>('normal');
   const [expiryDate, setExpiryDate] = useState('');
+  const [category, setCategory] = useState<MessageCategory>('announcement');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({ title, content, priority, expiry_date: expiryDate });
+    await onSave({ title, content, priority, expiry_date: expiryDate, category });
     setTitle('');
     setContent('');
     setPriority('normal');
     setExpiryDate('');
+    setCategory('announcement');
     onClose();
   };
 
@@ -90,6 +104,19 @@ const AnnouncementForm: React.FC<AnnouncementFormProps> = ({ isOpen, onClose, on
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={value => setCategory(value as MessageCategory)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {MESSAGE_CATEGORIES.map(cat => (
+                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -174,7 +201,7 @@ const Announcements = () => {
                     <CardTitle>{announcement.title}</CardTitle>
                   </div>
                   <CardDescription>
-                    Published on {new Date(announcement.publish_date).toLocaleDateString()}
+                    Published on {new Date(announcement.publish_date).toLocaleDateString()} | Category: {MESSAGE_CATEGORIES.find(c => c.value === announcement.category)?.label || announcement.category}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -197,21 +224,22 @@ const Announcements = () => {
                 toast.error('Please select an association');
                 return;
               }
-              
+
               const announcement: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> = {
                 title: data.title,
                 content: data.content,
                 priority: data.priority,
+                category: data.category,
                 association_id: selectedAssociation,
                 author_id: user?.id || '',
                 is_published: true,
                 publish_date: new Date().toISOString(),
                 expiry_date: data.expiry_date || addDays(new Date(), 30).toISOString()
               };
-              
+
               await createAnnouncement(announcement);
               setIsDialogOpen(false);
-              
+
             } catch (error: any) {
               console.error('Error saving announcement:', error);
               toast.error(`Failed to save announcement: ${error.message}`);

@@ -1,4 +1,3 @@
-
 export interface ResidentPreferences {
   notifications?: {
     email?: boolean;
@@ -13,6 +12,16 @@ export interface ResidentPreferences {
     canViewDocuments?: boolean;
     canViewFinancials?: boolean;
     canPostInForum?: boolean;
+  };
+  notification_categories?: {
+    general?: boolean;
+    maintenance?: boolean;
+    compliance?: boolean;
+    events?: boolean;
+    financial?: boolean;
+    emergency?: boolean;
+    announcement?: boolean;
+    community?: boolean;
   };
 }
 

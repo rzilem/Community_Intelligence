@@ -12,6 +12,18 @@ interface ResidentPreferencesFormProps {
   residentId: string;
 }
 
+// New constant: message categories
+const MESSAGE_CATEGORIES = [
+  { value: 'general', label: 'General' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'compliance', label: 'Compliance' },
+  { value: 'events', label: 'Events' },
+  { value: 'financial', label: 'Financial' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'announcement', label: 'Announcements' },
+  { value: 'community', label: 'Community News' },
+];
+
 export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = ({ residentId }) => {
   const { preferences, fetchPreferences, updatePreferences } = useResidentPreferences(residentId);
   const [localPreferences, setLocalPreferences] = useState<ResidentPreferences>({});
@@ -28,6 +40,32 @@ export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = (
     updatePreferences(localPreferences);
   };
 
+  // New: Render switches for notification categories
+  const renderCategoryToggles = () => (
+    <>
+      <h3 className="text-lg font-semibold">Message Categories</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {MESSAGE_CATEGORIES.map(cat => (
+          <div className="flex items-center space-x-2" key={cat.value}>
+            <Switch
+              checked={localPreferences.notification_categories?.[cat.value as keyof ResidentPreferences['notification_categories']] ?? true}
+              onCheckedChange={checked =>
+                setLocalPreferences(prev => ({
+                  ...prev,
+                  notification_categories: {
+                    ...prev.notification_categories,
+                    [cat.value]: checked
+                  }
+                }))
+              }
+            />
+            <Label>{cat.label}</Label>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -39,12 +77,12 @@ export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = (
           <div className="flex items-center space-x-2">
             <Switch
               checked={localPreferences.notifications?.email ?? true}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setLocalPreferences(prev => ({
                   ...prev,
-                  notifications: { 
-                    ...prev.notifications, 
-                    email: checked 
+                  notifications: {
+                    ...prev.notifications,
+                    email: checked
                   }
                 }))
               }
@@ -54,12 +92,12 @@ export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = (
           <div className="flex items-center space-x-2">
             <Switch
               checked={localPreferences.notifications?.sms ?? false}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setLocalPreferences(prev => ({
                   ...prev,
-                  notifications: { 
-                    ...prev.notifications, 
-                    sms: checked 
+                  notifications: {
+                    ...prev.notifications,
+                    sms: checked
                   }
                 }))
               }
@@ -73,7 +111,7 @@ export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = (
           <div className="flex items-center space-x-2">
             <Select
               value={localPreferences.contactPreferences?.preferredContactMethod ?? 'email'}
-              onValueChange={(value: 'email' | 'phone' | 'mail') => 
+              onValueChange={(value: 'email' | 'phone' | 'mail') =>
                 setLocalPreferences(prev => ({
                   ...prev,
                   contactPreferences: {
@@ -93,6 +131,10 @@ export const ResidentPreferencesForm: React.FC<ResidentPreferencesFormProps> = (
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          {renderCategoryToggles()}
         </div>
 
         <div className="flex justify-end mt-4">

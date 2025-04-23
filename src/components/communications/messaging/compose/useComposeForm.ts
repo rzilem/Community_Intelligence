@@ -5,6 +5,18 @@ import { communicationService } from '@/services/communication-service';
 import { replaceMergeTags } from '@/utils/mergeTags';
 import { ResidentType } from '@/types/resident-types';
 
+// Add new: categories consistent with enum in DB
+const MESSAGE_CATEGORIES = [
+  { value: 'general', label: 'General' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'compliance', label: 'Compliance' },
+  { value: 'events', label: 'Events' },
+  { value: 'financial', label: 'Financial' },
+  { value: 'emergency', label: 'Emergency' },
+  { value: 'announcement', label: 'Announcements' },
+  { value: 'community', label: 'Community News' },
+];
+
 export interface ComposeFormState {
   messageType: 'email' | 'sms';
   subject: string;
@@ -54,6 +66,8 @@ export interface ComposeFormState {
       deadline: Date;
     };
   };
+  // New: category
+  category: string;
 }
 
 interface UseComposeFormProps {
@@ -70,6 +84,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
   const [previewMode, setPreviewMode] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState(false);
   const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [category, setCategory] = useState('general'); // default to general
   const [previewData] = useState({
     resident: {
       name: 'John Smith',
@@ -139,7 +154,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
         association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
         type: messageType,
-        scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined
+        scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined,
+        category // Pass along newly selected category!
       });
 
       // Reset form
@@ -149,6 +165,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       setPreviewMode(false);
       setScheduleMessage(false);
       setScheduledDate(null);
+      setCategory('general');
       onMessageSent();
       toast.success(scheduleMessage ? 'Message scheduled successfully' : 'Message sent successfully');
     } catch (error) {
@@ -166,6 +183,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setPreviewMode(false);
     setScheduleMessage(false);
     setScheduledDate(null);
+    setCategory('general');
   };
 
   const togglePreview = () => {
@@ -182,14 +200,15 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     }
   };
 
-  const previewContent = previewMode 
+  const previewContent = previewMode
     ? replaceMergeTags(messageContent, previewData)
     : messageContent;
 
   const previewSubject = previewMode
     ? replaceMergeTags(subject, previewData)
     : subject;
-  
+
+  // Expose setCategory and categories for the form
   return {
     state: {
       messageType,
@@ -201,7 +220,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       previewMode,
       scheduleMessage,
       scheduledDate,
-      previewData
+      previewData,
+      category
     },
     previewContent,
     previewSubject,
@@ -214,6 +234,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     handleSendMessage,
     handleReset,
     togglePreview,
-    toggleSchedule
+    toggleSchedule,
+    setCategory,
+    categories: MESSAGE_CATEGORIES
   };
 }

@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           association_id: string
           author_id: string | null
+          category: Database["public"]["Enums"]["message_category"]
           content: string
           created_at: string
           expiry_date: string | null
@@ -103,6 +104,7 @@ export type Database = {
         Insert: {
           association_id: string
           author_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"]
           content: string
           created_at?: string
           expiry_date?: string | null
@@ -116,6 +118,7 @@ export type Database = {
         Update: {
           association_id?: string
           author_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"]
           content?: string
           created_at?: string
           expiry_date?: string | null
@@ -1353,6 +1356,7 @@ export type Database = {
       }
       communications_log: {
         Row: {
+          category: Database["public"]["Enums"]["message_category"]
           communication_type: string
           created_at: string
           homeowner_request_id: string | null
@@ -1365,6 +1369,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["message_category"]
           communication_type: string
           created_at?: string
           homeowner_request_id?: string | null
@@ -1377,6 +1382,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["message_category"]
           communication_type?: string
           created_at?: string
           homeowner_request_id?: string | null
@@ -3510,6 +3516,7 @@ export type Database = {
       scheduled_messages: {
         Row: {
           association_id: string
+          category: Database["public"]["Enums"]["message_category"]
           content: string
           created_at: string
           id: string
@@ -3523,6 +3530,7 @@ export type Database = {
         }
         Insert: {
           association_id: string
+          category?: Database["public"]["Enums"]["message_category"]
           content: string
           created_at?: string
           id?: string
@@ -3536,6 +3544,7 @@ export type Database = {
         }
         Update: {
           association_id?: string
+          category?: Database["public"]["Enums"]["message_category"]
           content?: string
           created_at?: string
           id?: string
@@ -4100,9 +4109,21 @@ export type Database = {
         Args: { association_uuid: string }
         Returns: boolean
       }
+      validate_resident_preferences: {
+        Args: { preferences: Json }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      message_category:
+        | "general"
+        | "maintenance"
+        | "compliance"
+        | "events"
+        | "financial"
+        | "emergency"
+        | "announcement"
+        | "community"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4217,6 +4238,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      message_category: [
+        "general",
+        "maintenance",
+        "compliance",
+        "events",
+        "financial",
+        "emergency",
+        "announcement",
+        "community",
+      ],
+    },
   },
 } as const
