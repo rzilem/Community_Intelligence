@@ -10,10 +10,6 @@ interface UseGLAccountsOptions {
   activeOnly?: boolean;
 }
 
-export const getFormattedGLAccountLabel = (account: GLAccount): string => {
-  return `${account.code} - ${account.name}`;
-};
-
 export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
   const { associationId, includeMaster = false, activeOnly = true } = options;
   const queryClient = useQueryClient();
