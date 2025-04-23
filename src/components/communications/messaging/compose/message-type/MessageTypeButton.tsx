@@ -10,7 +10,7 @@ export const MessageTypeButton: React.FC<MessageTypeButtonProps> = ({
   onSelect,
   icon: Icon,
   label,
-  className
+  className: additionalClassName
 }) => {
   return (
     <Button 
@@ -19,7 +19,7 @@ export const MessageTypeButton: React.FC<MessageTypeButtonProps> = ({
       className={cn(
         'flex-1 gap-2',
         isSelected && type === 'email' && 'bg-blue-600 hover:bg-blue-700',
-        className
+        additionalClassName
       )}
       onClick={onSelect}
     >
