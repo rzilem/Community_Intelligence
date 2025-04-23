@@ -13,12 +13,12 @@ const LeadAttachmentsTab: React.FC<LeadAttachmentsTabProps> = ({ lead }) => {
   const hasAttachments = lead.uploaded_files && Array.isArray(lead.uploaded_files) && lead.uploaded_files.length > 0;
   
   const handleDownload = (url: string, filename: string) => {
-    const a = document.createElement('a');
+    const a = window.document.createElement('a');
     a.href = url;
     a.download = filename;
-    document.body.appendChild(a);
+    window.document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    window.document.body.removeChild(a);
   };
 
   const getFileIcon = (fileType: string) => {

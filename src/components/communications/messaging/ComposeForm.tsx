@@ -96,7 +96,7 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
           />
           
           <MessageContent
-            value={content}
+            content={content}
             onChange={setContent}
           />
           

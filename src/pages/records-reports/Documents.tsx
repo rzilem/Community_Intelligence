@@ -74,12 +74,12 @@ const Documents = () => {
 
   const handleDownloadDocument = (document: Document) => {
     const link = document.url;
-    const a = document.createElement('a');
+    const a = window.document.createElement('a');
     a.href = link;
     a.download = document.name;
-    document.body.appendChild(a);
+    window.document.body.appendChild(a);
     a.click();
-    document.body.removeChild(a);
+    window.document.body.removeChild(a);
   };
 
   const handleDeleteDocument = (document: Document) => {
