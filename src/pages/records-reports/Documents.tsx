@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, Sparkles } from 'lucide-react';
 import { useResponsive } from '@/hooks/use-responsive';
 import DocumentContent from '@/components/documents/DocumentContent';
 import { useAuth } from '@/contexts/auth';
@@ -14,6 +15,7 @@ import DocumentDialogs from '@/components/documents/DocumentDialogs';
 import DocumentHeader from '@/components/documents/DocumentHeader';
 import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
 import { DocumentTab } from '@/types/document-types';
+import DocumentAnalysisDialog from '@/components/documents/DocumentAnalysisDialog';
 
 const Documents = () => {
   const { isMobile } = useResponsive();
@@ -23,6 +25,8 @@ const Documents = () => {
   const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   
   const { documents, isLoading } = useDocuments({
     associationId: currentAssociation?.id,
@@ -53,14 +57,12 @@ const Documents = () => {
   };
   
   const onDeleteDocument = (doc: Document) => {
-    deleteDocument.mutate(doc, {
-      onSuccess: () => {
-        toast.success('Document deleted successfully');
-      },
-      onError: (error) => {
-        toast.error(`Failed to delete document: ${error.message}`);
-      }
-    });
+    deleteDocument.mutate(doc);
+  };
+
+  const onAnalyzeDocument = (doc: Document) => {
+    setSelectedDocument(doc);
+    setIsAnalysisDialogOpen(true);
   };
 
   const handleUploadDocument = (file: File, category: string, description: string) => {
@@ -77,9 +79,6 @@ const Documents = () => {
     }, {
       onSuccess: () => {
         setIsUploadDialogOpen(false);
-      },
-      onError: (error) => {
-        toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     });
   };
@@ -96,7 +95,6 @@ const Documents = () => {
     }, {
       onSuccess: () => {
         setIsCategoryDialogOpen(false);
-        toast.success(`Category "${name}" created successfully`);
       }
     });
   };
@@ -112,14 +110,32 @@ const Documents = () => {
       icon={<FileText className="h-8 w-8" />}
       description="Access and manage community documents and files."
       actions={
-        <Button 
-          size="sm"
-          onClick={() => setIsUploadDialogOpen(true)}
-          disabled={!currentAssociation}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Upload Document
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            size="sm"
+            onClick={() => setIsUploadDialogOpen(true)}
+            disabled={!currentAssociation}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
+          <Button 
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              if (filteredDocuments.length === 0) {
+                toast.warning("Please upload a document first");
+                return;
+              }
+              toast.info("Select a document to analyze");
+            }}
+            disabled={!currentAssociation || filteredDocuments.length === 0}
+          >
+            <Sparkles className="h-4 w-4" />
+            AI Analysis
+          </Button>
+        </div>
       }
     >
       <div className={isMobile ? 'p-0' : ''}>
@@ -150,6 +166,7 @@ const Documents = () => {
             onViewDocument={onViewDocument}
             onDownloadDocument={onDownloadDocument}
             onDeleteDocument={onDeleteDocument}
+            onAnalyzeDocument={onAnalyzeDocument}
             visibleColumns={visibleColumnIds}
           />
 
@@ -163,6 +180,12 @@ const Documents = () => {
             categories={categories || []}
             isUploading={uploadDocument.isPending}
             isCreatingCategory={createCategory.isPending}
+          />
+          
+          <DocumentAnalysisDialog 
+            isOpen={isAnalysisDialogOpen}
+            onClose={() => setIsAnalysisDialogOpen(false)}
+            document={selectedDocument}
           />
         </div>
       </div>

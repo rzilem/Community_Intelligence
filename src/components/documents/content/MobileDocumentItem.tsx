@@ -1,86 +1,71 @@
 
 import React from 'react';
-import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import { Eye, Download, Clock, Trash2 } from 'lucide-react';
 import { Document } from '@/types/document-types';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Eye, Download, Trash2, Sparkles } from 'lucide-react';
+import { format } from 'date-fns';
+import { formatFileSize } from '@/lib/format-utils';
 
 interface MobileDocumentItemProps {
-  doc: Document;
-  onViewDocument: (doc: Document) => void;
-  onDownloadDocument: (doc: Document) => void;
-  onDeleteDocument: (doc: Document) => void;
-  onOpenVersionHistory: (doc: Document) => void;
+  document: Document;
+  onView: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+  onAnalyze?: () => void;
 }
 
 const MobileDocumentItem: React.FC<MobileDocumentItemProps> = ({
-  doc,
-  onViewDocument,
-  onDownloadDocument,
-  onDeleteDocument,
-  onOpenVersionHistory
+  document,
+  onView,
+  onDownload,
+  onDelete,
+  onAnalyze
 }) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return format(new Date(dateString), 'MMM d, yyyy');
+  };
+  
   return (
-    <div key={doc.id} className="border rounded-lg p-4 space-y-2">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium">{doc.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            {format(new Date(doc.uploaded_at), 'MMM d, yyyy')}
-          </p>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-2">
+          <div className="flex justify-between items-start">
+            <h3 className="font-medium truncate">{document.name}</h3>
+            <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-md">
+              {document.file_type?.toUpperCase() || 'Unknown'}
+            </span>
+          </div>
+          
+          {document.description && (
+            <p className="text-sm text-muted-foreground">{document.description}</p>
+          )}
+          
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Uploaded: {formatDate(document.uploaded_at)}</span>
+            <span>{formatFileSize(document.file_size)}</span>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 pt-2">
+            <Button size="sm" variant="outline" onClick={onView}>
+              <Eye className="h-4 w-4 mr-1" /> View
+            </Button>
+            <Button size="sm" variant="outline" onClick={onDownload}>
+              <Download className="h-4 w-4 mr-1" /> Download
+            </Button>
+            {onAnalyze && (
+              <Button size="sm" variant="outline" onClick={onAnalyze}>
+                <Sparkles className="h-4 w-4 mr-1" /> AI Analysis
+              </Button>
+            )}
+            <Button size="sm" variant="outline" className="text-destructive" onClick={onDelete}>
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
+            </Button>
+          </div>
         </div>
-        <Badge variant="outline">{doc.file_type.toUpperCase()}</Badge>
-      </div>
-      
-      <div className="text-sm">
-        {doc.description && <p>{doc.description}</p>}
-        <p className="text-xs text-muted-foreground">
-          {(doc.file_size / 1024).toFixed(2)} KB 
-          {doc.current_version ? ` • Version ${doc.current_version}` : ''}
-        </p>
-      </div>
-      
-      <div className="flex space-x-2 pt-2">
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          onClick={() => onViewDocument(doc)}
-          tooltip="View document"
-        >
-          <Eye className="h-4 w-4 mr-1" />
-          View
-        </TooltipButton>
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          onClick={() => onDownloadDocument(doc)}
-          tooltip="Download document"
-        >
-          <Download className="h-4 w-4 mr-1" />
-          Download
-        </TooltipButton>
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          onClick={() => onOpenVersionHistory(doc)}
-          tooltip="View version history"
-        >
-          <Clock className="h-4 w-4 mr-1" />
-          History
-        </TooltipButton>
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          className="text-destructive hover:text-destructive"
-          onClick={() => onDeleteDocument(doc)}
-          tooltip="Delete document"
-        >
-          <Trash2 className="h-4 w-4" />
-          <span className="sr-only">Delete</span>
-        </TooltipButton>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
