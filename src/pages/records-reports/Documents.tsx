@@ -1,196 +1,98 @@
 
-import React, { useState } from 'react';
-import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText, Plus, Sparkles } from 'lucide-react';
-import { useResponsive } from '@/hooks/use-responsive';
-import DocumentContent from '@/components/documents/DocumentContent';
-import { useAuth } from '@/contexts/auth';
-import { useDocuments, useDocumentOperations, useDocumentCategories } from '@/hooks/documents';
-import { useDocumentColumns } from '@/hooks/documents/useDocumentColumns';
-import { toast } from 'sonner';
+// Since we don't have access to this file directly, we need to fix the error in documents components
+// The error is in the onAnalyzeDocument prop type, which should return a Promise
+
+// Fix the issue in DocumentContent component:
+<lov-write file_path="src/components/documents/DocumentContent.tsx">
+import React from 'react';
 import { Document } from '@/types/document-types';
-import { Button } from '@/components/ui/button';
-import { saveAs } from 'file-saver';
-import DocumentDialogs from '@/components/documents/DocumentDialogs';
-import DocumentHeader from '@/components/documents/DocumentHeader';
-import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
-import { DocumentTab } from '@/types/document-types';
-import DocumentAnalysisDialog from '@/components/documents/DocumentAnalysisDialog';
+import DocumentsLoadingSkeleton from '@/components/documents/content/DocumentsLoadingSkeleton';
+import DocumentsTable from '@/components/documents/content/DocumentsTable';
+import MobileDocumentItem from '@/components/documents/content/MobileDocumentItem';
+import EmptyDocumentsState from '@/components/documents/content/EmptyDocumentsState';
+import { useResponsive } from '@/hooks/use-responsive';
+import DocumentAnalysisActions from './content/DocumentAnalysisActions';
 
-const Documents = () => {
+interface DocumentContentProps {
+  isLoading: boolean;
+  documents: Document[];
+  visibleColumns: string[];
+  onViewDocument: (document: Document) => void;
+  onDownloadDocument: (document: Document) => void;
+  onDeleteDocument: (document: Document) => void;
+  onAnalyzeDocument?: (document: Document) => Promise<any>;
+}
+
+const DocumentContent: React.FC<DocumentContentProps> = ({
+  isLoading,
+  documents,
+  visibleColumns,
+  onViewDocument,
+  onDownloadDocument,
+  onDeleteDocument,
+  onAnalyzeDocument
+}) => {
   const { isMobile } = useResponsive();
-  const { currentAssociation } = useAuth();
-  const [category, setCategory] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
-  
-  const { documents, isLoading } = useDocuments({
-    associationId: currentAssociation?.id,
-    category: category
-  });
-  
-  const { categories } = useDocumentCategories({
-    associationId: currentAssociation?.id
-  });
-  
-  const { 
-    columns, 
-    visibleColumnIds, 
-    updateVisibleColumns, 
-    reorderColumns, 
-    resetToDefaults 
-  } = useDocumentColumns();
-  
-  const { uploadDocument, deleteDocument, createCategory } = useDocumentOperations();
-  
-  const onViewDocument = (doc: Document) => {
-    window.open(doc.url, '_blank');
-  };
-  
-  const onDownloadDocument = (doc: Document) => {
-    saveAs(doc.url, doc.name);
-    toast.success('Document downloaded successfully');
-  };
-  
-  const onDeleteDocument = (doc: Document) => {
-    deleteDocument.mutate(doc);
-  };
+  const [currentAnalysis, setCurrentAnalysis] = React.useState<any>(null);
+  const [analyzedDocument, setAnalyzedDocument] = React.useState<Document | null>(null);
 
-  const onAnalyzeDocument = (doc: Document) => {
-    setSelectedDocument(doc);
-    setIsAnalysisDialogOpen(true);
-  };
-
-  const handleUploadDocument = (file: File, category: string, description: string) => {
-    if (!currentAssociation?.id) {
-      toast.error('Please select an association first');
-      return;
-    }
-    
-    uploadDocument.mutate({
-      file,
-      category: category === 'none' ? undefined : category,
-      description,
-      associationId: currentAssociation.id
-    }, {
-      onSuccess: () => {
-        setIsUploadDialogOpen(false);
+  const handleAnalyzeDocument = async (doc: Document) => {
+    if (onAnalyzeDocument) {
+      setAnalyzedDocument(doc);
+      try {
+        const result = await onAnalyzeDocument(doc);
+        if (result && result.analysis) {
+          setCurrentAnalysis(result.analysis);
+        }
+      } catch (error) {
+        console.error('Error analyzing document:', error);
       }
-    });
-  };
-
-  const handleCreateCategory = (name: string) => {
-    if (!currentAssociation?.id) {
-      toast.error('Please select an association first');
-      return;
     }
-    
-    createCategory.mutate({
-      name,
-      associationId: currentAssociation.id
-    }, {
-      onSuccess: () => {
-        setIsCategoryDialogOpen(false);
-      }
-    });
   };
 
-  const filteredDocuments = documents.filter(doc => 
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-  
+  if (isLoading) {
+    return <DocumentsLoadingSkeleton />;
+  }
+
+  if (documents.length === 0) {
+    return <EmptyDocumentsState />;
+  }
+
   return (
-    <PageTemplate 
-      title="Documents" 
-      icon={<FileText className="h-8 w-8" />}
-      description="Access and manage community documents and files."
-      actions={
-        <div className="flex gap-2">
-          <Button 
-            size="sm"
-            onClick={() => setIsUploadDialogOpen(true)}
-            disabled={!currentAssociation}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Upload Document
-          </Button>
-          <Button 
-            size="sm"
-            variant="outline"
-            className="gap-2"
-            onClick={() => {
-              if (filteredDocuments.length === 0) {
-                toast.warning("Please upload a document first");
-                return;
-              }
-              toast.info("Select a document to analyze");
-            }}
-            disabled={!currentAssociation || filteredDocuments.length === 0}
-          >
-            <Sparkles className="h-4 w-4" />
-            AI Analysis
-          </Button>
-        </div>
-      }
-    >
-      <div className={isMobile ? 'p-0' : ''}>
+    <div className="space-y-6">
+      {currentAnalysis && analyzedDocument && (
+        <DocumentAnalysisActions 
+          analysis={currentAnalysis} 
+          documentName={analyzedDocument.name}
+          associationId={analyzedDocument.association_id}
+        />
+      )}
+      
+      {isMobile ? (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <DocumentHeader 
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              onUploadClick={() => setIsUploadDialogOpen(true)}
-              isUploadDisabled={!currentAssociation}
+          {documents.map(doc => (
+            <MobileDocumentItem
+              key={doc.id}
+              document={doc}
+              onView={() => onViewDocument(doc)}
+              onDownload={() => onDownloadDocument(doc)}
+              onDelete={() => onDeleteDocument(doc)}
+              onAnalyze={() => handleAnalyzeDocument(doc)}
             />
-            
-            <DocumentColumnSelector
-              columns={columns}
-              selectedColumns={visibleColumnIds}
-              onChange={updateVisibleColumns}
-              onReorder={reorderColumns}
-              resetToDefaults={resetToDefaults}
-              className="ml-2"
-            />
-          </div>
-
-          <DocumentContent 
-            isLoading={isLoading}
-            documents={filteredDocuments}
-            onViewDocument={onViewDocument}
-            onDownloadDocument={onDownloadDocument}
-            onDeleteDocument={onDeleteDocument}
-            onAnalyzeDocument={onAnalyzeDocument}
-            visibleColumns={visibleColumnIds}
-          />
-
-          <DocumentDialogs 
-            isUploadDialogOpen={isUploadDialogOpen}
-            isCategoryDialogOpen={isCategoryDialogOpen}
-            onCloseUploadDialog={() => setIsUploadDialogOpen(false)}
-            onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
-            onUpload={handleUploadDocument}
-            onCreateCategory={handleCreateCategory}
-            categories={categories || []}
-            isUploading={uploadDocument.isPending}
-            isCreatingCategory={createCategory.isPending}
-          />
-          
-          <DocumentAnalysisDialog 
-            isOpen={isAnalysisDialogOpen}
-            onClose={() => setIsAnalysisDialogOpen(false)}
-            document={selectedDocument}
-          />
+          ))}
         </div>
-      </div>
-    </PageTemplate>
+      ) : (
+        <DocumentsTable
+          documents={documents}
+          visibleColumns={visibleColumns}
+          onViewDocument={onViewDocument}
+          onDownloadDocument={onDownloadDocument}
+          onDeleteDocument={onDeleteDocument}
+          onAnalyzeDocument={handleAnalyzeDocument}
+        />
+      )}
+    </div>
   );
 };
 
-export default Documents;
+export default DocumentContent;

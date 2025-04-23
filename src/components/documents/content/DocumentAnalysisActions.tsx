@@ -20,6 +20,7 @@ interface DocumentAnalysisActionsProps {
     suggestedActions: SuggestedAction[];
     importantDates?: Array<{ date: string; description: string }>;
     notificationTargets?: string[];
+    associationId?: string; // Make this optional as we now pass it separately
   };
   documentName: string;
   associationId: string;

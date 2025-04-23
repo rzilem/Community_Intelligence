@@ -7,6 +7,8 @@ import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
 import AssociationPortalSelector from './AssociationPortalSelector';
+import LanguageSelector from './LanguageSelector';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PortalPageLayoutProps {
   title: string;
@@ -47,10 +49,14 @@ export const PortalPageLayout: React.FC<PortalPageLayoutProps> = ({
             <h1 className="text-2xl font-bold">{title}</h1>
           </div>
           
-          {/* Only render the selector if user and currentAssociation are defined */}
-          {user && currentAssociation && (
-            <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
-          )}
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            
+            {/* Only render the selector if user and currentAssociation are defined */}
+            {user && currentAssociation && (
+              <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
+            )}
+          </div>
         </div>
         
         {description && (
