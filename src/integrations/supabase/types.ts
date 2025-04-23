@@ -2596,6 +2596,62 @@ export type Database = {
           },
         ]
       }
+      meeting_minutes: {
+        Row: {
+          association_id: string | null
+          attendees: Json | null
+          audio_url: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          key_action_items: Json | null
+          meeting_date: string
+          minutes_content: string | null
+          status: string
+          title: string
+          transcript: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_minutes_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_history: {
         Row: {
           association_id: string | null

@@ -27,18 +27,15 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
   onAnalyzeDocument
 }) => {
   const { isMobile } = useResponsive();
-
-  // Add state for analysis results
   const [currentAnalysis, setCurrentAnalysis] = React.useState<any>(null);
   const [analyzedDocument, setAnalyzedDocument] = React.useState<Document | null>(null);
 
-  // Update the analysis handler
   const handleAnalyzeDocument = async (doc: Document) => {
     if (onAnalyzeDocument) {
       setAnalyzedDocument(doc);
       try {
-        const response = await onAnalyzeDocument(doc);
-        setCurrentAnalysis(response.analysis);
+        const result = await onAnalyzeDocument(doc);
+        setCurrentAnalysis(result?.analysis);
       } catch (error) {
         console.error('Error analyzing document:', error);
       }

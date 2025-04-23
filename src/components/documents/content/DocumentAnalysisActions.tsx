@@ -44,11 +44,13 @@ const DocumentAnalysisActions: React.FC<DocumentAnalysisActionsProps> = ({
 
         case 'send_message':
           await supabase.from('scheduled_messages').insert({
+            association_id: analysis.associationId, // Add association_id
             subject: `Action Required: ${action.description}`,
             content: `Based on document analysis of ${documentName}: ${action.context}`,
             type: 'email',
             recipient_groups: analysis.notificationTargets || [],
-            category: 'general'
+            category: 'general',
+            scheduled_date: new Date().toISOString() // Add scheduled_date
           });
           toast.success('Message scheduled successfully');
           break;
@@ -56,6 +58,7 @@ const DocumentAnalysisActions: React.FC<DocumentAnalysisActionsProps> = ({
         case 'schedule_meeting':
           if (analysis.importantDates?.[0]?.date) {
             await supabase.from('calendar_events').insert({
+              hoa_id: analysis.associationId, // Add hoa_id
               title: action.description,
               description: action.context,
               start_time: analysis.importantDates[0].date,
