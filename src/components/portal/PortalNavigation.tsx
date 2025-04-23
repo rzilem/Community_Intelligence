@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -28,7 +29,7 @@ interface PortalNavigationProps {
   portalType: 'homeowner' | 'board' | 'vendor';
 }
 
-export interface NavigationTranslations extends Record<string, string> {
+export interface NavigationTranslations {
   dashboard: string;
   payments: string;
   requests: string;
@@ -45,6 +46,7 @@ export interface NavigationTranslations extends Record<string, string> {
   invoicesPayments: string;
   vendorStatus: string;
   portalNavigation: string;
+  [key: string]: string; // Add index signature to fix TypeScript error
 }
 
 export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
@@ -80,7 +82,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
       }
       
       try {
-        const translatedTitles = await translateTexts<NavigationTranslations>(defaultTitles);
+        const translatedTitles = await translateTexts(defaultTitles);
         setTranslations(translatedTitles);
       } catch (error) {
         console.error('Error translating navigation items:', error);
@@ -89,8 +91,9 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
     };
     
     translateNavItems();
-  }, [preferredLanguage, translateTexts]);
+  }, [preferredLanguage, translateTexts, defaultTitles]);
 
+  // Use the translations for navigation items
   const homeownerNavItems: NavItem[] = [
     { title: translations.dashboard, path: '/portal/homeowner', icon: <LayoutDashboard className="h-5 w-5" /> },
     { title: translations.payments, path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" /> },

@@ -44,10 +44,10 @@ export const useTranslation = () => {
       console.error('Translation error:', error);
       return text;
     }
-  }, [preferredLanguage]);
+  }, [preferredLanguage, translationCache]);
 
-  // Update translateTexts to handle generic types properly
-  const translateTexts = useCallback(async <T extends Record<string, string>>(texts: T): Promise<T> => {
+  // Properly handle generic types in translateTexts
+  const translateTexts = useCallback(async <T extends Record<string, any>>(texts: T): Promise<T> => {
     if (preferredLanguage === 'en') return texts;
     
     const translations = { ...texts } as T;
@@ -56,7 +56,7 @@ export const useTranslation = () => {
       const translationPromises = Object.entries(texts).map(async ([key, text]) => {
         if (typeof text === 'string') {
           const translatedText = await translateText(text, preferredLanguage);
-          (translations as Record<string, string>)[key] = translatedText;
+          (translations as any)[key] = translatedText;
         }
       });
       

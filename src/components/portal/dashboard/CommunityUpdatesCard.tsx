@@ -16,6 +16,7 @@ interface CommunityUpdatesCardProps {
     annualMeetingDesc: string;
     poolClosing: string;
     poolClosingDesc: string;
+    [key: string]: string; // Add index signature for flexibility
   };
 }
 

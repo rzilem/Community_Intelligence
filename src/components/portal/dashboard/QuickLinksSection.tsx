@@ -11,6 +11,7 @@ interface QuickLinksSectionProps {
     submitRequest: string;
     calendar: string;
     viewDocuments: string;
+    [key: string]: string; // Add index signature for flexibility
   };
 }
 

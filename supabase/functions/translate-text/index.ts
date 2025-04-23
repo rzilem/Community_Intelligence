@@ -24,6 +24,8 @@ serve(async (req) => {
       throw new Error("No target language provided");
     }
 
+    console.log(`Translating text to ${targetLanguage}: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+
     // Get API key from environment variables
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
@@ -60,6 +62,8 @@ serve(async (req) => {
     }
     
     const translatedText = data.choices[0].message.content;
+    
+    console.log(`Translation successful: "${translatedText.substring(0, 50)}${translatedText.length > 50 ? '...' : ''}"`);
 
     return new Response(
       JSON.stringify({

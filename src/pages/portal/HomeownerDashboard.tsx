@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { useAuth } from '@/contexts/auth';
@@ -10,7 +10,7 @@ import { QuickLinksSection } from '@/components/portal/dashboard/QuickLinksSecti
 import { CommunityUpdatesCard } from '@/components/portal/dashboard/CommunityUpdatesCard';
 import { AIChatCard } from '@/components/portal/dashboard/AIChatCard';
 
-export interface DashboardTranslations extends Record<string, string> {
+export interface DashboardTranslations {
   welcomeBack: string;
   homeownerPortal: string;
   makePayment: string;
@@ -25,6 +25,7 @@ export interface DashboardTranslations extends Record<string, string> {
   poolClosingDesc: string;
   askCommunityIntel: string;
   getInstantAnswers: string;
+  [key: string]: string; // Add index signature to fix TypeScript error
 }
 
 const HomeownerDashboard = () => {
@@ -57,14 +58,14 @@ const HomeownerDashboard = () => {
     }
     
     try {
-      const newTranslations = await translateTexts<DashboardTranslations>(defaultTexts);
+      const newTranslations = await translateTexts(defaultTexts);
       setTranslations(newTranslations);
     } catch (error) {
       console.error('Translation error:', error);
     }
-  }, [preferredLanguage, translateTexts]);
+  }, [preferredLanguage, translateTexts, defaultTexts]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     updateTranslations();
   }, [preferredLanguage, updateTranslations]);
 

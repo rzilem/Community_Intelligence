@@ -13,6 +13,7 @@ interface AIChatCardProps {
   translations: {
     askCommunityIntel: string;
     getInstantAnswers: string;
+    [key: string]: string; // Add index signature for flexibility
   };
 }
 
@@ -24,7 +25,7 @@ export const AIChatCard: React.FC<AIChatCardProps> = ({ translations }) => {
         <CardDescription>{translations.getInstantAnswers}</CardDescription>
       </CardHeader>
       <CardContent>
-        <AiQueryInput />
+        <AiQueryInput placeholder={`Ask Community Intelligence anything...`} />
       </CardContent>
     </Card>
   );
