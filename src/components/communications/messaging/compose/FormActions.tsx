@@ -2,32 +2,22 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar, Eye, EyeOff, Send, Undo2 } from 'lucide-react';
+import { MessageFormActionsProps } from '@/types/message-form-types';
 
-interface FormActionsProps {
-  isPreviewMode: boolean;
-  togglePreview: () => void;
-  handleReset: () => void;
-  handleSendMessage: () => void;
-  canSend: boolean;
-  isLoading: boolean;
-  isScheduled?: boolean;
-}
-
-const FormActions: React.FC<FormActionsProps> = ({
-  isPreviewMode,
-  togglePreview,
-  handleReset,
-  handleSendMessage,
-  canSend,
-  isLoading,
-  isScheduled = false
+const FormActions: React.FC<MessageFormActionsProps> = ({
+  isSubmitting,
+  canSubmit,
+  isScheduled,
+  onSubmit,
+  onReset,
+  onPreviewToggle
 }) => {
   return (
     <div className="flex flex-wrap gap-2 justify-end">
       <Button
         type="button"
         variant="outline"
-        onClick={handleReset}
+        onClick={onReset}
       >
         <Undo2 className="mr-2 h-4 w-4" />
         Reset
@@ -36,9 +26,9 @@ const FormActions: React.FC<FormActionsProps> = ({
       <Button
         type="button"
         variant="outline"
-        onClick={togglePreview}
+        onClick={onPreviewToggle}
       >
-        {isPreviewMode ? (
+        {isScheduled ? (
           <>
             <EyeOff className="mr-2 h-4 w-4" />
             Edit Message
@@ -53,10 +43,10 @@ const FormActions: React.FC<FormActionsProps> = ({
       
       <Button
         type="button"
-        disabled={!canSend || isLoading}
-        onClick={handleSendMessage}
+        disabled={!canSubmit || isSubmitting}
+        onClick={onSubmit}
       >
-        {isLoading ? (
+        {isSubmitting ? (
           'Processing...'
         ) : isScheduled ? (
           <>

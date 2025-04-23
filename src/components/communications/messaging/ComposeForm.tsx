@@ -1,13 +1,14 @@
 
 import React from 'react';
 import { useMessageCompose } from '@/hooks/messaging/useMessageCompose';
-import MessageHeader from './compose/MessageHeader';
-import MessageRecipients from './compose/MessageRecipients';
-import MessageContent from './compose/MessageContent';
+import { MessageTypeSelector } from './compose/message-type/MessageTypeSelector';
+import { MessageSubject } from './compose/content/MessageSubject';
+import { MessageContent } from './compose/content/MessageContent';
 import MessagePreview from './compose/MessagePreview';
 import FormActions from './compose/FormActions';
 import ScheduleSelector from './compose/ScheduleSelector';
 import CategorySelector from './compose/CategorySelector';
+import MessageRecipients from './compose/MessageRecipients';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -31,31 +32,36 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
 
   return (
     <div className="bg-white rounded-lg border p-6 space-y-6">
-      <MessageHeader 
-        messageType={state.messageType} 
-        onTypeChange={actions.setMessageType} 
+      <MessageTypeSelector 
+        selectedType={state.messageType}
+        onTypeChange={actions.setMessageType}
       />
       
       <MessageRecipients 
-        selectedAssociationId={state.selectedAssociationId}
         selectedGroups={state.selectedGroups}
+        associationId={state.selectedAssociationId}
+        onGroupsChange={actions.setSelectedGroups}
         onAssociationChange={actions.handleAssociationChange}
-        onSelectionChange={actions.setSelectedGroups}
       />
       
       {state.previewMode ? (
         <MessagePreview 
           subject={previewSubject}
           content={previewContent}
+          messageType={state.messageType}
+          category={state.category}
         />
       ) : (
         <>
-          <MessageContent 
-            subject={state.subject}
-            content={state.messageContent}
-            onSubjectChange={actions.setSubject}
-            onContentChange={actions.setMessageContent}
+          <MessageSubject
+            value={state.subject}
+            onChange={actions.setSubject}
             onUseTemplate={onUseTemplate}
+          />
+          
+          <MessageContent
+            value={state.messageContent}
+            onChange={actions.setMessageContent}
           />
           
           <CategorySelector
@@ -74,13 +80,12 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
       )}
       
       <FormActions 
-        isPreviewMode={state.previewMode}
-        togglePreview={actions.togglePreview}
-        handleReset={actions.handleReset}
-        handleSendMessage={actions.handleSendMessage}
-        canSend={canSend}
-        isLoading={state.isLoading}
+        isSubmitting={state.isLoading}
+        canSubmit={canSend}
         isScheduled={state.scheduleMessage}
+        onSubmit={actions.handleSendMessage}
+        onReset={actions.handleReset}
+        onPreviewToggle={actions.togglePreview}
       />
     </div>
   );
