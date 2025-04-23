@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useMessageCompose } from '@/hooks/messaging/useMessageCompose';
+import { useMessageContext } from '@/contexts/message/MessageContext';
 import { MessageTypeSelector } from './compose/message-type/MessageTypeSelector';
 import { MessageSubject } from './compose/content/MessageSubject';
 import { MessageContent } from './compose/content/MessageContent';
@@ -9,6 +9,7 @@ import FormActions from './compose/FormActions';
 import ScheduleSelector from './compose/ScheduleSelector';
 import CategorySelector from './compose/CategorySelector';
 import MessageRecipients from './compose/MessageRecipients';
+import { useMessageService } from '@/hooks/messaging/useMessageService';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -20,72 +21,105 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
   onUseTemplate
 }) => {
   const {
-    state,
-    actions,
-    previewContent,
-    previewSubject,
-    categories,
-    canSend
-  } = useMessageCompose({
-    onMessageSent
-  });
+    messageType,
+    subject,
+    content,
+    selectedGroups,
+    selectedAssociationId,
+    category,
+    isScheduled,
+    scheduledDate,
+    previewMode,
+    setMessageType,
+    setSubject,
+    setContent,
+    setSelectedGroups,
+    setSelectedAssociationId,
+    setCategory,
+    toggleSchedule,
+    setScheduledDate,
+    togglePreview,
+    reset
+  } = useMessageContext();
+
+  const { sendMessage, isLoading } = useMessageService();
+
+  const handleSendMessage = async () => {
+    await sendMessage({
+      subject,
+      content,
+      type: messageType,
+      association_id: selectedAssociationId,
+      recipient_groups: selectedGroups,
+      scheduled_date: isScheduled ? scheduledDate?.toISOString() : undefined,
+      category
+    });
+    onMessageSent();
+    reset();
+  };
+
+  const canSend = Boolean(
+    subject && 
+    content && 
+    selectedGroups.length > 0 && 
+    (!isScheduled || scheduledDate)
+  );
 
   return (
     <div className="bg-white rounded-lg border p-6 space-y-6">
       <MessageTypeSelector 
-        selectedType={state.messageType}
-        onTypeChange={actions.setMessageType}
+        selectedType={messageType}
+        onTypeChange={setMessageType}
       />
       
       <MessageRecipients 
-        selectedGroups={state.selectedGroups}
-        associationId={state.selectedAssociationId}
-        onGroupsChange={actions.setSelectedGroups}
-        onAssociationChange={actions.handleAssociationChange}
+        selectedGroups={selectedGroups}
+        selectedAssociationId={selectedAssociationId}
+        onGroupsChange={setSelectedGroups}
+        onAssociationChange={setSelectedAssociationId}
       />
       
-      {state.previewMode ? (
+      {previewMode ? (
         <MessagePreview 
-          subject={previewSubject}
-          content={previewContent}
-          messageType={state.messageType}
-          category={state.category}
+          subject={subject}
+          content={content}
+          type={messageType}
+          category={category}
         />
       ) : (
         <>
           <MessageSubject
-            value={state.subject}
-            onChange={actions.setSubject}
+            value={subject}
+            onChange={setSubject}
             onUseTemplate={onUseTemplate}
           />
           
           <MessageContent
-            value={state.messageContent}
-            onChange={actions.setMessageContent}
+            value={content}
+            onChange={setContent}
           />
           
           <CategorySelector
-            category={state.category}
-            categories={categories}
-            onCategoryChange={actions.setCategory}
+            category={category}
+            onCategoryChange={setCategory}
           />
           
           <ScheduleSelector
-            scheduleMessage={state.scheduleMessage}
-            scheduledDate={state.scheduledDate}
-            onToggleSchedule={actions.toggleSchedule}
-            onScheduledDateChange={actions.setScheduledDate}
+            scheduleMessage={isScheduled}
+            scheduledDate={scheduledDate}
+            onToggleSchedule={toggleSchedule}
+            onScheduledDateChange={setScheduledDate}
           />
         </>
       )}
       
       <FormActions 
-        isSubmitting={state.isLoading}
+        isSubmitting={isLoading}
         canSubmit={canSend}
-        isScheduled={state.scheduleMessage}
-        onSubmit={actions.handleSendMessage}
-        onReset={actions.handleReset}
-        onPreviewToggle={actions.togglePreview}
+        isScheduled={isScheduled}
+        onSubmit={handleSendMessage}
+        onReset={reset}
+        onPreviewToggle={togglePreview}
       />
     </div>
   );

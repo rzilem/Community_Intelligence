@@ -13,18 +13,19 @@ export interface MessageTypeButtonProps {
   onSelect: () => void;
   icon: React.ComponentType;
   label: string;
+  className?: string;
 }
 
 export interface MessagePreviewProps {
   subject: string;
   content: string;
-  messageType: 'email' | 'sms';
+  type: 'email' | 'sms';
   category: MessageCategory;
 }
 
-export interface RecipientSectionProps {
+export interface MessageRecipientsProps {
   selectedGroups: string[];
-  associationId: string;
+  selectedAssociationId: string;
   onGroupsChange: (groups: string[]) => void;
   onAssociationChange: (id: string) => void;
 }
@@ -36,4 +37,29 @@ export interface MessageFormActionsProps {
   onSubmit: () => void;
   onReset: () => void;
   onPreviewToggle: () => void;
+}
+
+export interface MessageContextState {
+  messageType: 'email' | 'sms';
+  subject: string;
+  content: string;
+  selectedGroups: string[];
+  selectedAssociationId: string;
+  category: MessageCategory;
+  isScheduled: boolean;
+  scheduledDate: Date | null;
+  previewMode: boolean;
+}
+
+export interface MessageContextValue extends MessageContextState {
+  setMessageType: (type: 'email' | 'sms') => void;
+  setSubject: (subject: string) => void;
+  setContent: (content: string) => void;
+  setSelectedGroups: (groups: string[]) => void;
+  setSelectedAssociationId: (id: string) => void;
+  setCategory: (category: MessageCategory) => void;
+  toggleSchedule: () => void;
+  setScheduledDate: (date: Date | null) => void;
+  togglePreview: () => void;
+  reset: () => void;
 }

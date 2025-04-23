@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { FileText, AlertTriangle } from 'lucide-react';
 import { MessageFormFieldProps } from '@/types/message-form-types';
+import { cn } from '@/lib/utils';
 
 interface MessageSubjectProps extends MessageFormFieldProps {
   onUseTemplate: () => void;

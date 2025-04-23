@@ -2,6 +2,7 @@
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageFormFieldProps } from '@/types/message-form-types';
+import { cn } from '@/lib/utils';
 
 export const MessageContent: React.FC<MessageFormFieldProps> = ({
   value,
