@@ -7,6 +7,7 @@ import MessageContent from './compose/MessageContent';
 import MessagePreview from './compose/MessagePreview';
 import FormActions from './compose/FormActions';
 import ScheduleSelector from './compose/ScheduleSelector';
+import CategorySelector from './compose/CategorySelector';
 
 interface ComposeFormProps {
   onMessageSent: () => void;
@@ -26,6 +27,8 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
     setMessageContent,
     setSelectedGroups,
     setScheduledDate,
+    setCategory,
+    categories,
     handleAssociationChange,
     handleSendMessage,
     handleReset,
@@ -67,6 +70,12 @@ const ComposeForm: React.FC<ComposeFormProps> = ({
             onSubjectChange={setSubject}
             onContentChange={setMessageContent}
             onUseTemplate={onUseTemplate}
+          />
+          
+          <CategorySelector
+            category={state.category}
+            categories={categories}
+            onCategoryChange={setCategory}
           />
           
           <ScheduleSelector

@@ -2,6 +2,7 @@
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { scheduledMessageService } from './scheduled-message-service';
+import { MessageCategory } from '@/types/communication-types';
 
 export const messageService = {
   // Send a message, optionally schedule to the new table
@@ -12,6 +13,7 @@ export const messageService = {
     recipient_groups: string[];
     type: 'email' | 'sms';
     scheduled_date?: string;
+    category?: MessageCategory;
   }): Promise<{ success: boolean }> => {
     try {
       if (messageData.type === 'email') {
@@ -38,6 +40,7 @@ export const messageService = {
           recipient_groups: messageData.recipient_groups,
           type: messageData.type,
           scheduled_date: messageData.scheduled_date,
+          category: messageData.category || 'general'
         });
         toast.success(`Message scheduled for ${new Date(messageData.scheduled_date).toLocaleString()}`);
         return { success: true };

@@ -1,43 +1,48 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from '@/integrations/supabase/client';
+import { MessageCategory } from '@/types/communication-types';
 
 export const scheduledMessageService = {
-  // Schedule a new message
-  async scheduleMessage(data: {
+  scheduleMessage: async (messageData: {
     association_id: string;
     subject: string;
     content: string;
     recipient_groups: string[];
-    type: 'email' | 'sms';
+    type: string;
     scheduled_date: string;
-  }) {
-    const { error } = await supabase
+    category?: MessageCategory;
+  }) => {
+    const { data, error } = await supabase
       .from('scheduled_messages')
       .insert({
-        association_id: data.association_id,
-        subject: data.subject,
-        content: data.content,
-        recipient_groups: data.recipient_groups,
-        type: data.type,
-        scheduled_date: data.scheduled_date,
+        association_id: messageData.association_id,
+        subject: messageData.subject,
+        content: messageData.content,
+        recipient_groups: messageData.recipient_groups,
+        type: messageData.type,
+        scheduled_date: messageData.scheduled_date,
+        category: messageData.category || 'general'
       });
+
     if (error) {
       throw error;
     }
-    return { success: true };
+
+    return data;
   },
 
-  // List not-yet-sent scheduled messages for an association
-  async getScheduledMessages(associationId: string) {
+  getScheduledMessages: async (associationId: string) => {
     const { data, error } = await supabase
       .from('scheduled_messages')
       .select('*')
       .eq('association_id', associationId)
       .eq('sent', false)
       .order('scheduled_date', { ascending: true });
+
     if (error) {
       throw error;
     }
-    return data || [];
+
+    return data;
   }
 };
