@@ -50,24 +50,25 @@ export const useTranslation = () => {
   }, [preferredLanguage, translationCache]);
 
   // Force immediate translation of multiple text items
-  const translateTexts = useCallback(async (texts: Record<string, string>): Promise<Record<string, string>> => {
+  // Updated to work with any record object while preserving its structure
+  const translateTexts = useCallback(async <T extends Record<string, string>>(texts: T): Promise<Partial<T>> => {
     const language = preferredLanguage;
     if (language === 'en') return texts;
     
-    const translations: Record<string, string> = {};
+    const translations: Partial<T> = {} as Partial<T>;
     
     try {
       const translationPromises = Object.entries(texts).map(async ([key, text]) => {
         // Check cache first
         const cachedTranslation = getCachedTranslation(text, language);
         if (cachedTranslation) {
-          translations[key] = cachedTranslation;
+          translations[key as keyof T] = cachedTranslation as unknown as T[keyof T];
           return;
         }
         
         const translatedText = await translationService.translateText(text, language);
         cacheTranslation(text, language, translatedText);
-        translations[key] = translatedText;
+        translations[key as keyof T] = translatedText as unknown as T[keyof T];
       });
       
       await Promise.all(translationPromises);

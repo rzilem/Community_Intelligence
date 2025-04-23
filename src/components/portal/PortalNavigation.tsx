@@ -29,13 +29,49 @@ interface PortalNavigationProps {
   portalType: 'homeowner' | 'board' | 'vendor';
 }
 
+interface NavigationTranslations {
+  dashboard: string;
+  payments: string;
+  requests: string;
+  calendarEvents: string;
+  directory: string;
+  documents: string;
+  myProfile: string;
+  communityPulse: string;
+  homeowners: string;
+  bankAccounts: string;
+  knowledgeBase: string;
+  emailCommunity: string;
+  bidsOpportunities: string;
+  invoicesPayments: string;
+  vendorStatus: string;
+  portalNavigation: string;
+}
+
 export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }) => {
   const location = useLocation();
   const { translateText, preferredLanguage } = useTranslation();
-  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translations, setTranslations] = useState<NavigationTranslations>({
+    dashboard: 'Dashboard',
+    payments: 'Payments',
+    requests: 'Requests',
+    calendarEvents: 'Calendar & Events',
+    directory: 'Directory',
+    documents: 'Documents',
+    myProfile: 'My Profile',
+    communityPulse: 'Community Pulse',
+    homeowners: 'Homeowners',
+    bankAccounts: 'Bank Accounts',
+    knowledgeBase: 'Knowledge Base',
+    emailCommunity: 'Email Community',
+    bidsOpportunities: 'Bids & Opportunities',
+    invoicesPayments: 'Invoices & Payments',
+    vendorStatus: 'Vendor Status',
+    portalNavigation: 'Portal Navigation'
+  });
 
   // Default navigation item titles
-  const defaultTitles = {
+  const defaultTitles: NavigationTranslations = {
     dashboard: 'Dashboard',
     payments: 'Payments',
     requests: 'Requests',
@@ -63,11 +99,11 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
       }
       
       try {
-        const translated: Record<string, string> = {};
+        const translated: Partial<NavigationTranslations> = {};
         for (const [key, text] of Object.entries(defaultTitles)) {
-          translated[key] = await translateText(text);
+          translated[key as keyof NavigationTranslations] = await translateText(text);
         }
-        setTranslations(translated);
+        setTranslations({...defaultTitles, ...translated});
       } catch (error) {
         console.error('Error translating navigation items:', error);
         setTranslations(defaultTitles); // Fallback to default English titles
@@ -79,31 +115,31 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
 
   // Define navigation items for each portal type
   const homeownerNavItems: NavItem[] = [
-    { title: translations.dashboard || defaultTitles.dashboard, path: '/portal/homeowner', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { title: translations.payments || defaultTitles.payments, path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" /> },
-    { title: translations.requests || defaultTitles.requests, path: '/portal/homeowner/requests', icon: <FileText className="h-5 w-5" /> },
-    { title: translations.calendarEvents || defaultTitles.calendarEvents, path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" /> },
-    { title: translations.directory || defaultTitles.directory, path: '/portal/homeowner/directory', icon: <Users className="h-5 w-5" /> },
-    { title: translations.documents || defaultTitles.documents, path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" /> },
-    { title: translations.myProfile || defaultTitles.myProfile, path: '/portal/homeowner/profile', icon: <UserCircle className="h-5 w-5" /> },
+    { title: translations.dashboard, path: '/portal/homeowner', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: translations.payments, path: '/portal/homeowner/payments', icon: <CreditCard className="h-5 w-5" /> },
+    { title: translations.requests, path: '/portal/homeowner/requests', icon: <FileText className="h-5 w-5" /> },
+    { title: translations.calendarEvents, path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" /> },
+    { title: translations.directory, path: '/portal/homeowner/directory', icon: <Users className="h-5 w-5" /> },
+    { title: translations.documents, path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" /> },
+    { title: translations.myProfile, path: '/portal/homeowner/profile', icon: <UserCircle className="h-5 w-5" /> },
   ];
 
   const boardNavItems: NavItem[] = [
-    { title: translations.dashboard || defaultTitles.dashboard, path: '/portal/board', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { title: translations.communityPulse || defaultTitles.communityPulse, path: '/portal/board/community-pulse', icon: <Activity className="h-5 w-5" /> },
-    { title: translations.homeowners || defaultTitles.homeowners, path: '/portal/board/homeowners', icon: <Users className="h-5 w-5" /> },
-    { title: translations.bankAccounts || defaultTitles.bankAccounts, path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
-    { title: translations.knowledgeBase || defaultTitles.knowledgeBase, path: '/portal/board/knowledge-base', icon: <BookOpen className="h-5 w-5" /> },
-    { title: translations.emailCommunity || defaultTitles.emailCommunity, path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
-    { title: translations.myProfile || defaultTitles.myProfile, path: '/portal/board/profile', icon: <UserCircle className="h-5 w-5" /> },
+    { title: translations.dashboard, path: '/portal/board', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: translations.communityPulse, path: '/portal/board/community-pulse', icon: <Activity className="h-5 w-5" /> },
+    { title: translations.homeowners, path: '/portal/board/homeowners', icon: <Users className="h-5 w-5" /> },
+    { title: translations.bankAccounts, path: '/portal/board/bank-accounts', icon: <Building className="h-5 w-5" /> },
+    { title: translations.knowledgeBase, path: '/portal/board/knowledge-base', icon: <BookOpen className="h-5 w-5" /> },
+    { title: translations.emailCommunity, path: '/portal/board/email', icon: <Mail className="h-5 w-5" /> },
+    { title: translations.myProfile, path: '/portal/board/profile', icon: <UserCircle className="h-5 w-5" /> },
   ];
 
   const vendorNavItems: NavItem[] = [
-    { title: translations.dashboard || defaultTitles.dashboard, path: '/portal/vendor', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { title: translations.bidsOpportunities || defaultTitles.bidsOpportunities, path: '/portal/vendor/bids', icon: <FileText className="h-5 w-5" /> },
-    { title: translations.invoicesPayments || defaultTitles.invoicesPayments, path: '/portal/vendor/invoices', icon: <CreditCard className="h-5 w-5" /> },
-    { title: translations.vendorStatus || defaultTitles.vendorStatus, path: '/portal/vendor/status', icon: <Star className="h-5 w-5" /> },
-    { title: translations.myProfile || defaultTitles.myProfile, path: '/portal/vendor/profile', icon: <UserCircle className="h-5 w-5" /> },
+    { title: translations.dashboard, path: '/portal/vendor', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { title: translations.bidsOpportunities, path: '/portal/vendor/bids', icon: <FileText className="h-5 w-5" /> },
+    { title: translations.invoicesPayments, path: '/portal/vendor/invoices', icon: <CreditCard className="h-5 w-5" /> },
+    { title: translations.vendorStatus, path: '/portal/vendor/status', icon: <Star className="h-5 w-5" /> },
+    { title: translations.myProfile, path: '/portal/vendor/profile', icon: <UserCircle className="h-5 w-5" /> },
   ];
 
   let navItems: NavItem[] = [];
@@ -124,7 +160,7 @@ export const PortalNavigation: React.FC<PortalNavigationProps> = ({ portalType }
 
   return (
     <div className="border rounded-lg p-4 mb-6">
-      <h2 className="font-semibold mb-4 text-lg">{translations.portalNavigation || 'Portal Navigation'}</h2>
+      <h2 className="font-semibold mb-4 text-lg">{translations.portalNavigation}</h2>
       <nav className="space-y-2">
         {navItems.map((item) => (
           <Link

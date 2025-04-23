@@ -12,13 +12,31 @@ import LanguageSelector from '@/components/portal/LanguageSelector';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from 'sonner';
 
+// Define the translations type to match the state shape
+interface DashboardTranslations {
+  welcomeBack: string;
+  homeownerPortal: string;
+  makePayment: string;
+  submitRequest: string;
+  calendar: string;
+  viewDocuments: string;
+  communityUpdates: string;
+  latestAnnouncements: string;
+  annualMeeting: string;
+  annualMeetingDesc: string;
+  poolClosing: string;
+  poolClosingDesc: string;
+  askCommunityIntel: string;
+  getInstantAnswers: string;
+}
+
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const { translateText, translateTexts, preferredLanguage } = useTranslation();
   
   // Static text that needs translation
-  const defaultTexts = {
+  const defaultTexts: DashboardTranslations = {
     welcomeBack: 'Welcome back',
     homeownerPortal: 'Homeowner Portal',
     makePayment: 'Make a Payment',
@@ -35,7 +53,7 @@ const HomeownerDashboard = () => {
     getInstantAnswers: 'Get instant answers about your community'
   };
   
-  const [translations, setTranslations] = useState(defaultTexts);
+  const [translations, setTranslations] = useState<DashboardTranslations>(defaultTexts);
 
   // Translate all UI text when language changes
   const updateTranslations = useCallback(async () => {
@@ -45,8 +63,16 @@ const HomeownerDashboard = () => {
     }
     
     try {
+      // Cast the result to ensure type safety
       const newTranslations = await translateTexts(defaultTexts);
-      setTranslations(newTranslations);
+      
+      // Create a new object that preserves the structure of DashboardTranslations
+      const typedTranslations: DashboardTranslations = {
+        ...defaultTexts, // Start with default texts as fallback
+        ...newTranslations // Override with translated texts where available
+      };
+      
+      setTranslations(typedTranslations);
     } catch (error) {
       console.error('Translation error:', error);
     }
