@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { MessageCategory } from './communication-types';
 
+// Form field components props
 export interface MessageFormFieldProps {
   value: string;
   onChange: (value: string) => void;
@@ -38,6 +40,7 @@ export interface MessageFormActionsProps {
   onPreviewToggle: () => void;
 }
 
+// Message context types
 export interface MessageContextState {
   messageType: 'email' | 'sms';
   subject: string;

@@ -1,6 +1,30 @@
 
 import { MessageCategory } from './communication-types';
 
+// Core message data types
+export interface MessageContent {
+  subject: string;
+  content: string;
+  type: 'email' | 'sms';
+  category: MessageCategory;
+}
+
+export interface MessageRecipient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  type: string;
+}
+
+export interface MessageGroup {
+  id: string;
+  name: string;
+  description?: string;
+  recipients: MessageRecipient[];
+}
+
+// Form state types
 export interface MessageFormState {
   messageType: 'email' | 'sms';
   subject: string;
@@ -28,6 +52,7 @@ export interface MessageFormActions {
   handleReset: () => void;
 }
 
+// Preview data for message templating
 export interface MessagePreviewData {
   resident: {
     name: string;
@@ -68,6 +93,7 @@ export interface MessagePreviewData {
   };
 }
 
+// Template data structure
 export interface MessageTemplateData {
   id: string;
   title: string;
@@ -79,6 +105,7 @@ export interface MessageTemplateData {
   updatedAt: string;
 }
 
+// Request parameters for the message service
 export interface MessageSendParams {
   subject: string;
   content: string;
@@ -87,4 +114,22 @@ export interface MessageSendParams {
   type: 'email' | 'sms';
   scheduled_date?: string;
   category: MessageCategory;
+}
+
+// Response from sending a message
+export interface MessageSendResponse {
+  success: boolean;
+  message?: string;
+  error?: any;
+}
+
+// History item for sent messages
+export interface MessageHistoryItem {
+  id: string;
+  subject: string;
+  type: 'email' | 'sms';
+  recipients: number;
+  sentDate: string;
+  status: 'sent' | 'scheduled' | 'failed';
+  openRate?: number;
 }
