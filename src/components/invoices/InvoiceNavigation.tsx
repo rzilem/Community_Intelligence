@@ -22,6 +22,19 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   currentPosition,
   totalPending
 }) => {
+  // Create separate handler functions to prevent default behavior
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onNavigate('prev');
+  };
+  
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onNavigate('next');
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex gap-2 items-center">
@@ -30,7 +43,7 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => onNavigate('prev')}
+              onClick={handlePrevious}
               disabled={disableNavigation}
               title="Navigate to previous pending invoice"
             >
@@ -46,7 +59,7 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => onNavigate('next')}
+              onClick={handleNext}
               disabled={disableNavigation}
               title="Navigate to next pending invoice"
             >
@@ -70,4 +83,3 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
     </div>
   );
 };
-

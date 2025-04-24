@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ExternalLink, FileText, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,15 +22,28 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen,
 }) => {
+  const [loadAttempts, setLoadAttempts] = useState(0);
+  
   // Log component props on mount and when they change
   useEffect(() => {
-    console.group('DocumentViewer Props');
+    console.log('DocumentViewer Props');
     console.log('pdfUrl:', pdfUrl || 'none');
     console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
     console.log('isPdf:', isPdf);
     console.log('isWordDocument:', isWordDocument);
-    console.groupEnd();
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+
+  // Try reloading PDF if it fails initially
+  useEffect(() => {
+    if (loadAttempts > 0 && loadAttempts < 3 && pdfUrl && isPdf) {
+      const timer = setTimeout(() => {
+        console.log(`Attempting to reload PDF, attempt ${loadAttempts + 1}`);
+        // Force re-render by updating state
+        setLoadAttempts(loadAttempts + 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [loadAttempts, pdfUrl, isPdf]);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -97,25 +110,29 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const createPdfEmbed = () => {
     if (!pdfUrl) return null;
     
+    // Key for re-rendering on load attempts
+    const embedKey = `pdf-embed-${loadAttempts}`;
+    
     return (
       <div className="w-full h-full flex flex-col">
-        <object
-          data={pdfUrl}
-          type="application/pdf"
+        <iframe
+          key={embedKey}
+          src={`${pdfUrl}#toolbar=0&view=FitH`}
           className="w-full h-full border-0"
-          onError={onIframeError}
-          onLoad={onIframeLoad}
-        >
-          <div className="flex flex-col items-center justify-center h-full p-6">
-            <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
-            <Button 
-              onClick={onExternalOpen}
-              className="flex items-center"
-            >
-              Download PDF <ExternalLink className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </object>
+          onError={(e) => {
+            console.error("PDF iframe loading error:", e);
+            onIframeError();
+            if (loadAttempts === 0) {
+              setLoadAttempts(1);
+            }
+          }}
+          onLoad={() => {
+            console.log("PDF iframe loaded successfully");
+            onIframeLoad();
+          }}
+          title="PDF Document"
+          sandbox="allow-scripts allow-same-origin"
+        />
       </div>
     );
   };
