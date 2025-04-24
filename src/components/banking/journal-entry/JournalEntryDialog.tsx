@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,6 +8,7 @@ import { JournalEntry, GLAccount } from '@/types/accounting-types';
 import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { LoadingState } from '@/components/ui/loading-state';
+import { Form } from '@/components/ui/form';
 import { JournalEntryForm } from './JournalEntryForm';
 import { JournalEntryLineItems } from './JournalEntryLineItems';
 
@@ -88,14 +88,14 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
             <JournalEntryForm form={form} />
             <JournalEntryLineItems form={form} accounts={accounts} />
             
-            <DialogFooter>
+            <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit" disabled={!form.formState.isValid}>
                 {entry ? 'Update' : 'Create'} Journal Entry
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

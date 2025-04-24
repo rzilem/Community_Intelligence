@@ -1,19 +1,13 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Database, ChartBar } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AssociationSelector from '@/components/associations/AssociationSelector';
+import { Database } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import GLAccountTabs from '@/components/accounting/GLAccountTabs';
-import { GLAccount } from '@/types/accounting-types';
-import { useAuth } from '@/contexts/auth/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
 import { LoadingState } from '@/components/ui/loading-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import GLAccountBalanceChart from '@/components/accounting/GLAccountBalanceChart';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import GLAccountsHeader from '@/components/accounting/gl-accounts/GLAccountsHeader';
 
 const GLAccounts = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +16,6 @@ const GLAccounts = () => {
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
   const [viewMode, setViewMode] = useState<'list' | 'chart'>('list');
   
-  // Use the hook based on active tab and selected association
   const {
     accounts,
     isLoading,
@@ -37,11 +30,10 @@ const GLAccounts = () => {
     setSelectedAssociationId(associationId);
   };
 
-  const handleAccountAdded = (newAccount: GLAccount) => {
+  const handleAccountAdded = (newAccount: any) => {
     refreshAccounts();
   };
 
-  // Function to copy master GL accounts to an association
   const handleCopyMasterToAssociation = async () => {
     if (!selectedAssociationId) {
       toast.error('Please select an association first');
@@ -49,7 +41,6 @@ const GLAccounts = () => {
     }
 
     try {
-      // 1. Fetch all master GL accounts
       const { data: masterAccounts, error: fetchError } = await supabase
         .from('gl_accounts')
         .select('*')
@@ -64,7 +55,6 @@ const GLAccounts = () => {
         return;
       }
 
-      // 2. Prepare data for insert - clone accounts but set association_id
       const accountsToInsert = masterAccounts.map(account => ({
         code: account.code,
         name: account.name,
@@ -75,7 +65,6 @@ const GLAccounts = () => {
         association_id: selectedAssociationId
       }));
 
-      // 3. Insert association-specific GL accounts
       const { data, error } = await supabase
         .from('gl_accounts')
         .insert(accountsToInsert)
@@ -87,7 +76,6 @@ const GLAccounts = () => {
 
       toast.success(`Successfully copied ${accountsToInsert.length} GL accounts to association`);
       
-      // Refresh the accounts list
       refreshAccounts();
     } catch (err: any) {
       console.error('Error copying master GL accounts:', err);
@@ -103,31 +91,11 @@ const GLAccounts = () => {
     >
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle>Chart of Accounts</CardTitle>
-              <CardDescription>Manage general ledger accounts for your associations</CardDescription>
-            </div>
-            <div className="flex gap-4 items-center">
-              <Tabs 
-                value={viewMode} 
-                onValueChange={(value) => setViewMode(value as 'list' | 'chart')}
-                className="mr-4"
-              >
-                <TabsList className="grid w-[180px] grid-cols-2">
-                  <TabsTrigger value="list">List View</TabsTrigger>
-                  <TabsTrigger value="chart">
-                    <ChartBar className="h-4 w-4 mr-1" />
-                    Chart View
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <AssociationSelector 
-                className="md:self-end" 
-                onAssociationChange={handleAssociationChange}
-              />
-            </div>
-          </div>
+          <GLAccountsHeader
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onAssociationChange={handleAssociationChange}
+          />
         </CardHeader>
         <CardContent>
           {viewMode === 'list' ? (
