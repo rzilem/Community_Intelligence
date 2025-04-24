@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,37 +77,6 @@ const WorkflowContent: React.FC<WorkflowContentProps> = ({
 
         <TabsContent value="test" className="mt-0">
           <WorkflowTestPanel workflow={workflow} />
-        </TabsContent>
-
-        <TabsContent value="editor" className="mt-0">
-          {selectedStepId ? (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Edit Step</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {workflow.steps.find(step => step.id === selectedStepId) ? (
-                    <p className="text-center text-muted-foreground">
-                      Step editor will be implemented here
-                    </p>
-                  ) : (
-                    <p className="text-center text-muted-foreground">
-                      Selected step not found
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">
-                  Select a step to edit its details
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
       </div>
     </>

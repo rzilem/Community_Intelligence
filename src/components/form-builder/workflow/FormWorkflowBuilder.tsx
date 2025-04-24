@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { FormWorkflow, FormWorkflowStep } from '@/types/form-workflow-types';
 import WorkflowHeader from './WorkflowHeader';
 import WorkflowError from './WorkflowError';
 import WorkflowContent from './WorkflowContent';
+import StepEditor from './StepEditor';
 
 interface FormWorkflowBuilderProps {
   formId: string;
@@ -125,6 +125,22 @@ const FormWorkflowBuilder: React.FC<FormWorkflowBuilderProps> = ({
           onDeleteStep={handleDeleteStep}
         />
       </div>
+
+      {activeTab === 'editor' && selectedStepId && (
+        <div className="mt-6">
+          {workflow.steps.find(step => step.id === selectedStepId) ? (
+            <StepEditor
+              step={workflow.steps.find(step => step.id === selectedStepId)!}
+              onUpdate={handleUpdateStep}
+              onDelete={() => handleDeleteStep(selectedStepId)}
+            />
+          ) : (
+            <p className="text-center text-muted-foreground">
+              Selected step not found
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
