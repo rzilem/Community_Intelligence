@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import usePermissions from '@/hooks/users/usePermissions';
 import { TwoFactorVerification } from './two-factor/TwoFactorVerification';
 import { getRoleBasedRedirect, canAccessPath } from '@/utils/role-redirects';
-import { Profile } from '@/types/profile-types'; // Add this import
+import { Profile } from '@/types/profile-types';
 
 interface RequireAuthProps {
   children: React.ReactNode;

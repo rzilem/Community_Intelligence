@@ -25,7 +25,7 @@ export const AppRouter = () => {
   return (
     <Routes>
       {/* Main routes */}
-      {mainRoutes.map((route, index) => (
+      {mainRoutes && mainRoutes.map((route, index) => (
         <Route 
           key={`main-route-${index}`} 
           path={route.path} 
@@ -55,7 +55,7 @@ export const AppRouter = () => {
       ))}
       
       {/* Accounting routes */}
-      {accountingRoutes.map((route, index) => (
+      {accountingRoutes && accountingRoutes.map((route, index) => (
         <Route 
           key={`accounting-route-${index}`} 
           path={route.path} 
