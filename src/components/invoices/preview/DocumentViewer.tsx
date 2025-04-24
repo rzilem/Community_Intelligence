@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
-import { ExternalLink, FileText, File } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ExternalLink, FileText, File, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DocumentViewerProps {
@@ -24,6 +24,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 }) => {
   const [loadAttempts, setLoadAttempts] = useState(0);
   const [viewerType, setViewerType] = useState<'object' | 'iframe' | 'fallback'>('object');
+  const [key, setKey] = useState(Date.now()); // Used to force remount of viewers
   
   // Log component props on mount and when they change
   useEffect(() => {
@@ -34,17 +35,31 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log('isWordDocument:', isWordDocument);
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
 
+  // Reset state when URL changes
+  useEffect(() => {
+    setLoadAttempts(0);
+    setViewerType('object');
+    setKey(Date.now());
+  }, [pdfUrl]);
+
   // Try different viewing methods if initial one fails
   useEffect(() => {
     if (loadAttempts === 1 && isPdf && pdfUrl) {
       console.log('First PDF load attempt failed, trying iframe method');
       setViewerType('iframe');
+      setKey(Date.now()); // Force remount with new technique
     } else if (loadAttempts >= 2 && isPdf && pdfUrl) {
       console.log('Both PDF load attempts failed, showing fallback view');
       setViewerType('fallback');
       onIframeError();
     }
   }, [loadAttempts, isPdf, pdfUrl, onIframeError]);
+
+  const handleRetry = useCallback(() => {
+    setLoadAttempts(0);
+    setViewerType('object');
+    setKey(Date.now());
+  }, []);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -94,11 +109,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const renderPdfWithObject = () => {
     if (!pdfUrl) return null;
     
-    const embedKey = `pdf-embed-object-${loadAttempts}`;
-    
     return (
       <object
-        key={embedKey}
+        key={`pdf-embed-object-${key}`}
         data={pdfUrl}
         type="application/pdf"
         className="w-full h-full border-0"
@@ -129,11 +142,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const renderPdfWithIframe = () => {
     if (!pdfUrl) return null;
     
-    const embedKey = `pdf-embed-iframe-${loadAttempts}`;
-    
     return (
       <iframe
-        key={embedKey}
+        key={`pdf-embed-iframe-${key}`}
         src={pdfUrl}
         className="w-full h-full border-0"
         onError={() => {
@@ -161,13 +172,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <p className="text-center text-sm text-muted-foreground mb-6">
         The PDF could not be displayed in the browser.
       </p>
-      <Button 
-        variant="default" 
-        onClick={onExternalOpen}
-        className="flex items-center"
-      >
-        Open in New Tab <ExternalLink className="h-4 w-4 ml-2" />
-      </Button>
+      <div className="flex gap-3">
+        <Button 
+          variant="default" 
+          onClick={onExternalOpen}
+          className="flex items-center"
+        >
+          Open in New Tab <ExternalLink className="h-4 w-4 ml-2" />
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={handleRetry}
+          className="flex items-center"
+        >
+          Retry <RefreshCw className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
     </div>
   );
 

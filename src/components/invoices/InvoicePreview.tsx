@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -8,7 +8,10 @@ import { DocumentViewer } from './preview/DocumentViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
-import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
+import { 
+  isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, 
+  isPdf, isImage, getFileExtension 
+} from './preview/previewUtils';
 import { useToast } from '@/components/ui/use-toast';
 
 interface InvoicePreviewProps {
@@ -28,6 +31,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('document');
+  const [refreshKey, setRefreshKey] = useState(Date.now()); // For forcing refresh
   const { toast } = useToast();
   
   // Determine if the document is a Word document based on file extension
@@ -38,27 +42,34 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
   
   // Handle opening the document in a new tab
-  const handleExternalOpen = () => {
+  const handleExternalOpen = useCallback(() => {
     if (normalizedPdfUrl) {
       console.log("Opening external URL:", normalizedPdfUrl);
-      window.open(normalizedPdfUrl, '_blank');
+      window.open(normalizedPdfUrl, '_blank', 'noopener,noreferrer');
     }
-  };
+  }, [normalizedPdfUrl]);
+  
+  // Handle retrying the preview loading
+  const handleRetry = useCallback(() => {
+    setError(null);
+    setLoading(true);
+    setRefreshKey(Date.now());
+  }, []);
   
   // Handle toggling fullscreen mode
-  const handleToggleFullscreen = () => {
+  const handleToggleFullscreen = useCallback(() => {
     setFullscreen(!fullscreen);
-  };
+  }, [fullscreen]);
   
   // Reset loading state after a timeout to prevent infinite loading state
   useEffect(() => {
     if (loading) {
       const timer = setTimeout(() => {
         setLoading(false);
-      }, 5000); // 5 seconds timeout
+      }, 3000); // 3 seconds timeout (reduced from 5s)
       return () => clearTimeout(timer);
     }
-  }, [loading]);
+  }, [loading, refreshKey]);
   
   useEffect(() => {
     // Reset states
@@ -108,7 +119,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       hasContent: hasContent,
       isPdfFile: isPdf(pdfUrl || '')
     });
-  }, [htmlContent, pdfUrl, emailContent]);
+  }, [htmlContent, pdfUrl, emailContent, toast, refreshKey]);
 
   // Handle iframe error
   const handleIframeError = () => {
@@ -138,6 +149,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       error={error} 
       pdfUrl={normalizedPdfUrl} 
       onExternalOpen={handleExternalOpen} 
+      onRetry={handleRetry}
     />;
   }
 
@@ -160,6 +172,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
           <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
             {normalizedPdfUrl ? (
               <DocumentViewer 
+                key={refreshKey}
                 pdfUrl={normalizedPdfUrl}
                 htmlContent={undefined}
                 isPdf={isPdf(normalizedPdfUrl)}
