@@ -1924,6 +1924,50 @@ export type Database = {
           },
         ]
       }
+      financial_statements: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          data: Json
+          id: string
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          statement_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          data: Json
+          id?: string
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          statement_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          data?: Json
+          id?: string
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          statement_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_statements_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_conversion_jobs: {
         Row: {
           association_id: string | null
