@@ -1,18 +1,17 @@
 
 import React from 'react';
-import { Money } from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 import GLAccountsHeader from '@/components/accounting/gl-accounts/GLAccountsHeader';
 import { GLAccount } from '@/types/accounting-types';
-import { GLAccountsTable } from '@/components/accounting/GLAccountsTable';
-import { GLAccountDialog } from '@/components/accounting/GLAccountDialog';
-import { GLAccountDetailDialog } from '@/components/accounting/GLAccountDetailDialog';
-import { GLAccountCategories } from '@/components/accounting/GLAccountCategories';
-import { GLAccountGroups } from '@/components/accounting/GLAccountGroups';
-import { GLAccountBalanceChart } from '@/components/accounting/GLAccountBalanceChart';
-import { GLAccountTabs } from '@/components/accounting/GLAccountTabs';
+import GLAccountsTable from '@/components/accounting/GLAccountsTable';
+import GLAccountDetailDialog from '@/components/accounting/GLAccountDetailDialog';
+import GLAccountCategories from '@/components/accounting/GLAccountCategories';
+import GLAccountGroups from '@/components/accounting/GLAccountGroups';
+import GLAccountBalanceChart from '@/components/accounting/GLAccountBalanceChart';
+import GLAccountTabs from '@/components/accounting/GLAccountTabs';
 import { useAuth } from '@/contexts/auth';
 
 const GLAccounts = () => {
@@ -39,7 +38,7 @@ const GLAccounts = () => {
   return (
     <PageTemplate
       title="Chart of Accounts"
-      icon={<Money className="h-8 w-8" />}
+      icon={<DollarSign className="h-8 w-8" />}
       description="Manage your general ledger accounts and chart of accounts structure"
     >
       <div className="space-y-6">
