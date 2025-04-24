@@ -55,6 +55,48 @@ const HomeownerRequestDialogs: React.FC<HomeownerRequestDialogsProps> = ({ handl
   );
 };
 
-// Export the component and dialog functions
-export { openDetailDialog, openHistoryDialog };
+// Export the component and the dialog functions
+const dialogHelpers = {
+  openDetailDialog: null as ((request: HomeownerRequest) => void) | null,
+  openHistoryDialog: null as ((request: HomeownerRequest) => void) | null,
+};
+
+// These are the functions that will be called from outside components
+export const openDetailDialog = (request: HomeownerRequest) => {
+  if (dialogHelpers.openDetailDialog) {
+    dialogHelpers.openDetailDialog(request);
+  } else {
+    console.error("Detail dialog helper is not initialized");
+  }
+};
+
+export const openHistoryDialog = (request: HomeownerRequest) => {
+  if (dialogHelpers.openHistoryDialog) {
+    dialogHelpers.openHistoryDialog(request);
+  } else {
+    console.error("History dialog helper is not initialized");
+  }
+};
+
+// Update the component to expose its functions via the helpers
+const HomeownerRequestDialogsWithHelpers: React.FC<HomeownerRequestDialogsProps> = (props) => {
+  const dialogsRef = React.useRef<{
+    openDetailDialog: (request: HomeownerRequest) => void;
+    openHistoryDialog: (request: HomeownerRequest) => void;
+  } | null>(null);
+
+  const dialogsComponent = <HomeownerRequestDialogs {...props} ref={dialogsRef} />;
+
+  React.useEffect(() => {
+    if (dialogsRef.current) {
+      dialogHelpers.openDetailDialog = dialogsRef.current.openDetailDialog;
+      dialogHelpers.openHistoryDialog = dialogsRef.current.openHistoryDialog;
+    }
+  }, [dialogsRef.current]);
+
+  return dialogsComponent;
+};
+
+// Export both the component and the dialog functions
+export { openDetailDialog as viewDetailDialog, openHistoryDialog as viewHistoryDialog };
 export default HomeownerRequestDialogs;

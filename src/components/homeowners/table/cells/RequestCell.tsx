@@ -34,11 +34,13 @@ export const RequestCell: React.FC<RequestCellProps> = ({
           variant={
             request.status === 'open' ? 'default' :
             request.status === 'in-progress' ? 'secondary' :
-            request.status === 'resolved' ? 'success' :
+            request.status === 'resolved' ? 'outline' : // Changed from 'success' to 'outline'
             request.status === 'closed' ? 'outline' :
             'destructive'
           }
-          className="capitalize"
+          className={`capitalize ${
+            request.status === 'resolved' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''
+          }`}
         >
           {request.status}
         </Badge>
