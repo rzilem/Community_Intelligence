@@ -76,8 +76,9 @@ export const useLeads = () => {
         }
         
         if (data && data[0]) {
-          // Type assertion to handle the conversion properly
-          await updateLeadScore(data[0] as Lead);
+          // Fix: Add proper type casting to make TypeScript happy
+          const leadData = data[0] as unknown as Lead;
+          await updateLeadScore(leadData);
         }
         
         console.log('Test lead created successfully:', data);
