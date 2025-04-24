@@ -4,7 +4,7 @@ export * from './useBudgetMutations';
 export * from './useBudgetEntryMutations';
 
 // Combined hook for convenience
-import { useBudgetQueries } from './useBudgetQueries';
+import { useBudgetQueries, getBudgetEntries } from './useBudgetQueries';
 import { useBudgetMutations } from './useBudgetMutations';
 import { useBudgetEntryMutations } from './useBudgetEntryMutations';
 
