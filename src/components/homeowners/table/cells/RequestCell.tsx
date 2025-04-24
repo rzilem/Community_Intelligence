@@ -1,18 +1,18 @@
 
 import React from 'react';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { Badge } from '@/components/ui/badge';
 import { formatRelativeDate } from '@/lib/date-utils';
-import { RequestStatusBadge } from '../RequestStatusBadge';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
 
 interface RequestCellProps {
   request: HomeownerRequest;
   columnId: string;
   resident?: any;
-  property?: any;
-  association?: any;
+  property?: string;
+  association?: string;
   email?: string;
   senderEmail?: string;
-  description: string;
+  description?: string;
 }
 
 export const RequestCell: React.FC<RequestCellProps> = ({
@@ -26,44 +26,60 @@ export const RequestCell: React.FC<RequestCellProps> = ({
   description
 }) => {
   switch (columnId) {
-    case 'priority':
-      return <RequestStatusBadge status={request.priority} type="priority" />;
-    case 'status':
-      return <RequestStatusBadge status={request.status} type="status" />;
     case 'title':
-      return <div className="text-sm font-medium">{request.title || 'Untitled Request'}</div>;
-    case 'type':
-      return <div className="text-sm">{request.type}</div>;
-    case 'description':
+      return <div className="font-medium">{request.title}</div>;
+    case 'status':
       return (
-        <div 
-          className="text-sm text-muted-foreground max-w-[200px] truncate" 
-          title={description}
+        <Badge 
+          variant={
+            request.status === 'open' ? 'default' :
+            request.status === 'in-progress' ? 'secondary' :
+            request.status === 'resolved' ? 'success' :
+            request.status === 'closed' ? 'outline' :
+            'destructive'
+          }
+          className="capitalize"
         >
-          {description}
-        </div>
+          {request.status}
+        </Badge>
       );
+    case 'priority':
+      return (
+        <Badge 
+          variant="outline" 
+          className={`capitalize ${
+            request.priority === 'high' ? 'border-orange-500 text-orange-600' :
+            request.priority === 'urgent' ? 'border-red-500 text-red-600' :
+            request.priority === 'low' ? 'border-green-500 text-green-600' :
+            ''
+          }`}
+        >
+          {request.priority}
+        </Badge>
+      );
+    case 'type':
+      return <span className="capitalize">{request.type}</span>;
     case 'tracking_number':
-      return <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>;
+      return <span>{request.tracking_number || 'N/A'}</span>;
     case 'created_at':
-      return (
-        <div className="text-sm text-muted-foreground">
-          {request.created_at ? formatRelativeDate(request.created_at) : 'Unknown'}
-        </div>
-      );
+      return <span>{formatRelativeDate(request.created_at)}</span>;
+    case 'updated_at':
+      return <span>{formatRelativeDate(request.updated_at)}</span>;
     case 'resident_id':
-      return <div className="text-sm">{resident?.name || 'Not assigned'}</div>;
+      return <span>{resident?.name || 'Unknown'}</span>;
     case 'property_id':
-      return (
-        <div className="text-sm">
-          {property ? `${property.address}${property.unit_number ? ` #${property.unit_number}` : ''}` : 'Not assigned'}
-        </div>
-      );
+      return <span>{property || 'Unknown'}</span>;
     case 'association_id':
-      return <div className="text-sm">{association?.name || 'Not assigned'}</div>;
+      return <span>{association || 'Unknown'}</span>;
     case 'email':
-      return <div className="text-sm">{email || senderEmail || 'No email found'}</div>;
+      return <span>{email || 'No email'}</span>;
+    case 'description':
+      return <span className="line-clamp-1">{description}</span>;
+    case 'assigned_to':
+      return <span>{request.assigned_to || 'Unassigned'}</span>;
+    case 'resolved_at':
+      return <span>{request.resolved_at ? formatRelativeDate(request.resolved_at) : 'Unresolved'}</span>;
     default:
-      return <div>-</div>;
+      return <span>-</span>;
   }
 };

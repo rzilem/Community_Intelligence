@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
@@ -8,6 +9,7 @@ import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, Hom
 import LiveStatusDot from "@/components/common/LiveStatusDot";
 import { useHomeownerRequestsRealtime } from "@/hooks/homeowners/useHomeownerRequestsRealtime";
 import { useAuth } from "@/contexts/auth";
+import { openDetailDialog, openHistoryDialog } from './HomeownerRequestDialogs';
 
 interface HomeownerRequestContentProps {
   filteredRequests: HomeownerRequest[];
@@ -47,10 +49,12 @@ const HomeownerRequestContent = ({
 
   const handleViewRequest = (request: HomeownerRequest) => {
     console.log('View request', request.id);
+    openDetailDialog(request);
   };
 
   const handleEditRequest = (request: HomeownerRequest) => {
     console.log('Edit request', request.id);
+    openHistoryDialog(request);
   };
 
   return (

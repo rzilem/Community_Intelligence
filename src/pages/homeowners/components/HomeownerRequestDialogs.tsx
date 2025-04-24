@@ -22,7 +22,7 @@ const HomeownerRequestDialogs: React.FC<HomeownerRequestDialogsProps> = ({ handl
     handleRefresh();
   };
 
-  // These functions would be connected to buttons or other UI elements
+  // These functions are exported to be called from outside components
   const openDetailDialog = (request: HomeownerRequest) => {
     setSelectedRequest(request);
     setDetailOpen(true);
@@ -55,4 +55,6 @@ const HomeownerRequestDialogs: React.FC<HomeownerRequestDialogsProps> = ({ handl
   );
 };
 
+// Export the component and dialog functions
+export { openDetailDialog, openHistoryDialog };
 export default HomeownerRequestDialogs;
