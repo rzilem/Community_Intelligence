@@ -49,7 +49,7 @@ export const RecurringTransactionsList = () => {
       accessorKey: 'is_active',
       header: 'Status',
       cell: ({ row }) => (
-        <Badge variant={row.original.is_active ? 'success' : 'secondary'}>
+        <Badge variant={row.original.is_active ? 'default' : 'secondary'}>
           {row.original.is_active ? 'Active' : 'Inactive'}
         </Badge>
       )
