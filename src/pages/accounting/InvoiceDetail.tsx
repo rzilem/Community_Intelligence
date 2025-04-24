@@ -117,7 +117,7 @@ const InvoiceDetail = () => {
     }
     
     // Use navigate to change routes without triggering a full page reload
-    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`);
+    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`, { replace: true });
   };
 
   return (

@@ -113,28 +113,37 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     // Key for re-rendering on load attempts
     const embedKey = `pdf-embed-${loadAttempts}`;
     
+    // Use a data URL to embed the PDF via an object tag instead of iframe
     return (
       <div className="w-full h-full flex flex-col">
-        <iframe
+        <object
           key={embedKey}
-          src={pdfUrl}
+          data={pdfUrl}
+          type="application/pdf"
           className="w-full h-full border-0"
           onError={(e) => {
-            console.error("PDF iframe loading error:", e);
+            console.error("PDF object loading error:", e);
             onIframeError();
             if (loadAttempts === 0) {
               setLoadAttempts(1);
             }
           }}
           onLoad={() => {
-            console.log("PDF iframe loaded successfully");
+            console.log("PDF object loaded successfully");
             onIframeLoad();
           }}
-          title="PDF Document"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
-          referrerPolicy="no-referrer"
-          loading="lazy"
-        />
+        >
+          <div className="flex flex-col items-center justify-center p-6">
+            <p className="mb-4">Unable to display PDF directly.</p>
+            <Button 
+              variant="outline" 
+              onClick={onExternalOpen}
+              className="flex items-center"
+            >
+              Open PDF <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </object>
       </div>
     );
   };
