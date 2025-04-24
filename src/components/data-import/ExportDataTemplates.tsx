@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Download, FileSpreadsheet, Check } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,7 +48,7 @@ const ExportDataTemplates: React.FC<ExportDataTemplatesProps> = ({ associationId
         if (exportFormat === 'csv') {
           const csvContent = XLSX.utils.sheet_to_csv(worksheet);
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = window.document.createElement('a');
+          const link = document.createElement('a');
           link.href = URL.createObjectURL(blob);
           link.download = result.fileName;
           link.click();

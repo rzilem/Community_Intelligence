@@ -1,6 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.6";
+
+// Required for the edge function to handle file data
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
@@ -9,42 +11,63 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Get environment variables
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!openAIApiKey || !supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing required environment variables');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key is not configured');
+    }
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Supabase credentials are not configured');
     }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { documentUrl, documentName, documentType, associationId } = await req.json();
+    
+    // Parse request body
+    const { documentUrl, documentName, documentType } = await req.json();
     
     if (!documentUrl) {
       throw new Error('Document URL is required');
     }
     
     console.log(`Processing document: ${documentName} (${documentType})`);
+    console.log(`Document URL: ${documentUrl}`);
     
+    // Fetch the document content
     const response = await fetch(documentUrl);
     if (!response.ok) {
-      throw new Error(`Failed to fetch document: ${response.status}`);
+      throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}`);
     }
     
-    let documentContent = await response.text();
+    // Get document content as text
+    let documentContent = '';
     
-    // Trim content if too large
-    const maxContentLength = 15000;
-    if (documentContent.length > maxContentLength) {
-      documentContent = documentContent.substring(0, maxContentLength) + "... [Content truncated]";
+    // For text-based files, get the content directly
+    if (documentType === 'pdf' || documentType === 'txt' || documentType === 'docx') {
+      documentContent = await response.text();
+    } else {
+      throw new Error(`Unsupported document type: ${documentType}`);
     }
     
-    // Call OpenAI with enhanced system prompt for action suggestions
+    // Prepare document content for analysis (trim if too large)
+    const maxContentLength = 15000; // OpenAI token limits
+    const trimmedContent = documentContent.length > maxContentLength 
+      ? documentContent.substring(0, maxContentLength) + "... [Content truncated due to length]"
+      : documentContent;
+    
+    console.log(`Document content length: ${documentContent.length} characters`);
+    console.log(`Trimmed content length: ${trimmedContent.length} characters`);
+    
+    // Analyze document with OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -56,36 +79,23 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an AI assistant specialized in analyzing HOA documents and suggesting actionable items. 
-            Extract key information, identify required actions, and suggest automated processes. Format your response 
-            as JSON with the following structure:
+            content: `You are an AI assistant specialized in analyzing HOA documents. Extract key information, 
+            summarize content, and highlight important clauses and rules. Format your response as JSON with the 
+            following structure:
             {
               "summary": "Brief summary of the document",
               "docType": "Document type identification",
               "keyTopics": ["List of key topics covered"],
-              "suggestedActions": [
-                {
-                  "type": "action type (e.g., create_request, send_message, schedule_meeting)",
-                  "priority": "high|medium|low",
-                  "description": "Description of the suggested action",
-                  "context": "Why this action is suggested",
-                  "automated": boolean
-                }
-              ],
-              "importantDates": [
-                {
-                  "date": "YYYY-MM-DD",
-                  "description": "What's happening on this date"
-                }
-              ],
-              "requiredApprovals": ["List of roles/departments needed for approval"],
-              "complianceItems": ["List of compliance-related items identified"],
-              "notificationTargets": ["List of roles/groups that should be notified"]
-            }`
+              "importantClauses": [{"title": "Clause title", "summary": "Brief explanation"}],
+              "actionItems": ["List of any action items or requirements"],
+              "effectiveDates": ["Any dates mentioned that seem important"],
+              "relevantRoles": ["Roles or departments this might be relevant to"]
+            }
+            `
           },
           {
             role: 'user',
-            content: `Analyze this HOA document and suggest actions: ${documentContent}`
+            content: `Analyze this HOA document: ${trimmedContent}`
           }
         ],
         response_format: { type: "json_object" }
@@ -95,7 +105,7 @@ serve(async (req) => {
     if (!openAIResponse.ok) {
       const errorText = await openAIResponse.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${openAIResponse.status}`);
+      throw new Error(`OpenAI API error: ${openAIResponse.status} ${openAIResponse.statusText}`);
     }
     
     const analysisData = await openAIResponse.json();
@@ -103,40 +113,26 @@ serve(async (req) => {
     
     console.log('Analysis completed successfully');
     
-    // Store analysis results
+    // Store analysis in database
     const { data: storedAnalysis, error: storageError } = await supabase
       .from('document_analyses')
       .insert({
         document_url: documentUrl,
         document_name: documentName,
-        document_type: documentType,
         analysis_results: analysis,
-        association_id: associationId
+        document_type: documentType
       })
       .select()
       .single();
     
     if (storageError) {
-      throw storageError;
-    }
-
-    // Process suggested actions
-    for (const action of analysis.suggestedActions || []) {
-      if (action.automated) {
-        try {
-          await processAutomatedAction(supabase, action, analysis, documentName, associationId);
-        } catch (error) {
-          console.error('Error processing automated action:', error);
-        }
-      }
+      console.error('Error storing analysis:', storageError);
+      throw new Error(`Error storing analysis: ${storageError.message}`);
     }
     
     return new Response(JSON.stringify({
       success: true,
-      analysis: {
-        ...analysis,
-        associationId
-      },
+      analysis,
       analysisId: storedAnalysis.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -152,43 +148,3 @@ serve(async (req) => {
     });
   }
 });
-
-async function processAutomatedAction(supabase: any, action: any, analysis: any, documentName: string, associationId: string) {
-  switch (action.type) {
-    case 'create_request':
-      await supabase.from('homeowner_requests').insert({
-        title: `Auto-created from document: ${documentName}`,
-        description: action.description,
-        type: 'general',
-        priority: action.priority,
-        status: 'open',
-        association_id: associationId
-      });
-      break;
-
-    case 'send_message':
-      await supabase.from('scheduled_messages').insert({
-        subject: `Action Required: ${action.description}`,
-        content: `Based on document analysis of ${documentName}: ${action.context}`,
-        type: 'email',
-        recipient_groups: analysis.notificationTargets,
-        category: 'general',
-        association_id: associationId
-      });
-      break;
-
-    case 'schedule_meeting':
-      const meetingDate = analysis.importantDates?.[0]?.date;
-      if (meetingDate) {
-        await supabase.from('calendar_events').insert({
-          title: action.description,
-          description: action.context,
-          start_time: meetingDate,
-          end_time: new Date(new Date(meetingDate).getTime() + 60 * 60 * 1000).toISOString(),
-          event_type: 'meeting',
-          hoa_id: associationId
-        });
-      }
-      break;
-  }
-}

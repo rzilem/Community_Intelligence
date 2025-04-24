@@ -37,13 +37,13 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
       const response = await fetch(fileUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = window.document.createElement('a');
+      const a = document.createElement('a');
       a.href = url;
       a.download = filename;
-      window.document.body.appendChild(a);
+      document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
-      window.document.body.removeChild(a);
+      document.body.removeChild(a);
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download file');

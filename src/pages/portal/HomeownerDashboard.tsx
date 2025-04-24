@@ -1,99 +1,54 @@
-
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreditCard, FileText, Calendar, Users, File } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
+import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
 import AssociationPortalSelector from '@/components/portal/AssociationPortalSelector';
-import LanguageSelector from '@/components/portal/LanguageSelector';
-import { useTranslation } from '@/hooks/use-translation';
-import { QuickLinksSection } from '@/components/portal/dashboard/QuickLinksSection';
-import { CommunityUpdatesCard } from '@/components/portal/dashboard/CommunityUpdatesCard';
-import { AIChatCard } from '@/components/portal/dashboard/AIChatCard';
-
-export interface DashboardTranslations {
-  welcomeBack: string;
-  homeownerPortal: string;
-  makePayment: string;
-  submitRequest: string;
-  calendar: string;
-  viewDocuments: string;
-  communityUpdates: string;
-  latestAnnouncements: string;
-  annualMeeting: string;
-  annualMeetingDesc: string;
-  poolClosing: string;
-  poolClosingDesc: string;
-  askCommunityIntel: string;
-  getInstantAnswers: string;
-  [key: string]: string; // Add index signature to fix TypeScript error
-}
+import { toast } from 'sonner';
 
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
-  const { translateTexts, preferredLanguage, translateVersion } = useTranslation();
-  
-  const defaultTexts: DashboardTranslations = {
-    welcomeBack: 'Welcome back',
-    homeownerPortal: 'Homeowner Portal',
-    makePayment: 'Make a Payment',
-    submitRequest: 'Submit a Request',
-    calendar: 'Calendar',
-    viewDocuments: 'View Documents',
-    communityUpdates: 'Community Updates',
-    latestAnnouncements: 'Latest announcements and news',
-    annualMeeting: 'Annual Meeting Scheduled',
-    annualMeetingDesc: 'October 15, 2023 at 7:00 PM in the Community Center',
-    poolClosing: 'Pool Closing for Season',
-    poolClosingDesc: 'The community pool will close for the season on September 30',
-    askCommunityIntel: 'Ask Community Intelligence',
-    getInstantAnswers: 'Get instant answers about your community'
-  };
-  
-  const [translations, setTranslations] = useState<DashboardTranslations>(defaultTexts);
+  const navigate = useNavigate();
 
-  const updateTranslations = useCallback(async () => {
-    try {
-      if (preferredLanguage === 'en') {
-        setTranslations(defaultTexts);
-        return;
-      }
-      
-      console.log(`Updating translations for HomeownerDashboard to ${preferredLanguage}`);
-      const newTranslations = await translateTexts<DashboardTranslations>(defaultTexts);
-      console.log('New translations:', newTranslations);
-      setTranslations(newTranslations);
-    } catch (error) {
-      console.error('Translation error:', error);
-    }
-  }, [preferredLanguage, translateTexts, defaultTexts]);
-
-  // Update translations when language or translation version changes
-  useEffect(() => {
-    updateTranslations();
-  }, [preferredLanguage, updateTranslations, translateVersion]);
-
-  const handleLanguageChange = () => {
-    // No need to do anything here, the hook handles this
-  };
-
-  const handleAssociationChange = () => {
+  // Handler for changing association and reloading (follows PortalPageLayout usage)
+  const handleAssociationChange = (associationId: string) => {
     window.location.reload();
   };
+
+  const quickLinks = [
+    { 
+      title: 'Make a Payment', 
+      path: '/portal/homeowner/payments', 
+      icon: <CreditCard className="h-5 w-5" />, 
+      color: 'bg-blue-100',
+      onClickToast: () => toast.info('Payment Portal', { description: 'Redirecting to payment options' })
+    },
+    { 
+      title: 'Submit a Request', 
+      path: '/portal/homeowner/requests', 
+      icon: <FileText className="h-5 w-5" />, 
+      color: 'bg-green-100',
+      onClickToast: () => toast.info('Request Portal', { description: 'Preparing request submission form' })
+    },
+    { title: 'Calendar', path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" />, color: 'bg-purple-100' },
+    { title: 'View Documents', path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" />, color: 'bg-amber-100' },
+  ];
 
   return (
     <AppLayout>
       <div className="container p-6 space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">{translations.homeownerPortal}</h1>
+            <h1 className="text-3xl font-bold">Homeowner Portal</h1>
             <p className="text-muted-foreground">
-              {translations.welcomeBack}, {profile?.name || user?.email || 'Homeowner'}
+              Welcome back, {profile?.name || user?.email || 'Homeowner'}
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <LanguageSelector onLanguageChange={handleLanguageChange} />
-            <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
-          </div>
+          {/* Swap out Community Intelligence button for Association selector */}
+          <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -102,9 +57,55 @@ const HomeownerDashboard = () => {
           </div>
           
           <div className="lg:col-span-3 space-y-6">
-            <QuickLinksSection translations={translations} />
-            <CommunityUpdatesCard translations={translations} />
-            <AIChatCard translations={translations} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {quickLinks.map((link) => (
+                <Card 
+                  key={link.path} 
+                  className="hover:shadow-md transition-shadow"
+                  onClick={() => {
+                    link.onClickToast && link.onClickToast();
+                    // Standard navigation
+                    navigate(link.path);
+                  }}
+                >
+                  <CardHeader className="p-4">
+                    <div className={`w-10 h-10 rounded-full ${link.color} flex items-center justify-center mb-2`}>
+                      {link.icon}
+                    </div>
+                    <CardTitle className="text-base">{link.title}</CardTitle>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Community Updates</CardTitle>
+                <CardDescription>Latest announcements and news</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="border-b pb-2">
+                    <p className="font-medium">Annual Meeting Scheduled</p>
+                    <p className="text-sm text-muted-foreground">October 15, 2023 at 7:00 PM in the Community Center</p>
+                  </div>
+                  <div className="border-b pb-2">
+                    <p className="font-medium">Pool Closing for Season</p>
+                    <p className="text-sm text-muted-foreground">The community pool will close for the season on September 30</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Ask Community Intelligence</CardTitle>
+                <CardDescription>Get instant answers about your community</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AiQueryInput />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

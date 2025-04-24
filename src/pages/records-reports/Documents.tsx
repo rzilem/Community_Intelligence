@@ -1,193 +1,194 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { File, Filter } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import DocumentHeader from '@/components/documents/DocumentHeader';
-import DocumentFilters from '@/components/documents/DocumentFilters';
-import DocumentContent from '@/components/documents/DocumentContent';
-import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog';
-import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
-import { supabase } from '@/integrations/supabase/client';
-import { Document, DocumentCategory } from '@/types/document-types';
-import { useQuery } from '@tanstack/react-query';
+import { FileText, Plus, Sparkles } from 'lucide-react';
 import { useResponsive } from '@/hooks/use-responsive';
-import { useDocumentCategories } from '@/hooks/documents/useDocumentCategories';
+import DocumentContent from '@/components/documents/DocumentContent';
+import { useAuth } from '@/contexts/auth';
+import { useDocuments, useDocumentOperations, useDocumentCategories } from '@/hooks/documents';
 import { useDocumentColumns } from '@/hooks/documents/useDocumentColumns';
+import { toast } from 'sonner';
+import { Document } from '@/types/document-types';
+import { Button } from '@/components/ui/button';
+import { saveAs } from 'file-saver';
+import DocumentDialogs from '@/components/documents/DocumentDialogs';
+import DocumentHeader from '@/components/documents/DocumentHeader';
+import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
+import { DocumentTab } from '@/types/document-types';
+import DocumentAnalysisDialog from '@/components/documents/DocumentAnalysisDialog';
 
 const Documents = () => {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedAssociationId, setSelectedAssociationId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'documents' | 'templates'>('documents');
   const { isMobile } = useResponsive();
+  const { currentAssociation } = useAuth();
+  const [category, setCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isAnalysisDialogOpen, setIsAnalysisDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   
-  // Use hook for document columns
+  const { documents, isLoading } = useDocuments({
+    associationId: currentAssociation?.id,
+    category: category
+  });
+  
+  const { categories } = useDocumentCategories({
+    associationId: currentAssociation?.id
+  });
+  
   const { 
     columns, 
     visibleColumnIds, 
-    updateVisibleColumns 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults 
   } = useDocumentColumns();
   
-  // Use hook for document categories
-  const { 
-    categories, 
-    isLoading: categoriesLoading 
-  } = useDocumentCategories({ 
-    associationId: selectedAssociationId || undefined 
-  });
+  const { uploadDocument, deleteDocument, createCategory } = useDocumentOperations();
   
-  const { data: documents, isLoading } = useQuery({
-    queryKey: ['documents', selectedAssociationId, selectedCategory],
-    queryFn: async () => {
-      let query = supabase.from('documents').select('*');
-      
-      if (selectedAssociationId) {
-        query = query.eq('association_id', selectedAssociationId);
-      }
-      
-      if (selectedCategory) {
-        query = query.eq('category', selectedCategory);
-      }
-      
-      const { data, error } = await query.order('uploaded_date', { ascending: false });
-      if (error) throw error;
-      
-      // Map the database fields to match our Document type
-      return (data || []).map(doc => ({
-        ...doc,
-        uploaded_at: doc.uploaded_date || doc.created_at // Ensure uploaded_at is populated
-      })) as Document[];
+  const onViewDocument = (doc: Document) => {
+    window.open(doc.url, '_blank');
+  };
+  
+  const onDownloadDocument = (doc: Document) => {
+    saveAs(doc.url, doc.name);
+    toast.success('Document downloaded successfully');
+  };
+  
+  const onDeleteDocument = (doc: Document) => {
+    deleteDocument.mutate(doc);
+  };
+
+  const onAnalyzeDocument = (doc: Document) => {
+    setSelectedDocument(doc);
+    setIsAnalysisDialogOpen(true);
+  };
+
+  const handleUploadDocument = (file: File, category: string, description: string) => {
+    if (!currentAssociation?.id) {
+      toast.error('Please select an association first');
+      return;
     }
-  });
-
-  const filteredDocuments = documents?.filter(doc => {
-    if (!searchTerm) return true;
-    return doc.name.toLowerCase().includes(searchTerm.toLowerCase());
-  }) || [];
-
-  const handleViewDocument = (document: Document) => {
-    window.open(document.url, '_blank');
-  };
-
-  const handleDownloadDocument = (document: Document) => {
-    const link = document.url;
-    const a = window.document.createElement('a');
-    a.href = link;
-    a.download = document.name;
-    window.document.body.appendChild(a);
-    a.click();
-    window.document.body.removeChild(a);
-  };
-
-  const handleDeleteDocument = (document: Document) => {
-    // This will be implemented with a proper confirmation dialog
-    console.log('Delete document:', document);
-  };
-
-  const handleAnalyzeDocument = async (document: Document): Promise<any> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-document', {
-        body: {
-          documentUrl: document.url,
-          documentName: document.name,
-          documentType: document.file_type,
-          associationId: document.association_id
-        }
-      });
-      
-      if (error) {
-        console.error('Error analyzing document:', error);
-        return null;
+    
+    uploadDocument.mutate({
+      file,
+      category: category === 'none' ? undefined : category,
+      description,
+      associationId: currentAssociation.id
+    }, {
+      onSuccess: () => {
+        setIsUploadDialogOpen(false);
       }
-      
-      return data;
-    } catch (error) {
-      console.error('Error calling analyze-document function:', error);
-      return null;
-    }
+    });
   };
 
+  const handleCreateCategory = (name: string) => {
+    if (!currentAssociation?.id) {
+      toast.error('Please select an association first');
+      return;
+    }
+    
+    createCategory.mutate({
+      name,
+      associationId: currentAssociation.id
+    }, {
+      onSuccess: () => {
+        setIsCategoryDialogOpen(false);
+      }
+    });
+  };
+
+  const filteredDocuments = documents.filter(doc => 
+    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+  
   return (
-    <PageTemplate
-      title="Documents"
-      icon={<File className="h-8 w-8" />}
-      description="Manage and organize your association documents."
+    <PageTemplate 
+      title="Documents" 
+      icon={<FileText className="h-8 w-8" />}
+      description="Access and manage community documents and files."
+      actions={
+        <div className="flex gap-2">
+          <Button 
+            size="sm"
+            onClick={() => setIsUploadDialogOpen(true)}
+            disabled={!currentAssociation}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
+          <Button 
+            size="sm"
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              if (filteredDocuments.length === 0) {
+                toast.warning("Please upload a document first");
+                return;
+              }
+              toast.info("Select a document to analyze");
+            }}
+            disabled={!currentAssociation || filteredDocuments.length === 0}
+          >
+            <Sparkles className="h-4 w-4" />
+            AI Analysis
+          </Button>
+        </div>
+      }
     >
-      <div className="space-y-6">
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'documents' | 'templates')}>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      <div className={isMobile ? 'p-0' : ''}>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
             <DocumentHeader 
               activeTab={activeTab}
               onTabChange={setActiveTab}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
-              onUploadClick={() => setIsUploadOpen(true)}
-              isUploadDisabled={!selectedAssociationId}
+              onUploadClick={() => setIsUploadDialogOpen(true)}
+              isUploadDisabled={!currentAssociation}
             />
             
-            <div className="flex items-center space-x-2">
-              <DocumentColumnSelector
-                columns={columns}
-                selectedColumns={visibleColumnIds}
-                onChange={updateVisibleColumns}
-              />
-              
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" /> Filters
-              </Button>
-            </div>
+            <DocumentColumnSelector
+              columns={columns}
+              selectedColumns={visibleColumnIds}
+              onChange={updateVisibleColumns}
+              onReorder={reorderColumns}
+              resetToDefaults={resetToDefaults}
+              className="ml-2"
+            />
           </div>
+
+          <DocumentContent 
+            isLoading={isLoading}
+            documents={filteredDocuments}
+            onViewDocument={onViewDocument}
+            onDownloadDocument={onDownloadDocument}
+            onDeleteDocument={onDeleteDocument}
+            onAnalyzeDocument={onAnalyzeDocument}
+            visibleColumns={visibleColumnIds}
+          />
+
+          <DocumentDialogs 
+            isUploadDialogOpen={isUploadDialogOpen}
+            isCategoryDialogOpen={isCategoryDialogOpen}
+            onCloseUploadDialog={() => setIsUploadDialogOpen(false)}
+            onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
+            onUpload={handleUploadDocument}
+            onCreateCategory={handleCreateCategory}
+            categories={categories || []}
+            isUploading={uploadDocument.isPending}
+            isCreatingCategory={createCategory.isPending}
+          />
           
-          <div className="mt-6">
-            <TabsContent value="documents" className="mt-0 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-1">
-                  <DocumentFilters
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    onSelectCategory={setSelectedCategory}
-                    onCreateCategory={() => console.log('Create category')}
-                    categoriesLoading={categoriesLoading}
-                    onAssociationChange={(id) => setSelectedAssociationId(id)}
-                  />
-                </div>
-                <div className="md:col-span-3">
-                  <DocumentContent
-                    isLoading={isLoading}
-                    documents={filteredDocuments}
-                    visibleColumns={visibleColumnIds}
-                    onViewDocument={handleViewDocument}
-                    onDownloadDocument={handleDownloadDocument}
-                    onDeleteDocument={handleDeleteDocument}
-                    onAnalyzeDocument={handleAnalyzeDocument}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="templates">
-              <div className="p-8 text-center">
-                <h3 className="text-lg font-medium">Document Templates</h3>
-                <p className="text-muted-foreground">Templates functionality coming soon.</p>
-              </div>
-            </TabsContent>
-          </div>
-        </Tabs>
+          <DocumentAnalysisDialog 
+            isOpen={isAnalysisDialogOpen}
+            onClose={() => setIsAnalysisDialogOpen(false)}
+            document={selectedDocument}
+          />
+        </div>
       </div>
-      
-      <DocumentUploadDialog 
-        isOpen={isUploadOpen} 
-        onClose={() => setIsUploadOpen(false)}
-        onUpload={(file, category, description) => {
-          console.log('Upload file:', file, category, description);
-          setIsUploadOpen(false);
-        }}
-        categories={categories}
-        isUploading={false}
-      />
     </PageTemplate>
   );
 };

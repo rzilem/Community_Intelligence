@@ -6,7 +6,6 @@ import DocumentsTable from '@/components/documents/content/DocumentsTable';
 import MobileDocumentItem from '@/components/documents/content/MobileDocumentItem';
 import EmptyDocumentsState from '@/components/documents/content/EmptyDocumentsState';
 import { useResponsive } from '@/hooks/use-responsive';
-import DocumentAnalysisActions from './content/DocumentAnalysisActions';
 
 interface DocumentContentProps {
   isLoading: boolean;
@@ -15,7 +14,7 @@ interface DocumentContentProps {
   onViewDocument: (document: Document) => void;
   onDownloadDocument: (document: Document) => void;
   onDeleteDocument: (document: Document) => void;
-  onAnalyzeDocument?: (document: Document) => Promise<any>;
+  onAnalyzeDocument?: (document: Document) => void;
 }
 
 const DocumentContent: React.FC<DocumentContentProps> = ({
@@ -28,23 +27,7 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
   onAnalyzeDocument
 }) => {
   const { isMobile } = useResponsive();
-  const [currentAnalysis, setCurrentAnalysis] = React.useState<any>(null);
-  const [analyzedDocument, setAnalyzedDocument] = React.useState<Document | null>(null);
-
-  const handleAnalyzeDocument = async (doc: Document) => {
-    if (onAnalyzeDocument) {
-      setAnalyzedDocument(doc);
-      try {
-        const result = await onAnalyzeDocument(doc);
-        if (result && result.analysis) {
-          setCurrentAnalysis(result.analysis);
-        }
-      } catch (error) {
-        console.error('Error analyzing document:', error);
-      }
-    }
-  };
-
+  
   if (isLoading) {
     return <DocumentsLoadingSkeleton />;
   }
@@ -53,40 +36,32 @@ const DocumentContent: React.FC<DocumentContentProps> = ({
     return <EmptyDocumentsState />;
   }
 
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {documents.map(doc => (
+          <MobileDocumentItem
+            key={doc.id}
+            document={doc}
+            onView={() => onViewDocument(doc)}
+            onDownload={() => onDownloadDocument(doc)}
+            onDelete={() => onDeleteDocument(doc)}
+            onAnalyze={onAnalyzeDocument ? () => onAnalyzeDocument(doc) : undefined}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {currentAnalysis && analyzedDocument && (
-        <DocumentAnalysisActions 
-          analysis={currentAnalysis} 
-          documentName={analyzedDocument.name}
-          associationId={analyzedDocument.association_id}
-        />
-      )}
-      
-      {isMobile ? (
-        <div className="space-y-4">
-          {documents.map(doc => (
-            <MobileDocumentItem
-              key={doc.id}
-              document={doc}
-              onView={() => onViewDocument(doc)}
-              onDownload={() => onDownloadDocument(doc)}
-              onDelete={() => onDeleteDocument(doc)}
-              onAnalyze={() => handleAnalyzeDocument(doc)}
-            />
-          ))}
-        </div>
-      ) : (
-        <DocumentsTable
-          documents={documents}
-          visibleColumns={visibleColumns}
-          onViewDocument={onViewDocument}
-          onDownloadDocument={onDownloadDocument}
-          onDeleteDocument={onDeleteDocument}
-          onAnalyzeDocument={handleAnalyzeDocument}
-        />
-      )}
-    </div>
+    <DocumentsTable
+      documents={documents}
+      visibleColumns={visibleColumns}
+      onViewDocument={onViewDocument}
+      onDownloadDocument={onDownloadDocument}
+      onDeleteDocument={onDeleteDocument}
+      onAnalyzeDocument={onAnalyzeDocument}
+    />
   );
 };
 

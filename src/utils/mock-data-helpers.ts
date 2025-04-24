@@ -2,27 +2,32 @@
 import { GLAccount } from '@/types/accounting-types';
 
 /**
- * Ensures that GL Accounts have the is_active property
- * This is a helper for backwards compatibility when using mock data
+ * Ensures all GL account objects in an array have the is_active property
+ * @param accounts Array of GL account objects that might be missing the is_active property
+ * @returns Array of GL account objects with is_active property set
  */
-export const ensureGLAccountsHaveIsActive = (accounts: any[]): GLAccount[] => {
+export function ensureGLAccountsHaveIsActive(accounts: Partial<GLAccount>[]): GLAccount[] {
   return accounts.map(account => ({
     ...account,
-    is_active: account.is_active === undefined ? true : account.is_active
-  }));
-};
+    is_active: account.is_active !== undefined ? account.is_active : true
+  })) as GLAccount[];
+}
 
 /**
- * Create a mock journal entry with balanced details
+ * Creates a mock GL account with default values
+ * @param overrides Properties to override in the default GL account
+ * @returns A mock GL account with the specified overrides
  */
-export const createMockJournalEntry = (id: string, date: string, description: string) => {
+export function createMockGLAccount(overrides: Partial<GLAccount> = {}): GLAccount {
   return {
-    id,
-    date,
-    reference: `JE-${id.substring(0, 8)}`,
-    description,
-    status: 'draft',
-    createdBy: 'System User',
-    createdAt: new Date().toISOString()
+    id: `mock-${Math.random().toString(36).substring(2, 9)}`,
+    code: '1000',
+    name: 'Mock Account',
+    type: 'Asset',
+    description: 'Mock account for testing',
+    category: 'Current Assets',
+    balance: 0,
+    is_active: true,
+    ...overrides
   };
-};
+}

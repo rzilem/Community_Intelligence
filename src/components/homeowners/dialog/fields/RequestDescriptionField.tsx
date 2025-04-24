@@ -18,12 +18,9 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
   const decodeHtmlEntities = (value: string): string => {
     if (!value) return '';
     try {
-      const textArea = window.document.createElement('textarea');
-      if (textArea.innerHTML !== undefined) {
-        textArea.innerHTML = value;
-        return textArea.value || value;
-      }
-      return value;
+      const textArea = document.createElement('textarea');
+      textArea.innerHTML = value;
+      return textArea.value;
     } catch (error) {
       console.error('Error decoding HTML entities:', error);
       return value; // Return original value if decoding fails
@@ -64,3 +61,4 @@ const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form 
 };
 
 export default RequestDescriptionField;
+

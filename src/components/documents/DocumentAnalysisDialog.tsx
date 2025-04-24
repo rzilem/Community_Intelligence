@@ -44,8 +44,7 @@ const DocumentAnalysisDialog: React.FC<DocumentAnalysisDialogProps> = ({
         body: {
           documentUrl: document.url,
           documentName: document.name,
-          documentType: document.file_type,
-          associationId: document.association_id
+          documentType: document.file_type
         }
       });
       

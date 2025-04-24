@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -11,7 +10,6 @@ import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleConte
 import { useResponsive } from '@/hooks/use-responsive';
 import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from '@/hooks/use-translation';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
@@ -27,7 +25,6 @@ const Dashboard = () => {
   const { stats, recentActivity, loading: dataLoading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
-  const { translateText } = useTranslation();
   
   console.log('Dashboard rendering, auth state:', { 
     isAuthenticated: isAuthenticated ? 'yes' : 'no',
@@ -50,19 +47,11 @@ const Dashboard = () => {
   useEffect(() => {
     // Show welcome back toast when dashboard loads
     if (profile) {
-      const showWelcomeToast = async () => {
-        const welcomeMessage = await translateText('Welcome back');
-        const viewingMessage = await translateText("You're currently viewing the");
-        const dashboardMessage = await translateText('dashboard');
-        
-        toast.success(`${welcomeMessage}, ${profile.name || 'Homeowner'}!`, {
-          description: `${viewingMessage} ${currentAssociation?.name || 'default'} ${dashboardMessage}.`
-        });
-      };
-      
-      showWelcomeToast();
+      toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
+        description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
+      });
     }
-  }, [profile, currentAssociation, translateText]);
+  }, [profile, currentAssociation]);
   
   if (loading) {
     return (
