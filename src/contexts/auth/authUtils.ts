@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
@@ -104,7 +105,11 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     const { data, error } = await supabase
       .from('association_users')
       .select(`
+        id, 
+        user_id,
+        association_id,
         role,
+        created_at,
         associations (
           id,
           name,
@@ -117,8 +122,13 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
 
     if (error) throw error;
 
+    // Map the response to match the UserAssociation type
     return data.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      association_id: item.association_id,
       role: item.role,
+      created_at: item.created_at,
       associations: item.associations
     }));
   } catch (error) {

@@ -1,4 +1,5 @@
 
+
 import { Session, User } from '@supabase/supabase-js';
 import { Association } from '@/types/association-types';
 import { Profile } from '@/types/profile-types';
