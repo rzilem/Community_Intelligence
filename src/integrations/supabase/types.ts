@@ -2741,8 +2741,11 @@ export type Database = {
           invoice_date: string | null
           invoice_number: string
           payment_date: string | null
+          payment_id: string | null
           payment_method: string | null
+          payment_status: string | null
           pdf_url: string | null
+          scheduled_payment_date: string | null
           source_document: string | null
           status: string
           tracking_number: string | null
@@ -2763,8 +2766,11 @@ export type Database = {
           invoice_date?: string | null
           invoice_number: string
           payment_date?: string | null
+          payment_id?: string | null
           payment_method?: string | null
+          payment_status?: string | null
           pdf_url?: string | null
+          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null
@@ -2785,8 +2791,11 @@ export type Database = {
           invoice_date?: string | null
           invoice_number?: string
           payment_date?: string | null
+          payment_id?: string | null
           payment_method?: string | null
+          payment_status?: string | null
           pdf_url?: string | null
+          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null

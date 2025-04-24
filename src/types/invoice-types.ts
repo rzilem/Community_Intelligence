@@ -1,4 +1,3 @@
-
 export interface Invoice {
   id: string;
   tracking_number?: string;
@@ -55,3 +54,4 @@ export interface CommunicationLog {
   created_at?: string;
   updated_at?: string;
 }
+
