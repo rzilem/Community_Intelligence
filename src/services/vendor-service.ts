@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Vendor, VendorStats } from "@/types/vendor-types";
 
@@ -13,7 +14,7 @@ export const vendorService = {
       .select('*');
 
     if (search) {
-      query = query.ilike('name', `%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
     }
 
     if (category) {
@@ -41,8 +42,10 @@ export const vendorService = {
     return (vendors || []).map(vendor => ({
       ...vendor,
       status: vendor.status || 'active',
-      hasInsurance: vendor.hasInsurance || false,
-    })) as Vendor[];
+      hasInsurance: vendor.has_insurance || false,
+      category: vendor.service_type,
+      lastInvoice: undefined, // Add this if needed
+    } as Vendor)) as Vendor[];
   },
 
   getVendorById: async (id: string): Promise<Vendor | undefined> => {
@@ -57,7 +60,13 @@ export const vendorService = {
       return undefined;
     }
 
-    return vendor;
+    return {
+      ...vendor,
+      status: vendor.status || 'active',
+      hasInsurance: vendor.has_insurance || false,
+      category: vendor.service_type,
+      lastInvoice: undefined, // Add this if needed
+    } as Vendor;
   },
 
   getVendorStats: async (): Promise<VendorStats> => {
@@ -80,7 +89,7 @@ export const vendorService = {
       inactiveVendors: inactiveVendors.length,
       topCategory: categories[0] || null,
       serviceCategories: categories.length,
-      withInsurance: vendors?.filter(v => v.hasInsurance)?.length || 0
+      withInsurance: vendors?.filter(v => v.has_insurance)?.length || 0
     };
   }
 };

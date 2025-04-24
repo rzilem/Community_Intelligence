@@ -4615,33 +4615,39 @@ export type Database = {
           address: string | null
           created_at: string
           email: string | null
+          has_insurance: boolean
           id: string
           name: string
           phone: string | null
           rating: number | null
           service_type: string | null
+          status: string
           updated_at: string
         }
         Insert: {
           address?: string | null
           created_at?: string
           email?: string | null
+          has_insurance?: boolean
           id?: string
           name: string
           phone?: string | null
           rating?: number | null
           service_type?: string | null
+          status?: string
           updated_at?: string
         }
         Update: {
           address?: string | null
           created_at?: string
           email?: string | null
+          has_insurance?: boolean
           id?: string
           name?: string
           phone?: string | null
           rating?: number | null
           service_type?: string | null
+          status?: string
           updated_at?: string
         }
         Relationships: []

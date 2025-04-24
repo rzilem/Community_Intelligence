@@ -46,7 +46,8 @@ const Vendors = () => {
     try {
       const result = await dataExportService.exportData({
         dataType: 'vendors',
-        format: 'xlsx'
+        format: 'xlsx',
+        associationId: undefined, // This was the missing property
       });
       
       if (result.success) {
