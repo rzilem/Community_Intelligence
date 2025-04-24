@@ -70,13 +70,18 @@ export const useLeadMutations = () => {
         .eq('id', id)
         .single();
 
-      if (fetchError || !leadData) {
+      if (fetchError) {
         console.error('Error fetching lead:', fetchError);
-        throw fetchError || new Error('Lead not found');
+        throw fetchError;
+      }
+      
+      if (!leadData) {
+        throw new Error('Lead not found');
       }
 
       // Now we have properly typed lead data
-      const lead = leadData as Lead;
+      // Use type assertion with unknown as intermediate step
+      const lead = leadData as unknown as Lead;
       
       console.log(`Updating lead ${id} status to ${status}`);
       
@@ -103,7 +108,12 @@ export const useLeadMutations = () => {
       }
       
       // Update lead score with new status
-      await updateLeadScore({ ...lead, status });
+      // Create a new object that combines the lead data with the new status
+      const updatedLead: Lead = {
+        ...lead,
+        status
+      };
+      await updateLeadScore(updatedLead);
       
     } catch (error: any) {
       console.error('Error updating lead status:', error);
