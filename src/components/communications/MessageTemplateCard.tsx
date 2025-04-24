@@ -5,11 +5,10 @@ import { Copy, Edit, Mail, Trash } from 'lucide-react';
 import TooltipButton from '@/components/ui/tooltip-button';
 
 interface MessageTemplateCardProps {
-  template: {
-    name: string;
-    description?: string;
-    lastUsed?: string;
-  };
+  title: string;
+  description?: string;
+  date?: string;
+  type: 'email' | 'sms';
   onEdit?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
@@ -17,7 +16,10 @@ interface MessageTemplateCardProps {
 }
 
 const MessageTemplateCard: React.FC<MessageTemplateCardProps> = ({
-  template,
+  title,
+  description,
+  date,
+  type,
   onEdit,
   onDelete,
   onDuplicate,
@@ -26,17 +28,20 @@ const MessageTemplateCard: React.FC<MessageTemplateCardProps> = ({
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-lg font-medium">{template.name}</h3>
-        {template.description && (
-          <p className="text-sm text-muted-foreground">{template.description}</p>
+        <h3 className="text-lg font-medium">{title}</h3>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
         )}
       </CardHeader>
       <CardContent>
-        {template.lastUsed && (
+        {date && (
           <p className="text-sm text-muted-foreground">
-            Last used: {template.lastUsed}
+            Last used: {date}
           </p>
         )}
+        <p className="text-sm text-muted-foreground mt-1">
+          Type: {type === 'email' ? 'Email Template' : 'SMS Template'}
+        </p>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
         <TooltipButton 
