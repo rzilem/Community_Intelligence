@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
-import { Workflow } from '@/types/workflow-types';
+import { Workflow, WorkflowType } from '@/types/workflow-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,7 +25,7 @@ const Workflows = () => {
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
-  const [workflowType, setWorkflowType] = useState<string>('Governance');
+  const [workflowType, setWorkflowType] = useState<WorkflowType>('Governance');
   const {
     workflows,
     templates,
@@ -33,6 +34,7 @@ const Workflows = () => {
     searchTerm,
     setSearchTerm,
     createFromTemplate,
+    duplicateWorkflow,
     isLoading: isCreating
   } = useWorkflows();
 
@@ -63,6 +65,14 @@ const Workflows = () => {
     if (newWorkflowId) {
       setNewDialogOpen(false);
     }
+  };
+
+  const handleUseTemplate = async (id: string) => {
+    await createFromTemplate(id);
+  };
+
+  const handleDuplicateWorkflow = async (id: string) => {
+    await duplicateWorkflow(id);
   };
 
   const filteredWorkflows = workflows.filter(workflow =>
@@ -111,7 +121,11 @@ const Workflows = () => {
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'active').map(workflow => (
                   <Card key={workflow.id}>
-                    <WorkflowTemplateCard workflow={workflow} />
+                    <WorkflowTemplateCard 
+                      workflow={workflow}
+                      onUseTemplate={handleUseTemplate}
+                      onDuplicateTemplate={handleDuplicateWorkflow}
+                    />
                   </Card>
                 ))}
               </div>
@@ -125,7 +139,11 @@ const Workflows = () => {
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredTemplates.map(template => (
                   <Card key={template.id}>
-                    <WorkflowTemplateCard workflow={template} />
+                    <WorkflowTemplateCard 
+                      workflow={template}
+                      onUseTemplate={handleUseTemplate}
+                      onDuplicateTemplate={handleDuplicateWorkflow}
+                    />
                   </Card>
                 ))}
               </div>
@@ -139,7 +157,11 @@ const Workflows = () => {
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'draft').map(workflow => (
                   <Card key={workflow.id}>
-                    <WorkflowTemplateCard workflow={workflow} />
+                    <WorkflowTemplateCard 
+                      workflow={workflow}
+                      onUseTemplate={handleUseTemplate}
+                      onDuplicateTemplate={handleDuplicateWorkflow}
+                    />
                   </Card>
                 ))}
               </div>
@@ -153,7 +175,11 @@ const Workflows = () => {
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'completed').map(workflow => (
                   <Card key={workflow.id}>
-                    <WorkflowTemplateCard workflow={workflow} />
+                    <WorkflowTemplateCard 
+                      workflow={workflow}
+                      onUseTemplate={handleUseTemplate}
+                      onDuplicateTemplate={handleDuplicateWorkflow}
+                    />
                   </Card>
                 ))}
               </div>
@@ -167,7 +193,11 @@ const Workflows = () => {
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.map(workflow => (
                   <Card key={workflow.id}>
-                    <WorkflowTemplateCard workflow={workflow} />
+                    <WorkflowTemplateCard 
+                      workflow={workflow}
+                      onUseTemplate={handleUseTemplate}
+                      onDuplicateTemplate={handleDuplicateWorkflow}
+                    />
                   </Card>
                 ))}
               </div>
@@ -206,7 +236,10 @@ const Workflows = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select onValueChange={setWorkflowType}>
+              <Select 
+                value={workflowType}
+                onValueChange={(value) => setWorkflowType(value as WorkflowType)}
+              >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Select workflow type" />
                 </SelectTrigger>

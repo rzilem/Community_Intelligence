@@ -44,7 +44,7 @@ export function useWorkflows(templateOnly: boolean = false) {
     const workflowId = id || paramId;
 
     const { data: workflow, isLoading, error } = useSupabaseQuery<Workflow>(
-      ['workflows', workflowId],
+      ['workflows', workflowId], // Use an array for the query key
       {
         select: '*',
         filter: [{ column: 'id', value: workflowId }],
@@ -61,7 +61,7 @@ export function useWorkflows(templateOnly: boolean = false) {
   };
 
   // Save workflow function
-  const saveWorkflow = async (workflow: Partial<Workflow>): Promise<boolean> => {
+  const saveWorkflow = async (workflow: Partial<Workflow> & { name: string, type: WorkflowType, steps: WorkflowStep[], is_template: boolean }): Promise<boolean> => {
     setIsLoading(true);
     try {
       if (workflow.id) {
@@ -71,7 +71,13 @@ export function useWorkflows(templateOnly: boolean = false) {
         });
         toast.success('Workflow updated successfully');
       } else {
-        await createWorkflow(workflow);
+        // Add the status field if not present
+        const workflowData = {
+          ...workflow,
+          status: workflow.status || 'draft' as WorkflowStatus
+        };
+        
+        await createWorkflow(workflowData);
         toast.success('Workflow created successfully');
       }
       refetch();
@@ -110,7 +116,7 @@ export function useWorkflows(templateOnly: boolean = false) {
       }
 
       // Create a new workflow based on the template
-      const newWorkflow: Partial<Workflow> = {
+      const newWorkflow = {
         name: template.name,
         description: template.description,
         type: template.type,
@@ -152,7 +158,7 @@ export function useWorkflows(templateOnly: boolean = false) {
       }
 
       // Create a duplicate with a slightly different name
-      const newWorkflow: Partial<Workflow> = {
+      const newWorkflow = {
         name: `${workflow.name} (Copy)`,
         description: workflow.description,
         type: workflow.type,

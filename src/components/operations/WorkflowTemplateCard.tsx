@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,8 +14,8 @@ import {
 
 interface WorkflowTemplateCardProps {
   workflow: Workflow;
-  onUseTemplate: (id: string) => void;
-  onDuplicateTemplate: (id: string) => void;
+  onUseTemplate?: (id: string) => void;
+  onDuplicateTemplate?: (id: string) => void;
   onEditTemplate?: (id: string) => void;
   onDeleteTemplate?: (id: string) => void;
 }
@@ -88,7 +89,7 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
           variant="outline"
           size="sm"
           className="h-7 text-xs"
-          onClick={() => onDuplicateTemplate(workflow.id)}
+          onClick={() => onDuplicateTemplate && onDuplicateTemplate(workflow.id)}
         >
           <Copy className="h-3 w-3 mr-1" />
           Duplicate
@@ -96,7 +97,7 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
         <Button 
           size="sm"
           className="h-7 text-xs"
-          onClick={() => onUseTemplate(workflow.id)}
+          onClick={() => onUseTemplate && onUseTemplate(workflow.id)}
         >
           <PlayCircle className="h-3 w-3 mr-1" />
           Use
