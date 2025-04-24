@@ -1,74 +1,42 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
-import { Workflow, WorkflowType } from '@/types/workflow-types';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Search, Loader2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
-import WorkflowListItem from '@/components/operations/WorkflowListItem';
 import { useNavigate } from 'react-router-dom';
+import { WorkflowFilters } from '@/components/operations/workflow/filters/WorkflowFilters';
+import WorkflowTabContent from '@/components/operations/workflow/tabs/WorkflowTabContent';
+import { NewWorkflowDialog } from '@/components/operations/workflow/dialogs/NewWorkflowDialog';
+import { useWorkflowDialog } from '@/hooks/operations/useWorkflowDialog';
 
 const Workflows = () => {
   const navigate = useNavigate();
-  const [newDialogOpen, setNewDialogOpen] = useState(false);
-  const [workflowName, setWorkflowName] = useState('');
-  const [workflowDescription, setWorkflowDescription] = useState('');
-  const [workflowType, setWorkflowType] = useState<WorkflowType>('Governance');
-  
   const {
     workflows,
     templates,
     isLoading,
-    saveWorkflow,
     searchTerm,
     setSearchTerm,
     createFromTemplate,
     duplicateWorkflow,
-    isLoading: isCreating
   } = useWorkflows();
 
-  const [templateId, setTemplateId] = useState<string | null>(null);
-
-  const handleCreate = async () => {
-    if (!workflowName) return;
-
-    let newWorkflowId: string | null = null;
-
-    if (templateId) {
-      newWorkflowId = await createFromTemplate(templateId);
-    } else {
-      const success = await saveWorkflow({
-        name: workflowName,
-        description: workflowDescription,
-        type: workflowType,
-        steps: [],
-        is_template: false
-      });
-      if (success) {
-        setWorkflowName('');
-        setWorkflowDescription('');
-        setWorkflowType('Governance');
-      }
-    }
-
-    if (newWorkflowId) {
-      setNewDialogOpen(false);
-    }
-  };
+  const {
+    newDialogOpen,
+    setNewDialogOpen,
+    workflowName,
+    setWorkflowName,
+    workflowDescription,
+    setWorkflowDescription,
+    workflowType,
+    setWorkflowType,
+    templateId,
+    setTemplateId,
+    handleCreate,
+    isCreating
+  } = useWorkflowDialog();
 
   const handleUseTemplate = async (id: string) => {
     await createFromTemplate(id);
@@ -94,16 +62,10 @@ const Workflows = () => {
     <PageTemplate title="Workflows" icon={<i className="icon" />}>
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
-          <div className="relative max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search workflows..."
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <WorkflowFilters 
+            searchTerm={searchTerm} 
+            onSearchChange={setSearchTerm} 
+          />
           <div className="flex gap-2">
             <Button onClick={() => setNewDialogOpen(true)}>
               <Plus className="mr-1 h-4 w-4" />
@@ -122,167 +84,69 @@ const Workflows = () => {
           </TabsList>
 
           <TabsContent value="active" className="mt-4">
-            {isLoading ? (
-              <p>Loading workflows...</p>
-            ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredWorkflows.filter(w => w.status === 'active').map(workflow => (
-                  <WorkflowListItem 
-                    key={workflow.id}
-                    workflow={workflow}
-                    onViewDetails={handleViewWorkflow}
-                    onDuplicate={handleDuplicateWorkflow}
-                  />
-                ))}
-              </div>
-            )}
+            <WorkflowTabContent
+              workflows={filteredWorkflows.filter(w => w.status === 'active')}
+              isLoading={isLoading}
+              onViewDetails={handleViewWorkflow}
+              onDuplicate={handleDuplicateWorkflow}
+            />
           </TabsContent>
 
           <TabsContent value="templates" className="mt-4">
-            {isLoading ? (
-              <p>Loading templates...</p>
-            ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredTemplates.map(template => (
-                  <WorkflowTemplateCard 
-                    key={template.id}
-                    workflow={template}
-                    onUseTemplate={handleUseTemplate}
-                    onDuplicateTemplate={handleDuplicateWorkflow}
-                  />
-                ))}
-              </div>
-            )}
+            <WorkflowTabContent
+              workflows={filteredTemplates}
+              isLoading={isLoading}
+              onViewDetails={handleViewWorkflow}
+              onDuplicate={handleDuplicateWorkflow}
+              onUseTemplate={handleUseTemplate}
+              isTemplate
+            />
           </TabsContent>
 
           <TabsContent value="drafts" className="mt-4">
-            {isLoading ? (
-              <p>Loading drafts...</p>
-            ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredWorkflows.filter(w => w.status === 'draft').map(workflow => (
-                  <WorkflowListItem 
-                    key={workflow.id}
-                    workflow={workflow} 
-                    onViewDetails={handleViewWorkflow}
-                    onDuplicate={handleDuplicateWorkflow}
-                  />
-                ))}
-              </div>
-            )}
+            <WorkflowTabContent
+              workflows={filteredWorkflows.filter(w => w.status === 'draft')}
+              isLoading={isLoading}
+              onViewDetails={handleViewWorkflow}
+              onDuplicate={handleDuplicateWorkflow}
+            />
           </TabsContent>
 
           <TabsContent value="completed" className="mt-4">
-            {isLoading ? (
-              <p>Loading completed workflows...</p>
-            ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredWorkflows.filter(w => w.status === 'completed').map(workflow => (
-                  <WorkflowListItem 
-                    key={workflow.id}
-                    workflow={workflow}
-                    onViewDetails={handleViewWorkflow}
-                    onDuplicate={handleDuplicateWorkflow}
-                  />
-                ))}
-              </div>
-            )}
+            <WorkflowTabContent
+              workflows={filteredWorkflows.filter(w => w.status === 'completed')}
+              isLoading={isLoading}
+              onViewDetails={handleViewWorkflow}
+              onDuplicate={handleDuplicateWorkflow}
+            />
           </TabsContent>
 
           <TabsContent value="all" className="mt-4">
-            {isLoading ? (
-              <p>Loading all workflows...</p>
-            ) : (
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredWorkflows.map(workflow => (
-                  <WorkflowListItem 
-                    key={workflow.id}
-                    workflow={workflow}
-                    onViewDetails={handleViewWorkflow}
-                    onDuplicate={handleDuplicateWorkflow}
-                  />
-                ))}
-              </div>
-            )}
+            <WorkflowTabContent
+              workflows={filteredWorkflows}
+              isLoading={isLoading}
+              onViewDetails={handleViewWorkflow}
+              onDuplicate={handleDuplicateWorkflow}
+            />
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* New Workflow Dialog */}
-      <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Workflow</DialogTitle>
-            <DialogDescription>
-              Start from scratch or use a template to create your workflow.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Workflow Name</Label>
-              <Input
-                id="name"
-                placeholder="Workflow name"
-                value={workflowName}
-                onChange={(e) => setWorkflowName(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Workflow description"
-                value={workflowDescription}
-                onChange={(e) => setWorkflowDescription(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select 
-                value={workflowType}
-                onValueChange={(value) => setWorkflowType(value as WorkflowType)}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Select workflow type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Financial">Financial</SelectItem>
-                  <SelectItem value="Compliance">Compliance</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
-                  <SelectItem value="Resident Management">Resident Management</SelectItem>
-                  <SelectItem value="Governance">Governance</SelectItem>
-                  <SelectItem value="Communication">Communication</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="template">Use Template (optional)</Label>
-              <Select onValueChange={setTemplateId}>
-                <SelectTrigger id="template">
-                  <SelectValue placeholder="Select a template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map(template => (
-                    <SelectItem key={template.id} value={template.id}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="">None</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={!workflowName || isCreating}>
-              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <NewWorkflowDialog
+        open={newDialogOpen}
+        onOpenChange={setNewDialogOpen}
+        workflowName={workflowName}
+        workflowDescription={workflowDescription}
+        workflowType={workflowType}
+        templateId={templateId}
+        templates={templates}
+        isCreating={isCreating}
+        onWorkflowNameChange={setWorkflowName}
+        onWorkflowDescriptionChange={setWorkflowDescription}
+        onWorkflowTypeChange={setWorkflowType}
+        onTemplateIdChange={setTemplateId}
+        onCreate={handleCreate}
+      />
     </PageTemplate>
   );
 };
