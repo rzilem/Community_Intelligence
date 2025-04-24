@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Workflow as WorkflowIcon, Plus, Loader2, Filter } from 'lucide-react';
+import { Workflow as WorkflowIcon, Plus, Loader2, Filter, SortAscending, Search } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,12 +18,18 @@ import { WorkflowType } from '@/types/workflow-types';
 import WorkflowAnalyticsDashboard from '@/components/operations/WorkflowAnalyticsDashboard';
 import WorkflowCreateDialog from '@/components/operations/dialogs/WorkflowCreateDialog';
 import WorkflowDeleteDialog from '@/components/operations/dialogs/WorkflowDeleteDialog';
+import { Input } from '@/components/ui/input';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import ResponsiveGrid from '@/components/layout/ResponsiveGrid';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<WorkflowType | 'all'>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'type' | 'popular'>('name');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // Show 20 cards per page
   const [deleteDialogState, setDeleteDialogState] = useState<{
     isOpen: boolean;
     workflowId: string | null;
@@ -53,22 +59,59 @@ const Workflows = () => {
   } = useWorkflows();
 
   const filteredTemplates = useMemo(() => {
-    return workflowTemplates.filter(workflow => {
+    let filtered = workflowTemplates.filter(workflow => {
       const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         workflow.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === 'all' || workflow.type === typeFilter;
       return matchesSearch && matchesType;
     });
-  }, [workflowTemplates, searchTerm, typeFilter]);
+    
+    // Sort the filtered workflows
+    return filtered.sort((a, b) => {
+      if (sortBy === 'popular') {
+        // Sort by popularity (isPopular first)
+        return (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0);
+      } else if (sortBy === 'type') {
+        // Sort by type
+        return a.type.localeCompare(b.type);
+      } else {
+        // Sort by name (default)
+        return a.name.localeCompare(b.name);
+      }
+    });
+  }, [workflowTemplates, searchTerm, typeFilter, sortBy]);
 
   const filteredActiveWorkflows = useMemo(() => {
-    return activeWorkflows.filter(workflow => {
+    let filtered = activeWorkflows.filter(workflow => {
       const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         workflow.description?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = typeFilter === 'all' || workflow.type === typeFilter;
       return matchesSearch && matchesType;
     });
-  }, [activeWorkflows, searchTerm, typeFilter]);
+    
+    // Sort the filtered workflows
+    return filtered.sort((a, b) => {
+      if (sortBy === 'type') {
+        return a.type.localeCompare(b.type);
+      } else {
+        return a.name.localeCompare(b.name);
+      }
+    });
+  }, [activeWorkflows, searchTerm, typeFilter, sortBy]);
+  
+  // Pagination calculations
+  const totalTemplatePages = Math.ceil(filteredTemplates.length / itemsPerPage);
+  const totalActivePages = Math.ceil(filteredActiveWorkflows.length / itemsPerPage);
+  
+  const paginatedTemplates = filteredTemplates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  
+  const paginatedActiveWorkflows = filteredActiveWorkflows.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const workflowTypes: WorkflowType[] = [
     'Financial', 
@@ -110,6 +153,11 @@ const Workflows = () => {
       console.error('Error deleting workflow:', error);
     }
   };
+  
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when changing tabs
+  };
 
   return (
     <PageTemplate 
@@ -118,6 +166,16 @@ const Workflows = () => {
       description="Create and manage automated workflows for your association processes"
       actions={
         <div className="flex gap-2">
+          <div className="relative w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search workflows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+          </div>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -144,6 +202,35 @@ const Workflows = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <SortAscending className="mr-2 h-4 w-4" />
+                Sort: {sortBy === 'name' ? 'Name' : sortBy === 'type' ? 'Type' : 'Popular'}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuCheckboxItem
+                checked={sortBy === 'name'}
+                onCheckedChange={() => setSortBy('name')}
+              >
+                Sort by Name
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={sortBy === 'type'}
+                onCheckedChange={() => setSortBy('type')}
+              >
+                Sort by Type
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={sortBy === 'popular'}
+                onCheckedChange={() => setSortBy('popular')}
+              >
+                Sort by Popular
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Custom Workflow
@@ -154,7 +241,7 @@ const Workflows = () => {
       <div className="space-y-6">
         <WorkflowTabs 
           activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
+          setActiveTab={handleTabChange}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
         />
@@ -169,18 +256,60 @@ const Workflows = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : filteredTemplates.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTemplates.map((workflow) => (
-                    <WorkflowTemplateCard
-                      key={workflow.id}
-                      workflow={workflow}
-                      onUseTemplate={useWorkflowTemplate}
-                      onDuplicateTemplate={duplicateTemplate}
-                      onEditTemplate={viewWorkflowDetails}
-                      onDeleteTemplate={(id) => openDeleteDialog(id, workflow.name, true)}
-                    />
-                  ))}
-                </div>
+                <>
+                  <ResponsiveGrid
+                    className="gap-4"
+                    mobileColumns={2}
+                    desktopColumns={5}
+                    gap="md"
+                  >
+                    {paginatedTemplates.map((workflow) => (
+                      <WorkflowTemplateCard
+                        key={workflow.id}
+                        workflow={workflow}
+                        onUseTemplate={useWorkflowTemplate}
+                        onDuplicateTemplate={duplicateTemplate}
+                        onEditTemplate={viewWorkflowDetails}
+                        onDeleteTemplate={(id) => openDeleteDialog(id, workflow.name, true)}
+                      />
+                    ))}
+                  </ResponsiveGrid>
+                  
+                  {totalTemplatePages > 1 && (
+                    <Pagination className="mt-6">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                            aria-disabled={currentPage === 1}
+                            tabIndex={currentPage === 1 ? -1 : 0}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalTemplatePages }).map((_, index) => (
+                          <PaginationItem key={index}>
+                            <PaginationLink
+                              isActive={currentPage === index + 1}
+                              onClick={() => setCurrentPage(index + 1)}
+                            >
+                              {index + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(prev => Math.min(totalTemplatePages, prev + 1))} 
+                            aria-disabled={currentPage === totalTemplatePages}
+                            tabIndex={currentPage === totalTemplatePages ? -1 : 0}
+                            className={currentPage === totalTemplatePages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm || typeFilter !== 'all' ? 
@@ -200,20 +329,62 @@ const Workflows = () => {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : filteredActiveWorkflows.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredActiveWorkflows.map((workflow) => (
-                    <ActiveWorkflowCard
-                      key={workflow.id}
-                      workflow={workflow}
-                      onViewDetails={viewWorkflowDetails}
-                      onPauseWorkflow={pauseWorkflow}
-                      onResumeWorkflow={resumeWorkflow}
-                      onCancelWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
-                      onEditWorkflow={viewWorkflowDetails}
-                      onDeleteWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
-                    />
-                  ))}
-                </div>
+                <>
+                  <ResponsiveGrid
+                    className="gap-4" 
+                    mobileColumns={2}
+                    desktopColumns={5}
+                    gap="md"
+                  >
+                    {paginatedActiveWorkflows.map((workflow) => (
+                      <ActiveWorkflowCard
+                        key={workflow.id}
+                        workflow={workflow}
+                        onViewDetails={viewWorkflowDetails}
+                        onPauseWorkflow={pauseWorkflow}
+                        onResumeWorkflow={resumeWorkflow}
+                        onCancelWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
+                        onEditWorkflow={viewWorkflowDetails}
+                        onDeleteWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
+                      />
+                    ))}
+                  </ResponsiveGrid>
+                  
+                  {totalActivePages > 1 && (
+                    <Pagination className="mt-6">
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+                            aria-disabled={currentPage === 1}
+                            tabIndex={currentPage === 1 ? -1 : 0}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalActivePages }).map((_, index) => (
+                          <PaginationItem key={index}>
+                            <PaginationLink
+                              isActive={currentPage === index + 1}
+                              onClick={() => setCurrentPage(index + 1)}
+                            >
+                              {index + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            onClick={() => setCurrentPage(prev => Math.min(totalActivePages, prev + 1))} 
+                            aria-disabled={currentPage === totalActivePages}
+                            tabIndex={currentPage === totalActivePages ? -1 : 0}
+                            className={currentPage === totalActivePages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  )}
+                </>
               ) : (
                 <p className="text-muted-foreground text-center py-8">
                   {searchTerm || typeFilter !== 'all' ? 

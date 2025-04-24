@@ -29,34 +29,34 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
   onDeleteTemplate
 }) => {
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-3">
+    <Card className="transition-all hover:shadow-md h-full">
+      <CardHeader className="p-3 pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold">
+          <CardTitle className="text-base font-bold truncate">
             {workflow.name}
             {workflow.isPopular && (
-              <Badge variant="secondary" className="ml-2 bg-amber-100 text-amber-800 border-amber-200">
-                <Star className="h-3 w-3 mr-1 fill-amber-500 text-amber-500" />
+              <Badge variant="secondary" className="ml-1 bg-amber-100 text-amber-800 border-amber-200 text-xs py-0">
+                <Star className="h-2.5 w-2.5 mr-1 fill-amber-500 text-amber-500" />
                 Popular
               </Badge>
             )}
           </CardTitle>
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="capitalize">
+          <div className="flex items-center space-x-0.5">
+            <Badge variant="outline" className="capitalize text-xs py-0 px-1.5">
               {workflow.type}
             </Badge>
             
             {(onEditTemplate || onDeleteTemplate) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0" aria-label="More options">
-                    <MoreHorizontal className="h-4 w-4" />
+                  <Button variant="ghost" className="h-6 w-6 p-0" aria-label="More options">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {onEditTemplate && (
                     <DropdownMenuItem onClick={() => onEditTemplate(workflow.id)}>
-                      <Edit className="mr-2 h-4 w-4" />
+                      <Edit className="mr-2 h-3.5 w-3.5" />
                       Edit
                     </DropdownMenuItem>
                   )}
@@ -65,7 +65,7 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
                       onClick={() => onDeleteTemplate(workflow.id)}
                       className="text-red-600"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
                       Delete
                     </DropdownMenuItem>
                   )}
@@ -75,33 +75,33 @@ const WorkflowTemplateCard: React.FC<WorkflowTemplateCardProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground text-sm mb-4">
+      <CardContent className="p-3 pt-0">
+        <p className="text-muted-foreground text-xs line-clamp-2 h-8">
           {workflow.description || 'No description provided.'}
         </p>
         
-        <div className="space-y-1">
-          <div className="text-sm text-muted-foreground">
-            <span className="font-medium">Steps: </span>
-            {workflow.steps?.length || 0}
-          </div>
+        <div className="text-xs text-muted-foreground mt-1">
+          <span className="font-medium">Steps: </span>
+          {workflow.steps?.length || 0}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between pt-3 border-t">
+      <CardFooter className="flex justify-between p-3 pt-1 border-t text-xs">
         <Button
           variant="outline"
           size="sm"
+          className="h-7 text-xs"
           onClick={() => onDuplicateTemplate(workflow.id)}
         >
-          <Copy className="h-4 w-4 mr-2" />
+          <Copy className="h-3 w-3 mr-1" />
           Duplicate
         </Button>
         <Button 
           size="sm"
+          className="h-7 text-xs"
           onClick={() => onUseTemplate(workflow.id)}
         >
-          <PlayCircle className="h-4 w-4 mr-2" />
-          Use Template
+          <PlayCircle className="h-3 w-3 mr-1" />
+          Use
         </Button>
       </CardFooter>
     </Card>
