@@ -28,6 +28,7 @@ export const messageService = {
         });
 
         if (emailResponse.error) {
+          console.error('Email function error:', emailResponse.error);
           throw emailResponse.error;
         }
       }
@@ -64,12 +65,12 @@ export const messageService = {
           message: 'Message sent successfully'
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       return {
         success: false,
         error,
-        message: 'Failed to send or schedule message'
+        message: error.message || 'Failed to send or schedule message'
       };
     }
   },

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,7 @@ import FormSubmissionDialog from '@/components/portal/homeowner/forms/FormSubmis
 import { useRequestForm } from '@/hooks/portal/useRequestForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { useHomeownerRequestsWithAuth } from '@/hooks/portal/useHomeownerRequestsWithAuth';
 
 const RequestsPage = () => {
   const { currentUser, currentAssociation } = useAuth();
@@ -37,44 +37,16 @@ const RequestsPage = () => {
     submissionId = ''
   } = useRequestForm();
 
-  const [userRequests, setUserRequests] = React.useState<any[]>([]);
-  const [isLoadingRequests, setIsLoadingRequests] = React.useState(true);
-
-  useEffect(() => {
-    if (currentUser?.id && currentAssociation?.id) {
-      fetchUserRequests();
-    }
-  }, [currentUser, currentAssociation]);
-
-  const fetchUserRequests = async () => {
-    if (!currentUser?.id || !currentAssociation?.id) return;
-    
-    try {
-      setIsLoadingRequests(true);
-      const { data, error } = await supabase
-        .from('homeowner_requests')
-        .select('*')
-        .eq('resident_id', currentUser.id)
-        .eq('association_id', currentAssociation.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching user requests:', error);
-        toast.error('Failed to load your requests');
-      } else {
-        setUserRequests(data || []);
-      }
-    } catch (err) {
-      console.error('Unexpected error fetching requests:', err);
-    } finally {
-      setIsLoadingRequests(false);
-    }
-  };
+  const { 
+    requests: userRequests, 
+    isLoading: isLoadingRequests, 
+    fetchRequests 
+  } = useHomeownerRequestsWithAuth();
 
   const handleFormSubmitWithResult = async () => {
     const result = await handleFormSubmit();
     if (result) {
-      fetchUserRequests();
+      fetchRequests();
     }
     return result;
   };

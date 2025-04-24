@@ -28,6 +28,7 @@ export const messageService = {
         });
 
         if (emailResponse.error) {
+          console.error('Email function error:', emailResponse.error);
           throw emailResponse.error;
         }
       }
