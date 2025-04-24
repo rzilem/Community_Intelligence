@@ -2,25 +2,16 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { toast } from 'sonner';
 import { Database, Upload, Users, Home, FileText, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
-import { faker } from '@faker-js/faker';
-
-type DataCategory = {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  count: number;
-  selected: boolean;
-  seedFunction: (associationId: string, count: number) => Promise<void>;
-};
+import { supabase } from '@/integrations/supabase/client';
+import { DataCategory } from '@/types/demo-seeder-types';
+import { seedProperties, seedResidents, seedDocuments, seedCalendarEvents } from '@/utils/demo-seeder-utils';
+import { CategoryList } from './CategoryList';
+import { SeedingProgress } from './SeedingProgress';
+import { Label } from '@/components/ui/label';
 
 const initialCategories: DataCategory[] = [
   { 
@@ -61,106 +52,6 @@ const initialCategories: DataCategory[] = [
   }
 ];
 
-// Seeding functions
-async function seedProperties(associationId: string, count: number) {
-  const propertiesToInsert = Array.from({ length: count }, () => ({
-    association_id: associationId,
-    address: faker.location.streetAddress(),
-    city: faker.location.city(),
-    state: faker.location.state(),
-    zip: faker.location.zipCode(),
-    property_type: faker.helpers.arrayElement(['Single Family', 'Townhouse', 'Condo', 'Apartment']),
-    square_feet: faker.number.int({ min: 800, max: 3000 }),
-    bedrooms: faker.number.int({ min: 1, max: 5 }),
-    bathrooms: faker.number.int({ min: 1, max: 3, decimals: 1 }),
-    year_built: faker.number.int({ min: 1950, max: 2023 }),
-    status: 'active'
-  }));
-
-  const { error } = await supabase
-    .from('properties')
-    .insert(propertiesToInsert);
-
-  if (error) {
-    throw error;
-  }
-}
-
-async function seedResidents(associationId: string, count: number) {
-  const residentProperties = await supabase
-    .from('properties')
-    .select('id')
-    .eq('association_id', associationId);
-
-  const propertyIds = residentProperties.data?.map(p => p.id) || [];
-
-  const residentsToInsert = Array.from({ length: count }, () => ({
-    association_id: associationId,
-    property_id: faker.helpers.arrayElement(propertyIds),
-    name: `${faker.person.firstName()} ${faker.person.lastName()}`,
-    email: faker.internet.email(),
-    phone: faker.phone.number(),
-    resident_type: faker.helpers.arrayElement(['owner', 'tenant']),
-    move_in_date: faker.date.past().toISOString(),
-    preferences: {}
-  }));
-
-  const { error } = await supabase
-    .from('residents')
-    .insert(residentsToInsert);
-
-  if (error) {
-    throw error;
-  }
-}
-
-async function seedDocuments(associationId: string, count: number) {
-  const documentsToInsert = Array.from({ length: count }, () => ({
-    association_id: associationId,
-    name: faker.lorem.words(3),
-    description: faker.lorem.sentence(),
-    file_type: faker.helpers.arrayElement(['pdf', 'docx', 'txt']),
-    url: faker.internet.url(),
-    is_public: faker.datatype.boolean(),
-    category: faker.helpers.arrayElement(['bylaws', 'minutes', 'financial', 'other']),
-    file_size: faker.number.int({ min: 100000, max: 5000000 })
-  }));
-
-  const { error } = await supabase
-    .from('documents')
-    .insert(documentsToInsert);
-
-  if (error) {
-    throw error;
-  }
-}
-
-async function seedCalendarEvents(associationId: string, count: number) {
-  const calendarEventsToInsert = Array.from({ length: count }, () => {
-    const startDate = faker.date.future();
-    const endDate = new Date(startDate);
-    endDate.setHours(startDate.getHours() + 2);
-    
-    return {
-      hoa_id: associationId,
-      title: faker.lorem.words(3),
-      description: faker.lorem.sentence(),
-      start_time: startDate.toISOString(),
-      end_time: endDate.toISOString(),
-      event_type: faker.helpers.arrayElement(['meeting', 'social', 'maintenance', 'other']),
-      visibility: faker.helpers.arrayElement(['public', 'private'])
-    };
-  });
-
-  const { error } = await supabase
-    .from('calendar_events')
-    .insert(calendarEventsToInsert);
-
-  if (error) {
-    throw error;
-  }
-}
-
 const DemoDataSeeder: React.FC = () => {
   const { currentAssociation } = useAuth();
   const [categories, setCategories] = useState<DataCategory[]>(initialCategories);
@@ -168,7 +59,6 @@ const DemoDataSeeder: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   
-  // Set default association when available
   React.useEffect(() => {
     if (currentAssociation?.id) {
       setSelectedAssociationId(currentAssociation.id);
@@ -204,17 +94,13 @@ const DemoDataSeeder: React.FC = () => {
     try {
       toast.info("Starting to seed demo data...");
       
-      // Process each selected category
       for (let i = 0; i < selectedCategories.length; i++) {
         const category = selectedCategories[i];
         
-        // Update progress
         setProgress(Math.round((i / selectedCategories.length) * 100));
         
-        // Seed data for this category
         await category.seedFunction(selectedAssociationId, category.count);
         
-        // Log seeding history
         await supabase.from('history').insert({
           association_id: selectedAssociationId,
           user_id: currentAssociation?.user_id,
@@ -234,7 +120,6 @@ const DemoDataSeeder: React.FC = () => {
       toast.error("An error occurred while seeding data");
     } finally {
       setIsLoading(false);
-      // Reset progress after a delay
       setTimeout(() => setProgress(0), 3000);
     }
   };
@@ -260,37 +145,12 @@ const DemoDataSeeder: React.FC = () => {
           />
         </div>
         
-        <div className="space-y-3 mt-4">
-          <Label>Select Data Categories</Label>
-          {categories.map(category => (
-            <div key={category.id} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50">
-              <Checkbox 
-                id={`category-${category.id}`}
-                checked={category.selected}
-                onCheckedChange={() => toggleCategory(category.id)}
-                className="mt-1"
-              />
-              <div className="space-y-1 flex-1">
-                <Label 
-                  htmlFor={`category-${category.id}`}
-                  className="flex items-center gap-2 cursor-pointer font-medium"
-                >
-                  {category.icon}
-                  {category.name} ({category.count})
-                </Label>
-                <p className="text-sm text-muted-foreground">{category.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <CategoryList 
+          categories={categories}
+          onToggleCategory={toggleCategory}
+        />
         
-        {progress > 0 && (
-          <div className="space-y-2 mt-4">
-            <Label>Progress</Label>
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-center text-muted-foreground">{progress}% complete</p>
-          </div>
-        )}
+        <SeedingProgress progress={progress} />
       </CardContent>
       
       <CardFooter>
