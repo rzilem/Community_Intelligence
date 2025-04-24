@@ -36,32 +36,14 @@ export const AppRouter = () => {
       {/* Add Forum Route */}
       <Route path="/forum" element={<ForumPage />} />
       
-      {/* Portal routes */}
-      {portalRoutes && portalRoutes.map((route, index) => (
-        <Route 
-          key={`portal-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {/* Portal routes - these are already Route elements */}
+      {portalRoutes && portalRoutes.map((route, index) => React.cloneElement(route, { key: `portal-route-${index}` }))}
       
-      {/* Portal page routes */}
-      {portalPageRoutes && portalPageRoutes.map((route, index) => (
-        <Route 
-          key={`portal-page-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {/* Portal page routes - these are already Route elements */}
+      {portalPageRoutes && portalPageRoutes.map((route, index) => React.cloneElement(route, { key: `portal-page-route-${index}` }))}
       
-      {/* Resale Portal routes */}
-      {resalePortalRoutes && resalePortalRoutes.map((route, index) => (
-        <Route 
-          key={`resale-portal-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {/* Resale Portal routes - these are already Route elements */}
+      {resalePortalRoutes && resalePortalRoutes.map((route, index) => React.cloneElement(route, { key: `resale-portal-route-${index}` }))}
       
       {/* Community Management routes */}
       {communityManagementRoutes && communityManagementRoutes.map((route, index) => (
