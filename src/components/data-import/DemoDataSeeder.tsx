@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
-import { Database, Upload, Users, Home, FileText, Calendar, ArrowRight } from 'lucide-react';
+import { Database, Upload, Users, Home, FileText, Calendar } from 'lucide-react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -72,12 +72,12 @@ async function seedProperties(associationId: string, count: number) {
     property_type: faker.helpers.arrayElement(['Single Family', 'Townhouse', 'Condo', 'Apartment']),
     square_feet: faker.number.int({ min: 800, max: 3000 }),
     bedrooms: faker.number.int({ min: 1, max: 5 }),
-    bathrooms: faker.number.float({ min: 1, max: 3, precision: 0.5 }),
+    bathrooms: faker.number.int({ min: 1, max: 3, decimals: 1 }),
     year_built: faker.number.int({ min: 1950, max: 2023 }),
     status: 'active'
   }));
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('properties')
     .insert(propertiesToInsert);
 
@@ -101,7 +101,7 @@ async function seedResidents(associationId: string, count: number) {
     email: faker.internet.email(),
     phone: faker.phone.number(),
     resident_type: faker.helpers.arrayElement(['owner', 'tenant']),
-    move_in_date: faker.date.past(),
+    move_in_date: faker.date.past().toISOString(),
     preferences: {}
   }));
 
@@ -122,7 +122,8 @@ async function seedDocuments(associationId: string, count: number) {
     file_type: faker.helpers.arrayElement(['pdf', 'docx', 'txt']),
     url: faker.internet.url(),
     is_public: faker.datatype.boolean(),
-    category: faker.helpers.arrayElement(['bylaws', 'minutes', 'financial', 'other'])
+    category: faker.helpers.arrayElement(['bylaws', 'minutes', 'financial', 'other']),
+    file_size: faker.number.int({ min: 100000, max: 5000000 })
   }));
 
   const { error } = await supabase
@@ -135,15 +136,21 @@ async function seedDocuments(associationId: string, count: number) {
 }
 
 async function seedCalendarEvents(associationId: string, count: number) {
-  const calendarEventsToInsert = Array.from({ length: count }, () => ({
-    hoa_id: associationId,
-    title: faker.lorem.words(3),
-    description: faker.lorem.sentence(),
-    start_time: faker.date.future(),
-    end_time: faker.date.future(),
-    event_type: faker.helpers.arrayElement(['meeting', 'social', 'maintenance', 'other']),
-    visibility: faker.helpers.arrayElement(['public', 'private'])
-  }));
+  const calendarEventsToInsert = Array.from({ length: count }, () => {
+    const startDate = faker.date.future();
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 2);
+    
+    return {
+      hoa_id: associationId,
+      title: faker.lorem.words(3),
+      description: faker.lorem.sentence(),
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
+      event_type: faker.helpers.arrayElement(['meeting', 'social', 'maintenance', 'other']),
+      visibility: faker.helpers.arrayElement(['public', 'private'])
+    };
+  });
 
   const { error } = await supabase
     .from('calendar_events')
