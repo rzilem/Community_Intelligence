@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText } from 'lucide-react';
 import { PDFViewer } from './PDFViewer';
 
@@ -12,10 +12,44 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
   pdfUrl,
   htmlContent
 }) => {
-  if (pdfUrl) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  // Helper to check if URL is valid
+  const isValidUrl = (url?: string) => {
+    if (!url) return false;
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      console.error("Invalid URL format:", url);
+      return false;
+    }
+  };
+
+  const handlePdfLoad = () => {
+    console.log("PDF loaded successfully in PreviewContent");
+    setLoading(false);
+    setError(false);
+  };
+
+  const handlePdfError = () => {
+    console.log("PDF failed to load in PreviewContent");
+    setLoading(false);
+    setError(true);
+  };
+
+  // Ensure pdfUrl is valid before attempting to render
+  const validPdfUrl = isValidUrl(pdfUrl) ? pdfUrl : undefined;
+
+  if (validPdfUrl) {
     return (
       <div className="w-[600px] h-[400px] bg-white">
-        <PDFViewer url={pdfUrl} />
+        <PDFViewer 
+          url={validPdfUrl} 
+          onLoad={handlePdfLoad}
+          onError={handlePdfError}
+        />
       </div>
     );
   }

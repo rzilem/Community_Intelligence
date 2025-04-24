@@ -17,31 +17,58 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [viewerType, setViewerType] = useState<'object' | 'iframe'>('object');
   const [key, setKey] = useState(Date.now());
   const [failed, setFailed] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
 
+  // Log URL for debugging
+  useEffect(() => {
+    console.log(`PDFViewer attempting to load: ${url}`);
+    console.log(`Current viewer type: ${viewerType}, attempt: ${attemptCount}`);
+  }, [url, viewerType, attemptCount]);
+
+  // Reset viewer when URL changes
   useEffect(() => {
     setKey(Date.now());
     setFailed(false);
     setViewerType('object');
+    setAttemptCount(0);
   }, [url]);
 
   const handleError = () => {
+    console.log(`PDF loading error with ${viewerType}, attempt ${attemptCount}`);
+    
     if (viewerType === 'object') {
+      console.log("Switching to iframe viewer");
       setViewerType('iframe');
       setKey(Date.now());
+      setAttemptCount(prev => prev + 1);
+    } else if (attemptCount < 2) {
+      // Try one more time with iframe before giving up
+      console.log("Retrying with iframe viewer");
+      setKey(Date.now());
+      setAttemptCount(prev => prev + 1);
     } else {
+      console.log("All PDF loading attempts failed");
       setFailed(true);
       if (onError) onError();
     }
   };
 
   const handleRetry = () => {
+    console.log("Manual retry requested for PDF viewer");
     setKey(Date.now());
     setFailed(false);
     setViewerType('object');
+    setAttemptCount(0);
   };
 
   const handleExternalOpen = () => {
+    console.log("Opening PDF in new tab:", url);
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleLoad = () => {
+    console.log(`PDF loaded successfully with ${viewerType}`);
+    if (onLoad) onLoad();
   };
 
   if (failed) {
@@ -67,7 +94,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         data={url}
         type="application/pdf"
         className="w-full h-full"
-        onLoad={onLoad}
+        onLoad={handleLoad}
         onError={handleError}
       >
         <p>Unable to display PDF</p>
@@ -80,9 +107,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       key={`pdf-iframe-${key}`}
       src={url}
       className="w-full h-full border-0"
-      onLoad={onLoad}
+      onLoad={handleLoad}
       onError={handleError}
       sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
+      referrerPolicy="no-referrer"
     />
   );
 };
