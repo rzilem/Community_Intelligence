@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType, RequestAttachment } from '@/types/homeowner-request-types';
 
 export function useHomeownerRequestsWithAuth() {
   const [requests, setRequests] = useState<HomeownerRequest[]>([]);
@@ -35,24 +35,29 @@ export function useHomeownerRequestsWithAuth() {
         toast.error('Failed to load your requests');
       } else {
         // Explicitly cast the data to ensure type safety
-        const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
-          id: item.id,
-          title: item.title,
-          description: item.description || '', // Ensure description is never undefined
-          status: item.status as HomeownerRequestStatus,
-          priority: item.priority as HomeownerRequestPriority,
-          type: item.type as HomeownerRequestType,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          resident_id: item.resident_id,
-          property_id: item.property_id,
-          association_id: item.association_id,
-          assigned_to: item.assigned_to,
-          resolved_at: item.resolved_at,
-          html_content: item.html_content,
-          tracking_number: item.tracking_number,
-          attachments: item.attachments || [] // Add default empty array for attachments
-        }));
+        const typedRequests: HomeownerRequest[] = (data || []).map(item => {
+          // Safe access to attachments - if it doesn't exist in the data, use empty array
+          const attachmentData = item.attachments || [];
+          
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description || '', // Ensure description is never undefined
+            status: item.status as HomeownerRequestStatus,
+            priority: item.priority as HomeownerRequestPriority,
+            type: item.type as HomeownerRequestType,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            resident_id: item.resident_id,
+            property_id: item.property_id,
+            association_id: item.association_id,
+            assigned_to: item.assigned_to,
+            resolved_at: item.resolved_at,
+            html_content: item.html_content,
+            tracking_number: item.tracking_number,
+            attachments: attachmentData as RequestAttachment[] // Cast with safety
+          };
+        });
         setRequests(typedRequests);
       }
     } catch (err: any) {
@@ -89,10 +94,9 @@ export function useHomeownerRequestsWithAuth() {
         type: formData.type || 'general' as HomeownerRequestType,
         tracking_number: trackingNumber,
         created_at: new Date().toISOString(),
-        // Include any other fields from formData that match the database schema
         property_id: formData.property_id,
         html_content: formData.html_content,
-        attachments: formData.attachments || [] // Add attachments with default empty array
+        attachments: formData.attachments || [] // Ensure attachments is always provided
       };
 
       const { data, error } = await supabase
