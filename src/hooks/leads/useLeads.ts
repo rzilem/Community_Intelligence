@@ -1,10 +1,10 @@
-
 import { useState } from 'react';
 import { Lead, LEAD_COLUMN_DEFINITIONS } from '@/types/lead-types';
 import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useTableColumns } from './useTableColumns';
+import { useLeadScoring } from '@/hooks/lead-scoring';
 
 export const useLeads = () => {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -22,7 +22,6 @@ export const useLeads = () => {
     }
   );
   
-  // Set up customizable columns with default definitions
   const { 
     columns, 
     visibleColumnIds, 
@@ -34,7 +33,8 @@ export const useLeads = () => {
     'leads-visible-columns'
   );
   
-  // Log information about the leads data for debugging
+  const { calculateScore, updateLeadScore } = useLeadScoring();
+  
   if (leads.length > 0) {
     console.log('Leads data loaded:', leads.length, 'leads');
     console.log('Sample lead:', leads[0]);
@@ -42,7 +42,6 @@ export const useLeads = () => {
     console.log('No leads found in the database');
   }
   
-  // Log any errors from the query
   if (error) {
     console.error('Error fetching leads:', error);
   }
@@ -73,6 +72,10 @@ export const useLeads = () => {
         if (error) {
           console.error('Error inserting test lead:', error);
           throw error;
+        }
+        
+        if (data && data[0]) {
+          await updateLeadScore(data[0] as Lead);
         }
         
         console.log('Test lead created successfully:', data);
@@ -110,15 +113,29 @@ export const useLeads = () => {
   
   const updateLeadStatus = async (id: string, status: Lead['status']): Promise<void> => {
     try {
+      const lead = leads.find(l => l.id === id);
+      if (!lead) throw new Error('Lead not found');
+
       console.log(`Updating lead ${id} status to ${status}`);
       const { error } = await supabase
         .from('leads' as any)
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({ 
+          status, 
+          updated_at: new Date().toISOString(),
+          ...(status === 'qualified' ? {
+            follow_up_sequence: lead.follow_up_sequence + 1,
+            next_follow_up: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Next day
+          } : {})
+        })
         .eq('id', id);
       
       if (error) {
         console.error('Error updating lead status:', error);
         throw error;
+      }
+      
+      if (lead) {
+        await updateLeadScore({ ...lead, status });
       }
       
       refreshLeads();

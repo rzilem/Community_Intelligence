@@ -9,6 +9,18 @@ export interface LeadAttachment {
   created_at: string;
 }
 
+export interface LeadFollowUp {
+  id: string;
+  lead_id: string;
+  type: 'email' | 'call' | 'meeting' | 'other';
+  content: string;
+  scheduled_date: string;
+  completed_date?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -77,6 +89,13 @@ export interface Lead {
   uploaded_files?: LeadAttachment[] | any;
   additional_requirements?: string;
   html_content?: string;
+  
+  // New properties
+  lead_score: number;
+  last_follow_up?: string;
+  next_follow_up?: string;
+  follow_up_sequence: number;
+  proposal_count: number;
 }
 
 // Import the LeadColumn type
@@ -105,6 +124,9 @@ export const LEAD_COLUMN_DEFINITIONS: LeadColumn[] = [
   { id: 'html_content', label: 'Original Email', accessorKey: 'html_content', defaultVisible: false },
   { id: 'updated_at', label: 'Updated', accessorKey: 'updated_at', defaultVisible: false },
   { id: 'tracking_number', label: 'Tracking Number', accessorKey: 'tracking_number', defaultVisible: false },
+  { id: 'lead_score', label: 'Score', accessorKey: 'lead_score', defaultVisible: true },
+  { id: 'next_follow_up', label: 'Next Follow-up', accessorKey: 'next_follow_up', defaultVisible: true },
+  { id: 'proposal_count', label: 'Proposals', accessorKey: 'proposal_count', defaultVisible: true }
 ];
 
 // Add LeadDocument type

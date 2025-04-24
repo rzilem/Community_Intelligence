@@ -2595,6 +2595,50 @@ export type Database = {
           },
         ]
       }
+      lead_follow_ups: {
+        Row: {
+          completed_date: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          scheduled_date: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          scheduled_date?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          scheduled_date?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_follow_ups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           additional_requirements: string | null
@@ -2607,13 +2651,18 @@ export type Database = {
           current_management: string | null
           email: string
           first_name: string | null
+          follow_up_sequence: number | null
           html_content: string | null
           id: string
+          last_follow_up: string | null
           last_name: string | null
+          lead_score: number | null
           name: string
+          next_follow_up: string | null
           notes: string | null
           number_of_units: number | null
           phone: string | null
+          proposal_count: number | null
           source: string
           state: string | null
           status: string
@@ -2634,13 +2683,18 @@ export type Database = {
           current_management?: string | null
           email: string
           first_name?: string | null
+          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
+          last_follow_up?: string | null
           last_name?: string | null
+          lead_score?: number | null
           name: string
+          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
+          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
@@ -2661,13 +2715,18 @@ export type Database = {
           current_management?: string | null
           email?: string
           first_name?: string | null
+          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
+          last_follow_up?: string | null
           last_name?: string | null
+          lead_score?: number | null
           name?: string
+          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
+          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
