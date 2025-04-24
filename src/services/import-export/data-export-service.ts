@@ -15,14 +15,20 @@ export const dataExportService = {
           tableName = 'associations';
           query = query.from(tableName as any).select('*');
           break;
-        case 'owners':
-          tableName = 'residents';
-          query = query.from(tableName as any).select('*').eq('resident_type', 'owner');
-          break;
-        case 'properties':
-          tableName = 'properties';
-          query = query.from(tableName as any).select('*').eq('association_id', associationId);
-          break;
+        case 'properties_owners':
+          // This will need a more complex query to join properties and residents
+          const { data: properties, error: propertiesError } = await supabase
+            .from('properties')
+            .select('*, residents(*)')
+            .eq('association_id', associationId);
+          
+          if (propertiesError) throw propertiesError;
+          return {
+            success: true,
+            message: 'Properties and owners exported successfully',
+            fileName: `properties_owners_export.${format}`,
+            data: properties
+          };
         case 'financial':
           tableName = 'assessments';
           query = query.from(tableName as any)
@@ -47,6 +53,8 @@ export const dataExportService = {
           throw new Error(`Unknown data type: ${dataType}`);
       }
       
+      // Only execute the query if we're not handling a special case like properties_owners
+      // which has already been processed and returned above
       const { data: exportData, error } = await query;
       
       if (error) {

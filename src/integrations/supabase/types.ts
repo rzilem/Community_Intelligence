@@ -1871,6 +1871,59 @@ export type Database = {
           },
         ]
       }
+      financial_audit_logs: {
+        Row: {
+          action_type: string
+          association_id: string | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          association_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          association_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_audit_logs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_conversion_jobs: {
         Row: {
           association_id: string | null
@@ -2565,6 +2618,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      import_export_jobs: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          data_type: string
+          error_details: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          job_type: string
+          metadata: Json | null
+          row_count: number | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          data_type: string
+          error_details?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          job_type: string
+          metadata?: Json | null
+          row_count?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          data_type?: string
+          error_details?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          job_type?: string
+          metadata?: Json | null
+          row_count?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_export_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       import_jobs: {
         Row: {
