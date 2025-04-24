@@ -4063,6 +4063,42 @@ export type Database = {
         }
         Relationships: []
       }
+      vendors: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          rating: number | null
+          service_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          rating?: number | null
+          service_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          service_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       violations: {
         Row: {
           association_id: string
@@ -4111,66 +4147,125 @@ export type Database = {
         }
         Relationships: []
       }
+      work_order_updates: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          update_details: Json | null
+          update_type: string
+          work_order_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          update_details?: Json | null
+          update_type: string
+          work_order_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          update_details?: Json | null
+          update_type?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_updates_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_orders: {
         Row: {
           actual_cost: number | null
           assigned_to: string | null
           association_id: string
           attachments: Json | null
+          budget_estimate: number | null
           category: string | null
           completed_date: string | null
+          completion_target_date: string | null
+          cost_tracking: Json | null
           created_at: string
           description: string | null
           due_date: string | null
           estimated_cost: number | null
           id: string
           priority: string
+          progress_status: number | null
           property_id: string | null
           requested_by: string | null
+          scheduled_date: string | null
           start_date: string | null
           status: string
           title: string
           updated_at: string
+          vendor_id: string | null
+          vendor_name: string | null
         }
         Insert: {
           actual_cost?: number | null
           assigned_to?: string | null
           association_id: string
           attachments?: Json | null
+          budget_estimate?: number | null
           category?: string | null
           completed_date?: string | null
+          completion_target_date?: string | null
+          cost_tracking?: Json | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
           priority?: string
+          progress_status?: number | null
           property_id?: string | null
           requested_by?: string | null
+          scheduled_date?: string | null
           start_date?: string | null
           status?: string
           title: string
           updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
         }
         Update: {
           actual_cost?: number | null
           assigned_to?: string | null
           association_id?: string
           attachments?: Json | null
+          budget_estimate?: number | null
           category?: string | null
           completed_date?: string | null
+          completion_target_date?: string | null
+          cost_tracking?: Json | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
           priority?: string
+          progress_status?: number | null
           property_id?: string | null
           requested_by?: string | null
+          scheduled_date?: string | null
           start_date?: string | null
           status?: string
           title?: string
           updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
         }
         Relationships: []
       }
