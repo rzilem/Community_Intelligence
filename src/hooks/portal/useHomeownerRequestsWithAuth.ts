@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 
 export function useHomeownerRequestsWithAuth() {
   const [requests, setRequests] = useState<HomeownerRequest[]>([]);
@@ -34,7 +34,26 @@ export function useHomeownerRequestsWithAuth() {
         setError(error.message);
         toast.error('Failed to load your requests');
       } else {
-        setRequests(data || []);
+        // Explicitly cast the data to ensure type safety
+        const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '', // Ensure description is never undefined
+          status: item.status as HomeownerRequestStatus,
+          priority: item.priority as HomeownerRequestPriority,
+          type: item.type as HomeownerRequestType,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          resident_id: item.resident_id,
+          property_id: item.property_id,
+          association_id: item.association_id,
+          assigned_to: item.assigned_to,
+          resolved_at: item.resolved_at,
+          html_content: item.html_content,
+          tracking_number: item.tracking_number,
+          attachments: item.attachments
+        }));
+        setRequests(typedRequests);
       }
     } catch (err: any) {
       console.error('Unexpected error fetching requests:', err);
@@ -59,16 +78,25 @@ export function useHomeownerRequestsWithAuth() {
       const random = Math.floor(10000 + Math.random() * 90000);
       const trackingNumber = `REQ-${year}-${random}`;
       
+      // Ensure we provide all required fields with proper types
+      const newRequest = {
+        title: formData.title || '',
+        description: formData.description || '', // Ensure description is always provided
+        resident_id: currentUser.id,
+        association_id: currentAssociation.id,
+        status: 'open' as HomeownerRequestStatus,
+        priority: formData.priority || 'medium' as HomeownerRequestPriority,
+        type: formData.type || 'general' as HomeownerRequestType,
+        tracking_number: trackingNumber,
+        created_at: new Date().toISOString(),
+        // Include any other fields from formData that match the database schema
+        property_id: formData.property_id,
+        html_content: formData.html_content
+      };
+
       const { data, error } = await supabase
         .from('homeowner_requests')
-        .insert({
-          ...formData,
-          resident_id: currentUser.id,
-          association_id: currentAssociation.id,
-          status: 'open',
-          tracking_number: trackingNumber,
-          created_at: new Date().toISOString()
-        })
+        .insert(newRequest)
         .select();
 
       if (error) {
