@@ -5,7 +5,6 @@ import { Workflow, WorkflowType } from '@/types/workflow-types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +19,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Search, Loader2 } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
+import WorkflowListItem from '@/components/operations/WorkflowListItem';
+import { useNavigate } from 'react-router-dom';
 
 const Workflows = () => {
+  const navigate = useNavigate();
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
   const [workflowType, setWorkflowType] = useState<WorkflowType>('Governance');
+  
   const {
     workflows,
     templates,
@@ -75,6 +78,10 @@ const Workflows = () => {
     await duplicateWorkflow(id);
   };
 
+  const handleViewWorkflow = (id: string) => {
+    navigate(`/operations/workflows/${id}`);
+  };
+
   const filteredWorkflows = workflows.filter(workflow =>
     workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -120,13 +127,12 @@ const Workflows = () => {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'active').map(workflow => (
-                  <Card key={workflow.id}>
-                    <WorkflowTemplateCard 
-                      workflow={workflow}
-                      onUseTemplate={handleUseTemplate}
-                      onDuplicateTemplate={handleDuplicateWorkflow}
-                    />
-                  </Card>
+                  <WorkflowListItem 
+                    key={workflow.id}
+                    workflow={workflow}
+                    onViewDetails={handleViewWorkflow}
+                    onDuplicate={handleDuplicateWorkflow}
+                  />
                 ))}
               </div>
             )}
@@ -138,13 +144,12 @@ const Workflows = () => {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredTemplates.map(template => (
-                  <Card key={template.id}>
-                    <WorkflowTemplateCard 
-                      workflow={template}
-                      onUseTemplate={handleUseTemplate}
-                      onDuplicateTemplate={handleDuplicateWorkflow}
-                    />
-                  </Card>
+                  <WorkflowTemplateCard 
+                    key={template.id}
+                    workflow={template}
+                    onUseTemplate={handleUseTemplate}
+                    onDuplicateTemplate={handleDuplicateWorkflow}
+                  />
                 ))}
               </div>
             )}
@@ -156,13 +161,12 @@ const Workflows = () => {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'draft').map(workflow => (
-                  <Card key={workflow.id}>
-                    <WorkflowTemplateCard 
-                      workflow={workflow}
-                      onUseTemplate={handleUseTemplate}
-                      onDuplicateTemplate={handleDuplicateWorkflow}
-                    />
-                  </Card>
+                  <WorkflowListItem 
+                    key={workflow.id}
+                    workflow={workflow} 
+                    onViewDetails={handleViewWorkflow}
+                    onDuplicate={handleDuplicateWorkflow}
+                  />
                 ))}
               </div>
             )}
@@ -174,13 +178,12 @@ const Workflows = () => {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.filter(w => w.status === 'completed').map(workflow => (
-                  <Card key={workflow.id}>
-                    <WorkflowTemplateCard 
-                      workflow={workflow}
-                      onUseTemplate={handleUseTemplate}
-                      onDuplicateTemplate={handleDuplicateWorkflow}
-                    />
-                  </Card>
+                  <WorkflowListItem 
+                    key={workflow.id}
+                    workflow={workflow}
+                    onViewDetails={handleViewWorkflow}
+                    onDuplicate={handleDuplicateWorkflow}
+                  />
                 ))}
               </div>
             )}
@@ -192,13 +195,12 @@ const Workflows = () => {
             ) : (
               <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredWorkflows.map(workflow => (
-                  <Card key={workflow.id}>
-                    <WorkflowTemplateCard 
-                      workflow={workflow}
-                      onUseTemplate={handleUseTemplate}
-                      onDuplicateTemplate={handleDuplicateWorkflow}
-                    />
-                  </Card>
+                  <WorkflowListItem 
+                    key={workflow.id}
+                    workflow={workflow}
+                    onViewDetails={handleViewWorkflow}
+                    onDuplicate={handleDuplicateWorkflow}
+                  />
                 ))}
               </div>
             )}

@@ -10,7 +10,6 @@ import {
   Pause, 
   Play, 
   CheckCircle, 
-  Circle,
   Edit, 
   Trash2, 
   Copy, 
@@ -19,7 +18,6 @@ import {
 } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Progress } from '@/components/ui/progress';
-import { WorkflowStep } from '@/types/workflow-types';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -30,8 +28,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
+import WorkflowStepItem from '@/components/operations/WorkflowStepItem';
 
 const WorkflowDetails = () => {
   const navigate = useNavigate();
@@ -42,7 +39,8 @@ const WorkflowDetails = () => {
     useWorkflow,
     updateWorkflowStatus,
     removeWorkflow,
-    completeWorkflowStep
+    completeWorkflowStep,
+    duplicateWorkflow
   } = useWorkflows();
 
   const { workflow, isLoading, error } = useWorkflow(id);
@@ -58,6 +56,14 @@ const WorkflowDetails = () => {
       navigate('/operations/workflows');
     }
     setDeleteDialogOpen(false);
+  };
+
+  const handleDuplicate = async () => {
+    if (!workflow?.id) return;
+    const newId = await duplicateWorkflow(workflow.id);
+    if (newId) {
+      navigate(`/operations/workflows/${newId}`);
+    }
   };
 
   const handleEditWorkflow = () => {
@@ -78,11 +84,16 @@ const WorkflowDetails = () => {
     await completeWorkflowStep(workflow.id, stepId);
   };
 
+  const handleMarkAsCompleted = async () => {
+    if (!workflow?.id) return;
+    await updateWorkflowStatus(workflow.id, 'completed');
+  };
+
   // Calculate progress percentage
-  const calculateProgress = (steps: WorkflowStep[]) => {
-    if (!steps || steps.length === 0) return 0;
-    const completedSteps = steps.filter(s => s.isComplete).length;
-    return Math.round((completedSteps / steps.length) * 100);
+  const calculateProgress = () => {
+    if (!workflow || !workflow.steps || workflow.steps.length === 0) return 0;
+    const completedSteps = workflow.steps.filter(s => s.isComplete).length;
+    return Math.round((completedSteps / workflow.steps.length) * 100);
   };
 
   if (isLoading) {
@@ -112,7 +123,7 @@ const WorkflowDetails = () => {
     );
   }
 
-  const progressPercentage = calculateProgress(workflow.steps);
+  const progressPercentage = calculateProgress();
   const isPaused = workflow.status === 'inactive';
   
   return (
@@ -154,7 +165,7 @@ const WorkflowDetails = () => {
                     Pause
                   </Button>
                 )}
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleDuplicate}>
                   <Copy className="h-4 w-4 mr-1" />
                   Duplicate
                 </Button>
@@ -185,37 +196,12 @@ const WorkflowDetails = () => {
               <div className="space-y-4">
                 {workflow.steps && workflow.steps.length > 0 ? (
                   workflow.steps.map((step, index) => (
-                    <Card key={step.id} className={cn(
-                      "border-l-4",
-                      step.isComplete ? "border-l-green-500" : "border-l-gray-300"
-                    )}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-3">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="rounded-full p-0 w-8 h-8"
-                              disabled={step.isComplete}
-                              onClick={() => handleCompleteStep(step.id)}
-                            >
-                              {step.isComplete ? (
-                                <CheckCircle className="h-6 w-6 text-green-500" />
-                              ) : (
-                                <Circle className="h-6 w-6 text-gray-400" />
-                              )}
-                            </Button>
-                            <div>
-                              <p className="font-medium">{step.name}</p>
-                              <p className="text-sm text-muted-foreground">{step.description}</p>
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            Step {index + 1}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <WorkflowStepItem
+                      key={step.id}
+                      step={step}
+                      index={index}
+                      onComplete={handleCompleteStep}
+                    />
                   ))
                 ) : (
                   <div className="text-center p-8 border rounded-lg">
@@ -227,7 +213,11 @@ const WorkflowDetails = () => {
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button variant="outline" onClick={handleBack}>Cancel</Button>
-            <Button disabled={progressPercentage !== 100} className="bg-green-600 hover:bg-green-700">
+            <Button 
+              disabled={progressPercentage !== 100} 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={handleMarkAsCompleted}
+            >
               <CheckCircle className="h-4 w-4 mr-1" />
               Mark as Completed
             </Button>
