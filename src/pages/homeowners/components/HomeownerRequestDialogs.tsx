@@ -72,9 +72,10 @@ const HomeownerRequestDialogs = forwardRef<HomeownerRequestDialogsRef, Homeowner
 // Define a name for the component for better debugging
 HomeownerRequestDialogs.displayName = 'HomeownerRequestDialogs';
 
-// Create helper functions to access the dialogs from outside components
-const dialogRef = React.createRef<HomeownerRequestDialogsRef>();
+// Create a shared ref that can be used across the application
+export const dialogRef = React.createRef<HomeownerRequestDialogsRef>();
 
+// Create helper functions to access the dialogs from outside components
 export const openDetailDialog = (request: HomeownerRequest) => {
   if (dialogRef.current) {
     dialogRef.current.openDetailDialog(request);

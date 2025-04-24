@@ -47,11 +47,13 @@ const HomeownerRequestContent = ({
     setTimeout(() => setRealtimeActive(false), 2000);
   });
 
+  // Handle view request (eye icon button)
   const handleViewRequest = (request: HomeownerRequest) => {
     console.log('View request', request.id);
     openDetailDialog(request);
   };
 
+  // Handle edit request (edit/history icon button)
   const handleEditRequest = (request: HomeownerRequest) => {
     console.log('Edit request', request.id);
     openHistoryDialog(request);

@@ -77,8 +77,8 @@ export const RequestTableRow: React.FC<RequestTableRowProps> = ({
         <td className="py-2 px-4 text-center border-l border-border/20">
           <RequestActions 
             request={request}
-            onViewRequest={onViewRequest ? () => onViewRequest(request) : undefined}
-            onEditRequest={onEditRequest ? () => onEditRequest(request) : undefined}
+            onViewRequest={onViewRequest}
+            onEditRequest={onEditRequest}
             onViewDetails={onViewDetails}
             onViewHistory={onViewHistory}
             onStatusChange={onStatusChange}
@@ -121,8 +121,10 @@ export const RequestTableRow: React.FC<RequestTableRowProps> = ({
       <div className="flex items-center gap-2">
         <RequestActions 
           request={request}
+          onViewRequest={onViewRequest}
+          onEditRequest={onEditRequest}
           onViewDetails={onViewDetails}
-          onViewHistory={onViewHistory} 
+          onViewHistory={onViewHistory}
           onStatusChange={onStatusChange}
         />
       </div>

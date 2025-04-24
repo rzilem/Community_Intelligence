@@ -34,7 +34,7 @@ export const RequestCell: React.FC<RequestCellProps> = ({
           variant={
             request.status === 'open' ? 'default' :
             request.status === 'in-progress' ? 'secondary' :
-            request.status === 'resolved' ? 'outline' : // Changed from 'success' to 'outline'
+            request.status === 'resolved' ? 'outline' :
             request.status === 'closed' ? 'outline' :
             'destructive'
           }
