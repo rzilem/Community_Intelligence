@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -100,8 +99,8 @@ export const TwoFactorSetup: React.FC<TwoFactorSetupProps> = ({
               maxLength={6}
               render={({ slots }) => (
                 <InputOTPGroup className="gap-2 justify-center">
-                  {slots.map((slot, index) => (
-                    <InputOTPSlot key={index} index={index} {...slot} />
+                  {slots.map((slot, idx) => (
+                    <InputOTPSlot key={idx} {...slot} index={idx} />
                   ))}
                 </InputOTPGroup>
               )}

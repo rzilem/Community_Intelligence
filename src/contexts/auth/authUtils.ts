@@ -1,7 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
+import { Profile } from '@/types/profile-types';
+import { Association } from '@/types/association-types';
+import { UserAssociation } from './types';
 
 /**
  * Sign in a user with email and password
@@ -72,5 +74,55 @@ export const signOutUser = async () => {
   } catch (error) {
     console.error('Error signing out:', error);
     return { error };
+  }
+};
+
+/**
+ * Load user profile data
+ */
+export const loadUserProfile = async (userId: string): Promise<Profile | null> => {
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    return profile;
+  } catch (error) {
+    console.error('Error loading user profile:', error);
+    return null;
+  }
+};
+
+/**
+ * Load user associations
+ */
+export const loadUserAssociations = async (userId: string): Promise<UserAssociation[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('association_users')
+      .select(`
+        role,
+        associations (
+          id,
+          name,
+          description,
+          logo_url,
+          status
+        )
+      `)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    return data.map(item => ({
+      role: item.role,
+      associations: item.associations
+    }));
+  } catch (error) {
+    console.error('Error loading user associations:', error);
+    return [];
   }
 };

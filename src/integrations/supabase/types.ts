@@ -4249,6 +4249,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_totp: {
+        Row: {
+          created_at: string
+          totp_secret: string
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          totp_secret: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          totp_secret?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       vendor_profiles: {
         Row: {
           company_description: string | null
@@ -4590,6 +4614,10 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
+      check_totp_status: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       check_user_association: {
         Args: { association_uuid: string }
         Returns: boolean
@@ -4607,6 +4635,10 @@ export type Database = {
           p_total_units?: number
         }
         Returns: string
+      }
+      delete_totp_secret: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>
@@ -4770,6 +4802,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      set_totp_verified: {
+        Args: { p_user_id: string; p_verified?: boolean }
+        Returns: undefined
+      }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -4796,6 +4832,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      upsert_totp_secret: {
+        Args: { p_user_id: string; p_totp_secret: string; p_verified?: boolean }
+        Returns: undefined
+      }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean
@@ -4811,6 +4851,10 @@ export type Database = {
       validate_resident_preferences: {
         Args: { preferences: Json }
         Returns: boolean
+      }
+      verify_totp: {
+        Args: { p_user_id: string; p_token: string }
+        Returns: Json
       }
     }
     Enums: {
