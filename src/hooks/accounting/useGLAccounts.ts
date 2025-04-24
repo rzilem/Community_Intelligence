@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,15 +14,42 @@ const mockGLAccounts: GLAccount[] = [
   { id: '6', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000, is_active: true },
 ];
 
-export const useGLAccounts = (associationId?: string) => {
+// Helper function to get formatted account categories
+export const getFormattedAccountCategories = (accounts: GLAccount[]): string[] => {
+  return Array.from(new Set(accounts.filter(acc => acc.category).map(acc => acc.category || ''))).sort();
+};
+
+// Helper function to format GL account labels
+export const getFormattedGLAccountLabel = (account: GLAccount): string => {
+  return `${account.code} - ${account.name}`;
+};
+
+// Type for useGLAccounts parameters
+export interface GLAccountsOptions {
+  associationId?: string;
+  includeMaster?: boolean;
+}
+
+export const useGLAccounts = (options?: string | GLAccountsOptions) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [accountType, setAccountType] = useState<string>('all');
   const [activeOnly, setActiveOnly] = useState<boolean>(true);
   const queryClient = useQueryClient();
+  
+  // Parse options
+  let associationId: string | undefined;
+  let includeMaster = false;
+  
+  if (typeof options === 'string') {
+    associationId = options;
+  } else if (options && typeof options === 'object') {
+    associationId = options.associationId;
+    includeMaster = options.includeMaster || false;
+  }
 
   // Fetch GL accounts (mock implementation)
   const { data: accounts = [], isLoading, error } = useQuery({
-    queryKey: ['glAccounts', associationId],
+    queryKey: ['glAccounts', associationId, includeMaster],
     queryFn: async () => {
       // In a real implementation, we would fetch from Supabase
       // For now, return mock data
@@ -107,6 +135,6 @@ export const useGLAccounts = (associationId?: string) => {
     createGLAccount,
     updateGLAccount,
     deleteGLAccount,
-    refreshAccounts // Added this function
+    refreshAccounts
   };
 };

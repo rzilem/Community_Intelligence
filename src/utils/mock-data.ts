@@ -27,61 +27,76 @@ export const mockPayments: Payment[] = [
   { id: '8', vendor: 'Water Works Inc.', amount: 300, date: '2023-12-10', status: 'scheduled', method: 'ach', associationName: 'Sunset HOA', category: 'Utilities', associationId: '1' },
 ];
 
-// Mock journal entries
+// Mock journal entries - updated to match JournalEntry interface
 export const mockJournalEntries: JournalEntry[] = [
   { 
     id: '1',
-    entry_number: 'JE-20231101-0001',
-    date: '2023-11-01',
+    entryNumber: 'JE-20231101-0001',
+    entryDate: '2023-11-01',
+    date: '2023-11-01', // For compatibility
     reference: 'NOV2023-ASSESS',
     description: 'Monthly assessment revenue',
     status: 'posted',
-    association_id: '1',
-    created_by: 'system',
-    createdBy: 'system'
+    amount: 5000,
+    associationId: '1',
+    createdBy: 'system',
+    createdAt: '2023-11-01T08:30:00Z',
+    updatedAt: '2023-11-01T08:30:00Z'
   },
   { 
     id: '2',
-    entry_number: 'JE-20231102-0002',
-    date: '2023-11-02',
+    entryNumber: 'JE-20231102-0002',
+    entryDate: '2023-11-02',
+    date: '2023-11-02', // For compatibility
     reference: 'INV-LANDS-1102',
     description: 'Landscaping expense',
     status: 'draft',
-    association_id: '1',
-    created_by: 'system',
-    createdBy: 'system'
+    amount: 1200,
+    associationId: '1',
+    createdBy: 'system',
+    createdAt: '2023-11-02T09:15:00Z',
+    updatedAt: '2023-11-02T09:15:00Z'
   },
   { 
     id: '3',
-    entry_number: 'JE-20231105-0003',
-    date: '2023-11-05',
+    entryNumber: 'JE-20231105-0003',
+    entryDate: '2023-11-05',
+    date: '2023-11-05', // For compatibility
     reference: 'INV-LEGAL-1105',
     description: 'Legal services',
-    status: 'reconciled',
-    association_id: '1',
-    created_by: 'system',
-    createdBy: 'system'
+    status: 'posted',
+    amount: 800,
+    associationId: '1',
+    createdBy: 'system',
+    createdAt: '2023-11-05T14:45:00Z',
+    updatedAt: '2023-11-05T14:45:00Z'
   },
   { 
     id: '4',
-    entry_number: 'JE-20231110-0004',
-    date: '2023-11-10',
+    entryNumber: 'JE-20231110-0004',
+    entryDate: '2023-11-10',
+    date: '2023-11-10', // For compatibility
     reference: 'INV-INS-1110',
     description: 'Insurance premium',
     status: 'posted',
-    association_id: '1',
-    created_by: 'system',
-    createdBy: 'system'
+    amount: 1500,
+    associationId: '1',
+    createdBy: 'system',
+    createdAt: '2023-11-10T11:30:00Z',
+    updatedAt: '2023-11-10T11:30:00Z'
   },
   { 
     id: '5',
-    entry_number: 'JE-20231115-0005',
-    date: '2023-11-15',
+    entryNumber: 'JE-20231115-0005',
+    entryDate: '2023-11-15',
+    date: '2023-11-15', // For compatibility
     reference: 'TRANSFER-RES-1115',
     description: 'Transfer to reserve account',
     status: 'draft',
-    association_id: '1',
-    created_by: 'system',
-    createdBy: 'system'
-  },
+    amount: 3000,
+    associationId: '1',
+    createdBy: 'system',
+    createdAt: '2023-11-15T10:00:00Z',
+    updatedAt: '2023-11-15T10:00:00Z'
+  }
 ];

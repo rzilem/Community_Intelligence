@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,6 +28,7 @@ interface GLAccountDialogProps {
   onSubmit: (account: GLAccount) => void;
   account?: GLAccount;
   accounts?: GLAccount[];
+  associationId?: string;
 }
 
 const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
@@ -36,7 +36,8 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   onClose,
   onSubmit,
   account,
-  accounts = []
+  accounts = [],
+  associationId
 }) => {
   const [isActive, setIsActive] = useState(true);
   
@@ -69,12 +70,12 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
         type: 'Expense',
         category: '',
         is_active: true,
-        association_id: '',
+        association_id: associationId || '',
         account_number: '',
       });
       setIsActive(true);
     }
-  }, [account, form]);
+  }, [account, form, associationId]);
 
   // Ensure all accounts have valid types
   const safeAccounts = ensureValidAccountTypes(accounts);
@@ -84,6 +85,7 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
     const validAccount = ensureValidAccountType({
       ...data,
       is_active: isActive,
+      association_id: associationId || data.association_id
     });
     onSubmit(validAccount);
   };
@@ -93,8 +95,14 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
     new Set(safeAccounts.map((a) => a.category).filter(Boolean))
   ).sort();
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{account ? 'Edit' : 'Add'} GL Account</DialogTitle>
