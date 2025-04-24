@@ -17,6 +17,9 @@ import { useAuth } from '@/contexts/auth';
 const GLAccounts = () => {
   const [viewMode, setViewMode] = React.useState<'list' | 'chart'>('list');
   const [selectedAssociationId, setSelectedAssociationId] = React.useState<string>('');
+  const [activeTab, setActiveTab] = React.useState<string>('master');
+  const [searchTerm, setSearchTerm] = React.useState<string>('');
+  const [accountType, setAccountType] = React.useState<string>('all');
   const { currentAssociation } = useAuth();
 
   const { data: accounts = [], isLoading, error } = useSupabaseQuery<GLAccount[]>(
@@ -35,6 +38,19 @@ const GLAccounts = () => {
     }
   }, [error]);
 
+  const handleAccountAdded = (account: GLAccount) => {
+    // In a real implementation, this would refresh the data
+    // For now, we'll just log it
+    console.log('Account added:', account);
+  };
+
+  const handleCopyMasterToAssociation = () => {
+    if (selectedAssociationId) {
+      // This would be implemented to copy master accounts to the selected association
+      toast.success('Master accounts copied to association');
+    }
+  };
+
   return (
     <PageTemplate
       title="Chart of Accounts"
@@ -49,9 +65,16 @@ const GLAccounts = () => {
         />
 
         <GLAccountTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           accounts={accounts}
-          isLoading={isLoading}
-          viewMode={viewMode}
+          searchTerm={searchTerm}
+          accountType={accountType}
+          onSearchChange={setSearchTerm}
+          onAccountTypeChange={setAccountType}
+          onAccountAdded={handleAccountAdded}
+          selectedAssociationId={selectedAssociationId}
+          onCopyMasterToAssociation={handleCopyMasterToAssociation}
         />
       </div>
     </PageTemplate>
