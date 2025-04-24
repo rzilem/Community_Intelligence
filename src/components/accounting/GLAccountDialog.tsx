@@ -25,15 +25,18 @@ import { ensureValidAccountType, ensureValidAccountTypes } from '@/utils/account
 interface GLAccountDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenChange?: (open: boolean) => void;
   onSubmit: (account: GLAccount) => void;
   account?: GLAccount;
   accounts?: GLAccount[];
   associationId?: string;
+  onAccountAdded?: (account: GLAccount) => void;
 }
 
 const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   isOpen,
   onClose,
+  onOpenChange,
   onSubmit,
   account,
   accounts = [],
@@ -96,6 +99,10 @@ const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   ).sort();
 
   const handleOpenChange = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+    
     if (!open) {
       onClose();
     }

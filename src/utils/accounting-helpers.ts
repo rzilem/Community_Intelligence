@@ -40,3 +40,12 @@ export const getFormattedGLAccountLabel = (account: GLAccount): string => {
   return `${account.code} - ${account.name}`;
 };
 
+// Format GL account for display
+export const formatGLAccount = (account: GLAccount): string => {
+  return `${account.code} - ${account.name}`;
+};
+
+// Check if a journal entry is balanced
+export const isJournalEntryBalanced = (debitTotal: number, creditTotal: number): boolean => {
+  return Math.abs(debitTotal - creditTotal) < 0.01;
+};

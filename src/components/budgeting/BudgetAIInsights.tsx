@@ -7,12 +7,20 @@ import { BudgetSummary } from '@/types/accounting-types';
 import { formatCurrency } from '@/utils/accounting-helpers';
 
 interface BudgetAIInsightsProps {
-  summary: BudgetSummary; // Changed from summary to match BudgetPlanning.tsx
+  summary?: BudgetSummary;
+  budgetSummary?: BudgetSummary; // Added alternate prop name for backward compatibility
   isLoading?: boolean;
 }
 
-const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ summary, isLoading = false }) => {
-  if (isLoading) {
+const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ 
+  summary, 
+  budgetSummary, 
+  isLoading = false 
+}) => {
+  // Use either summary or budgetSummary prop
+  const actualSummary = summary || budgetSummary;
+  
+  if (isLoading || !actualSummary) {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -45,11 +53,11 @@ const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ summary, isLoading 
           <div>
             <p className="text-sm text-muted-foreground">Total Revenue</p>
             <div className="flex items-center">
-              <p className="text-2xl font-bold">{formatCurrency(summary.totalRevenue)}</p>
-              {summary.changePercentage !== 0 && (
+              <p className="text-2xl font-bold">{formatCurrency(actualSummary.totalRevenue)}</p>
+              {actualSummary.changePercentage !== 0 && (
                 <Badge variant="outline" className="ml-2">
-                  <span className={summary.changePercentage >= 0 ? 'text-green-600' : 'text-red-600'}>
-                    {formatPercentage(summary.changePercentage)}
+                  <span className={actualSummary.changePercentage >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    {formatPercentage(actualSummary.changePercentage)}
                   </span>
                 </Badge>
               )}
@@ -59,23 +67,23 @@ const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ summary, isLoading 
           <div>
             <p className="text-sm text-muted-foreground">Total Expenses</p>
             <div className="flex items-center">
-              <p className="text-2xl font-bold">{formatCurrency(summary.totalExpenses)}</p>
+              <p className="text-2xl font-bold">{formatCurrency(actualSummary.totalExpenses)}</p>
             </div>
           </div>
           
           <div>
             <p className="text-sm text-muted-foreground">Net Income</p>
             <div className="flex items-center">
-              <p className="text-2xl font-bold">{formatCurrency(summary.netIncome)}</p>
-              {summary.netIncomeChange !== 0 && (
+              <p className="text-2xl font-bold">{formatCurrency(actualSummary.netIncome)}</p>
+              {actualSummary.netIncomeChange !== 0 && (
                 <div className="flex items-center ml-2">
-                  {summary.netIncomeChange > 0 ? (
+                  {actualSummary.netIncomeChange > 0 ? (
                     <ArrowUpRight className="h-4 w-4 text-green-500" />
                   ) : (
                     <ArrowDownRight className="h-4 w-4 text-red-500" />
                   )}
-                  <span className={summary.netIncomeChange > 0 ? 'text-green-600' : 'text-red-600'}>
-                    {formatCurrency(Math.abs(summary.netIncomeChange))}
+                  <span className={actualSummary.netIncomeChange > 0 ? 'text-green-600' : 'text-red-600'}>
+                    {formatCurrency(Math.abs(actualSummary.netIncomeChange))}
                   </span>
                 </div>
               )}
@@ -85,7 +93,7 @@ const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ summary, isLoading 
           <div className="pt-4 border-t">
             <h4 className="text-sm font-medium mb-2">AI Insights:</h4>
             <ul className="space-y-1">
-              {summary.insights.map((insight, index) => (
+              {actualSummary.insights.map((insight, index) => (
                 <li key={index} className="text-sm text-muted-foreground">• {insight}</li>
               ))}
             </ul>

@@ -1,4 +1,3 @@
-
 export interface Budget {
   id: string;
   name: string;
@@ -22,7 +21,7 @@ export interface BudgetEntry {
   previousYearActual?: number;
   previousYearBudget?: number;
   notes?: string;
-  budget_id?: string; // Kept for compatibility
+  budget_id?: string;
 }
 
 export interface MonthlyAmount {
@@ -60,10 +59,10 @@ export interface JournalEntry {
   id: string;
   entryNumber: string; 
   entryDate: string;
-  date?: string; // For compatibility
-  reference?: string; // For compatibility
+  date?: string;
+  reference?: string;
   description: string;
-  status: 'draft' | 'posted' | 'voided'; // Modified to match allowed types
+  status: 'draft' | 'posted' | 'voided';
   postDate?: string;
   amount: number;
   debitAccountId?: string;
@@ -109,8 +108,9 @@ export interface BudgetSummary {
   changePercentage: number;
   netIncomeChange: number; 
   insights: string[];
-  previousYearTotalRevenue?: number; 
-  previousYearTotalExpenses?: number; // Added this field to fix BudgetPlanning.tsx errors
+  previousYearTotalRevenue?: number;
+  previousYearTotalExpenses?: number;
+  previousYearNetIncome?: number;
 }
 
 export interface Invoice {
