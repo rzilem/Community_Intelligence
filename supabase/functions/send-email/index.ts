@@ -14,12 +14,15 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Check for authorization header
+  // For authenticated requests from web app, check auth
+  // Skip strict auth check for webhook requests that might come from third-parties
   const authHeader = req.headers.get('authorization');
   const apiKey = req.headers.get('apikey');
+  const isWebhookRequest = req.headers.get('x-webhook-source') === 'true';
   
-  if (!authHeader && !apiKey) {
-    console.error("Missing authorization header");
+  // Only verify auth for non-webhook requests
+  if (!isWebhookRequest && !authHeader && !apiKey) {
+    console.error("Missing authorization header and not a webhook request");
     return new Response(
       JSON.stringify({ 
         code: 401,

@@ -24,6 +24,11 @@ serve(async (req) => {
   try {
     console.log("Received request with content-type:", req.headers.get("content-type"));
     
+    // IMPORTANT: For CloudMailin, don't check authorization headers
+    // CloudMailin doesn't send standard auth headers, so we skip the check
+    // This is a security consideration - you should implement appropriate
+    // security measures based on your specific requirements
+    
     // Get email data from request - handle both JSON and multipart form data
     let emailData;
     

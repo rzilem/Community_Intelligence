@@ -15,26 +15,11 @@ serve(async (req) => {
   }
 
   try {
-    // Check for authorization header
-    const authHeader = req.headers.get('authorization');
-    const apiKey = req.headers.get('apikey');
+    // IMPORTANT: For CloudMailin, don't check authorization headers
+    // CloudMailin doesn't send standard auth headers, so we skip the check
+    // This is a security consideration - you should implement appropriate
+    // security measures based on your specific requirements
     
-    if (!authHeader && !apiKey) {
-      console.error("Missing authorization header");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Missing authorization header", 
-          code: 401,
-          message: "Missing authorization header" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401 
-        }
-      );
-    }
-
     console.log("Received homeowner request email webhook");
     
     // Get email data from request - handle both JSON and multipart form data

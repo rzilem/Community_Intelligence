@@ -15,27 +15,10 @@ serve(async (req) => {
   }
 
   try {
-    // Check for authorization header
-    const authHeader = req.headers.get('authorization');
-    const apiKey = req.headers.get('apikey');
-    
-    // Validate authorization
-    // You can add environment variable check or a predefined API key check
-    const validApiKey = Deno.env.get('FUNCTION_API_KEY');
-    
-    if (!authHeader && !apiKey) {
-      console.error("Missing authorization header");
-      return new Response(
-        JSON.stringify({ 
-          code: 401,
-          message: "Missing authorization header" 
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401 
-        }
-      );
-    }
+    // IMPORTANT: For CloudMailin, don't check authorization headers
+    // CloudMailin doesn't send standard auth headers, so we skip the check
+    // This is a security consideration - you should implement appropriate
+    // security measures based on your specific requirements
 
     console.log("Received invoice email with content-type:", req.headers.get("content-type"));
     console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
