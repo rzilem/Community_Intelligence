@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { PDFViewer } from './PDFViewer';
 
@@ -14,6 +14,18 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [key, setKey] = useState(Date.now()); // Used to force re-render
+
+  // Log for debugging
+  useEffect(() => {
+    if (pdfUrl) {
+      console.log('PreviewContent attempting to render PDF:', pdfUrl);
+    } else if (htmlContent) {
+      console.log('PreviewContent attempting to render HTML content');
+    } else {
+      console.log('PreviewContent has no content to render');
+    }
+  }, [pdfUrl, htmlContent]);
 
   // Helper to check if URL is valid
   const isValidUrl = (url?: string) => {
@@ -39,16 +51,25 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
     setError(true);
   };
 
+  const handleRetry = () => {
+    console.log("Retrying PDF load");
+    setLoading(true);
+    setError(false);
+    setKey(Date.now()); // Force PDFViewer to remount
+  };
+
   // Ensure pdfUrl is valid before attempting to render
   const validPdfUrl = isValidUrl(pdfUrl) ? pdfUrl : undefined;
 
   if (validPdfUrl) {
     return (
-      <div className="w-[600px] h-[400px] bg-white">
+      <div className="w-full h-full bg-white">
         <PDFViewer 
+          key={key}
           url={validPdfUrl} 
           onLoad={handlePdfLoad}
           onError={handlePdfError}
+          onRetry={handleRetry}
         />
       </div>
     );

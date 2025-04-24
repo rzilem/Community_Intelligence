@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PreviewContent } from './PreviewContent';
 import { Invoice } from '@/types/invoice-types';
 
@@ -8,8 +8,28 @@ interface InvoiceHoverPreviewProps {
 }
 
 export const InvoiceHoverPreview: React.FC<InvoiceHoverPreviewProps> = ({ invoice }) => {
-  // Log information about the invoice for debugging
+  const [normalizedUrl, setNormalizedUrl] = useState<string | undefined>(undefined);
+
+  // Normalize the PDF URL if needed
+  const normalizeUrl = (url?: string) => {
+    if (!url) return undefined;
+    
+    try {
+      // Create a URL object to validate the URL
+      new URL(url);
+      return url;
+    } catch (e) {
+      // If it's not a valid URL, try to add https://
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return `https://${url}`;
+      }
+      console.error("Invalid URL format even after normalization:", url);
+      return undefined;
+    }
+  };
+  
   useEffect(() => {
+    // Log information about the invoice for debugging
     console.group('InvoiceHoverPreview');
     console.log('Invoice ID:', invoice.id);
     console.log('PDF URL exists:', !!invoice.pdf_url);
@@ -18,23 +38,21 @@ export const InvoiceHoverPreview: React.FC<InvoiceHoverPreviewProps> = ({ invoic
     }
     console.log('HTML content exists:', !!invoice.html_content);
     console.groupEnd();
+
+    // Normalize URL when invoice changes
+    if (invoice.pdf_url) {
+      setNormalizedUrl(normalizeUrl(invoice.pdf_url));
+    } else {
+      setNormalizedUrl(undefined);
+    }
   }, [invoice]);
 
-  // Normalize the PDF URL if needed
-  const normalizeUrl = (url?: string) => {
-    if (!url) return undefined;
-    
-    // Ensure the URL starts with http:// or https://
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      return `https://${url}`;
-    }
-    return url;
-  };
-
   return (
-    <PreviewContent 
-      pdfUrl={normalizeUrl(invoice.pdf_url)} 
-      htmlContent={invoice.html_content} 
-    />
+    <div className="w-full h-full">
+      <PreviewContent 
+        pdfUrl={normalizedUrl} 
+        htmlContent={invoice.html_content} 
+      />
+    </div>
   );
 };
