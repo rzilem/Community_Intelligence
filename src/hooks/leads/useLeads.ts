@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import { Lead, LEAD_COLUMN_DEFINITIONS } from '@/types/lead-types';
 import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { useTableColumns } from './useTableColumns';
-import { useLeadScoring } from '@/hooks/lead-scoring';
+import { useLeadScoring } from '@/hooks/leads/useLeadScoring';
 
 export const useLeads = () => {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -75,6 +76,7 @@ export const useLeads = () => {
         }
         
         if (data && data[0]) {
+          // Type assertion to handle the conversion properly
           await updateLeadScore(data[0] as Lead);
         }
         
@@ -209,6 +211,10 @@ function generateTestLead(): Lead {
     current_management: randomManagement,
     additional_requirements: Math.random() > 0.7 ? 'Needs special attention to maintenance issues' : undefined,
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    // New properties required by the updated Lead type
+    lead_score: 0,
+    follow_up_sequence: 0,
+    proposal_count: 0
   };
 }
