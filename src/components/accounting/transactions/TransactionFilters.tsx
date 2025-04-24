@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -28,7 +27,7 @@ export const TransactionFilters = ({
             <Label>Start Date</Label>
             <DatePicker
               date={startDate}
-              onSelect={onStartDateChange}
+              setDate={onStartDateChange}
             />
           </div>
           
@@ -36,7 +35,7 @@ export const TransactionFilters = ({
             <Label>End Date</Label>
             <DatePicker
               date={endDate}
-              onSelect={onEndDateChange}
+              setDate={onEndDateChange}
             />
           </div>
           
