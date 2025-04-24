@@ -1,13 +1,11 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FormWorkflow, FormWorkflowStep } from '@/types/form-workflow-types';
-import { PlusCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { FormWorkflow, FormWorkflowStep } from '@/types/form-workflow-types';
 import WorkflowStepList from './WorkflowStepList';
-import WorkflowStepEditor from './WorkflowStepEditor';
 import WorkflowSettings from './WorkflowSettings';
 import WorkflowTestPanel from './WorkflowTestPanel';
 
@@ -15,119 +13,105 @@ interface WorkflowContentProps {
   workflow: FormWorkflow;
   activeTab: string;
   selectedStepId: string | null;
-  onUpdateWorkflow: (updates: Partial<FormWorkflow>) => void;
   onTabChange: (tab: string) => void;
   onAddStep: () => void;
   onSelectStep: (stepId: string) => void;
   onUpdateStep: (step: FormWorkflowStep) => void;
   onDeleteStep: (stepId: string) => void;
+  onUpdateWorkflow: (updates: Partial<FormWorkflow>) => void;
 }
 
 const WorkflowContent: React.FC<WorkflowContentProps> = ({
   workflow,
   activeTab,
   selectedStepId,
-  onUpdateWorkflow,
   onTabChange,
   onAddStep,
   onSelectStep,
   onUpdateStep,
-  onDeleteStep
+  onDeleteStep,
+  onUpdateWorkflow
 }) => {
-  const selectedStep = selectedStepId 
-    ? workflow.steps.find(step => step.id === selectedStepId) 
-    : null;
-
   return (
-    <Card className="col-span-4">
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-          <div>
-            <CardTitle>
-              <Input
-                value={workflow.name}
-                onChange={(e) => onUpdateWorkflow({ name: e.target.value })}
-                className="text-xl font-bold px-2 w-full max-w-md border-none"
-                placeholder="Workflow Name"
-              />
-            </CardTitle>
-          </div>
-          <Input
-            value={workflow.description || ''}
-            onChange={(e) => onUpdateWorkflow({ description: e.target.value })}
-            className="px-2 text-muted-foreground text-sm w-full max-w-md"
-            placeholder="Add a description (optional)"
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={onTabChange}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="steps">Workflow Steps</TabsTrigger>
-            <TabsTrigger value="editor" disabled={!selectedStepId}>Step Editor</TabsTrigger>
+    <>
+      <div className="col-span-1">
+        <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="steps">Steps</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="test">Test Workflow</TabsTrigger>
+            <TabsTrigger value="test">Test</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="steps" className="space-y-4">
-            {workflow.steps.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-muted/20">
-                <h3 className="text-lg font-medium mb-2">No Steps Added Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Create your first workflow step to define what happens when forms are submitted
-                </p>
-                <Button onClick={onAddStep}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Add First Step
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
+        </Tabs>
+      </div>
+
+      <div className="col-span-3">
+        <TabsContent value="steps" className="mt-0">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Workflow Steps</CardTitle>
+              <Button onClick={onAddStep} size="sm">
+                <Plus className="h-4 w-4 mr-1" /> Add Step
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {workflow.steps.length === 0 ? (
+                <div className="text-center p-8 text-muted-foreground">
+                  <p>No workflow steps defined.</p>
+                  <p className="text-sm">Add a step to begin defining your workflow.</p>
+                </div>
+              ) : (
                 <WorkflowStepList
                   steps={workflow.steps}
+                  selectedStepId={selectedStepId}
                   onSelectStep={onSelectStep}
+                  onUpdateStep={onUpdateStep}
                   onDeleteStep={onDeleteStep}
                 />
-                <div className="flex justify-center mt-4">
-                  <Button onClick={onAddStep} variant="outline">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Step
-                  </Button>
-                </div>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="editor">
-            {selectedStep ? (
-              <WorkflowStepEditor 
-                step={selectedStep}
-                onChange={onUpdateStep}
-                onDelete={() => onDeleteStep(selectedStep.id)}
-              />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Please select a step to edit
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="settings">
-            <WorkflowSettings
-              workflow={workflow}
-              onChange={onUpdateWorkflow}
-            />
-          </TabsContent>
-          
-          <TabsContent value="test">
-            <WorkflowTestPanel
-              workflow={workflow}
-              formId={workflow.formTemplateId}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-0">
+          <WorkflowSettings workflow={workflow} onUpdateWorkflow={onUpdateWorkflow} />
+        </TabsContent>
+
+        <TabsContent value="test" className="mt-0">
+          <WorkflowTestPanel workflow={workflow} />
+        </TabsContent>
+
+        <TabsContent value="editor" className="mt-0">
+          {selectedStepId ? (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Edit Step</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {workflow.steps.find(step => step.id === selectedStepId) ? (
+                    <p className="text-center text-muted-foreground">
+                      Step editor will be implemented here
+                    </p>
+                  ) : (
+                    <p className="text-center text-muted-foreground">
+                      Selected step not found
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  Select a step to edit its details
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </div>
+    </>
   );
 };
 
