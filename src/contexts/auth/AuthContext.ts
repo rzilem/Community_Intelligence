@@ -13,6 +13,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   loading: boolean;
   isLoading: boolean; // For backward compatibility
+  requiresTwoFactor: boolean;
 
   // Profile and role information
   profile: Profile | null;
@@ -25,7 +26,8 @@ interface AuthContextValue {
   setCurrentAssociation: (association: Association | null) => void;
 
   // Authentication methods
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; requires2FA: boolean; user: User | null }>;
+  verify2FA: (token: string) => Promise<boolean>;
   signUp: (email: string, password: string, userData: { 
     first_name: string; 
     last_name: string 
@@ -44,6 +46,7 @@ const AuthContext = createContext<AuthContextValue>({
   isAuthenticated: false,
   loading: true,
   isLoading: true,
+  requiresTwoFactor: false,
 
   // Profile and role defaults
   profile: null,
@@ -56,7 +59,8 @@ const AuthContext = createContext<AuthContextValue>({
   setCurrentAssociation: () => {},
 
   // Authentication method stubs
-  signIn: async () => {},
+  signIn: async () => ({ success: false, requires2FA: false, user: null }),
+  verify2FA: async () => false,
   signUp: async () => {},
   signOut: async () => {},
 

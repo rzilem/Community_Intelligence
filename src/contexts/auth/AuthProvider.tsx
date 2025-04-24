@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
 import { fetchUserProfile } from '@/services/user-service';
@@ -28,7 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentAssociation,
   } = authState;
 
-  const { signIn, signUp, signOut } = useAuthMethods(setLoading);
+  // Track if 2FA verification is required for the current login attempt
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
+
+  const { signIn, signUp, signOut, verify2FA } = useAuthMethods(setLoading);
   const { loadUserData } = useLoadUserData({
     setProfile,
     setIsAdmin,
@@ -48,6 +52,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
         setSession(session);
         setUser(session?.user || null);
+        // Reset 2FA requirement when successfully signed in
+        setRequiresTwoFactor(false);
       } else if (event === 'SIGNED_OUT') {
         setSession(null);
         setUser(null);
@@ -56,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(null);
         setUserAssociations([]);
         setCurrentAssociation(null);
+        setRequiresTwoFactor(false);
       }
     });
 
@@ -77,6 +84,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUserData(user);
   }, [user]);
 
+  const handleSignIn = async (email: string, password: string) => {
+    const result = await signIn(email, password);
+    if (result.success && result.requires2FA) {
+      setRequiresTwoFactor(true);
+    }
+    return result;
+  };
+
   const refreshProfile = async () => {
     if (user?.id) {
       try {
@@ -93,13 +108,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user && !requiresTwoFactor;
 
   console.log('[AuthProvider] Current state:', { 
     isAuthenticated, 
     userEmail: user?.email,
     profileLoaded: !!profile,
-    loading
+    loading,
+    requiresTwoFactor
   });
 
   const contextValue = {
@@ -107,7 +123,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentUser: user,
     profile,
     session,
-    signIn,
+    signIn: handleSignIn,
+    verify2FA,
     signUp,
     signOut,
     loading,
@@ -117,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     currentAssociation,
     isAdmin,
     isAuthenticated,
+    requiresTwoFactor,
     setCurrentAssociation,
     refreshProfile,
   };

@@ -1,9 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import usePermissions from '@/hooks/users/usePermissions';
+import { TwoFactorVerification } from './two-factor/TwoFactorVerification';
+import { getRoleBasedRedirect, canAccessPath } from '@/utils/role-redirects';
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -22,10 +24,11 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'],
   requireAssociation = false
 }) => {
-  const { user, loading, userRole, currentAssociation, userAssociations, isAuthenticated } = useAuth();
+  const { user, loading, userRole, currentAssociation, userAssociations, isAuthenticated, requiresTwoFactor, verify2FA } = useAuth();
   const { checkPermission } = usePermissions();
   const navigate = useNavigate();
   const location = useLocation();
+  const [showingTwoFactor, setShowingTwoFactor] = useState(false);
 
   // Special case for resale portal routes
   const isResalePortalRoute = location.pathname.startsWith('/resale-portal');
@@ -40,13 +43,36 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     loading, 
     userRole,
     currentPath: location.pathname,
-    effectiveAllowedRoles
+    effectiveAllowedRoles,
+    requiresTwoFactor
   });
+
+  // Handle 2FA verification if required
+  useEffect(() => {
+    if (requiresTwoFactor && !showingTwoFactor) {
+      setShowingTwoFactor(true);
+    }
+  }, [requiresTwoFactor]);
+
+  // Handle verification for 2FA
+  const handleVerify = async (token: string): Promise<boolean> => {
+    const success = await verify2FA(token);
+    if (success) {
+      setShowingTwoFactor(false);
+    }
+    return success;
+  };
 
   useEffect(() => {
     if (loading) {
       console.log('[RequireAuth] Still checking authentication...');
       return; // Still checking authentication
+    }
+    
+    // If 2FA verification is needed, show the verification UI
+    if (requiresTwoFactor) {
+      console.log('[RequireAuth] Two-factor verification required');
+      return; // Show 2FA verification UI instead
     }
     
     // If not authenticated, redirect to login
@@ -73,7 +99,21 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     if (effectiveAllowedRoles.length > 0 && userRole && !effectiveAllowedRoles.includes(userRole)) {
       console.log(`[RequireAuth] User role ${userRole} not in allowed roles (${effectiveAllowedRoles.join(', ')}), redirecting`);
       toast.error('You do not have permission to access this page');
-      navigate('/dashboard');
+      
+      // Redirect to role-specific page based on user role
+      if (user && userRole) {
+        navigate(getRoleBasedRedirect({ id: user.id, role: userRole } as Profile));
+      } else {
+        navigate('/dashboard');
+      }
+      return;
+    }
+
+    // Check path access based on role
+    if (userRole && !canAccessPath(userRole, location.pathname)) {
+      console.log(`[RequireAuth] User role ${userRole} cannot access ${location.pathname}, redirecting`);
+      toast.error('You do not have permission to access this page');
+      navigate(getRoleBasedRedirect({ id: user.id, role: userRole } as Profile));
       return;
     }
 
@@ -103,7 +143,8 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     submenuId,
     requiredAccess,
     checkPermission,
-    isResalePortalRoute
+    isResalePortalRoute,
+    requiresTwoFactor
   ]);
 
   if (loading) {
@@ -114,6 +155,20 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
           <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-lg">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Show 2FA verification UI if required
+  if (requiresTwoFactor && user?.email) {
+    return (
+      <div className="flex h-screen items-center justify-center p-4">
+        <TwoFactorVerification 
+          email={user.email}
+          onVerify={handleVerify}
+          onCancel={() => navigate('/auth?tab=login')}
+          onRecoveryOption={() => navigate('/auth/recovery')}
+        />
       </div>
     );
   }

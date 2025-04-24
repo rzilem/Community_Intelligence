@@ -2,16 +2,48 @@
 import { supabase } from '@/integrations/supabase/client';
 import { signInWithEmail, signUpWithEmail, signOutUser } from '../authUtils';
 import { toast } from 'sonner';
+import { twoFactorService } from '@/services/auth/two-factor-service';
 
 export function useAuthMethods(setLoading: (loading: boolean) => void) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      await signInWithEmail(email, password);
+      const { data, error } = await signInWithEmail(email, password);
+      
+      if (error) throw error;
+      
+      // Check if 2FA is required for this user
+      try {
+        const requires2FA = await twoFactorService.isEnabled();
+        
+        if (requires2FA) {
+          // We need to handle 2FA verification in the UI
+          // This will be handled in the login component by checking the return value
+          return { success: true, requires2FA: true, user: data.user };
+        }
+      } catch (twoFactorError) {
+        console.error('[AuthProvider] 2FA check error:', twoFactorError);
+        // Continue with normal sign-in if 2FA check fails
+      }
+      
+      return { success: true, requires2FA: false, user: data.user };
     } catch (error) {
       console.error('[AuthProvider] Sign in error:', error);
       toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verify2FA = async (token: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      return await twoFactorService.verify(token);
+    } catch (error) {
+      console.error('[AuthProvider] 2FA verification error:', error);
+      toast.error(`Verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
     } finally {
       setLoading(false);
     }
@@ -47,5 +79,5 @@ export function useAuthMethods(setLoading: (loading: boolean) => void) {
     }
   };
 
-  return { signIn, signUp, signOut };
+  return { signIn, signUp, signOut, verify2FA };
 }
