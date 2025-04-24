@@ -1,23 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import { Proposal, ProposalTemplate, ProposalAttachment, ProposalSection } from '@/types/proposal-types';
-import { useLeads } from '@/hooks/leads/useLeads';
-import { useProposalTemplates } from '@/hooks/proposals/useProposalTemplates';
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@/components/ui/dialog';
+import React from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
-import ProposalContentForm from './ProposalContentForm';
+import { Proposal } from '@/types/proposal-types';
+import { useLeads } from '@/hooks/leads/useLeads';
+import { useProposalTemplates } from '@/hooks/proposals/useProposalTemplates';
+import { FormProvider } from 'react-hook-form';
 import ProposalAttachments from './ProposalAttachments';
 import ProposalSettingsForm from './ProposalSettingsForm';
-import ProposalBuilder from './interactive-builder/ProposalBuilder';
+import ProposalContentTab from './form/ProposalContentTab';
+import { useProposalForm } from './form/useProposalForm';
 
 interface ProposalFormProps {
   isOpen: boolean;
@@ -36,96 +30,40 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
 }) => {
   const { leads } = useLeads();
   const { templates, isLoading: templatesLoading } = useProposalTemplates();
-  const [selectedTemplate, setSelectedTemplate] = useState<ProposalTemplate | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [attachments, setAttachments] = useState<ProposalAttachment[]>(proposal?.attachments || []);
-  const [activeTab, setActiveTab] = useState("content");
-  const [useAdvancedEditor, setUseAdvancedEditor] = useState(false);
-  const [sections, setSections] = useState<ProposalSection[]>(proposal?.sections || []);
-
-  const form = useForm({
-    defaultValues: {
-      id: proposal?.id || '',
-      lead_id: proposal?.lead_id || leadId || '',
-      template_id: proposal?.template_id || '',
-      name: proposal?.name || '',
-      content: proposal?.content || '',
-      amount: proposal?.amount || 0,
-      status: proposal?.status || 'draft'
-    }
-  });
-
-  // Effect to apply template content when selected
-  useEffect(() => {
-    if (selectedTemplate) {
-      form.setValue('content', selectedTemplate.content);
-      form.setValue('template_id', selectedTemplate.id);
-      
-      // If we're using the advanced editor, try to parse the template content into sections
-      if (useAdvancedEditor) {
-        try {
-          // This is simplified, in a real app you'd need a more robust parser
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(selectedTemplate.content, 'text/html');
-          const sectionElements = doc.querySelectorAll('section[data-section-id]');
-          
-          if (sectionElements.length > 0) {
-            const parsedSections: ProposalSection[] = Array.from(sectionElements).map((el, index) => {
-              const id = el.getAttribute('data-section-id') || `section-${Date.now()}-${index}`;
-              const title = el.querySelector('h2')?.textContent || 'Untitled Section';
-              const content = el.innerHTML;
-              
-              return {
-                id,
-                title,
-                content,
-                order: index,
-                attachments: []
-              };
-            });
-            
-            setSections(parsedSections);
-          }
-        } catch (error) {
-          console.error('Error parsing template content:', error);
-        }
-      }
-    }
-  }, [selectedTemplate, form, useAdvancedEditor]);
+  const [activeTab, setActiveTab] = React.useState("content");
+  const [isSaving, setIsSaving] = React.useState(false);
+  
+  const {
+    form,
+    attachments,
+    useAdvancedEditor,
+    setUseAdvancedEditor,
+    handleAttachmentUpload,
+    handleAttachmentRemove,
+    handleAdvancedContentSave
+  } = useProposalForm(proposal);
 
   const handleTemplateChange = (templateId: string) => {
     const template = templates.find(t => t.id === templateId);
-    setSelectedTemplate(template || null);
+    if (template) {
+      form.setValue('content', template.content);
+      form.setValue('template_id', template.id);
+    }
   };
 
   const handleSubmit = async (data: any) => {
     setIsSaving(true);
     try {
-      const proposalData = {
+      await onSave({
         ...data,
-        attachments: attachments,
-        sections: sections
-      };
-      await onSave(proposalData);
+        attachments
+      });
       onClose();
     } catch (error) {
       console.error('Error saving proposal:', error);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleAttachmentUpload = (attachment: ProposalAttachment) => {
-    setAttachments(prev => [...prev, attachment]);
-  };
-
-  const handleAttachmentRemove = (id: string) => {
-    setAttachments(prev => prev.filter(att => att.id !== id));
-  };
-
-  const handleAdvancedContentSave = (content: string, updatedSections: ProposalSection[]) => {
-    form.setValue('content', content);
-    setSections(updatedSections);
   };
 
   return (
@@ -145,34 +83,16 @@ const ProposalForm: React.FC<ProposalFormProps> = ({
           <FormProvider {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
               <TabsContent value="content" className="mt-0 space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium">Proposal Content</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setUseAdvancedEditor(!useAdvancedEditor)}
-                  >
-                    {useAdvancedEditor ? 'Switch to Basic Editor' : 'Switch to Advanced Editor'}
-                  </Button>
-                </div>
-                
-                {useAdvancedEditor ? (
-                  <div className="border rounded-md">
-                    <ProposalBuilder
-                      initialContent={form.getValues('content')}
-                      onSave={handleAdvancedContentSave}
-                      proposalId={proposal?.id}
-                    />
-                  </div>
-                ) : (
-                  <ProposalContentForm 
-                    leads={leads}
-                    templates={templates}
-                    templatesLoading={templatesLoading}
-                    onTemplateChange={handleTemplateChange}
-                    showLeadSelector={!leadId}
-                  />
-                )}
+                <ProposalContentTab
+                  leads={leads}
+                  templates={templates}
+                  templatesLoading={templatesLoading}
+                  onTemplateChange={handleTemplateChange}
+                  showLeadSelector={!leadId}
+                  useAdvancedEditor={useAdvancedEditor}
+                  onToggleEditor={() => setUseAdvancedEditor(!useAdvancedEditor)}
+                  onAdvancedContentSave={handleAdvancedContentSave}
+                />
               </TabsContent>
               
               <TabsContent value="attachments" className="mt-0">
