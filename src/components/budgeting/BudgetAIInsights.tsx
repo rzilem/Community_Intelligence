@@ -1,21 +1,24 @@
 
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowUpRight, ArrowDownRight, BarChart3 } from 'lucide-react';
-import { BudgetSummary } from '@/types/accounting-types';
+import { BudgetSummary, BudgetPrediction } from '@/types/accounting-types';
 import { formatCurrency } from '@/utils/accounting-helpers';
 
 interface BudgetAIInsightsProps {
   summary?: BudgetSummary;
   budgetSummary?: BudgetSummary; // Added alternate prop name for backward compatibility
   isLoading?: boolean;
+  predictions?: BudgetPrediction[];
 }
 
 const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ 
   summary, 
   budgetSummary, 
-  isLoading = false 
+  isLoading = false,
+  predictions
 }) => {
   // Use either summary or budgetSummary prop
   const actualSummary = summary || budgetSummary;

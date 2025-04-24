@@ -1,4 +1,5 @@
 
+
 import { GLAccount } from '@/types/accounting-types';
 
 // Format currency
@@ -49,3 +50,4 @@ export const formatGLAccount = (account: GLAccount): string => {
 export const isJournalEntryBalanced = (debitTotal: number, creditTotal: number): boolean => {
   return Math.abs(debitTotal - creditTotal) < 0.01;
 };
+

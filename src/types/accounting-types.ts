@@ -1,3 +1,4 @@
+
 export interface Budget {
   id: string;
   name: string;
@@ -111,6 +112,7 @@ export interface BudgetSummary {
   previousYearTotalRevenue?: number;
   previousYearTotalExpenses?: number;
   previousYearNetIncome?: number;
+  revenueChange?: number;
 }
 
 export interface Invoice {
