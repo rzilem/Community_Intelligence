@@ -2613,6 +2613,7 @@ export type Database = {
         Row: {
           assigned_to: string | null
           association_id: string | null
+          attachments: Json | null
           created_at: string
           description: string
           html_content: string | null
@@ -2630,6 +2631,7 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           association_id?: string | null
+          attachments?: Json | null
           created_at?: string
           description: string
           html_content?: string | null
@@ -2647,6 +2649,7 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           association_id?: string | null
+          attachments?: Json | null
           created_at?: string
           description?: string
           html_content?: string | null

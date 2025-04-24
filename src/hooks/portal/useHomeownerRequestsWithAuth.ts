@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -35,29 +34,25 @@ export function useHomeownerRequestsWithAuth() {
         toast.error('Failed to load your requests');
       } else {
         // Explicitly cast the data to ensure type safety
-        const typedRequests: HomeownerRequest[] = (data || []).map(item => {
-          // Safe access to attachments - if it doesn't exist in the data, use empty array
-          const attachmentData = item.attachments || [];
-          
-          return {
-            id: item.id,
-            title: item.title,
-            description: item.description || '', // Ensure description is never undefined
-            status: item.status as HomeownerRequestStatus,
-            priority: item.priority as HomeownerRequestPriority,
-            type: item.type as HomeownerRequestType,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            resident_id: item.resident_id,
-            property_id: item.property_id,
-            association_id: item.association_id,
-            assigned_to: item.assigned_to,
-            resolved_at: item.resolved_at,
-            html_content: item.html_content,
-            tracking_number: item.tracking_number,
-            attachments: attachmentData as RequestAttachment[] // Cast with safety
-          };
-        });
+        const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '', // Ensure description is never undefined
+          status: item.status as HomeownerRequestStatus,
+          priority: item.priority as HomeownerRequestPriority,
+          type: item.type as HomeownerRequestType,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          resident_id: item.resident_id,
+          property_id: item.property_id,
+          association_id: item.association_id,
+          assigned_to: item.assigned_to,
+          resolved_at: item.resolved_at,
+          html_content: item.html_content,
+          tracking_number: item.tracking_number,
+          attachments: item.attachments ? (item.attachments as RequestAttachment[]) : [] // Safe handling of attachments
+        }));
+        
         setRequests(typedRequests);
       }
     } catch (err: any) {
