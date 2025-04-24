@@ -10,6 +10,7 @@ import { Database, Upload, Users, Home, FileText, Calendar, ArrowRight } from 'l
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
+import { faker } from '@faker-js/faker';
 
 type DataCategory = {
   id: string;
@@ -18,6 +19,7 @@ type DataCategory = {
   icon: React.ReactNode;
   count: number;
   selected: boolean;
+  seedFunction: (associationId: string, count: number) => Promise<void>;
 };
 
 const initialCategories: DataCategory[] = [
@@ -27,7 +29,8 @@ const initialCategories: DataCategory[] = [
     description: 'Sample properties with various types and statuses',
     icon: <Home className="h-5 w-5" />,
     count: 50,
-    selected: true
+    selected: true,
+    seedFunction: seedProperties
   },
   { 
     id: 'residents', 
@@ -35,7 +38,8 @@ const initialCategories: DataCategory[] = [
     description: 'Homeowners and tenants with contact information',
     icon: <Users className="h-5 w-5" />,
     count: 75,
-    selected: true
+    selected: true,
+    seedFunction: seedResidents
   },
   { 
     id: 'documents', 
@@ -43,7 +47,8 @@ const initialCategories: DataCategory[] = [
     description: 'Community documents, bylaws, and notices',
     icon: <FileText className="h-5 w-5" />,
     count: 20,
-    selected: true 
+    selected: true,
+    seedFunction: seedDocuments
   },
   { 
     id: 'calendar', 
@@ -51,9 +56,103 @@ const initialCategories: DataCategory[] = [
     description: 'Community events, meetings, and amenity bookings',
     icon: <Calendar className="h-5 w-5" />,
     count: 15,
-    selected: true 
+    selected: true,
+    seedFunction: seedCalendarEvents
   }
 ];
+
+// Seeding functions
+async function seedProperties(associationId: string, count: number) {
+  const propertiesToInsert = Array.from({ length: count }, () => ({
+    association_id: associationId,
+    address: faker.location.streetAddress(),
+    city: faker.location.city(),
+    state: faker.location.state(),
+    zip: faker.location.zipCode(),
+    property_type: faker.helpers.arrayElement(['Single Family', 'Townhouse', 'Condo', 'Apartment']),
+    square_feet: faker.number.int({ min: 800, max: 3000 }),
+    bedrooms: faker.number.int({ min: 1, max: 5 }),
+    bathrooms: faker.number.float({ min: 1, max: 3, precision: 0.5 }),
+    year_built: faker.number.int({ min: 1950, max: 2023 }),
+    status: 'active'
+  }));
+
+  const { data, error } = await supabase
+    .from('properties')
+    .insert(propertiesToInsert);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function seedResidents(associationId: string, count: number) {
+  const residentProperties = await supabase
+    .from('properties')
+    .select('id')
+    .eq('association_id', associationId);
+
+  const propertyIds = residentProperties.data?.map(p => p.id) || [];
+
+  const residentsToInsert = Array.from({ length: count }, () => ({
+    association_id: associationId,
+    property_id: faker.helpers.arrayElement(propertyIds),
+    name: `${faker.person.firstName()} ${faker.person.lastName()}`,
+    email: faker.internet.email(),
+    phone: faker.phone.number(),
+    resident_type: faker.helpers.arrayElement(['owner', 'tenant']),
+    move_in_date: faker.date.past(),
+    preferences: {}
+  }));
+
+  const { error } = await supabase
+    .from('residents')
+    .insert(residentsToInsert);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function seedDocuments(associationId: string, count: number) {
+  const documentsToInsert = Array.from({ length: count }, () => ({
+    association_id: associationId,
+    name: faker.lorem.words(3),
+    description: faker.lorem.sentence(),
+    file_type: faker.helpers.arrayElement(['pdf', 'docx', 'txt']),
+    url: faker.internet.url(),
+    is_public: faker.datatype.boolean(),
+    category: faker.helpers.arrayElement(['bylaws', 'minutes', 'financial', 'other'])
+  }));
+
+  const { error } = await supabase
+    .from('documents')
+    .insert(documentsToInsert);
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function seedCalendarEvents(associationId: string, count: number) {
+  const calendarEventsToInsert = Array.from({ length: count }, () => ({
+    hoa_id: associationId,
+    title: faker.lorem.words(3),
+    description: faker.lorem.sentence(),
+    start_time: faker.date.future(),
+    end_time: faker.date.future(),
+    event_type: faker.helpers.arrayElement(['meeting', 'social', 'maintenance', 'other']),
+    visibility: faker.helpers.arrayElement(['public', 'private'])
+  }));
+
+  const { error } = await supabase
+    .from('calendar_events')
+    .insert(calendarEventsToInsert);
+
+  if (error) {
+    throw error;
+  }
+}
 
 const DemoDataSeeder: React.FC = () => {
   const { currentAssociation } = useAuth();
@@ -106,7 +205,16 @@ const DemoDataSeeder: React.FC = () => {
         setProgress(Math.round((i / selectedCategories.length) * 100));
         
         // Seed data for this category
-        await seedCategoryData(category, selectedAssociationId);
+        await category.seedFunction(selectedAssociationId, category.count);
+        
+        // Log seeding history
+        await supabase.from('history').insert({
+          association_id: selectedAssociationId,
+          user_id: currentAssociation?.user_id,
+          action: 'demo_data_seeding',
+          category: category.id,
+          count: category.count
+        });
         
         toast.success(`Created ${category.count} ${category.name.toLowerCase()}`);
       }
@@ -121,31 +229,6 @@ const DemoDataSeeder: React.FC = () => {
       setIsLoading(false);
       // Reset progress after a delay
       setTimeout(() => setProgress(0), 3000);
-    }
-  };
-  
-  const seedCategoryData = async (category: DataCategory, associationId: string) => {
-    // This is a placeholder function that would be replaced with actual seeding logic
-    console.log(`Seeding ${category.count} ${category.name} for association ${associationId}`);
-    
-    // Add a small delay to make the progress visible
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Here we would call specific seeding functions for each category
-    // For example:
-    switch (category.id) {
-      case 'properties':
-        // await seedProperties(category.count, associationId);
-        break;
-      case 'residents':
-        // await seedResidents(category.count, associationId);
-        break;
-      case 'documents':
-        // await seedDocuments(category.count, associationId);
-        break;
-      case 'calendar':
-        // await seedCalendarEvents(category.count, associationId);
-        break;
     }
   };
 
