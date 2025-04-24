@@ -3943,6 +3943,75 @@ export type Database = {
           },
         ]
       }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          association_id: string | null
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string
+          end_date: string | null
+          frequency: string
+          gl_account_id: string | null
+          id: string
+          is_active: boolean | null
+          last_generated_date: string | null
+          next_generation_date: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          association_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          end_date?: string | null
+          frequency: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          association_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_date?: string | null
+          frequency?: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_transactions_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resale_events: {
         Row: {
           color: string | null
