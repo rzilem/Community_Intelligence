@@ -34,6 +34,11 @@ export interface GLAccountGroup {
   name: string;
   accounts: GLAccount[];
   total: number;
+  code?: string; // Added missing property
+  isExpanded?: boolean; // Added missing property
+  totalBudget?: number; // Added missing property
+  totalPreviousYear?: number; // Added missing property
+  change?: number; // Added missing property
 }
 
 export interface JournalEntry {
@@ -49,6 +54,12 @@ export interface JournalEntry {
   created_at?: string;
   updated_at?: string;
   associationId?: string;
+  date?: string; // Added missing property
+  reference?: string; // Added missing property
+  createdAt?: string; // Added missing property
+  details?: any[]; // Added missing property
+  debitAccountId?: string; // Added missing property
+  creditAccountId?: string; // Added missing property
 }
 
 export interface Budget {
@@ -66,6 +77,8 @@ export interface Budget {
   updated_at?: string;
   created_by?: string;
   createdBy?: string;
+  createdAt?: string; // Added missing property
+  entries?: BudgetEntry[]; // Added missing property
 }
 
 export interface BudgetEntry {
@@ -101,6 +114,7 @@ export interface BudgetPrediction {
     percentChange: number;
   }[];
   insights: string[];
+  glAccountId?: string; // Added missing property
 }
 
 export interface ReportCategory {
