@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead-types';
@@ -62,25 +63,38 @@ export const useLeadMutations = () => {
   
   const updateLeadStatus = async (id: string, status: Lead['status']): Promise<void> => {
     try {
-      const { data: leads } = await supabase
+      // First, fetch the lead to get current data
+      const { data: leadData, error: fetchError } = await supabase
         .from('leads' as any)
         .select('*')
         .eq('id', id)
         .single();
 
-      if (!leads) throw new Error('Lead not found');
+      if (fetchError || !leadData) {
+        console.error('Error fetching lead:', fetchError);
+        throw fetchError || new Error('Lead not found');
+      }
 
+      // Now we have properly typed lead data
+      const lead = leadData as Lead;
+      
       console.log(`Updating lead ${id} status to ${status}`);
+      
+      // Prepare update data
+      const updateData: Partial<Lead> = { 
+        status, 
+        updated_at: new Date().toISOString() 
+      };
+      
+      // Add follow-up data if status is qualified
+      if (status === 'qualified') {
+        updateData.follow_up_sequence = (lead.follow_up_sequence || 0) + 1;
+        updateData.next_follow_up = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      }
+
       const { error } = await supabase
         .from('leads' as any)
-        .update({ 
-          status, 
-          updated_at: new Date().toISOString(),
-          ...(status === 'qualified' ? {
-            follow_up_sequence: leads.follow_up_sequence + 1,
-            next_follow_up: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          } : {})
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (error) {
@@ -88,7 +102,8 @@ export const useLeadMutations = () => {
         throw error;
       }
       
-      await updateLeadScore({ ...leads, status });
+      // Update lead score with new status
+      await updateLeadScore({ ...lead, status });
       
     } catch (error: any) {
       console.error('Error updating lead status:', error);
