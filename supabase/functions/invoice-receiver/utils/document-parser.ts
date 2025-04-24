@@ -20,24 +20,12 @@ export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unk
 
 export async function extractTextFromPdf(content: string): Promise<string> {
   try {
-    // Initialize Tesseract worker
-    const worker = await createWorker();
+    // Skip OCR processing in Deno Edge Function environment due to Worker limitations
+    console.log('OCR text extraction skipped in Edge Function environment');
     
-    // Configure worker for better invoice recognition
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
-    await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$,.-():/',
-    });
-
-    // Perform OCR on the PDF content
-    const { data: { text } } = await worker.recognize(content);
-    
-    // Terminate worker to free resources
-    await worker.terminate();
-
-    console.log('OCR extracted text:', text.substring(0, 200) + '...');
-    return text;
+    // Return an empty string or placeholder text - the PDF URL is still valid
+    // and will be accessible to the frontend for display
+    return '';
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
     return '';
