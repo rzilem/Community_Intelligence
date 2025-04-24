@@ -37,7 +37,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     console.log(`Current viewer type: ${viewerType}, attempt: ${attemptCount}`);
   }, [viewerType, attemptCount]);
 
-  // Timeout handler to prevent infinite loading
+  // Timeout handler to prevent infinite loading state
   useEffect(() => {
     // If we've been loading for more than 5 seconds, try a different approach
     const timeoutId = setTimeout(() => {
