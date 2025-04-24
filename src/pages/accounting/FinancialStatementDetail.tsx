@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { FileText, BarChart2 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import FinancialStatementDetail from '@/components/accounting/financial-statements/FinancialStatementDetail';
 

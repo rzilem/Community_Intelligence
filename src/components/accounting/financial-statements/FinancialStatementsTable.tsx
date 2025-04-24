@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { PlusCircle, FileText, BarChart, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
-import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { financialStatementService, FinancialStatement, StatementType } from '@/services/financial-statements/financial-statement-service';
 import GenerateStatementDialog from './GenerateStatementDialog';
