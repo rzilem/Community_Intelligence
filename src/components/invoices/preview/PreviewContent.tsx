@@ -31,11 +31,44 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
   const isValidUrl = (url?: string) => {
     if (!url) return false;
     try {
+      // Try to create a URL object to validate
       new URL(url);
       return true;
     } catch (e) {
+      // For relative URLs, they're valid but need a base URL
+      if (url.startsWith('/')) {
+        console.log("Relative URL detected:", url);
+        return true;
+      }
       console.error("Invalid URL format:", url);
       return false;
+    }
+  };
+
+  // Helper to normalize URL if needed
+  const normalizeUrl = (url?: string) => {
+    if (!url) return undefined;
+    
+    // Handle relative URLs - you may need to adjust the base URL
+    if (url.startsWith('/')) {
+      // Get base URL from current window location
+      const baseUrl = window.location.origin;
+      const fullUrl = `${baseUrl}${url}`;
+      console.log("Normalized relative URL:", fullUrl);
+      return fullUrl;
+    }
+    
+    try {
+      // If it's already a valid URL, return it as-is
+      new URL(url);
+      return url;
+    } catch (e) {
+      // If not a valid URL, try to add https://
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return `https://${url}`;
+      }
+      console.error("Invalid URL format even after normalization:", url);
+      return undefined;
     }
   };
 
@@ -58,10 +91,11 @@ export const PreviewContent: React.FC<PreviewContentProps> = ({
     setKey(Date.now()); // Force PDFViewer to remount
   };
 
-  // Ensure pdfUrl is valid before attempting to render
-  const validPdfUrl = isValidUrl(pdfUrl) ? pdfUrl : undefined;
+  // Ensure pdfUrl is valid and normalized before attempting to render
+  const validPdfUrl = pdfUrl ? normalizeUrl(pdfUrl) : undefined;
 
   if (validPdfUrl) {
+    console.log("Using normalized PDF URL:", validPdfUrl);
     return (
       <div className="w-full h-full bg-white">
         <PDFViewer 

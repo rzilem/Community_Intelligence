@@ -14,6 +14,12 @@ export const InvoiceHoverPreview: React.FC<InvoiceHoverPreviewProps> = ({ invoic
   const normalizeUrl = (url?: string) => {
     if (!url) return undefined;
     
+    // Handle relative URLs
+    if (url.startsWith('/')) {
+      const baseUrl = window.location.origin;
+      return `${baseUrl}${url}`;
+    }
+    
     try {
       // Create a URL object to validate the URL
       new URL(url);
@@ -34,14 +40,16 @@ export const InvoiceHoverPreview: React.FC<InvoiceHoverPreviewProps> = ({ invoic
     console.log('Invoice ID:', invoice.id);
     console.log('PDF URL exists:', !!invoice.pdf_url);
     if (invoice.pdf_url) {
-      console.log('PDF URL:', invoice.pdf_url);
+      console.log('Original PDF URL:', invoice.pdf_url);
     }
     console.log('HTML content exists:', !!invoice.html_content);
     console.groupEnd();
 
     // Normalize URL when invoice changes
     if (invoice.pdf_url) {
-      setNormalizedUrl(normalizeUrl(invoice.pdf_url));
+      const normalizedPdfUrl = normalizeUrl(invoice.pdf_url);
+      console.log('Normalized PDF URL:', normalizedPdfUrl);
+      setNormalizedUrl(normalizedPdfUrl);
     } else {
       setNormalizedUrl(undefined);
     }

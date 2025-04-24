@@ -81,7 +81,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     if (onRetry) onRetry();
   }, [onRetry]);
 
-  const handleExternalOpen = useCallback(() => {
+  const handleExternalOpen = useCallback((e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default to avoid automatic download
     console.log("Opening PDF in new tab:", url);
     window.open(url, '_blank', 'noopener,noreferrer');
   }, [url]);
@@ -95,7 +96,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-muted-foreground">
         <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
-        <p className="text-center mb-4">Failed to load PDF preview</p>
+        <p className="text-center mb-2 text-lg font-medium">Failed to load PDF preview</p>
+        <p className="text-center text-sm mb-4 text-muted-foreground">
+          The PDF may be set to download by the server instead of displaying inline.
+        </p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRetry} className="flex items-center">
             <RefreshCw className="h-4 w-4 mr-2" /> Retry
