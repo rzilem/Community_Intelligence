@@ -23,6 +23,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onExternalOpen,
 }) => {
   const [loadAttempts, setLoadAttempts] = useState(0);
+  const [viewerType, setViewerType] = useState<'object' | 'iframe' | 'fallback'>('object');
   
   // Log component props on mount and when they change
   useEffect(() => {
@@ -33,17 +34,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log('isWordDocument:', isWordDocument);
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
 
-  // Try reloading PDF if it fails initially
+  // Try different viewing methods if initial one fails
   useEffect(() => {
-    if (loadAttempts > 0 && loadAttempts < 3 && pdfUrl && isPdf) {
-      const timer = setTimeout(() => {
-        console.log(`Attempting to reload PDF, attempt ${loadAttempts + 1}`);
-        // Force re-render by updating state
-        setLoadAttempts(loadAttempts + 1);
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (loadAttempts === 1 && isPdf && pdfUrl) {
+      console.log('First PDF load attempt failed, trying iframe method');
+      setViewerType('iframe');
+    } else if (loadAttempts >= 2 && isPdf && pdfUrl) {
+      console.log('Both PDF load attempts failed, showing fallback view');
+      setViewerType('fallback');
+      onIframeError();
     }
-  }, [loadAttempts, pdfUrl, isPdf]);
+  }, [loadAttempts, isPdf, pdfUrl, onIframeError]);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -106,52 +107,97 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
-  // Function to create a direct PDF embed that works in most browsers
-  const createPdfEmbed = () => {
+  // Function to attempt PDF viewing with an object tag
+  const renderPdfWithObject = () => {
     if (!pdfUrl) return null;
     
-    // Key for re-rendering on load attempts
-    const embedKey = `pdf-embed-${loadAttempts}`;
+    const embedKey = `pdf-embed-object-${loadAttempts}`;
     
-    // Use a data URL to embed the PDF via an object tag instead of iframe
     return (
-      <div className="w-full h-full flex flex-col">
-        <object
-          key={embedKey}
-          data={pdfUrl}
-          type="application/pdf"
-          className="w-full h-full border-0"
-          onError={(e) => {
-            console.error("PDF object loading error:", e);
-            onIframeError();
-            if (loadAttempts === 0) {
-              setLoadAttempts(1);
-            }
-          }}
-          onLoad={() => {
-            console.log("PDF object loaded successfully");
-            onIframeLoad();
-          }}
-        >
-          <div className="flex flex-col items-center justify-center p-6">
-            <p className="mb-4">Unable to display PDF directly.</p>
-            <Button 
-              variant="outline" 
-              onClick={onExternalOpen}
-              className="flex items-center"
-            >
-              Open PDF <ExternalLink className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </object>
-      </div>
+      <object
+        key={embedKey}
+        data={pdfUrl}
+        type="application/pdf"
+        className="w-full h-full border-0"
+        onError={(e) => {
+          console.error("PDF object tag load error:", e);
+          setLoadAttempts(prev => prev + 1);
+        }}
+        onLoad={() => {
+          console.log("PDF object loaded successfully");
+          onIframeLoad();
+        }}
+      >
+        <div className="flex flex-col items-center justify-center p-6">
+          <p className="mb-4">Unable to display PDF directly.</p>
+          <Button 
+            variant="outline" 
+            onClick={onExternalOpen}
+            className="flex items-center"
+          >
+            Open PDF <ExternalLink className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      </object>
     );
   };
 
+  // Function to attempt PDF viewing with an iframe
+  const renderPdfWithIframe = () => {
+    if (!pdfUrl) return null;
+    
+    const embedKey = `pdf-embed-iframe-${loadAttempts}`;
+    
+    return (
+      <iframe
+        key={embedKey}
+        src={pdfUrl}
+        className="w-full h-full border-0"
+        onError={(e) => {
+          console.error("PDF iframe loading error:", e);
+          setLoadAttempts(prev => prev + 1);
+        }}
+        onLoad={() => {
+          console.log("PDF iframe loaded successfully");
+          onIframeLoad();
+        }}
+        title="PDF Document"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
+        referrerPolicy="no-referrer"
+        loading="lazy"
+        allow="fullscreen"
+      />
+    );
+  };
+
+  // Function to display fallback view when all PDF rendering attempts fail
+  const renderPdfFallbackView = () => (
+    <div className="flex flex-col items-center justify-center h-full">
+      <FileText className="h-16 w-16 mb-4 text-red-500/50" />
+      <p className="text-center mb-4 font-medium">Failed to load PDF document</p>
+      <p className="text-center text-sm text-muted-foreground mb-6">
+        The PDF could not be displayed in the browser.
+      </p>
+      <Button 
+        variant="default" 
+        onClick={onExternalOpen}
+        className="flex items-center"
+      >
+        Open in New Tab <ExternalLink className="h-4 w-4 ml-2" />
+      </Button>
+    </div>
+  );
+
   // Prioritize PDF viewing when available
   if (pdfUrl && isPdf) {
-    console.log('Displaying PDF content from URL:', pdfUrl);
-    return createPdfEmbed();
+    console.log('Displaying PDF content from URL:', pdfUrl, 'with viewer type:', viewerType);
+    if (viewerType === 'object') {
+      return renderPdfWithObject();
+    } else if (viewerType === 'iframe') {
+      return renderPdfWithIframe();
+    } else {
+      return renderPdfFallbackView();
+    }
   }
 
   // Handle Word documents

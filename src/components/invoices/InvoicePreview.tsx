@@ -9,6 +9,7 @@ import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
 import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
+import { useToast } from '@/components/ui/use-toast';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -21,12 +22,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   pdfUrl,
   emailContent
 }) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('document');
+  const { toast } = useToast();
   
   // Determine if the document is a Word document based on file extension
   const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
@@ -38,6 +40,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Handle opening the document in a new tab
   const handleExternalOpen = () => {
     if (normalizedPdfUrl) {
+      console.log("Opening external URL:", normalizedPdfUrl);
       window.open(normalizedPdfUrl, '_blank');
     }
   };
@@ -47,21 +50,42 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setFullscreen(!fullscreen);
   };
   
+  // Reset loading state after a timeout to prevent infinite loading state
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 5000); // 5 seconds timeout
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+  
   useEffect(() => {
     // Reset states
-    setLoading(false);
+    setLoading(true);
     setError(null);
     
     // Validate PDF URL
     if (pdfUrl) {
       try {
+        if (!isValidUrl(pdfUrl) && !pdfUrl.startsWith('http')) {
+          console.log("Attempting to normalize URL:", pdfUrl);
+        }
+        
         // Normalize URL by ensuring it has a protocol
         const normalizedUrl = normalizeUrl(pdfUrl);
         setNormalizedPdfUrl(normalizedUrl);
         setHasContent(true);
+        
+        console.log("Normalized URL:", normalizedUrl);
       } catch (e) {
         console.error("Invalid PDF URL:", pdfUrl, e);
         setError("Invalid PDF URL format");
+        toast({
+          title: "PDF Preview Error",
+          description: "There was an issue with the PDF URL format",
+          variant: "destructive"
+        });
       }
     } else {
       setNormalizedPdfUrl('');
@@ -86,14 +110,35 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     });
   }, [htmlContent, pdfUrl, emailContent]);
 
+  // Handle iframe error
+  const handleIframeError = () => {
+    console.log("Iframe error occurred");
+    setLoading(false);
+    // Only set an error if we have a PDF URL and no HTML content fallback
+    if (pdfUrl && !htmlContent) {
+      setError("Failed to load PDF document. Try opening it in a new tab.");
+    }
+  };
+
+  // Handle iframe load success
+  const handleIframeLoad = () => {
+    console.log("Iframe loaded successfully");
+    setLoading(false);
+    setError(null);
+  };
+
   // If no content and no email, show no preview state
   if (!hasContent && !hasEmailContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
   // If there's an error, show error state
-  if (error) {
-    return <PreviewErrorState error={error} />;
+  if (error && !loading && !htmlContent) {
+    return <PreviewErrorState 
+      error={error} 
+      pdfUrl={normalizedPdfUrl} 
+      onExternalOpen={handleExternalOpen} 
+    />;
   }
 
   return (
@@ -119,8 +164,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 htmlContent={undefined}
                 isPdf={isPdf(normalizedPdfUrl)}
                 isWordDocument={isWordDocument}
-                onIframeError={() => setError("Failed to load document")}
-                onIframeLoad={() => setLoading(false)}
+                onIframeError={handleIframeError}
+                onIframeLoad={handleIframeLoad}
                 onExternalOpen={handleExternalOpen}
               />
             ) : htmlContent && isValidHtml(htmlContent) ? (
