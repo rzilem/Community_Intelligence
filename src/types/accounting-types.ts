@@ -113,6 +113,7 @@ export interface BudgetSummary {
   previousYearTotalExpenses?: number;
   previousYearNetIncome?: number;
   revenueChange?: number;
+  expenseChange?: number;
 }
 
 export interface Invoice {

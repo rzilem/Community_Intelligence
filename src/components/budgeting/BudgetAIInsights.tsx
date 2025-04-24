@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +11,8 @@ interface BudgetAIInsightsProps {
   budgetSummary?: BudgetSummary; // Added alternate prop name for backward compatibility
   isLoading?: boolean;
   predictions?: BudgetPrediction[];
+  onApplyAllSuggestions?: () => void;
+  onGenerateReport?: () => void;
 }
 
 const BudgetAIInsights: React.FC<BudgetAIInsightsProps> = ({ 
