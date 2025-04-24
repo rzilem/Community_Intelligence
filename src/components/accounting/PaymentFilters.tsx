@@ -47,12 +47,15 @@ const PaymentFilters: React.FC<PaymentFilterProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <TooltipButton tooltip="Export payments as CSV">
+        <TooltipButton 
+          tooltip="Download payment data as CSV file"
+          variant="outline"
+        >
           <Download className="h-4 w-4 mr-2" /> Export
         </TooltipButton>
         <TooltipButton 
           variant="default" 
-          tooltip="Create a new payment"
+          tooltip="Create a new payment record"
           onClick={onCreatePayment}
         >
           <PlusCircle className="h-4 w-4 mr-2" /> New Payment
