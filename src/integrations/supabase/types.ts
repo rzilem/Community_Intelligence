@@ -1553,6 +1553,36 @@ export type Database = {
           },
         ]
       }
+      document_analyses: {
+        Row: {
+          analysis_results: Json
+          created_at: string
+          document_name: string | null
+          document_type: string | null
+          document_url: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_results: Json
+          created_at?: string
+          document_name?: string | null
+          document_type?: string | null
+          document_url: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_results?: Json
+          created_at?: string
+          document_name?: string | null
+          document_type?: string | null
+          document_url?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_versions: {
         Row: {
           created_at: string
