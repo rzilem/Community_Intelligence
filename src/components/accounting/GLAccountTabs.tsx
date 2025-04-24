@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Database, Copy, Layers } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import GLAccountsTable from './GLAccountsTable';
+import { GLAccountsTable } from './GLAccountsTable';
 import GLAccountCategories from './GLAccountCategories';
 import { GLAccount } from '@/types/accounting-types';
 import { Button } from '@/components/ui/button';

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DollarSign } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -6,10 +5,9 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 import GLAccountsHeader from '@/components/accounting/gl-accounts/GLAccountsHeader';
 import { GLAccount } from '@/types/accounting-types';
-import GLAccountsTable from '@/components/accounting/GLAccountsTable';
+import { GLAccountsTable } from '@/components/accounting/GLAccountsTable';
 import GLAccountDetailDialog from '@/components/accounting/GLAccountDetailDialog';
 import GLAccountCategories from '@/components/accounting/GLAccountCategories';
-import GLAccountGroups from '@/components/accounting/GLAccountGroups';
 import GLAccountBalanceChart from '@/components/accounting/GLAccountBalanceChart';
 import GLAccountTabs from '@/components/accounting/GLAccountTabs';
 import { useAuth } from '@/contexts/auth';
@@ -31,7 +29,6 @@ const GLAccounts = () => {
     }
   );
 
-  // Notify user of any errors
   React.useEffect(() => {
     if (error) {
       toast.error('Error loading GL accounts');
@@ -39,14 +36,11 @@ const GLAccounts = () => {
   }, [error]);
 
   const handleAccountAdded = (account: GLAccount) => {
-    // In a real implementation, this would refresh the data
-    // For now, we'll just log it
     console.log('Account added:', account);
   };
 
   const handleCopyMasterToAssociation = () => {
     if (selectedAssociationId) {
-      // This would be implemented to copy master accounts to the selected association
       toast.success('Master accounts copied to association');
     }
   };

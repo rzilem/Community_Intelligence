@@ -27,7 +27,8 @@ export type WidgetType =
   | 'notifications-widget'
   | 'shared-widget'
   | 'custom-widget'
-  | 'form-widget';
+  | 'form-widget'
+  | 'recent_transactions';
 
 export interface PortalWidget {
   id: string;
