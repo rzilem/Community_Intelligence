@@ -2017,6 +2017,104 @@ export type Database = {
           },
         ]
       }
+      form_workflow_execution_logs: {
+        Row: {
+          actionid: string
+          createdat: string
+          details: Json | null
+          id: string
+          status: string
+          stepid: string
+          submissionid: string
+          workflowid: string
+        }
+        Insert: {
+          actionid: string
+          createdat?: string
+          details?: Json | null
+          id?: string
+          status: string
+          stepid: string
+          submissionid: string
+          workflowid: string
+        }
+        Update: {
+          actionid?: string
+          createdat?: string
+          details?: Json | null
+          id?: string
+          status?: string
+          stepid?: string
+          submissionid?: string
+          workflowid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_workflow_execution_logs_submissionid_fkey"
+            columns: ["submissionid"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_workflow_execution_logs_workflowid_fkey"
+            columns: ["workflowid"]
+            isOneToOne: false
+            referencedRelation: "form_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_workflows: {
+        Row: {
+          createdat: string
+          description: string | null
+          formtemplateid: string
+          id: string
+          isenabled: boolean
+          logging: boolean | null
+          maxretries: number | null
+          name: string
+          retryfailed: boolean | null
+          steps: Json
+          updatedat: string
+        }
+        Insert: {
+          createdat?: string
+          description?: string | null
+          formtemplateid: string
+          id?: string
+          isenabled?: boolean
+          logging?: boolean | null
+          maxretries?: number | null
+          name: string
+          retryfailed?: boolean | null
+          steps?: Json
+          updatedat?: string
+        }
+        Update: {
+          createdat?: string
+          description?: string | null
+          formtemplateid?: string
+          id?: string
+          isenabled?: boolean
+          logging?: boolean | null
+          maxretries?: number | null
+          name?: string
+          retryfailed?: boolean | null
+          steps?: Json
+          updatedat?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_workflows_formtemplateid_fkey"
+            columns: ["formtemplateid"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_discussions: {
         Row: {
           association_id: string
