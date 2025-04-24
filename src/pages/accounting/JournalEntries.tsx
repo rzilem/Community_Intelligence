@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { BookOpen, Plus, Search, Download, Filter } from 'lucide-react';
@@ -12,14 +11,14 @@ import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
 import { GLAccount } from '@/types/accounting-types';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
-// Updated mock GL accounts to match the GLAccount interface
+// Updated mock GL accounts with correct properties
 const mockGLAccounts = ensureGLAccountsHaveIsActive([
-  { id: '1', number: '1000', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
-  { id: '2', number: '1100', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
-  { id: '3', number: '2000', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
-  { id: '4', number: '3000', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
-  { id: '5', number: '4000', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
-  { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
+  { id: '1', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
+  { id: '2', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
+  { id: '3', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
+  { id: '4', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
+  { id: '5', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
+  { id: '6', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 }
 ]);
 
 // Sample mock journal entries data
