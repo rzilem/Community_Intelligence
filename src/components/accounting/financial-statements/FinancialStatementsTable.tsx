@@ -76,7 +76,7 @@ const FinancialStatementsTable: React.FC<FinancialStatementsTableProps> = ({
       case 'cash_flow':
         return 'Cash Flow Statement';
       default:
-        return type.replace('_', ' ');
+        return type;
     }
   };
 
@@ -109,7 +109,8 @@ const FinancialStatementsTable: React.FC<FinancialStatementsTableProps> = ({
       cell: (info: any) => format(new Date(info.row.original.created_at), 'MMM d, yyyy')
     },
     {
-      id: 'actions',
+      accessorKey: 'actions',
+      header: 'Actions',
       cell: (info: any) => (
         <Button
           variant="ghost"
