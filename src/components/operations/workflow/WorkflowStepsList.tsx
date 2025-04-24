@@ -2,13 +2,19 @@
 import React from 'react';
 import WorkflowStepItem from './WorkflowStepItem';
 import { WorkflowStep } from '@/types/workflow-types';
+import { useWorkflowStep } from '@/hooks/operations/useWorkflowStep';
 
 interface WorkflowStepsListProps {
+  workflowId?: string;
   steps: WorkflowStep[];
-  onCompleteStep: (stepId: string) => void;
 }
 
-const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({ steps, onCompleteStep }) => {
+const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({ 
+  workflowId,
+  steps 
+}) => {
+  const { completeStep } = useWorkflowStep(workflowId);
+
   if (!steps || steps.length === 0) {
     return (
       <div className="text-center p-8 border rounded-lg">
@@ -24,7 +30,7 @@ const WorkflowStepsList: React.FC<WorkflowStepsListProps> = ({ steps, onComplete
           key={step.id}
           step={step}
           index={index}
-          onComplete={onCompleteStep}
+          onComplete={completeStep}
         />
       ))}
     </div>
