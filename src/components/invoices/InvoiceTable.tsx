@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ interface InvoiceTableProps {
   onRejectInvoice?: (id: string) => void;
 }
 
-const InvoiceTable: React.FC<InvoiceTableProps> = ({
+export const InvoiceTable: React.FC<InvoiceTableProps> = ({
   invoices,
   isLoading = false,
   onViewInvoice,
@@ -178,11 +177,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                     <HoverCardTrigger asChild>
                       <Button 
                         variant="ghost" 
-                        size="icon" 
-                        onClick={(e) => {
-                          // Stop propagation to prevent triggering the onViewInvoice
-                          e.stopPropagation();
-                        }}
+                        size="icon"
+                        onClick={() => onViewInvoice(invoice.id)}
+                        className="text-blue-600"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -191,16 +188,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                       {renderPdfPreview(invoice)}
                     </HoverCardContent>
                   </HoverCard>
-                  
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onViewInvoice(invoice.id)}
-                    title="View invoice details"
-                  >
-                    <Eye className="h-4 w-4 text-blue-600" />
-                  </Button>
-                  
+
                   {invoice.status === 'pending' && onApproveInvoice && (
                     <Button 
                       variant="ghost" 
