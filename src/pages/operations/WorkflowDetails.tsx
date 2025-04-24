@@ -1,40 +1,23 @@
 
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  ChevronLeft, 
-  Pause, 
-  Play, 
-  CheckCircle, 
-  Edit, 
-  Trash2, 
-  Copy, 
-  AlertCircle,
-  FileText
-} from 'lucide-react';
-import PageTemplate from '@/components/layout/PageTemplate';
-import { Progress } from '@/components/ui/progress';
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { ChevronLeft, CheckCircle, FileText, AlertCircle } from 'lucide-react';
+import { AlertDialog, AlertDialogContent, AlertDialogAction, AlertDialogCancel, 
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
-import WorkflowStepItem from '@/components/operations/WorkflowStepItem';
+import PageTemplate from '@/components/layout/PageTemplate';
+import WorkflowHeader from '@/components/operations/workflow/WorkflowHeader';
+import WorkflowProgress from '@/components/operations/workflow/WorkflowProgress';
+import WorkflowStepsList from '@/components/operations/workflow/WorkflowStepsList';
 
 const WorkflowDetails = () => {
   const navigate = useNavigate();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
   const { id } = useParams<{ id: string }>();
+  
   const {
     useWorkflow,
     updateWorkflowStatus,
@@ -45,32 +28,23 @@ const WorkflowDetails = () => {
 
   const { workflow, isLoading, error } = useWorkflow(id);
 
-  const handleBack = () => {
-    navigate('/operations/workflows');
-  };
-
+  const handleBack = () => navigate('/operations/workflows');
+  
   const handleDelete = async () => {
     if (!workflow?.id) return;
     const success = await removeWorkflow(workflow.id);
-    if (success) {
-      navigate('/operations/workflows');
-    }
+    if (success) navigate('/operations/workflows');
     setDeleteDialogOpen(false);
   };
 
   const handleDuplicate = async () => {
     if (!workflow?.id) return;
     const newId = await duplicateWorkflow(workflow.id);
-    if (newId) {
-      navigate(`/operations/workflows/${newId}`);
-    }
+    if (newId) navigate(`/operations/workflows/${newId}`);
   };
 
   const handleEditWorkflow = () => {
-    if (workflow?.id) {
-      // Navigate to edit page (to be implemented)
-      navigate(`/operations/workflows/edit/${workflow.id}`);
-    }
+    if (workflow?.id) navigate(`/operations/workflows/edit/${workflow.id}`);
   };
 
   const handleToggleStatus = async () => {
@@ -87,13 +61,6 @@ const WorkflowDetails = () => {
   const handleMarkAsCompleted = async () => {
     if (!workflow?.id) return;
     await updateWorkflowStatus(workflow.id, 'completed');
-  };
-
-  // Calculate progress percentage
-  const calculateProgress = () => {
-    if (!workflow || !workflow.steps || workflow.steps.length === 0) return 0;
-    const completedSteps = workflow.steps.filter(s => s.isComplete).length;
-    return Math.round((completedSteps / workflow.steps.length) * 100);
   };
 
   if (isLoading) {
@@ -123,8 +90,9 @@ const WorkflowDetails = () => {
     );
   }
 
-  const progressPercentage = calculateProgress();
   const isPaused = workflow.status === 'inactive';
+  const progressPercentage = workflow.steps?.filter(s => s.isComplete).length || 0;
+  const isComplete = progressPercentage === workflow.steps?.length;
   
   return (
     <PageTemplate title={workflow.name} icon={<FileText className="h-5 w-5" />}>
@@ -134,87 +102,34 @@ const WorkflowDetails = () => {
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back
           </Button>
-          
-          <div className="flex items-center gap-2">
-            <Badge 
-              variant={isPaused ? "outline" : "default"} 
-              className={isPaused ? 'text-amber-500' : ''}
-            >
-              {isPaused ? 'Paused' : workflow.status}
-            </Badge>
-            <Badge variant="outline">{workflow.type}</Badge>
-          </div>
         </div>
         
         <Card>
-          <CardHeader>
-            <div className="flex justify-between">
-              <div>
-                <CardTitle className="text-2xl">{workflow.name}</CardTitle>
-                <CardDescription className="mt-2">{workflow.description || 'No description provided'}</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                {isPaused ? (
-                  <Button variant="outline" size="sm" onClick={handleToggleStatus}>
-                    <Play className="h-4 w-4 mr-1" />
-                    Resume
-                  </Button>
-                ) : (
-                  <Button variant="outline" size="sm" onClick={handleToggleStatus}>
-                    <Pause className="h-4 w-4 mr-1" />
-                    Pause
-                  </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={handleDuplicate}>
-                  <Copy className="h-4 w-4 mr-1" />
-                  Duplicate
-                </Button>
-                <Button variant="ghost" size="sm" onClick={handleEditWorkflow}>
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                <Button variant="ghost" size="sm" className="text-red-500" onClick={() => setDeleteDialogOpen(true)}>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Progress</span>
-                <span className="text-sm text-muted-foreground">
-                  {workflow.steps?.filter(s => s.isComplete).length || 0} / {workflow.steps?.length || 0} steps
-                </span>
-              </div>
-              <Progress value={progressPercentage} className="h-2" />
-            </div>
+          <CardContent className="p-6">
+            <WorkflowHeader
+              workflow={workflow}
+              onEdit={handleEditWorkflow}
+              onDelete={() => setDeleteDialogOpen(true)}
+              onDuplicate={handleDuplicate}
+              onToggleStatus={handleToggleStatus}
+              isPaused={isPaused}
+            />
+            
+            <WorkflowProgress steps={workflow.steps} />
             
             <div className="space-y-6">
               <h3 className="text-lg font-semibold">Workflow Steps</h3>
-              <div className="space-y-4">
-                {workflow.steps && workflow.steps.length > 0 ? (
-                  workflow.steps.map((step, index) => (
-                    <WorkflowStepItem
-                      key={step.id}
-                      step={step}
-                      index={index}
-                      onComplete={handleCompleteStep}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center p-8 border rounded-lg">
-                    <p className="text-muted-foreground">No steps have been added to this workflow</p>
-                  </div>
-                )}
-              </div>
+              <WorkflowStepsList 
+                steps={workflow.steps}
+                onCompleteStep={handleCompleteStep}
+              />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between">
+          
+          <CardFooter className="flex justify-between p-6">
             <Button variant="outline" onClick={handleBack}>Cancel</Button>
             <Button 
-              disabled={progressPercentage !== 100} 
+              disabled={!isComplete} 
               className="bg-green-600 hover:bg-green-700"
               onClick={handleMarkAsCompleted}
             >
@@ -225,7 +140,6 @@ const WorkflowDetails = () => {
         </Card>
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -237,7 +151,9 @@ const WorkflowDetails = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDelete}>
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
