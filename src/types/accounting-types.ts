@@ -1,9 +1,11 @@
 
+// Report-related types
 export interface ReportCategory {
   title: string;
   reports: string[];
 }
 
+// GL Account related types
 export interface GLAccount {
   id: string;
   code: string;
@@ -14,10 +16,10 @@ export interface GLAccount {
   balance: number;
   account_number?: string;
   association_id?: string;
-  number?: string;
   is_active: boolean;
 }
 
+// Journal Entry related types
 export interface JournalEntry {
   id: string;
   date: string;

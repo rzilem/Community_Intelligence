@@ -2125,6 +2125,113 @@ export type Database = {
           },
         ]
       }
+      gl_budget_entries: {
+        Row: {
+          annual_total: number
+          budget_id: string
+          created_at: string | null
+          gl_account_id: string
+          id: string
+          monthly_amounts: Json | null
+          notes: string | null
+          previous_year_actual: number | null
+          previous_year_budget: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          annual_total?: number
+          budget_id: string
+          created_at?: string | null
+          gl_account_id: string
+          id?: string
+          monthly_amounts?: Json | null
+          notes?: string | null
+          previous_year_actual?: number | null
+          previous_year_budget?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          annual_total?: number
+          budget_id?: string
+          created_at?: string | null
+          gl_account_id?: string
+          id?: string
+          monthly_amounts?: Json | null
+          notes?: string | null
+          previous_year_actual?: number | null
+          previous_year_budget?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_budget_entries_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "gl_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gl_budget_entries_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_budgets: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          fund_type: string
+          id: string
+          name: string
+          status: string
+          total_expenses: number | null
+          total_revenue: number | null
+          updated_at: string | null
+          year: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fund_type?: string
+          id?: string
+          name: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          year: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fund_type?: string
+          id?: string
+          name?: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_budgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
@@ -2596,6 +2703,62 @@ export type Database = {
           },
         ]
       }
+      meeting_minutes: {
+        Row: {
+          association_id: string | null
+          attendees: Json | null
+          audio_url: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          key_action_items: Json | null
+          meeting_date: string
+          minutes_content: string | null
+          status: string
+          title: string
+          transcript: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_minutes_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_history: {
         Row: {
           association_id: string | null
@@ -2686,6 +2849,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language_code?: string
+          message_id?: string
+          original_text?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       onboarding_documents: {
         Row: {
@@ -3053,6 +3246,7 @@ export type Database = {
           id: string
           last_name: string | null
           phone_number: string | null
+          preferred_language: string | null
           profile_image_url: string | null
           role: string
           updated_at: string
@@ -3064,6 +3258,7 @@ export type Database = {
           id: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string
@@ -3075,6 +3270,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string
