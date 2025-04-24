@@ -1,9 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import { Profile } from '@/types/profile-types';
-import { Association } from '@/types/association-types';
 import { UserAssociation } from './types';
 
 /**
@@ -105,7 +103,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     const { data, error } = await supabase
       .from('association_users')
       .select(`
-        id, 
+        id,
         user_id,
         association_id,
         role,
@@ -115,7 +113,9 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
           name,
           description,
           logo_url,
-          status
+          status,
+          created_at,
+          updated_at
         )
       `)
       .eq('user_id', userId);
