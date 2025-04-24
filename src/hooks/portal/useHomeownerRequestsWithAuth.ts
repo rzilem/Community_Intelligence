@@ -51,7 +51,7 @@ export function useHomeownerRequestsWithAuth() {
           resolved_at: item.resolved_at,
           html_content: item.html_content,
           tracking_number: item.tracking_number,
-          attachments: item.attachments
+          attachments: item.attachments || [] // Add default empty array for attachments
         }));
         setRequests(typedRequests);
       }
@@ -91,7 +91,8 @@ export function useHomeownerRequestsWithAuth() {
         created_at: new Date().toISOString(),
         // Include any other fields from formData that match the database schema
         property_id: formData.property_id,
-        html_content: formData.html_content
+        html_content: formData.html_content,
+        attachments: formData.attachments || [] // Add attachments with default empty array
       };
 
       const { data, error } = await supabase

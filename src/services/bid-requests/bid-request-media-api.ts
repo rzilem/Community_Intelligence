@@ -96,8 +96,14 @@ export async function uploadBidRequestAttachment(bidRequestId: string, file: Fil
     
     // Update the bid request with the new attachment
     const currentAttachments = bidRequestData.attachments || [];
+    
+    // Make sure currentAttachments is treated as an array
+    const attachmentsArray = Array.isArray(currentAttachments) 
+      ? currentAttachments 
+      : [];
+      
     const updatedAttachments = [
-      ...currentAttachments,
+      ...attachmentsArray,
       {
         url: attachmentUrl,
         name: file.name,
