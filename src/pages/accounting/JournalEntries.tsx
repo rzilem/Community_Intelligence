@@ -7,9 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import JournalEntryTable from '@/components/banking/JournalEntryTable';
+import JournalEntryTable, { JournalEntry } from '@/components/banking/JournalEntryTable';
 import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
-import { GLAccount, JournalEntry } from '@/types/accounting-types';
+import { GLAccount } from '@/types/accounting-types';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
 // Updated mock GL accounts to match the GLAccount interface
@@ -26,45 +26,33 @@ const mockGLAccounts = ensureGLAccountsHaveIsActive([
 const mockJournalEntriesData: JournalEntry[] = [
   {
     id: '1',
-    entryNumber: 'JE-2025-001',
-    entryDate: '2025-03-15',
     date: '2025-03-15',
     reference: 'JE-2025-001',
     description: 'Monthly utility expense',
     amount: 1500,
     status: 'posted',
     createdBy: 'System Admin',
-    createdAt: '2025-03-15T08:30:00Z',
-    updatedAt: '2025-03-15T08:30:00Z',
-    associationId: '1'
+    createdAt: '2025-03-15T08:30:00Z'
   },
   {
     id: '2',
-    entryNumber: 'JE-2025-002',
-    entryDate: '2025-03-16',
     date: '2025-03-16',
     reference: 'JE-2025-002',
     description: 'Assessment revenue recognition',
     amount: 12000,
     status: 'posted',
     createdBy: 'John Doe',
-    createdAt: '2025-03-16T09:15:00Z',
-    updatedAt: '2025-03-16T09:15:00Z',
-    associationId: '1'
+    createdAt: '2025-03-16T09:15:00Z'
   },
   {
     id: '3',
-    entryNumber: 'JE-2025-003',
-    entryDate: '2025-03-20',
     date: '2025-03-20',
     reference: 'JE-2025-003',
     description: 'Office supplies expense',
     amount: 350,
     status: 'draft',
     createdBy: 'Jane Smith',
-    createdAt: '2025-03-20T14:45:00Z',
-    updatedAt: '2025-03-20T14:45:00Z',
-    associationId: '1'
+    createdAt: '2025-03-20T14:45:00Z'
   }
 ];
 
@@ -78,9 +66,9 @@ const JournalEntries = () => {
   
   const filteredEntries = journalEntries.filter(entry => {
     const matchesSearch = 
-      entry.reference!.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.createdBy!.toLowerCase().includes(searchTerm.toLowerCase());
+      entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || entry.status === statusFilter;
     
@@ -101,17 +89,13 @@ const JournalEntries = () => {
     
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
-      entryNumber: data.reference,
-      entryDate: data.date,
       date: data.date,
       reference: data.reference,
       description: data.description,
       amount,
       status: 'draft',
       createdBy: 'Current User', // Would come from authentication context in a real app
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      associationId: selectedAssociationId || '1'
+      createdAt: new Date().toISOString()
     };
     
     setJournalEntries([newEntry, ...journalEntries]);

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,19 +26,31 @@ const TranslateButton: React.FC<TranslateButtonProps> = ({
   variant = 'ghost',
   size = 'sm'
 }) => {
+  const [isTranslating, setIsTranslating] = useState(false);
   const languages = translationService.getSupportedLanguages();
   
   const handleTranslate = async (languageCode: string) => {
-    // Translation functionality is temporarily disabled
-    toast.info('Translation is temporarily disabled');
-    // Still call the callback with the original content to maintain the UI flow
-    onTranslated(content);
+    if (!content || isTranslating) return;
+    
+    setIsTranslating(true);
+    toast.loading('Translating content...');
+    
+    try {
+      const translatedText = await translationService.translateText(content, languageCode);
+      onTranslated(translatedText);
+      toast.success(`Translated to ${languages.find(l => l.code === languageCode)?.name}`);
+    } catch (error) {
+      console.error('Translation error:', error);
+      toast.error('Translation failed. Please try again.');
+    } finally {
+      setIsTranslating(false);
+    }
   };
   
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant={variant} size={size}>
+        <Button variant={variant} size={size} disabled={isTranslating}>
           <Languages className="h-4 w-4 mr-2" />
           Translate
         </Button>
@@ -50,6 +62,7 @@ const TranslateButton: React.FC<TranslateButtonProps> = ({
           <DropdownMenuItem
             key={language.code}
             onClick={() => handleTranslate(language.code)}
+            disabled={isTranslating}
             className="cursor-pointer"
           >
             {language.name}

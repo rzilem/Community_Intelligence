@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, PlusCircle, SortAsc, SortDesc } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GLAccount } from '@/types/accounting-types';
 import GLAccountGroups from './GLAccountGroups';
-import GLAccountDialog from './GLAccountDialog';
+import { GLAccountDialog } from './GLAccountDialog';
 import GLAccountImportExport from './GLAccountImportExport';
 import { useAuth } from '@/contexts/auth/useAuth';
 import { Slider } from '@/components/ui/slider';
@@ -102,17 +101,6 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   
   const handleActiveFilterChange = (value: string) => {
     setActiveFilter(value as 'all' | 'active' | 'inactive');
-  };
-  
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-  };
-  
-  const handleAccountSubmit = (account: GLAccount) => {
-    if (onAccountAdded) {
-      onAccountAdded(account);
-    }
-    setIsDialogOpen(false);
   };
 
   return (
@@ -250,11 +238,8 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
 
       <GLAccountDialog 
         isOpen={isDialogOpen} 
-        onClose={handleDialogClose}
-        onSubmit={handleAccountSubmit}
         onOpenChange={setIsDialogOpen}
         associationId={currentAssociation?.id}
-        accounts={accounts}
         onAccountAdded={onAccountAdded}
       />
     </>

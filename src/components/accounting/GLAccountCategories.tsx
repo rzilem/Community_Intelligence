@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -9,7 +10,7 @@ import { PlusCircle, Edit, Trash } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { GLAccount } from '@/types/accounting-types';
-import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
+import { useGLAccounts, getFormattedAccountCategories } from '@/hooks/accounting/useGLAccounts';
 
 interface GLAccountCategoriesProps {
   associationId?: string;
@@ -27,10 +28,6 @@ const GLAccountCategories: React.FC<GLAccountCategoriesProps> = ({
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editMode, setEditMode] = useState(false);
 
-  const getFormattedAccountCategories = (accounts: GLAccount[]): string[] => {
-    return Array.from(new Set(accounts.filter(acc => acc.category).map(acc => acc.category || ''))).sort();
-  };
-
   const categories = getFormattedAccountCategories(accounts);
 
   const handleOpenDialog = (category: string = '', edit: boolean = false) => {
@@ -47,6 +44,8 @@ const GLAccountCategories: React.FC<GLAccountCategoriesProps> = ({
     }
 
     try {
+      // For now, we'll just demonstrate the UI
+      // In a full implementation, we would update the category in all relevant GL accounts
       toast.success(`Category ${editMode ? 'updated' : 'created'} successfully`);
       setIsDialogOpen(false);
       onRefresh();

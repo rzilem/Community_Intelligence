@@ -1,307 +1,286 @@
-import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { X, Plus, Trash2 } from "lucide-react";
-import { JournalEntry, GLAccount } from "@/types/accounting-types";
-import { formatGLAccount, isJournalEntryBalanced } from "@/utils/accounting-helpers";
+
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { JournalEntry } from './JournalEntryTable';
+import { useGLAccounts, getFormattedGLAccountLabel } from '@/hooks/accounting/useGLAccounts';
+import { useAuth } from '@/contexts/auth/useAuth';
+import { LoadingState } from '@/components/ui/loading-state';
+import { GLAccount } from '@/types/accounting-types';
 
 interface JournalEntryLineItem {
-  id?: string;
   accountId: string;
   description: string;
   debit: number;
   credit: number;
 }
 
-interface JournalEntryDialogProps {
+const formSchema = z.object({
+  date: z.string().min(1, { message: 'Date is required' }),
+  reference: z.string().min(1, { message: 'Reference is required' }),
+  description: z.string().min(1, { message: 'Description is required' }),
+  lineItems: z.array(z.object({
+    accountId: z.string().min(1, { message: 'Account is required' }),
+    description: z.string(),
+    debit: z.number().nonnegative(),
+    credit: z.number().nonnegative(),
+  })).refine(items => {
+    const totalDebits = items.reduce((sum, item) => sum + item.debit, 0);
+    const totalCredits = items.reduce((sum, item) => sum + item.credit, 0);
+    return Math.abs(totalDebits - totalCredits) < 0.001; // Allow for floating point precision issues
+  }, { message: 'Total debits must equal total credits' }),
+});
+
+export interface JournalEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   entry?: JournalEntry;
-  accounts: GLAccount[];
+  accounts?: GLAccount[]; // Add the accounts property to the interface
 }
 
-const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
+const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
   entry,
-  accounts,
+  accounts: providedAccounts
 }) => {
-  const [entryNumber, setEntryNumber] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [description, setDescription] = useState("");
-  const [lineItems, setLineItems] = useState<JournalEntryLineItem[]>([
-    { accountId: "", description: "", debit: 0, credit: 0 },
-    { accountId: "", description: "", debit: 0, credit: 0 },
-  ]);
+  const { currentAssociation } = useAuth();
+  const { accounts: fetchedAccounts, isLoading } = useGLAccounts({
+    associationId: currentAssociation?.id,
+    includeMaster: true
+  });
 
-  useEffect(() => {
-    if (entry) {
-      setEntryNumber(entry.entryNumber);
-      setDate(new Date(entry.entryDate).toISOString().split("T")[0]);
-      setDescription(entry.description);
+  // Use provided accounts if available, otherwise use fetched accounts
+  const accounts = providedAccounts || fetchedAccounts;
 
-      // If the entry has details, use them
-      if (entry.details && entry.details.length > 0) {
-        setLineItems(
-          entry.details.map((detail) => ({
-            id: detail.id,
-            accountId: detail.gl_account_id,
-            description: detail.description || "",
-            debit: detail.debit,
-            credit: detail.credit,
-          }))
-        );
-      } else {
-        // Create default line items for debit and credit
-        const items: JournalEntryLineItem[] = [];
-        
-        if (entry.debitAccountId) {
-          items.push({
-            accountId: entry.debitAccountId,
-            description: "",
-            debit: entry.amount,
-            credit: 0,
-          });
-        }
-        
-        if (entry.creditAccountId) {
-          items.push({
-            accountId: entry.creditAccountId,
-            description: "",
-            debit: 0,
-            credit: entry.amount,
-          });
-        }
-        
-        if (items.length > 0) {
-          setLineItems(items);
-        }
-      }
-    } else {
-      // Reset form for new entry
-      setEntryNumber("");
-      setDate(new Date().toISOString().split("T")[0]);
-      setDescription("");
-      setLineItems([
-        { accountId: "", description: "", debit: 0, credit: 0 },
-        { accountId: "", description: "", debit: 0, credit: 0 },
-      ]);
-    }
-  }, [entry]);
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: entry ? {
+      date: entry.date,
+      reference: entry.reference,
+      description: entry.description,
+      lineItems: []
+    } : {
+      date: new Date().toISOString().split('T')[0],
+      reference: '',
+      description: '',
+      lineItems: [{ accountId: '', description: '', debit: 0, credit: 0 }]
+    },
+  });
 
-  const handleAddLineItem = () => {
-    setLineItems([...lineItems, { accountId: "", description: "", debit: 0, credit: 0 }]);
+  const lineItems = form.watch('lineItems') || [];
+  
+  const addLineItem = () => {
+    form.setValue('lineItems', [
+      ...lineItems,
+      { accountId: '', description: '', debit: 0, credit: 0 }
+    ]);
   };
 
-  const handleRemoveLineItem = (index: number) => {
-    const filteredItems = lineItems.filter((_, i) => i !== index);
-    setLineItems(filteredItems);
+  const removeLineItem = (index: number) => {
+    form.setValue('lineItems', lineItems.filter((_, i) => i !== index));
   };
 
-  const handleLineItemChange = (index: number, field: keyof JournalEntryLineItem, value: string | number) => {
-    const newLineItems = [...lineItems];
-    newLineItems[index] = { ...newLineItems[index], [field]: value };
-    setLineItems(newLineItems);
-  };
+  const totalDebits = lineItems.reduce((sum, item) => sum + (Number(item.debit) || 0), 0);
+  const totalCredits = lineItems.reduce((sum, item) => sum + (Number(item.credit) || 0), 0);
+  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
 
-  const calculateTotals = () => {
-    const totalDebit = lineItems.reduce((sum, item) => sum + Number(item.debit || 0), 0);
-    const totalCredit = lineItems.reduce((sum, item) => sum + Number(item.credit || 0), 0);
-    return { totalDebit, totalCredit };
-  };
-
-  const { totalDebit, totalCredit } = calculateTotals();
-  const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01;
-
-  const handleSubmit = () => {
-    if (!isBalanced) {
-      alert("Journal entry must be balanced (debits must equal credits)");
-      return;
-    }
-
-    // Convert line items to the format expected by the backend
-    const formattedLineItems = lineItems.map(item => ({
-      id: item.id,
-      gl_account_id: item.accountId,
-      description: item.description,
-      debit: Number(item.debit) || 0,
-      credit: Number(item.credit) || 0
-    }));
-
-    onSubmit({
-      entryNumber,
-      date,
-      description,
-      lineItems: formattedLineItems,
-      // Other fields as needed
-    });
-  };
+  if (isLoading && !providedAccounts) {
+    return (
+      <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <LoadingState variant="spinner" text="Loading GL accounts..." className="py-10" />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{entry ? "Edit" : "Create"} Journal Entry</DialogTitle>
+          <DialogTitle>{entry ? 'Edit Journal Entry' : 'Create Journal Entry'}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <Label htmlFor="entryNumber">Entry Number</Label>
-            <Input
-              id="entryNumber"
-              value={entryNumber}
-              onChange={(e) => setEntryNumber(e.target.value)}
-              placeholder="Auto-generated if left blank"
-            />
-          </div>
-          <div>
-            <Label htmlFor="date">Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-4">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Enter a description for this journal entry"
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name="reference"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reference</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-medium">Line Items</h3>
-            <Button type="button" size="sm" onClick={handleAddLineItem}>
-              <Plus className="h-4 w-4 mr-1" /> Add Line
-            </Button>
-          </div>
+              <div></div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-4 font-medium">Account</th>
-                  <th className="text-left py-2 px-4 font-medium">Description</th>
-                  <th className="text-right py-2 px-4 font-medium">Debit</th>
-                  <th className="text-right py-2 px-4 font-medium">Credit</th>
-                  <th className="py-2 px-4 w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {lineItems.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2 px-4">
-                      <Select
-                        value={item.accountId}
-                        onValueChange={(value) =>
-                          handleLineItemChange(index, "accountId", value)
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select account" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {accounts.map((account) => (
-                            <SelectItem key={account.id} value={account.id}>
-                              {formatGLAccount(account)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="py-2 px-4">
-                      <Input
-                        value={item.description}
-                        onChange={(e) =>
-                          handleLineItemChange(index, "description", e.target.value)
-                        }
-                        placeholder="Description"
-                      />
-                    </td>
-                    <td className="py-2 px-4">
-                      <Input
-                        type="number"
-                        value={item.debit || ""}
-                        onChange={(e) =>
-                          handleLineItemChange(index, "debit", parseFloat(e.target.value) || 0)
-                        }
-                        className="text-right"
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="py-2 px-4">
-                      <Input
-                        type="number"
-                        value={item.credit || ""}
-                        onChange={(e) =>
-                          handleLineItemChange(index, "credit", parseFloat(e.target.value) || 0)
-                        }
-                        className="text-right"
-                        placeholder="0.00"
-                      />
-                    </td>
-                    <td className="py-2 px-4">
-                      {lineItems.length > 2 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveLineItem(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="font-medium">
-                  <td colSpan={2} className="py-2 px-4 text-right">
-                    Totals:
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    ${totalDebit.toFixed(2)}
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    ${totalCredit.toFixed(2)}
-                  </td>
-                  <td></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          {!isBalanced && (
-            <div className="text-red-500 text-sm mt-2">
-              Journal entry must be balanced (difference: $
-              {Math.abs(totalDebit - totalCredit).toFixed(2)})
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="col-span-1 md:col-span-3">
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea rows={2} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          )}
-        </div>
 
-        <div className="flex justify-end space-x-2 mt-4">
-          <Button variant="outline" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!isBalanced || lineItems.length === 0}
-          >
-            {entry ? "Update" : "Create"} Journal Entry
-          </Button>
-        </div>
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-4">Line Items</h3>
+              
+              <div className="grid grid-cols-12 gap-2 mb-2 font-medium">
+                <div className="col-span-3">Account</div>
+                <div className="col-span-3">Description</div>
+                <div className="col-span-2">Debit</div>
+                <div className="col-span-2">Credit</div>
+                <div className="col-span-2"></div>
+              </div>
+              
+              {lineItems.map((item, index) => (
+                <div key={index} className="grid grid-cols-12 gap-2 mb-2">
+                  <div className="col-span-3">
+                    <Select
+                      value={item.accountId}
+                      onValueChange={(value) => form.setValue(`lineItems.${index}.accountId`, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {accounts.map(account => (
+                          <SelectItem key={account.id} value={account.id}>
+                            {getFormattedGLAccountLabel(account)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="col-span-3">
+                    <Input
+                      value={item.description}
+                      onChange={(e) => form.setValue(`lineItems.${index}.description`, e.target.value)}
+                      placeholder="Description"
+                    />
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.debit || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseFloat(e.target.value) : 0;
+                        form.setValue(`lineItems.${index}.debit`, value);
+                        if (value > 0) {
+                          form.setValue(`lineItems.${index}.credit`, 0);
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.credit || ''}
+                      onChange={(e) => {
+                        const value = e.target.value ? parseFloat(e.target.value) : 0;
+                        form.setValue(`lineItems.${index}.credit`, value);
+                        if (value > 0) {
+                          form.setValue(`lineItems.${index}.debit`, 0);
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="col-span-2 flex">
+                    {lineItems.length > 1 && (
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => removeLineItem(index)}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              <div className="grid grid-cols-12 gap-2 mt-4">
+                <div className="col-span-3">
+                  <Button type="button" variant="outline" onClick={addLineItem}>
+                    Add Line Item
+                  </Button>
+                </div>
+                <div className="col-span-3"></div>
+                <div className="col-span-2 font-medium text-right pr-4">
+                  ${totalDebits.toFixed(2)}
+                </div>
+                <div className="col-span-2 font-medium text-right pr-4">
+                  ${totalCredits.toFixed(2)}
+                </div>
+                <div className="col-span-2"></div>
+              </div>
+              
+              <div className="grid grid-cols-12 gap-2 mt-2">
+                <div className="col-span-3"></div>
+                <div className="col-span-3 text-right font-medium">Difference:</div>
+                <div className={`col-span-4 font-medium ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
+                  ${Math.abs(totalDebits - totalCredits).toFixed(2)} {isBalanced ? '(Balanced)' : '(Unbalanced)'}
+                </div>
+                <div className="col-span-2"></div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!isBalanced}>
+                {entry ? 'Update' : 'Create'} Journal Entry
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

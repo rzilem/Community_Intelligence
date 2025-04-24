@@ -1,391 +1,381 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  convertToCamelCase, 
-  convertToSnakeCase,
-  formatBudgetForAPI,
-  formatBudgetEntryForAPI
-} from './BudgetPlannerPatch';
-import { Budget, BudgetEntry, GLAccount } from '@/types/accounting-types';
-import { useToast } from '@/components/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LoadingState } from '@/components/ui/loading-state';
+import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
+import { useBudgets } from '@/hooks/accounting/useBudgets';
+import { Budget, BudgetEntry } from '@/types/accounting-types';
+import { ArrowRight, Plus, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface BudgetPlannerProps {
   associationId: string;
-  existingBudget?: Budget;
-  accounts: GLAccount[];
-  onSave: (budget: Budget) => void;
-  onCancel: () => void;
+  budget?: Budget;
+  onSave?: (budget: Budget) => void;
 }
 
-const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
+export const BudgetPlanner: React.FC<BudgetPlannerProps> = ({
   associationId,
-  existingBudget,
-  accounts,
-  onSave,
-  onCancel
+  budget,
+  onSave
 }) => {
-  const initialBudget: Partial<Budget> = existingBudget || {
+  const { accounts, isLoading: isLoadingAccounts } = useGLAccounts({
     associationId,
-    name: '',
-    year: new Date().getFullYear().toString(),
+    includeMaster: true
+  });
+  
+  const [budgetData, setBudgetData] = useState<Partial<Budget>>(budget || {
+    association_id: associationId,
+    name: `Budget ${new Date().getFullYear() + 1}`,
+    year: `${new Date().getFullYear() + 1}`,
     status: 'draft',
-    fundType: 'operating',
-    description: ''
+    fund_type: 'operating',
+    description: '',
+  });
+  
+  const [entries, setEntries] = useState<Partial<BudgetEntry>[]>(
+    budget?.entries || []
+  );
+  
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const revenueAccounts = accounts.filter(account => account.type === 'Revenue');
+  const expenseAccounts = accounts.filter(account => account.type === 'Expense');
+
+  const handleAddEntry = () => {
+    if (!selectedAccountId) {
+      toast.error('Please select an account');
+      return;
+    }
+
+    const existingEntry = entries.find(entry => entry.gl_account_id === selectedAccountId);
+    if (existingEntry) {
+      toast.error('This account is already in the budget');
+      return;
+    }
+
+    const account = accounts.find(acc => acc.id === selectedAccountId);
+    setEntries([...entries, {
+      gl_account_id: selectedAccountId,
+      annual_total: 0,
+      monthly_amounts: Array(12).fill({ amount: 0 })
+    }]);
+    setSelectedAccountId('');
   };
 
-  const [budget, setBudget] = useState<Partial<Budget>>(initialBudget);
-  const [revenueEntries, setRevenueEntries] = useState<Partial<BudgetEntry>[]>([]);
-  const [expenseEntries, setExpenseEntries] = useState<Partial<BudgetEntry>[]>([]);
-  
-  useEffect(() => {
-    if (existingBudget && existingBudget.entries) {
-      const entries = existingBudget.entries.map(entry => convertToCamelCase(entry));
-      
-      const revAccounts = accounts.filter(a => a.type === 'Revenue' || a.type === 'Income').map(a => a.id);
-      const expAccounts = accounts.filter(a => a.type === 'Expense').map(a => a.id);
-      
-      setRevenueEntries(
-        entries.filter(entry => revAccounts.includes(entry.glAccountId))
-      );
-      
-      setExpenseEntries(
-        entries.filter(entry => expAccounts.includes(entry.glAccountId))
-      );
-    } else {
-      const revAccounts = accounts.filter(a => a.type === 'Revenue' || a.type === 'Income');
-      const newRevEntries = revAccounts.map(account => ({
-        glAccountId: account.id,
-        annualTotal: 0,
-        monthlyAmounts: Array(12).fill({ month: 0, amount: 0 })
-      }));
-      setRevenueEntries(newRevEntries);
-      
-      const expAccounts = accounts.filter(a => a.type === 'Expense');
-      const newExpEntries = expAccounts.map(account => ({
-        glAccountId: account.id,
-        annualTotal: 0,
-        monthlyAmounts: Array(12).fill({ month: 0, amount: 0 })
-      }));
-      setExpenseEntries(newExpEntries);
+  const handleEntryAmountChange = (index: number, value: string) => {
+    const newEntries = [...entries];
+    const amount = parseFloat(value) || 0;
+    newEntries[index].annual_total = amount;
+    
+    // Distribute evenly across months
+    const monthlyAmount = amount / 12;
+    newEntries[index].monthly_amounts = Array(12).fill({ amount: monthlyAmount });
+    
+    setEntries(newEntries);
+  };
+
+  const handleRemoveEntry = (index: number) => {
+    const newEntries = [...entries];
+    newEntries.splice(index, 1);
+    setEntries(newEntries);
+  };
+
+  const handleSaveBudget = () => {
+    if (!budgetData.name || !budgetData.year) {
+      toast.error('Please provide a name and year for the budget');
+      return;
     }
-  }, [existingBudget, accounts]);
-  
-  useEffect(() => {
-    const totalRevenue = revenueEntries.reduce(
-      (sum, entry) => sum + (entry.annualTotal || 0),
-      0
-    );
-    
-    const totalExpenses = expenseEntries.reduce(
-      (sum, entry) => sum + (entry.annualTotal || 0),
-      0
-    );
-    
-    setBudget({
-      ...budget,
-      totalRevenue,
-      totalExpenses
-    });
-  }, [revenueEntries, expenseEntries]);
-  
-  const handleRevenueMonthlyChange = (accountId: string, month: number, amount: number) => {
-    setRevenueEntries(prev => 
-      prev.map(entry => {
-        if (entry.glAccountId === accountId) {
-          const updatedMonthlyAmounts = [...(entry.monthlyAmounts || [])];
-          updatedMonthlyAmounts[month - 1] = { month, amount };
-          
-          const annualTotal = updatedMonthlyAmounts.reduce(
-            (sum, item) => sum + (Number(item.amount) || 0), 
-            0
-          );
-          
-          return {
-            ...entry,
-            monthlyAmounts: updatedMonthlyAmounts,
-            annualTotal
-          };
-        }
-        return entry;
+
+    setIsSubmitting(true);
+
+    const totalRevenue = entries
+      .filter(entry => {
+        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+        return account?.type === 'Revenue';
       })
-    );
-  };
-  
-  const handleExpenseMonthlyChange = (accountId: string, month: number, amount: number) => {
-    setExpenseEntries(prev => 
-      prev.map(entry => {
-        if (entry.glAccountId === accountId) {
-          const updatedMonthlyAmounts = [...(entry.monthlyAmounts || [])];
-          updatedMonthlyAmounts[month - 1] = { month, amount };
-          
-          const annualTotal = updatedMonthlyAmounts.reduce(
-            (sum, item) => sum + (Number(item.amount) || 0), 
-            0
-          );
-          
-          return {
-            ...entry,
-            monthlyAmounts: updatedMonthlyAmounts,
-            annualTotal
-          };
-        }
-        return entry;
+      .reduce((sum, entry) => sum + (entry.annual_total || 0), 0);
+
+    const totalExpenses = entries
+      .filter(entry => {
+        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+        return account?.type === 'Expense';
       })
-    );
-  };
-  
-  const handleRevenueAnnualChange = (accountId: string, amount: number) => {
-    setRevenueEntries(prev => 
-      prev.map(entry => {
-        if (entry.glAccountId === accountId) {
-          const monthlyAmount = amount / 12;
-          const updatedMonthlyAmounts = Array(12).fill(0).map((_, idx) => ({
-            month: idx + 1,
-            amount: monthlyAmount
-          }));
-          
-          return {
-            ...entry,
-            annualTotal: amount,
-            monthlyAmounts: updatedMonthlyAmounts
-          };
-        }
-        return entry;
-      })
-    );
-  };
-  
-  const handleExpenseAnnualChange = (accountId: string, amount: number) => {
-    setExpenseEntries(prev => 
-      prev.map(entry => {
-        if (entry.glAccountId === accountId) {
-          const monthlyAmount = amount / 12;
-          const updatedMonthlyAmounts = Array(12).fill(0).map((_, idx) => ({
-            month: idx + 1,
-            amount: monthlyAmount
-          }));
-          
-          return {
-            ...entry,
-            annualTotal: amount,
-            monthlyAmounts: updatedMonthlyAmounts
-          };
-        }
-        return entry;
-      })
-    );
-  };
-  
-  const handleBudgetChange = (field: keyof Budget, value: string) => {
-    setBudget(prev => ({ ...prev, [field]: value }));
-  };
-  
-  const handleSave = () => {
-    try {
-      const allEntries = [...revenueEntries, ...expenseEntries];
-      
-      const completeBudget: Budget = {
-        ...budget as Budget,
-        entries: allEntries as BudgetEntry[],
-      };
-      
-      console.log('Saving budget:', completeBudget);
+      .reduce((sum, entry) => sum + (entry.annual_total || 0), 0);
+
+    const completeBudget: Budget = {
+      ...(budgetData as Budget),
+      total_revenue: totalRevenue,
+      total_expenses: totalExpenses,
+      entries: entries as BudgetEntry[]
+    };
+
+    if (onSave) {
       onSave(completeBudget);
-    } catch (error) {
-      console.error('Error saving budget:', error);
     }
+
+    setIsSubmitting(false);
   };
-  
-  const getAccount = (id: string) => {
-    return accounts.find(a => a.id === id);
-  };
-  
-  const renderMonthlyFields = (entry: Partial<BudgetEntry>, isRevenue: boolean) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    return months.map((month, idx) => {
-      const monthNumber = idx + 1;
-      const monthlyValues = entry.monthlyAmounts || [];
-      const monthValue = monthlyValues[idx]?.amount || 0;
-      
-      const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = Number(e.target.value) || 0;
-        if (isRevenue) {
-          handleRevenueMonthlyChange(entry.glAccountId!, monthNumber, value);
-        } else {
-          handleExpenseMonthlyChange(entry.glAccountId!, monthNumber, value);
-        }
-      };
-      
-      return (
-        <div key={`${entry.glAccountId}-${month}`} className="flex flex-col">
-          <label className="text-xs text-gray-500">{month}</label>
-          <input
-            type="number"
-            value={monthValue}
-            onChange={handleChange}
-            className="border rounded px-2 py-1 text-sm"
-          />
-        </div>
-      );
-    });
-  };
-  
-  const renderRevenueAccounts = () => {
-    return revenueEntries.map(entry => {
-      const account = getAccount(entry.glAccountId!);
-      
-      if (!account) return null;
-      
-      return (
-        <div key={entry.glAccountId} className="border-b py-2">
-          <div className="flex justify-between items-center mb-2">
-            <div className="font-medium">{account.code} - {account.name}</div>
-            <input
-              type="number"
-              value={entry.annualTotal || 0}
-              onChange={(e) => handleRevenueAnnualChange(entry.glAccountId!, Number(e.target.value) || 0)}
-              className="border rounded px-3 py-1 w-32 font-bold text-green-600"
-            />
-          </div>
-          <div className="grid grid-cols-12 gap-1">
-            {renderMonthlyFields(entry, true)}
-          </div>
-        </div>
-      );
-    });
-  };
-  
-  const renderExpenseAccounts = () => {
-    return expenseEntries.map(entry => {
-      const account = getAccount(entry.glAccountId!);
-      
-      if (!account) return null;
-      
-      return (
-        <div key={entry.glAccountId} className="border-b py-2">
-          <div className="flex justify-between items-center mb-2">
-            <div className="font-medium">{account.code} - {account.name}</div>
-            <input
-              type="number"
-              value={entry.annualTotal || 0}
-              onChange={(e) => handleExpenseAnnualChange(entry.glAccountId!, Number(e.target.value) || 0)}
-              className="border rounded px-3 py-1 w-32 font-bold text-red-600"
-            />
-          </div>
-          <div className="grid grid-cols-12 gap-1">
-            {renderMonthlyFields(entry, false)}
-          </div>
-        </div>
-      );
-    });
-  };
+
+  if (isLoadingAccounts) {
+    return <LoadingState variant="spinner" text="Loading accounts..." className="py-10" />;
+  }
+
+  const totalRevenue = entries
+    .filter(entry => {
+      const account = accounts.find(acc => acc.id === entry.gl_account_id);
+      return account?.type === 'Revenue';
+    })
+    .reduce((sum, entry) => sum + (entry.annual_total || 0), 0);
+
+  const totalExpenses = entries
+    .filter(entry => {
+      const account = accounts.find(acc => acc.id === entry.gl_account_id);
+      return account?.type === 'Expense';
+    })
+    .reduce((sum, entry) => sum + (entry.annual_total || 0), 0);
+
+  const netIncome = totalRevenue - totalExpenses;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Budget Details</CardTitle>
+          <CardTitle>Budget Information</CardTitle>
+          <CardDescription>Enter basic information for this budget</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Budget Name</label>
-              <input 
-                type="text"
-                value={budget.name || ''}
-                onChange={(e) => handleBudgetChange('name', e.target.value)}
-                className="border rounded w-full px-3 py-2"
-                placeholder="e.g., 2025 Operating Budget"
+              <Input
+                value={budgetData.name || ''}
+                onChange={(e) => setBudgetData({ ...budgetData, name: e.target.value })}
+                placeholder="Annual Budget 2025"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Year</label>
-              <input 
-                type="text"
-                value={budget.year || ''}
-                onChange={(e) => handleBudgetChange('year', e.target.value)}
-                className="border rounded w-full px-3 py-2"
-                placeholder="e.g., 2025"
+              <Input
+                value={budgetData.year || ''}
+                onChange={(e) => setBudgetData({ ...budgetData, year: e.target.value })}
+                placeholder="2025"
               />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Fund Type</label>
-              <select 
-                value={budget.fundType || 'operating'}
-                onChange={(e) => handleBudgetChange('fundType', e.target.value)}
-                className="border rounded w-full px-3 py-2"
+              <Select
+                value={budgetData.fund_type || 'operating'}
+                onValueChange={(value) => setBudgetData({ ...budgetData, fund_type: value })}
               >
-                <option value="operating">Operating</option>
-                <option value="reserve">Reserve</option>
-                <option value="capital">Capital</option>
-              </select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select fund type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="operating">Operating</SelectItem>
+                  <SelectItem value="reserve">Reserve</SelectItem>
+                  <SelectItem value="capital">Capital</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <Input
+                value={budgetData.description || ''}
+                onChange={(e) => setBudgetData({ ...budgetData, description: e.target.value })}
+                placeholder="Annual budget for the fiscal year"
+              />
             </div>
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea 
-              value={budget.description || ''}
-              onChange={(e) => handleBudgetChange('description', e.target.value)}
-              className="border rounded w-full px-3 py-2"
-              rows={2}
-              placeholder="Optional budget description..."
-            />
-          </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader>
-          <CardTitle>Revenue</CardTitle>
+          <CardTitle>Budget Entries</CardTitle>
+          <CardDescription>Add and configure budget entries by account</CardDescription>
         </CardHeader>
         <CardContent>
-          {renderRevenueAccounts()}
-          <div className="mt-4 text-right font-bold">
-            <span className="mr-4">Total Revenue:</span> 
-            ${(budget.totalRevenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          <div className="flex flex-col md:flex-row gap-4 mb-6 items-end">
+            <div className="flex-grow">
+              <label className="block text-sm font-medium mb-1">Add Account</label>
+              <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="" disabled>Select an account</SelectItem>
+                  {revenueAccounts.length > 0 && (
+                    <SelectItem value="revenue-header" disabled>-- Revenue Accounts --</SelectItem>
+                  )}
+                  {revenueAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.code} - {account.name}
+                    </SelectItem>
+                  ))}
+                  {expenseAccounts.length > 0 && (
+                    <SelectItem value="expense-header" disabled>-- Expense Accounts --</SelectItem>
+                  )}
+                  {expenseAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.code} - {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button onClick={handleAddEntry}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Entry
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Expenses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {renderExpenseAccounts()}
-          <div className="mt-4 text-right font-bold">
-            <span className="mr-4">Total Expenses:</span> 
-            ${(budget.totalExpenses || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex justify-between">
-            <div>
-              <div className="text-lg font-medium">Net Income:</div>
-              <div className={`text-2xl font-bold ${
-                ((budget.totalRevenue || 0) - (budget.totalExpenses || 0)) >= 0 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                ${((budget.totalRevenue || 0) - (budget.totalExpenses || 0)).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+
+          {entries.length === 0 ? (
+            <div className="text-center py-8 border rounded-md bg-muted/20">
+              <p className="text-muted-foreground">No budget entries added yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Select an account above to add your first budget entry
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Revenue Entries */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Revenue</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Account</TableHead>
+                      <TableHead className="text-right">Annual Amount</TableHead>
+                      <TableHead className="w-24">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries
+                      .filter(entry => {
+                        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+                        return account?.type === 'Revenue';
+                      })
+                      .map((entry, index) => {
+                        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>{account ? `${account.code} - ${account.name}` : 'Unknown Account'}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={entry.annual_total || ''}
+                                onChange={(e) => handleEntryAmountChange(
+                                  entries.findIndex(e => e.gl_account_id === entry.gl_account_id),
+                                  e.target.value
+                                )}
+                                className="text-right w-40 ml-auto"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveEntry(
+                                  entries.findIndex(e => e.gl_account_id === entry.gl_account_id)
+                                )}
+                              >
+                                Remove
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    <TableRow>
+                      <TableCell className="font-bold">Total Revenue</TableCell>
+                      <TableCell className="text-right font-bold">${totalRevenue.toFixed(2)}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Expense Entries */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">Expenses</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Account</TableHead>
+                      <TableHead className="text-right">Annual Amount</TableHead>
+                      <TableHead className="w-24">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {entries
+                      .filter(entry => {
+                        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+                        return account?.type === 'Expense';
+                      })
+                      .map((entry, index) => {
+                        const account = accounts.find(acc => acc.id === entry.gl_account_id);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>{account ? `${account.code} - ${account.name}` : 'Unknown Account'}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={entry.annual_total || ''}
+                                onChange={(e) => handleEntryAmountChange(
+                                  entries.findIndex(e => e.gl_account_id === entry.gl_account_id),
+                                  e.target.value
+                                )}
+                                className="text-right w-40 ml-auto"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveEntry(
+                                  entries.findIndex(e => e.gl_account_id === entry.gl_account_id)
+                                )}
+                              >
+                                Remove
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    <TableRow>
+                      <TableCell className="font-bold">Total Expenses</TableCell>
+                      <TableCell className="text-right font-bold">${totalExpenses.toFixed(2)}</TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Budget Summary */}
+              <div className="pt-4 border-t">
+                <div className="flex justify-between items-center">
+                  <div className="text-lg font-bold">Net Income</div>
+                  <div className={`text-lg font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ${netIncome.toFixed(2)}
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-x-2">
-              <Button variant="outline" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button onClick={handleSave}>
-                Save Budget
-              </Button>
-            </div>
+          )}
+
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSaveBudget} disabled={isSubmitting}>
+              <Save className="h-4 w-4 mr-1" />
+              {isSubmitting ? 'Saving...' : 'Save Budget'}
+            </Button>
           </div>
         </CardContent>
       </Card>
     </div>
   );
 };
-
-export default BudgetPlanner;

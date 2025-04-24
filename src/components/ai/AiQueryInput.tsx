@@ -1,12 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from '@/hooks/use-translation';
 
 export const AiQueryInput: React.FC<{ placeholder?: string; compact?: boolean }> = ({ 
   placeholder: customPlaceholder,
   compact = false 
 }) => {
   const [query, setQuery] = useState('');
-  const [placeholder] = useState(customPlaceholder || 'Ask Community Intelligence anything...');
+  const [placeholder, setPlaceholder] = useState(customPlaceholder || 'Ask Community Intelligence anything...');
+  const { translateText, preferredLanguage, translateVersion } = useTranslation();
+
+  useEffect(() => {
+    const updatePlaceholder = async () => {
+      if (!customPlaceholder) {
+        const defaultPlaceholder = 'Ask Community Intelligence anything...';
+        if (preferredLanguage === 'en') {
+          setPlaceholder(defaultPlaceholder);
+          return;
+        }
+        
+        try {
+          const translated = await translateText(defaultPlaceholder);
+          if (translated) {
+            setPlaceholder(translated);
+          }
+        } catch (error) {
+          console.error('Error translating placeholder:', error);
+        }
+      }
+    };
+    
+    updatePlaceholder();
+  }, [customPlaceholder, preferredLanguage, translateText, translateVersion]);
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

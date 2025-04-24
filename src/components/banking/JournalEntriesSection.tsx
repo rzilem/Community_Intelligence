@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,15 +20,6 @@ const mockGLAccounts = ensureGLAccountsHaveIsActive([
   { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
 ]);
 
-// Let's adapt the JournalEntry interface to match what JournalEntryTable expects
-const adaptJournalEntry = (entry: JournalEntry) => {
-  return {
-    ...entry,
-    date: entry.entryDate || entry.date,
-    reference: entry.entryNumber || entry.reference
-  };
-};
-
 interface JournalEntriesSectionProps {
   journalEntries: JournalEntry[];
   associationId?: string;
@@ -45,20 +35,15 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | undefined>();
   
   const filteredEntries = journalEntries.filter(entry => {
-    // Check if entryNumber and reference exist and handle both cases
-    const entryRef = entry.entryNumber || entry.reference || '';
     const matchesSearch = 
-      entryRef.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (entry.createdBy && entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase()));
+      entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || entry.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
-
-  // Adapt entries for the table component
-  const adaptedEntries = filteredEntries.map(adaptJournalEntry);
 
   const handleCreateEntry = (data: any) => {
     console.log('Creating journal entry:', data);
@@ -135,7 +120,7 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
         </div>
 
         <JournalEntryTable 
-          entries={adaptedEntries}
+          entries={filteredEntries}
           onEdit={handleEditEntry}
           onView={handleViewEntry}
         />
@@ -148,7 +133,7 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
           }}
           onSubmit={selectedEntry ? handleUpdateEntry : handleCreateEntry}
           entry={selectedEntry}
-          accounts={mockGLAccounts as GLAccount[]}
+          accounts={mockGLAccounts}
         />
       </CardContent>
     </Card>

@@ -1,5 +1,6 @@
+
 import { Transaction, Payment } from '@/types/transaction-payment-types';
-import { JournalEntry } from '@/types/accounting-types';
+import { JournalEntry } from '@/hooks/accounting/useJournalEntries';
 
 // Mock transactions data
 export const mockTransactions: Transaction[] = [
@@ -27,76 +28,61 @@ export const mockPayments: Payment[] = [
   { id: '8', vendor: 'Water Works Inc.', amount: 300, date: '2023-12-10', status: 'scheduled', method: 'ach', associationName: 'Sunset HOA', category: 'Utilities', associationId: '1' },
 ];
 
-// Mock journal entries - updated to match JournalEntry interface
+// Mock journal entries
 export const mockJournalEntries: JournalEntry[] = [
   { 
     id: '1',
-    entryNumber: 'JE-20231101-0001',
-    entryDate: '2023-11-01',
-    date: '2023-11-01', // For compatibility
+    entry_number: 'JE-20231101-0001',
+    date: '2023-11-01',
     reference: 'NOV2023-ASSESS',
     description: 'Monthly assessment revenue',
     status: 'posted',
-    amount: 5000,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-01T08:30:00Z',
-    updatedAt: '2023-11-01T08:30:00Z'
+    association_id: '1',
+    created_by: 'system',
+    createdBy: 'system'
   },
   { 
     id: '2',
-    entryNumber: 'JE-20231102-0002',
-    entryDate: '2023-11-02',
-    date: '2023-11-02', // For compatibility
+    entry_number: 'JE-20231102-0002',
+    date: '2023-11-02',
     reference: 'INV-LANDS-1102',
     description: 'Landscaping expense',
     status: 'draft',
-    amount: 1200,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-02T09:15:00Z',
-    updatedAt: '2023-11-02T09:15:00Z'
+    association_id: '1',
+    created_by: 'system',
+    createdBy: 'system'
   },
   { 
     id: '3',
-    entryNumber: 'JE-20231105-0003',
-    entryDate: '2023-11-05',
-    date: '2023-11-05', // For compatibility
+    entry_number: 'JE-20231105-0003',
+    date: '2023-11-05',
     reference: 'INV-LEGAL-1105',
     description: 'Legal services',
-    status: 'posted',
-    amount: 800,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-05T14:45:00Z',
-    updatedAt: '2023-11-05T14:45:00Z'
+    status: 'reconciled',
+    association_id: '1',
+    created_by: 'system',
+    createdBy: 'system'
   },
   { 
     id: '4',
-    entryNumber: 'JE-20231110-0004',
-    entryDate: '2023-11-10',
-    date: '2023-11-10', // For compatibility
+    entry_number: 'JE-20231110-0004',
+    date: '2023-11-10',
     reference: 'INV-INS-1110',
     description: 'Insurance premium',
     status: 'posted',
-    amount: 1500,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-10T11:30:00Z',
-    updatedAt: '2023-11-10T11:30:00Z'
+    association_id: '1',
+    created_by: 'system',
+    createdBy: 'system'
   },
   { 
     id: '5',
-    entryNumber: 'JE-20231115-0005',
-    entryDate: '2023-11-15',
-    date: '2023-11-15', // For compatibility
+    entry_number: 'JE-20231115-0005',
+    date: '2023-11-15',
     reference: 'TRANSFER-RES-1115',
     description: 'Transfer to reserve account',
     status: 'draft',
-    amount: 3000,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-15T10:00:00Z',
-    updatedAt: '2023-11-15T10:00:00Z'
-  }
+    association_id: '1',
+    created_by: 'system',
+    createdBy: 'system'
+  },
 ];

@@ -1,76 +1,72 @@
 
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import { GLAccount } from '@/types/accounting-types';
+import { toast } from 'sonner';
 
-// Mock GL accounts data for development
-const mockGLAccounts: GLAccount[] = [
-  { id: '1', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000, is_active: true },
-  { id: '2', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000, is_active: true },
-  { id: '3', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000, is_active: true },
-  { id: '4', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000, is_active: true },
-  { id: '5', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000, is_active: true },
-  { id: '6', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000, is_active: true },
-];
+interface UseGLAccountsOptions {
+  associationId?: string;
+  includeMaster?: boolean;
+  activeOnly?: boolean;
+}
 
-// Helper function to get formatted account categories
+// Utility function to get formatted account categories from accounts array
 export const getFormattedAccountCategories = (accounts: GLAccount[]): string[] => {
-  return Array.from(new Set(accounts.filter(acc => acc.category).map(acc => acc.category || ''))).sort();
+  // Extract unique categories and filter out null/undefined values
+  const categories = [...new Set(accounts
+    .map(account => account.category)
+    .filter(Boolean))] as string[];
+  
+  // Sort categories alphabetically
+  return categories.sort((a, b) => a.localeCompare(b));
 };
 
-// Helper function to format GL account labels
+// Utility function to format GL account label with code and name
 export const getFormattedGLAccountLabel = (account: GLAccount): string => {
   return `${account.code} - ${account.name}`;
 };
 
-// Type for useGLAccounts parameters
-export interface GLAccountsOptions {
-  associationId?: string;
-  includeMaster?: boolean;
-}
-
-export const useGLAccounts = (options?: string | GLAccountsOptions) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [accountType, setAccountType] = useState<string>('all');
-  const [activeOnly, setActiveOnly] = useState<boolean>(true);
+export const useGLAccounts = (options: UseGLAccountsOptions = {}) => {
+  const { associationId, includeMaster = false, activeOnly = true } = options;
   const queryClient = useQueryClient();
-  
-  // Parse options
-  let associationId: string | undefined;
-  let includeMaster = false;
-  
-  if (typeof options === 'string') {
-    associationId = options;
-  } else if (options && typeof options === 'object') {
-    associationId = options.associationId;
-    includeMaster = options.includeMaster || false;
-  }
 
-  // Fetch GL accounts (mock implementation)
   const { data: accounts = [], isLoading, error } = useQuery({
-    queryKey: ['glAccounts', associationId, includeMaster],
+    queryKey: ['glAccounts', associationId, includeMaster, activeOnly],
     queryFn: async () => {
-      // In a real implementation, we would fetch from Supabase
-      // For now, return mock data
-      let filteredAccounts = [...mockGLAccounts];
+      let query = supabase
+        .from('gl_accounts')
+        .select('*')
+        .order('code');
       
-      if (associationId) {
-        filteredAccounts = filteredAccounts.filter(account => account.association_id === associationId);
+      if (activeOnly) {
+        query = query.eq('is_active', true);
       }
       
-      return filteredAccounts;
-    },
+      if (associationId) {
+        if (includeMaster) {
+          query = query.or(`association_id.eq.${associationId},association_id.is.null`);
+        } else {
+          query = query.eq('association_id', associationId);
+        }
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data || [];
+    }
   });
 
-  // Create GL account mutation (mock implementation)
   const createGLAccount = useMutation({
     mutationFn: async (account: Partial<GLAccount>) => {
-      // In a real implementation, this would be an insert to Supabase
-      console.log('Creating GL account:', account);
+      const { data, error } = await supabase
+        .from('gl_accounts')
+        .insert(account)
+        .select()
+        .single();
       
-      // Mock successful creation
-      return { id: `mock-${Date.now()}` };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success('GL account created successfully');
@@ -81,14 +77,17 @@ export const useGLAccounts = (options?: string | GLAccountsOptions) => {
     }
   });
 
-  // Update GL account mutation (mock implementation)
   const updateGLAccount = useMutation({
-    mutationFn: async (account: GLAccount) => {
-      // In a real implementation, this would be an update to Supabase
-      console.log('Updating GL account:', account);
+    mutationFn: async ({ id, ...account }: Partial<GLAccount> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('gl_accounts')
+        .update(account)
+        .eq('id', id)
+        .select()
+        .single();
       
-      // Mock successful update
-      return { success: true };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success('GL account updated successfully');
@@ -99,42 +98,11 @@ export const useGLAccounts = (options?: string | GLAccountsOptions) => {
     }
   });
 
-  // Delete GL account mutation (mock implementation)
-  const deleteGLAccount = useMutation({
-    mutationFn: async (accountId: string) => {
-      // In a real implementation, this would be a delete from Supabase
-      console.log('Deleting GL account:', accountId);
-      
-      // Mock successful deletion
-      return { success: true };
-    },
-    onSuccess: () => {
-      toast.success('GL account deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['glAccounts'] });
-    },
-    onError: (error) => {
-      toast.error(`Failed to delete GL account: ${error.message}`);
-    }
-  });
-
-  // Add the refreshAccounts function to fix GLAccounts.tsx error
-  const refreshAccounts = () => {
-    queryClient.invalidateQueries({ queryKey: ['glAccounts'] });
-  };
-
   return {
     accounts,
     isLoading,
     error,
-    searchTerm,
-    setSearchTerm,
-    accountType,
-    setAccountType,
-    activeOnly,
-    setActiveOnly,
     createGLAccount,
-    updateGLAccount,
-    deleteGLAccount,
-    refreshAccounts
+    updateGLAccount
   };
 };

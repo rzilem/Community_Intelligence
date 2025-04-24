@@ -1,211 +1,287 @@
+
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PageTemplate from '@/components/layout/PageTemplate';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { useJournalEntries } from '@/hooks/accounting/useJournalEntries';
-import { useTransactionPaymentData } from '@/hooks/accounting/useTransactionPaymentData';
-import { useAssociationContext } from '@/contexts/association-context';
-import PageTemplate from '@/components/layout/PageTemplate';
-import { DollarSign, Plus } from 'lucide-react';
-import { JournalEntry, GLAccount } from '@/types/accounting-types'; // Fixed import
+import { useAuth } from '@/contexts/auth';
+import TransactionsSection from '@/components/accounting/TransactionsSection';
+import PaymentsSection from '@/components/accounting/PaymentsSection';
+import JournalEntriesSection from '@/components/accounting/JournalEntriesSection';
 import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
+import { useJournalEntries, JournalEntry } from '@/hooks/accounting/useJournalEntries';
+import { FinancialReportView } from '@/components/accounting/reports/FinancialReportView';
+import { ArrowRight, BarChart3, BookOpen, CreditCard, DollarSign } from 'lucide-react';
+import { GLAccountBalanceChart } from '@/components/accounting/GLAccountBalanceChart';
+import { AiQueryInput } from '@/components/ai/AiQueryInput';
 
-interface GLAccountBalanceChartProps {
-  accounts: GLAccount[];
-}
-
-const GLAccountBalanceChart: React.FC<GLAccountBalanceChartProps> = ({ accounts }) => {
-  // Implementation of the chart component
-  return (
-    <div className="h-[200px] flex items-center justify-center">
-      <p className="text-muted-foreground">GL Account balance visualization</p>
-    </div>
-  );
-};
+// Mock data for demonstration
+import { mockPayments, mockTransactions, mockJournalEntries } from '@/utils/mock-data';
 
 const AccountingDashboard = () => {
-  const [activeTab, setActiveTab] = useState('accounts');
-  const { currentAssociation } = useAssociationContext();
-  const { entries, isLoading: entriesLoading } = useJournalEntries(currentAssociation?.id);
-  const { transactions, payments, journalEntries } = useTransactionPaymentData(currentAssociation?.id);
-  
-  // Use the accounts from useGLAccounts
-  const { accounts: glAccounts } = useGLAccounts(currentAssociation?.id);
-  
+  const { currentAssociation } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
+  const { accounts, isLoading: isLoadingAccounts } = useGLAccounts({
+    associationId: currentAssociation?.id,
+    includeMaster: true,
+  });
+
   return (
     <PageTemplate
       title="Accounting Dashboard"
       icon={<DollarSign className="h-8 w-8" />}
-      description="Overview of accounting and financial data for your association."
+      description="Manage your association's financial records and transactions"
     >
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Financial Overview</h2>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> New Transaction
-        </Button>
+      <div className="mb-6">
+        <AiQueryInput 
+          placeholder="Ask about accounting data or financial insights..." 
+          compact={true}
+        />
       </div>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$24,000</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$12,500</div>
-            <p className="text-xs text-muted-foreground">+10.5% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cash Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,200</div>
-            <p className="text-xs text-muted-foreground">+12.3% from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$3,200</div>
-            <p className="text-xs text-muted-foreground">5 invoices pending</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Tabs defaultValue="accounts" className="mt-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="transactions">Transactions</TabsTrigger>
           <TabsTrigger value="journal">Journal Entries</TabsTrigger>
+          <TabsTrigger value="payments">Payments</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="accounts" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Financial Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SummaryCard
+              title="Total Revenue"
+              value="$45,289.00"
+              change={+12.5}
+              icon={<DollarSign className="h-5 w-5" />}
+              linkText="View details"
+              linkHref="/accounting/gl-accounts"
+            />
+            <SummaryCard
+              title="Total Expenses"
+              value="$32,478.00"
+              change={+3.2}
+              icon={<CreditCard className="h-5 w-5" />}
+              linkText="View details"
+              linkHref="/accounting/gl-accounts"
+            />
+            <SummaryCard
+              title="Outstanding Invoices"
+              value="$7,842.00"
+              change={-2.4}
+              icon={<BookOpen className="h-5 w-5" />}
+              linkText="View invoices"
+              linkHref="/accounting/invoice-queue"
+            />
+            <SummaryCard
+              title="This Month's Budget"
+              value="$12,000.00"
+              progress={75}
+              icon={<BarChart3 className="h-5 w-5" />}
+              linkText="View budget"
+              linkHref="/accounting/budget-planning"
+            />
+          </div>
+
+          {/* GL Account Balances */}
+          <Card>
+            <CardHeader>
+              <CardTitle>GL Account Balances</CardTitle>
+              <CardDescription>Overview of key account balances</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <GLAccountBalanceChart />
+            </CardContent>
+          </Card>
+
+          {/* Quick Reports */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">GL Account Balances</CardTitle>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
               </CardHeader>
               <CardContent>
-                <GLAccountBalanceChart accounts={glAccounts || []} />
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="pb-2">Description</th>
+                      <th className="pb-2 text-right">Amount</th>
+                      <th className="pb-2 text-right">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockTransactions.slice(0, 5).map((transaction, index) => (
+                      <tr key={index} className="border-b last:border-0">
+                        <td className="py-3">{transaction.description}</td>
+                        <td className={`py-3 text-right ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                          ${transaction.amount.toFixed(2)}
+                        </td>
+                        <td className="py-3 text-right">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="mt-4 text-right">
+                  <Button variant="link" className="text-primary" onClick={() => setActiveTab('transactions')}>
+                    View all transactions
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Account Distribution</CardTitle>
+              <CardHeader>
+                <CardTitle>Upcoming Payments</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] flex items-center justify-center">
-                  <p className="text-muted-foreground">Account distribution visualization</p>
+                <table className="w-full">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="pb-2">Vendor</th>
+                      <th className="pb-2 text-right">Amount</th>
+                      <th className="pb-2 text-right">Due Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockPayments.slice(0, 5).map((payment, index) => (
+                      <tr key={index} className="border-b last:border-0">
+                        <td className="py-3">{payment.vendor}</td>
+                        <td className="py-3 text-right">${payment.amount.toFixed(2)}</td>
+                        <td className="py-3 text-right">
+                          {new Date(payment.date).toLocaleDateString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="mt-4 text-right">
+                  <Button variant="link" className="text-primary" onClick={() => setActiveTab('payments')}>
+                    View all payments
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
-        
-        <TabsContent value="transactions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {transactions.length > 0 ? (
-                <div className="rounded-md border">
-                  <div className="p-4">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left pb-2">Date</th>
-                          <th className="text-left pb-2">Description</th>
-                          <th className="text-left pb-2">Category</th>
-                          <th className="text-right pb-2">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {transactions.slice(0, 5).map((transaction) => (
-                          <tr key={transaction.id} className="border-b">
-                            <td className="py-2">{transaction.date}</td>
-                            <td className="py-2">{transaction.description}</td>
-                            <td className="py-2">{transaction.category}</td>
-                            <td className={`py-2 text-right ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                              {transaction.type === 'income' ? '+' : '-'}${transaction.amount}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No transactions found</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+
+        <TabsContent value="transactions">
+          <TransactionsSection transactions={mockTransactions} />
         </TabsContent>
-        
-        <TabsContent value="journal" className="space-y-4">
+
+        <TabsContent value="journal">
+          <JournalEntriesSection journalEntries={mockJournalEntries} associationId={currentAssociation?.id} />
+        </TabsContent>
+
+        <TabsContent value="payments">
+          <PaymentsSection payments={mockPayments} />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Journal Entries</CardTitle>
+              <CardTitle>Financial Reports</CardTitle>
+              <CardDescription>View key financial statements and reports</CardDescription>
             </CardHeader>
             <CardContent>
-              {journalEntries.length > 0 ? (
-                <div className="rounded-md border">
-                  <div className="p-4">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left pb-2">Date</th>
-                          <th className="text-left pb-2">Reference</th>
-                          <th className="text-left pb-2">Description</th>
-                          <th className="text-right pb-2">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {journalEntries.slice(0, 5).map((entry) => (
-                          <tr key={entry.id} className="border-b">
-                            <td className="py-2">{entry.date}</td>
-                            <td className="py-2">{entry.reference}</td>
-                            <td className="py-2">{entry.description}</td>
-                            <td className="py-2 text-right">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                entry.status === 'posted' ? 'bg-green-100 text-green-800' : 
-                                entry.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {entry.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No journal entries found</p>
-                </div>
-              )}
+              <Tabs defaultValue="balance-sheet">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
+                  <TabsTrigger value="income-statement">Income Statement</TabsTrigger>
+                  <TabsTrigger value="cash-flow">Cash Flow</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="balance-sheet">
+                  <FinancialReportView 
+                    associationId={currentAssociation?.id || ''}
+                    reportType="balance-sheet"
+                  />
+                </TabsContent>
+                
+                <TabsContent value="income-statement">
+                  <FinancialReportView 
+                    associationId={currentAssociation?.id || ''}
+                    reportType="income-statement"
+                  />
+                </TabsContent>
+                
+                <TabsContent value="cash-flow">
+                  <FinancialReportView 
+                    associationId={currentAssociation?.id || ''}
+                    reportType="cash-flow"
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
     </PageTemplate>
+  );
+};
+
+interface SummaryCardProps {
+  title: string;
+  value: string;
+  change?: number;
+  progress?: number;
+  icon: React.ReactNode;
+  linkText?: string;
+  linkHref?: string;
+}
+
+const SummaryCard: React.FC<SummaryCardProps> = ({
+  title,
+  value,
+  change,
+  progress,
+  icon,
+  linkText,
+  linkHref
+}) => {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <h4 className="text-2xl font-bold mt-1">{value}</h4>
+            {change !== undefined && (
+              <p className={`text-xs ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {change >= 0 ? '+' : ''}{change}% from last month
+              </p>
+            )}
+            {progress !== undefined && (
+              <div className="mt-2">
+                <div className="h-1.5 w-full bg-gray-200 rounded-full">
+                  <div
+                    className="h-1.5 bg-primary rounded-full"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{progress}% of budget used</p>
+              </div>
+            )}
+            {linkText && linkHref && (
+              <Button variant="link" className="text-primary p-0 mt-2 h-auto" asChild>
+                <a href={linkHref}>
+                  {linkText}
+                  <ArrowRight className="h-3 w-3 ml-1" />
+                </a>
+              </Button>
+            )}
+          </div>
+          <div className="p-2 bg-primary/10 rounded-md">
+            {icon}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

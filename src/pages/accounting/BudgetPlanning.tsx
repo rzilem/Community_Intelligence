@@ -28,6 +28,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
+// Mock data for GL accounts - now with is_active property
 const mockGLAccounts = ensureGLAccountsHaveIsActive([
   { id: '1000', code: '1000', name: 'First Citizens Bank Operating-X2806', type: 'Asset', balance: 0, description: 'First Citizens Bank Operating-X2806', category: 'Assets', account_number: '1000' },
   { id: '4000', code: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, description: 'Assessment Income', category: 'Income', account_number: '4000' },
@@ -189,18 +190,15 @@ const BudgetPlanning = () => {
   ]);
   
   const [budgetSummary, setBudgetSummary] = useState<BudgetSummary>({
-    totalRevenue: 0,
-    totalExpenses: 0,
+    totalRevenue: 550795,
+    totalExpenses: 550795,
     netIncome: 0,
-    changeFromLastYear: 0,
-    changePercentage: 0,
-    insights: [],
-    previousYearTotalRevenue: 0,
-    previousYearTotalExpenses: 0,
-    previousYearNetIncome: 0,
-    revenueChange: 0,
-    expenseChange: 0,
-    netIncomeChange: 0
+    previousYearTotalRevenue: 670149.71,
+    previousYearTotalExpenses: 913226.23,
+    previousYearNetIncome: -243076.52,
+    revenueChange: -17.81,
+    expenseChange: -39.69,
+    netIncomeChange: 100
   });
   
   const generateMockBudgetEntries = () => {

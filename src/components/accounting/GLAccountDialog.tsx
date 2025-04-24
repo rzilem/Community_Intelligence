@@ -1,247 +1,306 @@
+
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { FormField, FormItem, FormLabel, FormControl, FormMessage, Form } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CheckCircle2, HelpCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { GLAccount } from '@/types/accounting-types';
-import { useForm } from 'react-hook-form';
-import { ensureValidAccountType, ensureValidAccountTypes } from '@/utils/accounting-helpers';
+import { useGLAccounts, getFormattedAccountCategories } from '@/hooks/accounting/useGLAccounts';
 
 interface GLAccountDialogProps {
   isOpen: boolean;
-  onClose: () => void;
-  onOpenChange?: (open: boolean) => void;
-  onSubmit: (account: GLAccount) => void;
-  account?: GLAccount;
-  accounts?: GLAccount[];
-  associationId?: string;
+  onOpenChange: (open: boolean) => void;
+  associationId?: string | null;
   onAccountAdded?: (account: GLAccount) => void;
+  accountToEdit?: GLAccount;
 }
 
-const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
+export const GLAccountDialog: React.FC<GLAccountDialogProps> = ({
   isOpen,
-  onClose,
   onOpenChange,
-  onSubmit,
-  account,
-  accounts = [],
-  associationId
+  associationId,
+  onAccountAdded,
+  accountToEdit
 }) => {
-  const [isActive, setIsActive] = useState(true);
-  
-  const form = useForm<GLAccount>({
-    defaultValues: {
-      id: '',
-      code: '',
-      name: '',
-      description: '',
-      type: 'Expense',
-      category: '',
-      is_active: true,
-      association_id: '',
-      account_number: '',
-    }
+  const [formData, setFormData] = useState({
+    code: accountToEdit?.code || '',
+    name: accountToEdit?.name || '',
+    type: accountToEdit?.type || 'Expense',
+    description: accountToEdit?.description || '',
+    category: accountToEdit?.category || '',
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeError, setCodeError] = useState('');
+  const [existingCodes, setExistingCodes] = useState<string[]>([]);
+
+  // Fetch existing codes for validation
   useEffect(() => {
-    if (account) {
-      // Convert the account type if needed
-      const validAccount = ensureValidAccountType(account);
-      form.reset(validAccount);
-      setIsActive(validAccount.is_active);
-    } else {
-      form.reset({
-        id: '',
-        code: '',
-        name: '',
-        description: '',
-        type: 'Expense',
-        category: '',
-        is_active: true,
-        association_id: associationId || '',
-        account_number: '',
-      });
-      setIsActive(true);
+    const fetchExistingCodes = async () => {
+      try {
+        let query = supabase.from('gl_accounts').select('code');
+        if (associationId) {
+          query = query.eq('association_id', associationId);
+        } else {
+          query = query.is('association_id', null);
+        }
+        
+        if (accountToEdit) {
+          query = query.neq('id', accountToEdit.id);
+        }
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        setExistingCodes(data.map(item => item.code));
+      } catch (error) {
+        console.error('Error fetching existing codes:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchExistingCodes();
     }
-  }, [account, form, associationId]);
+  }, [isOpen, associationId, accountToEdit]);
 
-  // Ensure all accounts have valid types
-  const safeAccounts = ensureValidAccountTypes(accounts);
+  // For available categories
+  const { accounts } = useGLAccounts({
+    associationId: associationId || undefined,
+    includeMaster: true
+  });
+  
+  const categories = getFormattedAccountCategories(accounts);
 
-  const handleSubmit = (data: GLAccount) => {
-    // Make sure the account has a valid type
-    const validAccount = ensureValidAccountType({
-      ...data,
-      is_active: isActive,
-      association_id: associationId || data.association_id
-    });
-    onSubmit(validAccount);
-  };
-
-  // Get unique categories
-  const categories = Array.from(
-    new Set(safeAccounts.map((a) => a.category).filter(Boolean))
-  ).sort();
-
-  const handleOpenChange = (open: boolean) => {
-    if (onOpenChange) {
-      onOpenChange(open);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'code') {
+      // Validate code format and uniqueness
+      const codeRegex = /^\d+$/;
+      if (!codeRegex.test(value)) {
+        setCodeError('Code must contain only numbers');
+      } else if (existingCodes.includes(value)) {
+        setCodeError('This code is already in use');
+      } else {
+        setCodeError('');
+      }
     }
     
-    if (!open) {
-      onClose();
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleSelectChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (codeError) {
+      toast.error('Please fix the errors before submitting');
+      return;
     }
+    
+    setIsSubmitting(true);
+
+    try {
+      const accountData = {
+        code: formData.code,
+        name: formData.name,
+        type: formData.type,
+        description: formData.description || formData.name,
+        category: formData.category || null,
+        association_id: associationId
+      };
+
+      let operation;
+      
+      if (accountToEdit) {
+        // Update existing account
+        operation = supabase
+          .from('gl_accounts')
+          .update(accountData)
+          .eq('id', accountToEdit.id)
+          .select();
+      } else {
+        // Create new account
+        operation = supabase
+          .from('gl_accounts')
+          .insert(accountData)
+          .select();
+      }
+
+      const { data, error } = await operation;
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success(accountToEdit ? 'GL account updated successfully' : 'GL account created successfully');
+      onOpenChange(false);
+      
+      if (data && data.length > 0 && onAccountAdded) {
+        onAccountAdded(data[0] as GLAccount);
+      }
+    } catch (error: any) {
+      console.error('Error saving GL account:', error);
+      toast.error(error.message || 'Failed to save GL account');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const dialogTitle = accountToEdit ? 'Edit GL Account' : associationId ? 'Add Association GL Account' : 'Add Master GL Account';
+  const buttonText = accountToEdit ? 'Update Account' : 'Create Account';
+  
+  const getAccountTypeLabel = () => {
+    return associationId ? 'Association GL Account' : 'Master GL Account';
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{account ? 'Edit' : 'Add'} GL Account</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>
+            {associationId 
+              ? 'Create or update a GL account specific to this association.' 
+              : 'Create or update a master GL account that can be shared across associations.'}
+          </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+        
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="code">Account Code</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-5 w-5">
+                      <HelpCircle className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Account Code Guidelines</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Account codes typically follow a standardized structure:
+                      </p>
+                      <ul className="text-sm list-disc pl-4 space-y-1">
+                        <li>1000-1999: Assets</li>
+                        <li>2000-2999: Liabilities</li>
+                        <li>3000-3999: Equity</li>
+                        <li>4000-4999: Revenue</li>
+                        <li>5000-9999: Expenses</li>
+                      </ul>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <Input
+                id="code"
                 name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Code</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                placeholder="e.g., 1000"
+                value={formData.code}
+                onChange={handleInputChange}
+                required
+                className={codeError ? "border-red-500" : ""}
               />
-              <FormField
-                control={form.control}
-                name="account_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {codeError && <p className="text-sm text-red-500">{codeError}</p>}
             </div>
-            <FormField
-              control={form.control}
+            
+            <div className="space-y-2">
+              <Label htmlFor="type">Account Type</Label>
+              <Select 
+                value={formData.type} 
+                onValueChange={(value) => handleSelectChange('type', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select account type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Asset">Asset</SelectItem>
+                  <SelectItem value="Liability">Liability</SelectItem>
+                  <SelectItem value="Equity">Equity</SelectItem>
+                  <SelectItem value="Revenue">Revenue</SelectItem>
+                  <SelectItem value="Income">Income</SelectItem>
+                  <SelectItem value="Expense">Expense</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="name">Account Name</Label>
+            <Input
+              id="name"
               name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              placeholder="e.g., Cash Operating Account"
+              value={formData.name}
+              onChange={handleInputChange}
+              required
             />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Asset">Asset</SelectItem>
-                      <SelectItem value="Liability">Liability</SelectItem>
-                      <SelectItem value="Equity">Equity</SelectItem>
-                      <SelectItem value="Revenue">Revenue</SelectItem>
-                      <SelectItem value="Income">Income</SelectItem>
-                      <SelectItem value="Expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select value={field.value || ""} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="new">+ Add New Category</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="category">Category</Label>
+            <Select
+              value={formData.category || ""}
+              onValueChange={(value) => handleSelectChange('category', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No Category</SelectItem>
+                {categories.map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+                <SelectItem value="__new__" className="text-primary font-medium">
+                  + Add New Category
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Textarea
+              id="description"
               name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              placeholder="Enter a detailed description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows={3}
             />
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is-active"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-              />
-              <label htmlFor="is-active">Active</label>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {account ? 'Update' : 'Create'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+          
+          <div className="pt-4 flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit"
+              disabled={isSubmitting || !!codeError}
+            >
+              {isSubmitting ? 'Saving...' : buttonText}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
 };
-
-export default GLAccountDialog;

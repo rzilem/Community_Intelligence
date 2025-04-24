@@ -36,11 +36,10 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | undefined>();
   
   const filteredEntries = journalEntries.filter(entry => {
-    // Match based on entryNumber and other fields
     const matchesSearch = 
-      entry.entryNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      entry.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
       entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (entry.createdBy && entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase()));
+      entry.createdBy.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || entry.status === statusFilter;
     
@@ -49,6 +48,10 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
 
   const handleCreateEntry = (data: any) => {
     console.log('Creating journal entry:', data);
+    
+    // In a real implementation, this would update the journal entries in the database
+    // and then refresh the data. For now, we'll just console.log the data.
+    
     setIsDialogOpen(false);
   };
 
@@ -66,6 +69,10 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
     if (!selectedEntry) return;
     
     console.log('Updating journal entry:', data);
+    
+    // In a real implementation, this would update the journal entry in the database
+    // and then refresh the data. For now, we'll just console.log the data.
+    
     setSelectedEntry(undefined);
     setIsDialogOpen(false);
   };
@@ -92,7 +99,7 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="posted">Posted</SelectItem>
-                <SelectItem value="voided">Voided</SelectItem>
+                <SelectItem value="reconciled">Reconciled</SelectItem>
               </SelectContent>
             </Select>
 
@@ -127,7 +134,7 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
           }}
           onSubmit={selectedEntry ? handleUpdateEntry : handleCreateEntry}
           entry={selectedEntry}
-          accounts={mockGLAccounts as GLAccount[]}
+          accounts={mockGLAccounts}
         />
       </CardContent>
     </Card>

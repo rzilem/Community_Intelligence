@@ -1,76 +1,62 @@
 
 import { JournalEntry } from '@/types/accounting-types';
 
-// Mock journal entries data
-export const mockJournalEntries: JournalEntry[] = [
+const mockJournalEntries: JournalEntry[] = [
   {
     id: '1',
-    entryNumber: 'JE-20231101-0001',
-    entryDate: '2023-11-01',
-    date: '2023-11-01', // For compatibility
-    reference: 'NOV2023-ASSESS',
-    description: 'Monthly assessment revenue',
-    status: 'posted',
+    date: '2025-04-01',
+    reference: 'JE-2025-001',
+    description: 'Monthly rent revenue recognition',
     amount: 5000,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-01T08:30:00Z',
-    updatedAt: '2023-11-01T08:30:00Z'
+    status: 'posted',
+    createdBy: 'John Smith',
+    createdAt: '2025-04-01T10:30:00Z',
+    associationId: 'assoc-1'
   },
   {
     id: '2',
-    entryNumber: 'JE-20231102-0002',
-    entryDate: '2023-11-02',
-    date: '2023-11-02', // For compatibility
-    reference: 'INV-LANDS-1102',
-    description: 'Landscaping expense',
-    status: 'draft',
-    amount: 1200,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-02T09:15:00Z',
-    updatedAt: '2023-11-02T09:15:00Z'
+    date: '2025-04-02',
+    reference: 'JE-2025-002',
+    description: 'Office supplies expense',
+    amount: 350.75,
+    status: 'posted',
+    createdBy: 'John Smith',
+    createdAt: '2025-04-02T11:15:00Z',
+    associationId: 'assoc-1'
   },
   {
     id: '3',
-    entryNumber: 'JE-20231105-0003',
-    entryDate: '2023-11-05',
-    date: '2023-11-05', // For compatibility
-    reference: 'INV-LEGAL-1105',
-    description: 'Legal services',
-    status: 'posted', // Changed from 'reconciled' to valid status
-    amount: 800,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-05T14:45:00Z',
-    updatedAt: '2023-11-05T14:45:00Z'
+    date: '2025-04-05',
+    reference: 'JE-2025-003',
+    description: 'Maintenance service payment',
+    amount: 1200,
+    status: 'reconciled',
+    createdBy: 'Jane Doe',
+    createdAt: '2025-04-05T14:45:00Z',
+    associationId: 'assoc-2'
   },
   {
     id: '4',
-    entryNumber: 'JE-20231110-0004',
-    entryDate: '2023-11-10',
-    date: '2023-11-10', // For compatibility
-    reference: 'INV-INS-1110',
-    description: 'Insurance premium',
-    status: 'posted',
-    amount: 1500,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-10T11:30:00Z',
-    updatedAt: '2023-11-10T11:30:00Z'
+    date: '2025-04-08',
+    reference: 'JE-2025-004',
+    description: 'Adjustment for overpayment of assessment fees',
+    amount: 475.25,
+    status: 'draft',
+    createdBy: 'Jane Doe',
+    createdAt: '2025-04-08T09:20:00Z',
+    associationId: 'assoc-2'
   },
   {
     id: '5',
-    entryNumber: 'JE-20231115-0005',
-    entryDate: '2023-11-15',
-    date: '2023-11-15', // For compatibility
-    reference: 'TRANSFER-RES-1115',
+    date: '2025-04-09',
+    reference: 'JE-2025-005',
     description: 'Transfer to reserve account',
-    status: 'draft',
-    amount: 3000,
-    associationId: '1',
-    createdBy: 'system',
-    createdAt: '2023-11-15T10:00:00Z',
-    updatedAt: '2023-11-15T10:00:00Z'
+    amount: 2500,
+    status: 'posted',
+    createdBy: 'John Smith',
+    createdAt: '2025-04-09T15:10:00Z',
+    associationId: 'assoc-1'
   }
 ];
+
+export default mockJournalEntries;
