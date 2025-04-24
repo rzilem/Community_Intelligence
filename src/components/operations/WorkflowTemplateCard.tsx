@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, PlayCircle, Star, Edit, Trash2 } from 'lucide-react';
+import { Copy, PlayCircle, Star, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
 import {
   DropdownMenu,
@@ -11,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 
 interface WorkflowTemplateCardProps {
   workflow: Workflow;
