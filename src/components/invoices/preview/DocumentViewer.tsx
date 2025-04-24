@@ -117,7 +117,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <div className="w-full h-full flex flex-col">
         <iframe
           key={embedKey}
-          src={`${pdfUrl}#toolbar=0&view=FitH`}
+          src={pdfUrl}
           className="w-full h-full border-0"
           onError={(e) => {
             console.error("PDF iframe loading error:", e);
@@ -131,7 +131,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             onIframeLoad();
           }}
           title="PDF Document"
-          sandbox="allow-scripts allow-same-origin"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
+          referrerPolicy="no-referrer"
+          loading="lazy"
         />
       </div>
     );
@@ -189,7 +191,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           srcDoc={createHtmlContent()}
           title="Invoice HTML Content"
           className="w-full h-full border-0"
-          sandbox="allow-same-origin"
+          sandbox="allow-same-origin allow-scripts"
           onError={(e) => {
             console.error('HTML iframe error:', e);
             onIframeError();
