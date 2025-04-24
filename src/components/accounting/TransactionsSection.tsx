@@ -6,6 +6,7 @@ import TransactionFilters from './TransactionFilters';
 import TransactionTable from './TransactionTable';
 import TransactionSummaryCards from './TransactionSummaryCards';
 import { Transaction } from '@/types/transaction-payment-types';
+import { TransactionBatchOperations } from './transactions/TransactionBatchOperations';
 
 interface TransactionsSectionProps {
   transactions: Transaction[];
@@ -15,6 +16,7 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [date, setDate] = useState<Date | undefined>(undefined);
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   
   const filteredTransactions = transactions
     .filter(transaction => 
@@ -29,6 +31,10 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
   
   const incomeTransactions = transactions.filter(t => t.type === 'income');
   const expenseTransactions = transactions.filter(t => t.type === 'expense');
+
+  const handleBatchOperationComplete = () => {
+    setSelectedTransactions([]);
+  };
   
   return (
     <>
@@ -36,6 +42,11 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
       
       <Card>
         <CardContent className="pt-6">
+          <TransactionBatchOperations 
+            selectedTransactions={selectedTransactions}
+            onOperationComplete={handleBatchOperationComplete}
+          />
+
           <TransactionFilters 
             searchTerm={searchTerm} 
             setSearchTerm={setSearchTerm} 
@@ -66,16 +77,24 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
             </TabsList>
             
             <TabsContent value="all">
-              <TransactionTable transactions={filteredTransactions} />
+              <TransactionTable 
+                transactions={filteredTransactions}
+                selectedTransactions={selectedTransactions}
+                onSelectionChange={setSelectedTransactions}
+              />
             </TabsContent>
             <TabsContent value="income">
               <TransactionTable 
-                transactions={filteredTransactions.filter(t => t.type === 'income')}  
+                transactions={filteredTransactions.filter(t => t.type === 'income')}
+                selectedTransactions={selectedTransactions}
+                onSelectionChange={setSelectedTransactions}
               />
             </TabsContent>
             <TabsContent value="expense">
               <TransactionTable 
-                transactions={filteredTransactions.filter(t => t.type === 'expense')}  
+                transactions={filteredTransactions.filter(t => t.type === 'expense')}
+                selectedTransactions={selectedTransactions}
+                onSelectionChange={setSelectedTransactions}
               />
             </TabsContent>
           </Tabs>

@@ -1,4 +1,3 @@
-
 export interface Transaction {
   id: string;
   date: string;
@@ -9,6 +8,7 @@ export interface Transaction {
   category: string;
   glAccount: string;
   associationId?: string;
+  batch_id?: string;
 }
 
 export interface Payment {

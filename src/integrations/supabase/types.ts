@@ -666,6 +666,7 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount: number
+          batch_id: string | null
           category: string | null
           created_at: string
           description: string | null
@@ -682,6 +683,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          batch_id?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -698,6 +700,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          batch_id?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
@@ -4211,6 +4214,42 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      transaction_batches: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          operation_type: string
+          processed_by: string | null
+          processed_transactions: number | null
+          status: string
+          total_transactions: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation_type: string
+          processed_by?: string | null
+          processed_transactions?: number | null
+          status?: string
+          total_transactions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation_type?: string
+          processed_by?: string | null
+          processed_transactions?: number | null
+          status?: string
+          total_transactions?: number | null
+          updated_at?: string
         }
         Relationships: []
       }

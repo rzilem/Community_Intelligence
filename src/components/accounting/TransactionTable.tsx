@@ -4,15 +4,47 @@ import { format } from 'date-fns';
 import { Eye } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import TooltipButton from '@/components/ui/tooltip-button';
 import { TransactionTableProps } from '@/types/transaction-payment-types';
 
-const TransactionTable: React.FC<TransactionTableProps> = ({ transactions }) => {
+interface ExtendedTransactionTableProps extends TransactionTableProps {
+  selectedTransactions: string[];
+  onSelectionChange: (selected: string[]) => void;
+}
+
+const TransactionTable: React.FC<ExtendedTransactionTableProps> = ({ 
+  transactions, 
+  selectedTransactions, 
+  onSelectionChange 
+}) => {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      onSelectionChange(transactions.map(t => t.id));
+    } else {
+      onSelectionChange([]);
+    }
+  };
+
+  const handleSelectTransaction = (id: string, checked: boolean) => {
+    if (checked) {
+      onSelectionChange([...selectedTransactions, id]);
+    } else {
+      onSelectionChange(selectedTransactions.filter(t => t !== id));
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">
+              <Checkbox 
+                checked={transactions.length > 0 && selectedTransactions.length === transactions.length}
+                onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+              />
+            </TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Property</TableHead>
@@ -25,13 +57,19 @@ const TransactionTable: React.FC<TransactionTableProps> = ({ transactions }) => 
         <TableBody>
           {transactions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 No transactions found
               </TableCell>
             </TableRow>
           ) : (
             transactions.map((transaction) => (
               <TableRow key={transaction.id}>
+                <TableCell>
+                  <Checkbox 
+                    checked={selectedTransactions.includes(transaction.id)}
+                    onCheckedChange={(checked) => handleSelectTransaction(transaction.id, checked as boolean)}
+                  />
+                </TableCell>
                 <TableCell>{format(new Date(transaction.date), 'MMM d, yyyy')}</TableCell>
                 <TableCell>{transaction.description}</TableCell>
                 <TableCell>{transaction.property}</TableCell>
