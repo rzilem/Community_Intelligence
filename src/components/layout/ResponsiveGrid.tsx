@@ -9,7 +9,7 @@ interface ResponsiveGridProps {
   mobileClassName?: string;
   desktopClassName?: string;
   mobileColumns?: 1 | 2;
-  desktopColumns?: 2 | 3 | 4;
+  desktopColumns?: 2 | 3 | 4 | 5;
   gap?: 'none' | 'sm' | 'md' | 'lg';
 }
 
