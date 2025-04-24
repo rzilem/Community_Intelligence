@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Workflow } from '@/types/workflow-types';
-import WorkflowListItem from '../WorkflowListItem';
 import WorkflowTemplateCard from '../../WorkflowTemplateCard';
+import WorkflowListItem from '../../WorkflowListItem';
 
 interface WorkflowTabContentProps {
   workflows: Workflow[];
