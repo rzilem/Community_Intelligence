@@ -9,6 +9,19 @@ schemas = ["public", "storage"]
 [functions.generate-document]
 verify_jwt = true
 
+# Important: Set verify_jwt to false for email receiver functions to allow webhook access
+[functions.email-receiver]
+verify_jwt = false
+
+[functions.homeowner-request-email]
+verify_jwt = false
+
+[functions.invoice-receiver]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
 [db]
 port = 54322
 

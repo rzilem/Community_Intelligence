@@ -16,6 +16,14 @@ const supabase = createClient(
 );
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
+  
   // Check if configuration is locked
   if (CURRENT_CONFIG_LOCKED) {
     console.log("Configuration is currently locked. No modifications allowed.");
@@ -23,11 +31,10 @@ serve(async (req) => {
 
   try {
     console.log("Received request with content-type:", req.headers.get("content-type"));
+    console.log("Request headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
     
-    // IMPORTANT: For CloudMailin, don't check authorization headers
-    // CloudMailin doesn't send standard auth headers, so we skip the check
-    // This is a security consideration - you should implement appropriate
-    // security measures based on your specific requirements
+    // IMPORTANT: CloudMailin doesn't send standard auth headers, so we skip the check
+    // NO AUTHENTICATION CHECK HERE - THIS IS INTENTIONAL FOR CLOUDMAILIN WEBHOOKS
     
     // Get email data from request - handle both JSON and multipart form data
     let emailData;
@@ -37,12 +44,19 @@ serve(async (req) => {
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       try {
+        // Clone the request before trying to parse as JSON
+        const clonedRequest = req.clone();
         // Fallback to regular JSON parsing
-        emailData = await req.json();
+        emailData = await clonedRequest.json();
       } catch (jsonError) {
         console.error("Error parsing request as JSON:", jsonError);
         return new Response(
-          JSON.stringify({ success: false, error: "Invalid request format" }),
+          JSON.stringify({ 
+            success: false, 
+            error: "Invalid request format", 
+            details: `${parseError.message}, then ${jsonError.message}`,
+            headers: Object.fromEntries([...req.headers.entries()])
+          }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400 
@@ -58,7 +72,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid" 
+          details: "The email webhook payload was empty or invalid",
+          headers: Object.fromEntries([...req.headers.entries()])
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },

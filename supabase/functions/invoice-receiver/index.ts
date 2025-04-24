@@ -15,13 +15,14 @@ serve(async (req) => {
   }
 
   try {
-    // IMPORTANT: For CloudMailin, don't check authorization headers
-    // CloudMailin doesn't send standard auth headers, so we skip the check
-    // This is a security consideration - you should implement appropriate
-    // security measures based on your specific requirements
+    // Log all incoming request headers for debugging
+    console.log("Received invoice email webhook");
+    console.log("Request headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
+    
+    // IMPORTANT: CloudMailin doesn't send standard auth headers, so we skip the check
+    // NO AUTHENTICATION CHECK HERE - THIS IS INTENTIONAL FOR CLOUDMAILIN WEBHOOKS
 
     console.log("Received invoice email with content-type:", req.headers.get("content-type"));
-    console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
     
     // Make a copy of the request to inspect the raw body if needed
     const reqCopy = req.clone();
