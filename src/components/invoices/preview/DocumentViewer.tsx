@@ -83,23 +83,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             h1, h2, h3 {
               color: #1a56db;
             }
-            .invoice-details {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 1rem;
-              margin-bottom: 2rem;
-            }
-            .invoice-total {
-              text-align: right;
-              font-weight: bold;
-              margin-top: 1rem;
-              font-size: 1.2rem;
-            }
-            font[color="#6fa8dc"] {
-              color: #6fa8dc;
-              font-size: 24px;
-              font-weight: bold;
-            }
           </style>
         </head>
         <body>${htmlContent}</body>
@@ -119,8 +102,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         data={pdfUrl}
         type="application/pdf"
         className="w-full h-full border-0"
-        onError={(e) => {
-          console.error("PDF object tag load error:", e);
+        onError={() => {
+          console.error("PDF object tag load error");
           setLoadAttempts(prev => prev + 1);
         }}
         onLoad={() => {
@@ -153,8 +136,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         key={embedKey}
         src={pdfUrl}
         className="w-full h-full border-0"
-        onError={(e) => {
-          console.error("PDF iframe loading error:", e);
+        onError={() => {
+          console.error("PDF iframe loading error");
           setLoadAttempts(prev => prev + 1);
         }}
         onLoad={() => {

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 interface PreviewErrorStateProps {
   error: string;
   pdfUrl?: string;
-  onExternalOpen?: () => void; // Made optional since it's not always used
+  onExternalOpen?: () => void;
 }
 
 export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
@@ -19,7 +19,7 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
       <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
       <p className="text-center font-medium mb-2">{error}</p>
       <p className="text-center text-sm mb-6">
-        Some PDFs cannot be displayed directly in the browser due to security restrictions.
+        Some PDFs cannot be displayed directly in the browser due to security restrictions or browser limitations.
       </p>
       {pdfUrl && onExternalOpen && (
         <Button 
