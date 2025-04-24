@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
@@ -50,7 +51,15 @@ export function useHomeownerRequestsWithAuth() {
           resolved_at: item.resolved_at,
           html_content: item.html_content,
           tracking_number: item.tracking_number,
-          attachments: item.attachments ? (item.attachments as RequestAttachment[]) : [] // Safe handling of attachments
+          // Safe casting of the attachments JSON to our typed interface
+          attachments: Array.isArray(item.attachments) 
+            ? item.attachments.map((attachment: any) => ({
+                name: attachment.name || '',
+                url: attachment.url || '',
+                size: attachment.size || 0,
+                type: attachment.type || ''
+              }))
+            : []
         }));
         
         setRequests(typedRequests);
@@ -78,6 +87,15 @@ export function useHomeownerRequestsWithAuth() {
       const random = Math.floor(10000 + Math.random() * 90000);
       const trackingNumber = `REQ-${year}-${random}`;
       
+      // Convert typed attachments array to plain objects for Supabase
+      const plainAttachments = formData.attachments ? 
+        formData.attachments.map(attachment => ({
+          name: attachment.name,
+          url: attachment.url,
+          size: attachment.size,
+          type: attachment.type
+        })) : [];
+      
       // Ensure we provide all required fields with proper types
       const newRequest = {
         title: formData.title || '',
@@ -91,7 +109,7 @@ export function useHomeownerRequestsWithAuth() {
         created_at: new Date().toISOString(),
         property_id: formData.property_id,
         html_content: formData.html_content,
-        attachments: formData.attachments || [] // Ensure attachments is always provided
+        attachments: plainAttachments // Using the plain objects array
       };
 
       const { data, error } = await supabase

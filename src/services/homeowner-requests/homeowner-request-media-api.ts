@@ -54,16 +54,25 @@ export async function uploadHomeownerRequestAttachment(requestId: string, file: 
     }
     
     // Update the request with the new attachment
-    const currentAttachments = requestData.attachments || [];
+    // First, prepare the current attachments as plain objects
+    let currentAttachments = [];
     
-    // Make sure currentAttachments is treated as an array
-    const attachmentsArray = Array.isArray(currentAttachments) 
-      ? currentAttachments 
-      : [];
+    if (requestData.attachments) {
+      // Convert to array if it's not already (safety check)
+      currentAttachments = Array.isArray(requestData.attachments) 
+        ? requestData.attachments 
+        : [];
+    }
       
+    // Add the new attachment as a plain object
     const updatedAttachments = [
-      ...attachmentsArray,
-      attachment
+      ...currentAttachments,
+      {
+        url: attachment.url,
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size
+      }
     ];
     
     const { error: updateError } = await supabase
