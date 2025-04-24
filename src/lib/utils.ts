@@ -1,37 +1,39 @@
 
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-// Add missing formatCurrency utility
-export function formatCurrency(amount: number | string, currency = 'USD', locale = 'en-US') {
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-  
-  if (isNaN(numericAmount)) {
-    return '—';
-  }
-  
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(numericAmount);
-}
+export const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0
+});
 
-// Add date formatter utility
-export function formatDate(date: string | Date, options: Intl.DateTimeFormatOptions = {}) {
-  if (!date) return '';
-  
-  const defaultOptions: Intl.DateTimeFormatOptions = {
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
-    ...options,
-  };
+    day: 'numeric'
+  }).format(date);
+}
+
+// Add formatCurrency function
+export function formatCurrency(amount: number): string {
+  return currencyFormatter.format(amount);
+}
+
+// Add formatBytes function
+export function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
   
-  return new Intl.DateTimeFormat('en-US', defaultOptions).format(new Date(date));
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }

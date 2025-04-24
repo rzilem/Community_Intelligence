@@ -1,85 +1,129 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Home, Users, FileText, CreditCard, Calendar, Building } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
-import { Link } from 'react-router-dom';
+import { useDashboardData } from '@/hooks/dashboard/useDashboardData';
+import { useAdminAccess } from '@/hooks/dashboard/useAdminAccess';
+import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleContent';
+import { useResponsive } from '@/hooks/use-responsive';
+import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
+import { useNavigate } from 'react-router-dom';
+
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import DashboardStatsSection from '@/components/dashboard/DashboardStats';
+import ActivityFeed from '@/components/dashboard/ActivityFeed';
+import MessagesFeed from '@/components/dashboard/MessagesFeed';
+import CalendarTab from '@/components/dashboard/CalendarTab';
+import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
+import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { currentAssociation, user, profile, loading, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { stats, recentActivity, loading: dataLoading, error } = useDashboardData(currentAssociation?.id);
+  const { isTablet, isMobile } = useResponsive();
+  const { issues, loading: issuesLoading } = useAIIssues();
   
-  const dashboardCards = [
-    {
-      title: 'Homeowners',
-      description: 'View and manage homeowners',
-      icon: <Users className="h-6 w-6" />,
-      path: '/homeowners',
-      color: 'bg-blue-500/10 text-blue-500'
-    },
-    {
-      title: 'Properties',
-      description: 'Manage properties and units',
-      icon: <Building className="h-6 w-6" />,
-      path: '/properties',
-      color: 'bg-green-500/10 text-green-500'
-    },
-    {
-      title: 'Documents',
-      description: 'Access important documents',
-      icon: <FileText className="h-6 w-6" />,
-      path: '/documents',
-      color: 'bg-yellow-500/10 text-yellow-500'
-    },
-    {
-      title: 'Payments',
-      description: 'View payment history',
-      icon: <CreditCard className="h-6 w-6" />,
-      path: '/accounting/payments',
-      color: 'bg-purple-500/10 text-purple-500'
-    },
-    {
-      title: 'Calendar',
-      description: 'View upcoming events',
-      icon: <Calendar className="h-6 w-6" />,
-      path: '/calendar',
-      color: 'bg-pink-500/10 text-pink-500'
-    },
-    {
-      title: 'Portal',
-      description: 'Access resident portal',
-      icon: <Home className="h-6 w-6" />,
-      path: '/portal',
-      color: 'bg-indigo-500/10 text-indigo-500'
-    },
-  ];
+  console.log('Dashboard rendering, auth state:', { 
+    isAuthenticated: isAuthenticated ? 'yes' : 'no',
+    user: user ? 'logged in' : 'not logged in', 
+    profile: profile ? 'profile loaded' : 'no profile',
+    loading: loading ? 'auth loading' : 'auth loaded',
+    currentPath: window.location.pathname
+  });
   
+  useAdminAccess(user?.id);
+  
+  useEffect(() => {
+    // Only redirect if we've confirmed the user isn't authenticated
+    if (!loading && !isAuthenticated) {
+      console.log('No user detected in Dashboard, redirecting to auth');
+      navigate('/auth?tab=login');
+    }
+  }, [isAuthenticated, loading, navigate]);
+  
+  useEffect(() => {
+    // Show welcome back toast when dashboard loads
+    if (profile) {
+      toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
+        description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
+      });
+    }
+  }, [profile, currentAssociation]);
+  
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return null; // Will be redirected by useEffect
+  }
+  
+  // Use the profile from auth context
+  const userProfile = profile;
+  
+  const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
+    userProfile,
+    recentActivity,
+    dataLoading,
+    error
+  );
+
   return (
     <AppLayout>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Welcome to Community Intelligence</h1>
+      <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
+        <DashboardHeader 
+          associationName={currentAssociation?.name} 
+        />
+
+        <DashboardStatsSection 
+          stats={stats} 
+          associationName={currentAssociation?.name} 
+          loading={dataLoading} 
+        />
         
-        <p className="text-muted-foreground mb-6">
-          Select a module below to get started or use the navigation menu.
-        </p>
+        <QuickActionWidgets />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dashboardCards.map((card) => (
-            <Link to={card.path} key={card.title}>
-              <Card className="cursor-pointer hover:shadow-md transition-all">
-                <CardHeader className="pb-2">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${card.color}`}>
-                    {card.icon}
-                  </div>
-                  <CardTitle>{card.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        {/* AI Analysis Section */}
+        <div className="bg-blue-50 rounded-lg p-6">
+          <AIAnalysisSection issues={issues} />
         </div>
+
+        {/* Community Intelligence AI */}
+        <AiQueryInput />
+        
+        {profile?.role === 'treasurer' ? (
+          getContentForRole()
+        ) : (
+          <Tabs defaultValue="calendar" className="space-y-4">
+            <TabsList className={isMobile ? 'w-full' : ''}>
+              <TabsTrigger value="calendar" className={isMobile ? 'flex-1' : ''}>Calendar</TabsTrigger>
+              <TabsTrigger value="activity" className={isMobile ? 'flex-1' : ''}>Recent Activity</TabsTrigger>
+              <TabsTrigger value="messages" className={isMobile ? 'flex-1' : ''}>Messages</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="calendar" className="space-y-4">
+              <CalendarTab />
+            </TabsContent>
+            
+            <TabsContent value="activity">
+              {getActivityContent()}
+            </TabsContent>
+            
+            <TabsContent value="messages">
+              {getMessagesContent()}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </AppLayout>
   );

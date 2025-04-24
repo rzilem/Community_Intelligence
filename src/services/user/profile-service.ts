@@ -1,64 +1,83 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { Profile, UserSettings } from '@/types/profile-types';
 
-export const updateProfile = async (userId: string, updates: any) => {
+/**
+ * Update a user's profile in Supabase
+ */
+export const updateProfile = async (userId: string, data: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
-      
-    if (error) {
-      console.error('Error updating profile:', error);
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true, profile: data };
+      .update(data)
+      .eq('id', userId);
+
+    if (error) throw error;
+    return { success: true };
   } catch (error: any) {
     console.error('Error updating profile:', error);
     return { success: false, error: error.message };
   }
 };
 
-export const updateProfileImage = async (userId: string, imageUrl: string) => {
+/**
+ * Alias for updateProfile for backward compatibility
+ */
+export const updateUserProfile = updateProfile;
+
+/**
+ * Update a user's password in Supabase
+ */
+export const updateUserPassword = async (password: string): Promise<{ success: boolean; error?: string }> => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({ profile_image_url: imageUrl })
-      .eq('id', userId)
-      .select()
-      .single();
-      
-    if (error) {
-      console.error('Error updating profile image:', error);
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true, profile: data };
+    const { error } = await supabase.auth.updateUser({
+      password
+    });
+
+    if (error) throw error;
+    return { success: true };
   } catch (error: any) {
-    console.error('Error updating profile image:', error);
+    console.error('Error updating password:', error);
     return { success: false, error: error.message };
   }
 };
 
-export const getProfileByUserId = async (userId: string) => {
+/**
+ * Fetch user settings from Supabase
+ */
+export const fetchUserSettings = async (userId: string): Promise<{ data?: UserSettings; error?: string }> => {
   try {
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_settings')
       .select('*')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .single();
-      
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return { success: false, error: error.message };
-    }
-    
-    return { success: true, profile: data };
+
+    if (error) throw error;
+    return { data: data as UserSettings };
   } catch (error: any) {
-    console.error('Error fetching profile:', error);
+    console.error('Error fetching user settings:', error);
+    return { error: error.message };
+  }
+};
+
+/**
+ * Update user preferences in Supabase
+ */
+export const updateUserPreferences = async (
+  userId: string, 
+  preferences: Partial<UserSettings>
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const { error } = await supabase
+      .from('user_settings')
+      .update(preferences)
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error updating user preferences:', error);
     return { success: false, error: error.message };
   }
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import ForumPage from '../pages/forum/ForumPage';
@@ -14,35 +13,6 @@ import { systemRoutes } from './systemRoutes';
 import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
 import { resalePortalRoutes } from './resalePortalRoutes';
-import PortalSelection from '../pages/portal/PortalSelection';
-import Index from '../pages/Index';
-import RequireAuth from '../components/auth/RequireAuth';
-
-const renderRoutes = (routes, keyPrefix) => {
-  if (!routes) return null;
-  
-  return routes.map((route, index) => {
-    if (React.isValidElement(route)) {
-      return React.cloneElement(route, { key: `${keyPrefix}-route-${index}` });
-    }
-    
-    const RouteElement = route.protected ? (
-      <Route 
-        key={`${keyPrefix}-route-${index}`} 
-        path={route.path} 
-        element={<RequireAuth>{route.element}</RequireAuth>} 
-      />
-    ) : (
-      <Route 
-        key={`${keyPrefix}-route-${index}`} 
-        path={route.path} 
-        element={route.element} 
-      />
-    );
-    
-    return RouteElement;
-  });
-};
 
 export const AppRouter = () => {
   const location = useLocation();
@@ -53,36 +23,98 @@ export const AppRouter = () => {
 
   return (
     <Routes>
-      {/* Root route for the landing page */}
-      <Route path="/" element={<Index />} />
+      {/* Main routes */}
+      {mainRoutes.map((route, index) => (
+        <Route 
+          key={`main-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(mainRoutes, 'main')}
-      
+      {/* Add Forum Route */}
       <Route path="/forum" element={<ForumPage />} />
       
-      {renderRoutes(portalRoutes, 'portal')}
+      {/* Portal routes */}
+      {portalRoutes}
       
-      {renderRoutes(portalPageRoutes, 'portal-page')}
+      {/* Portal page routes */}
+      {portalPageRoutes}
       
-      {renderRoutes(resalePortalRoutes, 'resale-portal')}
+      {/* Resale Portal routes */}
+      {resalePortalRoutes}
       
-      {renderRoutes(communityManagementRoutes, 'community-mgmt')}
+      {/* Community Management routes */}
+      {communityManagementRoutes.map((route, index) => (
+        <Route 
+          key={`community-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(accountingRoutes, 'accounting')}
+      {/* Accounting routes */}
+      {accountingRoutes.map((route, index) => (
+        <Route 
+          key={`accounting-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(communicationsRoutes, 'communications')}
+      {/* Communications routes */}
+      {communicationsRoutes.map((route, index) => (
+        <Route 
+          key={`communications-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(leadManagementRoutes, 'lead-mgmt')}
+      {/* Lead Management routes */}
+      {leadManagementRoutes.map((route, index) => (
+        <Route 
+          key={`lead-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(operationsRoutes, 'operations')}
+      {/* Operations routes */}
+      {operationsRoutes.map((route, index) => (
+        <Route 
+          key={`operations-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(recordsReportsRoutes, 'records-reports')}
+      {/* Records & Reports routes */}
+      {recordsReportsRoutes.map((route, index) => (
+        <Route 
+          key={`records-reports-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(resaleManagementRoutes, 'resale-mgmt')}
+      {/* Resale Management routes */}
+      {resaleManagementRoutes.map((route, index) => (
+        <Route 
+          key={`resale-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
       
-      {renderRoutes(systemRoutes, 'system')}
-      
-      <Route path="/portal" element={<PortalSelection />} />
+      {/* System routes */}
+      {systemRoutes.map((route, index) => (
+        <Route 
+          key={`system-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
     </Routes>
   );
 };

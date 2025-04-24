@@ -16,14 +16,13 @@ interface DataTableColumn {
   cell?: (info: any) => React.ReactNode;
 }
 
-export interface DataTableProps {
+interface DataTableProps {
   columns: DataTableColumn[];
   data: any[];
   isLoading?: boolean;
-  noResultsMessage?: string; // Added noResultsMessage prop
 }
 
-export function DataTable({ columns, data, isLoading = false, noResultsMessage = "No results." }: DataTableProps) {
+export function DataTable({ columns, data, isLoading = false }: DataTableProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -46,7 +45,7 @@ export function DataTable({ columns, data, isLoading = false, noResultsMessage =
           {data.length === 0 ? (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                {noResultsMessage}
+                No results.
               </TableCell>
             </TableRow>
           ) : (
@@ -55,7 +54,7 @@ export function DataTable({ columns, data, isLoading = false, noResultsMessage =
                 {columns.map((column) => (
                   <TableCell key={`${rowIndex}-${column.accessorKey}`}>
                     {column.cell 
-                      ? column.cell({ getValue: () => row[column.accessorKey], row: { original: row } }) 
+                      ? column.cell(row) 
                       : row[column.accessorKey] || '—'}
                   </TableCell>
                 ))}

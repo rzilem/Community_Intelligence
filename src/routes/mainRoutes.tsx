@@ -1,30 +1,48 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import HomeownerListPage from '../pages/homeowners/HomeownerListPage';
-import Dashboard from '../pages/Dashboard';
-import LoginPage from '../pages/auth/LoginPage';
-import RegistrationPage from '../pages/auth/RegistrationPage';
+import Dashboard from '@/pages/Dashboard';
+import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
+import Permissions from '@/pages/system/Permissions';
+import UserProfile from '@/pages/user/UserProfile';
 
 export const mainRoutes = [
   {
-    path: "/dashboard",
-    element: <Dashboard />,
-    protected: true
+    path: '/',
+    element: <Index />
   },
   {
-    path: "/homeowners",
-    element: <HomeownerListPage />,
-    protected: true
+    path: '/dashboard',
+    element: <Dashboard />
   },
   {
-    path: "/auth/login",
-    element: <LoginPage />,
-    protected: false
+    path: '/properties',
+    element: <Navigate to="/associations" />
   },
   {
-    path: "/auth/register",
-    element: <RegistrationPage />,
-    protected: false
+    path: '/residents',
+    element: <Navigate to="/homeowners" />
   },
+  {
+    path: '/residents/:id',
+    element: <Navigate to="/homeowners/:id" replace />
+  },
+  {
+    path: '/system/permissions',
+    element: <Permissions />
+  },
+  {
+    path: '/user/profile',
+    element: <UserProfile />
+  },
+  {
+    path: '/auth',
+    element: <Auth />
+  },
+  {
+    path: '*',
+    element: <NotFound />
+  }
 ];

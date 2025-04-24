@@ -1,103 +1,138 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { User } from '@supabase/supabase-js';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
 
-// Sign in with email and password
-export async function signInWithEmail(email: string, password: string) {
+/**
+ * Sign in a user with email and password
+ */
+export const signInWithEmail = async (email: string, password: string) => {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) throw error;
     
-    return { user: data.user, error: null };
-  } catch (error: any) {
+    return { 
+      user: data.user,
+      error: null
+    };
+  } catch (error) {
     console.error('Error signing in:', error);
-    return { user: null, error };
+    return {
+      user: null,
+      error
+    };
   }
-}
+};
 
-// Sign up with email and password
-export async function signUpWithEmail(
+/**
+ * Sign up a new user with email and password
+ */
+export const signUpWithEmail = async (
   email: string, 
   password: string, 
   userData: { first_name: string; last_name: string }
-) {
+) => {
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
       password,
       options: {
         data: {
           first_name: userData.first_name,
-          last_name: userData.last_name,
+          last_name: userData.last_name
         }
       }
     });
     
     if (error) throw error;
     
+    // Check if email confirmation is required
+    if (data.user && !data.user.confirmed_at) {
+      toast.success(`Verification email sent to ${email}. Please check your inbox.`);
+    } else {
+      toast.success('Account created successfully!');
+    }
+    
     return { user: data.user, error: null };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error signing up:', error);
-    throw error;
+    return { user: null, error };
   }
-}
+};
 
-// Sign out the current user
-export async function signOutUser() {
+/**
+ * Sign out the current user
+ */
+export const signOutUser = async () => {
   try {
     const { error } = await supabase.auth.signOut();
-    
     if (error) throw error;
-    
     return { error: null };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error signing out:', error);
-    throw error;
+    return { error };
   }
-}
+};
 
-// Load user profile from profiles table
-export async function loadUserProfile(userId: string): Promise<Profile | null> {
+/**
+ * Load user profile data
+ */
+export const loadUserProfile = async (userId: string): Promise<Profile | null> => {
   try {
-    const { data, error } = await supabase
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
-      
-    if (error) {
-      console.error('Error loading user profile:', error);
-      return null;
-    }
     
-    return data as Profile;
+    if (error) throw error;
+    return profile;
   } catch (error) {
     console.error('Error loading user profile:', error);
     return null;
   }
-}
+};
 
-// Load user association data
-export async function loadUserAssociations(userId: string): Promise<UserAssociation[]> {
+/**
+ * Load user associations
+ */
+export const loadUserAssociations = async (userId: string): Promise<UserAssociation[]> => {
   try {
     const { data, error } = await supabase
       .from('association_users')
-      .select('*, associations(*)')
+      .select(`
+        id,
+        user_id,
+        association_id,
+        role,
+        created_at,
+        associations (
+          id,
+          name,
+          description,
+          logo_url,
+          status,
+          created_at,
+          updated_at
+        )
+      `)
       .eq('user_id', userId);
-      
-    if (error) {
-      console.error('Error loading user associations:', error);
-      return [];
-    }
-    
-    return data as UserAssociation[];
+
+    if (error) throw error;
+
+    // Map the response to match the UserAssociation type
+    return data.map(item => ({
+      id: item.id,
+      user_id: item.user_id,
+      association_id: item.association_id,
+      role: item.role,
+      created_at: item.created_at,
+      associations: item.associations
+    }));
   } catch (error) {
     console.error('Error loading user associations:', error);
     return [];
   }
-}
+};
