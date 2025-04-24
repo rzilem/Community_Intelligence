@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import TooltipButton from '@/components/ui/tooltip-button';
 
 interface TemplatesHeaderProps {
@@ -9,28 +9,26 @@ interface TemplatesHeaderProps {
   onCreateClick: () => void;
 }
 
-const TemplatesHeader = ({ 
-  templateCount, 
-  onCreateClick 
-}: TemplatesHeaderProps) => {
+const TemplatesHeader: React.FC<TemplatesHeaderProps> = ({ 
+  templateCount,
+  onCreateClick
+}) => {
   return (
-    <>
-      <div className="text-sm text-muted-foreground bg-muted p-2 rounded mb-4">
-        Available templates: {templateCount}
+    <div className="flex justify-between items-center">
+      <div>
+        <h1 className="text-2xl font-bold">Onboarding Templates</h1>
+        <p className="text-muted-foreground">
+          {templateCount} {templateCount === 1 ? 'template' : 'templates'} available
+        </p>
       </div>
-      
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Onboarding Templates</h2>
-        <TooltipButton 
-          tooltip="Create a new template for onboarding clients"
-          className="flex items-center gap-2"
-          onClick={onCreateClick}
-        >
-          <PlusCircle className="h-4 w-4" />
-          New Template
-        </TooltipButton>
-      </div>
-    </>
+      <TooltipButton
+        onClick={onCreateClick}
+        tooltip="Create a new onboarding template"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Create Template
+      </TooltipButton>
+    </div>
   );
 };
 
