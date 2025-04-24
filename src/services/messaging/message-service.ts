@@ -23,7 +23,8 @@ export const messageService = {
             to: messageData.recipient_groups, // Assuming this is an email list
             subject: messageData.subject,
             html: messageData.content
-          })
+          }),
+          // The supabase client already includes auth headers by default
         });
 
         if (emailResponse.error) {

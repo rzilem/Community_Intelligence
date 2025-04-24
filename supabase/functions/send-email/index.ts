@@ -14,6 +14,24 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Check for authorization header
+  const authHeader = req.headers.get('authorization');
+  const apiKey = req.headers.get('apikey');
+  
+  if (!authHeader && !apiKey) {
+    console.error("Missing authorization header");
+    return new Response(
+      JSON.stringify({ 
+        code: 401,
+        message: "Missing authorization header" 
+      }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401 
+      }
+    );
+  }
+
   try {
     const { 
       to, 
