@@ -8,23 +8,23 @@ import RegistrationPage from '../pages/auth/RegistrationPage';
 
 export const mainRoutes = [
   {
-    path: "/",
-    element: <Navigate to="/dashboard" replace />,
-  },
-  {
     path: "/dashboard",
     element: <Dashboard />,
+    protected: true
   },
   {
     path: "/homeowners",
     element: <HomeownerListPage />,
+    protected: true
   },
   {
     path: "/auth/login",
     element: <LoginPage />,
+    protected: false
   },
   {
     path: "/auth/register",
     element: <RegistrationPage />,
+    protected: false
   },
 ];

@@ -1,5 +1,6 @@
 
-export { AuthProvider } from './AuthProvider';
-export { useAuth } from './useAuth';
-export type { AuthContextType, UserAssociation } from './types';
-export type { Association } from '@/types/association-types';
+// Re-export components from the auth context
+import { AuthProvider } from './AuthProvider';
+import { useAuth } from './useAuth';
+
+export { AuthProvider, useAuth };

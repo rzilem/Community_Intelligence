@@ -1,39 +1,38 @@
 
-import { useEffect, useContext } from 'react';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { NotificationContext } from '@/contexts/notifications/NotificationContext';
-import { NotificationItem } from './useNotifications';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 
 export const useRealTimeNotifications = () => {
   const { user } = useAuth();
-  const { notifications, setNotifications } = useContext(NotificationContext);
 
   useEffect(() => {
     if (!user) return;
 
-    // Subscribe to new notifications
-    const subscription = supabase
-      .channel('portal_notifications')
+    // Set up real-time notification listener
+    const channel = supabase
+      .channel('notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'portal_notifications',
+          table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const newNotification = payload.new as NotificationItem;
-          setNotifications((prev) => [newNotification, ...prev]);
+          const notification = payload.new;
+          toast(notification.title, {
+            description: notification.message,
+          });
         }
       )
       .subscribe();
 
+    // Clean up subscription
     return () => {
-      supabase.removeChannel(subscription);
+      supabase.removeChannel(channel);
     };
-  }, [user, setNotifications]);
-
-  return { notifications };
+  }, [user]);
 };

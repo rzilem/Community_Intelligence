@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import ForumPage from '../pages/forum/ForumPage';
@@ -14,6 +15,8 @@ import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
 import { resalePortalRoutes } from './resalePortalRoutes';
 import PortalSelection from '../pages/portal/PortalSelection';
+import Index from '../pages/Index';
+import RequireAuth from '../components/auth/RequireAuth';
 
 const renderRoutes = (routes, keyPrefix) => {
   if (!routes) return null;
@@ -23,13 +26,21 @@ const renderRoutes = (routes, keyPrefix) => {
       return React.cloneElement(route, { key: `${keyPrefix}-route-${index}` });
     }
     
-    return (
+    const RouteElement = route.protected ? (
+      <Route 
+        key={`${keyPrefix}-route-${index}`} 
+        path={route.path} 
+        element={<RequireAuth>{route.element}</RequireAuth>} 
+      />
+    ) : (
       <Route 
         key={`${keyPrefix}-route-${index}`} 
         path={route.path} 
         element={route.element} 
       />
     );
+    
+    return RouteElement;
   });
 };
 
@@ -42,6 +53,9 @@ export const AppRouter = () => {
 
   return (
     <Routes>
+      {/* Root route for the landing page */}
+      <Route path="/" element={<Index />} />
+      
       {renderRoutes(mainRoutes, 'main')}
       
       <Route path="/forum" element={<ForumPage />} />

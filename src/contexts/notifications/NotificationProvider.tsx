@@ -1,137 +1,52 @@
-import React, { ReactNode, useEffect, useState } from 'react';
-import { NotificationContext } from './NotificationContext';
-import { NotificationItem } from '@/hooks/useNotifications';
-import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
-import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
-import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
-import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
-import { useAuth } from '@/contexts/auth';
 
-interface NotificationProviderProps {
-  children: ReactNode;
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+
+interface Notification {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+  duration?: number;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const { user } = useAuth();
-  
-  // Get notifications from different sources
-  const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
-  const { unreadInvoicesCount, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
-  const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
-  const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
+interface NotificationContextType {
+  notifications: Notification[];
+  addNotification: (notification: Omit<Notification, 'id'>) => void;
+  removeNotification: (id: string) => void;
+}
 
-  // Aggregate notifications when user or notification counts change
-  useEffect(() => {
-    if (!user) {
-      setNotifications([]);
-      return;
-    }
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-    const aggregatedNotifications: NotificationItem[] = [];
-    
-    // Add lead notifications
-    if (recentLeads && recentLeads.length > 0) {
-      recentLeads.forEach(lead => {
-        aggregatedNotifications.push({
-          id: `lead-${lead.id}`,
-          title: `New Lead: ${lead.name || 'Unnamed Lead'}`,
-          description: lead.association_name || lead.city || 'No location provided',
-          type: 'lead',
-          severity: 'info',
-          read: false,
-          timestamp: lead.created_at,
-          route: `/lead-management/leads?id=${lead.id}`
-        });
-      });
-    }
-    
-    // Add mock notifications for other types (these would be replaced with real data in a full implementation)
-    if (unreadInvoicesCount > 0) {
-      for (let i = 0; i < unreadInvoicesCount; i++) {
-        aggregatedNotifications.push({
-          id: `invoice-${i}`,
-          title: `New Invoice Received`,
-          description: 'Review pending invoice',
-          type: 'invoice',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/accounting/invoice-queue'
-        });
-      }
-    }
-    
-    if (unreadRequestsCount > 0) {
-      for (let i = 0; i < unreadRequestsCount; i++) {
-        aggregatedNotifications.push({
-          id: `request-${i}`,
-          title: 'New Homeowner Request',
-          description: 'Homeowner request needs attention',
-          type: 'request',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/community-management/homeowner-requests'
-        });
-      }
-    }
-    
-    if (unreadEventsCount > 0) {
-      for (let i = 0; i < unreadEventsCount; i++) {
-        aggregatedNotifications.push({
-          id: `event-${i}`,
-          title: 'Resale Calendar Update',
-          description: 'New event on the resale calendar',
-          type: 'event',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/resale-management/calendar'
-        });
-      }
-    }
-    
-    // Sort by timestamp (newest first)
-    aggregatedNotifications.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-    
-    setNotifications(aggregatedNotifications);
-  }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
+export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-    );
+  const addNotification = (notification: Omit<Notification, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    const newNotification = { ...notification, id };
+    
+    setNotifications((prev) => [...prev, newNotification]);
+
+    if (notification.duration !== 0) {
+      setTimeout(() => {
+        removeNotification(id);
+      }, notification.duration || 5000);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    markLeadsAsRead();
-    markInvoicesAsRead();
-    markRequestsAsRead();
-    markEventsAsRead();
+  const removeNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
   };
-
-  const deleteNotification = (notificationId: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== notificationId));
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <NotificationContext.Provider 
-      value={{ 
-        notifications, 
-        unreadCount, 
-        markAsRead, 
-        markAllAsRead, 
-        deleteNotification,
-        setNotifications 
-      }}
-    >
+    <NotificationContext.Provider value={{ notifications, addNotification, removeNotification }}>
       {children}
     </NotificationContext.Provider>
   );
+};
+
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
 };

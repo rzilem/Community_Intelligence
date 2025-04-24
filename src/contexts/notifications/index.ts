@@ -1,4 +1,4 @@
 
-export * from './NotificationContext';
-export * from './NotificationProvider';
-export * from './useNotificationContext';
+import { NotificationProvider } from './NotificationProvider';
+
+export { NotificationProvider };
