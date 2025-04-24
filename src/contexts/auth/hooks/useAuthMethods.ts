@@ -8,9 +8,9 @@ export function useAuthMethods(setLoading: (loading: boolean) => void) {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { data, error } = await signInWithEmail(email, password);
+      const result = await signInWithEmail(email, password);
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       // Check if 2FA is required for this user
       try {
@@ -19,14 +19,14 @@ export function useAuthMethods(setLoading: (loading: boolean) => void) {
         if (requires2FA) {
           // We need to handle 2FA verification in the UI
           // This will be handled in the login component by checking the return value
-          return { success: true, requires2FA: true, user: data.user };
+          return { success: true, requires2FA: true, user: result.user };
         }
       } catch (twoFactorError) {
         console.error('[AuthProvider] 2FA check error:', twoFactorError);
         // Continue with normal sign-in if 2FA check fails
       }
       
-      return { success: true, requires2FA: false, user: data.user };
+      return { success: true, requires2FA: false, user: result.user };
     } catch (error) {
       console.error('[AuthProvider] Sign in error:', error);
       toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

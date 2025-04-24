@@ -68,7 +68,7 @@ export const TwoFactorVerification: React.FC<TwoFactorVerificationProps> = ({
                 render={({ slots }) => (
                   <InputOTPGroup className="gap-2 justify-center">
                     {slots.map((slot, index) => (
-                      <InputOTPSlot key={index} {...slot} />
+                      <InputOTPSlot key={index} index={index} {...slot} />
                     ))}
                   </InputOTPGroup>
                 )}
