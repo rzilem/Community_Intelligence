@@ -1583,6 +1583,47 @@ export type Database = {
         }
         Relationships: []
       }
+      document_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          form_template_id: string | null
+          id: string
+          name: string
+          template_content: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          form_template_id?: string | null
+          id?: string
+          name: string
+          template_content: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          form_template_id?: string | null
+          id?: string
+          name?: string
+          template_content?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_versions: {
         Row: {
           created_at: string
@@ -2196,6 +2237,54 @@ export type Database = {
             columns: ["discussion_id"]
             isOneToOne: false
             referencedRelation: "forum_discussions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          document_template_id: string | null
+          file_size: number | null
+          file_url: string
+          form_submission_id: string | null
+          generated_at: string | null
+          id: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          document_template_id?: string | null
+          file_size?: number | null
+          file_url: string
+          form_submission_id?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Update: {
+          document_template_id?: string | null
+          file_size?: number | null
+          file_url?: string
+          form_submission_id?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_document_template_id_fkey"
+            columns: ["document_template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_documents_form_submission_id_fkey"
+            columns: ["form_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
             referencedColumns: ["id"]
           },
         ]

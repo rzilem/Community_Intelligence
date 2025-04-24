@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FormTemplate, FormField } from '@/types/form-builder-types';
 import { Loader2 } from 'lucide-react';
+import { GenerateDocument } from '@/components/generate-document';
 
 interface FormSubmissionDialogProps {
   open: boolean;
@@ -19,6 +19,8 @@ interface FormSubmissionDialogProps {
   onFieldChange: (id: string, value: any) => void;
   onSubmit: () => Promise<boolean>;
   isSubmitting: boolean;
+  status: string;
+  submissionId: string;
 }
 
 const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
@@ -28,11 +30,12 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   values,
   onFieldChange,
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  status,
+  submissionId
 }) => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
-  // Reset errors when form changes or dialog opens/closes
   useEffect(() => {
     setFormErrors({});
   }, [form, open]);
@@ -40,7 +43,6 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     const errors: Record<string, string> = {};
     const visibleFields = getVisibleFields(form?.fields || []);
     
@@ -55,7 +57,6 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
       return;
     }
     
-    // Clear errors and submit
     setFormErrors({});
     const success = await onSubmit();
     if (success) {
@@ -63,28 +64,23 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
     }
   };
 
-  // Determine if a field should be visible based on conditional logic
   const shouldShowField = (field: FormField): boolean => {
     if (!field.conditionalDisplay) return true;
     
     const { dependsOn, showWhen } = field.conditionalDisplay;
     const dependentValue = values[dependsOn];
     
-    // Handle boolean values (checkbox)
     if (typeof showWhen === 'boolean') {
       return Boolean(dependentValue) === showWhen;
     }
     
-    // Handle array values (multiple select)
     if (Array.isArray(dependentValue)) {
       return dependentValue.includes(showWhen);
     }
     
-    // Handle string/number values
     return String(dependentValue) === String(showWhen);
   };
 
-  // Get visible fields based on current values and conditional logic
   const getVisibleFields = (fields: FormField[]): FormField[] => {
     return fields.filter(shouldShowField);
   };
@@ -264,6 +260,15 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
           {form.description && <p className="text-sm text-muted-foreground mt-2">{form.description}</p>}
         </DialogHeader>
         
+        {status === 'submitted' && (
+          <div className="mb-4">
+            <GenerateDocument
+              submissionId={submissionId}
+              formTemplateId={form.id}
+            />
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {visibleFields.length > 0 ? (
             visibleFields.map(field => renderField(field))

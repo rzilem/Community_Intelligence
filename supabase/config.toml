@@ -1,39 +1,20 @@
 
-project_id = "community-intelligence"
+project_id = "cahergndkwfqltxyikyr"
 
 [api]
+enabled = true
 port = 54321
 schemas = ["public", "storage"]
-extra_search_path = ["public", "extensions"]
-max_rows = 1000
+
+[functions.generate-document]
+verify_jwt = true
 
 [db]
 port = 54322
 
 [studio]
+enabled = true
 port = 54323
 
-[auth]
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000"]
-jwt_expiry = 3600
-enable_refresh_token_rotation = true
-refresh_token_reuse_interval = 10
-
 [storage]
-file_size_limit = "50MiB"
-
-[[tables]]
-name = "form_templates"
-
-[[tables]]
-name = "form_submissions"
-
-[[tables]]
-name = "form_template_associations"
-
-[[tables]]
-name = "form_workflows"
-
-[[tables]]
-name = "form_workflow_execution_logs"
+enabled = true
