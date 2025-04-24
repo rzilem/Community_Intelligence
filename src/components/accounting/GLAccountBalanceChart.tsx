@@ -111,4 +111,6 @@ const GLAccountBalanceChart: React.FC<GLAccountBalanceChartProps> = ({
   );
 };
 
+// Fix the export to make it both default and named export
+export { GLAccountBalanceChart };
 export default GLAccountBalanceChart;

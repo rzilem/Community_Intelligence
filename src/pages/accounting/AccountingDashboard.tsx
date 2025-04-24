@@ -12,7 +12,7 @@ import { useGLAccounts } from '@/hooks/accounting/useGLAccounts';
 import { useJournalEntries, JournalEntry } from '@/hooks/accounting/useJournalEntries';
 import { FinancialReportView } from '@/components/accounting/reports/FinancialReportView';
 import { ArrowRight, BarChart3, BookOpen, CreditCard, DollarSign } from 'lucide-react';
-import { GLAccountBalanceChart } from '@/components/accounting/GLAccountBalanceChart';
+import GLAccountBalanceChart from '@/components/accounting/GLAccountBalanceChart';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 
 // Mock data for demonstration
