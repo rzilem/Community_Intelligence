@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,10 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, Filter, Download, Plus } from 'lucide-react';
 import { JournalEntry, GLAccount } from '@/types/accounting-types';
 import JournalEntryTable from '@/components/banking/JournalEntryTable';
-import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
+import JournalEntryDialog from './journal-entry/JournalEntryDialog';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
-// Updated mock GL accounts with correct properties
 const mockGLAccounts = ensureGLAccountsHaveIsActive([
   { id: '1', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
   { id: '2', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
@@ -48,9 +46,6 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
   const handleCreateEntry = (data: any) => {
     console.log('Creating journal entry:', data);
     
-    // In a real implementation, this would update the journal entries in the database
-    // and then refresh the data. For now, we'll just console.log the data.
-    
     setIsDialogOpen(false);
   };
 
@@ -61,16 +56,12 @@ const JournalEntriesSection: React.FC<JournalEntriesSectionProps> = ({
 
   const handleViewEntry = (entry: JournalEntry) => {
     console.log('Viewing entry:', entry);
-    // In a real implementation, we would show a detailed view dialog
   };
 
   const handleUpdateEntry = (data: any) => {
     if (!selectedEntry) return;
     
     console.log('Updating journal entry:', data);
-    
-    // In a real implementation, this would update the journal entry in the database
-    // and then refresh the data. For now, we'll just console.log the data.
     
     setSelectedEntry(undefined);
     setIsDialogOpen(false);

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import JournalEntryTable, { JournalEntry } from '@/components/banking/JournalEntryTable';
-import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
+import JournalEntryDialog from '@/components/banking/journal-entry/JournalEntryDialog';
 import { GLAccount } from '@/types/accounting-types';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
