@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { useGlobalNotifications } from '@/hooks/useGlobalNotifications';
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
 import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
@@ -10,93 +10,90 @@ interface HomeownerRequestDialogsProps {
   handleRefresh: () => void;
 }
 
-const HomeownerRequestDialogs: React.FC<HomeownerRequestDialogsProps> = ({ handleRefresh }) => {
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
-  
-  // This function will be called when status changes
-  const handleStatusChange = (id: string, status: string) => {
-    console.log(`Changing status of request ${id} to ${status}`);
-    toast.success(`Status updated to ${status}`);
-    handleRefresh();
-  };
+// Define a type for the ref that will be exposed
+export interface HomeownerRequestDialogsRef {
+  openDetailDialog: (request: HomeownerRequest) => void;
+  openHistoryDialog: (request: HomeownerRequest) => void;
+}
 
-  // These functions are exported to be called from outside components
-  const openDetailDialog = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setDetailOpen(true);
-  };
-  
-  const openHistoryDialog = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setHistoryOpen(true);
-  };
+const HomeownerRequestDialogs = forwardRef<HomeownerRequestDialogsRef, HomeownerRequestDialogsProps>(
+  ({ handleRefresh }, ref) => {
+    const [detailOpen, setDetailOpen] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
+    
+    // This function will be called when status changes
+    const handleStatusChange = (id: string, status: string) => {
+      console.log(`Changing status of request ${id} to ${status}`);
+      toast.success(`Status updated to ${status}`);
+      handleRefresh();
+    };
 
-  return (
-    <>
-      {selectedRequest && (
-        <>
-          <HomeownerRequestDetailDialog
-            request={selectedRequest}
-            open={detailOpen}
-            onOpenChange={setDetailOpen}
-            onStatusChange={handleStatusChange}
-          />
-          
-          <HomeownerRequestHistoryDialog
-            requestId={selectedRequest.id}
-            open={historyOpen}
-            onOpenChange={setHistoryOpen}
-          />
-        </>
-      )}
-    </>
-  );
-};
+    // These functions are exposed via the ref
+    const openDetailDialog = (request: HomeownerRequest) => {
+      setSelectedRequest(request);
+      setDetailOpen(true);
+    };
+    
+    const openHistoryDialog = (request: HomeownerRequest) => {
+      setSelectedRequest(request);
+      setHistoryOpen(true);
+    };
 
-// Export the component and the dialog functions
-const dialogHelpers = {
-  openDetailDialog: null as ((request: HomeownerRequest) => void) | null,
-  openHistoryDialog: null as ((request: HomeownerRequest) => void) | null,
-};
+    // Expose the functions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+      openDetailDialog,
+      openHistoryDialog
+    }));
 
-// These are the functions that will be called from outside components
+    return (
+      <>
+        {selectedRequest && (
+          <>
+            <HomeownerRequestDetailDialog
+              request={selectedRequest}
+              open={detailOpen}
+              onOpenChange={setDetailOpen}
+              onStatusChange={handleStatusChange}
+            />
+            
+            <HomeownerRequestHistoryDialog
+              requestId={selectedRequest.id}
+              open={historyOpen}
+              onOpenChange={setHistoryOpen}
+            />
+          </>
+        )}
+      </>
+    );
+  }
+);
+
+// Define a name for the component for better debugging
+HomeownerRequestDialogs.displayName = 'HomeownerRequestDialogs';
+
+// Create helper functions to access the dialogs from outside components
+const dialogRef = React.createRef<HomeownerRequestDialogsRef>();
+
 export const openDetailDialog = (request: HomeownerRequest) => {
-  if (dialogHelpers.openDetailDialog) {
-    dialogHelpers.openDetailDialog(request);
+  if (dialogRef.current) {
+    dialogRef.current.openDetailDialog(request);
   } else {
-    console.error("Detail dialog helper is not initialized");
+    console.error("Detail dialog ref is not initialized");
   }
 };
 
 export const openHistoryDialog = (request: HomeownerRequest) => {
-  if (dialogHelpers.openHistoryDialog) {
-    dialogHelpers.openHistoryDialog(request);
+  if (dialogRef.current) {
+    dialogRef.current.openHistoryDialog(request);
   } else {
-    console.error("History dialog helper is not initialized");
+    console.error("History dialog ref is not initialized");
   }
 };
 
-// Update the component to expose its functions via the helpers
-const HomeownerRequestDialogsWithHelpers: React.FC<HomeownerRequestDialogsProps> = (props) => {
-  const dialogsRef = React.useRef<{
-    openDetailDialog: (request: HomeownerRequest) => void;
-    openHistoryDialog: (request: HomeownerRequest) => void;
-  } | null>(null);
-
-  const dialogsComponent = <HomeownerRequestDialogs {...props} ref={dialogsRef} />;
-
-  React.useEffect(() => {
-    if (dialogsRef.current) {
-      dialogHelpers.openDetailDialog = dialogsRef.current.openDetailDialog;
-      dialogHelpers.openHistoryDialog = dialogsRef.current.openHistoryDialog;
-    }
-  }, [dialogsRef.current]);
-
-  return dialogsComponent;
+// Create a wrapper component that renders the HomeownerRequestDialogs with the ref
+const HomeownerRequestDialogsWithRef: React.FC<HomeownerRequestDialogsProps> = (props) => {
+  return <HomeownerRequestDialogs {...props} ref={dialogRef} />;
 };
 
-// Export both the component and the dialog functions
-export { openDetailDialog as viewDetailDialog, openHistoryDialog as viewHistoryDialog };
-export default HomeownerRequestDialogs;
+export default HomeownerRequestDialogsWithRef;
