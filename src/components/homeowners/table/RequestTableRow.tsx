@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatRelativeDate } from '@/lib/date-utils';
+import { formatRelativeDate, formatRelativeTime } from '@/lib/date-utils';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 import { useResidentFromEmail } from '@/hooks/homeowners/useResidentFromEmail';
