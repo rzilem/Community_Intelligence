@@ -18,14 +18,19 @@ const Vendors = () => {
   const [addVendorOpen, setAddVendorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [sortBy, setSortBy] = useState<{ column: string; ascending: boolean } | undefined>();
   const { toast } = useToast();
 
   const { data: vendors = [], isLoading: isLoadingVendors } = useQuery({
     queryKey: ['vendors', search, selectedCategory, selectedStatus, sortBy],
-    queryFn: () => vendorService.getVendors(search, selectedCategory, selectedStatus, sortBy),
+    queryFn: () => vendorService.getVendors(
+      search, 
+      selectedCategory === 'all' ? '' : selectedCategory, 
+      selectedStatus === 'all' ? '' : selectedStatus, 
+      sortBy
+    ),
   });
 
   const { data: vendorStats, isLoading: isLoadingStats } = useQuery({

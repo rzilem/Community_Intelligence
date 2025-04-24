@@ -35,7 +35,7 @@ const VendorFilters: React.FC<VendorFiltersProps> = ({
           <SelectValue placeholder="Filter by category" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Categories</SelectItem>
+          <SelectItem value="all">All Categories</SelectItem>
           {VENDOR_CATEGORIES.map((category) => (
             <SelectItem key={category} value={category}>{category}</SelectItem>
           ))}
@@ -46,7 +46,7 @@ const VendorFilters: React.FC<VendorFiltersProps> = ({
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Statuses</SelectItem>
+          <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="inactive">Inactive</SelectItem>
         </SelectContent>
