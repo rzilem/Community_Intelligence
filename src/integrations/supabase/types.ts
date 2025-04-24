@@ -666,10 +666,14 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount: number
+          category: string | null
           created_at: string
           description: string | null
+          gl_account_id: string | null
           id: string
+          is_categorized: boolean | null
           is_reconciled: boolean | null
+          notes: string | null
           reconciled_at: string | null
           reference_number: string | null
           statement_id: string
@@ -678,10 +682,14 @@ export type Database = {
         }
         Insert: {
           amount: number
+          category?: string | null
           created_at?: string
           description?: string | null
+          gl_account_id?: string | null
           id?: string
+          is_categorized?: boolean | null
           is_reconciled?: boolean | null
+          notes?: string | null
           reconciled_at?: string | null
           reference_number?: string | null
           statement_id: string
@@ -690,10 +698,14 @@ export type Database = {
         }
         Update: {
           amount?: number
+          category?: string | null
           created_at?: string
           description?: string | null
+          gl_account_id?: string | null
           id?: string
+          is_categorized?: boolean | null
           is_reconciled?: boolean | null
+          notes?: string | null
           reconciled_at?: string | null
           reference_number?: string | null
           statement_id?: string
@@ -701,6 +713,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bank_transactions_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bank_transactions_statement_id_fkey"
             columns: ["statement_id"]

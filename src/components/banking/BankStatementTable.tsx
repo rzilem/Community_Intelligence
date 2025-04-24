@@ -1,12 +1,12 @@
-
 import React, { useEffect, useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Trash2, Download, FileSpreadsheet } from 'lucide-react';
+import { FileText, Trash2, Download, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { TransactionCategoryDialog } from '../accounting/transactions/TransactionCategoryDialog';
 
 interface BankStatement {
   id: string;
@@ -17,6 +17,7 @@ interface BankStatement {
   import_status: 'pending' | 'processing' | 'processed' | 'failed';
   balance_ending?: number;
   created_at: string;
+  category?: string;
 }
 
 interface BankStatementTableProps {
@@ -24,11 +25,22 @@ interface BankStatementTableProps {
 }
 
 const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) => {
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  
   const { data: statements, isLoading, refetch } = useSupabaseQuery<BankStatement[]>(
     'bank_statements',
     {
       filter: [{ column: 'bank_account_id', value: accountId }],
       order: { column: 'statement_date', ascending: false },
+    }
+  );
+
+  const { data: glAccounts = [] } = useSupabaseQuery(
+    'gl_accounts',
+    {
+      select: '*',
+      filter: [{ column: 'is_active', value: true }],
+      order: { column: 'code', ascending: true }
     }
   );
 
@@ -115,12 +127,13 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Filename</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {statements.map((statement) => (
+            {statements?.map((statement) => (
               <TableRow key={statement.id}>
                 <TableCell>{formatDate(statement.statement_date)}</TableCell>
                 <TableCell>
@@ -132,9 +145,17 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
                     </span>
                   </div>
                 </TableCell>
+                <TableCell>{statement.category || 'Uncategorized'}</TableCell>
                 <TableCell>{getStatusIcon(statement.import_status)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setSelectedTransaction(statement)}
+                    >
+                      <Tag className="h-4 w-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -157,6 +178,18 @@ const BankStatementTable: React.FC<BankStatementTableProps> = ({ accountId }) =>
           </TableBody>
         </Table>
       </div>
+
+      {selectedTransaction && (
+        <TransactionCategoryDialog
+          isOpen={!!selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+          transactionId={selectedTransaction.id}
+          glAccounts={glAccounts}
+          currentCategory={selectedTransaction.category}
+          currentNotes={selectedTransaction.notes}
+          currentGlAccountId={selectedTransaction.gl_account_id}
+        />
+      )}
     </div>
   );
 };
