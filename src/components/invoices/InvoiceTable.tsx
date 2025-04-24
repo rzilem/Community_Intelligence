@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { DocumentViewer } from './preview/DocumentViewer';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -44,6 +44,33 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     if (!invoice.html_content) return false;
     
     return !!invoice[field] && field !== 'html_content';
+  };
+
+  const renderPdfPreview = (invoice: Invoice) => {
+    if (invoice.pdf_url) {
+      return (
+        <iframe 
+          src={invoice.pdf_url} 
+          className="w-full h-full border-0"
+          title="PDF Preview"
+          sandbox="allow-scripts allow-same-origin"
+        />
+      );
+    } else if (invoice.html_content) {
+      const sanitizedHtml = invoice.html_content;
+      return (
+        <div 
+          className="p-4 overflow-auto h-full"
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }} 
+        />
+      );
+    } else {
+      return (
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          No preview available
+        </div>
+      );
+    }
   };
 
   return (
@@ -149,38 +176,48 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                 <div className="flex justify-end space-x-2">
                   <HoverCard>
                     <HoverCardTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={(e) => {
+                          // Stop propagation to prevent triggering the onViewInvoice
+                          e.stopPropagation();
+                        }}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent className="w-[600px] h-[400px] p-0">
-                      {(invoice.pdf_url || invoice.html_content) ? (
-                        <div className="w-full h-full">
-                          <DocumentViewer
-                            pdfUrl={invoice.pdf_url}
-                            htmlContent={invoice.html_content}
-                            isPdf={!!invoice.pdf_url}
-                            isWordDocument={false}
-                            onIframeError={() => {}}
-                            onIframeLoad={() => {}}
-                            onExternalOpen={() => onViewInvoice(invoice.id)}
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          No preview available
-                        </div>
-                      )}
+                      {renderPdfPreview(invoice)}
                     </HoverCardContent>
                   </HoverCard>
                   
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => onViewInvoice(invoice.id)}
+                    title="View invoice details"
+                  >
+                    <Eye className="h-4 w-4 text-blue-600" />
+                  </Button>
+                  
                   {invoice.status === 'pending' && onApproveInvoice && (
-                    <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onApproveInvoice(invoice.id)}
+                      title="Approve invoice"
+                    >
                       <CheckCircle className="h-4 w-4 text-green-600" />
                     </Button>
                   )}
                   {invoice.status === 'pending' && onRejectInvoice && (
-                    <Button variant="ghost" size="icon" onClick={() => onRejectInvoice(invoice.id)}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => onRejectInvoice(invoice.id)}
+                      title="Reject invoice"
+                    >
                       <XCircle className="h-4 w-4 text-red-600" />
                     </Button>
                   )}
