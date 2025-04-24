@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { FormTemplate, FormField } from '@/types/form-builder-types';
 import { Loader2 } from 'lucide-react';
-import { GenerateDocument } from '@/components/generate-document';
+import { GenerateDocument } from '@/components/form-builder/GenerateDocument';
 
 interface FormSubmissionDialogProps {
   open: boolean;
@@ -19,8 +20,8 @@ interface FormSubmissionDialogProps {
   onFieldChange: (id: string, value: any) => void;
   onSubmit: () => Promise<boolean>;
   isSubmitting: boolean;
-  status: string;
-  submissionId: string;
+  status?: string;
+  submissionId?: string;
 }
 
 const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
@@ -31,8 +32,8 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
   onFieldChange,
   onSubmit,
   isSubmitting,
-  status,
-  submissionId
+  status = '',
+  submissionId = ''
 }) => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
@@ -260,7 +261,7 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
           {form.description && <p className="text-sm text-muted-foreground mt-2">{form.description}</p>}
         </DialogHeader>
         
-        {status === 'submitted' && (
+        {status === 'submitted' && submissionId && (
           <div className="mb-4">
             <GenerateDocument
               submissionId={submissionId}
@@ -271,7 +272,7 @@ const FormSubmissionDialog: React.FC<FormSubmissionDialogProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {visibleFields.length > 0 ? (
-            visibleFields.map(field => renderField(field))
+            visibleFields.map((field) => renderField(field))
           ) : (
             <p className="text-muted-foreground text-center py-4">
               This form has no fields.

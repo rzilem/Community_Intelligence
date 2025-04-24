@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, AlertCircle } from 'lucide-react';
@@ -18,7 +17,6 @@ import { toast } from 'sonner';
 const RequestsPage = () => {
   const { currentUser, currentAssociation } = useAuth();
   
-  // Specifically request forms of type 'portal_request'
   const { data: associationForms = [], isLoading: formsLoading, error: formsError } = useAssociationFormTemplates(
     currentAssociation?.id,
     'portal_request'
@@ -34,7 +32,9 @@ const RequestsPage = () => {
     handleFormSelection,
     handleFieldChange,
     handleFormSubmit,
-    isSubmitting
+    isSubmitting,
+    submissionStatus = '',
+    submissionId = ''
   } = useRequestForm();
 
   const [userRequests, setUserRequests] = React.useState<any[]>([]);
@@ -71,7 +71,6 @@ const RequestsPage = () => {
     }
   };
 
-  // Modified to return boolean
   const handleFormSubmitWithResult = async () => {
     const result = await handleFormSubmit();
     if (result) {
@@ -182,6 +181,8 @@ const RequestsPage = () => {
         onFieldChange={handleFieldChange}
         onSubmit={handleFormSubmitWithResult}
         isSubmitting={isSubmitting}
+        status={submissionStatus}
+        submissionId={submissionId}
       />
     </PortalPageLayout>
   );

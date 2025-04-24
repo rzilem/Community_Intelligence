@@ -24,7 +24,7 @@ export const DocumentTemplateForm: React.FC<DocumentTemplateFormProps> = ({
   onSuccess
 }) => {
   const { register, handleSubmit, formState: { errors } } = useForm<DocumentTemplateFormData>();
-  const { mutate: createTemplate, isLoading } = useSupabaseCreate('document_templates');
+  const { mutate: createTemplate, isPending: isLoading } = useSupabaseCreate('document_templates');
 
   const onSubmit = async (data: DocumentTemplateFormData) => {
     try {
