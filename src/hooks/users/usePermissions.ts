@@ -1,34 +1,70 @@
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 
-interface Permission {
-  menuId: string;
-  submenuId?: string;
-  access: 'none' | 'read' | 'full';
-}
-
-// This is a simplified implementation
 const usePermissions = () => {
-  const { userRole } = useAuth();
+  const { userRole, isAdmin } = useAuth();
+  const [permissionsCache, setPermissionsCache] = useState<Record<string, boolean>>({});
+  
+  // In a real app, this might fetch permissions from the backend
+  useEffect(() => {
+    // Reset cache when user role changes
+    setPermissionsCache({});
+  }, [userRole, isAdmin]);
   
   const checkPermission = (
-    menuId: string, 
-    submenuId?: string, 
+    menuId: string,
+    submenuId?: string,
     requiredAccess: 'read' | 'full' = 'read'
-  ) => {
-    // Admin has access to everything
-    if (userRole === 'admin') return true;
+  ): boolean => {
+    // Admin has all permissions
+    if (isAdmin) return true;
     
-    // Simple role-based permissions logic
-    // In a real app, this would likely fetch from a database or API
-    // This is just a placeholder implementation
-    if (userRole === 'manager' && menuId === 'community-management') return true;
-    if (userRole === 'accountant' && menuId === 'accounting') return true;
-    if (userRole === 'resident' && menuId === 'portal') return true;
+    const cacheKey = `${menuId}:${submenuId || ''}:${requiredAccess}`;
     
-    return false;
+    // Check cache first
+    if (permissionsCache[cacheKey] !== undefined) {
+      return permissionsCache[cacheKey];
+    }
+    
+    // Implement permission logic based on user role
+    // This is a simplified version; in a real app, this would be more complex
+    let hasPermission = false;
+    
+    if (userRole === 'manager') {
+      // Managers have full access to most areas except system settings
+      hasPermission = menuId !== 'system-settings';
+    } else if (userRole === 'resident') {
+      // Residents have read access to specific areas
+      const residentAccessibleMenus = [
+        'dashboard',
+        'documents',
+        'calendar',
+        'maintenance-requests',
+        'payments'
+      ];
+      hasPermission = residentAccessibleMenus.includes(menuId) && requiredAccess === 'read';
+    } else if (userRole === 'board-member') {
+      // Board members have read access to most areas and full access to some
+      const boardFullAccessMenus = [
+        'dashboard',
+        'documents',
+        'calendar',
+        'meetings'
+      ];
+      hasPermission = boardFullAccessMenus.includes(menuId) || 
+        (requiredAccess === 'read' && menuId !== 'system-settings');
+    }
+    
+    // Cache the result
+    setPermissionsCache(prev => ({
+      ...prev,
+      [cacheKey]: hasPermission
+    }));
+    
+    return hasPermission;
   };
-
+  
   return { checkPermission };
 };
 

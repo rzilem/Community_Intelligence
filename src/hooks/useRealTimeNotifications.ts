@@ -1,38 +1,55 @@
 
 import { useEffect } from 'react';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/auth';
+import { toast } from 'sonner';
 
-export const useRealTimeNotifications = () => {
-  const { user } = useAuth();
-
+export function useRealTimeNotifications() {
   useEffect(() => {
-    if (!user) return;
-
-    // Set up real-time notification listener
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const notification = payload.new;
-          toast(notification.title, {
-            description: notification.message,
-          });
-        }
-      )
-      .subscribe();
-
-    // Clean up subscription
-    return () => {
-      supabase.removeChannel(channel);
+    // Only set up listeners if user is authenticated
+    const setupNotificationListeners = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) return;
+        
+        // Set up subscription to portal_notifications table
+        const notificationSubscription = supabase
+          .channel('portal_notifications')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'portal_notifications',
+              filter: `user_id=eq.${user.id}`,
+            },
+            (payload) => {
+              const notification = payload.new;
+              
+              toast(
+                notification.title,
+                {
+                  description: notification.content,
+                  action: notification.link ? {
+                    label: 'View',
+                    onClick: () => window.location.href = notification.link
+                  } : undefined
+                }
+              );
+            }
+          )
+          .subscribe();
+          
+        return () => {
+          supabase.removeChannel(notificationSubscription);
+        };
+      } catch (error) {
+        console.error('Error setting up notification listeners:', error);
+      }
     };
-  }, [user]);
-};
+
+    setupNotificationListeners();
+  }, []);
+  
+  return null;
+}
