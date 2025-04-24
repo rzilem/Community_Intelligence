@@ -323,7 +323,13 @@ const BidRequestCategorySelector: React.FC<BidRequestCategorySelectorProps> = ({
           >
             <div className="p-4 flex flex-col h-full">
               <div className="bg-muted rounded-md aspect-video mb-3 overflow-hidden">
-                {category.value === 'hvac' ? (
+                {category.value === 'pest_control' ? (
+                  <img 
+                    src="https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/bidrequest-images//Pest-Control.jpg" 
+                    alt={category.label} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : category.value === 'hvac' ? (
                   <img 
                     src="https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/bidrequest-images//HVAC.png" 
                     alt={category.label} 
