@@ -1,20 +1,48 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Vendor, VendorStats } from "@/types/vendor-types";
 
 export const vendorService = {
-  getVendors: async (): Promise<Vendor[]> => {
-    const { data: vendors, error } = await supabase
+  getVendors: async (
+    search?: string,
+    category?: string,
+    status?: string,
+    sortBy?: { column: string; ascending: boolean }
+  ): Promise<Vendor[]> => {
+    let query = supabase
       .from('vendors')
-      .select('*')
-      .order('name', { ascending: true });
+      .select('*');
+
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+
+    if (category) {
+      query = query.eq('service_type', category);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (sortBy) {
+      query = query.order(sortBy.column, { ascending: sortBy.ascending });
+    } else {
+      query = query.order('name', { ascending: true });
+    }
+
+    const { data: vendors, error } = await query;
 
     if (error) {
       console.error('Error fetching vendors:', error);
       throw error;
     }
 
-    return vendors || [];
+    // Ensure all required properties are present
+    return (vendors || []).map(vendor => ({
+      ...vendor,
+      status: vendor.status || 'active',
+      hasInsurance: vendor.hasInsurance || false,
+    })) as Vendor[];
   },
 
   getVendorById: async (id: string): Promise<Vendor | undefined> => {

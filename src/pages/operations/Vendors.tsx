@@ -8,18 +8,24 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VendorList from '@/components/vendors/VendorList';
 import VendorStatsCards from '@/components/vendors/VendorStatsCards';
 import VendorDialog from '@/components/vendors/VendorDialog';
+import VendorFilters from '@/components/vendors/VendorFilters';
 import { vendorService } from '@/services/vendor-service';
 import { VendorFormData } from '@/types/vendor-types';
 import { useToast } from '@/components/ui/use-toast';
+import { dataExportService } from '@/services/data-export-service';
 
 const Vendors = () => {
   const [addVendorOpen, setAddVendorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
+  const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [sortBy, setSortBy] = useState<{ column: string; ascending: boolean } | undefined>();
   const { toast } = useToast();
 
   const { data: vendors = [], isLoading: isLoadingVendors } = useQuery({
-    queryKey: ['vendors'],
-    queryFn: vendorService.getVendors,
+    queryKey: ['vendors', search, selectedCategory, selectedStatus, sortBy],
+    queryFn: () => vendorService.getVendors(search, selectedCategory, selectedStatus, sortBy),
   });
 
   const { data: vendorStats, isLoading: isLoadingStats } = useQuery({
@@ -34,6 +40,35 @@ const Vendors = () => {
       description: `${data.name} has been added successfully.`,
     });
     setAddVendorOpen(false);
+  };
+
+  const handleExport = async () => {
+    try {
+      const result = await dataExportService.exportData({
+        dataType: 'vendors',
+        format: 'xlsx'
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Export successful",
+          description: "Vendor data has been exported successfully.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting the vendor data.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSort = (column: string) => {
+    setSortBy(current => ({
+      column,
+      ascending: current?.column === column ? !current.ascending : true
+    }));
   };
 
   return (
@@ -52,9 +87,15 @@ const Vendors = () => {
               View vendor performance metrics and insurance tracking
             </p>
           </div>
-          <Button onClick={() => setAddVendorOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Vendor
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport}>
+              <FileDown className="mr-2 h-4 w-4" />
+              Export
+            </Button>
+            <Button onClick={() => setAddVendorOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Add Vendor
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -72,18 +113,18 @@ const Vendors = () => {
 
         {vendorStats && <VendorStatsCards stats={vendorStats} />}
 
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Vendors</h2>
-          <Button variant="outline" size="sm">
-            <FileDown className="mr-2 h-4 w-4" />
-            Import/Export
-          </Button>
-        </div>
+        <VendorFilters
+          onSearchChange={setSearch}
+          onCategoryChange={setSelectedCategory}
+          onStatusChange={setSelectedStatus}
+          selectedCategory={selectedCategory}
+          selectedStatus={selectedStatus}
+        />
 
         {isLoadingVendors ? (
           <div className="flex justify-center py-8">Loading vendors...</div>
         ) : (
-          <VendorList vendors={vendors} />
+          <VendorList vendors={vendors} onSort={handleSort} sortBy={sortBy} />
         )}
       </div>
 
