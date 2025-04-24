@@ -1,304 +1,214 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageTemplate from '@/components/layout/PageTemplate';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
-import WorkflowTabs from '@/components/operations/WorkflowTabs';
+import { Workflow } from '@/types/workflow-types';
 import { Button } from '@/components/ui/button';
-import { Plus, AlertCircle } from 'lucide-react';
-import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
-import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
-import ResponsiveGrid from '@/components/layout/ResponsiveGrid';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+  DialogFooter
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { WorkflowType } from '@/types/workflow-types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Search, Loader2 } from 'lucide-react';
+import PageTemplate from '@/components/layout/PageTemplate';
+import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
 
 const Workflows = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('templates');
-  const [isNewWorkflowDialogOpen, setIsNewWorkflowDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+  const [newDialogOpen, setNewDialogOpen] = useState(false);
+  const [workflowName, setWorkflowName] = useState('');
+  const [workflowDescription, setWorkflowDescription] = useState('');
+  const [workflowType, setWorkflowType] = useState<string>('Governance');
   const {
     workflows,
     templates,
     isLoading,
-    error,
     saveWorkflow,
-    removeWorkflow,
+    searchTerm,
+    setSearchTerm,
     createFromTemplate,
-    duplicateWorkflow,
-    updateWorkflowStatus,
-    searchTerm: hookSearchTerm,
-    setSearchTerm: setHookSearchTerm
+    isLoading: isCreating
   } = useWorkflows();
 
-  // Initialize form state for new workflow dialog
-  const [newWorkflow, setNewWorkflow] = useState({
-    name: '',
-    description: '',
-    type: 'Financial' as WorkflowType
-  });
+  const [templateId, setTemplateId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setHookSearchTerm(searchTerm);
-  }, [searchTerm, setHookSearchTerm]);
+  const handleCreate = async () => {
+    if (!workflowName) return;
 
-  const handleCreateWorkflow = async () => {
-    const success = await saveWorkflow({
-      ...newWorkflow,
-      steps: [],
-      status: 'draft',
-      is_template: activeTab === 'templates'
-    });
+    let newWorkflowId: string | null = null;
 
-    if (success) {
-      setIsNewWorkflowDialogOpen(false);
-      setNewWorkflow({
-        name: '',
-        description: '',
-        type: 'Financial' as WorkflowType
+    if (templateId) {
+      newWorkflowId = await createFromTemplate(templateId);
+    } else {
+      const success = await saveWorkflow({
+        name: workflowName,
+        description: workflowDescription,
+        type: workflowType,
+        steps: [],
+        is_template: false
       });
+      if (success) {
+        setWorkflowName('');
+        setWorkflowDescription('');
+        setWorkflowType('Governance');
+      }
     }
-  };
 
-  // Filter workflows and templates based on search term
-  const filteredTemplates = templates.filter(template => 
-    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (template.description && template.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    template.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredWorkflows = workflows.filter(workflow => 
-    workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (workflow.description && workflow.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    workflow.type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Handlers for workflow actions
-  const handleUseTemplate = async (id: string) => {
-    const newWorkflowId = await createFromTemplate(id);
     if (newWorkflowId) {
-      setActiveTab('active');
+      setNewDialogOpen(false);
     }
   };
 
-  const handleDuplicateTemplate = async (id: string) => {
-    await duplicateWorkflow(id);
-  };
+  const filteredWorkflows = workflows.filter(workflow =>
+    workflow.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const handleViewDetails = (id: string) => {
-    navigate(`/operations/workflows/${id}`);
-  };
-
-  const handlePauseWorkflow = async (id: string) => {
-    await updateWorkflowStatus(id, 'inactive');
-  };
-
-  const handleResumeWorkflow = async (id: string) => {
-    await updateWorkflowStatus(id, 'active');
-  };
-
-  const handleCancelWorkflow = async (id: string) => {
-    await updateWorkflowStatus(id, 'archived');
-  };
-
-  const handleEditWorkflow = (id: string) => {
-    navigate(`/operations/workflows/edit/${id}`);
-  };
-
-  const handleDeleteWorkflow = async (id: string) => {
-    await removeWorkflow(id);
-  };
+  const filteredTemplates = templates.filter(template =>
+    template.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <PageTemplate title="Workflows" loading={isLoading}>
+    <PageTemplate title="Workflows" icon={<i className="icon" />}>
       <div className="flex flex-col gap-6">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <h1 className="text-3xl font-bold">Workflow Management</h1>
-          <Button onClick={() => setIsNewWorkflowDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {activeTab === 'templates' ? 'New Template' : 'New Workflow'}
-          </Button>
+        <div className="flex justify-between items-center">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search workflows..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => setNewDialogOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              New Workflow
+            </Button>
+          </div>
         </div>
 
-        <WorkflowTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
+        <Tabs defaultValue="active">
+          <TabsList>
+            <TabsTrigger value="active">Active Workflows</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+            <TabsTrigger value="drafts">Drafts</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
+          </TabsList>
 
-        {error ? (
-          <div className="flex flex-col items-center justify-center p-8 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Error Loading Workflows</h2>
-            <p className="text-muted-foreground mb-6">{error.message}</p>
-            <Button onClick={() => window.location.reload()}>Refresh</Button>
-          </div>
-        ) : (
-          <>
-            {activeTab === 'templates' && (
-              <>
-                {filteredTemplates.length === 0 ? (
-                  <div className="text-center p-12 border rounded-lg">
-                    <h3 className="font-semibold text-lg mb-2">No templates found</h3>
-                    <p className="text-muted-foreground mb-6">
-                      {searchTerm ? 
-                        `No templates match "${searchTerm}"` : 
-                        "You haven't created any workflow templates yet"
-                      }
-                    </p>
-                    <Button onClick={() => setIsNewWorkflowDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Template
-                    </Button>
-                  </div>
-                ) : (
-                  <ResponsiveGrid 
-                    mobileColumns={1}
-                    desktopColumns={3}
-                    gap="md"
-                  >
-                    {filteredTemplates.map(template => (
-                      <WorkflowTemplateCard
-                        key={template.id}
-                        workflow={template}
-                        onUseTemplate={handleUseTemplate}
-                        onDuplicateTemplate={handleDuplicateTemplate}
-                        onEditTemplate={handleEditWorkflow}
-                        onDeleteTemplate={handleDeleteWorkflow}
-                      />
-                    ))}
-                  </ResponsiveGrid>
-                )}
-              </>
-            )}
-
-            {activeTab === 'active' && (
-              <>
-                {filteredWorkflows.length === 0 ? (
-                  <div className="text-center p-12 border rounded-lg">
-                    <h3 className="font-semibold text-lg mb-2">No active workflows</h3>
-                    <p className="text-muted-foreground mb-6">
-                      {searchTerm ? 
-                        `No workflows match "${searchTerm}"` : 
-                        "You haven't created any workflows yet"
-                      }
-                    </p>
-                    <div className="flex gap-4 justify-center">
-                      <Button onClick={() => setActiveTab('templates')}>
-                        Use Template
-                      </Button>
-                      <Button onClick={() => setIsNewWorkflowDialogOpen(true)}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Workflow
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <ResponsiveGrid 
-                    mobileColumns={1}
-                    desktopColumns={3}
-                    gap="md"
-                  >
-                    {filteredWorkflows.map(workflow => (
-                      <ActiveWorkflowCard
-                        key={workflow.id}
-                        workflow={workflow}
-                        onViewDetails={handleViewDetails}
-                        onPauseWorkflow={handlePauseWorkflow}
-                        onResumeWorkflow={handleResumeWorkflow}
-                        onCancelWorkflow={handleCancelWorkflow}
-                        onEditWorkflow={handleEditWorkflow}
-                        onDeleteWorkflow={handleDeleteWorkflow}
-                      />
-                    ))}
-                  </ResponsiveGrid>
-                )}
-              </>
-            )}
-
-            {activeTab === 'custom' && (
-              <div className="text-center p-12 border rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">Custom Workflows</h3>
-                <p className="text-muted-foreground mb-6">
-                  This feature is coming soon. You'll be able to create custom workflow templates.
-                </p>
+          <TabsContent value="active" className="mt-4">
+            {isLoading ? (
+              <p>Loading workflows...</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredWorkflows.filter(w => w.status === 'active').map(workflow => (
+                  <Card key={workflow.id}>
+                    <WorkflowTemplateCard workflow={workflow} />
+                  </Card>
+                ))}
               </div>
             )}
+          </TabsContent>
 
-            {activeTab === 'builder' && (
-              <div className="text-center p-12 border rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">Workflow Builder</h3>
-                <p className="text-muted-foreground mb-6">
-                  Advanced workflow builder is coming soon. You'll be able to create complex workflows with branching logic.
-                </p>
+          <TabsContent value="templates" className="mt-4">
+            {isLoading ? (
+              <p>Loading templates...</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredTemplates.map(template => (
+                  <Card key={template.id}>
+                    <WorkflowTemplateCard workflow={template} />
+                  </Card>
+                ))}
               </div>
             )}
+          </TabsContent>
 
-            {activeTab === 'analytics' && (
-              <div className="text-center p-12 border rounded-lg">
-                <h3 className="font-semibold text-lg mb-2">Workflow Analytics</h3>
-                <p className="text-muted-foreground mb-6">
-                  Workflow analytics are coming soon. You'll be able to track workflow performance and completion rates.
-                </p>
+          <TabsContent value="drafts" className="mt-4">
+            {isLoading ? (
+              <p>Loading drafts...</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredWorkflows.filter(w => w.status === 'draft').map(workflow => (
+                  <Card key={workflow.id}>
+                    <WorkflowTemplateCard workflow={workflow} />
+                  </Card>
+                ))}
               </div>
             )}
-          </>
-        )}
+          </TabsContent>
+
+          <TabsContent value="completed" className="mt-4">
+            {isLoading ? (
+              <p>Loading completed workflows...</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredWorkflows.filter(w => w.status === 'completed').map(workflow => (
+                  <Card key={workflow.id}>
+                    <WorkflowTemplateCard workflow={workflow} />
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="all" className="mt-4">
+            {isLoading ? (
+              <p>Loading all workflows...</p>
+            ) : (
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredWorkflows.map(workflow => (
+                  <Card key={workflow.id}>
+                    <WorkflowTemplateCard workflow={workflow} />
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* New Workflow Dialog */}
-      <Dialog open={isNewWorkflowDialogOpen} onOpenChange={setIsNewWorkflowDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {activeTab === 'templates' ? 'Create Workflow Template' : 'Create New Workflow'}
-            </DialogTitle>
+            <DialogTitle>Create New Workflow</DialogTitle>
             <DialogDescription>
-              {activeTab === 'templates' ? 
-                'Create a reusable workflow template that can be used as a starting point for future workflows.' :
-                'Create a new workflow to track and manage your operations.'
-              }
+              Start from scratch or use a template to create your workflow.
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4 py-4">
+          <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Workflow Name</Label>
               <Input
                 id="name"
-                placeholder="Enter workflow name"
-                value={newWorkflow.name}
-                onChange={(e) => setNewWorkflow({...newWorkflow, name: e.target.value})}
+                placeholder="Workflow name"
+                value={workflowName}
+                onChange={(e) => setWorkflowName(e.target.value)}
               />
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Workflow description"
+                value={workflowDescription}
+                onChange={(e) => setWorkflowDescription(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="type">Type</Label>
-              <Select
-                value={newWorkflow.type}
-                onValueChange={(value) => setNewWorkflow({...newWorkflow, type: value as WorkflowType})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+              <Select onValueChange={setWorkflowType}>
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Select workflow type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Financial">Financial</SelectItem>
@@ -310,25 +220,29 @@ const Workflows = () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe the purpose of this workflow"
-                value={newWorkflow.description || ''}
-                onChange={(e) => setNewWorkflow({...newWorkflow, description: e.target.value})}
-                rows={3}
-              />
+              <Label htmlFor="template">Use Template (optional)</Label>
+              <Select onValueChange={setTemplateId}>
+                <SelectTrigger id="template">
+                  <SelectValue placeholder="Select a template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map(template => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="">None</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewWorkflowDialogOpen(false)}>Cancel</Button>
-            <Button 
-              disabled={!newWorkflow.name} 
-              onClick={handleCreateWorkflow}
-            >
+            <Button variant="outline" onClick={() => setNewDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} disabled={!workflowName || isCreating}>
+              {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create
             </Button>
           </DialogFooter>

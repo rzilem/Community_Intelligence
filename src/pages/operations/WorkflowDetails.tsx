@@ -14,7 +14,8 @@ import {
   Edit, 
   Trash2, 
   Copy, 
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Progress } from '@/components/ui/progress';
@@ -30,6 +31,7 @@ import {
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 const WorkflowDetails = () => {
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ const WorkflowDetails = () => {
 
   if (isLoading) {
     return (
-      <PageTemplate title="Workflow Details" loading={true}>
+      <PageTemplate title="Workflow Details" icon={<FileText className="h-5 w-5" />}>
         <div className="flex flex-col gap-4">
           <div className="h-8 w-64 bg-gray-200 animate-pulse rounded"></div>
           <div className="h-24 bg-gray-200 animate-pulse rounded"></div>
@@ -97,7 +99,7 @@ const WorkflowDetails = () => {
 
   if (error || !workflow) {
     return (
-      <PageTemplate title="Workflow Details">
+      <PageTemplate title="Workflow Details" icon={<FileText className="h-5 w-5" />}>
         <div className="flex flex-col items-center justify-center p-8 text-center">
           <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Error Loading Workflow</h2>
@@ -114,7 +116,7 @@ const WorkflowDetails = () => {
   const isPaused = workflow.status === 'inactive';
   
   return (
-    <PageTemplate title={workflow.name}>
+    <PageTemplate title={workflow.name} icon={<FileText className="h-5 w-5" />}>
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <Button variant="outline" size="sm" onClick={handleBack}>
