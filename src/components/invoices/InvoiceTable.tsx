@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -25,17 +24,19 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onApproveInvoice,
   onRejectInvoice,
 }) => {
-  // Function to create PDF proxy URL
-  const createProxyUrl = (pdfUrl: string) => {
+  // Function to extract just the filename from a PDF URL
+  const getFilenameFromUrl = (pdfUrl: string): string => {
     if (!pdfUrl) return '';
     
-    // Extract the file name from the URL
-    const fileName = pdfUrl.split('/').pop();
-    if (fileName) {
-      // Create the proxy URL
-      return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(fileName)}`;
+    if (pdfUrl.includes('://')) {
+      try {
+        const parsedUrl = new URL(pdfUrl);
+        return parsedUrl.pathname.split('/').pop() || pdfUrl;
+      } catch (e) {
+        return pdfUrl.split('/').pop() || pdfUrl;
+      }
     }
-    return pdfUrl;
+    return pdfUrl.split('/').pop() || pdfUrl;
   };
 
   if (isLoading) {
@@ -171,7 +172,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
                       {(invoice.pdf_url || invoice.html_content) ? (
                         <div className="w-full h-full">
                           <DocumentViewer
-                            pdfUrl={invoice.pdf_url ? createProxyUrl(invoice.pdf_url) : undefined}
+                            pdfUrl={invoice.pdf_url || ''}
                             htmlContent={invoice.html_content}
                             isPdf={!!invoice.pdf_url}
                             isWordDocument={false}

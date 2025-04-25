@@ -26,8 +26,26 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   // Create a proxy URL for PDFs to ensure they display inline
   const createProxyUrl = (url: string) => {
     if (!url) return '';
+    
     // Extract just the filename from the URL
-    const filename = url.split('/').pop() || '';
+    let filename = url;
+    
+    // If it's a full URL, extract just the filename
+    if (url.includes('://')) {
+      try {
+        const parsedUrl = new URL(url);
+        filename = parsedUrl.pathname.split('/').pop() || '';
+      } catch (e) {
+        console.error('Failed to parse URL:', url, e);
+        // Just take anything after the last slash if URL parsing fails
+        filename = url.split('/').pop() || '';
+      }
+    } else if (url.includes('/')) {
+      // If it has slashes but isn't a full URL, just take the last part
+      filename = url.split('/').pop() || '';
+    }
+    
+    console.log(`Creating proxy URL for: ${url}, filename: ${filename}`);
     return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}`;
   };
 
