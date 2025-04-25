@@ -13,6 +13,7 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
   const [pdfMentioned, setPdfMentioned] = useState(false);
   const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [activeTab, setActiveTab] = useState('document');
 
   // Function to refresh the preview
   const refreshPreview = () => {
@@ -79,6 +80,8 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
     contentType,
     pdfMentioned,
     refreshPreview,
-    refreshKey
+    refreshKey,
+    activeTab,
+    setActiveTab
   };
 };

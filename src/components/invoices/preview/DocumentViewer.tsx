@@ -1,273 +1,91 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { ExternalLink, FileText, File } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { FileQuestion } from 'lucide-react';
 
 interface DocumentViewerProps {
-  pdfUrl?: string;
+  pdfUrl: string;
   htmlContent?: string;
   isPdf: boolean;
-  isWordDocument: boolean;
-  onIframeError: () => void;
-  onIframeLoad: () => void;
-  onExternalOpen: () => void;
+  isWordDocument?: boolean;
+  onIframeError?: () => void;
+  onIframeLoad?: () => void;
+  onExternalOpen?: () => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   pdfUrl,
   htmlContent,
   isPdf,
-  isWordDocument,
+  isWordDocument = false,
   onIframeError,
   onIframeLoad,
-  onExternalOpen,
+  onExternalOpen
 }) => {
-  const [viewerType, setViewerType] = useState<'object' | 'iframe' | 'fallback'>('object');
-  const [failed, setFailed] = useState(false);
-  const [attemptCount, setAttemptCount] = useState(0);
-  const [key, setKey] = useState(Date.now());
-  const [proxyUrl, setProxyUrl] = useState<string>('');
+  const [iframeError, setIframeError] = useState(false);
 
-  // Log component props on mount and when they change
-  useEffect(() => {
-    console.group('DocumentViewer Props');
-    console.log('pdfUrl:', pdfUrl || 'none');
-    console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
-    console.log('isPdf:', isPdf);
-    console.log('isWordDocument:', isWordDocument);
-    console.groupEnd();
-  }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+  // Create a proxy URL for PDFs to ensure they display inline
+  const proxyUrl = isPdf 
+    ? `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(pdfUrl.split('/').pop() || '')}`
+    : pdfUrl;
 
-  // Function to get the proxy URL for PDFs
-  useEffect(() => {
-    if (pdfUrl && isPdf) {
-      // Extract the file name from the URL
-      const fileName = pdfUrl.split('/').pop();
-      if (fileName) {
-        // Create the proxy URL
-        const proxy = `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(fileName)}`;
-        console.log('Using proxy URL:', proxy);
-        setProxyUrl(proxy);
-      } else {
-        setProxyUrl(pdfUrl);
-      }
-    }
-  }, [pdfUrl, isPdf]);
-
-  // Handle viewer errors
-  const handleError = useCallback(() => {
-    console.log(`PDF loading error with ${viewerType}, attempt ${attemptCount}`);
-    
-    if (viewerType === 'object') {
-      console.log("Switching to iframe viewer");
-      setViewerType('iframe');
-      setKey(Date.now());
-      setAttemptCount(prev => prev + 1);
-    } else if (attemptCount < 2) {
-      console.log("Retrying with iframe viewer");
-      setKey(Date.now());
-      setAttemptCount(prev => prev + 1);
-    } else {
-      console.log("All PDF loading attempts failed");
-      setFailed(true);
-      onIframeError();
-    }
-  }, [viewerType, attemptCount, onIframeError]);
-
-  const createHtmlContent = () => {
-    if (!htmlContent) return '';
-    
-    // Improve the styling of the HTML content for better readability
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1">
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-              line-height: 1.5;
-              color: #333;
-              margin: 20px;
-              padding: 20px;
-            }
-            table {
-              border-collapse: collapse;
-              width: 100%;
-              margin-bottom: 1rem;
-            }
-            th, td {
-              padding: 8px;
-              text-align: left;
-              border: 1px solid #ddd;
-            }
-            th {
-              background-color: #f2f2f2;
-            }
-            div {
-              margin-bottom: 1rem;
-            }
-            h1, h2, h3 {
-              color: #1a56db;
-            }
-            .invoice-details {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 1rem;
-              margin-bottom: 2rem;
-            }
-            .invoice-total {
-              text-align: right;
-              font-weight: bold;
-              margin-top: 1rem;
-              font-size: 1.2rem;
-            }
-            font[color="#6fa8dc"] {
-              color: #6fa8dc;
-              font-size: 24px;
-              font-weight: bold;
-            }
-          </style>
-        </head>
-        <body>${htmlContent}</body>
-      </html>
-    `;
+  const handleIframeError = () => {
+    console.error('Failed to load document in iframe:', proxyUrl);
+    setIframeError(true);
+    if (onIframeError) onIframeError();
   };
 
-  // PDF loading error indicator for diagnostics
-  if (failed) {
+  const handleIframeLoad = () => {
+    console.log('Document loaded successfully in iframe');
+    if (onIframeLoad) onIframeLoad();
+  };
+
+  if (isWordDocument) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <FileText className="h-12 w-12 mb-4 text-red-400" />
-        <p className="text-center text-red-500 mb-4">PDF preview failed to load</p>
-        <Button 
-          variant="outline" 
-          onClick={onExternalOpen} 
-          className="flex items-center"
-        >
-          Open externally <ExternalLink className="h-4 w-4 ml-2" />
-        </Button>
-      </div>
-    );
-  }
-
-  // Function to create a direct PDF embed that works in most browsers
-  const createPdfEmbed = () => {
-    if (!pdfUrl) return null;
-    
-    const finalUrl = viewerType === 'fallback' ? pdfUrl : proxyUrl || pdfUrl;
-    
-    if (viewerType === 'object') {
-      return (
-        <div className="w-full h-full flex flex-col">
-          <object
-            key={key}
-            data={finalUrl}
-            type="application/pdf"
-            className="w-full h-full border-0"
-            onError={handleError}
-            onLoad={onIframeLoad}
-          >
-            <p className="text-center">PDF loading failed. Using fallback...</p>
-          </object>
-        </div>
-      );
-    } else if (viewerType === 'iframe') {
-      return (
-        <div className="w-full h-full flex flex-col">
-          <iframe
-            key={key}
-            src={finalUrl}
-            className="w-full h-full border-0"
-            onError={handleError}
-            onLoad={onIframeLoad}
-          />
-        </div>
-      );
-    } else {
-      // Fallback content
-      return (
-        <div className="flex flex-col items-center justify-center h-full p-6">
-          <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
-          <Button 
+        <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
+        <p className="text-center mb-4">
+          Word documents cannot be previewed directly in the browser.
+        </p>
+        {onExternalOpen && (
+          <button 
             onClick={onExternalOpen}
-            className="flex items-center"
+            className="text-primary hover:underline flex items-center"
           >
-            Download PDF <ExternalLink className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
-      );
-    }
-  };
-
-  // Prioritize PDF viewing when available
-  if (pdfUrl && isPdf) {
-    console.log('Displaying PDF content from URL:', proxyUrl || pdfUrl);
-    return createPdfEmbed();
-  }
-
-  // Handle Word documents
-  if (pdfUrl && isWordDocument) {
-    console.log('Displaying Word document placeholder');
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
-        <File className="h-16 w-16 mb-4 text-blue-500" />
-        <p className="text-center mb-2">Microsoft Word Document</p>
-        <p className="text-center text-sm mb-6">Word documents cannot be previewed directly in the browser.</p>
-        <Button 
-          variant="outline" 
-          onClick={onExternalOpen}
-          className="flex items-center"
-        >
-          Download Document <ExternalLink className="h-4 w-4 ml-2" />
-        </Button>
+            Download document
+          </button>
+        )}
       </div>
     );
   }
 
-  // Handle other document types with URL but not PDF or Word
-  if (pdfUrl && !isPdf && !isWordDocument) {
-    console.log('Displaying unknown document type placeholder');
+  if (iframeError) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <FileText className="h-12 w-12 mb-4 text-muted-foreground/50" />
-        <p className="text-center">Unknown document type.</p>
-        <Button 
-          variant="link" 
-          onClick={onExternalOpen} 
-          className="mt-4"
-        >
-          Open file <ExternalLink className="h-4 w-4 ml-2" />
-        </Button>
+        <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
+        <p className="text-center mb-4">
+          Unable to preview this document. The file may be corrupted or not supported.
+        </p>
+        {onExternalOpen && (
+          <button 
+            onClick={onExternalOpen}
+            className="text-primary hover:underline flex items-center"
+          >
+            Try opening in a new tab
+          </button>
+        )}
       </div>
     );
   }
 
-  // If we have HTML content, render it
-  if (htmlContent) {
-    console.log('Displaying HTML content');
-    return (
-      <div className="h-full">
-        <iframe
-          srcDoc={createHtmlContent()}
-          title="Invoice HTML Content"
-          className="w-full h-full border-0"
-          sandbox="allow-same-origin"
-          onError={(e) => {
-            console.error('HTML iframe error:', e);
-            onIframeError();
-          }}
-          onLoad={() => {
-            console.log('HTML iframe loaded successfully');
-            onIframeLoad();
-          }}
-        />
-      </div>
-    );
-  }
-
-  // No content available
-  console.log('No content to display');
-  return null;
+  return (
+    <iframe
+      className="w-full h-full border-0"
+      src={proxyUrl}
+      onError={handleIframeError}
+      onLoad={handleIframeLoad}
+      allow="fullscreen"
+      title="Document Preview"
+      sandbox="allow-same-origin allow-scripts allow-forms"
+    />
+  );
 };

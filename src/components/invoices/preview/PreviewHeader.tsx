@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, ExternalLink, Maximize, Minimize, RefreshCcw } from "lucide-react";
 
 interface PreviewHeaderProps {
@@ -33,24 +33,24 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
 }) => {
   return (
     <div className="flex items-center justify-between p-2 border-b bg-muted/40">
-      <TabsList>
-        <TabsTrigger 
-          value="document" 
-          onClick={() => onTabChange('document')}
-          className={activeTab === 'document' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
-        >
-          Document
-        </TabsTrigger>
-        {hasEmail && (
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
+        <TabsList>
           <TabsTrigger 
-            value="email" 
-            onClick={() => onTabChange('email')}
-            className={activeTab === 'email' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
+            value="document"
+            className={activeTab === 'document' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
           >
-            Email
+            Document
           </TabsTrigger>
-        )}
-      </TabsList>
+          {hasEmail && (
+            <TabsTrigger 
+              value="email"
+              className={activeTab === 'email' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
+            >
+              Email
+            </TabsTrigger>
+          )}
+        </TabsList>
+      </Tabs>
       
       <div className="flex items-center gap-2">
         {onRefresh && (
