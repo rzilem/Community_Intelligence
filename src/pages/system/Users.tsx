@@ -17,7 +17,7 @@ const roles = [
 ];
 
 const Users = () => {
-  const { data: users = [], isLoading, error, refetch } = useSupabaseQuery<UserWithProfile>(
+  const { data: users, isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
     'profiles',
     {
       select: 'id, email, created_at, first_name, last_name, role, profile_image_url',
@@ -37,7 +37,7 @@ const Users = () => {
       description="Manage users and their roles across the platform."
     >
       <UserManagement 
-        users={users} 
+        users={users || []} 
         isLoading={isLoading} 
         error={error} 
         roles={roles} 
