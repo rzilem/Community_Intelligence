@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AccessButton } from '@/components/users/permissions/AccessIcon';
 import { defaultRoles, defaultMenus, MenuItemWithSubmenu, hasPermission } from '@/services/permission-service';
 import { SearchBar } from './permissions/SearchBar';
 import { Button } from '@/components/ui/button';
-import { CompareIcon } from 'lucide-react';
+import { GitCompareIcon } from 'lucide-react';
 import CompareRolesDialog from './permissions/CompareRolesDialog';
 import { usePermissionOperations } from '@/hooks/users/usePermissionOperations';
 
@@ -60,7 +59,7 @@ const RolePermissionsTable: React.FC = () => {
           disabled={selectedRolesToCompare.length !== 2}
           className="flex items-center gap-2"
         >
-          <CompareIcon size={16} />
+          <GitCompareIcon size={16} />
           Compare Roles
         </Button>
       </div>
