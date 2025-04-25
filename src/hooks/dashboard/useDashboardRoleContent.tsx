@@ -5,6 +5,7 @@ import CalendarTab from '@/components/dashboard/CalendarTab';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import TreasurerDashboard from '@/components/dashboard/TreasurerDashboard';
+import { UserRole } from '@/types/user-types';
 
 export const useDashboardRoleContent = (
   user: Profile | null,
@@ -15,9 +16,19 @@ export const useDashboardRoleContent = (
   const getContentForRole = () => {
     if (!user) return null;
     
+    // For backward compatibility with any code using 'treasurer'
+    // We'll handle this special case - in a real app you might want to add this to the enum
+    if (user.role === 'accountant') {
+      return <TreasurerDashboard />;
+    }
+    
     switch (user.role) {
-      case 'treasurer':
-        return <TreasurerDashboard />;
+      case 'admin':
+      case 'manager':
+      case 'resident':
+      case 'maintenance':
+      case 'accountant':
+      case 'user':
       default:
         return (
           <>

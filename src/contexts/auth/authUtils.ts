@@ -1,8 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
 import { toast } from 'sonner';
+import { UserRole } from '@/types/user-types';
 
 /**
  * Signs in a user with email and password
@@ -156,7 +156,7 @@ export const syncUserProfile = async (userId: string, profile?: Partial<Profile>
         email: authUser.user.email,
         first_name: authUser.user.user_metadata?.first_name || '',
         last_name: authUser.user.user_metadata?.last_name || '',
-        role: 'user',
+        role: 'user' as UserRole,
         ...profile
       };
       

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, Info } from 'lucide-react';
@@ -11,7 +12,7 @@ import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Update roles to match our new enum type
+// Define roles array with correct typing
 const roles = [
   { id: 'admin', name: 'Administrator' },
   { id: 'manager', name: 'Manager' },
@@ -75,6 +76,9 @@ const Permissions = () => {
     refetch();
   };
 
+  // Create a mutable copy of the roles array to pass to UserManagement
+  const mutableRoles = [...roles];
+
   return (
     <PageTemplate 
       title="User Permissions" 
@@ -107,7 +111,7 @@ const Permissions = () => {
         users={users} 
         isLoading={isLoading} 
         error={error} 
-        roles={roles}
+        roles={mutableRoles}
         onRefresh={handleRefresh} 
       />
       <RolePermissionsCard />

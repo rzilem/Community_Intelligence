@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -78,6 +79,9 @@ const Dashboard = () => {
     error
   );
 
+  // Check if user role is 'accountant' (previously 'treasurer')
+  const isTreasurer = profile?.role === 'accountant';
+
   return (
     <AppLayout>
       <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
@@ -101,7 +105,7 @@ const Dashboard = () => {
         {/* Community Intelligence AI */}
         <AiQueryInput />
         
-        {profile?.role === 'treasurer' ? (
+        {isTreasurer ? (
           getContentForRole()
         ) : (
           <Tabs defaultValue="calendar" className="space-y-4">
