@@ -2,7 +2,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
@@ -163,24 +163,38 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
-                  <HoverCard>
+                  <HoverCard openDelay={300} closeDelay={100}>
                     <HoverCardTrigger asChild>
                       <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     </HoverCardTrigger>
-                    <HoverCardContent className="w-[600px] h-[400px] p-0">
+                    <HoverCardContent className="w-[600px] h-[400px] p-0" side="left" align="end">
                       {(invoice.pdf_url || invoice.html_content) ? (
-                        <div className="w-full h-full">
-                          <DocumentViewer
-                            pdfUrl={invoice.pdf_url || ''}
-                            htmlContent={invoice.html_content}
-                            isPdf={!!invoice.pdf_url}
-                            isWordDocument={false}
-                            onIframeError={() => {}}
-                            onIframeLoad={() => {}}
-                            onExternalOpen={() => onViewInvoice(invoice.id)}
-                          />
+                        <div className="w-full h-full flex flex-col">
+                          <div className="flex items-center justify-between bg-muted p-2 border-b">
+                            <div className="text-sm font-medium">Document Preview</div>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => onViewInvoice(invoice.id)}
+                              className="flex items-center"
+                            >
+                              <ExternalLink className="h-3 w-3 mr-1" />
+                              Full View
+                            </Button>
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                            <DocumentViewer
+                              pdfUrl={invoice.pdf_url || ''}
+                              htmlContent={invoice.html_content}
+                              isPdf={!!invoice.pdf_url}
+                              isWordDocument={false}
+                              onIframeError={() => {}}
+                              onIframeLoad={() => {}}
+                              onExternalOpen={() => onViewInvoice(invoice.id)}
+                            />
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">

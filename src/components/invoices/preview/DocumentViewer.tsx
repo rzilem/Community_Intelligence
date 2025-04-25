@@ -1,6 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
-import { FileQuestion } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileQuestion, RefreshCcw, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface DocumentViewerProps {
   pdfUrl: string;
@@ -22,7 +23,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onExternalOpen
 }) => {
   const [iframeError, setIframeError] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [key, setKey] = useState(Date.now()); // Force refresh key
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [attempt, setAttempt] = useState(1);
+  const [viewerType, setViewerType] = useState<'pdfjs' | 'direct' | 'object'>('pdfjs');
 
   // Create a proxy URL for PDFs to ensure they display inline
   const createProxyUrl = (url: string) => {
@@ -49,30 +54,58 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log(`Creating proxy URL for: ${url}, filename: ${filename}`);
     // Add timestamp to prevent caching issues
     const timestamp = Date.now();
-    return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}&t=${timestamp}`;
+    const uniqueKey = `${timestamp}-${attempt}`;
+    return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}&t=${uniqueKey}`;
   };
 
   const proxyUrl = isPdf ? createProxyUrl(pdfUrl) : pdfUrl;
+  
+  // For PDF.js viewer
+  const pdfJsUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(proxyUrl)}`;
 
-  const handleIframeError = () => {
-    console.error('Failed to load document in iframe:', proxyUrl);
+  const handleIframeError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
+    console.error('Failed to load document in iframe:', e);
     setIframeError(true);
+    setLoading(false);
     if (onIframeError) onIframeError();
   };
 
   const handleIframeLoad = () => {
     console.log('Document loaded successfully in iframe');
+    setLoading(false);
     if (onIframeLoad) onIframeLoad();
   };
 
-  // Force refresh the iframe/object when the URL changes
+  // Force refresh the iframe/object when the URL changes or on retry
   useEffect(() => {
     setKey(Date.now());
-  }, [pdfUrl, proxyUrl]);
+    setLoading(true);
+    setIframeError(false);
+    
+    // Set a timeout to check if loading takes too long
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('Loading timeout reached, trying alternate viewer');
+        // If PDF.js is taking too long, try direct viewing
+        if (viewerType === 'pdfjs') {
+          setViewerType('direct');
+          setKey(Date.now());
+        } else if (viewerType === 'direct') {
+          setViewerType('object');
+          setKey(Date.now());
+        }
+      }
+    }, 5000);
+
+    return () => clearTimeout(loadingTimeout);
+  }, [pdfUrl, proxyUrl, attempt, viewerType]);
 
   // Add retry functionality
   const handleRetry = () => {
+    setAttempt(prev => prev + 1);
     setIframeError(false);
+    setLoading(true);
+    setViewerType('pdfjs'); // Reset to PDF.js first
     setKey(Date.now());
   };
 
@@ -84,12 +117,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           Word documents cannot be previewed directly in the browser.
         </p>
         {onExternalOpen && (
-          <button 
+          <Button 
             onClick={onExternalOpen}
             className="text-primary hover:underline flex items-center"
           >
             Download document
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -103,64 +136,107 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           Unable to preview this document. The file may be corrupted or not supported.
         </p>
         <div className="flex gap-2">
-          <button 
+          <Button 
             onClick={handleRetry}
             className="text-primary hover:underline flex items-center mr-4"
+            variant="outline"
           >
-            Retry loading
-          </button>
+            <RefreshCcw className="h-4 w-4 mr-2" /> Retry loading
+          </Button>
           {onExternalOpen && (
-            <button 
+            <Button 
               onClick={onExternalOpen}
               className="text-primary hover:underline flex items-center"
+              variant="outline"
             >
-              Open in new tab
-            </button>
+              <ExternalLink className="h-4 w-4 mr-2" /> Open in new tab
+            </Button>
           )}
         </div>
       </div>
     );
   }
 
-  // For PDF files, use multiple rendering options to maximize compatibility
+  // For PDF files, use multiple rendering options based on the current viewerType
   if (isPdf) {
-    // Try with PDF.js web viewer (a more robust option for PDF viewing)
-    const pdfJsUrl = `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(proxyUrl)}`;
+    // Loading indicator
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
+            <p className="text-sm text-muted-foreground">Loading document...</p>
+          </div>
+        </div>
+      );
+    }
     
-    return (
-      <div className="relative w-full h-full">
-        {/* First approach: PDF.js viewer (most compatible) */}
-        <iframe
-          key={`pdfjs-${key}`}
-          className="w-full h-full border-0"
-          src={pdfJsUrl}
-          onError={handleIframeError}
-          onLoad={handleIframeLoad}
-          allowFullScreen
-          title="PDF.js Document Preview"
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
-        />
-        
-        {/* Fallback options hidden, will be shown if primary approach fails */}
-        <object
-          key={`object-${key}`}
-          className="hidden"
-          data={proxyUrl}
-          type="application/pdf"
-        >
+    // PDF.js viewer (most compatible)
+    if (viewerType === 'pdfjs') {
+      return (
+        <div className="relative w-full h-full">
           <iframe
-            key={`iframe-${key}`}
+            ref={iframeRef}
+            key={`pdfjs-${key}`}
             className="w-full h-full border-0"
-            src={proxyUrl}
+            src={pdfJsUrl}
+            onError={handleIframeError}
+            onLoad={handleIframeLoad}
             allowFullScreen
-            title="Document Preview Fallback"
+            title="PDF.js Document Preview"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
           />
+        </div>
+      );
+    }
+    
+    // Direct PDF in iframe
+    if (viewerType === 'direct') {
+      return (
+        <div className="relative w-full h-full">
+          <iframe
+            ref={iframeRef}
+            key={`direct-${key}`}
+            className="w-full h-full border-0"
+            src={proxyUrl}
+            onError={handleIframeError}
+            onLoad={handleIframeLoad}
+            allowFullScreen
+            title="Direct PDF Preview"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
+          />
+        </div>
+      );
+    }
+    
+    // Object tag as last resort
+    return (
+      <div className="relative w-full h-full">
+        <object
+          key={`object-${key}`}
+          className="w-full h-full"
+          data={proxyUrl}
+          type="application/pdf"
+          title="PDF Document Preview"
+        >
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <p className="mb-4 text-center">Unable to display PDF directly</p>
+            {onExternalOpen && (
+              <Button 
+                onClick={onExternalOpen}
+                variant="outline"
+                className="flex items-center"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" /> Open in new tab
+              </Button>
+            )}
+          </div>
         </object>
       </div>
     );
   }
 
+  // For HTML content
   return (
     <iframe
       key={key}

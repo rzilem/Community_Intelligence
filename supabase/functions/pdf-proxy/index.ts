@@ -8,11 +8,14 @@ const enhancedHeaders = {
   'Content-Type': 'application/pdf',
   'Content-Disposition': 'inline; filename="document.pdf"',
   'X-Content-Type-Options': 'nosniff',
-  'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *;",
+  'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *; img-src * data: blob:; frame-ancestors *;",
   'X-Frame-Options': 'ALLOWALL',
   'Cache-Control': 'no-cache, no-store, must-revalidate', // No caching
   'Pragma': 'no-cache',
   'Expires': '0',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': '*',
 };
 
 serve(async (req) => {
@@ -26,9 +29,14 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const pdfPath = url.searchParams.get('pdf');
+    
+    // Debug information
+    console.log(`Request received: ${req.url}`);
+    console.log(`Headers: ${JSON.stringify(Object.fromEntries(req.headers))}`);
 
     // Validate PDF path
     if (!pdfPath) {
+      console.error('Missing PDF path parameter');
       return new Response(JSON.stringify({ error: 'Missing PDF path parameter' }), {
         headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -38,10 +46,6 @@ serve(async (req) => {
     console.log(`Raw PDF path from request: ${pdfPath}`);
 
     // Extract just the filename without any path or URL components
-    // This handles various formats like:
-    // - full URLs (https://example.com/path/file.pdf)
-    // - storage paths (/invoices/file.pdf)
-    // - filenames (file.pdf)
     let filename = pdfPath;
     
     // If it's a URL, extract the filename from the end of the path
@@ -72,24 +76,46 @@ serve(async (req) => {
       );
     }
     
+    // Remove URL encoding from filename if present
+    try {
+      const decodedFilename = decodeURIComponent(filename);
+      if (decodedFilename !== filename) {
+        console.log(`Decoded filename from ${filename} to ${decodedFilename}`);
+        filename = decodedFilename;
+      }
+    } catch (e) {
+      console.warn('Error decoding filename, using as-is:', e);
+    }
+    
     console.log(`Processing PDF request. Original path: ${pdfPath}, Extracted filename: ${filename}`);
     
     // Construct the storage URL with just the filename
-    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}`;
+    // Add timestamp to prevent caching
+    const timestamp = Date.now();
+    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}?t=${timestamp}`;
     console.log(`Fetching PDF from: ${fileUrl}`);
 
     // Fetch the PDF from Supabase Storage with no-cache headers
     const fetchHeaders = {
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
+      'Expires': '0',
     };
 
-    const response = await fetch(fileUrl, { headers: fetchHeaders });
+    const response = await fetch(fileUrl, { 
+      headers: fetchHeaders,
+      cache: 'no-store' 
+    });
     
     if (!response.ok) {
       console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+      console.error(`Response headers: ${JSON.stringify(Object.fromEntries(response.headers))}`);
       return new Response(
-        JSON.stringify({ error: `Failed to fetch PDF: ${response.statusText}` }),
+        JSON.stringify({ 
+          error: `Failed to fetch PDF: ${response.statusText}`,
+          status: response.status,
+          url: fileUrl
+        }),
         {
           headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
           status: response.status,
@@ -99,21 +125,27 @@ serve(async (req) => {
 
     // Get the PDF file as a blob
     const pdfBlob = await response.blob();
+    console.log(`PDF blob received, size: ${pdfBlob.size} bytes`);
     
     // Set specific headers for the PDF response
     const responseHeaders = {
       ...enhancedHeaders,
       'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': pdfBlob.size.toString(),
     };
 
     // Return the PDF with headers that allow inline viewing
+    console.log(`Returning PDF response with headers:`, responseHeaders);
     return new Response(pdfBlob, {
       headers: responseHeaders,
     });
   } catch (error) {
     console.error('Error in pdf-proxy function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
       {
         headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
         status: 500,
