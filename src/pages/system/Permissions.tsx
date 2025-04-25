@@ -21,17 +21,17 @@ const roles = [
 ];
 
 const Permissions = () => {
-  // Query directly from profiles table with more detailed logging
+  // Query all users from auth.users joined with profiles
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
     {
-      select: 'id, email, created_at, first_name, last_name, role, profile_image_url',
+      select: 'id, email, created_at, first_name, last_name, role, profile_image_url, phone_number',
       filter: [],
       order: { column: 'created_at', ascending: false },
     }
   );
   
-  // Log the raw data fetched from Supabase
+  // Log the raw data fetched from Supabase for debugging
   console.log('Permissions - Raw profiles data:', data);
   
   // Transform the profiles data to match the UserWithProfile structure
@@ -45,11 +45,12 @@ const Permissions = () => {
       last_name: profile.last_name,
       role: profile.role,
       email: profile.email,
+      phone_number: profile.phone_number,
       profile_image_url: profile.profile_image_url
     }
   })) as UserWithProfile[];
 
-  // Log the transformed users data
+  // Log the transformed users data for debugging
   console.log('Permissions - Transformed users:', users);
 
   // Use the profile sync hook to manage sync operations
