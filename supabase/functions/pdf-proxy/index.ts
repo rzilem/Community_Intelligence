@@ -2,11 +2,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Enhanced CORS headers with additional security related headers
+const enhancedHeaders = {
+  ...corsHeaders,
+  'Content-Type': 'application/pdf',
+  'Content-Disposition': 'inline',
+  'X-Content-Type-Options': 'nosniff',
+  'Content-Security-Policy': "default-src 'self'; frame-ancestors *;",
+  'X-Frame-Options': 'ALLOWALL',
+  'Cache-Control': 'public, max-age=3600',
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
-      headers: corsHeaders
+      headers: enhancedHeaders
     });
   }
 
@@ -17,7 +28,7 @@ serve(async (req) => {
     // Validate PDF path
     if (!pdfPath) {
       return new Response(JSON.stringify({ error: 'Missing PDF path parameter' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
         status: 400,
       });
     }
@@ -57,7 +68,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: `Failed to fetch PDF: ${response.statusText}` }),
         {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
           status: response.status,
         }
       );
@@ -68,19 +79,14 @@ serve(async (req) => {
 
     // Return the PDF with headers that allow inline viewing
     return new Response(pdfBlob, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'inline',
-        'Cache-Control': 'public, max-age=3600',
-      },
+      headers: enhancedHeaders,
     });
   } catch (error) {
     console.error('Error in pdf-proxy function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
     );

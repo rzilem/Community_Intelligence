@@ -108,7 +108,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       onLoad={handleIframeLoad}
       allow="fullscreen"
       title="Document Preview"
-      sandbox="allow-same-origin allow-scripts allow-forms"
+      sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
     />
   );
 };
