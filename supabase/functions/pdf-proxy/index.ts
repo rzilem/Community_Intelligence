@@ -10,7 +10,9 @@ const enhancedHeaders = {
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *;",
   'X-Frame-Options': 'ALLOWALL',
-  'Cache-Control': 'public, max-age=3600',
+  'Cache-Control': 'no-cache, no-store, must-revalidate', // No caching
+  'Pragma': 'no-cache',
+  'Expires': '0',
 };
 
 serve(async (req) => {
@@ -33,6 +35,8 @@ serve(async (req) => {
       });
     }
 
+    console.log(`Raw PDF path from request: ${pdfPath}`);
+
     // Extract just the filename without any path or URL components
     // This handles various formats like:
     // - full URLs (https://example.com/path/file.pdf)
@@ -45,6 +49,7 @@ serve(async (req) => {
       try {
         const parsedUrl = new URL(pdfPath);
         filename = parsedUrl.pathname.split('/').pop() || '';
+        console.log(`Extracted filename from URL: ${filename}`);
       } catch (e) {
         console.error('Error parsing URL:', e);
         // Fall back to using the original string if URL parsing fails
@@ -52,6 +57,19 @@ serve(async (req) => {
     } else if (pdfPath.includes('/')) {
       // If it contains slashes but isn't a URL, take the last part
       filename = pdfPath.split('/').pop() || '';
+      console.log(`Extracted filename from path: ${filename}`);
+    }
+    
+    // Make sure we have a valid filename
+    if (!filename || filename === '') {
+      console.error('Failed to extract filename from path:', pdfPath);
+      return new Response(
+        JSON.stringify({ error: 'Failed to extract filename from path' }),
+        {
+          headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
     }
     
     console.log(`Processing PDF request. Original path: ${pdfPath}, Extracted filename: ${filename}`);
@@ -60,8 +78,13 @@ serve(async (req) => {
     const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}`;
     console.log(`Fetching PDF from: ${fileUrl}`);
 
-    // Fetch the PDF from Supabase Storage
-    const response = await fetch(fileUrl);
+    // Fetch the PDF from Supabase Storage with no-cache headers
+    const fetchHeaders = {
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+    };
+
+    const response = await fetch(fileUrl, { headers: fetchHeaders });
     
     if (!response.ok) {
       console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);

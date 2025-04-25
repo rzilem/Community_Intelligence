@@ -6,6 +6,6 @@ export const corsHeaders = {
   'Access-Control-Allow-Credentials': 'true',
   'Access-Control-Expose-Headers': 'Content-Disposition, Content-Length, Content-Type',
   'Cross-Origin-Resource-Policy': 'cross-origin',
-  'Cross-Origin-Embedder-Policy': 'credentialless',
-  'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+  'Cross-Origin-Embedder-Policy': 'unsafe-none',
+  'Cross-Origin-Opener-Policy': 'unsafe-none'
 };
