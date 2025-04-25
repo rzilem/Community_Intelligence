@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
+import { supabase } from '@/integrations/supabase/client';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -21,7 +22,7 @@ const roles = [
 ];
 
 const Permissions = () => {
-  // Query all users from auth.users joined with profiles
+  // Query all users and profiles in a single query
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
     {

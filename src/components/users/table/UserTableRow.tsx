@@ -67,6 +67,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
                 firstName={user.profile?.first_name}
                 lastName={user.profile?.last_name}
                 onImageUpdated={onProfileImageUpdated}
+                size="md"
               />
             ) : (
               <Avatar className="h-10 w-10 border border-gray-200">
