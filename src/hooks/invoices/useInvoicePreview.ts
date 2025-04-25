@@ -12,6 +12,14 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
   const [isLoading, setIsLoading] = useState(true);
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
   const [pdfMentioned, setPdfMentioned] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(Date.now());
+
+  // Function to refresh the preview
+  const refreshPreview = () => {
+    setPreviewError(null);
+    setIsLoading(true);
+    setRefreshKey(Date.now());
+  };
 
   useEffect(() => {
     console.group('InvoicePreview Component');
@@ -19,7 +27,8 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
       hasHtmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
       pdfUrl: pdfUrl || 'none',
-      pdfUrlValid: typeof pdfUrl === 'string' && pdfUrl.trim().length > 0
+      pdfUrlValid: typeof pdfUrl === 'string' && pdfUrl.trim().length > 0,
+      refreshKey
     });
 
     setPreviewError(null);
@@ -42,59 +51,23 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
       return;
     }
 
-    // If we have a PDF URL, always check if it's accessible first
+    // If we have a PDF URL, check if it's accessible through our proxy
     if (pdfUrl && pdfUrl.trim() !== '') {
-      console.log('Checking PDF URL accessibility:', pdfUrl);
+      console.log('Setting content type to PDF for:', pdfUrl);
       setContentType('pdf');
-      
-      // Check if the URL is accessible
-      fetch(pdfUrl, { method: 'HEAD' })
-        .then((response) => {
-          setIsLoading(false);
-          if (!response.ok) {
-            console.error('PDF URL inaccessible:', {
-              status: response.status,
-              statusText: response.statusText,
-              url: pdfUrl
-            });
-            
-            // Fallback to HTML content if available
-            if (htmlContent) {
-              console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
-              setContentType('html');
-            } else {
-              setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
-              setContentType('none');
-            }
-          } else {
-            console.log('PDF URL is accessible:', pdfUrl);
-            setContentType('pdf');
-          }
-        })
-        .catch((err) => {
-          console.error('Error accessing PDF URL:', err.message, pdfUrl);
-          setIsLoading(false);
-          
-          if (htmlContent) {
-            console.log('PDF URL error but HTML content available, will use HTML instead');
-            setContentType('html');
-          } else {
-            setPreviewError(`Error accessing PDF: ${err.message}`);
-            setContentType('none');
-          }
-        });
+      setIsLoading(false);
     } else if (htmlContent) {
       console.log('No PDF URL provided, using HTML content for preview');
       setContentType('html');
       setIsLoading(false);
-      console.groupEnd();
     } else {
       console.warn('Both PDF URL and HTML content are empty or invalid');
       setContentType('none');
       setIsLoading(false);
-      console.groupEnd();
     }
-  }, [htmlContent, pdfUrl]);
+    
+    console.groupEnd();
+  }, [htmlContent, pdfUrl, refreshKey]);
 
   return {
     fullscreenPreview,
@@ -105,5 +78,7 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
     setIsLoading,
     contentType,
     pdfMentioned,
+    refreshPreview,
+    refreshKey
   };
 };

@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ExternalLink, FileText, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -22,6 +22,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen,
 }) => {
+  const [viewerType, setViewerType] = useState<'object' | 'iframe' | 'fallback'>('object');
+  const [failed, setFailed] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const [key, setKey] = useState(Date.now());
+  const [proxyUrl, setProxyUrl] = useState<string>('');
+
   // Log component props on mount and when they change
   useEffect(() => {
     console.group('DocumentViewer Props');
@@ -31,6 +37,42 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log('isWordDocument:', isWordDocument);
     console.groupEnd();
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+
+  // Function to get the proxy URL for PDFs
+  useEffect(() => {
+    if (pdfUrl && isPdf) {
+      // Extract the file name from the URL
+      const fileName = pdfUrl.split('/').pop();
+      if (fileName) {
+        // Create the proxy URL
+        const proxy = `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(fileName)}`;
+        console.log('Using proxy URL:', proxy);
+        setProxyUrl(proxy);
+      } else {
+        setProxyUrl(pdfUrl);
+      }
+    }
+  }, [pdfUrl, isPdf]);
+
+  // Handle viewer errors
+  const handleError = useCallback(() => {
+    console.log(`PDF loading error with ${viewerType}, attempt ${attemptCount}`);
+    
+    if (viewerType === 'object') {
+      console.log("Switching to iframe viewer");
+      setViewerType('iframe');
+      setKey(Date.now());
+      setAttemptCount(prev => prev + 1);
+    } else if (attemptCount < 2) {
+      console.log("Retrying with iframe viewer");
+      setKey(Date.now());
+      setAttemptCount(prev => prev + 1);
+    } else {
+      console.log("All PDF loading attempts failed");
+      setFailed(true);
+      onIframeError();
+    }
+  }, [viewerType, attemptCount, onIframeError]);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -93,36 +135,75 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
+  // PDF loading error indicator for diagnostics
+  if (failed) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full">
+        <FileText className="h-12 w-12 mb-4 text-red-400" />
+        <p className="text-center text-red-500 mb-4">PDF preview failed to load</p>
+        <Button 
+          variant="outline" 
+          onClick={onExternalOpen} 
+          className="flex items-center"
+        >
+          Open externally <ExternalLink className="h-4 w-4 ml-2" />
+        </Button>
+      </div>
+    );
+  }
+
   // Function to create a direct PDF embed that works in most browsers
   const createPdfEmbed = () => {
     if (!pdfUrl) return null;
     
-    return (
-      <div className="w-full h-full flex flex-col">
-        <object
-          data={pdfUrl}
-          type="application/pdf"
-          className="w-full h-full border-0"
-          onError={onIframeError}
-          onLoad={onIframeLoad}
-        >
-          <div className="flex flex-col items-center justify-center h-full p-6">
-            <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
-            <Button 
-              onClick={onExternalOpen}
-              className="flex items-center"
-            >
-              Download PDF <ExternalLink className="h-4 w-4 ml-2" />
-            </Button>
-          </div>
-        </object>
-      </div>
-    );
+    const finalUrl = viewerType === 'fallback' ? pdfUrl : proxyUrl || pdfUrl;
+    
+    if (viewerType === 'object') {
+      return (
+        <div className="w-full h-full flex flex-col">
+          <object
+            key={key}
+            data={finalUrl}
+            type="application/pdf"
+            className="w-full h-full border-0"
+            onError={handleError}
+            onLoad={onIframeLoad}
+          >
+            <p className="text-center">PDF loading failed. Using fallback...</p>
+          </object>
+        </div>
+      );
+    } else if (viewerType === 'iframe') {
+      return (
+        <div className="w-full h-full flex flex-col">
+          <iframe
+            key={key}
+            src={finalUrl}
+            className="w-full h-full border-0"
+            onError={handleError}
+            onLoad={onIframeLoad}
+          />
+        </div>
+      );
+    } else {
+      // Fallback content
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-6">
+          <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
+          <Button 
+            onClick={onExternalOpen}
+            className="flex items-center"
+          >
+            Download PDF <ExternalLink className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      );
+    }
   };
 
   // Prioritize PDF viewing when available
   if (pdfUrl && isPdf) {
-    console.log('Displaying PDF content from URL:', pdfUrl);
+    console.log('Displaying PDF content from URL:', proxyUrl || pdfUrl);
     return createPdfEmbed();
   }
 

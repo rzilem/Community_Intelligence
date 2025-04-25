@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCcw } from "lucide-react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { NoPreviewState } from './preview/NoPreviewState';
 import { DocumentViewer } from './preview/DocumentViewer';
@@ -9,6 +9,7 @@ import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
 import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
+import { Button } from "@/components/ui/button";
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -27,6 +28,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const [hasContent, setHasContent] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('document');
+  const [refreshKey, setRefreshKey] = useState(Date.now());
   
   // Determine if the document is a Word document based on file extension
   const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
@@ -46,10 +48,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const handleToggleFullscreen = () => {
     setFullscreen(!fullscreen);
   };
+
+  // Handle refresh action
+  const handleRefresh = () => {
+    setError(null);
+    setLoading(true);
+    setRefreshKey(Date.now());
+  };
   
   useEffect(() => {
     // Reset states
-    setLoading(false);
+    setLoading(true);
     setError(null);
     
     // Validate PDF URL
@@ -62,6 +71,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       } catch (e) {
         console.error("Invalid PDF URL:", pdfUrl, e);
         setError("Invalid PDF URL format");
+        setLoading(false);
       }
     } else {
       setNormalizedPdfUrl('');
@@ -84,16 +94,23 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       hasContent: hasContent,
       isPdfFile: isPdf(pdfUrl || '')
     });
-  }, [htmlContent, pdfUrl, emailContent]);
+  }, [htmlContent, pdfUrl, emailContent, refreshKey]);
 
   // If no content and no email, show no preview state
   if (!hasContent && !hasEmailContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
-  // If there's an error, show error state
+  // If there's an error, show error state with retry option
   if (error) {
-    return <PreviewErrorState error={error} />;
+    return (
+      <PreviewErrorState 
+        error={error} 
+        pdfUrl={normalizedPdfUrl}
+        onExternalOpen={handleExternalOpen}
+        onRetry={handleRefresh}
+      />
+    );
   }
 
   return (
@@ -108,6 +125,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         hasEmail={hasEmailContent}
+        onRefresh={handleRefresh}
       />
       
       <Tabs value={activeTab} className="flex-1 overflow-hidden">

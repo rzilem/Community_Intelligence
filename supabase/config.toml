@@ -23,6 +23,9 @@ refresh_token_reuse_interval = 10
 [storage]
 file_size_limit = "50MiB"
 
+[functions.pdf-proxy]
+verify_jwt = false
+
 [[tables]]
 name = "form_templates"
 
