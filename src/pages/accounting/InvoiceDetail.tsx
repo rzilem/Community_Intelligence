@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -40,8 +39,7 @@ const InvoiceDetail = () => {
       vendor: invoice.vendor,
       invoiceNumber: invoice.invoiceNumber,
       hasEmailContent: !!invoice.emailContent,
-      emailContentLength: invoice.emailContent?.length || 0,
-      pdfUrl: invoice.pdfUrl || 'none'
+      emailContentLength: invoice.emailContent?.length || 0
     });
   }, [invoice]);
 
@@ -116,8 +114,7 @@ const InvoiceDetail = () => {
       nextIndex = (currentIndex - 1 + pendingInvoices.length) % pendingInvoices.length;
     }
     
-    // Use navigate to change routes without triggering a full page reload
-    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`, { replace: true });
+    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`);
   };
 
   return (

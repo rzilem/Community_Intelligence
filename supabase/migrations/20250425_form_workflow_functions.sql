@@ -1,3 +1,4 @@
+
 -- Create function to get form workflows
 CREATE OR REPLACE FUNCTION public.get_form_workflows(template_id UUID)
 RETURNS SETOF public.form_workflows
@@ -43,4 +44,3 @@ BEGIN
   );
 END;
 $$;
-

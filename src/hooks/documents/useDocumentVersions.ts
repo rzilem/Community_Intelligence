@@ -18,6 +18,7 @@ export const useDocumentVersions = (documentId?: string) => {
       if (!documentId) return [];
       
       try {
+        // Use a more type-safe approach to query document versions
         const { data, error } = await supabase
           .from('document_versions')
           .select('*')
@@ -26,6 +27,7 @@ export const useDocumentVersions = (documentId?: string) => {
           
         if (error) throw error;
         
+        // Return the data as DocumentVersion[]
         return (data || []) as DocumentVersion[];
       } catch (error: any) {
         console.error('Error fetching document versions:', error);
@@ -36,13 +38,7 @@ export const useDocumentVersions = (documentId?: string) => {
     enabled: !!documentId
   });
 
-  const uploadNewVersion = async ({ file, documentId, notes }: { 
-    file: File; 
-    documentId: string; 
-    notes?: string 
-  }) => {
-    if (!documentId) return false;
-    
+  const uploadNewVersion = async (file: File, documentId: string, notes?: string) => {
     setIsUploadingVersion(true);
     try {
       // Get the current document to determine next version number
@@ -119,15 +115,19 @@ export const useDocumentVersions = (documentId?: string) => {
     }
   };
 
-  const revertToVersion = async ({ 
-    documentId, 
-    versionId, 
-    versionNumber 
-  }: { 
-    documentId: string; 
-    versionId: string; 
-    versionNumber: number 
-  }) => {
+  const uploadVersionMutation = useMutation({
+    mutationFn: ({ 
+      file, 
+      documentId, 
+      notes 
+    }: { 
+      file: File; 
+      documentId: string; 
+      notes?: string 
+    }) => uploadNewVersion(file, documentId, notes)
+  });
+
+  const revertToVersion = async (documentId: string, versionId: string, versionNumber: number) => {
     try {
       // Get version details
       const { data: version, error: versionError } = await supabase
@@ -165,12 +165,24 @@ export const useDocumentVersions = (documentId?: string) => {
     }
   };
 
+  const revertVersionMutation = useMutation({
+    mutationFn: ({ 
+      documentId, 
+      versionId, 
+      versionNumber 
+    }: { 
+      documentId: string; 
+      versionId: string; 
+      versionNumber: number 
+    }) => revertToVersion(documentId, versionId, versionNumber)
+  });
+
   return {
     versions: versions || [],
     versionsLoading,
-    isUploadingVersion,
-    uploadNewVersion,
-    revertToVersion,
+    isUploadingVersion: isUploadingVersion || uploadVersionMutation.isPending,
+    uploadNewVersion: uploadVersionMutation.mutate,
+    revertToVersion: revertVersionMutation.mutate,
     refetchVersions
   };
 };

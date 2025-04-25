@@ -1,42 +1,36 @@
 
 import { useState, useEffect } from 'react';
-import { OnboardingStage, OnboardingTemplate } from '@/types/onboarding-types';
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
+import { OnboardingTemplate } from '@/types/onboarding-types';
 
 export const useTemplateStages = (templates: OnboardingTemplate[]) => {
-  const [templateStages, setTemplateStages] = useState<Record<string, OnboardingStage[]>>({});
-  const [loadingStages, setLoadingStages] = useState(true);
   const { getTemplateStages } = useOnboardingTemplates();
+  const [templateStages, setTemplateStages] = useState<Record<string, any>>({});
+  const [loadingStages, setLoadingStages] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const fetchStages = async () => {
-      if (!templates.length) {
-        setLoadingStages(false);
-        return;
+    templates.forEach(template => {
+      if (!templateStages[template.id]) {
+        loadStagesForTemplate(template.id);
       }
-      
-      setLoadingStages(true);
-      const stagesData: Record<string, OnboardingStage[]> = {};
-      
-      for (const template of templates) {
-        try {
-          const stages = await getTemplateStages(template.id);
-          stagesData[template.id] = stages;
-        } catch (error) {
-          console.error(`Error fetching stages for template ${template.id}:`, error);
-          stagesData[template.id] = [];
-        }
-      }
-      
-      setTemplateStages(stagesData);
-      setLoadingStages(false);
-    };
+    });
+  }, [templates]);
 
-    fetchStages();
-  }, [templates, getTemplateStages]);
+  const loadStagesForTemplate = async (templateId: string) => {
+    setLoadingStages(prev => ({ ...prev, [templateId]: true }));
+    try {
+      const stages = await getTemplateStages(templateId);
+      setTemplateStages(prev => ({ ...prev, [templateId]: stages }));
+    } catch (error) {
+      console.error('Error loading stages for template:', error);
+    } finally {
+      setLoadingStages(prev => ({ ...prev, [templateId]: false }));
+    }
+  };
 
   return {
     templateStages,
-    loadingStages
+    loadingStages,
+    loadStagesForTemplate
   };
 };

@@ -23,12 +23,10 @@ export const messageService = {
             to: messageData.recipient_groups, // Assuming this is an email list
             subject: messageData.subject,
             html: messageData.content
-          }),
-          // The supabase client already includes auth headers by default
+          })
         });
 
         if (emailResponse.error) {
-          console.error('Email function error:', emailResponse.error);
           throw emailResponse.error;
         }
       }
@@ -65,12 +63,12 @@ export const messageService = {
           message: 'Message sent successfully'
         };
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending message:', error);
       return {
         success: false,
         error,
-        message: error.message || 'Failed to send or schedule message'
+        message: 'Failed to send or schedule message'
       };
     }
   },

@@ -1,158 +1,510 @@
 
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useWorkflows } from '@/hooks/operations/useWorkflows';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { ChevronLeft, CheckCircle, FileText, AlertCircle } from 'lucide-react';
-import { AlertDialog, AlertDialogContent, AlertDialogAction, AlertDialogCancel, 
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle 
-} from '@/components/ui/alert-dialog';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Workflow, WorkflowStep } from '@/types/workflow-types';
 import PageTemplate from '@/components/layout/PageTemplate';
-import WorkflowHeader from '@/components/operations/workflow/WorkflowHeader';
-import WorkflowProgress from '@/components/operations/workflow/WorkflowProgress';
-import WorkflowStepsList from '@/components/operations/workflow/WorkflowStepsList';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2, ArrowLeft, Plus, Save, Trash2, MoveUp, MoveDown } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
-const WorkflowDetails = () => {
-  const navigate = useNavigate();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+const WorkflowDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [workflowData, setWorkflowData] = useState<Partial<Workflow> | null>(null);
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   
-  const {
-    useWorkflow,
-    updateWorkflowStatus,
-    removeWorkflow,
-    completeWorkflowStep,
-    duplicateWorkflow
-  } = useWorkflows();
-
-  const { workflow, isLoading, error } = useWorkflow(id);
-
-  const handleBack = () => navigate('/operations/workflows');
+  // Fetch workflow details
+  const { data: workflow, isLoading, error } = useQuery({
+    queryKey: ['workflow', id],
+    queryFn: async () => {
+      try {
+        let query;
+        // Check if this is a template or a regular workflow
+        const templateCheck = await supabase
+          .from('workflow_templates')
+          .select('id')
+          .eq('id', id)
+          .single();
+        
+        if (templateCheck.data) {
+          query = await supabase
+            .from('workflow_templates')
+            .select('*')
+            .eq('id', id)
+            .single();
+        } else {
+          query = await supabase
+            .from('workflows')
+            .select('*')
+            .eq('id', id)
+            .single();
+        }
+        
+        const { data, error } = query;
+        if (error) throw error;
+        
+        // Convert to our Workflow type
+        const result: Workflow = {
+          id: data.id,
+          name: data.name,
+          description: data.description || '',
+          type: data.type,
+          status: data.status,
+          steps: data.steps || [],
+          isTemplate: data.is_template,
+          isPopular: data.is_popular || false
+        };
+        
+        setWorkflowData(result);
+        return result;
+      } catch (err) {
+        console.error('Error fetching workflow:', err);
+        throw err;
+      }
+    },
+    enabled: !!id,
+  });
   
-  const handleDelete = async () => {
-    if (!workflow?.id) return;
-    const success = await removeWorkflow(workflow.id);
-    if (success) navigate('/operations/workflows');
-    setDeleteDialogOpen(false);
+  // Update workflow mutation
+  const updateWorkflow = useMutation({
+    mutationFn: async (data: Partial<Workflow>) => {
+      try {
+        const isTemplate = data.isTemplate;
+        const tableName = isTemplate ? 'workflow_templates' : 'workflows';
+        
+        const { error } = await supabase
+          .from(tableName)
+          .update({
+            name: data.name,
+            description: data.description,
+            steps: data.steps,
+            // Don't update these unless explicitly changed
+            type: data.type,
+            status: data.status,
+          })
+          .eq('id', id);
+          
+        if (error) throw error;
+        
+        return data;
+      } catch (err) {
+        console.error('Error updating workflow:', err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Workflow updated successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflow', id] });
+      if (workflow?.isTemplate) {
+        queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+      }
+    },
+    onError: (err) => {
+      toast.error(`Error updating workflow: ${err.message}`);
+    }
+  });
+  
+  // Delete workflow mutation
+  const deleteWorkflow = useMutation({
+    mutationFn: async () => {
+      try {
+        const isTemplate = workflow?.isTemplate;
+        const tableName = isTemplate ? 'workflow_templates' : 'workflows';
+        
+        const { error } = await supabase
+          .from(tableName)
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        
+        return true;
+      } catch (err) {
+        console.error('Error deleting workflow:', err);
+        throw err;
+      }
+    },
+    onSuccess: () => {
+      toast.success('Workflow deleted successfully');
+      navigate('/operations/workflows');
+      if (workflow?.isTemplate) {
+        queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+      }
+    },
+    onError: (err) => {
+      toast.error(`Error deleting workflow: ${err.message}`);
+    }
+  });
+  
+  // Update local workflow data
+  const handleInputChange = (field: string, value: string) => {
+    if (!workflowData) return;
+    setWorkflowData({
+      ...workflowData,
+      [field]: value
+    });
   };
-
-  const handleDuplicate = async () => {
-    if (!workflow?.id) return;
-    const newId = await duplicateWorkflow(workflow.id);
-    if (newId) navigate(`/operations/workflows/${newId}`);
+  
+  // Update step
+  const handleStepChange = (stepId: string, field: string, value: string) => {
+    if (!workflowData?.steps) return;
+    
+    const updatedSteps = workflowData.steps.map((step) => {
+      if (step.id === stepId) {
+        return { ...step, [field]: value };
+      }
+      return step;
+    });
+    
+    setWorkflowData({
+      ...workflowData,
+      steps: updatedSteps
+    });
   };
-
-  const handleEditWorkflow = () => {
-    if (workflow?.id) navigate(`/operations/workflows/edit/${workflow.id}`);
+  
+  // Add new step
+  const addStep = () => {
+    if (!workflowData) return;
+    
+    const newStep: WorkflowStep = {
+      id: crypto.randomUUID(),
+      name: `Step ${(workflowData.steps?.length || 0) + 1}`,
+      description: '',
+      order: (workflowData.steps?.length || 0),
+      isComplete: false
+    };
+    
+    setWorkflowData({
+      ...workflowData,
+      steps: [...(workflowData.steps || []), newStep]
+    });
+    
+    // Expand the newly added step
+    setExpandedStepId(newStep.id);
   };
-
-  const handleToggleStatus = async () => {
-    if (!workflow?.id) return;
-    const newStatus = workflow.status === 'inactive' ? 'active' : 'inactive';
-    await updateWorkflowStatus(workflow.id, newStatus);
+  
+  // Delete step
+  const deleteStep = (stepId: string) => {
+    if (!workflowData?.steps) return;
+    
+    const updatedSteps = workflowData.steps
+      .filter((step) => step.id !== stepId)
+      .map((step, index) => ({
+        ...step,
+        order: index
+      }));
+    
+    setWorkflowData({
+      ...workflowData,
+      steps: updatedSteps
+    });
   };
-
-  const handleCompleteStep = async (stepId: string) => {
-    if (!workflow?.id) return;
-    await completeWorkflowStep(workflow.id, stepId);
+  
+  // Move step up
+  const moveStepUp = (stepId: string) => {
+    if (!workflowData?.steps) return;
+    
+    const stepIndex = workflowData.steps.findIndex((s) => s.id === stepId);
+    if (stepIndex <= 0) return;
+    
+    const updatedSteps = [...workflowData.steps];
+    const temp = updatedSteps[stepIndex];
+    updatedSteps[stepIndex] = updatedSteps[stepIndex - 1];
+    updatedSteps[stepIndex - 1] = temp;
+    
+    // Update order property
+    const reorderedSteps = updatedSteps.map((step, index) => ({
+      ...step,
+      order: index
+    }));
+    
+    setWorkflowData({
+      ...workflowData,
+      steps: reorderedSteps
+    });
   };
-
-  const handleMarkAsCompleted = async () => {
-    if (!workflow?.id) return;
-    await updateWorkflowStatus(workflow.id, 'completed');
+  
+  // Move step down
+  const moveStepDown = (stepId: string) => {
+    if (!workflowData?.steps) return;
+    
+    const stepIndex = workflowData.steps.findIndex((s) => s.id === stepId);
+    if (stepIndex >= workflowData.steps.length - 1) return;
+    
+    const updatedSteps = [...workflowData.steps];
+    const temp = updatedSteps[stepIndex];
+    updatedSteps[stepIndex] = updatedSteps[stepIndex + 1];
+    updatedSteps[stepIndex + 1] = temp;
+    
+    // Update order property
+    const reorderedSteps = updatedSteps.map((step, index) => ({
+      ...step,
+      order: index
+    }));
+    
+    setWorkflowData({
+      ...workflowData,
+      steps: reorderedSteps
+    });
   };
-
+  
+  // Save changes
+  const saveChanges = () => {
+    if (!workflowData) return;
+    updateWorkflow.mutate(workflowData);
+  };
+  
+  // Handle delete confirmation
+  const confirmDelete = () => {
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Perform delete
+  const handleDelete = () => {
+    deleteWorkflow.mutate();
+    setIsDeleteDialogOpen(false);
+  };
+  
   if (isLoading) {
     return (
-      <PageTemplate title="Workflow Details" icon={<FileText className="h-5 w-5" />}>
-        <div className="flex flex-col gap-4">
-          <div className="h-8 w-64 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-24 bg-gray-200 animate-pulse rounded"></div>
-          <div className="h-96 bg-gray-200 animate-pulse rounded"></div>
+      <PageTemplate title="Workflow Details" icon={<Loader2 className="h-8 w-8 animate-spin" />}>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading workflow details...</span>
         </div>
       </PageTemplate>
     );
   }
-
+  
   if (error || !workflow) {
     return (
-      <PageTemplate title="Workflow Details" icon={<FileText className="h-5 w-5" />}>
-        <div className="flex flex-col items-center justify-center p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-          <h2 className="text-2xl font-semibold mb-2">Error Loading Workflow</h2>
-          <p className="text-muted-foreground mb-6">
-            {error?.message || "This workflow doesn't exist or you don't have permission to view it."}
-          </p>
-          <Button onClick={handleBack}>Return to Workflows</Button>
-        </div>
+      <PageTemplate title="Workflow Details" icon={<ArrowLeft className="h-8 w-8" />}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <h3 className="text-lg font-semibold mb-2">Error Loading Workflow</h3>
+              <p className="text-muted-foreground mb-4">
+                {error ? `${error}` : 'Could not find the requested workflow.'}
+              </p>
+              <Button onClick={() => navigate('/operations/workflows')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Workflows
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </PageTemplate>
     );
   }
-
-  const isPaused = workflow.status === 'inactive';
-  const progressPercentage = workflow.steps?.filter(s => s.isComplete).length || 0;
-  const isComplete = progressPercentage === workflow.steps?.length;
   
   return (
-    <PageTemplate title={workflow.name} icon={<FileText className="h-5 w-5" />}>
-      <div className="flex flex-col gap-6">
-        <div className="flex justify-between items-center">
-          <Button variant="outline" size="sm" onClick={handleBack}>
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+    <PageTemplate 
+      title={workflowData?.name || workflow.name} 
+      icon={<ArrowLeft className="h-8 w-8 cursor-pointer" onClick={() => navigate('/operations/workflows')} />}
+      description={workflowData?.description || workflow.description}
+      actions={
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={confirmDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+          <Button onClick={saveChanges} disabled={updateWorkflow.isPending}>
+            <Save className="mr-2 h-4 w-4" />
+            {updateWorkflow.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
-        
+      }
+    >
+      <div className="space-y-6">
         <Card>
-          <CardContent className="p-6">
-            <WorkflowHeader
-              workflow={workflow}
-              onEdit={handleEditWorkflow}
-              onDelete={() => setDeleteDialogOpen(true)}
-              onDuplicate={handleDuplicate}
-              onToggleStatus={handleToggleStatus}
-              isPaused={isPaused}
-            />
-            
-            <WorkflowProgress steps={workflow.steps} />
-            
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Workflow Steps</h3>
-              <WorkflowStepsList 
-                steps={workflow.steps}
-                onCompleteStep={handleCompleteStep}
-              />
+          <CardHeader>
+            <CardTitle>Workflow Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input 
+                  id="name" 
+                  value={workflowData?.name || workflow.name} 
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea 
+                  id="description" 
+                  value={workflowData?.description || workflow.description} 
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex gap-2 items-center">
+                <Label>Type:</Label>
+                <Badge variant="outline">{workflow.type}</Badge>
+              </div>
+              
+              <div className="flex gap-2 items-center">
+                <Label>Status:</Label>
+                <Badge 
+                  variant={workflow.status === 'active' ? 'default' : 
+                           workflow.status === 'template' ? 'secondary' : 
+                           'outline'}
+                >
+                  {workflow.status}
+                </Badge>
+              </div>
+              
+              <div className="flex gap-2 items-center">
+                <Label>Template:</Label>
+                <Badge variant="outline">{workflow.isTemplate ? 'Yes' : 'No'}</Badge>
+              </div>
             </div>
           </CardContent>
-          
-          <CardFooter className="flex justify-between p-6">
-            <Button variant="outline" onClick={handleBack}>Cancel</Button>
-            <Button 
-              disabled={!isComplete} 
-              className="bg-green-600 hover:bg-green-700"
-              onClick={handleMarkAsCompleted}
-            >
-              <CheckCircle className="h-4 w-4 mr-1" />
-              Mark as Completed
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Workflow Steps</CardTitle>
+            <Button onClick={addStep}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Step
             </Button>
-          </CardFooter>
+          </CardHeader>
+          <CardContent>
+            {(!workflowData?.steps || workflowData.steps.length === 0) ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No steps defined yet. Click "Add Step" to get started.
+              </div>
+            ) : (
+              <Accordion
+                type="single"
+                collapsible
+                value={expandedStepId || undefined}
+                onValueChange={(value) => setExpandedStepId(value)}
+              >
+                {workflowData.steps.map((step, index) => (
+                  <AccordionItem key={step.id} value={step.id}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex flex-1 items-center">
+                        <span className="font-medium">{index + 1}. {step.name}</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 pt-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor={`step-name-${step.id}`}>Step Name</Label>
+                          <Input 
+                            id={`step-name-${step.id}`} 
+                            value={step.name} 
+                            onChange={(e) => handleStepChange(step.id, 'name', e.target.value)}
+                          />
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor={`step-description-${step.id}`}>Description</Label>
+                          <Textarea 
+                            id={`step-description-${step.id}`} 
+                            value={step.description || ''} 
+                            onChange={(e) => handleStepChange(step.id, 'description', e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                        
+                        <div className="flex justify-between pt-2">
+                          <div className="space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => moveStepUp(step.id)}
+                              disabled={index === 0}
+                            >
+                              <MoveUp className="h-4 w-4" />
+                              <span className="sr-only">Move Up</span>
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => moveStepDown(step.id)}
+                              disabled={index === workflowData.steps.length - 1}
+                            >
+                              <MoveDown className="h-4 w-4" />
+                              <span className="sr-only">Move Down</span>
+                            </Button>
+                          </div>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => deleteStep(step.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete Step
+                          </Button>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardContent>
         </Card>
       </div>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this workflow?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the workflow
-              and all associated data.
+              This will permanently delete this workflow and all of its steps.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleDelete}>
-              Delete
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground"
+            >
+              {deleteWorkflow.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Workflow'  
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

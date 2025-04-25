@@ -4,13 +4,13 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { User } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import LeadsTable from '@/components/leads/LeadsTable';
 import { useLeads } from '@/hooks/leads/useLeads';
 import LeadStatCards from '@/components/leads/LeadStatCards';
 import LeadActionButtons from '@/components/leads/LeadActionButtons';
 import LeadColumnSelector from '@/components/leads/LeadColumnSelector';
 import LeadStatusTabs from '@/components/leads/LeadStatusTabs';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
-import LeadsContent from '@/components/leads/LeadsContent';
 
 const LeadsDashboard = () => {
   const { 
@@ -31,6 +31,7 @@ const LeadsDashboard = () => {
   const { markAllAsRead } = useLeadNotifications();
   const [activeTab, setActiveTab] = useState('all');
   
+  // Mark notifications as read when visiting this page
   useEffect(() => {
     markAllAsRead();
   }, []);
@@ -38,7 +39,13 @@ const LeadsDashboard = () => {
   // Filter leads based on active tab
   const filteredLeads = leads.filter(lead => {
     if (activeTab === 'all') return true;
-    return lead.status === activeTab;
+    if (activeTab === 'new') return lead.status === 'new';
+    if (activeTab === 'contacted') return lead.status === 'contacted';
+    if (activeTab === 'qualified') return lead.status === 'qualified';
+    if (activeTab === 'proposal') return lead.status === 'proposal';
+    if (activeTab === 'converted') return lead.status === 'converted';
+    if (activeTab === 'lost') return lead.status === 'lost';
+    return true;
   });
   
   // Count leads by status
@@ -59,8 +66,10 @@ const LeadsDashboard = () => {
       description="Track and manage potential association clients."
     >
       <div className="space-y-6">
+        {/* Quick stats cards */}
         <LeadStatCards leadCounts={leadCounts} />
 
+        {/* Actions bar */}
         <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
           <LeadActionButtons 
             onRefresh={refreshLeads} 
@@ -76,20 +85,83 @@ const LeadsDashboard = () => {
           />
         </div>
 
+        {/* Tabs and Table */}
         <Card>
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
             <div className="flex items-center justify-between px-4 pt-4">
               <LeadStatusTabs leadCounts={leadCounts} activeTab={activeTab} />
             </div>
             <CardContent className="pt-4 pb-0">
-              <LeadsContent 
-                leads={filteredLeads}
-                isLoading={isLoading}
-                visibleColumnIds={visibleColumnIds}
-                columns={columns}
-                onDeleteLead={deleteLead}
-                onUpdateLeadStatus={updateLeadStatus}
-              />
+              <TabsContent value="all">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="new">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="contacted">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="qualified">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="proposal">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="converted">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
+              <TabsContent value="lost">
+                <LeadsTable 
+                  leads={filteredLeads} 
+                  isLoading={isLoading}
+                  visibleColumnIds={visibleColumnIds}
+                  columns={columns}
+                  onDeleteLead={deleteLead}
+                  onUpdateLeadStatus={updateLeadStatus}
+                />
+              </TabsContent>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground py-2 px-4 border-t">
               Last updated: {lastRefreshed.toLocaleTimeString()}

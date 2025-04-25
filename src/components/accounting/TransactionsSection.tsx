@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -5,9 +6,6 @@ import TransactionFilters from './TransactionFilters';
 import TransactionTable from './TransactionTable';
 import TransactionSummaryCards from './TransactionSummaryCards';
 import { Transaction } from '@/types/transaction-payment-types';
-import { TransactionBatchOperations } from './transactions/TransactionBatchOperations';
-import { RecurringTransactionDialog } from './transactions/RecurringTransactionDialog';
-import { RecurringTransactionsList } from './transactions/RecurringTransactionsList';
 
 interface TransactionsSectionProps {
   transactions: Transaction[];
@@ -17,7 +15,6 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState('all');
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
   
   const filteredTransactions = transactions
     .filter(transaction => 
@@ -32,10 +29,6 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
   
   const incomeTransactions = transactions.filter(t => t.type === 'income');
   const expenseTransactions = transactions.filter(t => t.type === 'expense');
-
-  const handleBatchOperationComplete = () => {
-    setSelectedTransactions([]);
-  };
   
   return (
     <>
@@ -43,20 +36,15 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
       
       <Card>
         <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-6">
-            <TransactionFilters 
-              searchTerm={searchTerm} 
-              setSearchTerm={setSearchTerm} 
-              date={date} 
-              setDate={setDate} 
-            />
-            <div className="flex gap-2">
-              <RecurringTransactionDialog />
-            </div>
-          </div>
-
+          <TransactionFilters 
+            searchTerm={searchTerm} 
+            setSearchTerm={setSearchTerm} 
+            date={date} 
+            setDate={setDate} 
+          />
+          
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all">
                 All Transactions
                 <span className="ml-1.5 rounded-full bg-muted px-2 py-0.5 text-xs">
@@ -75,33 +63,20 @@ const TransactionsSection: React.FC<TransactionsSectionProps> = ({ transactions 
                   {expenseTransactions.length}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="recurring">Recurring</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all">
-              <TransactionTable 
-                transactions={filteredTransactions}
-                selectedTransactions={selectedTransactions}
-                onSelectionChange={setSelectedTransactions}
-              />
+              <TransactionTable transactions={filteredTransactions} />
             </TabsContent>
             <TabsContent value="income">
               <TransactionTable 
-                transactions={filteredTransactions.filter(t => t.type === 'income')}
-                selectedTransactions={selectedTransactions}
-                onSelectionChange={setSelectedTransactions}
+                transactions={filteredTransactions.filter(t => t.type === 'income')}  
               />
             </TabsContent>
             <TabsContent value="expense">
               <TransactionTable 
-                transactions={filteredTransactions.filter(t => t.type === 'expense')}
-                selectedTransactions={selectedTransactions}
-                onSelectionChange={setSelectedTransactions}
+                transactions={filteredTransactions.filter(t => t.type === 'expense')}  
               />
-            </TabsContent>
-            
-            <TabsContent value="recurring">
-              <RecurringTransactionsList />
             </TabsContent>
           </Tabs>
         </CardContent>

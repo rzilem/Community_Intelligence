@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 
 const BackToLeadsButton: React.FC = () => {
@@ -9,14 +9,13 @@ const BackToLeadsButton: React.FC = () => {
 
   return (
     <div className="absolute top-4 left-4 z-10">
-      <TooltipButton 
+      <Button 
         variant="outline"
         onClick={() => navigate('/lead-management/dashboard')}
-        tooltip="Return to leads dashboard"
       >
         <ChevronLeft className="h-4 w-4 mr-2" />
         Back to Leads
-      </TooltipButton>
+      </Button>
     </div>
   );
 };

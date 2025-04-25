@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pause, Play, XCircle, Eye, Edit } from 'lucide-react';
+import { PlayCircle, PauseCircle, Eye, XCircle, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
 import {
   DropdownMenu,
@@ -19,8 +19,8 @@ interface ActiveWorkflowCardProps {
   onPauseWorkflow: (id: string) => void;
   onResumeWorkflow: (id: string) => void;
   onCancelWorkflow: (id: string) => void;
-  onEditWorkflow: (id: string) => void;
-  onDeleteWorkflow: (id: string) => void;
+  onEditWorkflow?: (id: string) => void;
+  onDeleteWorkflow?: (id: string) => void;
 }
 
 const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
@@ -32,94 +32,124 @@ const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
   onEditWorkflow,
   onDeleteWorkflow
 }) => {
-  const isPaused = workflow.status === 'inactive';
-  
+  // Function to check if all steps are completed
+  const getProgressPercentage = () => {
+    if (!workflow.steps || workflow.steps.length === 0) return 0;
+    const completedSteps = workflow.steps.filter(step => step.isComplete).length;
+    return Math.round((completedSteps / workflow.steps.length) * 100);
+  };
+
+  const isActive = workflow.status === 'active';
+  const progressPercentage = getProgressPercentage();
+
   return (
-    <Card className="transition-all hover:shadow-md h-full">
-      <CardHeader className="p-3 pb-2">
+    <Card className="transition-all hover:shadow-md">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-base font-bold truncate">
-            {workflow.name}
-          </CardTitle>
-          <div className="flex items-center space-x-0.5">
-            <Badge variant="outline" className="capitalize text-xs py-0 px-1.5">
-              {workflow.type}
-            </Badge>
+          <CardTitle className="text-xl font-bold">{workflow.name}</CardTitle>
+          <div className="flex items-center space-x-2">
             <Badge 
-              variant={isPaused ? "outline" : "default"} 
-              className={`text-xs py-0 px-1.5 ${isPaused ? 'text-amber-500' : ''}`}
+              variant={isActive ? "default" : "secondary"}
+              className="capitalize"
             >
-              {isPaused ? 'Paused' : 'Active'}
+              {workflow.status}
             </Badge>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-6 w-6 p-0" aria-label="More options">
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onViewDetails(workflow.id)}>
-                  <Eye className="mr-2 h-3.5 w-3.5" />
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
-                  <Edit className="mr-2 h-3.5 w-3.5" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDeleteWorkflow(workflow.id)}
-                  className="text-red-600"
-                >
-                  <XCircle className="mr-2 h-3.5 w-3.5" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {(onEditWorkflow || onDeleteWorkflow) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0" aria-label="More options">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onEditWorkflow && (
+                    <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDeleteWorkflow && (
+                    <DropdownMenuItem 
+                      onClick={() => onDeleteWorkflow(workflow.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-3 pt-0">
-        <p className="text-muted-foreground text-xs line-clamp-2 h-8">
+      <CardContent>
+        <p className="text-muted-foreground text-sm mb-4">
           {workflow.description || 'No description provided.'}
         </p>
         
-        <div className="text-xs text-muted-foreground mt-1">
-          <span className="font-medium">Progress: </span>
-          {workflow.steps?.filter(s => s.isComplete).length || 0} / {workflow.steps?.length || 0} steps
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Progress</span>
+            <span className="font-medium">{progressPercentage}%</span>
+          </div>
+          
+          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+            <div 
+              className="bg-primary h-2 rounded-full" 
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <div>
+              <span className="font-medium">Type: </span>
+              {workflow.type}
+            </div>
+            <div>
+              <span className="font-medium">Steps: </span>
+              {workflow.steps?.length || 0}
+            </div>
+          </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between p-3 pt-1 border-t text-xs">
-        {isPaused ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => onResumeWorkflow(workflow.id)}
-          >
-            <Play className="h-3 w-3 mr-1" />
-            Resume
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => onPauseWorkflow(workflow.id)}
-          >
-            <Pause className="h-3 w-3 mr-1" />
-            Pause
-          </Button>
-        )}
-        <Button 
-          variant="destructive"
+      <CardFooter className="flex justify-between pt-3 border-t">
+        <Button
+          variant="outline"
           size="sm"
-          className="h-7 text-xs"
-          onClick={() => onCancelWorkflow(workflow.id)}
+          onClick={() => isActive ? onPauseWorkflow(workflow.id) : onResumeWorkflow(workflow.id)}
         >
-          <XCircle className="h-3 w-3 mr-1" />
-          Cancel
+          {isActive ? (
+            <>
+              <PauseCircle className="h-4 w-4 mr-2" />
+              Pause
+            </>
+          ) : (
+            <>
+              <PlayCircle className="h-4 w-4 mr-2" />
+              Resume
+            </>
+          )}
         </Button>
+        <div className="space-x-2">
+          <Button 
+            variant="outline"
+            size="sm"
+            onClick={() => onCancelWorkflow(workflow.id)}
+            className="text-destructive hover:text-destructive"
+          >
+            <XCircle className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          <Button 
+            size="sm"
+            onClick={() => onViewDetails(workflow.id)}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

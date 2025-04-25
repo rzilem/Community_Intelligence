@@ -1,23 +1,28 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { BookOpen } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { JournalEntry } from '@/components/banking/JournalEntryTable';
-import JournalEntryDialog from '@/components/banking/journal-entry/JournalEntryDialog';
-import JournalEntriesHeader from '@/components/banking/journal-entries/JournalEntriesHeader';
-import JournalEntriesToolbar from '@/components/banking/journal-entries/JournalEntriesToolbar';
-import JournalEntryTable from '@/components/banking/JournalEntryTable';
+import { BookOpen, Plus, Search, Download, Filter } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import AssociationSelector from '@/components/associations/AssociationSelector';
+import JournalEntryTable, { JournalEntry } from '@/components/banking/JournalEntryTable';
+import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
+import { GLAccount } from '@/types/accounting-types';
 import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
+// Updated mock GL accounts to match the GLAccount interface
 const mockGLAccounts = ensureGLAccountsHaveIsActive([
-  { id: '1', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
-  { id: '2', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
-  { id: '3', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
-  { id: '4', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
-  { id: '5', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
-  { id: '6', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 }
+  { id: '1', number: '1000', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
+  { id: '2', number: '1100', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
+  { id: '3', number: '2000', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
+  { id: '4', number: '3000', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
+  { id: '5', number: '4000', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
+  { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
 ]);
 
+// Sample mock journal entries data
 const mockJournalEntriesData: JournalEntry[] = [
   {
     id: '1',
@@ -136,19 +141,57 @@ const JournalEntries = () => {
     >
       <Card>
         <CardHeader>
-          <JournalEntriesHeader onAssociationChange={handleAssociationChange} />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle>Journal Entries</CardTitle>
+              <CardDescription>Create and manage journal entries for accounting adjustments</CardDescription>
+            </div>
+            <AssociationSelector 
+              className="md:self-end" 
+              onAssociationChange={handleAssociationChange} 
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <JournalEntriesToolbar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            onCreateClick={() => {
-              setSelectedEntry(undefined);
-              setIsDialogOpen(true);
-            }}
-          />
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search entries..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="posted">Posted</SelectItem>
+                  <SelectItem value="reconciled">Reconciled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button variant="outline">
+                <Filter className="h-4 w-4 mr-2" /> More Filters
+              </Button>
+
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" /> Export
+              </Button>
+
+              <Button onClick={() => {
+                setSelectedEntry(undefined);
+                setIsDialogOpen(true);
+              }}>
+                <Plus className="h-4 w-4 mr-2" /> Create Entry
+              </Button>
+            </div>
+          </div>
 
           <JournalEntryTable 
             entries={filteredEntries}

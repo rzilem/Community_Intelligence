@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PortalPageLayout } from '@/components/portal/PortalPageLayout';
 import { FileText, Filter, Plus, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,13 @@ import FormSubmissionDialog from '@/components/portal/homeowner/forms/FormSubmis
 import { useRequestForm } from '@/hooks/portal/useRequestForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useHomeownerRequestsWithAuth } from '@/hooks/portal/useHomeownerRequestsWithAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const RequestsPage = () => {
   const { currentUser, currentAssociation } = useAuth();
   
+  // Specifically request forms of type 'portal_request'
   const { data: associationForms = [], isLoading: formsLoading, error: formsError } = useAssociationFormTemplates(
     currentAssociation?.id,
     'portal_request'
@@ -32,21 +34,48 @@ const RequestsPage = () => {
     handleFormSelection,
     handleFieldChange,
     handleFormSubmit,
-    isSubmitting,
-    submissionStatus = '',
-    submissionId = ''
+    isSubmitting
   } = useRequestForm();
 
-  const { 
-    requests: userRequests, 
-    isLoading: isLoadingRequests, 
-    fetchRequests 
-  } = useHomeownerRequestsWithAuth();
+  const [userRequests, setUserRequests] = React.useState<any[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = React.useState(true);
 
+  useEffect(() => {
+    if (currentUser?.id && currentAssociation?.id) {
+      fetchUserRequests();
+    }
+  }, [currentUser, currentAssociation]);
+
+  const fetchUserRequests = async () => {
+    if (!currentUser?.id || !currentAssociation?.id) return;
+    
+    try {
+      setIsLoadingRequests(true);
+      const { data, error } = await supabase
+        .from('homeowner_requests')
+        .select('*')
+        .eq('resident_id', currentUser.id)
+        .eq('association_id', currentAssociation.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching user requests:', error);
+        toast.error('Failed to load your requests');
+      } else {
+        setUserRequests(data || []);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching requests:', err);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
+  // Modified to return boolean
   const handleFormSubmitWithResult = async () => {
     const result = await handleFormSubmit();
     if (result) {
-      fetchRequests();
+      fetchUserRequests();
     }
     return result;
   };
@@ -153,8 +182,6 @@ const RequestsPage = () => {
         onFieldChange={handleFieldChange}
         onSubmit={handleFormSubmitWithResult}
         isSubmitting={isSubmitting}
-        status={submissionStatus}
-        submissionId={submissionId}
       />
     </PortalPageLayout>
   );

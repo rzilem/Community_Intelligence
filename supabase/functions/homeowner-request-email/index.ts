@@ -15,12 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    // Log all incoming request headers for debugging
     console.log("Received homeowner request email webhook");
-    console.log("Request headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
-    
-    // IMPORTANT: CloudMailin doesn't send standard auth headers, so we skip the check
-    // NO AUTHENTICATION CHECK HERE - THIS IS INTENTIONAL FOR CLOUDMAILIN WEBHOOKS
     
     // Get email data from request - handle both JSON and multipart form data
     let emailData;
@@ -48,8 +43,7 @@ serve(async (req) => {
             error: "Invalid request format",
             message: "Could not parse request body as multipart form data or JSON",
             parseError: parseError.message,
-            jsonError: jsonError.message,
-            headers: Object.fromEntries([...req.headers.entries()])
+            jsonError: jsonError.message
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -66,8 +60,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid",
-          headers: Object.fromEntries([...req.headers.entries()])
+          details: "The email webhook payload was empty or invalid" 
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },

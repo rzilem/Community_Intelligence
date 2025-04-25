@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -8,10 +9,13 @@ interface ResponsiveGridProps {
   mobileClassName?: string;
   desktopClassName?: string;
   mobileColumns?: 1 | 2;
-  desktopColumns?: 2 | 3 | 4 | 5;
+  desktopColumns?: 2 | 3 | 4;
   gap?: 'none' | 'sm' | 'md' | 'lg';
 }
 
+/**
+ * A responsive grid component that adjusts columns based on screen size
+ */
 const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
   children,
   className,
@@ -31,6 +35,7 @@ const ResponsiveGrid: React.FC<ResponsiveGridProps> = ({
     lg: 'gap-6',
   };
 
+  // Map column count to Tailwind grid classes
   const mobileGridClass = mobileColumns === 1 ? 'grid-cols-1' : 'grid-cols-2';
   const desktopGridClass = `md:grid-cols-${desktopColumns}`;
 

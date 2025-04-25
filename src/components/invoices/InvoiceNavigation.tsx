@@ -22,25 +22,6 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   currentPosition,
   totalPending
 }) => {
-  // Create separate handler functions to prevent default behavior
-  const handlePrevious = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onNavigate('prev');
-  };
-  
-  const handleNext = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onNavigate('next');
-  };
-
-  // Create separate handler for toggle preview to prevent any potential issues
-  const handleTogglePreview = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    onTogglePreview();
-  };
-
   return (
     <div className="flex items-center justify-between">
       <div className="flex gap-2 items-center">
@@ -49,10 +30,9 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handlePrevious}
+              onClick={() => onNavigate('prev')}
               disabled={disableNavigation}
               title="Navigate to previous pending invoice"
-              type="button"
             >
               <ChevronLeft className="h-4 w-4 mr-1" /> Previous Pending
             </Button>
@@ -66,10 +46,9 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
             <Button 
               variant="outline" 
               size="sm"
-              onClick={handleNext}
+              onClick={() => onNavigate('next')}
               disabled={disableNavigation}
               title="Navigate to next pending invoice"
-              type="button"
             >
               Next Pending <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
@@ -79,9 +58,8 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={handleTogglePreview}
+        onClick={onTogglePreview}
         className="gap-1"
-        type="button"
       >
         {showPreview ? (
           <><Minimize2 className="h-4 w-4" /> Hide Preview</>
@@ -92,3 +70,4 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
     </div>
   );
 };
+

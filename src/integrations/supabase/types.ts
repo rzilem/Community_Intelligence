@@ -666,15 +666,10 @@ export type Database = {
       bank_transactions: {
         Row: {
           amount: number
-          batch_id: string | null
-          category: string | null
           created_at: string
           description: string | null
-          gl_account_id: string | null
           id: string
-          is_categorized: boolean | null
           is_reconciled: boolean | null
-          notes: string | null
           reconciled_at: string | null
           reference_number: string | null
           statement_id: string
@@ -683,15 +678,10 @@ export type Database = {
         }
         Insert: {
           amount: number
-          batch_id?: string | null
-          category?: string | null
           created_at?: string
           description?: string | null
-          gl_account_id?: string | null
           id?: string
-          is_categorized?: boolean | null
           is_reconciled?: boolean | null
-          notes?: string | null
           reconciled_at?: string | null
           reference_number?: string | null
           statement_id: string
@@ -700,15 +690,10 @@ export type Database = {
         }
         Update: {
           amount?: number
-          batch_id?: string | null
-          category?: string | null
           created_at?: string
           description?: string | null
-          gl_account_id?: string | null
           id?: string
-          is_categorized?: boolean | null
           is_reconciled?: boolean | null
-          notes?: string | null
           reconciled_at?: string | null
           reference_number?: string | null
           statement_id?: string
@@ -716,13 +701,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "bank_transactions_gl_account_id_fkey"
-            columns: ["gl_account_id"]
-            isOneToOne: false
-            referencedRelation: "gl_accounts"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "bank_transactions_statement_id_fkey"
             columns: ["statement_id"]
@@ -1575,77 +1553,6 @@ export type Database = {
           },
         ]
       }
-      document_analyses: {
-        Row: {
-          analysis_results: Json
-          created_at: string
-          document_name: string | null
-          document_type: string | null
-          document_url: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          analysis_results: Json
-          created_at?: string
-          document_name?: string | null
-          document_type?: string | null
-          document_url: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          analysis_results?: Json
-          created_at?: string
-          document_name?: string | null
-          document_type?: string | null
-          document_url?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      document_templates: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          form_template_id: string | null
-          id: string
-          name: string
-          template_content: string
-          template_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          form_template_id?: string | null
-          id?: string
-          name: string
-          template_content: string
-          template_type?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          form_template_id?: string | null
-          id?: string
-          name?: string
-          template_content?: string
-          template_type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_templates_form_template_id_fkey"
-            columns: ["form_template_id"]
-            isOneToOne: false
-            referencedRelation: "form_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       document_versions: {
         Row: {
           created_at: string
@@ -1871,103 +1778,6 @@ export type Database = {
           },
         ]
       }
-      financial_audit_logs: {
-        Row: {
-          action_type: string
-          association_id: string | null
-          created_at: string | null
-          id: string
-          ip_address: string | null
-          metadata: Json | null
-          new_values: Json | null
-          old_values: Json | null
-          record_id: string | null
-          table_name: string
-          transaction_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action_type: string
-          association_id?: string | null
-          created_at?: string | null
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          table_name: string
-          transaction_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action_type?: string
-          association_id?: string | null
-          created_at?: string | null
-          id?: string
-          ip_address?: string | null
-          metadata?: Json | null
-          new_values?: Json | null
-          old_values?: Json | null
-          record_id?: string | null
-          table_name?: string
-          transaction_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "financial_audit_logs_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      financial_statements: {
-        Row: {
-          association_id: string
-          created_at: string | null
-          created_by: string | null
-          data: Json
-          id: string
-          metadata: Json | null
-          period_end: string
-          period_start: string
-          statement_type: string
-        }
-        Insert: {
-          association_id: string
-          created_at?: string | null
-          created_by?: string | null
-          data: Json
-          id?: string
-          metadata?: Json | null
-          period_end: string
-          period_start: string
-          statement_type: string
-        }
-        Update: {
-          association_id?: string
-          created_at?: string | null
-          created_by?: string | null
-          data?: Json
-          id?: string
-          metadata?: Json | null
-          period_end?: string
-          period_start?: string
-          statement_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "financial_statements_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       form_conversion_jobs: {
         Row: {
           association_id: string | null
@@ -2177,104 +1987,6 @@ export type Database = {
           },
         ]
       }
-      form_workflow_execution_logs: {
-        Row: {
-          actionid: string
-          createdat: string
-          details: Json | null
-          id: string
-          status: string
-          stepid: string
-          submissionid: string
-          workflowid: string
-        }
-        Insert: {
-          actionid: string
-          createdat?: string
-          details?: Json | null
-          id?: string
-          status: string
-          stepid: string
-          submissionid: string
-          workflowid: string
-        }
-        Update: {
-          actionid?: string
-          createdat?: string
-          details?: Json | null
-          id?: string
-          status?: string
-          stepid?: string
-          submissionid?: string
-          workflowid?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "form_workflow_execution_logs_submissionid_fkey"
-            columns: ["submissionid"]
-            isOneToOne: false
-            referencedRelation: "form_submissions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "form_workflow_execution_logs_workflowid_fkey"
-            columns: ["workflowid"]
-            isOneToOne: false
-            referencedRelation: "form_workflows"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      form_workflows: {
-        Row: {
-          createdat: string
-          description: string | null
-          formtemplateid: string
-          id: string
-          isenabled: boolean
-          logging: boolean | null
-          maxretries: number | null
-          name: string
-          retryfailed: boolean | null
-          steps: Json
-          updatedat: string
-        }
-        Insert: {
-          createdat?: string
-          description?: string | null
-          formtemplateid: string
-          id?: string
-          isenabled?: boolean
-          logging?: boolean | null
-          maxretries?: number | null
-          name: string
-          retryfailed?: boolean | null
-          steps?: Json
-          updatedat?: string
-        }
-        Update: {
-          createdat?: string
-          description?: string | null
-          formtemplateid?: string
-          id?: string
-          isenabled?: boolean
-          logging?: boolean | null
-          maxretries?: number | null
-          name?: string
-          retryfailed?: boolean | null
-          steps?: Json
-          updatedat?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "form_workflows_formtemplateid_fkey"
-            columns: ["formtemplateid"]
-            isOneToOne: false
-            referencedRelation: "form_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       forum_discussions: {
         Row: {
           association_id: string
@@ -2360,54 +2072,6 @@ export type Database = {
           },
         ]
       }
-      generated_documents: {
-        Row: {
-          document_template_id: string | null
-          file_size: number | null
-          file_url: string
-          form_submission_id: string | null
-          generated_at: string | null
-          id: string
-          metadata: Json | null
-          status: string
-        }
-        Insert: {
-          document_template_id?: string | null
-          file_size?: number | null
-          file_url: string
-          form_submission_id?: string | null
-          generated_at?: string | null
-          id?: string
-          metadata?: Json | null
-          status?: string
-        }
-        Update: {
-          document_template_id?: string | null
-          file_size?: number | null
-          file_url?: string
-          form_submission_id?: string | null
-          generated_at?: string | null
-          id?: string
-          metadata?: Json | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "generated_documents_document_template_id_fkey"
-            columns: ["document_template_id"]
-            isOneToOne: false
-            referencedRelation: "document_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_documents_form_submission_id_fkey"
-            columns: ["form_submission_id"]
-            isOneToOne: false
-            referencedRelation: "form_submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       gl_accounts: {
         Row: {
           account_number: string | null
@@ -2461,159 +2125,10 @@ export type Database = {
           },
         ]
       }
-      gl_budget_entries: {
-        Row: {
-          annual_total: number
-          budget_id: string
-          created_at: string | null
-          gl_account_id: string
-          id: string
-          monthly_amounts: Json | null
-          notes: string | null
-          previous_year_actual: number | null
-          previous_year_budget: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          annual_total?: number
-          budget_id: string
-          created_at?: string | null
-          gl_account_id: string
-          id?: string
-          monthly_amounts?: Json | null
-          notes?: string | null
-          previous_year_actual?: number | null
-          previous_year_budget?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          annual_total?: number
-          budget_id?: string
-          created_at?: string | null
-          gl_account_id?: string
-          id?: string
-          monthly_amounts?: Json | null
-          notes?: string | null
-          previous_year_actual?: number | null
-          previous_year_budget?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gl_budget_entries_budget_id_fkey"
-            columns: ["budget_id"]
-            isOneToOne: false
-            referencedRelation: "gl_budgets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "gl_budget_entries_gl_account_id_fkey"
-            columns: ["gl_account_id"]
-            isOneToOne: false
-            referencedRelation: "gl_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gl_budgets: {
-        Row: {
-          association_id: string | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          fund_type: string
-          id: string
-          name: string
-          status: string
-          total_expenses: number | null
-          total_revenue: number | null
-          updated_at: string | null
-          year: string
-        }
-        Insert: {
-          association_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          fund_type?: string
-          id?: string
-          name: string
-          status?: string
-          total_expenses?: number | null
-          total_revenue?: number | null
-          updated_at?: string | null
-          year: string
-        }
-        Update: {
-          association_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          fund_type?: string
-          id?: string
-          name?: string
-          status?: string
-          total_expenses?: number | null
-          total_revenue?: number | null
-          updated_at?: string | null
-          year?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gl_budgets_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      history: {
-        Row: {
-          action: string
-          association_id: string | null
-          category: string
-          count: number
-          created_at: string | null
-          details: Json | null
-          id: string
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          association_id?: string | null
-          category: string
-          count: number
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          association_id?: string | null
-          category?: string
-          count?: number
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "history_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
           association_id: string | null
-          attachments: Json | null
           created_at: string
           description: string
           html_content: string | null
@@ -2631,7 +2146,6 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           association_id?: string | null
-          attachments?: Json | null
           created_at?: string
           description: string
           html_content?: string | null
@@ -2649,7 +2163,6 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           association_id?: string | null
-          attachments?: Json | null
           created_at?: string
           description?: string
           html_content?: string | null
@@ -2665,65 +2178,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      import_export_jobs: {
-        Row: {
-          association_id: string | null
-          created_at: string | null
-          data_type: string
-          error_details: string | null
-          file_name: string | null
-          file_size: number | null
-          file_url: string | null
-          id: string
-          job_type: string
-          metadata: Json | null
-          row_count: number | null
-          status: string
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          association_id?: string | null
-          created_at?: string | null
-          data_type: string
-          error_details?: string | null
-          file_name?: string | null
-          file_size?: number | null
-          file_url?: string | null
-          id?: string
-          job_type: string
-          metadata?: Json | null
-          row_count?: number | null
-          status?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          association_id?: string | null
-          created_at?: string | null
-          data_type?: string
-          error_details?: string | null
-          file_name?: string | null
-          file_size?: number | null
-          file_url?: string | null
-          id?: string
-          job_type?: string
-          metadata?: Json | null
-          row_count?: number | null
-          status?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "import_export_jobs_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       import_jobs: {
         Row: {
@@ -2903,11 +2357,8 @@ export type Database = {
           invoice_date: string | null
           invoice_number: string
           payment_date: string | null
-          payment_id: string | null
           payment_method: string | null
-          payment_status: string | null
           pdf_url: string | null
-          scheduled_payment_date: string | null
           source_document: string | null
           status: string
           tracking_number: string | null
@@ -2928,11 +2379,8 @@ export type Database = {
           invoice_date?: string | null
           invoice_number: string
           payment_date?: string | null
-          payment_id?: string | null
           payment_method?: string | null
-          payment_status?: string | null
           pdf_url?: string | null
-          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null
@@ -2953,11 +2401,8 @@ export type Database = {
           invoice_date?: string | null
           invoice_number?: string
           payment_date?: string | null
-          payment_id?: string | null
           payment_method?: string | null
-          payment_status?: string | null
           pdf_url?: string | null
-          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null
@@ -3013,50 +2458,6 @@ export type Database = {
           },
         ]
       }
-      lead_follow_ups: {
-        Row: {
-          completed_date: string | null
-          content: string | null
-          created_at: string | null
-          created_by: string | null
-          id: string
-          lead_id: string
-          scheduled_date: string | null
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          completed_date?: string | null
-          content?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          lead_id: string
-          scheduled_date?: string | null
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          completed_date?: string | null
-          content?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          lead_id?: string
-          scheduled_date?: string | null
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_follow_ups_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       leads: {
         Row: {
           additional_requirements: string | null
@@ -3069,18 +2470,13 @@ export type Database = {
           current_management: string | null
           email: string
           first_name: string | null
-          follow_up_sequence: number | null
           html_content: string | null
           id: string
-          last_follow_up: string | null
           last_name: string | null
-          lead_score: number | null
           name: string
-          next_follow_up: string | null
           notes: string | null
           number_of_units: number | null
           phone: string | null
-          proposal_count: number | null
           source: string
           state: string | null
           status: string
@@ -3101,18 +2497,13 @@ export type Database = {
           current_management?: string | null
           email: string
           first_name?: string | null
-          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
-          last_follow_up?: string | null
           last_name?: string | null
-          lead_score?: number | null
           name: string
-          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
-          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
@@ -3133,18 +2524,13 @@ export type Database = {
           current_management?: string | null
           email?: string
           first_name?: string | null
-          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
-          last_follow_up?: string | null
           last_name?: string | null
-          lead_score?: number | null
           name?: string
-          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
-          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
@@ -3206,62 +2592,6 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      meeting_minutes: {
-        Row: {
-          association_id: string | null
-          attendees: Json | null
-          audio_url: string | null
-          created_at: string | null
-          created_by: string | null
-          id: string
-          key_action_items: Json | null
-          meeting_date: string
-          minutes_content: string | null
-          status: string
-          title: string
-          transcript: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          association_id?: string | null
-          attendees?: Json | null
-          audio_url?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          key_action_items?: Json | null
-          meeting_date?: string
-          minutes_content?: string | null
-          status?: string
-          title: string
-          transcript?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          association_id?: string | null
-          attendees?: Json | null
-          audio_url?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: string
-          key_action_items?: Json | null
-          meeting_date?: string
-          minutes_content?: string | null
-          status?: string
-          title?: string
-          transcript?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "meeting_minutes_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]
@@ -3356,36 +2686,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      message_translations: {
-        Row: {
-          created_at: string | null
-          id: string
-          language_code: string
-          message_id: string
-          original_text: string
-          translated_text: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          language_code: string
-          message_id: string
-          original_text: string
-          translated_text: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          language_code?: string
-          message_id?: string
-          original_text?: string
-          translated_text?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       onboarding_documents: {
         Row: {
@@ -3753,7 +3053,6 @@ export type Database = {
           id: string
           last_name: string | null
           phone_number: string | null
-          preferred_language: string | null
           profile_image_url: string | null
           role: string
           updated_at: string
@@ -3765,7 +3064,6 @@ export type Database = {
           id: string
           last_name?: string | null
           phone_number?: string | null
-          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string
@@ -3777,7 +3075,6 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone_number?: string | null
-          preferred_language?: string | null
           profile_image_url?: string | null
           role?: string
           updated_at?: string
@@ -4102,75 +3399,6 @@ export type Database = {
           },
         ]
       }
-      recurring_transactions: {
-        Row: {
-          amount: number
-          association_id: string | null
-          category: string | null
-          created_at: string
-          created_by: string
-          description: string
-          end_date: string | null
-          frequency: string
-          gl_account_id: string | null
-          id: string
-          is_active: boolean | null
-          last_generated_date: string | null
-          next_generation_date: string | null
-          start_date: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          association_id?: string | null
-          category?: string | null
-          created_at?: string
-          created_by: string
-          description: string
-          end_date?: string | null
-          frequency: string
-          gl_account_id?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_generated_date?: string | null
-          next_generation_date?: string | null
-          start_date: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          association_id?: string | null
-          category?: string | null
-          created_at?: string
-          created_by?: string
-          description?: string
-          end_date?: string | null
-          frequency?: string
-          gl_account_id?: string | null
-          id?: string
-          is_active?: boolean | null
-          last_generated_date?: string | null
-          next_generation_date?: string | null
-          start_date?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recurring_transactions_association_id_fkey"
-            columns: ["association_id"]
-            isOneToOne: false
-            referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recurring_transactions_gl_account_id_fkey"
-            columns: ["gl_account_id"]
-            isOneToOne: false
-            referencedRelation: "gl_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       resale_events: {
         Row: {
           color: string | null
@@ -4445,42 +3673,6 @@ export type Database = {
         }
         Relationships: []
       }
-      transaction_batches: {
-        Row: {
-          created_at: string
-          details: Json | null
-          id: string
-          operation_type: string
-          processed_by: string | null
-          processed_transactions: number | null
-          status: string
-          total_transactions: number | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          details?: Json | null
-          id?: string
-          operation_type: string
-          processed_by?: string | null
-          processed_transactions?: number | null
-          status?: string
-          total_transactions?: number | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          details?: Json | null
-          id?: string
-          operation_type?: string
-          processed_by?: string | null
-          processed_transactions?: number | null
-          status?: string
-          total_transactions?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       user_portal_widgets: {
         Row: {
           created_at: string
@@ -4544,30 +3736,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_totp: {
-        Row: {
-          created_at: string
-          totp_secret: string
-          updated_at: string
-          user_id: string
-          verified: boolean | null
-        }
-        Insert: {
-          created_at?: string
-          totp_secret: string
-          updated_at?: string
-          user_id: string
-          verified?: boolean | null
-        }
-        Update: {
-          created_at?: string
-          totp_secret?: string
-          updated_at?: string
-          user_id?: string
-          verified?: boolean | null
-        }
-        Relationships: []
-      }
       vendor_profiles: {
         Row: {
           company_description: string | null
@@ -4607,48 +3775,6 @@ export type Database = {
           settings?: Json | null
           updated_at?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      vendors: {
-        Row: {
-          address: string | null
-          created_at: string
-          email: string | null
-          has_insurance: boolean
-          id: string
-          name: string
-          phone: string | null
-          rating: number | null
-          service_type: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          has_insurance?: boolean
-          id?: string
-          name: string
-          phone?: string | null
-          rating?: number | null
-          service_type?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          address?: string | null
-          created_at?: string
-          email?: string | null
-          has_insurance?: boolean
-          id?: string
-          name?: string
-          phone?: string | null
-          rating?: number | null
-          service_type?: string | null
-          status?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -4700,125 +3826,66 @@ export type Database = {
         }
         Relationships: []
       }
-      work_order_updates: {
-        Row: {
-          amount: number | null
-          created_at: string
-          created_by: string | null
-          id: string
-          update_details: Json | null
-          update_type: string
-          work_order_id: string | null
-        }
-        Insert: {
-          amount?: number | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          update_details?: Json | null
-          update_type: string
-          work_order_id?: string | null
-        }
-        Update: {
-          amount?: number | null
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          update_details?: Json | null
-          update_type?: string
-          work_order_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "work_order_updates_work_order_id_fkey"
-            columns: ["work_order_id"]
-            isOneToOne: false
-            referencedRelation: "work_orders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       work_orders: {
         Row: {
           actual_cost: number | null
           assigned_to: string | null
           association_id: string
           attachments: Json | null
-          budget_estimate: number | null
           category: string | null
           completed_date: string | null
-          completion_target_date: string | null
-          cost_tracking: Json | null
           created_at: string
           description: string | null
           due_date: string | null
           estimated_cost: number | null
           id: string
           priority: string
-          progress_status: number | null
           property_id: string | null
           requested_by: string | null
-          scheduled_date: string | null
           start_date: string | null
           status: string
           title: string
           updated_at: string
-          vendor_id: string | null
-          vendor_name: string | null
         }
         Insert: {
           actual_cost?: number | null
           assigned_to?: string | null
           association_id: string
           attachments?: Json | null
-          budget_estimate?: number | null
           category?: string | null
           completed_date?: string | null
-          completion_target_date?: string | null
-          cost_tracking?: Json | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
           priority?: string
-          progress_status?: number | null
           property_id?: string | null
           requested_by?: string | null
-          scheduled_date?: string | null
           start_date?: string | null
           status?: string
           title: string
           updated_at?: string
-          vendor_id?: string | null
-          vendor_name?: string | null
         }
         Update: {
           actual_cost?: number | null
           assigned_to?: string | null
           association_id?: string
           attachments?: Json | null
-          budget_estimate?: number | null
           category?: string | null
           completed_date?: string | null
-          completion_target_date?: string | null
-          cost_tracking?: Json | null
           created_at?: string
           description?: string | null
           due_date?: string | null
           estimated_cost?: number | null
           id?: string
           priority?: string
-          progress_status?: number | null
           property_id?: string | null
           requested_by?: string | null
-          scheduled_date?: string | null
           start_date?: string | null
           status?: string
           title?: string
           updated_at?: string
-          vendor_id?: string | null
-          vendor_name?: string | null
         }
         Relationships: []
       }
@@ -4915,10 +3982,6 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
-      check_totp_status: {
-        Args: { p_user_id: string }
-        Returns: Json
-      }
       check_user_association: {
         Args: { association_uuid: string }
         Returns: boolean
@@ -4936,10 +3999,6 @@ export type Database = {
           p_total_units?: number
         }
         Returns: string
-      }
-      delete_totp_secret: {
-        Args: { p_user_id: string }
-        Returns: undefined
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>
@@ -5103,10 +4162,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      set_totp_verified: {
-        Args: { p_user_id: string; p_verified?: boolean }
-        Returns: undefined
-      }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -5133,10 +4188,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      upsert_totp_secret: {
-        Args: { p_user_id: string; p_totp_secret: string; p_verified?: boolean }
-        Returns: undefined
-      }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean
@@ -5152,10 +4203,6 @@ export type Database = {
       validate_resident_preferences: {
         Args: { preferences: Json }
         Returns: boolean
-      }
-      verify_totp: {
-        Args: { p_user_id: string; p_token: string }
-        Returns: Json
       }
     }
     Enums: {

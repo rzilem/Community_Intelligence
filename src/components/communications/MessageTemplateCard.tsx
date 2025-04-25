@@ -1,18 +1,24 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Copy, Edit, Mail, Trash } from 'lucide-react';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { FileText, MoreVertical, Copy, Pencil, Trash } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface MessageTemplateCardProps {
   title: string;
-  description?: string;
-  date?: string;
+  description: string;
+  date: string;
   type: 'email' | 'sms';
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onDuplicate?: () => void;
-  onUse?: () => void;
+  onUse: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }
 
 const MessageTemplateCard: React.FC<MessageTemplateCardProps> = ({
@@ -20,66 +26,57 @@ const MessageTemplateCard: React.FC<MessageTemplateCardProps> = ({
   description,
   date,
   type,
+  onUse,
   onEdit,
-  onDelete,
   onDuplicate,
-  onUse
+  onDelete
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <h3 className="text-lg font-medium">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="p-4 pb-2 flex flex-row justify-between items-start space-y-0">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-600" />
+          <div>
+            <h3 className="font-medium">{title}</h3>
+            <p className="text-xs text-muted-foreground">
+              {type === 'email' ? 'Email Template' : 'SMS Template'} • Last updated: {date}
+            </p>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
+              <Pencil className="mr-2 h-4 w-4" />
+              <span>Edit</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDuplicate} className="cursor-pointer">
+              <Copy className="mr-2 h-4 w-4" />
+              <span>Duplicate</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-destructive focus:text-destructive">
+              <Trash className="mr-2 h-4 w-4" />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </CardHeader>
-      <CardContent>
-        {date && (
-          <p className="text-sm text-muted-foreground">
-            Last used: {date}
-          </p>
-        )}
-        <p className="text-sm text-muted-foreground mt-1">
-          Type: {type === 'email' ? 'Email Template' : 'SMS Template'}
-        </p>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <TooltipButton 
+      <CardContent className="p-4 pt-2">
+        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+        <Button 
           variant="outline" 
-          size="sm"
-          tooltip="Duplicate template"
-          onClick={onDuplicate}
-        >
-          <Copy className="h-4 w-4" />
-        </TooltipButton>
-        
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          tooltip="Edit template"
-          onClick={onEdit}
-        >
-          <Edit className="h-4 w-4" />
-        </TooltipButton>
-        
-        <TooltipButton 
-          variant="outline" 
-          size="sm"
-          tooltip="Delete template"
-          onClick={onDelete}
-        >
-          <Trash className="h-4 w-4" />
-        </TooltipButton>
-        
-        <TooltipButton 
-          size="sm"
-          tooltip="Use this template"
+          size="sm" 
+          className="mt-3 w-full"
           onClick={onUse}
         >
-          <Mail className="h-4 w-4 mr-2" />
           Use Template
-        </TooltipButton>
-      </CardFooter>
+        </Button>
+      </CardContent>
     </Card>
   );
 };

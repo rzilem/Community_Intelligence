@@ -20,22 +20,12 @@ export function useMessageService() {
   const sendMessage = async (params: SendMessageParams) => {
     setIsLoading(true);
     try {
-      const result = await messageService.sendMessage(params);
+      await messageService.sendMessage(params);
       toast.success(params.scheduled_date ? 'Message scheduled successfully' : 'Message sent successfully');
       return true;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error sending message:', error);
-      
-      let errorMessage = 'Failed to send message. Please try again.';
-      
-      // Check for specific error types
-      if (error.status === 401 || (error.error && error.error.includes('authorization'))) {
-        errorMessage = 'Authentication error. Please log in again and retry.';
-      } else if (error.message) {
-        errorMessage = `Error: ${error.message}`;
-      }
-      
-      toast.error(errorMessage);
+      toast.error('Failed to send message. Please try again.');
       return false;
     } finally {
       setIsLoading(false);

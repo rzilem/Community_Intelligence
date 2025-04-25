@@ -6,7 +6,6 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import MessagingPage from './communications/Messaging';
 import Announcements from './communications/Announcements';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MessageProvider } from '@/contexts/message/MessageContext';
 
 const Communications = () => {
   const [activeTab, setActiveTab] = useState('messaging');
@@ -36,9 +35,7 @@ const Communications = () => {
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
         </TabsList>
         <TabsContent value="messaging">
-          <MessageProvider>
-            <MessagingPage />
-          </MessageProvider>
+          <MessagingPage />
         </TabsContent>
         <TabsContent value="announcements">
           <Announcements />

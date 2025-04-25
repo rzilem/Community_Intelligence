@@ -30,19 +30,6 @@ export async function createInvoice(invoiceData: any) {
       tracking_number: trackingNumber
     };
     
-    // Ensure these fields are not undefined to match the new schema
-    if (!invoiceWithTracking.payment_status) {
-      delete invoiceWithTracking.payment_status;
-    }
-    
-    if (!invoiceWithTracking.payment_id) {
-      delete invoiceWithTracking.payment_id;
-    }
-    
-    if (!invoiceWithTracking.scheduled_payment_date) {
-      delete invoiceWithTracking.scheduled_payment_date;
-    }
-    
     // Log the invoice data being saved
     console.log("Creating invoice with data:", {
       tracking_number: trackingNumber,

@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { Printer, Download, Filter, Plus, RefreshCw } from 'lucide-react';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Printer, Eye, Send, Download } from 'lucide-react';
 
 interface PrintQueueActionsProps {
-  includeMailingLabels?: boolean;
-  setIncludeMailingLabels?: (value: boolean) => void;
-  printPreview?: boolean;
-  setPrintPreview?: (value: boolean) => void;
-  onPrint?: () => void;
-  onSendToMailers?: () => void;
-  onExport?: () => void;
-  selectedJobsCount?: number;
+  includeMailingLabels: boolean;
+  setIncludeMailingLabels: (include: boolean) => void;
+  printPreview: boolean;
+  setPrintPreview: (preview: boolean) => void;
+  onPrint: () => void;
+  onSendToMailers: () => void;
+  onExport: () => void;
+  selectedJobsCount: number;
 }
 
 const PrintQueueActions: React.FC<PrintQueueActionsProps> = ({
@@ -25,44 +26,59 @@ const PrintQueueActions: React.FC<PrintQueueActionsProps> = ({
   selectedJobsCount
 }) => {
   return (
-    <div className="flex flex-wrap gap-3 mb-6">
-      <TooltipButton 
+    <div className="flex flex-wrap gap-4 py-4">
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="include-mailing-labels"
+          checked={includeMailingLabels}
+          onCheckedChange={(checked) => setIncludeMailingLabels(!!checked)}
+        />
+        <label
+          htmlFor="include-mailing-labels"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Include Mailing Labels
+        </label>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="print-preview"
+          checked={printPreview}
+          onCheckedChange={(checked) => setPrintPreview(!!checked)}
+        />
+        <label
+          htmlFor="print-preview"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Print Preview
+        </label>
+      </div>
+
+      <Button
         variant="outline"
-        tooltip="Refresh print queue"
+        className="ml-auto"
+        disabled={selectedJobsCount === 0}
+        onClick={onPrint}
       >
-        <RefreshCw className="h-4 w-4 mr-2" /> Refresh
-      </TooltipButton>
+        <Printer className="mr-2 h-4 w-4" /> Print
+      </Button>
       
-      <TooltipButton 
+      <Button
         variant="outline"
-        tooltip="Filter print jobs"
+        disabled={selectedJobsCount === 0}
+        onClick={onSendToMailers}
       >
-        <Filter className="h-4 w-4 mr-2" /> Filter
-      </TooltipButton>
-      
-      <TooltipButton 
+        <Send className="mr-2 h-4 w-4" /> Send to HOA Mailers
+      </Button>
+
+      <Button
         variant="outline"
-        tooltip="Export print queue data"
+        disabled={selectedJobsCount === 0}
         onClick={onExport}
       >
-        <Download className="h-4 w-4 mr-2" /> Export
-      </TooltipButton>
-      
-      <TooltipButton
-        tooltip="Add new print job"
-      >
-        <Plus className="h-4 w-4 mr-2" /> New Print Job
-      </TooltipButton>
-      
-      <TooltipButton
-        variant="default"
-        tooltip="Print selected items"
-        onClick={onPrint}
-        disabled={selectedJobsCount === 0}
-      >
-        <Printer className="h-4 w-4 mr-2" /> Print Selected
-        {selectedJobsCount ? ` (${selectedJobsCount})` : ''}
-      </TooltipButton>
+        <Download className="mr-2 h-4 w-4" /> Export
+      </Button>
     </div>
   );
 };

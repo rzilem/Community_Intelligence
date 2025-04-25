@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import DashboardWidget from '@/components/portal/DashboardWidget';
 import { BaseWidgetProps } from '@/types/portal-types';
 import { Button } from '@/components/ui/button';
@@ -45,9 +46,7 @@ const FormWidget: React.FC<FormWidgetProps> = ({
     handleFormSelection,
     handleFieldChange,
     handleFormSubmit,
-    isSubmitting,
-    submissionStatus = '',
-    submissionId = ''
+    isSubmitting
   } = useRequestForm();
   
   const getFormData = () => {
@@ -148,8 +147,6 @@ const FormWidget: React.FC<FormWidgetProps> = ({
         onFieldChange={handleFieldChange}
         onSubmit={handleFormSubmit}
         isSubmitting={isSubmitting}
-        status={submissionStatus}
-        submissionId={submissionId}
       />
     </>
   );

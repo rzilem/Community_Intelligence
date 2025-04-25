@@ -24,11 +24,9 @@ export const messageService = {
             subject: messageData.subject,
             html: messageData.content
           })
-          // The supabase client already includes auth headers by default
         });
 
         if (emailResponse.error) {
-          console.error('Email function error:', emailResponse.error);
           throw emailResponse.error;
         }
       }

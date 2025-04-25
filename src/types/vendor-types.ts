@@ -6,13 +6,10 @@ export interface Vendor {
   email?: string;
   phone?: string;
   category?: string;
-  service_type?: string;
   status: 'active' | 'inactive';
   lastInvoice?: string;
   rating?: number;
   hasInsurance?: boolean;
-  created_at?: string;
-  updated_at?: string;
 }
 
 export interface VendorFormData {
@@ -21,7 +18,6 @@ export interface VendorFormData {
   email?: string;
   phone?: string;
   category?: string;
-  service_type?: string;
   status: 'active' | 'inactive';
   hasInsurance?: boolean;
 }

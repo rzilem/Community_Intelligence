@@ -16,23 +16,24 @@ export interface HomeownerRequest {
   status: HomeownerRequestStatus;
   priority: HomeownerRequestPriority;
   type: HomeownerRequestType;
-  created_at: string;
-  updated_at: string;
-  resident_id?: string;
-  property_id?: string;
-  association_id?: string;
+  created_at: string;  // Match database column name
+  updated_at: string;  // Match database column name
+  resident_id?: string; // Optional to handle null values
+  property_id?: string; // Optional to handle null values
+  association_id?: string; // Optional to handle null values
   assigned_to?: string;
   resolved_at?: string;
-  html_content?: string;
+  html_content?: string; // For original email content
   tracking_number?: string; 
-  attachments?: RequestAttachment[]; 
+  attachments?: RequestAttachment[]; // Added attachments property
   
-  createdAt?: string;
-  updatedAt?: string;
-  residentId?: string;
-  propertyId?: string;
-  associationId?: string;
-  resolvedAt?: string;
+  // Virtual properties for UI (not in database)
+  createdAt?: string; // Alias for created_at
+  updatedAt?: string; // Alias for updated_at
+  residentId?: string; // Alias for resident_id
+  propertyId?: string; // Alias for property_id
+  associationId?: string; // Alias for association_id
+  resolvedAt?: string; // Alias for resolved_at
 }
 
 export interface HomeownerRequestColumn {

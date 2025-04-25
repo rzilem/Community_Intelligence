@@ -1,3 +1,4 @@
+
 import { Session, User } from '@supabase/supabase-js';
 import { Association } from '@/types/association-types';
 import { Profile } from '@/types/profile-types';
@@ -7,8 +8,8 @@ export interface UserAssociation {
   user_id: string;
   association_id: string;
   role: string;
-  created_at: string;
   associations: Association;
+  created_at: string;
 }
 
 export interface AuthContextType {

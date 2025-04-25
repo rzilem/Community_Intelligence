@@ -55,4 +55,3 @@ export interface CommunicationLog {
   created_at?: string;
   updated_at?: string;
 }
-

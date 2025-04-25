@@ -55,17 +55,15 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({
   const handleAddVersion = async () => {
     if (!file || !document) return;
     
-    const success = await uploadNewVersion({
+    await uploadNewVersion({ 
       file, 
       documentId: document.id, 
       notes 
     });
     
-    if (success) {
-      setFile(null);
-      setNotes('');
-      setIsAddingVersion(false);
-    }
+    setFile(null);
+    setNotes('');
+    setIsAddingVersion(false);
   };
 
   const handleRevertVersion = (versionId: string, versionNumber: number) => {
@@ -81,14 +79,6 @@ const DocumentVersionHistory: React.FC<DocumentVersionHistoryProps> = ({
   const handleDownloadVersion = (url: string, fileName: string) => {
     window.open(url, '_blank');
   };
-
-  React.useEffect(() => {
-    if (!isOpen) {
-      setIsAddingVersion(false);
-      setFile(null);
-      setNotes('');
-    }
-  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

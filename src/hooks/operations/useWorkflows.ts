@@ -1,260 +1,410 @@
 
 import { useState } from 'react';
-import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { Workflow, WorkflowStep, WorkflowStatus, WorkflowType } from '@/types/workflow-types';
+import { Workflow, WorkflowType, WorkflowStatus } from '@/types/workflow-types';
 import { toast } from 'sonner';
-import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useSupabaseDelete } from '../supabase/use-supabase-delete';
 
-export function useWorkflows(templateOnly: boolean = false) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Query to fetch workflows
-  const { data: workflows = [], isLoading: isLoadingWorkflows, error, refetch } = useSupabaseQuery<Workflow[]>(
-    'workflows',
-    {
-      select: '*',
-      filter: templateOnly 
-        ? [{ column: 'is_template', value: true }] 
-        : [{ column: 'is_template', value: false }],
-      order: { column: 'created_at', ascending: false }
-    }
-  );
-
-  // Query to fetch workflow templates
-  const { data: templates = [], isLoading: isLoadingTemplates } = useSupabaseQuery<Workflow[]>(
-    'workflows',
-    {
-      select: '*',
-      filter: [{ column: 'is_template', value: true }],
-      order: { column: 'created_at', ascending: false }
-    },
-    !templateOnly // Only fetch if not already fetching templates
-  );
-
-  // Mutations for CRUD operations
-  const { mutate: createWorkflow } = useSupabaseCreate('workflows');
-  const { mutate: updateWorkflow } = useSupabaseUpdate('workflows');
-  const { mutate: deleteWorkflow } = useSupabaseDelete('workflows');
-
-  // Hook to get a single workflow by ID
-  const useWorkflow = (id?: string) => {
-    const { id: paramId } = useParams();
-    const workflowId = id || paramId;
-
-    const { data: workflow, isLoading, error } = useSupabaseQuery<Workflow>(
-      'workflows', // Use a string instead of an array
-      {
-        select: '*',
-        filter: [{ column: 'id', value: workflowId || '' }], // Provide default for null/undefined
-        single: true
-      },
-      !!workflowId
-    );
-
-    return {
-      workflow,
-      isLoading,
-      error
-    };
-  };
-
-  // Save workflow function
-  const saveWorkflow = async (workflow: Partial<Workflow> & { name: string, type: WorkflowType, steps: WorkflowStep[], is_template: boolean }): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      if (workflow.id) {
-        await updateWorkflow({ 
-          id: workflow.id, 
-          data: workflow 
-        });
-        toast.success('Workflow updated successfully');
-      } else {
-        // Add the status field if not present
-        const workflowData = {
-          ...workflow,
-          status: workflow.status || 'draft' as WorkflowStatus
-        };
-        
-        await createWorkflow(workflowData as any); // Use type assertion since we know it meets requirements
-        toast.success('Workflow created successfully');
-      }
-      refetch();
-      return true;
-    } catch (error) {
-      console.error('Error saving workflow:', error);
-      toast.error('Failed to save workflow');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Remove workflow function
-  const removeWorkflow = async (id: string): Promise<boolean> => {
-    try {
-      await deleteWorkflow(id);
-      toast.success('Workflow deleted successfully');
-      refetch();
-      return true;
-    } catch (error) {
-      console.error('Error deleting workflow:', error);
-      toast.error('Failed to delete workflow');
-      return false;
-    }
-  };
-
-  // Function to create a workflow from a template
-  const createFromTemplate = async (templateId: string): Promise<string | null> => {
-    setIsLoading(true);
-    try {
-      // Find the template
-      const template = templates.find(t => t.id === templateId);
-      if (!template) {
-        throw new Error('Template not found');
-      }
-
-      // Create a new workflow based on the template
-      const newWorkflow = {
-        name: template.name,
-        description: template.description,
-        type: template.type,
-        status: 'active' as WorkflowStatus,
-        steps: template.steps,
-        is_template: false,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-      };
-
-      const { data, error } = await supabase
-        .from('workflows')
-        .insert(newWorkflow as any) // Use type assertion
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      toast.success('Workflow created from template');
-      refetch();
-      return data.id;
-    } catch (error) {
-      console.error('Error creating workflow from template:', error);
-      toast.error('Failed to create workflow from template');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Function to duplicate a workflow
-  const duplicateWorkflow = async (id: string): Promise<string | null> => {
-    setIsLoading(true);
-    try {
-      const workflow = workflows.find(w => w.id === id) || 
-                      templates.find(t => t.id === id);
-      
-      if (!workflow) {
-        throw new Error('Workflow not found');
-      }
-
-      // Create a duplicate with a slightly different name
-      const newWorkflow = {
-        name: `${workflow.name} (Copy)`,
-        description: workflow.description,
-        type: workflow.type,
-        status: workflow.is_template ? 'template' : 'draft' as WorkflowStatus,
-        steps: workflow.steps,
-        is_template: workflow.is_template,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-      };
-
-      const { data, error } = await supabase
-        .from('workflows')
-        .insert(newWorkflow as any) // Use type assertion
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success('Workflow duplicated successfully');
-      refetch();
-      return data.id;
-    } catch (error) {
-      console.error('Error duplicating workflow:', error);
-      toast.error('Failed to duplicate workflow');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Function to update workflow status
-  const updateWorkflowStatus = async (id: string, status: WorkflowStatus): Promise<boolean> => {
-    try {
-      await updateWorkflow({
-        id,
-        data: { status }
-      });
-      
-      toast.success(`Workflow ${status === 'inactive' ? 'paused' : status}`);
-      refetch();
-      return true;
-    } catch (error) {
-      console.error('Error updating workflow status:', error);
-      toast.error('Failed to update workflow status');
-      return false;
-    }
-  };
-
-  // Function to complete a workflow step
-  const completeWorkflowStep = async (workflowId: string, stepId: string): Promise<boolean> => {
-    try {
-      const workflow = workflows.find(w => w.id === workflowId);
-      if (!workflow) {
-        throw new Error('Workflow not found');
-      }
-
-      const updatedSteps = workflow.steps.map(step => {
-        if (step.id === stepId) {
-          return { ...step, isComplete: true };
+export const useWorkflows = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  
+  // Fetch workflow templates from Supabase
+  const { 
+    data: workflowTemplates = [],
+    isLoading,
+    error: fetchError,
+    refetch
+  } = useQuery({
+    queryKey: ['workflowTemplates'],
+    queryFn: async (): Promise<Workflow[]> => {
+      try {
+        const { data, error } = await supabase
+          .from('workflow_templates')
+          .select('*')
+          .eq('is_template', true);
+          
+        if (error) {
+          throw new Error(error.message);
         }
-        return step;
-      });
-
-      await updateWorkflow({
-        id: workflowId,
-        data: { steps: updatedSteps }
-      });
-
-      // Check if all steps are complete
-      const allComplete = updatedSteps.every(step => step.isComplete);
-      if (allComplete) {
-        await updateWorkflowStatus(workflowId, 'completed');
+        
+        // Map the database results to our Workflow type
+        return (data || []).map((template: any) => ({
+          id: template.id,
+          name: template.name || '',
+          description: template.description || '',
+          type: template.type as WorkflowType,
+          status: template.status || 'template',
+          steps: template.steps || [],
+          isTemplate: template.is_template || true,
+          isPopular: template.is_popular || false
+        }));
+      } catch (err) {
+        console.error("Error fetching workflow templates:", err);
+        throw err;
       }
-
-      refetch();
-      return true;
-    } catch (error) {
-      console.error('Error completing workflow step:', error);
-      toast.error('Failed to complete workflow step');
-      return false;
     }
+  });
+
+  // Fetch active workflows from Supabase
+  const { 
+    data: activeWorkflows = [],
+    isLoading: activeLoading,
+    error: activeError,
+    refetch: refetchActive
+  } = useQuery({
+    queryKey: ['activeWorkflows'],
+    queryFn: async (): Promise<Workflow[]> => {
+      try {
+        const { data, error } = await supabase
+          .from('workflows')
+          .select('*')
+          .eq('status', 'active');
+          
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        // Map the database results to our Workflow type
+        return (data || []).map((workflow: any) => ({
+          id: workflow.id,
+          name: workflow.name || '',
+          description: workflow.description || '',
+          type: workflow.type as WorkflowType,
+          status: workflow.status || 'active',
+          steps: workflow.steps || [],
+          isTemplate: workflow.is_template || false,
+          isPopular: false
+        }));
+      } catch (err) {
+        console.error("Error fetching active workflows:", err);
+        throw err;
+      }
+    }
+  });
+
+  // Use template mutation
+  const useTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setLoading(true);
+      
+      try {
+        // Get the template
+        const { data: template, error: templateError } = await supabase
+          .from('workflow_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+          
+        if (templateError) throw new Error(templateError.message);
+        
+        // Create a new workflow from the template
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        
+        if (!userId) {
+          throw new Error("User not authenticated");
+        }
+        
+        // Get the user's current association
+        // In a real implementation, you might get this from a context or state
+        const { data: userAssociations, error: associationError } = await supabase
+          .from('association_users')
+          .select('association_id')
+          .eq('user_id', userId)
+          .limit(1);
+          
+        if (associationError) throw new Error(associationError.message);
+        
+        const associationId = userAssociations && userAssociations.length > 0 
+          ? userAssociations[0].association_id 
+          : null;
+        
+        const { data, error } = await supabase
+          .from('workflows')
+          .insert({
+            name: template.name,
+            description: template.description,
+            type: template.type,
+            status: 'active',
+            steps: template.steps,
+            is_template: false,
+            created_by: userId,
+            association_id: associationId
+          })
+          .select()
+          .single();
+          
+        if (error) throw new Error(error.message);
+        
+        return data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Workflow created from template');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error creating workflow: ${error.message}`);
+    }
+  });
+
+  // Duplicate template mutation
+  const duplicateTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setLoading(true);
+      
+      try {
+        // Get the original template
+        const { data: template, error: templateError } = await supabase
+          .from('workflow_templates')
+          .select('*')
+          .eq('id', templateId)
+          .single();
+          
+        if (templateError) throw new Error(templateError.message);
+        
+        // Create a duplicate template
+        const { data, error } = await supabase
+          .from('workflow_templates')
+          .insert({
+            name: `${template.name} (Copy)`,
+            description: template.description,
+            type: template.type,
+            status: template.status,
+            steps: template.steps,
+            is_template: true,
+            is_popular: false
+          })
+          .select()
+          .single();
+          
+        if (error) throw new Error(error.message);
+        
+        return data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Template duplicated successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+    },
+    onError: (error) => {
+      toast.error(`Error duplicating template: ${error.message}`);
+    }
+  });
+
+  // Create custom template mutation
+  const createTemplateMutation = useMutation({
+    mutationFn: async (workflowData: {
+      name: string;
+      description?: string;
+      type: WorkflowType;
+    }) => {
+      setLoading(true);
+      
+      try {
+        // Get current user for audit
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        
+        // Initialize with a single default step
+        const initialSteps = [
+          {
+            id: crypto.randomUUID(),
+            name: "First Step",
+            description: "The first step in your workflow",
+            order: 0,
+            isComplete: false
+          }
+        ];
+            
+        const { data, error } = await supabase
+          .from('workflow_templates')
+          .insert({
+            name: workflowData.name,
+            description: workflowData.description || '',
+            type: workflowData.type,
+            status: 'template',
+            steps: initialSteps,
+            is_template: true,
+            is_popular: false,
+            created_by: userId
+          })
+          .select()
+          .single();
+            
+        if (error) throw new Error(error.message);
+        
+        return data;
+      } finally {
+        setLoading(false);
+      }
+    },
+    onSuccess: (data) => {
+      toast.success('Custom template created successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+      navigate(`/operations/workflows/${data.id}`);
+    },
+    onError: (error) => {
+      toast.error(`Error creating template: ${error.message}`);
+    }
+  });
+
+  // Pause workflow mutation
+  const pauseWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .update({ status: 'inactive' })
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow paused');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error pausing workflow: ${error.message}`);
+    }
+  });
+
+  // Resume workflow mutation
+  const resumeWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .update({ status: 'active' })
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow resumed');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error resuming workflow: ${error.message}`);
+    }
+  });
+
+  // Cancel workflow mutation
+  const cancelWorkflowMutation = useMutation({
+    mutationFn: async (workflowId: string) => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .delete()
+        .eq('id', workflowId)
+        .select()
+        .single();
+        
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Workflow cancelled');
+      queryClient.invalidateQueries({ queryKey: ['activeWorkflows'] });
+    },
+    onError: (error) => {
+      toast.error(`Error cancelling workflow: ${error.message}`);
+    }
+  });
+
+  // Delete template mutation
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (templateId: string) => {
+      setIsDeleting(true);
+      try {
+        const { error } = await supabase
+          .from('workflow_templates')
+          .delete()
+          .eq('id', templateId);
+          
+        if (error) throw error;
+        return templateId;
+      } finally {
+        setIsDeleting(false);
+      }
+    },
+    onSuccess: () => {
+      toast.success('Template deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
+    },
+    onError: (error) => {
+      toast.error(`Error deleting template: ${error.message}`);
+    }
+  });
+
+  // Handler functions
+  const useWorkflowTemplate = (workflowId: string) => {
+    useTemplateMutation.mutate(workflowId);
+  };
+
+  const duplicateTemplate = (workflowId: string) => {
+    duplicateTemplateMutation.mutate(workflowId);
+  };
+
+  const createCustomTemplate = (workflowData: {
+    name: string;
+    description?: string;
+    type: WorkflowType;
+  }) => {
+    createTemplateMutation.mutate(workflowData);
+  };
+
+  const pauseWorkflow = (workflowId: string) => {
+    pauseWorkflowMutation.mutate(workflowId);
+  };
+
+  const resumeWorkflow = (workflowId: string) => {
+    resumeWorkflowMutation.mutate(workflowId);
+  };
+
+  const cancelWorkflow = (workflowId: string) => {
+    cancelWorkflowMutation.mutate(workflowId);
+  };
+
+  const deleteTemplate = (templateId: string) => {
+    deleteTemplateMutation.mutate(templateId);
+  };
+
+  const viewWorkflowDetails = (workflowId: string) => {
+    navigate(`/operations/workflows/${workflowId}`);
   };
 
   return {
-    workflows,
-    templates,
-    isLoading: isLoadingWorkflows || isLoadingTemplates || isLoading,
-    error,
-    saveWorkflow,
-    removeWorkflow,
-    createFromTemplate,
-    duplicateWorkflow,
-    updateWorkflowStatus,
-    completeWorkflowStep,
-    searchTerm,
-    setSearchTerm,
-    refetch,
-    useWorkflow
+    workflowTemplates,
+    activeWorkflows,
+    loading: isLoading || activeLoading || loading,
+    error: fetchError || activeError || error,
+    useWorkflowTemplate,
+    duplicateTemplate,
+    createCustomTemplate,
+    pauseWorkflow,
+    resumeWorkflow,
+    cancelWorkflow,
+    viewWorkflowDetails,
+    deleteTemplate,
+    isDeleting,
+    refreshWorkflows: () => {
+      refetch();
+      refetchActive();
+    },
+    isCreating: createTemplateMutation.isPending
   };
-}
+};

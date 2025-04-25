@@ -7,7 +7,7 @@ import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { InvoiceHoverPreview } from './preview/InvoiceHoverPreview';
+import { DocumentViewer } from './preview/DocumentViewer';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -17,7 +17,7 @@ interface InvoiceTableProps {
   onRejectInvoice?: (id: string) => void;
 }
 
-export const InvoiceTable: React.FC<InvoiceTableProps> = ({
+const InvoiceTable: React.FC<InvoiceTableProps> = ({
   invoices,
   isLoading = false,
   onViewInvoice,
@@ -40,7 +40,6 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  // Helper to check if a field was extracted by AI
   const isAIAssisted = (invoice: Invoice, field: keyof Invoice) => {
     if (!invoice.html_content) return false;
     
@@ -148,67 +147,42 @@ export const InvoiceTable: React.FC<InvoiceTableProps> = ({
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
-                  <HoverCard openDelay={100} closeDelay={300}>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <HoverCardTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => onViewInvoice(invoice.id)}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </HoverCardTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>View invoice details</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <HoverCardContent className="w-[600px] h-[400px] p-0 shadow-lg" side="left">
-                      <InvoiceHoverPreview invoice={invoice} />
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-[600px] h-[400px] p-0">
+                      {(invoice.pdf_url || invoice.html_content) ? (
+                        <div className="w-full h-full">
+                          <DocumentViewer
+                            pdfUrl={invoice.pdf_url}
+                            htmlContent={invoice.html_content}
+                            isPdf={!!invoice.pdf_url}
+                            isWordDocument={false}
+                            onIframeError={() => {}}
+                            onIframeLoad={() => {}}
+                            onExternalOpen={() => onViewInvoice(invoice.id)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          No preview available
+                        </div>
+                      )}
                     </HoverCardContent>
                   </HoverCard>
-
-                  {invoice.status === 'pending' && onApproveInvoice && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => onApproveInvoice(invoice.id)}
-                          >
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Approve invoice</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
                   
+                  {invoice.status === 'pending' && onApproveInvoice && (
+                    <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </Button>
+                  )}
                   {invoice.status === 'pending' && onRejectInvoice && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => onRejectInvoice(invoice.id)}
-                          >
-                            <XCircle className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Reject invoice</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Button variant="ghost" size="icon" onClick={() => onRejectInvoice(invoice.id)}>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </Button>
                   )}
                 </div>
               </TableCell>

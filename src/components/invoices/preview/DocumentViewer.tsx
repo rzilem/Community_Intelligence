@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { ExternalLink, FileText, File, RefreshCw } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { ExternalLink, FileText, File } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DocumentViewerProps {
@@ -22,44 +22,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen,
 }) => {
-  const [loadAttempts, setLoadAttempts] = useState(0);
-  const [viewerType, setViewerType] = useState<'object' | 'iframe' | 'fallback'>('object');
-  const [key, setKey] = useState(Date.now()); // Used to force remount of viewers
-  
   // Log component props on mount and when they change
   useEffect(() => {
-    console.log('DocumentViewer Props');
+    console.group('DocumentViewer Props');
     console.log('pdfUrl:', pdfUrl || 'none');
     console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
     console.log('isPdf:', isPdf);
     console.log('isWordDocument:', isWordDocument);
+    console.groupEnd();
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
-
-  // Reset state when URL changes
-  useEffect(() => {
-    setLoadAttempts(0);
-    setViewerType('object');
-    setKey(Date.now());
-  }, [pdfUrl]);
-
-  // Try different viewing methods if initial one fails
-  useEffect(() => {
-    if (loadAttempts === 1 && isPdf && pdfUrl) {
-      console.log('First PDF load attempt failed, trying iframe method');
-      setViewerType('iframe');
-      setKey(Date.now()); // Force remount with new technique
-    } else if (loadAttempts >= 2 && isPdf && pdfUrl) {
-      console.log('Both PDF load attempts failed, showing fallback view');
-      setViewerType('fallback');
-      onIframeError();
-    }
-  }, [loadAttempts, isPdf, pdfUrl, onIframeError]);
-
-  const handleRetry = useCallback(() => {
-    setLoadAttempts(0);
-    setViewerType('object');
-    setKey(Date.now());
-  }, []);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -98,6 +69,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             h1, h2, h3 {
               color: #1a56db;
             }
+            .invoice-details {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 1rem;
+              margin-bottom: 2rem;
+            }
+            .invoice-total {
+              text-align: right;
+              font-weight: bold;
+              margin-top: 1rem;
+              font-size: 1.2rem;
+            }
+            font[color="#6fa8dc"] {
+              color: #6fa8dc;
+              font-size: 24px;
+              font-weight: bold;
+            }
           </style>
         </head>
         <body>${htmlContent}</body>
@@ -105,102 +93,37 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
-  // Function to attempt PDF viewing with an object tag
-  const renderPdfWithObject = () => {
+  // Function to create a direct PDF embed that works in most browsers
+  const createPdfEmbed = () => {
     if (!pdfUrl) return null;
     
     return (
-      <object
-        key={`pdf-embed-object-${key}`}
-        data={pdfUrl}
-        type="application/pdf"
-        className="w-full h-full border-0"
-        onError={() => {
-          console.error("PDF object tag load error");
-          setLoadAttempts(prev => prev + 1);
-        }}
-        onLoad={() => {
-          console.log("PDF object loaded successfully");
-          onIframeLoad();
-        }}
-      >
-        <div className="flex flex-col items-center justify-center p-6">
-          <p className="mb-4">Unable to display PDF directly.</p>
-          <Button 
-            variant="outline" 
-            onClick={onExternalOpen}
-            className="flex items-center"
-          >
-            Open PDF <ExternalLink className="h-4 w-4 ml-2" />
-          </Button>
-        </div>
-      </object>
-    );
-  };
-
-  // Function to attempt PDF viewing with an iframe
-  const renderPdfWithIframe = () => {
-    if (!pdfUrl) return null;
-    
-    return (
-      <iframe
-        key={`pdf-embed-iframe-${key}`}
-        src={pdfUrl}
-        className="w-full h-full border-0"
-        onError={() => {
-          console.error("PDF iframe loading error");
-          setLoadAttempts(prev => prev + 1);
-        }}
-        onLoad={() => {
-          console.log("PDF iframe loaded successfully");
-          onIframeLoad();
-        }}
-        title="PDF Document"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups"
-        referrerPolicy="no-referrer"
-        loading="lazy"
-        allow="fullscreen"
-      />
-    );
-  };
-
-  // Function to display fallback view when all PDF rendering attempts fail
-  const renderPdfFallbackView = () => (
-    <div className="flex flex-col items-center justify-center h-full">
-      <FileText className="h-16 w-16 mb-4 text-red-500/50" />
-      <p className="text-center mb-4 font-medium">Failed to load PDF document</p>
-      <p className="text-center text-sm text-muted-foreground mb-6">
-        The PDF could not be displayed in the browser.
-      </p>
-      <div className="flex gap-3">
-        <Button 
-          variant="default" 
-          onClick={onExternalOpen}
-          className="flex items-center"
+      <div className="w-full h-full flex flex-col">
+        <object
+          data={pdfUrl}
+          type="application/pdf"
+          className="w-full h-full border-0"
+          onError={onIframeError}
+          onLoad={onIframeLoad}
         >
-          Open in New Tab <ExternalLink className="h-4 w-4 ml-2" />
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={handleRetry}
-          className="flex items-center"
-        >
-          Retry <RefreshCw className="h-4 w-4 ml-2" />
-        </Button>
+          <div className="flex flex-col items-center justify-center h-full p-6">
+            <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
+            <Button 
+              onClick={onExternalOpen}
+              className="flex items-center"
+            >
+              Download PDF <ExternalLink className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </object>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Prioritize PDF viewing when available
   if (pdfUrl && isPdf) {
-    console.log('Displaying PDF content from URL:', pdfUrl, 'with viewer type:', viewerType);
-    if (viewerType === 'object') {
-      return renderPdfWithObject();
-    } else if (viewerType === 'iframe') {
-      return renderPdfWithIframe();
-    } else {
-      return renderPdfFallbackView();
-    }
+    console.log('Displaying PDF content from URL:', pdfUrl);
+    return createPdfEmbed();
   }
 
   // Handle Word documents
@@ -249,7 +172,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           srcDoc={createHtmlContent()}
           title="Invoice HTML Content"
           className="w-full h-full border-0"
-          sandbox="allow-same-origin allow-scripts"
+          sandbox="allow-same-origin"
           onError={(e) => {
             console.error('HTML iframe error:', e);
             onIframeError();

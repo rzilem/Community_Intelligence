@@ -1,75 +1,80 @@
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { OnboardingTemplate, OnboardingStage } from '@/types/onboarding-types';
+import { PlusCircle, Loader2 } from 'lucide-react';
+import { OnboardingTemplate } from '@/types/onboarding-types';
 import TemplateCard from '../TemplateCard';
-import CreateTemplateOptions from './CreateTemplateOptions';
+import { useNavigate } from 'react-router-dom';
 
 interface TemplatesListProps {
   templates: OnboardingTemplate[];
   filteredTemplates: OnboardingTemplate[];
-  templateStages: Record<string, OnboardingStage[]>;
-  loadingStages: boolean;
+  templateStages: Record<string, any>;
+  loadingStages: Record<string, boolean>;
   isLoading: boolean;
   onCreateClick: () => void;
   onEditTemplate: (template: OnboardingTemplate) => void;
   onDeleteTemplate: (template: OnboardingTemplate) => void;
 }
 
-const TemplatesList: React.FC<TemplatesListProps> = ({ 
+const TemplatesList = ({ 
   templates,
-  filteredTemplates, 
+  filteredTemplates,
   templateStages,
   loadingStages,
   isLoading,
   onCreateClick,
   onEditTemplate,
   onDeleteTemplate
-}) => {
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10">
-        <Loader2 className="h-10 w-10 text-primary animate-spin" />
-        <p className="mt-2 text-muted-foreground">Loading templates...</p>
-      </div>
-    );
-  }
+}: TemplatesListProps) => {
+  const navigate = useNavigate();
 
-  if (templates.length === 0) {
-    return (
-      <div className="border rounded-lg p-6 flex flex-col items-center justify-center text-center">
-        <h3 className="text-lg font-medium mb-2">No onboarding templates</h3>
-        <p className="text-muted-foreground mb-4">
-          Create your first template to start onboarding clients efficiently
-        </p>
-        <CreateTemplateOptions onCreateBasic={onCreateClick} />
-      </div>
-    );
+  const handleViewDetails = (templateId: string) => {
+    console.log("View details for template:", templateId);
+    navigate(`/lead-management/onboarding/templates/${templateId}`);
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <span className="ml-2 text-lg">Loading templates...</span>
+    </div>;
   }
 
   if (filteredTemplates.length === 0) {
     return (
-      <div className="border rounded-lg p-6 flex flex-col items-center justify-center text-center">
-        <h3 className="text-lg font-medium mb-2">No templates match your filter</h3>
-        <p className="text-muted-foreground mb-4">
-          Try changing your filter or create a new template
-        </p>
-        <Button onClick={onCreateClick}>Create Template</Button>
-      </div>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center h-64">
+          <p className="text-muted-foreground text-center">
+            {templates.length === 0 ? 
+              "No templates found. Create your first onboarding template to get started." : 
+              "No templates match your current filter. Try another filter."}
+          </p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={onCreateClick}
+          >
+            <PlusCircle className="h-4 w-4 mr-2" />
+            Create Template
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {filteredTemplates.map(template => (
-        <TemplateCard
-          key={template.id}
-          template={template}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {filteredTemplates.map((template) => (
+        <TemplateCard 
+          key={template.id} 
+          template={template} 
           stages={templateStages[template.id] || []}
-          isLoadingStages={loadingStages}
+          isLoadingStages={loadingStages[template.id] || false}
           onEdit={() => onEditTemplate(template)}
           onDelete={() => onDeleteTemplate(template)}
+          onViewDetails={() => handleViewDetails(template.id)}
         />
       ))}
     </div>
