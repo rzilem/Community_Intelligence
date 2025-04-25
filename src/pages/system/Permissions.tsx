@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
-import { supabase } from '@/integrations/supabase/client';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },

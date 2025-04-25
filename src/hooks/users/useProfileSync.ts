@@ -17,42 +17,8 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     failed: number;
   } | null>(null);
   
-  // Check for missing profiles when users data changes
-  useEffect(() => {
-    const checkMissingProfiles = async () => {
-      try {
-        // Get all users from auth.users
-        const { data, error } = await supabase.auth.admin.listUsers({
-          page: 1,
-          perPage: 100 // Adjust based on expected user count
-        });
-        
-        if (error) throw error;
-        
-        if (data && data.users) {
-          const authUsers = data.users;
-          setAuthUserCount(authUsers.length);
-          
-          // Create a set of existing profile IDs for fast lookup
-          const existingProfileIds = new Set(users.map(user => user.id));
-          
-          // Find auth users without profiles
-          const missingProfiles = authUsers.filter(
-            (authUser: User) => !existingProfileIds.has(authUser.id)
-          );
-          
-          setSyncInfo({
-            totalAuthUsers: authUsers.length,
-            missingProfiles: missingProfiles.length
-          });
-        }
-      } catch (error) {
-        console.error('Error checking for missing profiles:', error);
-      }
-    };
-    
-    checkMissingProfiles();
-  }, [users]);
+  // We're not using checkMissingProfiles on component mount anymore
+  // since it requires admin privileges
   
   // Function to sync missing profiles
   const syncMissingProfiles = async () => {
@@ -61,14 +27,21 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     setSyncInProgress(true);
     setSyncResult(null);
     
+    toast.info("The sync operation requires admin privileges in Supabase.");
+    
     try {
-      // Get all users from auth.users
+      // Attempt to fetch users - this may fail without admin privileges
       const { data, error } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 100
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error accessing auth users:', error);
+        toast.error('You need admin privileges to sync user profiles');
+        setSyncInProgress(false);
+        return;
+      }
       
       if (!data || !data.users || !data.users.length) {
         toast.error('No users found in the authentication system');
@@ -77,6 +50,7 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       }
       
       const authUsers = data.users;
+      setAuthUserCount(authUsers.length);
       
       // Create a set of existing profile IDs for fast lookup
       const existingProfileIds = new Set(users.map(user => user.id));
@@ -154,7 +128,7 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       setSyncInProgress(false);
     }
   };
-  
+
   return {
     syncInProgress,
     syncResult,

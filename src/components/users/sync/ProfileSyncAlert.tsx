@@ -64,14 +64,14 @@ const ProfileSyncAlert: React.FC<ProfileSyncAlertProps> = ({
     );
   }
   
-  // Show status info when everything is synced
-  if (syncInfo && syncInfo.missingProfiles === 0 && userCount > 0) {
+  if (userCount > 0) {
     return (
       <Alert className="mb-6" variant="default">
         <CheckCircle className="h-4 w-4" />
-        <AlertTitle>All Profiles Synced</AlertTitle>
+        <AlertTitle>Users Available</AlertTitle>
         <AlertDescription>
-          All {userCount} users have profiles in the system.
+          {userCount} user profile{userCount !== 1 ? 's' : ''} found in the system.
+          {userCount === 1 && " Note: Sync feature requires admin privileges in Supabase to see all auth users."}
         </AlertDescription>
       </Alert>
     );

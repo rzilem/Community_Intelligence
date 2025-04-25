@@ -52,7 +52,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
     if (user.profile?.first_name) {
       return `${user.profile.first_name} ${user.profile.last_name || ''}`.trim();
     }
-    return 'Unnamed User';
+    return user.email || 'Unnamed User';
   };
   
   return (
