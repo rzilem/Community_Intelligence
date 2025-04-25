@@ -1,4 +1,3 @@
-
 import { RouteObject } from "react-router-dom";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import System from "@/pages/system/System";
@@ -11,6 +10,7 @@ import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
 import FormBuilder from "@/pages/system/FormBuilder";
+import Users from "@/pages/system/Users";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
@@ -69,5 +69,9 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/form-builder/edit/:formId",
     element: <RequireAuth menuId="system" submenuId="form-builder"><FormBuilder /></RequireAuth>
+  },
+  {
+    path: "/system/users",
+    element: <RequireAuth menuId="system" submenuId="users"><Users /></RequireAuth>
   }
 ];

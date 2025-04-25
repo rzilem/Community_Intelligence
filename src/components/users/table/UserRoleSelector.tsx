@@ -1,6 +1,12 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface UserRoleSelectorProps {
   userId: string;
@@ -10,21 +16,21 @@ interface UserRoleSelectorProps {
   isDisabled?: boolean;
 }
 
-const UserRoleSelector: React.FC<UserRoleSelectorProps> = ({ 
-  userId, 
-  currentRole, 
-  roles, 
+const UserRoleSelector: React.FC<UserRoleSelectorProps> = ({
+  userId,
+  currentRole,
+  roles,
   onRoleChange,
-  isDisabled
+  isDisabled = false
 }) => {
   return (
     <Select
-      value={currentRole}
+      defaultValue={currentRole}
       onValueChange={(value) => onRoleChange(userId, value)}
       disabled={isDisabled}
     >
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="Select role" />
+        <SelectValue placeholder="Select a role" />
       </SelectTrigger>
       <SelectContent>
         {roles.map((role) => (
