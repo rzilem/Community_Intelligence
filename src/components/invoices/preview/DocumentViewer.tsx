@@ -46,7 +46,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
     
     console.log(`Creating proxy URL for: ${url}, filename: ${filename}`);
-    return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}`;
+    // Add timestamp to prevent caching issues
+    const timestamp = new Date().getTime();
+    return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}&t=${timestamp}`;
   };
 
   const proxyUrl = isPdf ? createProxyUrl(pdfUrl) : pdfUrl;
@@ -97,6 +99,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           </button>
         )}
       </div>
+    );
+  }
+
+  // For PDF files, use object tag instead of iframe for better browser compatibility
+  if (isPdf) {
+    return (
+      <object
+        className="w-full h-full border-0"
+        data={proxyUrl}
+        type="application/pdf"
+        onError={handleIframeError}
+        onLoad={handleIframeLoad}
+      >
+        <p>Your browser does not support PDF preview. <a href={proxyUrl} target="_blank" rel="noreferrer">Click here to download</a></p>
+      </object>
     );
   }
 

@@ -6,9 +6,9 @@ import { corsHeaders } from "../_shared/cors.ts";
 const enhancedHeaders = {
   ...corsHeaders,
   'Content-Type': 'application/pdf',
-  'Content-Disposition': 'inline',
+  'Content-Disposition': 'inline; filename="document.pdf"',
   'X-Content-Type-Options': 'nosniff',
-  'Content-Security-Policy': "default-src 'self'; frame-ancestors *;",
+  'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval'; frame-ancestors *;",
   'X-Frame-Options': 'ALLOWALL',
   'Cache-Control': 'public, max-age=3600',
 };
@@ -76,10 +76,16 @@ serve(async (req) => {
 
     // Get the PDF file as a blob
     const pdfBlob = await response.blob();
+    
+    // Set specific headers for the PDF response
+    const responseHeaders = {
+      ...enhancedHeaders,
+      'Content-Disposition': `inline; filename="${filename}"`,
+    };
 
     // Return the PDF with headers that allow inline viewing
     return new Response(pdfBlob, {
-      headers: enhancedHeaders,
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error('Error in pdf-proxy function:', error);
