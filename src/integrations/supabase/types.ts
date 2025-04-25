@@ -3755,7 +3755,7 @@ export type Database = {
           phone_number: string | null
           preferred_language: string | null
           profile_image_url: string | null
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
@@ -3767,7 +3767,7 @@ export type Database = {
           phone_number?: string | null
           preferred_language?: string | null
           profile_image_url?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
@@ -3779,7 +3779,7 @@ export type Database = {
           phone_number?: string | null
           preferred_language?: string | null
           profile_image_url?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
@@ -5168,6 +5168,13 @@ export type Database = {
         | "emergency"
         | "announcement"
         | "community"
+      user_role:
+        | "admin"
+        | "manager"
+        | "resident"
+        | "maintenance"
+        | "accountant"
+        | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5292,6 +5299,14 @@ export const Constants = {
         "emergency",
         "announcement",
         "community",
+      ],
+      user_role: [
+        "admin",
+        "manager",
+        "resident",
+        "maintenance",
+        "accountant",
+        "user",
       ],
     },
   },

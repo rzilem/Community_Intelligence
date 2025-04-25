@@ -1,15 +1,17 @@
 
+import { UserRole } from './user-types';
+
 export interface Profile {
   id: string;
   email?: string;
   first_name?: string;
   last_name?: string;
-  role: string;
+  role: UserRole;
   profile_image_url?: string | null;
   phone?: string | null;
   created_at: string;
   updated_at: string;
-  [key: string]: any; // Allow for additional properties
+  [key: string]: any;
 }
 
 export interface UserSettings {

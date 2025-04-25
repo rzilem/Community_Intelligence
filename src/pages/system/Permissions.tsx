@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, Info } from 'lucide-react';
@@ -12,6 +11,7 @@ import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+// Update roles to match our new enum type
 const roles = [
   { id: 'admin', name: 'Administrator' },
   { id: 'manager', name: 'Manager' },
@@ -19,7 +19,7 @@ const roles = [
   { id: 'maintenance', name: 'Maintenance' },
   { id: 'accountant', name: 'Accountant' },
   { id: 'user', name: 'Basic User' },
-];
+] as const;
 
 const Permissions = () => {
   // Query all users and profiles in a single query
