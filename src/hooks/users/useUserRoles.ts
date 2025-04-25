@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { UserWithProfile, UserRole } from '@/types/user-types';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +28,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
       
       const { error } = await supabase
         .from('profiles')
-        .update({ role })
+        .update({ role: role as UserRole })
         .eq('id', userId);
         
       if (error) throw error;
@@ -57,7 +58,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
         .upsert({
           id: userId,
           email: user.email,
-          role: user.profile?.role || 'user',
+          role: user.profile?.role || ('user' as UserRole),
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()

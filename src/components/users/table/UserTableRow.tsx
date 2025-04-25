@@ -3,7 +3,7 @@ import React from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, UserRound } from 'lucide-react';
-import { UserWithProfile } from '@/types/user-types';
+import { UserWithProfile, UserRole } from '@/types/user-types';
 import UserRoleSelector from './UserRoleSelector';
 import UserRoleBadge from './UserRoleBadge';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
@@ -105,7 +105,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
           <div className="max-w-xs">
             <UserRoleSelector
               userId={user.id}
-              currentRole={userRole}
+              currentRole={userRole as UserRole}
               roles={roles}
               onRoleChange={onRoleUpdate}
               isDisabled={isLoading}
