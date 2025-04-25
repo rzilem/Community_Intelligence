@@ -27,7 +27,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [key, setKey] = useState(Date.now()); // Force refresh key
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [attempt, setAttempt] = useState(1);
-  const [viewerType, setViewerType] = useState<'pdfjs' | 'direct' | 'object'>('pdfjs');
+  const [viewerType, setViewerType] = useState<'direct' | 'pdfjs' | 'object'>('direct');
 
   // Create a proxy URL for PDFs to ensure they display inline
   const createProxyUrl = (url: string) => {
@@ -54,7 +54,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log(`Creating proxy URL for: ${url}, filename: ${filename}`);
     // Add timestamp to prevent caching issues
     const timestamp = Date.now();
-    const uniqueKey = `${timestamp}-${attempt}`;
+    const randomId = Math.random().toString(36).substring(2, 10); // Add randomness
+    const uniqueKey = `${timestamp}-${randomId}-${attempt}`;
     return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}&t=${uniqueKey}`;
   };
 
@@ -68,6 +69,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setIframeError(true);
     setLoading(false);
     if (onIframeError) onIframeError();
+    
+    // Try to switch viewers if one fails
+    if (viewerType === 'direct') {
+      console.log('Direct viewing failed, switching to PDF.js');
+      setViewerType('pdfjs');
+      setLoading(true);
+      setKey(Date.now());
+    } else if (viewerType === 'pdfjs') {
+      console.log('PDF.js viewing failed, switching to object tag');
+      setViewerType('object');
+      setLoading(true);
+      setKey(Date.now());
+    }
   };
 
   const handleIframeLoad = () => {
@@ -86,13 +100,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     const loadingTimeout = setTimeout(() => {
       if (loading) {
         console.log('Loading timeout reached, trying alternate viewer');
-        // If PDF.js is taking too long, try direct viewing
-        if (viewerType === 'pdfjs') {
-          setViewerType('direct');
+        // Try cycling through different viewer types
+        if (viewerType === 'direct') {
+          setViewerType('pdfjs');
           setKey(Date.now());
-        } else if (viewerType === 'direct') {
+        } else if (viewerType === 'pdfjs') {
           setViewerType('object');
           setKey(Date.now());
+        } else if (viewerType === 'object') {
+          // If all viewers timed out, show error
+          setIframeError(true);
+          setLoading(false);
         }
       }
     }, 5000);
@@ -105,7 +123,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     setAttempt(prev => prev + 1);
     setIframeError(false);
     setLoading(true);
-    setViewerType('pdfjs'); // Reset to PDF.js first
+    setViewerType('direct'); // Reset to direct first
     setKey(Date.now());
   };
 
@@ -171,7 +189,26 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       );
     }
     
-    // PDF.js viewer (most compatible)
+    // Direct PDF in iframe (try first as it's fastest)
+    if (viewerType === 'direct') {
+      return (
+        <div className="relative w-full h-full">
+          <iframe
+            ref={iframeRef}
+            key={`direct-${key}`}
+            className="w-full h-full border-0"
+            src={proxyUrl}
+            onError={handleIframeError}
+            onLoad={handleIframeLoad}
+            allowFullScreen
+            title="PDF Preview"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
+          />
+        </div>
+      );
+    }
+    
+    // PDF.js viewer (most compatible but slower)
     if (viewerType === 'pdfjs') {
       return (
         <div className="relative w-full h-full">
@@ -184,25 +221,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             onLoad={handleIframeLoad}
             allowFullScreen
             title="PDF.js Document Preview"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
-          />
-        </div>
-      );
-    }
-    
-    // Direct PDF in iframe
-    if (viewerType === 'direct') {
-      return (
-        <div className="relative w-full h-full">
-          <iframe
-            ref={iframeRef}
-            key={`direct-${key}`}
-            className="w-full h-full border-0"
-            src={proxyUrl}
-            onError={handleIframeError}
-            onLoad={handleIframeLoad}
-            allowFullScreen
-            title="Direct PDF Preview"
             sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads allow-presentation"
           />
         </div>

@@ -90,12 +90,13 @@ serve(async (req) => {
     console.log(`Processing PDF request. Original path: ${pdfPath}, Extracted filename: ${filename}`);
     
     // Construct the storage URL with just the filename
-    // Add timestamp to prevent caching
+    // Add timestamp to prevent caching - include unique identifier from request if available
     const timestamp = Date.now();
-    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}?t=${timestamp}`;
+    const randomId = Math.random().toString(36).substring(2, 10); // Add randomness
+    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}?t=${timestamp}&r=${randomId}`;
     console.log(`Fetching PDF from: ${fileUrl}`);
 
-    // Fetch the PDF from Supabase Storage with no-cache headers
+    // Fetch the PDF from Supabase Storage with strict no-cache headers
     const fetchHeaders = {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma': 'no-cache',
@@ -104,7 +105,8 @@ serve(async (req) => {
 
     const response = await fetch(fileUrl, { 
       headers: fetchHeaders,
-      cache: 'no-store' 
+      cache: 'no-store',
+      method: 'GET'
     });
     
     if (!response.ok) {
@@ -132,6 +134,9 @@ serve(async (req) => {
       ...enhancedHeaders,
       'Content-Disposition': `inline; filename="${filename}"`,
       'Content-Length': pdfBlob.size.toString(),
+      'Access-Control-Allow-Origin': '*',  // Ensure this is set for cross-origin requests
+      'Access-Control-Expose-Headers': 'Content-Disposition, Content-Length, Content-Type',
+      'X-Content-Type-Options': 'nosniff',
     };
 
     // Return the PDF with headers that allow inline viewing
