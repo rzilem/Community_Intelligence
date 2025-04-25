@@ -64,10 +64,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     // Validate PDF URL
     if (pdfUrl) {
       try {
+        // For debugging, log the original URL
+        console.log("Original PDF URL:", pdfUrl);
+        
         // Normalize URL by ensuring it has a protocol
-        const normalizedUrl = normalizeUrl(pdfUrl);
+        let normalizedUrl = pdfUrl;
+        if (!normalizedUrl.startsWith('http')) {
+          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${normalizedUrl}`;
+        }
+        
         setNormalizedPdfUrl(normalizedUrl);
         setHasContent(true);
+        console.log("Normalized PDF URL:", normalizedUrl);
       } catch (e) {
         console.error("Invalid PDF URL:", pdfUrl, e);
         setError("Invalid PDF URL format");

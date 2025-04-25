@@ -24,9 +24,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [iframeError, setIframeError] = useState(false);
 
   // Create a proxy URL for PDFs to ensure they display inline
-  const proxyUrl = isPdf 
-    ? `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(pdfUrl.split('/').pop() || '')}`
-    : pdfUrl;
+  const createProxyUrl = (url: string) => {
+    if (!url) return '';
+    // Extract just the filename from the URL
+    const filename = url.split('/').pop() || '';
+    return `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(filename)}`;
+  };
+
+  const proxyUrl = isPdf ? createProxyUrl(pdfUrl) : pdfUrl;
 
   const handleIframeError = () => {
     console.error('Failed to load document in iframe:', proxyUrl);

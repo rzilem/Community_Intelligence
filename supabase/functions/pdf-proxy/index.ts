@@ -23,7 +23,12 @@ serve(async (req) => {
     }
 
     // Construct the file URL to Supabase Storage
-    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${pdfPath}`;
+    // We'll clean up the path to handle both full URLs and relative paths
+    const filePath = pdfPath.includes('://') 
+      ? new URL(pdfPath).pathname.split('/').pop() // Extract filename from full URL
+      : pdfPath; // Use as is if it's already just a filename
+    
+    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filePath}`;
     console.log(`Proxying PDF from: ${fileUrl}`);
 
     // Fetch the PDF from Supabase Storage

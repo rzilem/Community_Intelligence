@@ -52,7 +52,7 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
       return;
     }
 
-    // If we have a PDF URL, check if it's accessible through our proxy
+    // If we have a PDF URL, check if it's valid
     if (pdfUrl && pdfUrl.trim() !== '') {
       console.log('Setting content type to PDF for:', pdfUrl);
       setContentType('pdf');
