@@ -22,6 +22,12 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const [attemptCount, setAttemptCount] = useState(0);
   const [loadStartTime, setLoadStartTime] = useState(Date.now());
 
+  // Get the proxy URL for a PDF
+  const getProxyUrl = useCallback((originalUrl: string) => {
+    const proxyEndpoint = 'https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy';
+    return `${proxyEndpoint}?url=${encodeURIComponent(originalUrl)}`;
+  }, []);
+
   // Reset state when URL changes
   useEffect(() => {
     console.log(`PDFViewer attempting to load: ${url}`);
@@ -39,7 +45,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   // Timeout handler to prevent infinite loading state
   useEffect(() => {
-    // If we've been loading for more than 5 seconds, try a different approach
     const timeoutId = setTimeout(() => {
       if (!failed && viewerType === 'object') {
         console.log("PDF loading timeout - switching to iframe");
@@ -60,7 +65,6 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
       setKey(Date.now());
       setAttemptCount(prev => prev + 1);
     } else if (attemptCount < 2) {
-      // Try one more time with iframe before giving up
       console.log("Retrying with iframe viewer");
       setKey(Date.now());
       setAttemptCount(prev => prev + 1);
@@ -71,8 +75,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     }
   }, [viewerType, attemptCount, onError]);
 
+  const handleLoad = useCallback(() => {
+    console.log(`PDF loaded successfully with ${viewerType}`);
+    setFailed(false);
+    if (onLoad) onLoad();
+  }, [viewerType, onLoad]);
+
   const handleRetry = useCallback(() => {
-    console.log("Manual retry requested for PDF viewer");
+    console.log("Manual retry requested");
     setKey(Date.now());
     setFailed(false);
     setViewerType('object');
@@ -81,23 +91,17 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     if (onRetry) onRetry();
   }, [onRetry]);
 
-  const handleExternalOpen = useCallback((e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default to avoid automatic download
+  const handleExternalOpen = useCallback(() => {
     console.log("Opening PDF in new tab:", url);
     window.open(url, '_blank', 'noopener,noreferrer');
   }, [url]);
-
-  const handleLoad = useCallback(() => {
-    console.log(`PDF loaded successfully with ${viewerType}`);
-    if (onLoad) onLoad();
-  }, [viewerType, onLoad]);
 
   if (failed) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-muted-foreground">
         <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
-        <p className="text-center mb-2 text-lg font-medium">Failed to load PDF preview</p>
-        <p className="text-center text-sm mb-4 text-muted-foreground">
+        <p className="text-center mb-2">Failed to load PDF preview</p>
+        <p className="text-center text-sm mb-4">
           The PDF may be set to download by the server instead of displaying inline.
         </p>
         <div className="flex gap-2">
@@ -112,11 +116,14 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     );
   }
 
+  const proxyUrl = getProxyUrl(url);
+  console.log('Using proxy URL:', proxyUrl);
+
   if (viewerType === 'object') {
     return (
       <object
         key={`pdf-object-${key}`}
-        data={url}
+        data={proxyUrl}
         type="application/pdf"
         className="w-full h-full"
         onLoad={handleLoad}
@@ -131,7 +138,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   return (
     <iframe
       key={`pdf-iframe-${key}`}
-      src={url}
+      src={proxyUrl}
       className="w-full h-full border-0"
       onLoad={handleLoad}
       onError={handleError}

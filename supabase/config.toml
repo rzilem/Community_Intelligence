@@ -85,6 +85,9 @@ gcp_jwt_path = "supabase/gcloud.json"
 # Enable experimental features - useful when testing new features like functions, etc.
 enable_experimental_functions = true
 
-# Add custom function settings to allow the invoice-receiver function to run without JWT verification
+# Add custom function settings to allow functions to run without JWT verification
 [functions.invoice-receiver]
+verify_jwt = false
+
+[functions.pdf-proxy]
 verify_jwt = false
