@@ -15,10 +15,8 @@ export const useProfileSync = (users: UserWithProfile[]) => {
   const [syncResult, setSyncResult] = useState<{
     success: number;
     failed: number;
+    needsSupabaseAdmin?: boolean;
   } | null>(null);
-  
-  // We're not using checkMissingProfiles on component mount anymore
-  // since it requires admin privileges
   
   // Function to sync missing profiles
   const syncMissingProfiles = async () => {
@@ -27,10 +25,8 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     setSyncInProgress(true);
     setSyncResult(null);
     
-    toast.info("The sync operation requires admin privileges in Supabase.");
-    
     try {
-      // Attempt to fetch users - this may fail without admin privileges
+      // Attempt to fetch users - this will fail without admin privileges in Supabase
       const { data, error } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 100
@@ -38,7 +34,15 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       
       if (error) {
         console.error('Error accessing auth users:', error);
-        toast.error('You need admin privileges to sync user profiles');
+        
+        // Set special flag to indicate this is a Supabase admin permission issue
+        setSyncResult({
+          success: 0,
+          failed: 0,
+          needsSupabaseAdmin: true
+        });
+        
+        toast.error('This feature requires Supabase admin privileges');
         setSyncInProgress(false);
         return;
       }

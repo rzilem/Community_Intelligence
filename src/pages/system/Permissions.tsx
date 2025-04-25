@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield } from 'lucide-react';
+import { Shield, Info } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const roles = [
   { id: 'admin', name: 'Administrator' },
@@ -86,6 +87,15 @@ const Permissions = () => {
         />
       }
     >
+      <Alert variant="default" className="mb-6">
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Note about Supabase Admin Privileges:</strong> The sync feature requires special Supabase admin privileges
+          to access all authentication users. Without these privileges, you can still view and manage user profiles that exist in the database,
+          and you can create new users directly through this application.
+        </AlertDescription>
+      </Alert>
+      
       <ProfileSyncAlert
         syncInfo={syncInfo}
         syncResult={syncResult}
