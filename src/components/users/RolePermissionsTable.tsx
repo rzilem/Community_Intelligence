@@ -6,7 +6,7 @@ import { Role } from '@/types/permission-types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
-import { ResponsiveContainer } from '@/components/layout/ResponsiveContainer';
+import ResponsiveContainer from '@/components/layout/ResponsiveContainer';
 
 const AccessIcon = ({ access }: { access: 'full' | 'read' | 'none' }) => {
   switch (access) {
