@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserRound, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { updateProfileImage } from '@/services/user/profile-image-service';
 
 interface ProfileImageUploadProps {
   userId: string;
@@ -10,6 +12,7 @@ interface ProfileImageUploadProps {
   firstName?: string | null;
   lastName?: string | null;
   onImageUpdated: () => void;
+  size?: 'sm' | 'md' | 'lg';
 }
 
 const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
@@ -17,7 +20,8 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   imageUrl,
   firstName,
   lastName,
-  onImageUpdated
+  onImageUpdated,
+  size = 'md'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   
@@ -50,17 +54,33 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     setIsUploading(true);
     
     try {
-      // In a real implementation, upload the file to storage
-      // For now, we'll simulate a successful upload
-      setTimeout(() => {
-        toast.success('Profile image updated successfully');
-        onImageUpdated();
-        setIsUploading(false);
-      }, 1000);
-    } catch (error) {
+      // Upload the profile image using our service
+      const result = await updateProfileImage(userId, file);
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast.success('Profile image updated successfully');
+      onImageUpdated();
+    } catch (error: any) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image');
+    } finally {
       setIsUploading(false);
+    }
+  };
+  
+  // Determine avatar size based on prop
+  const getAvatarSize = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-8 w-8';
+      case 'lg':
+        return 'h-24 w-24';
+      case 'md':
+      default:
+        return 'h-10 w-10';
     }
   };
   
@@ -75,21 +95,21 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         disabled={isUploading}
       />
       <label htmlFor={`profile-upload-${userId}`} className="cursor-pointer">
-        <Avatar className="h-10 w-10 border border-gray-200">
+        <Avatar className={`${getAvatarSize()} border border-gray-200`}>
           {imageUrl ? (
             <AvatarImage src={imageUrl} alt="Profile" />
           ) : null}
           <AvatarFallback className={`${getInitials() ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
-            {getInitials() || <UserRound size={20} />}
+            {getInitials() || <UserRound size={size === 'lg' ? 32 : size === 'sm' ? 16 : 20} />}
           </AvatarFallback>
         </Avatar>
         <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <Upload className="h-4 w-4 text-white" />
+          <Upload className={`${size === 'lg' ? 'h-6 w-6' : size === 'sm' ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
         </div>
       </label>
       {isUploading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-          <div className="h-4 w-4 border-2 border-t-transparent border-white rounded-full animate-spin"></div>
+          <div className={`${size === 'lg' ? 'h-6 w-6 border-2' : size === 'sm' ? 'h-3 w-3 border' : 'h-4 w-4 border-2'} border-t-transparent border-white rounded-full animate-spin`}></div>
         </div>
       )}
     </div>
