@@ -6,7 +6,9 @@ const UserTableHeader: React.FC = () => {
   return (
     <TableHeader>
       <TableRow>
-        <TableHead className="w-[250px]">User</TableHead>
+        <TableHead>User</TableHead>
+        <TableHead>Phone</TableHead>
+        <TableHead>Created At</TableHead>
         <TableHead>Role</TableHead>
         <TableHead className="text-right">Actions</TableHead>
       </TableRow>

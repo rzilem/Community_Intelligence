@@ -20,7 +20,16 @@ const Users = () => {
   const { data: users, isLoading, error, refetch } = useSupabaseQuery<UserWithProfile[]>(
     'profiles',
     {
-      select: 'id, email, created_at, first_name, last_name, role, profile_image_url',
+      select: `
+        id, 
+        email, 
+        created_at, 
+        first_name, 
+        last_name, 
+        role, 
+        profile_image_url,
+        phone_number
+      `,
       filter: [],
       order: { column: 'created_at', ascending: false },
     }

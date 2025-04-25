@@ -7,6 +7,7 @@ import { UserWithProfile } from '@/types/user-types';
 import UserRoleSelector from './UserRoleSelector';
 import UserRoleBadge from './UserRoleBadge';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
+import { formatDate } from '@/lib/date-utils';
 
 interface UserTableRowProps {
   user: UserWithProfile;
@@ -35,26 +36,30 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
   
   return (
     <TableRow key={user.id}>
-      <TableCell className="flex items-center gap-3">
-        <div className="flex-shrink-0">
-          <ProfileImageUpload
-            userId={user.id}
-            imageUrl={user.profile?.profile_image_url}
-            firstName={user.profile?.first_name}
-            lastName={user.profile?.last_name}
-            onImageUpdated={onProfileImageUpdated}
-          />
-        </div>
-        <div>
-          <div className="font-medium">
-            {user.profile?.first_name ? 
-              `${user.profile.first_name} ${user.profile.last_name || ''}` : 
-              'Unnamed User'
-            }
+      <TableCell className="w-[250px]">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <ProfileImageUpload
+              userId={user.id}
+              imageUrl={user.profile?.profile_image_url}
+              firstName={user.profile?.first_name}
+              lastName={user.profile?.last_name}
+              onImageUpdated={onProfileImageUpdated}
+            />
           </div>
-          <div className="text-sm text-muted-foreground">{user.email}</div>
+          <div>
+            <div className="font-medium">
+              {user.profile?.first_name ? 
+                `${user.profile.first_name} ${user.profile.last_name || ''}` : 
+                'Unnamed User'
+              }
+            </div>
+            <div className="text-sm text-muted-foreground">{user.email}</div>
+          </div>
         </div>
       </TableCell>
+      <TableCell>{user.profile?.phone_number || '-'}</TableCell>
+      <TableCell>{formatDate(user.created_at)}</TableCell>
       <TableCell>
         {!user.profile ? (
           <div className="flex gap-2 items-center">
