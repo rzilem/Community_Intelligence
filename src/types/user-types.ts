@@ -8,5 +8,5 @@ export interface UserWithProfile {
   profile?: Profile;  
 }
 
-// Add UserRole type to match our new enum
+// Update UserRole to include 'accountant'
 export type UserRole = 'admin' | 'manager' | 'resident' | 'maintenance' | 'accountant' | 'user';

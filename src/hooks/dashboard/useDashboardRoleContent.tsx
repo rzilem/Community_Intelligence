@@ -16,12 +16,6 @@ export const useDashboardRoleContent = (
   const getContentForRole = () => {
     if (!user) return null;
     
-    // For backward compatibility with any code using 'treasurer'
-    // We'll handle this special case - in a real app you might want to add this to the enum
-    if (user.role === 'accountant') {
-      return <TreasurerDashboard />;
-    }
-    
     switch (user.role) {
       case 'admin':
       case 'manager':
