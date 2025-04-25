@@ -5,13 +5,31 @@ import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/h
 import { CheckCircle } from 'lucide-react';
 import { Role } from '@/types/permission-types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface RoleOverviewProps {
   roles: Role[];
   getRoleDescription: (role: Role) => string;
+  searchQuery: string;
+  selectedRoles: string[];
+  onRoleSelectionChange: (roleId: string, selected: boolean) => void;
 }
 
-export const RoleOverview: React.FC<RoleOverviewProps> = ({ roles, getRoleDescription }) => {
+export const RoleOverview: React.FC<RoleOverviewProps> = ({ 
+  roles, 
+  getRoleDescription,
+  searchQuery,
+  selectedRoles,
+  onRoleSelectionChange
+}) => {
+  // Filter roles based on search query
+  const filteredRoles = searchQuery 
+    ? roles.filter(role => 
+        role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        role.description.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : roles;
+
   return (
     <ScrollArea className="w-full">
       <Table>
@@ -20,10 +38,11 @@ export const RoleOverview: React.FC<RoleOverviewProps> = ({ roles, getRoleDescri
             <TableHead>Role</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Access Level</TableHead>
+            <TableHead className="text-center">Compare</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {roles.map(role => (
+          {filteredRoles.map(role => (
             <TableRow key={role.id}>
               <TableCell>
                 <HoverCard>
@@ -46,6 +65,13 @@ export const RoleOverview: React.FC<RoleOverviewProps> = ({ roles, getRoleDescri
                   }`} />
                   <span className="capitalize">{role.accessLevel}</span>
                 </div>
+              </TableCell>
+              <TableCell className="text-center">
+                <Checkbox 
+                  id={`compare-overview-${role.id}`}
+                  checked={selectedRoles.includes(role.id)}
+                  onCheckedChange={(checked) => onRoleSelectionChange(role.id, checked === true)}
+                />
               </TableCell>
             </TableRow>
           ))}

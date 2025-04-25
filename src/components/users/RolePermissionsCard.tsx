@@ -10,7 +10,7 @@ const RolePermissionsCard: React.FC = () => {
         <CardTitle>Role Permissions Matrix</CardTitle>
         <CardDescription>
           Overview of permissions granted to each user role in the system. 
-          Select the "Detailed Permissions" tab to view permissions by menu and submenu.
+          Search for specific features, compare roles side-by-side, or edit permissions directly.
         </CardDescription>
       </CardHeader>
       <CardContent>
