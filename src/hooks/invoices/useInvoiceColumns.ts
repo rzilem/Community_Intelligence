@@ -1,10 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { InvoiceColumn } from './useInvoices';
 
-export function useInvoiceColumns() {
+// Export the InvoiceColumn type so it can be imported elsewhere
+export interface InvoiceColumn {
+  id: string;
+  label: string;
+  accessorKey: string;
+  sortable: boolean;
+}
+
+export function useInvoiceColumns(storageKey: string = 'invoiceColumnsVisible') {
   const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(
-    JSON.parse(localStorage.getItem('invoiceColumnsVisible') || 'null') || 
+    JSON.parse(localStorage.getItem(storageKey) || 'null') || 
     ['invoice_number', 'vendor', 'association_name', 'invoice_date', 'amount', 'due_date', 'status']
   );
 
@@ -22,8 +29,8 @@ export function useInvoiceColumns() {
 
   // Update visible columns in local storage
   useEffect(() => {
-    localStorage.setItem('invoiceColumnsVisible', JSON.stringify(visibleColumnIds));
-  }, [visibleColumnIds]);
+    localStorage.setItem(storageKey, JSON.stringify(visibleColumnIds));
+  }, [visibleColumnIds, storageKey]);
 
   // Handler to update visible columns
   const updateVisibleColumns = (selectedColumns: string[]) => {

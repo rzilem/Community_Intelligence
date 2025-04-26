@@ -5,17 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice-types';
 import { useInvoiceFilters } from './useInvoiceFilters';
-import { useInvoiceColumns } from './useInvoiceColumns';
+import { useInvoiceColumns, InvoiceColumn } from './useInvoiceColumns';
 import { useAutoRefresh } from './useAutoRefresh';
 import { useInvoiceActions } from './useInvoiceActions';
-
-// Column configuration type
-export type InvoiceColumn = {
-  id: string;
-  label: string;
-  accessorKey: string;
-  sortable: boolean;
-};
 
 export const useInvoices = () => {
   const { toast } = useToast();
