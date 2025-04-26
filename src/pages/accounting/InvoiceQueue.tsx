@@ -2,101 +2,62 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt, Check, RefreshCw, MessageSquare } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { 
+  CheckCircle2, 
+  Inbox, 
+  Plus, 
+  Receipt, 
+  RefreshCcw, 
+  Settings2, 
+  Clock, 
+  AlertTriangle 
+} from 'lucide-react';
 import { useInvoices } from '@/hooks/invoices/useInvoices';
-import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
-import { useToast } from '@/hooks/use-toast';
-import InvoicePaymentAlert from '@/components/invoices/InvoicePaymentAlert';
-import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
-import BulkActionBar from '@/components/invoices/BulkActionBar';
-import InvoiceAnalytics from '@/components/invoices/InvoiceAnalytics';
-import ColumnSelector from '@/components/table/ColumnSelector';
-import { useInvoiceColumns } from '@/hooks/invoices/useInvoiceColumns';
+import InvoiceTable from '@/components/invoices/InvoiceTable';
+import { ColumnSettings } from '@/components/ui/column-settings';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from '@/hooks/useDebounce';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { formatDateTime } from '@/lib/date-utils';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { markAllAsRead } = useInvoiceNotifications();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('pending');
-  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
-  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
-  const [showAnalytics, setShowAnalytics] = useState(true);
-  const [refreshCount, setRefreshCount] = useState(0);
-  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<{count: number, lastUpdate: string}>({
-    count: 0,
-    lastUpdate: new Date().toISOString()
-  });
-
-  const {
-    invoices,
-    isLoading,
-    refreshInvoices,
-    updateInvoiceStatus,
-    deleteInvoice,
-    lastRefreshed
-  } = useInvoices();
-
-  const {
-    columns,
-    visibleColumnIds,
-    updateVisibleColumns,
-    reorderColumns,
-    resetToDefaults
-  } = useInvoiceColumns();
-
-  useEffect(() => {
-    markAllAsRead();
-  }, []);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [activeTab, setActiveTab] = useState('all');
   
-  // Auto-refresh every 30 seconds
+  const { 
+    invoices, 
+    isLoading,
+    columns, 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults,
+    refreshInvoices, 
+    updateInvoiceStatus, 
+    deleteInvoice,
+    lastRefreshed,
+    statusFilter,
+    setStatusFilter,
+    autoRefreshEnabled,
+    toggleAutoRefresh
+  } = useInvoices();
+  
+  // Update status filter when tab changes
   useEffect(() => {
-    if (isAutoRefreshing) {
-      const timer = setInterval(() => {
-        console.log("Auto-refreshing invoices...");
-        refreshInvoices();
-        setRefreshCount(prev => prev + 1);
-      }, 30000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [isAutoRefreshing, refreshInvoices]);
-
-  // Update debug info when invoices change
-  useEffect(() => {
-    setDebugInfo({
-      count: invoices.length,
-      lastUpdate: new Date().toISOString()
-    });
-  }, [invoices]);
-
-  useEffect(() => {
-    const approvedInvoices = invoices.filter(
-      inv => inv.status === 'approved' && !('payment_id' in inv)
-    );
-    setShowPaymentAlert(approvedInvoices.length > 0);
-  }, [invoices]);
-
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = searchTerm === '' ||
-      Object.values(invoice).some(value =>
-        typeof value === 'string' &&
-        value.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-    const matchesStatus =
-      activeTab === 'all-invoices' ||
-      activeTab === invoice.status;
-
-    return matchesSearch && matchesStatus;
-  });
+    setStatusFilter(activeTab);
+  }, [activeTab, setStatusFilter]);
 
   const handleAddInvoice = () => {
-    navigate('/accounting/invoice-queue/new');
+    navigate("/accounting/invoice-queue/new");
   };
 
   const handleViewInvoice = (id: string) => {
@@ -105,240 +66,199 @@ const InvoiceQueue = () => {
 
   const handleApproveInvoice = (id: string) => {
     updateInvoiceStatus(id, 'approved');
-    toast({
-      title: "Invoice Approved",
-      description: "The invoice has been approved and is now ready for payment processing.",
-    });
   };
 
   const handleRejectInvoice = (id: string) => {
     updateInvoiceStatus(id, 'rejected');
-    toast({
-      title: "Invoice Rejected",
-      description: "The invoice has been rejected and will not be processed for payment.",
-    });
   };
 
-  const handleViewPaymentsQueue = () => {
-    navigate('/accounting/transactions-payments');
-  };
+  // Filter invoices based on search term
+  const filteredInvoices = invoices.filter(invoice => {
+    if (!debouncedSearchTerm) return true;
+    
+    const searchLower = debouncedSearchTerm.toLowerCase();
+    return (
+      (invoice.invoice_number && invoice.invoice_number.toLowerCase().includes(searchLower)) ||
+      (invoice.vendor && invoice.vendor.toLowerCase().includes(searchLower)) ||
+      (invoice.description && invoice.description.toLowerCase().includes(searchLower)) ||
+      (invoice.association_name && invoice.association_name.toLowerCase().includes(searchLower))
+    );
+  });
 
-  const handleBulkApprove = async () => {
-    for (const id of selectedInvoiceIds) {
-      await updateInvoiceStatus(id, 'approved');
-    }
-    setSelectedInvoiceIds([]);
-    toast({
-      title: "Bulk Approval Complete",
-      description: `Successfully approved ${selectedInvoiceIds.length} invoices.`,
-    });
-  };
-
-  const handleBulkReject = async () => {
-    for (const id of selectedInvoiceIds) {
-      await updateInvoiceStatus(id, 'rejected');
-    }
-    setSelectedInvoiceIds([]);
-    toast({
-      title: "Bulk Rejection Complete",
-      description: `Successfully rejected ${selectedInvoiceIds.length} invoices.`,
-    });
-  };
-
-  const handleBulkExport = () => {
-    const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
-    toast({
-      title: "Export Started",
-      description: `Exporting ${selectedInvoices.length} invoices.`,
-    });
-  };
-
-  const toggleAutoRefresh = () => {
-    setIsAutoRefreshing(prev => !prev);
-    toast({
-      title: isAutoRefreshing ? "Auto-refresh disabled" : "Auto-refresh enabled",
-      description: isAutoRefreshing ? 
-        "Automatic invoice refresh has been disabled." : 
-        "Invoices will automatically refresh every 30 seconds.",
-    });
-  };
+  // Count invoices by status
+  const pendingCount = invoices.filter(inv => inv.status === 'pending').length;
+  const approvedCount = invoices.filter(inv => inv.status === 'approved').length;
+  const rejectedCount = invoices.filter(inv => inv.status === 'rejected').length;
+  const paidCount = invoices.filter(inv => inv.status === 'paid').length;
 
   return (
     <PageTemplate
       title="Invoice Queue"
-      icon={<Receipt className="h-8 w-8" />}
-      description="Process and approve incoming vendor invoices for payment."
+      icon={<Inbox className="h-8 w-8" />}
+      description="Review, code, and process invoices for payment"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button onClick={handleAddInvoice}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Invoice
+          </Button>
+        </div>
+      }
     >
-      <div className="mt-6 space-y-4">
-        <InvoicePaymentAlert 
-          show={showPaymentAlert} 
-          onViewPaymentsQueue={handleViewPaymentsQueue} 
-        />
-        
-        {showAnalytics && (
-          <InvoiceAnalytics invoices={invoices} />
-        )}
-
-        <div className="flex justify-between items-center">
-          <BulkActionBar
-            selectedInvoices={selectedInvoiceIds}
-            onBulkApprove={handleBulkApprove}
-            onBulkReject={handleBulkReject}
-            onBulkExport={handleBulkExport}
-            onClearSelection={() => setSelectedInvoiceIds([])}
-          />
-
-          <div className="flex space-x-2">
-            <Button 
-              onClick={refreshInvoices} 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className="h-4 w-4" /> Refresh
-            </Button>
-            
-            <Button 
-              onClick={toggleAutoRefresh} 
-              variant={isAutoRefreshing ? "default" : "outline"} 
-              size="sm"
-            >
-              {isAutoRefreshing ? "Auto-refresh ON" : "Auto-refresh OFF"}
-            </Button>
-          </div>
-        </div>
-
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="approved">Approved</TabsTrigger>
-                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                <TabsTrigger value="paid">Paid</TabsTrigger>
-                <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <ColumnSelector
-              columns={columns}
-              selectedColumns={visibleColumnIds}
-              onChange={updateVisibleColumns}
-              onReorder={reorderColumns}
-              resetToDefaults={resetToDefaults}
-              className="ml-auto"
-            />
-          </div>
-
-          <Tabs defaultValue="pending" onValueChange={setActiveTab} value={activeTab}>
-            <TabsContent value="pending" className="mt-4">
-              <InvoiceTabContent
-                tabKey="pending"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-                invoices={filteredInvoices}
-                isLoading={isLoading}
-                onViewInvoice={handleViewInvoice}
-                onApproveInvoice={handleApproveInvoice}
-                onRejectInvoice={handleRejectInvoice}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-              />
-            </TabsContent>
-            <TabsContent value="approved" className="mt-4">
-              <InvoiceTabContent
-                tabKey="approved"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-                invoices={filteredInvoices}
-                isLoading={isLoading}
-                onViewInvoice={handleViewInvoice}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-              />
-              <div className="mt-4 flex justify-end">
-                <Button
-                  onClick={handleViewPaymentsQueue}
-                  className="bg-green-500 hover:bg-green-600"
-                >
-                  <Check className="h-4 w-4 mr-2" /> Process Approved Invoices
-                </Button>
-              </div>
-            </TabsContent>
-            <TabsContent value="rejected" className="mt-4">
-              <InvoiceTabContent
-                tabKey="rejected"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-                invoices={filteredInvoices}
-                isLoading={isLoading}
-                onViewInvoice={handleViewInvoice}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-              />
-            </TabsContent>
-            <TabsContent value="paid" className="mt-4">
-              <InvoiceTabContent
-                tabKey="paid"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-                invoices={filteredInvoices}
-                isLoading={isLoading}
-                onViewInvoice={handleViewInvoice}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-              />
-            </TabsContent>
-            <TabsContent value="all-invoices" className="mt-4">
-              <InvoiceTabContent
-                tabKey="all-invoices"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-                invoices={filteredInvoices}
-                isLoading={isLoading}
-                onViewInvoice={handleViewInvoice}
-                onApproveInvoice={handleApproveInvoice}
-                onRejectInvoice={handleRejectInvoice}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-              />
-            </TabsContent>
+      <div className="flex justify-between items-center mb-4">
+        <div className="space-x-2">
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="inline-flex"
+          >
+            <TabsList>
+              <TabsTrigger value="all">
+                All
+                <Badge variant="secondary" className="ml-2">
+                  {isLoading ? <Skeleton className="h-4 w-4" /> : invoices.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="pending">
+                Pending
+                <Badge variant="secondary" className="ml-2 bg-yellow-100 text-yellow-800">
+                  {isLoading ? <Skeleton className="h-4 w-4" /> : pendingCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="approved">
+                Approved
+                <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+                  {isLoading ? <Skeleton className="h-4 w-4" /> : approvedCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="rejected">
+                Rejected
+                <Badge variant="secondary" className="ml-2 bg-red-100 text-red-800">
+                  {isLoading ? <Skeleton className="h-4 w-4" /> : rejectedCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="paid">
+                Paid
+                <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800">
+                  {isLoading ? <Skeleton className="h-4 w-4" /> : paidCount}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
           </Tabs>
-        </Card>
+        </div>
         
-        <div className="flex justify-between items-center text-sm text-gray-500">
-          <div>Showing {filteredInvoices.length} of {invoices.length} invoices</div>
-          <div>Last updated: {lastRefreshed.toLocaleString()}</div>
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Settings2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="p-4 space-y-2 min-w-[220px]">
+              <h4 className="text-sm font-medium mb-2">Display Options</h4>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="auto-refresh" className="text-sm">Auto Refresh</Label>
+                <Switch 
+                  id="auto-refresh" 
+                  checked={autoRefreshEnabled} 
+                  onCheckedChange={toggleAutoRefresh} 
+                />
+              </div>
+              <ColumnSettings
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
+                onColumnChange={updateVisibleColumns}
+                onReset={resetToDefaults}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <Button 
+            onClick={refreshInvoices} 
+            variant="outline" 
+            size="icon" 
+            aria-label="Refresh Invoices"
+            title="Refresh Invoices"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="relative w-full max-w-sm">
+            <Input
+              placeholder="Search invoices..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+            <Inbox className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>Last updated: {formatDateTime(lastRefreshed)}</span>
+            {autoRefreshEnabled && (
+              <Badge variant="outline" className="bg-green-50 border-green-200">
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                Auto-refresh on
+              </Badge>
+            )}
+          </div>
         </div>
 
-        {/* Debug Panel */}
-        <Card className="p-3 bg-gray-50">
-          <div className="text-xs text-gray-500">
-            <h3 className="font-medium flex items-center gap-1">
-              <MessageSquare className="h-3 w-3" /> Debug Information
-            </h3>
-            <div className="mt-1">
-              <p>Total Invoices in DB: {debugInfo.count}</p>
-              <p>Last API Update: {debugInfo.lastUpdate}</p>
-              <p>Auto-refresh: {isAutoRefreshing ? "Enabled" : "Disabled"}</p>
-              <p>Refresh Count: {refreshCount}</p>
-            </div>
-          </div>
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-4">
+                <div className="flex items-center justify-center py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <RefreshCcw className="h-8 w-8 animate-spin text-primary" />
+                    <p>Loading invoices...</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <InvoiceTable
+                invoices={filteredInvoices}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
+                onViewInvoice={handleViewInvoice}
+                onApproveInvoice={handleApproveInvoice}
+                onRejectInvoice={handleRejectInvoice}
+                isLoading={isLoading}
+              />
+            )}
+          </CardContent>
         </Card>
+        
+        {invoices.length === 0 && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-8 bg-muted/40 rounded-md">
+            <Receipt className="h-12 w-12 text-muted-foreground mb-2" />
+            <h3 className="text-lg font-medium">No invoices found</h3>
+            <p className="text-muted-foreground mb-4">
+              {statusFilter !== 'all' 
+                ? `There are no ${statusFilter} invoices to display.`
+                : 'Start by creating a new invoice or wait for emails to be processed.'}
+            </p>
+            <Button onClick={handleAddInvoice}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Invoice Manually
+            </Button>
+          </div>
+        )}
+        
+        {filteredInvoices.length === 0 && invoices.length > 0 && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-8 bg-muted/40 rounded-md">
+            <AlertTriangle className="h-12 w-12 text-yellow-500 mb-2" />
+            <h3 className="text-lg font-medium">No matches found</h3>
+            <p className="text-muted-foreground">
+              No invoices match your search criteria. Try adjusting your filters.
+            </p>
+          </div>
+        )}
       </div>
     </PageTemplate>
   );

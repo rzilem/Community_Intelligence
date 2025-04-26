@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Invoice } from './useInvoiceNotifications';
+import { Invoice } from '@/types/invoice-types';
 
 // Column configuration type
 export type InvoiceColumn = {
@@ -21,6 +21,8 @@ export const useInvoices = () => {
   );
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState<boolean>(true);
+  const [refreshInterval, setRefreshInterval] = useState<number>(30000); // 30 seconds
 
   // Define columns for the invoices table
   const columns: InvoiceColumn[] = [
@@ -34,28 +36,45 @@ export const useInvoices = () => {
     { id: 'description', label: 'Description', accessorKey: 'description', sortable: false },
   ];
 
-  // Fetch invoices using react-query directly
+  // Fetch invoices using react-query with auto-refresh
   const { data: invoices = [], isLoading, refetch } = useQuery({
-    queryKey: ['invoices'],
+    queryKey: ['invoices', statusFilter],
     queryFn: async () => {
-      console.log("Fetching invoices...");
-      const { data, error } = await supabase
+      console.log(`Fetching invoices with status filter: ${statusFilter}`);
+      
+      let query = supabase
         .from('invoices')
         .select('*')
         .order('created_at', { ascending: false });
+      
+      // Apply status filter if not 'all'
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
+      }
+        
+      const { data, error } = await query;
         
       if (error) {
         console.error("Error fetching invoices:", error);
+        toast({
+          title: "Error loading invoices",
+          description: "There was a problem fetching the invoice data.",
+          variant: "destructive"
+        });
         throw error;
       }
       
       console.log("Invoices fetched:", data?.length || 0, "records");
-      console.log("First few invoices:", data?.slice(0, 3));
+      if (data && data.length > 0) {
+        console.log("First few invoices:", data.slice(0, 3));
+      } else {
+        console.log("No invoices found with current filter");
+      }
       
       return data as Invoice[];
     },
-    // Increase polling frequency to detect new invoices faster
-    refetchInterval: 10000, // Poll every 10 seconds
+    refetchInterval: autoRefreshEnabled ? refreshInterval : false,
+    staleTime: 5000, // Consider data stale after 5 seconds
   });
 
   // Update visible columns in local storage
@@ -103,12 +122,17 @@ export const useInvoices = () => {
     }
   };
 
+  // Toggle auto-refresh
+  const toggleAutoRefresh = () => {
+    setAutoRefreshEnabled(!autoRefreshEnabled);
+  };
+
   // Function to update invoice status
   const updateInvoiceStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
         .from('invoices')
-        .update({ status })
+        .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id);
         
       if (error) throw error;
@@ -172,6 +196,10 @@ export const useInvoices = () => {
     resetToDefaults,
     lastRefreshed,
     statusFilter,
-    setStatusFilter
+    setStatusFilter,
+    autoRefreshEnabled,
+    toggleAutoRefresh,
+    refreshInterval,
+    setRefreshInterval
   };
 };
