@@ -10,107 +10,52 @@ const enhancedHeaders = {
   'X-Content-Type-Options': 'nosniff',
   'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *; img-src * data: blob:; frame-ancestors *;",
   'X-Frame-Options': 'ALLOWALL',
-  'Cache-Control': 'no-cache, no-store, must-revalidate', // No caching
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
   'Pragma': 'no-cache',
   'Expires': '0',
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': '*',
-  'Access-Control-Expose-Headers': 'Content-Disposition, Content-Length, Content-Type',
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: enhancedHeaders
-    });
+    return new Response(null, { headers: enhancedHeaders });
   }
 
   try {
     const url = new URL(req.url);
-    const pdfPath = url.searchParams.get('pdf');
+    let pdfPath = url.searchParams.get('pdf');
     
-    // Debug information
-    console.log(`Request received: ${req.url}`);
-    console.log(`Headers: ${JSON.stringify(Object.fromEntries(req.headers))}`);
-
-    // Validate PDF path
-    if (!pdfPath) {
-      console.error('Missing PDF path parameter');
-      return new Response(JSON.stringify({ error: 'Missing PDF path parameter' }), {
-        headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      });
-    }
-
     console.log(`Raw PDF path from request: ${pdfPath}`);
-
-    // Extract just the filename without any path or URL components
-    let filename = pdfPath;
     
-    // If it's a URL, extract the filename from the end of the path
-    if (pdfPath.includes('://')) {
-      try {
-        const parsedUrl = new URL(pdfPath);
-        filename = parsedUrl.pathname.split('/').pop() || '';
-        console.log(`Extracted filename from URL: ${filename}`);
-      } catch (e) {
-        console.error('Error parsing URL:', e);
-        // Fall back to using the original string if URL parsing fails
-      }
-    } else if (pdfPath.includes('/')) {
-      // If it contains slashes but isn't a URL, take the last part
-      filename = pdfPath.split('/').pop() || '';
-      console.log(`Extracted filename from path: ${filename}`);
-    }
-    
-    // Make sure we have a valid filename
-    if (!filename || filename === '') {
-      console.error('Failed to extract filename from path:', pdfPath);
+    if (!pdfPath) {
       return new Response(
-        JSON.stringify({ error: 'Failed to extract filename from path' }),
-        {
-          headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
+        JSON.stringify({ error: 'Missing PDF path parameter' }), 
+        { headers: { ...enhancedHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
-    
-    // Remove URL encoding from filename if present
+
+    // Decode the URL-encoded path
     try {
-      const decodedFilename = decodeURIComponent(filename);
-      if (decodedFilename !== filename) {
-        console.log(`Decoded filename from ${filename} to ${decodedFilename}`);
-        filename = decodedFilename;
-      }
+      pdfPath = decodeURIComponent(pdfPath);
     } catch (e) {
       console.warn('Error decoding filename, using as-is:', e);
     }
+
+    console.log(`Processing PDF request. Path: ${pdfPath}`);
     
-    console.log(`Processing PDF request. Original path: ${pdfPath}, Extracted filename: ${filename}`);
-    
-    // Add a direct mapping for test PDFs - these are publicly accessible PDF files we can use for testing
-    if (filename === 'test.pdf') {
-      filename = 'invoice-example.pdf'; // Map to an example PDF in our storage
-    }
-    
-    // Construct the storage URL with just the filename
-    // Add timestamp to prevent caching - include unique identifier from request if available
+    // Construct the storage URL with the full relative path
     const timestamp = Date.now();
-    const randomId = Math.random().toString(36).substring(2, 10); // Add randomness
-    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${filename}?t=${timestamp}&r=${randomId}`;
+    const randomId = Math.random().toString(36).substring(2, 10);
+    const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${pdfPath}?t=${timestamp}&r=${randomId}`;
+    
     console.log(`Fetching PDF from: ${fileUrl}`);
 
-    // Fetch the PDF from Supabase Storage with strict no-cache headers
-    const fetchHeaders = {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0',
-    };
-
     const response = await fetch(fileUrl, { 
-      headers: fetchHeaders,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
       cache: 'no-store',
       method: 'GET'
     });
@@ -118,43 +63,6 @@ serve(async (req) => {
     if (!response.ok) {
       console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
       console.error(`Response headers: ${JSON.stringify(Object.fromEntries(response.headers))}`);
-      
-      // If the file wasn't found, try a hardcoded public PDF for testing purposes
-      if (response.status === 404) {
-        const fallbackUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-        console.log(`Trying fallback public PDF: ${fallbackUrl}`);
-        
-        const fallbackResponse = await fetch(fallbackUrl, {
-          cache: 'no-store',
-          method: 'GET'
-        });
-        
-        if (!fallbackResponse.ok) {
-          return new Response(
-            JSON.stringify({ 
-              error: `Failed to fetch both original and fallback PDF`,
-              originalStatus: response.status,
-              fallbackStatus: fallbackResponse.status
-            }),
-            {
-              headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },
-              status: fallbackResponse.status,
-            }
-          );
-        }
-        
-        const fallbackBlob = await fallbackResponse.blob();
-        console.log(`Fallback PDF blob received, size: ${fallbackBlob.size} bytes`);
-        
-        // Return the fallback PDF
-        return new Response(fallbackBlob, {
-          headers: {
-            ...enhancedHeaders,
-            'Content-Disposition': `inline; filename="sample.pdf"`,
-            'Content-Length': fallbackBlob.size.toString(),
-          },
-        });
-      }
       
       return new Response(
         JSON.stringify({ 
@@ -174,7 +82,6 @@ serve(async (req) => {
     console.log(`PDF blob received, size: ${pdfBlob.size} bytes, type: ${pdfBlob.type}`);
     
     if (pdfBlob.size === 0) {
-      console.error('Received zero-byte PDF blob');
       return new Response(
         JSON.stringify({ error: 'Received empty PDF file' }),
         {
@@ -187,7 +94,7 @@ serve(async (req) => {
     // Set specific headers for the PDF response
     const responseHeaders = {
       ...enhancedHeaders,
-      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Disposition': `inline; filename="${pdfPath.split('/').pop()}"`,
       'Content-Type': 'application/pdf',
       'Content-Length': pdfBlob.size.toString(),
     };
