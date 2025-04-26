@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -104,13 +105,15 @@ const InvoiceQueue = () => {
         />
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <TabsList>
-              <TabsTrigger value="pending">Pending</TabsTrigger>
-              <TabsTrigger value="approved">Approved</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected</TabsTrigger>
-              <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
-            </TabsList>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="approved">Approved</TabsTrigger>
+                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                <TabsTrigger value="paid">Paid</TabsTrigger>
+                <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <ColumnSelector
               columns={columns}
               selectedColumns={visibleColumnIds}
@@ -121,7 +124,7 @@ const InvoiceQueue = () => {
             />
           </div>
 
-          <Tabs defaultValue="pending" onValueChange={setActiveTab}>
+          <Tabs defaultValue="pending" onValueChange={setActiveTab} value={activeTab}>
             <TabsContent value="pending" className="mt-4">
               <InvoiceTabContent
                 tabKey="pending"

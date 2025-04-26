@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Sample invoices data
 const invoices = [
@@ -27,6 +28,7 @@ const InvoicesPage = () => {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [viewingInvoice, setViewingInvoice] = useState<any>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
   
   // Filter function based on search term and status
   const filteredInvoices = invoices.filter(invoice => {

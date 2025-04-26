@@ -73,20 +73,12 @@ export const HomeownerTabs: React.FC<HomeownerTabsProps> = ({
       <TabsContent value="Notes" className="space-y-4">
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="border-b">
-            <div className="flex">
-              <button
-                className={`px-4 py-2 ${activeNotesTab === 'Manual Notes' ? 'bg-primary text-primary-foreground' : 'bg-muted/30 hover:bg-muted/50'}`}
-                onClick={() => setActiveNotesTab('Manual Notes')}
-              >
-                Manual Notes ({manualNotes.length})
-              </button>
-              <button
-                className={`px-4 py-2 ${activeNotesTab === 'System Notes' ? 'bg-primary text-primary-foreground' : 'bg-muted/30 hover:bg-muted/50'}`}
-                onClick={() => setActiveNotesTab('System Notes')}
-              >
-                System Notes ({systemNotes.length})
-              </button>
-            </div>
+            <Tabs value={activeNotesTab} onValueChange={setActiveNotesTab}>
+              <TabsList>
+                <TabsTrigger value="Manual Notes">Manual Notes ({manualNotes.length})</TabsTrigger>
+                <TabsTrigger value="System Notes">System Notes ({systemNotes.length})</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           
           <div className="p-4">
