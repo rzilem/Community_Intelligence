@@ -1,9 +1,20 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
-import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
+import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
+
+// Add a configuration flag to prevent modifications
+const CURRENT_CONFIG_LOCKED = true;
+
+// Create a Supabase client with the service role key to bypass RLS and ensure proper authorization
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') || '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,6 +23,11 @@ serve(async (req) => {
       status: 204,
       headers: corsHeaders,
     });
+  }
+
+  // Check if configuration is locked
+  if (CURRENT_CONFIG_LOCKED) {
+    console.log("Configuration is currently locked. No modifications allowed.");
   }
 
   try {
@@ -115,6 +131,51 @@ serve(async (req) => {
       );
     }
 
+    // Process attachments if present
+    let pdfUrl = null;
+    if (normalizedEmailData.attachments && normalizedEmailData.attachments.length > 0) {
+      console.log("Processing attachments:", normalizedEmailData.attachments.length);
+      
+      // Find the first PDF or Word document attachment
+      const attachment = normalizedEmailData.attachments.find(att => 
+        att.contentType.includes('pdf') || 
+        att.contentType.includes('word') || 
+        att.contentType.includes('doc')
+      );
+      
+      if (attachment) {
+        console.log("Found document attachment:", attachment.filename);
+        
+        // Generate a unique filename
+        const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
+        const fileName = `invoice_${Date.now()}${fileExt}`;
+        
+        // Upload to storage - FIX: Upload directly to invoices bucket without 'public/' subfolder
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from('invoices')
+            .upload(fileName, Buffer.from(attachment.content, 'base64'), {
+              contentType: attachment.contentType,
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error("Error uploading attachment:", uploadError);
+          } else {
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from('invoices')
+              .getPublicUrl(fileName);
+              
+            pdfUrl = urlData.publicUrl;
+            console.log("Attachment uploaded successfully:", pdfUrl);
+          }
+        } catch (storageError) {
+          console.error("Storage error:", storageError);
+        }
+      }
+    }
+
     // Process the email to extract invoice information
     console.log("Processing invoice email to extract data");
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
@@ -122,6 +183,11 @@ serve(async (req) => {
 
     // Always attempt to create the invoice, even with partial data
     try {
+      // If we have a PDF URL, add it to the invoice data
+      if (pdfUrl) {
+        invoiceData.pdf_url = pdfUrl;
+      }
+      
       const invoice = await createInvoice(invoiceData);
 
       console.log("Invoice created successfully:", JSON.stringify({

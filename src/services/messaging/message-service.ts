@@ -1,5 +1,4 @@
 
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { MessageCategory } from '@/types/communication-types';
 import { MessageSendParams, MessageSendResponse } from '@/types/messaging-types';
@@ -19,15 +18,16 @@ export const messageService = {
       // For email messages, call the Supabase edge function
       if (messageData.type === 'email') {
         const emailResponse = await supabase.functions.invoke('send-email', {
-          body: JSON.stringify({
-            to: messageData.recipient_groups, // Assuming this is an email list
+          body: {
+            to: messageData.recipient_groups, // Array of recipient emails
             subject: messageData.subject,
             html: messageData.content
-          })
+          }
         });
 
         if (emailResponse.error) {
-          throw emailResponse.error;
+          console.error("Edge function error:", emailResponse.error);
+          throw new Error(emailResponse.error.message || 'Failed to send email');
         }
       }
 

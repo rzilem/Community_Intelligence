@@ -1,9 +1,16 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { processEmailData } from "./services/email-processor.ts";
 import { createRequest } from "./services/request-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
+
+// Create a Supabase client with the service role key to bypass RLS
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') || '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+);
 
 serve(async (req) => {
   // Handle CORS preflight requests

@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { messageService } from '@/services/communications/message-service';
+import { messageService } from '@/services/messaging';
 import { MessageCategory } from '@/types/communication-types';
 
 interface SendMessageParams {

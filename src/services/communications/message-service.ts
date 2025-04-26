@@ -1,5 +1,4 @@
 
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { scheduledMessageService } from './scheduled-message-service';
 import { MessageCategory } from '@/types/communication-types';
@@ -17,16 +16,17 @@ export const messageService = {
   }): Promise<{ success: boolean }> => {
     try {
       if (messageData.type === 'email') {
-        // Call Supabase edge function to send email
+        // Call Supabase edge function to send email - Fix: using object instead of JSON string
         const emailResponse = await supabase.functions.invoke('send-email', {
-          body: JSON.stringify({
-            to: messageData.recipient_groups, // Assuming this is an email list
+          body: {
+            to: messageData.recipient_groups, // Array of recipient emails
             subject: messageData.subject,
             html: messageData.content
-          })
+          }
         });
 
         if (emailResponse.error) {
+          console.error("Edge function error:", emailResponse.error);
           throw emailResponse.error;
         }
       }
@@ -42,17 +42,16 @@ export const messageService = {
           scheduled_date: messageData.scheduled_date,
           category: messageData.category || 'general'
         });
-        toast.success(`Message scheduled for ${new Date(messageData.scheduled_date).toLocaleString()}`);
+        
         return { success: true };
       } else {
         // For immediate send
         console.log('Sending message immediately:', messageData);
-        toast.success('Message sent successfully');
+        
         return { success: true };
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Failed to send or schedule message');
       throw error;
     }
   }

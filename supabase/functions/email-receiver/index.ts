@@ -10,12 +10,21 @@ import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
 // Add a configuration flag to prevent modifications
 const CURRENT_CONFIG_LOCKED = true;
 
+// Create Supabase client with service role key for proper authorization
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') || '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 );
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }
+
   // Check if configuration is locked
   if (CURRENT_CONFIG_LOCKED) {
     console.log("Configuration is currently locked. No modifications allowed.");
@@ -32,12 +41,20 @@ serve(async (req) => {
     } catch (parseError) {
       console.error("Error parsing request body:", parseError);
       try {
+        // Clone the request before trying to parse as JSON
+        const jsonReqCopy = req.clone();
         // Fallback to regular JSON parsing
-        emailData = await req.json();
+        emailData = await jsonReqCopy.json();
+        console.log("Successfully parsed as JSON fallback");
       } catch (jsonError) {
         console.error("Error parsing request as JSON:", jsonError);
         return new Response(
-          JSON.stringify({ success: false, error: "Invalid request format" }),
+          JSON.stringify({ 
+            success: false, 
+            error: "Invalid request format", 
+            details: `${parseError.message}, then ${jsonError.message}`,
+            headers: Object.fromEntries([...req.headers.entries()])
+          }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 400 
@@ -53,7 +70,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid" 
+          details: "The email webhook payload was empty or invalid",
+          headers: Object.fromEntries([...req.headers.entries()])
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -64,7 +82,14 @@ serve(async (req) => {
     
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
-    console.log("Normalized email data:", JSON.stringify(normalizedEmailData, null, 2));
+    console.log("Normalized email data:", JSON.stringify({
+      from: normalizedEmailData.from,
+      to: normalizedEmailData.to,
+      subject: normalizedEmailData.subject,
+      hasHtml: !!normalizedEmailData.html,
+      hasText: !!normalizedEmailData.text,
+      attachmentsCount: normalizedEmailData.attachments?.length,
+    }, null, 2));
 
     // Check if we have either HTML content, text content, or subject (minimum required to process)
     if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
@@ -73,7 +98,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Missing required content", 
-          details: "Email must contain HTML, text content, or at least a subject" 
+          details: "Email must contain HTML, text content, or at least a subject"
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
