@@ -1,14 +1,11 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { DocumentViewer } from './preview/DocumentViewer';
-import { InvoiceColumn } from '@/hooks/invoices/useInvoiceColumns';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -18,6 +15,8 @@ interface InvoiceTableProps {
   onViewInvoice: (id: string) => void;
   onApproveInvoice?: (id: string) => void;
   onRejectInvoice?: (id: string) => void;
+  selectedInvoiceIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
 const InvoiceTable: React.FC<InvoiceTableProps> = ({
@@ -28,20 +27,23 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   onViewInvoice,
   onApproveInvoice,
   onRejectInvoice,
+  selectedInvoiceIds = [],
+  onSelectionChange = () => {},
 }) => {
-  // Function to extract just the filename from a PDF URL
-  const getFilenameFromUrl = (pdfUrl: string): string => {
-    if (!pdfUrl) return '';
-    
-    if (pdfUrl.includes('://')) {
-      try {
-        const parsedUrl = new URL(pdfUrl);
-        return parsedUrl.pathname.split('/').pop() || pdfUrl;
-      } catch (e) {
-        return pdfUrl.split('/').pop() || pdfUrl;
-      }
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      onSelectionChange(invoices.map(inv => inv.id));
+    } else {
+      onSelectionChange([]);
     }
-    return pdfUrl.split('/').pop() || pdfUrl;
+  };
+
+  const handleSelectRow = (invoiceId: string, checked: boolean) => {
+    if (checked) {
+      onSelectionChange([...selectedInvoiceIds, invoiceId]);
+    } else {
+      onSelectionChange(selectedInvoiceIds.filter(id => id !== invoiceId));
+    }
   };
 
   if (isLoading) {
@@ -98,6 +100,12 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">
+              <Checkbox
+                checked={selectedInvoiceIds.length === invoices.length}
+                onCheckedChange={handleSelectAll}
+              />
+            </TableHead>
             {visibleColumnIds.map((columnId) => {
               const column = columns.find(col => col.id === columnId);
               return column && (
@@ -110,13 +118,19 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
         <TableBody>
           {invoices.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={visibleColumnIds.length + 1} className="h-24 text-center">
+              <TableCell colSpan={visibleColumnIds.length + 2} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>
           ) : (
             invoices.map((invoice) => (
               <TableRow key={invoice.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedInvoiceIds.includes(invoice.id)}
+                    onCheckedChange={(checked) => handleSelectRow(invoice.id, checked as boolean)}
+                  />
+                </TableCell>
                 {visibleColumnIds.map((columnId) => (
                   <TableCell key={`${invoice.id}-${columnId}`}>
                     {getCellContent(invoice, columnId)}

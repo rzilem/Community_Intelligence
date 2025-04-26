@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt, Check } from 'lucide-react';
+import { Receipt } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInvoices } from '@/hooks/invoices/useInvoices';
@@ -10,7 +9,8 @@ import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotification
 import { useToast } from '@/hooks/use-toast';
 import InvoicePaymentAlert from '@/components/invoices/InvoicePaymentAlert';
 import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
-import { Button } from '@/components/ui/button';
+import BulkActionBar from '@/components/invoices/BulkActionBar';
+import InvoiceAnalytics from '@/components/invoices/InvoiceAnalytics';
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { useInvoiceColumns } from '@/hooks/invoices/useInvoiceColumns';
 
@@ -21,6 +21,8 @@ const InvoiceQueue = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
   const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   const {
     invoices,
@@ -92,6 +94,36 @@ const InvoiceQueue = () => {
     navigate('/accounting/transactions-payments');
   };
 
+  const handleBulkApprove = async () => {
+    for (const id of selectedInvoiceIds) {
+      await updateInvoiceStatus(id, 'approved');
+    }
+    setSelectedInvoiceIds([]);
+    toast({
+      title: "Bulk Approval Complete",
+      description: `Successfully approved ${selectedInvoiceIds.length} invoices.`,
+    });
+  };
+
+  const handleBulkReject = async () => {
+    for (const id of selectedInvoiceIds) {
+      await updateInvoiceStatus(id, 'rejected');
+    }
+    setSelectedInvoiceIds([]);
+    toast({
+      title: "Bulk Rejection Complete",
+      description: `Successfully rejected ${selectedInvoiceIds.length} invoices.`,
+    });
+  };
+
+  const handleBulkExport = () => {
+    const selectedInvoices = invoices.filter(inv => selectedInvoiceIds.includes(inv.id));
+    toast({
+      title: "Export Started",
+      description: `Exporting ${selectedInvoices.length} invoices.`,
+    });
+  };
+
   return (
     <PageTemplate
       title="Invoice Queue"
@@ -103,6 +135,19 @@ const InvoiceQueue = () => {
           show={showPaymentAlert} 
           onViewPaymentsQueue={handleViewPaymentsQueue} 
         />
+        
+        {showAnalytics && (
+          <InvoiceAnalytics invoices={invoices} />
+        )}
+
+        <BulkActionBar
+          selectedInvoices={selectedInvoiceIds}
+          onBulkApprove={handleBulkApprove}
+          onBulkReject={handleBulkReject}
+          onBulkExport={handleBulkExport}
+          onClearSelection={() => setSelectedInvoiceIds([])}
+        />
+
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
