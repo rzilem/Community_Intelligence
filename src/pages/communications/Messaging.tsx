@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { MessageProvider } from '@/contexts/message/MessageContext';
 
 // Import the mock data
 import { mockHistoryData, mockTemplates } from './messaging/MessagingData';
@@ -51,13 +52,15 @@ const MessagingPage = () => {
           <TabsTrigger value="templates" className="text-base">Message Templates</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="compose" className="space-y-6">
-          <h2 className="text-2xl font-semibold">Compose Message</h2>
-          <ComposeForm 
-            onMessageSent={() => setActiveTab('history')}
-            onUseTemplate={() => setActiveTab('templates')}
-          />
-        </TabsContent>
+        <MessageProvider>
+          <TabsContent value="compose" className="space-y-6">
+            <h2 className="text-2xl font-semibold">Compose Message</h2>
+            <ComposeForm 
+              onMessageSent={() => setActiveTab('history')}
+              onUseTemplate={() => setActiveTab('templates')}
+            />
+          </TabsContent>
+        </MessageProvider>
         
         <TabsContent value="history">
           <HistorySection 
