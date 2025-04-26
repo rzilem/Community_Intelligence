@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createProxyUrl } from './utils/pdfUtils';
+import { useDocumentViewer } from './hooks/useDocumentViewer';
 
 interface DocumentViewerProps {
   pdfUrl: string;
@@ -23,56 +23,31 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen
 }) => {
-  const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  const [attempt, setAttempt] = useState(1); // For retry
-  const [key] = useState(Date.now()); // Stable key for this instance
-
-  // Generate the proxy URL - using our existing utility function
-  const proxyUrl = isPdf ? createProxyUrl(pdfUrl, attempt) : pdfUrl;
-  
-  console.log('DEBUG - SimpleViewer:', {
-    originalUrl: pdfUrl,
-    proxyUrl: proxyUrl,
+  // Use the simplified hook
+  const {
+    iframeError,
+    loading,
+    key,
+    proxyUrl,
+    handleIframeError,
+    handleIframeLoad,
+    handleRetry
+  } = useDocumentViewer({
+    pdfUrl,
     isPdf,
-    attempt,
-    loadState
+    onIframeError,
+    onIframeLoad
   });
   
-  useEffect(() => {
-    setLoadState('loading'); // Reset on url/attempt change
-    
-    // Add safety timeout
-    const loadingTimeout = setTimeout(() => {
-      if (loadState === 'loading') {
-        console.warn('Loading timeout reached after 10 seconds');
-        setLoadState('error');
-        if (onIframeError) onIframeError();
-      }
-    }, 10000);
-    
-    return () => clearTimeout(loadingTimeout);
-  }, [proxyUrl, attempt]); // Depend on proxyUrl and attempt count
-
-  const handleLoad = () => {
-    console.log('SimpleViewer: iframe loaded successfully.');
-    setLoadState('loaded');
-    if (onIframeLoad) onIframeLoad();
-  };
-
-  const handleError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
-    console.error('SimpleViewer: iframe failed to load.', {
-      event: e,
-      target: e.currentTarget?.src
-    });
-    setLoadState('error');
-    if (onIframeError) onIframeError();
-  };
-
-  const handleRetry = () => {
-    console.log('SimpleViewer: Retrying with new attempt');
-    setAttempt(prev => prev + 1);
-  };
-
+  console.log('DocumentViewer render state:', { 
+    isPdf, 
+    isWordDocument, 
+    loading, 
+    iframeError,
+    hasProxyUrl: !!proxyUrl,
+    hasHtmlContent: !!htmlContent 
+  });
+  
   const handleDownload = () => {
     if (isPdf && proxyUrl) {
       const link = document.createElement('a');
@@ -82,6 +57,12 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+  };
+  
+  const handleOpenDirect = () => {
+    if (proxyUrl) {
+      window.open(proxyUrl, '_blank');
     }
   };
 
@@ -113,36 +94,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // --- Render PDF Logic ---
+  // --- Simplified PDF Logic ---
   if (!isPdf || !proxyUrl) {
-    return <div>No valid content to display.</div>;
+    return <div className="p-4 text-center text-muted-foreground">No valid content to display.</div>;
   }
 
-  if (loadState === 'loading') {
+  if (loading) {
     return (
-      <div className="relative w-full h-full">
-        {/* Show loading overlay */}
-        <div className="flex items-center justify-center h-full">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
-            <p className="text-sm text-muted-foreground">Loading document...</p>
-          </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
+          <p className="text-sm text-muted-foreground">Loading document...</p>
         </div>
-        {/* Hidden iframe to attempt loading */}
-        <iframe
-          key={`pdf-frame-${key}-${attempt}`} // Change key on retry
-          className="absolute top-0 left-0 w-1 h-1 opacity-0" // Hide iframe while loading
-          src={proxyUrl}
-          onLoad={handleLoad}
-          onError={handleError}
-          title="PDF Preview Loader"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
       </div>
     );
   }
 
-  if (loadState === 'error') {
+  if (iframeError) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
@@ -154,6 +122,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <Button onClick={handleDownload} variant="outline">
             <Download className="h-4 w-4 mr-2" /> Download
           </Button>
+          <Button onClick={handleOpenDirect} variant="outline">
+            <ExternalLink className="h-4 w-4 mr-2" /> Open in New Tab
+          </Button>
           {onExternalOpen && (
             <Button onClick={onExternalOpen} variant="outline">
               <ExternalLink className="h-4 w-4 mr-2" /> Open Original
@@ -161,22 +132,27 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           )}
         </div>
         <div className="mt-4 text-xs text-muted-foreground">
-          <p>Proxy URL: {proxyUrl}</p>
+          <p>Debug: {proxyUrl}</p>
         </div>
       </div>
     );
   }
 
-  // If loaded successfully, show the iframe
+  // Only one view mode now - direct iframe
   return (
     <div className="relative w-full h-full">
-      <iframe
-        key={`pdf-frame-${key}-${attempt}`} // Use same key as loader
-        className="w-full h-full border-0"
-        src={proxyUrl}
-        title="PDF Preview"
-        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-      />
+      {/* Add a wrapper to help with cross-browser iframe sizing */}
+      <div className="absolute inset-0 bg-white">
+        <iframe
+          key={`pdf-frame-${key}`}
+          className="w-full h-full border-0"
+          src={proxyUrl}
+          title="PDF Preview"
+          onError={handleIframeError}
+          onLoad={handleIframeLoad}
+          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        />
+      </div>
     </div>
   );
 };

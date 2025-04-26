@@ -16,18 +16,22 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       if (invoicesIndex !== -1 && invoicesIndex < pathParts.length - 1) {
         // Get everything after 'invoices/'
         relativePath = pathParts.slice(invoicesIndex + 1).join('/');
+        console.log('Extracted from Supabase URL:', relativePath);
       } else {
         // Fallback to the whole path if we can't parse it
         relativePath = urlObj.pathname;
+        console.log('Using full pathname:', relativePath);
       }
     } 
     // Handle relative paths directly 
     else if (!fullStorageUrl.startsWith('http')) {
       relativePath = fullStorageUrl;
+      console.log('Using relative path directly:', relativePath);
     }
     // Standard URL parsing for other cases - just get the filename
     else {
       relativePath = fullStorageUrl.split('/').pop() || '';
+      console.log('Extracted filename from URL:', relativePath);
     }
   } catch (e) {
     console.error('Failed to parse URL:', fullStorageUrl, e);

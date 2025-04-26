@@ -19,7 +19,9 @@ export const useDocumentViewer = ({
   const [loading, setLoading] = useState(true);
   const [key, setKey] = useState(Date.now());
   const [attempt, setAttempt] = useState(1);
-  const [viewerType, setViewerType] = useState<'direct' | 'pdfjs' | 'object' | 'embed'>('direct');
+  
+  // Simplified: Now we only use direct view mode
+  const viewerType = 'direct';
 
   // Generate the proxy URL
   const proxyUrl = isPdf ? createProxyUrl(pdfUrl, attempt) : pdfUrl;
@@ -31,71 +33,32 @@ export const useDocumentViewer = ({
       console.log(`DocumentViewer Debug [${viewerType}]:`, {
         originalUrl: pdfUrl,
         proxyUrl,
-        pdfJsUrl,
         attempt,
         viewerType,
         key,
         timestamp: new Date().toISOString()
       });
       
-      // Preflight check to see if PDF exists and is accessible
-      const checkProxyUrl = async () => {
-        try {
-          const response = await fetch(proxyUrl, { 
-            method: 'HEAD',
-            cache: 'no-store'
-          });
-          console.log('PDF Proxy HEAD check:', {
-            status: response.status,
-            ok: response.ok,
-            contentType: response.headers.get('content-type'),
-            contentLength: response.headers.get('content-length'),
-            timestamp: new Date().toISOString()
-          });
-        } catch (err) {
-          console.error('PDF Proxy HEAD check failed:', err);
-        }
-      };
-      
-      checkProxyUrl();
+      // No preflight check - we'll let the iframe handle success/failure directly
     }
-  }, [pdfUrl, proxyUrl, attempt, viewerType, isPdf, key, pdfJsUrl]);
+  }, [pdfUrl, proxyUrl, attempt, viewerType, isPdf, key]);
 
   const handleIframeError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
-    console.error(`Failed to load document [${viewerType}]:`, {
+    console.error(`Failed to load document:`, {
       proxyUrl,
       event: e,
       target: e.currentTarget?.src,
       timestamp: new Date().toISOString()
     });
     
+    // Simplified error handling - no switching between viewer types
     setIframeError(true);
     setLoading(false);
     if (onIframeError) onIframeError();
-
-    // Try different viewer types in sequence
-    if (viewerType === 'direct') {
-      console.log('Direct viewer failed, switching to PDF.js viewer');
-      setViewerType('pdfjs');
-      setLoading(true);
-      setKey(Date.now());
-    } else if (viewerType === 'pdfjs') {
-      console.log('PDF.js viewer failed, switching to object tag');
-      setViewerType('object');
-      setLoading(true);
-      setKey(Date.now());
-    } else if (viewerType === 'object') {
-      console.log('Object tag failed, switching to embed tag with Google Docs');
-      setViewerType('embed');
-      setLoading(true);
-      setKey(Date.now());
-    } else {
-      console.error('All viewer types failed');
-    }
   };
 
   const handleIframeLoad = () => {
-    console.log(`Document loaded successfully [${viewerType}]`, {
+    console.log(`Document loaded successfully`, {
       timestamp: new Date().toISOString()
     });
     setLoading(false);
@@ -107,7 +70,6 @@ export const useDocumentViewer = ({
     setAttempt(prev => prev + 1);
     setIframeError(false);
     setLoading(true);
-    setViewerType('direct');
     setKey(Date.now());
   };
 
@@ -118,13 +80,13 @@ export const useDocumentViewer = ({
 
     const loadingTimeout = setTimeout(() => {
       if (loading) {
-        console.warn(`Loading timeout reached for: ${viewerType}`, {
+        console.warn(`Loading timeout reached`, {
           timestamp: new Date().toISOString()
         });
         setIframeError(true);
         setLoading(false);
       }
-    }, 7000);
+    }, 10000); // Increased from 7s to 10s for more time
 
     return () => clearTimeout(loadingTimeout);
   }, [pdfUrl, attempt]);
