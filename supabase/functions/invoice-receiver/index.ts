@@ -7,8 +7,8 @@ import { createInvoice } from "./services/invoice-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
 
-// Add a configuration flag to prevent modifications
-const CURRENT_CONFIG_LOCKED = true;
+// Remove the config lock to allow modifications
+const CURRENT_CONFIG_LOCKED = false;
 
 // Create a Supabase client with the service role key to bypass RLS and ensure proper authorization
 const supabase = createClient(
@@ -23,11 +23,6 @@ serve(async (req) => {
       status: 204,
       headers: corsHeaders,
     });
-  }
-
-  // Check if configuration is locked
-  if (CURRENT_CONFIG_LOCKED) {
-    console.log("Configuration is currently locked. No modifications allowed.");
   }
 
   try {
