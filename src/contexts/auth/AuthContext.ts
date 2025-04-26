@@ -30,6 +30,7 @@ interface AuthContextValue {
     first_name: string; 
     last_name: string 
   }) => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<boolean>;
   signOut: () => Promise<void>;
 
   // Profile management
@@ -58,6 +59,7 @@ const AuthContext = createContext<AuthContextValue>({
   // Authentication method stubs
   signIn: async () => {},
   signUp: async () => {},
+  signInWithMagicLink: async () => false,
   signOut: async () => {},
 
   // Profile management stub
