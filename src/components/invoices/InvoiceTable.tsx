@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  if (invoices.length === 0) {
+  if (!invoices || invoices.length === 0) {
     return (
       <div className="w-full py-10 text-center text-gray-500">
         No invoices found. Add invoices or adjust your filters.
@@ -96,6 +97,8 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     }
   };
 
+  console.log("Rendering InvoiceTable with invoices:", invoices.length);
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -103,7 +106,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
           <TableRow>
             <TableHead className="w-[50px]">
               <Checkbox
-                checked={selectedInvoiceIds.length === invoices.length}
+                checked={selectedInvoiceIds.length === invoices.length && invoices.length > 0}
                 onCheckedChange={handleSelectAll}
               />
             </TableHead>
@@ -117,46 +120,38 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invoices.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={visibleColumnIds.length + 2} className="h-24 text-center">
-                No results.
+          {invoices.map((invoice) => (
+            <TableRow key={invoice.id}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedInvoiceIds.includes(invoice.id)}
+                  onCheckedChange={(checked) => handleSelectRow(invoice.id, checked as boolean)}
+                />
+              </TableCell>
+              {visibleColumnIds.map((columnId) => (
+                <TableCell key={`${invoice.id}-${columnId}`}>
+                  {getCellContent(invoice, columnId)}
+                </TableCell>
+              ))}
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
+                  <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  {invoice.status === 'pending' && onApproveInvoice && (
+                    <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </Button>
+                  )}
+                  {invoice.status === 'pending' && onRejectInvoice && (
+                    <Button variant="ghost" size="icon" onClick={() => onRejectInvoice(invoice.id)}>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
-          ) : (
-            invoices.map((invoice) => (
-              <TableRow key={invoice.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedInvoiceIds.includes(invoice.id)}
-                    onCheckedChange={(checked) => handleSelectRow(invoice.id, checked as boolean)}
-                  />
-                </TableCell>
-                {visibleColumnIds.map((columnId) => (
-                  <TableCell key={`${invoice.id}-${columnId}`}>
-                    {getCellContent(invoice, columnId)}
-                  </TableCell>
-                ))}
-                <TableCell className="text-right">
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {invoice.status === 'pending' && onApproveInvoice && (
-                      <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </Button>
-                    )}
-                    {invoice.status === 'pending' && onRejectInvoice && (
-                      <Button variant="ghost" size="icon" onClick={() => onRejectInvoice(invoice.id)}>
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>

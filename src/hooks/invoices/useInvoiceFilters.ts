@@ -15,8 +15,10 @@ export function useInvoiceFilters() {
     description?: string;
     association_name?: string;
   }>(invoices: T[]) => {
-    if (!debouncedSearchTerm) return invoices;
+    // If there's no search term, return all invoices unfiltered
+    if (!debouncedSearchTerm || debouncedSearchTerm.trim() === '') return invoices;
     
+    // Apply search filter when a search term exists
     const searchLower = debouncedSearchTerm.toLowerCase();
     return invoices.filter((invoice) => 
       (invoice.invoice_number && invoice.invoice_number.toLowerCase().includes(searchLower)) || 

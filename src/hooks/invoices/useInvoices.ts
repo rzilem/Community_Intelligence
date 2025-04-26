@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Invoice } from '@/types/invoice-types';
 import { useInvoiceFilters } from './useInvoiceFilters';
-import { useInvoiceColumns, InvoiceColumn } from './useInvoiceColumns';
+import { useInvoiceColumns } from './useInvoiceColumns';
 import { useAutoRefresh } from './useAutoRefresh';
 import { useInvoiceActions } from './useInvoiceActions';
 
@@ -38,7 +38,7 @@ export const useInvoices = () => {
   } = useAutoRefresh();
 
   // Fetch invoices using react-query with auto-refresh
-  const { data: invoices = [], isLoading, refetch } = useQuery({
+  const { data: allInvoices = [], isLoading, refetch } = useQuery({
     queryKey: ['invoices', statusFilter],
     queryFn: async () => {
       console.log(`Fetching invoices with status filter: ${statusFilter}`);
@@ -101,11 +101,11 @@ export const useInvoices = () => {
   };
 
   // Apply search filter to the invoices
-  const filteredInvoices = applyFilters(invoices || []);
+  const filteredInvoices = applyFilters(allInvoices || []);
 
   return {
     invoices: filteredInvoices,
-    allInvoices: invoices,
+    allInvoices,
     isLoading,
     refreshInvoices,
     updateInvoiceStatus,

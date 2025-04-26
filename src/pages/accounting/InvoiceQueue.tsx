@@ -20,8 +20,6 @@ import { ColumnSettings } from '@/components/ui/column-settings';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { useDebounce } from '@/hooks/useDebounce';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDateTime } from '@/lib/date-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -29,8 +27,6 @@ import { Label } from '@/components/ui/label';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   // Change default from 'all' to 'pending'
   const [activeTab, setActiveTab] = useState('pending');
   
@@ -48,6 +44,8 @@ const InvoiceQueue = () => {
     lastRefreshed,
     statusFilter,
     setStatusFilter,
+    searchTerm,
+    setSearchTerm,
     autoRefreshEnabled,
     toggleAutoRefresh
   } = useInvoices();
@@ -72,19 +70,6 @@ const InvoiceQueue = () => {
   const handleRejectInvoice = (id: string) => {
     updateInvoiceStatus(id, 'rejected');
   };
-
-  // Filter invoices based on search term
-  const filteredInvoices = invoices.filter(invoice => {
-    if (!debouncedSearchTerm) return true;
-    
-    const searchLower = debouncedSearchTerm.toLowerCase();
-    return (
-      (invoice.invoice_number && invoice.invoice_number.toLowerCase().includes(searchLower)) ||
-      (invoice.vendor && invoice.vendor.toLowerCase().includes(searchLower)) ||
-      (invoice.description && invoice.description.toLowerCase().includes(searchLower)) ||
-      (invoice.association_name && invoice.association_name.toLowerCase().includes(searchLower))
-    );
-  });
 
   // Count invoices by status
   const pendingCount = invoices.filter(inv => inv.status === 'pending').length;
@@ -223,7 +208,7 @@ const InvoiceQueue = () => {
               </div>
             ) : (
               <InvoiceTable
-                invoices={filteredInvoices}
+                invoices={invoices}
                 columns={columns}
                 visibleColumnIds={visibleColumnIds}
                 onViewInvoice={handleViewInvoice}
@@ -251,7 +236,7 @@ const InvoiceQueue = () => {
           </div>
         )}
         
-        {filteredInvoices.length === 0 && invoices.length > 0 && !isLoading && (
+        {invoices.length === 0 && invoices.length > 0 && !isLoading && (
           <div className="flex flex-col items-center justify-center py-8 bg-muted/40 rounded-md">
             <AlertTriangle className="h-12 w-12 text-yellow-500 mb-2" />
             <h3 className="text-lg font-medium">No matches found</h3>
