@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt } from 'lucide-react';
+import { Receipt, Check } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { useInvoices } from '@/hooks/invoices/useInvoices';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 import { useToast } from '@/hooks/use-toast';

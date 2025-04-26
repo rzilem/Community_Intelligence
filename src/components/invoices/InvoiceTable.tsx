@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { InvoiceColumn } from '@/hooks/invoices/useInvoiceColumns';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
