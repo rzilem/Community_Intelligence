@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -11,6 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import InvoicePaymentAlert from '@/components/invoices/InvoicePaymentAlert';
 import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
 import { Button } from '@/components/ui/button';
+import ColumnSelector from '@/components/table/ColumnSelector';
+import { useInvoiceColumns } from '@/hooks/invoices/useInvoiceColumns';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
@@ -28,6 +29,14 @@ const InvoiceQueue = () => {
     deleteInvoice,
     lastRefreshed
   } = useInvoices();
+
+  const {
+    columns,
+    visibleColumnIds,
+    updateVisibleColumns,
+    reorderColumns,
+    resetToDefaults
+  } = useInvoiceColumns();
 
   useEffect(() => {
     markAllAsRead();
@@ -94,7 +103,7 @@ const InvoiceQueue = () => {
           onViewPaymentsQueue={handleViewPaymentsQueue} 
         />
         <Card className="p-6">
-          <Tabs defaultValue="pending" onValueChange={setActiveTab}>
+          <div className="flex justify-between items-center mb-4">
             <TabsList>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>
@@ -102,6 +111,17 @@ const InvoiceQueue = () => {
               <TabsTrigger value="paid">Paid</TabsTrigger>
               <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
             </TabsList>
+            <ColumnSelector
+              columns={columns}
+              selectedColumns={visibleColumnIds}
+              onChange={updateVisibleColumns}
+              onReorder={reorderColumns}
+              resetToDefaults={resetToDefaults}
+              className="ml-auto"
+            />
+          </div>
+
+          <Tabs defaultValue="pending" onValueChange={setActiveTab}>
             <TabsContent value="pending" className="mt-4">
               <InvoiceTabContent
                 tabKey="pending"
@@ -115,6 +135,8 @@ const InvoiceQueue = () => {
                 onViewInvoice={handleViewInvoice}
                 onApproveInvoice={handleApproveInvoice}
                 onRejectInvoice={handleRejectInvoice}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
               />
             </TabsContent>
             <TabsContent value="approved" className="mt-4">
@@ -128,6 +150,8 @@ const InvoiceQueue = () => {
                 invoices={filteredInvoices}
                 isLoading={isLoading}
                 onViewInvoice={handleViewInvoice}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
               />
               <div className="mt-4 flex justify-end">
                 <Button
@@ -149,6 +173,8 @@ const InvoiceQueue = () => {
                 invoices={filteredInvoices}
                 isLoading={isLoading}
                 onViewInvoice={handleViewInvoice}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
               />
             </TabsContent>
             <TabsContent value="paid" className="mt-4">
@@ -162,6 +188,8 @@ const InvoiceQueue = () => {
                 invoices={filteredInvoices}
                 isLoading={isLoading}
                 onViewInvoice={handleViewInvoice}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
               />
             </TabsContent>
             <TabsContent value="all-invoices" className="mt-4">
@@ -177,6 +205,8 @@ const InvoiceQueue = () => {
                 onViewInvoice={handleViewInvoice}
                 onApproveInvoice={handleApproveInvoice}
                 onRejectInvoice={handleRejectInvoice}
+                columns={columns}
+                visibleColumnIds={visibleColumnIds}
               />
             </TabsContent>
           </Tabs>
