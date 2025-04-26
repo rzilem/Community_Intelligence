@@ -34,7 +34,8 @@ export const useDocumentViewer = ({
         pdfJsUrl,
         attempt,
         viewerType,
-        key
+        key,
+        timestamp: new Date().toISOString()
       });
       
       // Preflight check to see if PDF exists and is accessible
@@ -48,7 +49,8 @@ export const useDocumentViewer = ({
             status: response.status,
             ok: response.ok,
             contentType: response.headers.get('content-type'),
-            contentLength: response.headers.get('content-length')
+            contentLength: response.headers.get('content-length'),
+            timestamp: new Date().toISOString()
           });
         } catch (err) {
           console.error('PDF Proxy HEAD check failed:', err);
@@ -57,13 +59,14 @@ export const useDocumentViewer = ({
       
       checkProxyUrl();
     }
-  }, [pdfUrl, proxyUrl, attempt, viewerType, isPdf]);
+  }, [pdfUrl, proxyUrl, attempt, viewerType, isPdf, key, pdfJsUrl]);
 
   const handleIframeError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
     console.error(`Failed to load document [${viewerType}]:`, {
       proxyUrl,
       event: e,
-      target: e.currentTarget?.src
+      target: e.currentTarget?.src,
+      timestamp: new Date().toISOString()
     });
     
     setIframeError(true);
@@ -92,7 +95,9 @@ export const useDocumentViewer = ({
   };
 
   const handleIframeLoad = () => {
-    console.log(`Document loaded successfully [${viewerType}]`);
+    console.log(`Document loaded successfully [${viewerType}]`, {
+      timestamp: new Date().toISOString()
+    });
     setLoading(false);
     if (onIframeLoad) onIframeLoad();
   };
@@ -113,7 +118,9 @@ export const useDocumentViewer = ({
 
     const loadingTimeout = setTimeout(() => {
       if (loading) {
-        console.warn(`Loading timeout reached for: ${viewerType}`);
+        console.warn(`Loading timeout reached for: ${viewerType}`, {
+          timestamp: new Date().toISOString()
+        });
         setIframeError(true);
         setLoading(false);
       }

@@ -5,7 +5,6 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
   console.log('Creating proxy URL for:', fullStorageUrl);
 
   let relativePath = '';
-  const storagePathPrefix = '/public/invoices/';
 
   try {
     // Special case for direct Supabase storage URLs
@@ -26,18 +25,9 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     else if (!fullStorageUrl.startsWith('http')) {
       relativePath = fullStorageUrl;
     }
-    // Standard URL parsing for other cases
+    // Standard URL parsing for other cases - just get the filename
     else {
-      const parsedUrl = new URL(fullStorageUrl);
-      const pathname = parsedUrl.pathname;
-      const prefixIndex = pathname.indexOf(storagePathPrefix);
-
-      if (prefixIndex !== -1) {
-        relativePath = pathname.substring(prefixIndex + storagePathPrefix.length);
-      } else {
-        console.warn(`Storage path prefix "${storagePathPrefix}" not found in URL pathname: ${pathname}`);
-        relativePath = pathname.split('/').pop() || '';
-      }
+      relativePath = fullStorageUrl.split('/').pop() || '';
     }
   } catch (e) {
     console.error('Failed to parse URL:', fullStorageUrl, e);
