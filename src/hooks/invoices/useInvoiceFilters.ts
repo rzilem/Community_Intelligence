@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export function useInvoiceFilters() {
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  // Change default from 'all' to 'pending'
+  const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 

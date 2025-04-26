@@ -31,7 +31,8 @@ const InvoiceQueue = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
-  const [activeTab, setActiveTab] = useState('all');
+  // Change default from 'all' to 'pending'
+  const [activeTab, setActiveTab] = useState('pending');
   
   const { 
     invoices, 
@@ -51,7 +52,7 @@ const InvoiceQueue = () => {
     toggleAutoRefresh
   } = useInvoices();
   
-  // Update status filter when tab changes
+  // Update status filter when tab changes or on initial load
   useEffect(() => {
     setStatusFilter(activeTab);
   }, [activeTab, setStatusFilter]);
