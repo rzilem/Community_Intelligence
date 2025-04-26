@@ -11,12 +11,14 @@ import { CollectionsTable } from '@/components/collections/CollectionsTable';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { useAuth } from '@/contexts/auth';
 import { useCollectionsData } from '@/hooks/collections/useCollectionsData';
+import { useInvoiceColumns } from '@/hooks/invoices/useInvoiceColumns';
 
 const CommunityPulsePage = () => {
   const [activeTab, setActiveTab] = useState('invoices');
   const [searchTerm, setSearchTerm] = useState('');
   const { currentAssociation } = useAuth();
   const { accounts, isLoading: collectionsLoading } = useCollectionsData(currentAssociation?.id || '');
+  const { columns, visibleColumnIds } = useInvoiceColumns('community-pulse-invoices');
 
   const tabs = [
     { id: 'invoices', label: 'Invoices' },
@@ -57,6 +59,8 @@ const CommunityPulsePage = () => {
                   invoices={[]}
                   isLoading={false}
                   onViewInvoice={() => {}}
+                  columns={columns}
+                  visibleColumnIds={visibleColumnIds}
                 />
               )}
               {activeTab === 'work-orders' && (

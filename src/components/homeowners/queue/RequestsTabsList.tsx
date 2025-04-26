@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface RequestsTabsListProps {
   requestCounts: {
@@ -28,38 +28,25 @@ const RequestsTabsList: React.FC<RequestsTabsListProps> = ({
 
   return (
     <div className="flex justify-between mb-6">
-      <TabsList>
-        <TabsTrigger 
-          value="all" 
-          onClick={() => handleTabChange("all")}
-        >
-          All Requests ({requestCounts.all || 0})
-        </TabsTrigger>
-        <TabsTrigger 
-          value="open"
-          onClick={() => handleTabChange("open")}
-        >
-          Open ({requestCounts.open || 0})
-        </TabsTrigger>
-        <TabsTrigger 
-          value="in-progress"
-          onClick={() => handleTabChange("in-progress")}
-        >
-          In Progress ({requestCounts.inProgress || 0})
-        </TabsTrigger>
-        <TabsTrigger 
-          value="resolved"
-          onClick={() => handleTabChange("resolved")}
-        >
-          Resolved ({requestCounts.closed || 0})
-        </TabsTrigger>
-        <TabsTrigger 
-          value="closed"
-          onClick={() => handleTabChange("closed")}
-        >
-          Closed ({requestCounts.closed || 0})
-        </TabsTrigger>
-      </TabsList>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList>
+          <TabsTrigger value="all">
+            All Requests ({requestCounts.all || 0})
+          </TabsTrigger>
+          <TabsTrigger value="open">
+            Open ({requestCounts.open || 0})
+          </TabsTrigger>
+          <TabsTrigger value="in-progress">
+            In Progress ({requestCounts.inProgress || 0})
+          </TabsTrigger>
+          <TabsTrigger value="resolved">
+            Resolved ({requestCounts.closed || 0})
+          </TabsTrigger>
+          <TabsTrigger value="closed">
+            Closed ({requestCounts.closed || 0})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 };
