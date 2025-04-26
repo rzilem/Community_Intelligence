@@ -1,18 +1,48 @@
 
 import React from 'react';
-import { Route } from 'react-router-dom';
-
-import Index from '@/pages/Index';
+import { Navigate } from 'react-router-dom';
 import Dashboard from '@/pages/Dashboard';
 import NotFound from '@/pages/NotFound';
-import { RequireAuth } from '@/components/auth/RequireAuth';
-import ConfirmAuth from '@/components/auth/ConfirmAuth';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
+import Permissions from '@/pages/system/Permissions';
+import UserProfile from '@/pages/user/UserProfile';
 
-export const mainRoutes = (
-  <>
-    <Route path="/" element={<Index />} />
-    <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-    <Route path="/auth/confirm" element={<ConfirmAuth />} />
-    <Route path="*" element={<NotFound />} />
-  </>
-);
+export const mainRoutes = [
+  {
+    path: '/',
+    element: <Index />
+  },
+  {
+    path: '/dashboard',
+    element: <Dashboard />
+  },
+  {
+    path: '/properties',
+    element: <Navigate to="/associations" />
+  },
+  {
+    path: '/residents',
+    element: <Navigate to="/homeowners" />
+  },
+  {
+    path: '/residents/:id',
+    element: <Navigate to="/homeowners/:id" replace />
+  },
+  {
+    path: '/system/permissions',
+    element: <Permissions />
+  },
+  {
+    path: '/user/profile',
+    element: <UserProfile />
+  },
+  {
+    path: '/auth',
+    element: <Auth />
+  },
+  {
+    path: '*',
+    element: <NotFound />
+  }
+];
