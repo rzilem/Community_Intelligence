@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -12,6 +11,11 @@ import { formatDateTime } from '@/lib/date-utils';
 import { InvoiceQueueFilters } from '@/components/invoices/InvoiceQueueFilters';
 import { InvoiceQueueSettings } from '@/components/invoices/InvoiceQueueSettings';
 import { InvoiceQueueEmptyState } from '@/components/invoices/InvoiceQueueEmptyState';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent 
+} from '@/components/ui/dropdown-menu';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
@@ -143,4 +147,3 @@ const InvoiceQueue = () => {
 };
 
 export default InvoiceQueue;
-
