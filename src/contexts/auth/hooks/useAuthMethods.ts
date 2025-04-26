@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { signInWithEmail, signUpWithEmail, signOutUser, sendMagicLink } from '../authUtils';
+import { signInWithEmail, signUpWithEmail, signOutUser } from '../authUtils';
 import { toast } from 'sonner';
 
 export function useAuthMethods(setLoading: (loading: boolean) => void) {
@@ -34,21 +34,6 @@ export function useAuthMethods(setLoading: (loading: boolean) => void) {
     }
   };
 
-  const signInWithMagicLink = async (email: string) => {
-    try {
-      setLoading(true);
-      await sendMagicLink(email);
-      toast.success(`Magic link sent to ${email}. Check your email!`);
-      return true;
-    } catch (error) {
-      console.error('[AuthProvider] Magic link error:', error);
-      toast.error(`Failed to send magic link: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signOut = async () => {
     try {
       setLoading(true);
@@ -62,5 +47,5 @@ export function useAuthMethods(setLoading: (loading: boolean) => void) {
     }
   };
 
-  return { signIn, signUp, signOut, signInWithMagicLink };
+  return { signIn, signUp, signOut };
 }

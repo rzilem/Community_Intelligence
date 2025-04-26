@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
@@ -29,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentAssociation,
   } = authState;
 
-  const { signIn, signUp, signOut, signInWithMagicLink } = useAuthMethods(setLoading);
+  const { signIn, signUp, signOut } = useAuthMethods(setLoading);
   const { loadUserData } = useLoadUserData({
     setProfile,
     setIsAdmin,
@@ -111,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signUp,
     signOut,
-    signInWithMagicLink,
     loading,
     isLoading: loading,
     userRole,

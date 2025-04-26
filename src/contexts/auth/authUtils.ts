@@ -49,26 +49,6 @@ export const signUpWithEmail = async (
 };
 
 /**
- * Sends a magic link to the user's email
- */
-export const sendMagicLink = async (email: string) => {
-  const { data, error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth/confirm`,
-    },
-  });
-
-  if (error) {
-    console.error('[AuthUtils] Magic link error:', error);
-    throw error;
-  }
-
-  console.log('[AuthUtils] Magic link sent to:', email);
-  return data;
-};
-
-/**
  * Signs out the current user
  */
 export const signOutUser = async () => {
