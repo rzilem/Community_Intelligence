@@ -32,6 +32,28 @@ export async function processInvoiceEmail(emailData: any) {
       attachments: emailData.attachments?.length || 0
     });
     
+    // If we have a subject, use it to improve invoice data
+    if (subject) {
+      console.log("Using email subject for invoice data:", subject);
+      invoice.description = subject;
+      
+      // Try to extract invoice number from subject
+      const invoiceNumMatch = subject.match(/inv[-\s#:]*(\d+)/i) || subject.match(/invoice[-\s#:]*(\d+)/i);
+      if (invoiceNumMatch && invoiceNumMatch[1]) {
+        invoice.invoice_number = invoiceNumMatch[1];
+        console.log("Extracted invoice number from subject:", invoice.invoice_number);
+      }
+    }
+    
+    // If we have a sender email, use it to improve vendor info
+    if (from) {
+      const vendorMatch = from.match(/([^<@]+)(?:\s+<|\s+\(|@)/);
+      if (vendorMatch && vendorMatch[1]) {
+        invoice.vendor = vendorMatch[1].trim();
+        console.log("Extracted vendor from email sender:", invoice.vendor);
+      }
+    }
+    
     // Process attachments and documents first
     const { documentContent, processedAttachment } = await processDocument(emailData.attachments);
     
@@ -63,8 +85,36 @@ export async function processInvoiceEmail(emailData: any) {
       invoice.html_content = rawHtmlContent;
     }
 
+    // If no vendor info could be extracted, use a placeholder
+    if (!invoice.vendor) {
+      if (from) {
+        // Try to extract vendor name from email address
+        const emailMatch = from.match(/([^@<\s]+)@/);
+        if (emailMatch && emailMatch[1]) {
+          const possibleVendor = emailMatch[1].charAt(0).toUpperCase() + emailMatch[1].slice(1);
+          invoice.vendor = possibleVendor;
+          console.log("Using email domain as vendor:", invoice.vendor);
+        } else {
+          invoice.vendor = "Unknown Vendor";
+        }
+      } else {
+        invoice.vendor = "Unknown Vendor";
+      }
+    }
+
     // Clean up and validate invoice data
-    return cleanupInvoiceData(invoice, processedAttachment, subject, content);
+    const cleanedInvoice = cleanupInvoiceData(invoice, processedAttachment, subject, content);
+    
+    // Ensure we always have an invoice number
+    if (!cleanedInvoice.invoice_number) {
+      cleanedInvoice.invoice_number = `INV-${Date.now().toString().slice(-6)}`;
+      console.log("Generated invoice number:", cleanedInvoice.invoice_number);
+    }
+    
+    // Log final invoice data
+    console.log("Extracted invoice data:", cleanedInvoice);
+
+    return cleanedInvoice;
   } catch (error) {
     console.error("Error processing invoice email:", error);
     throw new Error(`Failed to process invoice email: ${error.message}`);

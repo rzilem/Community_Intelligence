@@ -30,15 +30,36 @@ export async function createInvoice(invoiceData: any) {
       tracking_number: trackingNumber
     };
     
+    // Ensure invoice has an invoice number
+    if (!invoiceWithTracking.invoice_number || invoiceWithTracking.invoice_number.trim() === '') {
+      invoiceWithTracking.invoice_number = `INV-${Date.now().toString().slice(-6)}`;
+    }
+
+    // Ensure invoice has minimum required fields
+    if (!invoiceWithTracking.status) {
+      invoiceWithTracking.status = 'pending';
+    }
+
+    if (!invoiceWithTracking.due_date) {
+      // Set default due date to 30 days from now
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      invoiceWithTracking.due_date = dueDate.toISOString().split('T')[0];
+    }
+
+    if (!invoiceWithTracking.invoice_date) {
+      invoiceWithTracking.invoice_date = new Date().toISOString().split('T')[0];
+    }
+    
     // Log the invoice data being saved
     console.log("Creating invoice with data:", {
       tracking_number: trackingNumber,
-      invoice_number: invoiceData.invoice_number,
-      vendor: invoiceData.vendor,
-      amount: invoiceData.amount,
-      due_date: invoiceData.due_date,
-      status: invoiceData.status,
-      source_document: invoiceData.source_document || 'None'
+      invoice_number: invoiceWithTracking.invoice_number,
+      vendor: invoiceWithTracking.vendor,
+      amount: invoiceWithTracking.amount,
+      due_date: invoiceWithTracking.due_date,
+      status: invoiceWithTracking.status,
+      source_document: invoiceWithTracking.source_document || 'None'
     });
     
     // Insert the invoice into the database

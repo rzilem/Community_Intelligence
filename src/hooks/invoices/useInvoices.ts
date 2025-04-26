@@ -38,17 +38,24 @@ export const useInvoices = () => {
   const { data: invoices = [], isLoading, refetch } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
+      console.log("Fetching invoices...");
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
         .order('created_at', { ascending: false });
         
       if (error) {
+        console.error("Error fetching invoices:", error);
         throw error;
       }
       
+      console.log("Invoices fetched:", data?.length || 0, "records");
+      console.log("First few invoices:", data?.slice(0, 3));
+      
       return data as Invoice[];
     },
+    // Increase polling frequency to detect new invoices faster
+    refetchInterval: 10000, // Poll every 10 seconds
   });
 
   // Update visible columns in local storage
@@ -79,6 +86,7 @@ export const useInvoices = () => {
   // Handler to refresh invoices
   const refreshInvoices = async () => {
     try {
+      console.log("Manually refreshing invoices...");
       await refetch();
       setLastRefreshed(new Date());
       toast({
@@ -86,6 +94,7 @@ export const useInvoices = () => {
         description: "The invoice list has been updated."
       });
     } catch (error) {
+      console.error("Error refreshing invoices:", error);
       toast({
         title: "Error refreshing invoices",
         description: "There was an error refreshing the invoice list.",

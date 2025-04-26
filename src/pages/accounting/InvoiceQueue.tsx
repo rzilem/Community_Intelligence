@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt, Check } from 'lucide-react';
+import { Receipt, Check, RefreshCw, MessageSquare } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,12 @@ const InvoiceQueue = () => {
   const [showPaymentAlert, setShowPaymentAlert] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [showAnalytics, setShowAnalytics] = useState(true);
+  const [refreshCount, setRefreshCount] = useState(0);
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<{count: number, lastUpdate: string}>({
+    count: 0,
+    lastUpdate: new Date().toISOString()
+  });
 
   const {
     invoices,
@@ -46,6 +52,27 @@ const InvoiceQueue = () => {
   useEffect(() => {
     markAllAsRead();
   }, []);
+  
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (isAutoRefreshing) {
+      const timer = setInterval(() => {
+        console.log("Auto-refreshing invoices...");
+        refreshInvoices();
+        setRefreshCount(prev => prev + 1);
+      }, 30000);
+      
+      return () => clearInterval(timer);
+    }
+  }, [isAutoRefreshing, refreshInvoices]);
+
+  // Update debug info when invoices change
+  useEffect(() => {
+    setDebugInfo({
+      count: invoices.length,
+      lastUpdate: new Date().toISOString()
+    });
+  }, [invoices]);
 
   useEffect(() => {
     const approvedInvoices = invoices.filter(
@@ -126,6 +153,16 @@ const InvoiceQueue = () => {
     });
   };
 
+  const toggleAutoRefresh = () => {
+    setIsAutoRefreshing(prev => !prev);
+    toast({
+      title: isAutoRefreshing ? "Auto-refresh disabled" : "Auto-refresh enabled",
+      description: isAutoRefreshing ? 
+        "Automatic invoice refresh has been disabled." : 
+        "Invoices will automatically refresh every 30 seconds.",
+    });
+  };
+
   return (
     <PageTemplate
       title="Invoice Queue"
@@ -142,13 +179,34 @@ const InvoiceQueue = () => {
           <InvoiceAnalytics invoices={invoices} />
         )}
 
-        <BulkActionBar
-          selectedInvoices={selectedInvoiceIds}
-          onBulkApprove={handleBulkApprove}
-          onBulkReject={handleBulkReject}
-          onBulkExport={handleBulkExport}
-          onClearSelection={() => setSelectedInvoiceIds([])}
-        />
+        <div className="flex justify-between items-center">
+          <BulkActionBar
+            selectedInvoices={selectedInvoiceIds}
+            onBulkApprove={handleBulkApprove}
+            onBulkReject={handleBulkReject}
+            onBulkExport={handleBulkExport}
+            onClearSelection={() => setSelectedInvoiceIds([])}
+          />
+
+          <div className="flex space-x-2">
+            <Button 
+              onClick={refreshInvoices} 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </Button>
+            
+            <Button 
+              onClick={toggleAutoRefresh} 
+              variant={isAutoRefreshing ? "default" : "outline"} 
+              size="sm"
+            >
+              {isAutoRefreshing ? "Auto-refresh ON" : "Auto-refresh OFF"}
+            </Button>
+          </div>
+        </div>
 
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
@@ -261,10 +319,26 @@ const InvoiceQueue = () => {
             </TabsContent>
           </Tabs>
         </Card>
+        
         <div className="flex justify-between items-center text-sm text-gray-500">
           <div>Showing {filteredInvoices.length} of {invoices.length} invoices</div>
           <div>Last updated: {lastRefreshed.toLocaleString()}</div>
         </div>
+
+        {/* Debug Panel */}
+        <Card className="p-3 bg-gray-50">
+          <div className="text-xs text-gray-500">
+            <h3 className="font-medium flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" /> Debug Information
+            </h3>
+            <div className="mt-1">
+              <p>Total Invoices in DB: {debugInfo.count}</p>
+              <p>Last API Update: {debugInfo.lastUpdate}</p>
+              <p>Auto-refresh: {isAutoRefreshing ? "Enabled" : "Disabled"}</p>
+              <p>Refresh Count: {refreshCount}</p>
+            </div>
+          </div>
+        </Card>
       </div>
     </PageTemplate>
   );
