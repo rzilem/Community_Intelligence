@@ -3,6 +3,7 @@ import React from 'react';
 import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDocumentViewer } from './hooks/useDocumentViewer';
+import { toast } from 'sonner';
 
 interface DocumentViewerProps {
   pdfUrl: string;
@@ -57,12 +58,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      toast.success("Download started");
     }
   };
   
   const handleOpenDirect = () => {
     if (proxyUrl) {
       window.open(proxyUrl, '_blank');
+      toast.success("Opening document in new tab");
     }
   };
 
@@ -115,7 +118,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <div className="flex flex-col items-center justify-center h-full">
         <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
         <p className="text-center mb-4">Failed to load PDF preview.</p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 justify-center">
           <Button onClick={handleRetry} variant="outline">
             <RefreshCcw className="h-4 w-4 mr-2" /> Retry
           </Button>
@@ -131,8 +134,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </Button>
           )}
         </div>
-        <div className="mt-4 text-xs text-muted-foreground">
-          <p>Debug: {proxyUrl}</p>
+        <div className="mt-4 text-xs text-muted-foreground max-w-md overflow-hidden text-ellipsis">
+          <p>Debug information:</p>
+          <p className="text-wrap break-all">{proxyUrl}</p>
         </div>
       </div>
     );

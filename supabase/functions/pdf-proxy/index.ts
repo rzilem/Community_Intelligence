@@ -16,9 +16,9 @@ const enhancedHeaders = {
   'Expires': '0',
 };
 
-// Initialize Supabase client with service role key for storage access
+// Initialize Supabase client with service role key for storage access - this bypasses RLS
 const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? 'https://cahergndkwfqltxyikyr.supabase.co',
+  Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   { auth: { persistSession: false } }
 );
@@ -82,7 +82,7 @@ serve(async (req) => {
       // Construct the storage URL with the full relative path
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2, 10);
-      const fileUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${pdfPath}?t=${timestamp}&r=${randomId}`;
+      const fileUrl = `${Deno.env.get('SUPABASE_URL') || 'https://cahergndkwfqltxyikyr.supabase.co'}/storage/v1/object/public/invoices/${pdfPath}?t=${timestamp}&r=${randomId}`;
       
       console.log(`Fetching PDF from public URL: ${fileUrl}`);
       

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,9 +8,10 @@ import { useInvoiceFilters } from './useInvoiceFilters';
 import { useInvoiceColumns } from './useInvoiceColumns';
 import { useAutoRefresh } from './useAutoRefresh';
 import { useInvoiceActions } from './useInvoiceActions';
+import { toast } from 'sonner';
 
 export const useInvoices = () => {
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const { 
     statusFilter, 
     setStatusFilter, 
@@ -38,45 +39,53 @@ export const useInvoices = () => {
   } = useAutoRefresh();
 
   // Fetch invoices using react-query with auto-refresh
-  const { data: allInvoices = [], isLoading, refetch } = useQuery({
+  const { data: allInvoices = [], isLoading, refetch, error } = useQuery({
     queryKey: ['invoices', statusFilter],
     queryFn: async () => {
       console.log(`Fetching invoices with status filter: ${statusFilter}`);
       
-      let query = supabase
-        .from('invoices')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      // Apply status filter if not 'all'
-      if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
-      }
+      try {
+        let query = supabase
+          .from('invoices')
+          .select('*')
+          .order('created_at', { ascending: false });
         
-      const { data, error } = await query;
+        // Apply status filter if not 'all'
+        if (statusFilter !== 'all') {
+          query = query.eq('status', statusFilter);
+        }
+          
+        const { data, error } = await query;
+          
+        if (error) {
+          console.error("Error fetching invoices:", error);
+          throw error;
+        }
         
-      if (error) {
-        console.error("Error fetching invoices:", error);
-        toast({
-          title: "Error loading invoices",
-          description: "There was a problem fetching the invoice data.",
-          variant: "destructive"
-        });
-        throw error;
+        console.log("Invoices fetched:", data?.length || 0, "records");
+        if (data && data.length > 0) {
+          console.log("First few invoices:", data.slice(0, 3));
+        } else {
+          console.log("No invoices found with current filter");
+        }
+        
+        return data as Invoice[];
+      } catch (err) {
+        console.error("Query execution error:", err);
+        toast.error("Failed to fetch invoices");
+        return [];
       }
-      
-      console.log("Invoices fetched:", data?.length || 0, "records");
-      if (data && data.length > 0) {
-        console.log("First few invoices:", data.slice(0, 3));
-      } else {
-        console.log("No invoices found with current filter");
-      }
-      
-      return data as Invoice[];
     },
     refetchInterval: autoRefreshEnabled ? refreshInterval : false,
     staleTime: 5000, // Consider data stale after 5 seconds
   });
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error in invoice query:", error);
+      toast.error("Failed to load invoices");
+    }
+  }, [error]);
 
   const { updateInvoiceStatus, deleteInvoice } = useInvoiceActions(refetch);
 
@@ -86,22 +95,20 @@ export const useInvoices = () => {
       console.log("Manually refreshing invoices...");
       await refetch();
       updateLastRefreshed();
-      toast({
-        title: "Invoices refreshed",
-        description: "The invoice list has been updated."
-      });
+      toast.success("Invoices refreshed");
     } catch (error) {
       console.error("Error refreshing invoices:", error);
-      toast({
-        title: "Error refreshing invoices",
-        description: "There was an error refreshing the invoice list.",
-        variant: "destructive"
-      });
+      toast.error("Failed to refresh invoices");
     }
   };
 
   // Apply search filter to the invoices
   const filteredInvoices = applyFilters(allInvoices || []);
+
+  // Debug log for filtered invoices
+  useEffect(() => {
+    console.log(`After filtering: ${filteredInvoices.length} invoices match criteria (${statusFilter}, search: "${searchTerm}")`);
+  }, [filteredInvoices.length, statusFilter, searchTerm]);
 
   return {
     invoices: filteredInvoices,
