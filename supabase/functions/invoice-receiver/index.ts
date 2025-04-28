@@ -145,11 +145,21 @@ serve(async (req) => {
         const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
         const fileName = `invoice_${Date.now()}${fileExt}`;
         
-        // Upload to storage - FIX: Upload directly to invoices bucket without 'public/' subfolder
+        // Upload to storage - FIX: Upload directly to invoices bucket without leading slashes
         try {
+          // Convert content to Uint8Array for storage upload
+          let content;
+          if (typeof attachment.content === 'string') {
+            content = new TextEncoder().encode(attachment.content);
+          } else if (attachment.content instanceof Blob) {
+            content = new Uint8Array(await attachment.content.arrayBuffer());
+          } else {
+            content = attachment.content;
+          }
+          
           const { error: uploadError } = await supabase.storage
             .from('invoices')
-            .upload(fileName, Buffer.from(attachment.content, 'base64'), {
+            .upload(fileName, content, {
               contentType: attachment.contentType,
               upsert: true
             });
@@ -157,13 +167,32 @@ serve(async (req) => {
           if (uploadError) {
             console.error("Error uploading attachment:", uploadError);
           } else {
-            // Get public URL
+            // Get public URL - this is where we fix the double slash issue
             const { data: urlData } = supabase.storage
               .from('invoices')
               .getPublicUrl(fileName);
               
             pdfUrl = urlData.publicUrl;
             console.log("Attachment uploaded successfully:", pdfUrl);
+            
+            // Verify the URL doesn't have double slashes in the path portion
+            if (pdfUrl.includes('//')) {
+              console.warn("Warning: Generated URL contains double slashes:", pdfUrl);
+              
+              // Fix the URL if it contains double slashes after the protocol
+              if (pdfUrl.includes('://')) {
+                const parts = pdfUrl.split('://');
+                const protocol = parts[0];
+                let path = parts[1];
+                
+                // Replace multiple consecutive slashes with single slash
+                path = path.replace(/\/+/g, '/');
+                
+                // Reconstruct the URL with fixed path
+                pdfUrl = `${protocol}://${path}`;
+                console.log("Fixed URL:", pdfUrl);
+              }
+            }
           }
         } catch (storageError) {
           console.error("Storage error:", storageError);

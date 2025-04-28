@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { toast } from 'sonner';
-import { FileText, ExternalLink, Download } from 'lucide-react';
+import { FileText, ExternalLink, Download, Bug } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Set worker source
@@ -23,49 +23,48 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [normalizedUrl, setNormalizedUrl] = useState<string>('');
 
-  // Thorough URL normalization function
+  // Enhanced URL normalization function
   const normalizeUrlPath = (url: string): string => {
     if (!url) return '';
     
     try {
       console.log('PdfPreview: Original URL before normalization:', url);
       
-      // Check for double slashes and log
-      if (url.includes('//') && !url.includes('://')) {
-        console.warn('⚠️ PdfPreview: Double slash detected in URL that needs fixing:', url);
-      }
-      
-      // For URLs with protocol, use URL parsing for thorough normalization
+      // For URLs with protocol, use URL parsing
       if (url.startsWith('http')) {
         const parsed = new URL(url);
         
-        // Clean the pathname by:
-        // 1. Split by slashes
-        // 2. Filter out empty segments (which cause double slashes)
-        // 3. Join with single slashes
-        const pathParts = parsed.pathname.split('/')
+        // Clean the pathname by filtering empty segments
+        const pathSegments = parsed.pathname.split('/')
           .filter(segment => segment !== '');
         
-        // Reconstruct pathname with a single leading slash
-        parsed.pathname = '/' + pathParts.join('/');
+        parsed.pathname = '/' + pathSegments.join('/');
         
         const normalized = parsed.toString();
-        console.log('PdfPreview: Normalized URL with protocol:', normalized);
+        console.log('PdfPreview: Normalized URL result:', normalized);
         return normalized;
       }
       
-      // For relative paths, handle more carefully
-      // First remove leading slashes
+      // For relative paths
       let normalized = url.replace(/^\/+/, '');
-      // Then replace multiple consecutive slashes with a single one
       normalized = normalized.replace(/\/+/g, '/');
       
-      console.log('PdfPreview: Normalized relative path:', normalized);
+      console.log('PdfPreview: Normalized relative path result:', normalized);
       return normalized;
     } catch (e) {
       console.error('PdfPreview: Error normalizing URL:', e);
       return url; // Return original if parsing fails
     }
+  };
+
+  // Check if the URL is a direct Supabase storage URL
+  const isSupabaseStorageUrl = (url: string): boolean => {
+    return url.includes('supabase.co/storage/v1/object');
+  };
+
+  // Check if the URL is a signed URL
+  const isSignedUrl = (url: string): boolean => {
+    return url.includes('token=') && url.includes('supabase.co');
   };
 
   useEffect(() => {
@@ -78,21 +77,24 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       return;
     }
 
-    // Normalize the URL first to fix any double slashes
+    // Normalize the URL
     const normalizedUrl = normalizeUrlPath(url);
     setNormalizedUrl(normalizedUrl);
     
-    // Check for potential URL formatting issues
-    if (url.includes('//') && !url.includes('://')) {
-      console.warn("⚠️ URL contains suspicious double slashes that might cause issues:", url);
-      console.log("Normalized to:", normalizedUrl);
+    // Log URL type for debugging
+    if (isSupabaseStorageUrl(normalizedUrl)) {
+      console.log("Using direct Supabase storage URL");
+    } else if (isSignedUrl(normalizedUrl)) {
+      console.log("Using signed Supabase URL");
+    } else {
+      console.log("Using proxy or external URL");
     }
 
     const loadPdf = async () => {
       try {
         setLoading(true);
         setError(false);
-        console.log("Loading PDF from normalized URL:", normalizedUrl);
+        console.log("Loading PDF from URL:", normalizedUrl);
         
         // Clear any previous PDF document
         if (pdfDoc) {
@@ -100,6 +102,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           setPdfDoc(null);
         }
         
+        // Load the PDF
         const loadingTask = pdfjsLib.getDocument({
           url: normalizedUrl,
           withCredentials: false,
@@ -107,15 +110,18 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           cMapPacked: true,
         });
         
-        // Add event listeners for loading progress
+        // Add progress logging
         loadingTask.onProgress = (progressData) => {
-          console.log(`PDF loading progress: ${progressData.loaded} of ${progressData.total || 'unknown'} bytes`);
+          const total = progressData.total || 'unknown';
+          console.log(`PDF loading progress: ${progressData.loaded} of ${total} bytes`);
         };
         
+        // Get the PDF document
         const pdf = await loadingTask.promise;
         console.log("PDF loaded successfully, pages:", pdf.numPages);
         setPdfDoc(pdf);
         
+        // Render the first page
         const page = await pdf.getPage(1);
         const viewport = page.getViewport({ scale });
         const canvas = canvasRef.current;
@@ -158,14 +164,24 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
     };
   }, [url, scale, onError]);
 
+  // Function to open the PDF in a new tab
   const handleOpenExternal = () => {
     if (normalizedUrl) {
       window.open(normalizedUrl, '_blank');
     }
   };
 
+  // Toggle debug mode
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  // Determine URL type for debug information
+  const getUrlType = () => {
+    if (isSignedUrl(normalizedUrl)) return "Signed Supabase URL";
+    if (isSupabaseStorageUrl(normalizedUrl)) return "Direct Supabase Storage URL";
+    if (normalizedUrl.includes('/functions/v1/pdf-proxy')) return "Proxy URL";
+    return "External URL";
   };
 
   if (loading) {
@@ -193,7 +209,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
             variant="outline"
             className="flex items-center gap-1"
           >
-            <ExternalLink className="h-4 w-4" /> View Direct URL
+            <ExternalLink className="h-4 w-4" /> Open in New Tab
           </Button>
           <Button 
             onClick={toggleDebugMode} 
@@ -201,6 +217,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
             size="sm"
             className="text-xs"
           >
+            <Bug className="h-4 w-4 mr-1" />
             {debugMode ? "Hide" : "Show"} Debug Info
           </Button>
         </div>
@@ -209,6 +226,8 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-w-md max-h-48 overflow-auto">
             <p className="font-bold">Error Message:</p>
             <p className="break-all mb-2 text-red-600">{errorDetails}</p>
+            <p className="font-bold">URL Type:</p>
+            <p className="mb-2">{getUrlType()}</p>
             <p className="font-bold">Original URL:</p>
             <p className="break-all mb-2">{url}</p>
             <p className="font-bold">Normalized URL:</p>

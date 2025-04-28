@@ -1,4 +1,3 @@
-
 import DOMPurify from 'dompurify';
 
 export const isValidUrl = (url: string): boolean => {
@@ -10,46 +9,36 @@ export const isValidUrl = (url: string): boolean => {
   }
 };
 
-// Enhanced normalizeUrl function that more aggressively handles slashes
+// Comprehensive URL normalization function that handles double slashes properly
 export const normalizeUrl = (url: string): string => {
   if (!url) return '';
   
   try {
-    // For URLs with protocol, use URL parsing to fix path
+    // Handle URLs with protocol (http/https)
     if (url.startsWith('http')) {
-      // First fix the URL by parsing it
       const parsed = new URL(url);
       
-      // Log suspicious double slashes in pathname for debugging
-      if (parsed.pathname.includes('//')) {
-        console.warn('Found double slashes in pathname that need fixing:', parsed.pathname);
-      }
+      // Clean up the pathname by splitting by slashes, removing empty segments, and rejoining
+      const pathSegments = parsed.pathname.split('/')
+        .filter(segment => segment !== '');
       
-      // Fix double slashes in pathname - this is crucial
-      parsed.pathname = parsed.pathname.split('/')
-        .filter(segment => segment !== '') // Remove empty segments
-        .join('/'); // Rejoin with single slashes
-      
-      // Ensure the pathname starts with a slash
-      if (!parsed.pathname.startsWith('/')) {
-        parsed.pathname = '/' + parsed.pathname;
-      }
+      parsed.pathname = '/' + pathSegments.join('/');
       
       return parsed.toString();
     } 
-    // For relative paths, just normalize slashes
+    // For relative paths or storage paths
     else {
       // Remove leading slashes
-      let normalizedPath = url.replace(/^\/+/, '');
+      let normalized = url.replace(/^\/+/, '');
       // Replace multiple consecutive slashes with a single one
-      normalizedPath = normalizedPath.replace(/\/+/g, '/');
+      normalized = normalized.replace(/\/+/g, '/');
       
-      // Ensure it has a protocol if needed
-      if (!normalizedPath.startsWith('http://') && !normalizedPath.startsWith('https://')) {
-        return 'https://' + normalizedPath;
+      // Add protocol if needed for displaying in browser
+      if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+        return 'https://' + normalized;
       }
       
-      return normalizedPath;
+      return normalized;
     }
   } catch (e) {
     console.error('Error normalizing URL:', e);

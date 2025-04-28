@@ -1,11 +1,12 @@
 
+// Function to create a proxy URL with proper URL normalization
 export const createProxyUrl = (fullStorageUrl: string, attempt: number): string => {
   if (!fullStorageUrl) return '';
   
   console.log('Creating proxy URL for:', fullStorageUrl);
 
   try {
-    // Keep track of the original URL for debugging
+    // Parameters for the proxy
     let proxyParams = new URLSearchParams();
     proxyParams.append('t', `${Date.now()}-${Math.random().toString(36).substring(2, 8)}-${attempt}`);
     
@@ -13,92 +14,58 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     const uuidMatch = fullStorageUrl.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
     if (uuidMatch) {
       const fileId = uuidMatch[1];
-      console.log('Extracted UUID from URL:', fileId);
       proxyParams.append('id', fileId);
     }
     
-    // Thoroughly normalize URL to fix double slashes
-    const normalizeUrl = (url: string): string => {
+    // Enhanced URL normalization function
+    const normalizeUrlPath = (url: string): string => {
       try {
-        console.log('Normalizing URL:', url);
-        
-        // Check for and log any double slashes which might cause issues
-        if (url.includes('//') && !url.includes('://')) {
-          console.warn('⚠️ Double slash detected in URL:', url);
-        }
+        if (!url) return '';
         
         // For URLs with protocol, use URL parsing for robust handling
         if (url.startsWith('http')) {
           const parsed = new URL(url);
           
-          // Clean the pathname by:
-          // 1. Split by slashes
-          // 2. Filter out empty segments (which cause double slashes)
-          // 3. Join with single slashes
-          const pathParts = parsed.pathname.split('/')
+          // Clean pathname - filter out empty segments
+          const pathSegments = parsed.pathname.split('/')
             .filter(segment => segment !== '');
           
-          // Reconstruct pathname with a single leading slash
-          parsed.pathname = '/' + pathParts.join('/');
-          
-          const normalized = parsed.toString();
-          console.log('Normalized URL with protocol:', normalized);
-          return normalized;
+          parsed.pathname = '/' + pathSegments.join('/');
+          return parsed.toString();
         }
         
-        // For relative paths, handle more carefully
-        // Remove leading slashes first
+        // For relative paths, clean up slashes
         let normalized = url.replace(/^\/+/, '');
-        // Then replace multiple consecutive slashes with a single one
         normalized = normalized.replace(/\/+/g, '/');
-        
-        console.log('Normalized relative path:', normalized);
         return normalized;
       } catch (e) {
-        console.error('Error normalizing URL:', e);
-        return url; // Return original if parsing fails
+        console.error('Error normalizing URL in pdfUtils:', e);
+        return url;
       }
     };
     
-    // For Supabase URLs, send the entire URL to the proxy after normalizing
-    if (fullStorageUrl.includes('supabase.co/storage/v1/object/public/')) {
-      console.log('Processing Supabase storage URL');
-      
-      // Normalize the URL before sending to proxy - critical for fixing double slashes
-      const normalizedUrl = normalizeUrl(fullStorageUrl);
-      console.log('Normalized Supabase URL:', normalizedUrl);
-      
-      // Check again for any double slashes after normalization
-      if (normalizedUrl.includes('//') && !normalizedUrl.includes('://')) {
-        console.error('⚠️ Double slash STILL detected after normalization:', normalizedUrl);
-      }
-      
+    // Normalize the URL before processing
+    const normalizedUrl = normalizeUrlPath(fullStorageUrl);
+    
+    // For Supabase URLs
+    if (normalizedUrl.includes('supabase.co/storage/v1/object/public/')) {
       // Send the complete normalized URL to the proxy
       proxyParams.append('pdf', encodeURIComponent(normalizedUrl));
       
       const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
       const proxyUrl = `${supabaseUrl}/functions/v1/pdf-proxy?${proxyParams.toString()}`;
-      console.log('Generated proxy URL with full path:', proxyUrl);
       return proxyUrl;
     }
     
     // For relative paths or other URLs
-    let relativePath = fullStorageUrl;
+    let relativePath = normalizedUrl;
     
-    // If it's a relative path (no protocol prefix)
-    if (!fullStorageUrl.startsWith('http')) {
-      console.log('Processing relative path:', relativePath);
-      // Normalize the relative path - fix any double slashes
-      relativePath = normalizeUrl(relativePath);
-      console.log('Normalized relative path:', relativePath);
-    } 
-    // For any other URL format
-    else {
-      console.log('Processing other URL format');
-      // Try to extract the filename
-      const urlParts = fullStorageUrl.split('/');
+    if (!normalizedUrl.startsWith('http')) {
+      relativePath = normalizeUrlPath(relativePath);
+    } else {
+      // Extract the filename from full URLs
+      const urlParts = normalizedUrl.split('/');
       relativePath = urlParts[urlParts.length - 1];
-      console.log('Extracted filename:', relativePath);
     }
     
     // Add the path to the parameters
@@ -108,10 +75,9 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
     const proxyUrl = `${supabaseUrl}/functions/v1/pdf-proxy?${proxyParams.toString()}`;
     
-    console.log('Generated proxy URL:', proxyUrl);
     return proxyUrl;
   } catch (e) {
     console.error('Error generating proxy URL:', e);
-    return ''; // Return empty string instead of throwing to prevent crashing
+    return '';
   }
 };
