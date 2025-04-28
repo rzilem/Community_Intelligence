@@ -71,15 +71,24 @@ serve(async (req) => {
       }
     }
     
-    // Try to fetch the PDF from storage
-    console.log(`Fetching PDF from storage: ${pdfPath}`);
+    // Try to download from the invoices bucket
+    console.log(`Fetching PDF from storage bucket 'invoices': ${pdfPath}`);
     try {
-      const { data, error } = await supabaseAdmin.storage
+      // First, try with the exact path as provided
+      let { data, error } = await supabaseAdmin.storage
         .from('invoices')
         .download(pdfPath);
+        
+      // If that failed and the path includes directories, try just the filename
+      if (error && pdfPath.includes('/')) {
+        const filename = pdfPath.split('/').pop();
+        console.log(`First attempt failed, trying with just filename: ${filename}`);
+        ({ data, error } = await supabaseAdmin.storage
+          .from('invoices')
+          .download(filename || pdfPath));
+      }
       
       if (error) {
-        console.error('Error fetching PDF from storage:', error);
         throw error;
       }
       
@@ -103,10 +112,16 @@ serve(async (req) => {
       if (pdfPath.startsWith('http')) {
         console.log(`Attempting to proxy external URL: ${pdfPath}`);
         try {
-          const response = await fetch(pdfPath);
+          const response = await fetch(pdfPath, {
+            headers: {
+              'Accept': 'application/pdf',
+            }
+          });
+          
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
+          
           const contentType = response.headers.get('content-type');
           const data = await response.blob();
           
@@ -133,7 +148,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
+        note: "Please check if the file exists in the 'invoices' storage bucket"
       }),
       {
         headers: { ...enhancedHeaders, 'Content-Type': 'application/json' },

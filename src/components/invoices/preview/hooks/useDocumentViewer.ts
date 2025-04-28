@@ -42,7 +42,7 @@ export const useDocumentViewer = ({
         setKey(Date.now());
       }, 1000);
     } else {
-      toast.error('Failed to load PDF preview. Please try again or open in a new tab.');
+      toast.error('Failed to load PDF preview. Please check if the PDF exists in the storage bucket.');
     }
   }, [proxyUrl, pdfUrl, attempt, onIframeError]);
 
@@ -76,6 +76,7 @@ export const useDocumentViewer = ({
         if (pdfUrl !== originalUrl) {
           setOriginalUrl(pdfUrl);
           console.log('PDF URL changed, generating new proxy URL');
+          console.log('Original PDF URL:', pdfUrl);
         }
         
         const url = createProxyUrl(pdfUrl, attempt);

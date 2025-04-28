@@ -39,7 +39,12 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           setPdfDoc(null);
         }
         
-        const loadingTask = pdfjsLib.getDocument(url);
+        const loadingTask = pdfjsLib.getDocument({
+          url: url,
+          withCredentials: false,
+          cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdfjs-dist/3.11.174/cmaps/',
+          cMapPacked: true,
+        });
         
         // Add event listeners for loading progress
         loadingTask.onProgress = (progressData) => {
@@ -74,7 +79,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
         console.error('Error loading PDF:', error);
         setError(true);
         setLoading(false);
-        toast.error('Error loading PDF preview');
+        toast.error('Error loading PDF preview: ' + error.message);
         if (onError) onError();
       }
     };
@@ -104,8 +109,19 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-red-500">Failed to load PDF preview</div>
+      <div className="flex flex-col items-center justify-center h-full">
+        <div className="text-red-500 mb-2">Failed to load PDF preview</div>
+        <div className="text-sm text-muted-foreground">Check if the file exists in the storage bucket</div>
+        <div className="mt-4">
+          <a 
+            href={url} 
+            target="_blank" 
+            rel="noreferrer"
+            className="text-sm underline text-blue-500"
+          >
+            View PDF directly
+          </a>
+        </div>
       </div>
     );
   }

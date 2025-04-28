@@ -15,8 +15,9 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       console.log('Extracted UUID from URL:', fileId);
     }
 
-    // Special case for direct Supabase storage URLs
+    // Handle different URL formats
     if (fullStorageUrl.includes('supabase.co/storage/v1/object/public/')) {
+      // Direct Supabase storage URL
       const urlObj = new URL(fullStorageUrl);
       // Find the bucket name in the path segments
       const pathParts = urlObj.pathname.split('/');
@@ -36,7 +37,7 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
         console.log('Using filename from pathname:', relativePath);
       }
     } 
-    // Handle relative paths directly 
+    // Handle relative paths directly - this is a common case
     else if (!fullStorageUrl.startsWith('http')) {
       relativePath = fullStorageUrl;
       console.log('Using relative path directly:', relativePath);
@@ -52,8 +53,9 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     const randomId = Math.random().toString(36).substring(2, 8);
     const uniqueKey = `${timestamp}-${randomId}-${attempt}`;
     
-    // Create the proxy URL with optional file ID
-    let proxyUrl = `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(relativePath)}&t=${uniqueKey}`;
+    // Create the proxy URL with direct access to the storage bucket
+    const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
+    let proxyUrl = `${supabaseUrl}/functions/v1/pdf-proxy?pdf=${encodeURIComponent(relativePath)}&t=${uniqueKey}`;
     
     // Add file ID if available
     if (fileId) {
@@ -65,6 +67,6 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     return proxyUrl;
   } catch (e) {
     console.error('Error generating proxy URL:', e);
-    throw e;
+    return ''; // Return empty string instead of throwing to prevent crashing
   }
 };
