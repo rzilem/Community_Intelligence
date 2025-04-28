@@ -21,6 +21,36 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   const [errorDetails, setErrorDetails] = useState<string>('');
   const [debugMode, setDebugMode] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
+  const [normalizedUrl, setNormalizedUrl] = useState<string>('');
+
+  // URL normalization function
+  const normalizeUrlPath = (url: string): string => {
+    if (!url) return '';
+    
+    try {
+      // Check for double slashes and log
+      if (url.includes('//') && !url.includes('://')) {
+        console.warn('⚠️ PdfPreview: Double slash detected in URL that needs fixing:', url);
+      }
+      
+      // For URLs with protocol, use URL parsing
+      if (url.startsWith('http')) {
+        const parsed = new URL(url);
+        // Normalize pathname by replacing multiple slashes with a single one
+        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+        const normalized = parsed.toString();
+        console.log('PdfPreview: Normalized URL with protocol:', normalized);
+        return normalized;
+      }
+      // For relative paths, just replace multiple slashes
+      const normalized = url.replace(/\/+/g, '/');
+      console.log('PdfPreview: Normalized relative path:', normalized);
+      return normalized;
+    } catch (e) {
+      console.error('PdfPreview: Error normalizing URL:', e);
+      return url; // Return original if parsing fails
+    }
+  };
 
   useEffect(() => {
     if (!url) {
@@ -32,16 +62,21 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       return;
     }
 
+    // Normalize the URL first
+    const normalizedUrl = normalizeUrlPath(url);
+    setNormalizedUrl(normalizedUrl);
+    
     // Check for potential URL formatting issues
     if (url.includes('//') && !url.includes('://')) {
       console.warn("⚠️ URL contains suspicious double slashes that might cause issues:", url);
+      console.log("Normalized to:", normalizedUrl);
     }
 
     const loadPdf = async () => {
       try {
         setLoading(true);
         setError(false);
-        console.log("Loading PDF from URL:", url);
+        console.log("Loading PDF from normalized URL:", normalizedUrl);
         
         // Clear any previous PDF document
         if (pdfDoc) {
@@ -50,7 +85,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
         }
         
         const loadingTask = pdfjsLib.getDocument({
-          url: url,
+          url: normalizedUrl,
           withCredentials: false,
           cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdfjs-dist/3.11.174/cmaps/',
           cMapPacked: true,
@@ -95,7 +130,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       }
     };
 
-    if (url) {
+    if (normalizedUrl) {
       loadPdf();
     }
     
@@ -108,8 +143,8 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   }, [url, scale, onError]);
 
   const handleOpenExternal = () => {
-    if (url) {
-      window.open(url, '_blank');
+    if (normalizedUrl) {
+      window.open(normalizedUrl, '_blank');
     }
   };
 
@@ -158,8 +193,10 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-w-md max-h-48 overflow-auto">
             <p className="font-bold">Error Message:</p>
             <p className="break-all mb-2 text-red-600">{errorDetails}</p>
-            <p className="font-bold">URL:</p>
+            <p className="font-bold">Original URL:</p>
             <p className="break-all mb-2">{url}</p>
+            <p className="font-bold">Normalized URL:</p>
+            <p className="break-all mb-2">{normalizedUrl}</p>
             {url.includes('//') && !url.includes('://') && (
               <p className="text-orange-500 font-bold">Warning: URL contains suspicious double slashes!</p>
             )}

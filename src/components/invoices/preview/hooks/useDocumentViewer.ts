@@ -68,30 +68,49 @@ export const useDocumentViewer = ({
     toast.info('Retrying PDF load...');
   }, []);
 
+  // Pre-normalize the URL to fix double slashes
+  const normalizeUrl = useCallback((url: string): string => {
+    if (!url) return '';
+    
+    try {
+      // For URLs with protocol, use URL parsing
+      if (url.startsWith('http')) {
+        const parsed = new URL(url);
+        // Normalize pathname by replacing multiple slashes with a single one
+        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+        return parsed.toString();
+      }
+      // For relative paths, just replace multiple slashes
+      return url.replace(/\/+/g, '/');
+    } catch (e) {
+      console.error('Error normalizing URL in useDocumentViewer:', e);
+      return url; // Return original if parsing fails
+    }
+  }, []);
+
   // Generate proxy URL only when dependencies change
   useEffect(() => {
     if (isPdf && pdfUrl) {
       try {
+        // Pre-normalize the URL first to fix any double slashes
+        const normalizedInputUrl = normalizeUrl(pdfUrl);
+        
         // Check if URL has changed
-        if (pdfUrl !== originalUrl) {
-          setOriginalUrl(pdfUrl);
+        if (normalizedInputUrl !== originalUrl) {
+          setOriginalUrl(normalizedInputUrl);
           console.log('PDF URL changed, generating new proxy URL');
           console.log('Original PDF URL:', pdfUrl);
+          console.log('Normalized PDF URL:', normalizedInputUrl);
           
           // Check for and log any double slashes which might cause issues
-          if (pdfUrl.includes('//')) {
-            const doubleSlashIndex = pdfUrl.indexOf('//');
-            const protocolDoubleSlash = pdfUrl.indexOf('://');
-            
-            // Only log warning if double slash is not part of protocol (http://)
-            if (doubleSlashIndex !== protocolDoubleSlash) {
-              console.warn('⚠️ Double slash detected in PDF URL that may cause issues:', pdfUrl);
-            }
+          if (pdfUrl.includes('//') && !pdfUrl.includes('://')) {
+            console.warn('⚠️ Double slash detected in PDF URL that may cause issues:', pdfUrl);
+            console.log('This has been normalized to:', normalizedInputUrl);
           }
         }
         
-        // Create proxy URL with full original URL to ensure proper path handling
-        const url = createProxyUrl(pdfUrl, attempt);
+        // Create proxy URL with normalized URL to ensure proper path handling
+        const url = createProxyUrl(normalizedInputUrl, attempt);
         console.log('Generated proxy URL:', url);
         setProxyUrl(url);
         setLoading(true);
@@ -102,7 +121,7 @@ export const useDocumentViewer = ({
         setLoading(false);
       }
     }
-  }, [pdfUrl, attempt, isPdf, originalUrl]);
+  }, [pdfUrl, attempt, isPdf, originalUrl, normalizeUrl]);
 
   return {
     iframeError,

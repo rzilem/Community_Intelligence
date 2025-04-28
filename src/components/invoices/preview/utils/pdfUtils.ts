@@ -17,18 +17,30 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // Normalize the URL by removing duplicate slashes in paths
+    // Enhanced normalize function that's more aggressive with double slashes
     const normalizeUrl = (url: string): string => {
       try {
+        console.log('Normalizing URL:', url);
+        
+        // Check for and log any double slashes which might cause issues
+        if (url.includes('//') && !url.includes('://')) {
+          console.warn('⚠️ Double slash detected in URL that needs fixing:', url);
+        }
+        
         // For URLs with protocol, use URL parsing
         if (url.startsWith('http')) {
           const parsed = new URL(url);
-          // Normalize pathname by replacing multiple slashes with a single one
+          // Normalize pathname by replacing multiple consecutive slashes with a single one
           parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
-          return parsed.toString();
+          const normalized = parsed.toString();
+          console.log('Normalized URL with protocol:', normalized);
+          return normalized;
         }
+        
         // For relative paths, just replace multiple slashes
-        return url.replace(/\/+/g, '/');
+        const normalized = url.replace(/\/+/g, '/');
+        console.log('Normalized relative path:', normalized);
+        return normalized;
       } catch (e) {
         console.error('Error normalizing URL:', e);
         return url; // Return original if parsing fails

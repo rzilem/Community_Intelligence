@@ -56,6 +56,26 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setRefreshKey(Date.now());
   };
   
+  // Normalize URL function
+  const normalizeUrlPath = (url: string): string => {
+    if (!url) return '';
+    
+    try {
+      // For URLs with protocol, use URL parsing
+      if (url.startsWith('http')) {
+        const parsed = new URL(url);
+        // Normalize pathname by replacing multiple slashes with a single one
+        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+        return parsed.toString();
+      }
+      // For relative paths, just replace multiple slashes
+      return url.replace(/\/+/g, '/');
+    } catch (e) {
+      console.error('Error normalizing URL in InvoicePreview:', e);
+      return url; // Return original if parsing fails
+    }
+  };
+  
   useEffect(() => {
     // Reset states
     setLoading(true);
@@ -67,10 +87,20 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         // For debugging, log the original URL
         console.log("Original PDF URL:", pdfUrl);
         
-        // Normalize URL by ensuring it has a protocol
+        // Check for and log any double slashes which might cause issues
+        if (pdfUrl.includes('//') && !pdfUrl.includes('://')) {
+          console.warn('⚠️ Double slash detected in PDF URL that needs fixing:', pdfUrl);
+        }
+        
+        // Normalize URL by ensuring it has a protocol and fixing double slashes
         let normalizedUrl = pdfUrl;
+        
+        // Fix double slashes in the path part
+        normalizedUrl = normalizeUrlPath(normalizedUrl);
+        
+        // Add protocol if missing
         if (!normalizedUrl.startsWith('http')) {
-          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${normalizedUrl}`;
+          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${normalizedUrl.replace(/^\/+/, '')}`;
         }
         
         setNormalizedPdfUrl(normalizedUrl);

@@ -10,11 +10,35 @@ export const isValidUrl = (url: string): boolean => {
   }
 };
 
+// Enhanced normalizeUrl function that's more aggressive with double slashes
 export const normalizeUrl = (url: string): string => {
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    return 'https://' + url;
+  if (!url) return '';
+  
+  try {
+    // First fix double slashes in the path
+    let normalizedUrl = url;
+    
+    // For URLs with protocol, use URL parsing to fix path
+    if (url.startsWith('http')) {
+      const parsed = new URL(url);
+      // Normalize pathname by replacing multiple slashes with a single one
+      parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+      normalizedUrl = parsed.toString();
+    } else {
+      // For relative paths, just replace multiple slashes
+      normalizedUrl = url.replace(/\/+/g, '/');
+    }
+    
+    // Then ensure it has a protocol if missing
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      return 'https://' + normalizedUrl;
+    }
+    
+    return normalizedUrl;
+  } catch (e) {
+    console.error('Error normalizing URL:', e);
+    return url; // Return original if parsing fails
   }
-  return url;
 };
 
 export const isValidHtml = (html: string): boolean => {
