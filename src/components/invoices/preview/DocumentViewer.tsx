@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -50,7 +49,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   };
 
-  // Word document handling
   if (isWordDocument) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -66,7 +64,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // HTML content render
   if (!isPdf && htmlContent) {
     return (
       <div className="h-full overflow-auto">
@@ -115,7 +112,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // Use the new PDF.js preview component
   return (
     <div className="relative w-full h-full">
       <div className="absolute inset-0 bg-white">

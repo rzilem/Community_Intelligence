@@ -49,7 +49,6 @@ export const useDocumentViewer = ({
     if (onIframeError) onIframeError();
     
     if (attempt < 3) {
-      // Auto-retry up to 3 times
       setTimeout(() => {
         setAttempt(prev => prev + 1);
         setKey(Date.now());
