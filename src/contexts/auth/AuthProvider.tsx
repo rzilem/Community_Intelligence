@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import AuthContext from './AuthContext';
 import { fetchUserProfile } from '@/services/user-service';
@@ -39,6 +40,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading,
   });
 
+  const refreshProfile = useCallback(async () => {
+    if (user?.id) {
+      try {
+        console.log('[AuthProvider] Refreshing profile for user:', user.id);
+        const { profile: updatedProfile } = await fetchUserProfile(user.id);
+        if (updatedProfile) {
+          console.log('[AuthProvider] Updated profile:', updatedProfile);
+          setProfile(updatedProfile);
+        }
+      } catch (error) {
+        console.error('[AuthProvider] Error refreshing profile:', error);
+        toast.error('Failed to refresh profile');
+      }
+    }
+  }, [user?.id, setProfile]);
+
+  // Initialize auth state
   useEffect(() => {
     console.log('[AuthProvider] Initializing authentication...');
     
@@ -59,10 +77,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    // Only fetch the session once on initialization
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('[AuthProvider] Initial session check:', session ? 'Session found' : 'No session');
       setSession(session);
       setUser(session?.user || null);
+      setLoading(false);
     }).catch(error => {
       console.error('[AuthProvider] Error fetching initial session:', error);
       setLoading(false);
@@ -71,27 +91,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [setSession, setUser, setProfile, setIsAdmin, setUserRole, setUserAssociations, setCurrentAssociation, setLoading]);
 
+  // Load user data when user changes
   useEffect(() => {
-    loadUserData(user);
-  }, [user]);
-
-  const refreshProfile = async () => {
-    if (user?.id) {
-      try {
-        console.log('[AuthProvider] Refreshing profile for user:', user.id);
-        const { profile: updatedProfile } = await fetchUserProfile(user.id);
-        if (updatedProfile) {
-          console.log('[AuthProvider] Updated profile:', updatedProfile);
-          setProfile(updatedProfile);
-        }
-      } catch (error) {
-        console.error('[AuthProvider] Error refreshing profile:', error);
-        toast.error('Failed to refresh profile');
-      }
+    if (user) {
+      loadUserData(user);
     }
-  };
+  }, [user, loadUserData]);
 
   const isAuthenticated = !!user;
 

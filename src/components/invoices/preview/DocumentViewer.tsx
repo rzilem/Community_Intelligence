@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -112,6 +113,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
+  // Use the improved PdfPreview component
   return (
     <div className="relative w-full h-full">
       <div className="absolute inset-0 bg-white">
