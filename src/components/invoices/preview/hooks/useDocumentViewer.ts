@@ -77,6 +77,17 @@ export const useDocumentViewer = ({
           setOriginalUrl(pdfUrl);
           console.log('PDF URL changed, generating new proxy URL');
           console.log('Original PDF URL:', pdfUrl);
+          
+          // Check for and log any double slashes which might cause issues
+          if (pdfUrl.includes('//')) {
+            const doubleSlashIndex = pdfUrl.indexOf('//');
+            const protocolDoubleSlash = pdfUrl.indexOf('://');
+            
+            // Only log warning if double slash is not part of protocol (http://)
+            if (doubleSlashIndex !== protocolDoubleSlash) {
+              console.warn('⚠️ Double slash detected in PDF URL that may cause issues:', pdfUrl);
+            }
+          }
         }
         
         // Create proxy URL with full original URL to ensure proper path handling

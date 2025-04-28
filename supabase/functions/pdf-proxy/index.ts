@@ -19,6 +19,24 @@ const supabaseAdmin = createClient(
   { auth: { persistSession: false } }
 );
 
+// Normalize a URL by removing duplicate slashes in the path
+const normalizeUrl = (url: string): string => {
+  try {
+    // For URLs like https://domain.com//path//to//file
+    if (url.startsWith('http')) {
+      const parsedUrl = new URL(url);
+      // Normalize the pathname by replacing multiple slashes with a single one
+      parsedUrl.pathname = parsedUrl.pathname.replace(/\/+/g, '/');
+      return parsedUrl.toString();
+    } 
+    // For relative paths like /path//to//file
+    return url.replace(/\/+/g, '/');
+  } catch (e) {
+    console.error('Error normalizing URL:', e, url);
+    return url; // Return original if parsing fails
+  }
+};
+
 serve(async (req) => {
   console.log('PDF Proxy request received:', req.url);
   
@@ -41,7 +59,9 @@ serve(async (req) => {
     }
 
     pdfPath = decodeURIComponent(pdfPath);
-    console.log(`Processing PDF request for path: ${pdfPath}`);
+    // Normalize the PDF path to handle double slashes
+    pdfPath = normalizeUrl(pdfPath);
+    console.log(`Processing PDF request for path (normalized): ${pdfPath}`);
     
     // If we have an invoice ID, try to get the PDF URL from the invoices table
     if (fileId) {
@@ -57,9 +77,9 @@ serve(async (req) => {
           console.error('Error fetching invoice:', invoiceError);
         } else if (invoice && invoice.pdf_url) {
           console.log(`Found PDF URL in invoice: ${invoice.pdf_url}`);
-          // Update pdfPath with the correct URL from the database
-          pdfPath = invoice.pdf_url;
-          console.log(`Updated PDF path from invoice: ${pdfPath}`);
+          // Update pdfPath with the correct URL from the database and normalize it
+          pdfPath = normalizeUrl(invoice.pdf_url);
+          console.log(`Updated PDF path from invoice (normalized): ${pdfPath}`);
         }
       } catch (error) {
         console.error('Error querying invoice:', error);
@@ -68,12 +88,14 @@ serve(async (req) => {
     
     // Handle full Supabase storage URLs
     if (pdfPath.includes('supabase.co/storage/v1/object/public/')) {
-      // Extract bucket name and path from URL
+      // Extract bucket name and path from URL, handling potential double slashes
       try {
-        const pathMatch = pdfPath.match(/\/public\/([^\/]+)\/(.+)/);
+        // Improved regex to handle multiple consecutive slashes
+        const pathMatch = pdfPath.match(/\/public\/([^\/]+)\/?(.*)/);
         if (pathMatch) {
           const bucketName = pathMatch[1];
-          const objectPath = pathMatch[2];
+          // The object path might start with slashes that need to be removed
+          const objectPath = pathMatch[2].replace(/^\/+/, '');
           
           console.log(`Extracted from URL - bucket: ${bucketName}, path: ${objectPath}`);
           
@@ -83,6 +105,7 @@ serve(async (req) => {
             .download(objectPath);
             
           if (error) {
+            console.error(`Storage fetch error for bucket: ${bucketName}, path: ${objectPath}`, error);
             throw error;
           }
           
@@ -99,6 +122,8 @@ serve(async (req) => {
             },
             status: 200,
           });
+        } else {
+          console.error('Could not extract bucket and path from URL:', pdfPath);
         }
       } catch (urlParseError) {
         console.error('Error parsing Supabase URL:', urlParseError);
@@ -109,10 +134,10 @@ serve(async (req) => {
     // Try to download from the invoices bucket
     console.log(`Fetching PDF from storage bucket 'invoices': ${pdfPath}`);
     try {
-      // First, try with the exact path as provided
+      // First, try with the exact path as provided (but normalized)
       let { data, error } = await supabaseAdmin.storage
         .from('invoices')
-        .download(pdfPath);
+        .download(pdfPath.replace(/^\/+/, '')); // Remove leading slashes
         
       // If that failed and the path includes directories, try just the filename
       if (error && pdfPath.includes('/')) {
@@ -124,6 +149,7 @@ serve(async (req) => {
       }
       
       if (error) {
+        console.error(`Storage error fetching from 'invoices': ${error.message}`);
         throw error;
       }
       

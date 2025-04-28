@@ -32,6 +32,11 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       return;
     }
 
+    // Check for potential URL formatting issues
+    if (url.includes('//') && !url.includes('://')) {
+      console.warn("⚠️ URL contains suspicious double slashes that might cause issues:", url);
+    }
+
     const loadPdf = async () => {
       try {
         setLoading(true);
@@ -155,6 +160,9 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
             <p className="break-all mb-2 text-red-600">{errorDetails}</p>
             <p className="font-bold">URL:</p>
             <p className="break-all mb-2">{url}</p>
+            {url.includes('//') && !url.includes('://') && (
+              <p className="text-orange-500 font-bold">Warning: URL contains suspicious double slashes!</p>
+            )}
           </div>
         )}
       </div>

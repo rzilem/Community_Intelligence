@@ -1,3 +1,4 @@
+
 export const createProxyUrl = (fullStorageUrl: string, attempt: number): string => {
   if (!fullStorageUrl) return '';
   
@@ -16,11 +17,34 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // For Supabase URLs, send the entire URL to the proxy
+    // Normalize the URL by removing duplicate slashes in paths
+    const normalizeUrl = (url: string): string => {
+      try {
+        // For URLs with protocol, use URL parsing
+        if (url.startsWith('http')) {
+          const parsed = new URL(url);
+          // Normalize pathname by replacing multiple slashes with a single one
+          parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+          return parsed.toString();
+        }
+        // For relative paths, just replace multiple slashes
+        return url.replace(/\/+/g, '/');
+      } catch (e) {
+        console.error('Error normalizing URL:', e);
+        return url; // Return original if parsing fails
+      }
+    };
+    
+    // For Supabase URLs, send the entire URL to the proxy after normalizing
     if (fullStorageUrl.includes('supabase.co/storage/v1/object/public/')) {
       console.log('Processing Supabase storage URL');
-      // Send the complete URL to the proxy
-      proxyParams.append('pdf', encodeURIComponent(fullStorageUrl));
+      
+      // Normalize the URL before sending to proxy
+      const normalizedUrl = normalizeUrl(fullStorageUrl);
+      console.log('Normalized Supabase URL:', normalizedUrl);
+      
+      // Send the complete normalized URL to the proxy
+      proxyParams.append('pdf', encodeURIComponent(normalizedUrl));
       
       const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
       const proxyUrl = `${supabaseUrl}/functions/v1/pdf-proxy?${proxyParams.toString()}`;
@@ -34,7 +58,9 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     // If it's a relative path (no protocol prefix)
     if (!fullStorageUrl.startsWith('http')) {
       console.log('Processing relative path:', relativePath);
-      // Keep it as is - the proxy will handle it
+      // Normalize the relative path
+      relativePath = normalizeUrl(relativePath);
+      console.log('Normalized relative path:', relativePath);
     } 
     // For any other URL format
     else {
