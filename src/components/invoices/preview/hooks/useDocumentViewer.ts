@@ -85,13 +85,14 @@ export const useDocumentViewer = ({
       console.log('Original URL before normalization:', url);
       
       // For URLs with protocol, use URL parsing for robust handling
-      if (url.startsWith('http')) {
+      if (url.includes('://')) {
         const parsed = new URL(url);
         
         // Clean the pathname by filtering out empty segments
         const pathSegments = parsed.pathname.split('/')
           .filter(segment => segment !== '');
         
+        // Reconstruct pathname with a single leading slash
         parsed.pathname = '/' + pathSegments.join('/');
         
         return parsed.toString();

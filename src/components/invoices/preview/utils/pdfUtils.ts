@@ -17,13 +17,13 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // Enhanced URL normalization function
+    // Improved URL normalization function
     const normalizeUrlPath = (url: string): string => {
       try {
         if (!url) return '';
         
         // For URLs with protocol, use URL parsing for robust handling
-        if (url.startsWith('http')) {
+        if (url.includes('://')) {
           const parsed = new URL(url);
           
           // Clean pathname - filter out empty segments

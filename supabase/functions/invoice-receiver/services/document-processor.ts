@@ -104,15 +104,20 @@ export async function processDocument(attachments: any[] = []) {
     }
 
     try {
-      // Generate a unique filename with original extension
-      const timestamp = new Date().getTime();
-      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      // Generate a unique filename with timestamp only - no original filename to avoid issues
+      const timestamp = Date.now();
+      const fileId = crypto.randomUUID().substring(0, 8); // Use first 8 chars of UUID for uniqueness
+      
+      // Keep original extension
+      const originalExtension = filename.split('.').pop()?.toLowerCase() || 'pdf';
+      
+      // Create a clean, simple filename format: timestamp_uuid.extension
+      const storageFilename = `invoice_${timestamp}_${fileId}.${originalExtension}`;
       
       // Store original filename as source_document
-      const sourceDocument = safeFilename;
+      const sourceDocument = filename;
       
-      // Upload to the 'invoices' bucket
+      // Upload to the 'invoices' bucket - make sure there's no leading slash
       console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
       const uploadResult = await supabase.storage
         .from('invoices')
@@ -137,7 +142,25 @@ export async function processDocument(attachments: any[] = []) {
         continue;
       }
 
-      console.log(`Document uploaded successfully: ${urlData.publicUrl}`);
+      // Verify and fix URL if needed - ensure no double slashes in the path portion
+      let cleanPublicUrl = urlData.publicUrl;
+      if (cleanPublicUrl.includes('//')) {
+        // Fix the URL if it contains double slashes after the protocol
+        if (cleanPublicUrl.includes('://')) {
+          const parts = cleanPublicUrl.split('://');
+          const protocol = parts[0];
+          let path = parts[1];
+          
+          // Replace multiple consecutive slashes with single slash
+          path = path.replace(/\/+/g, '/');
+          
+          // Reconstruct the URL with fixed path
+          cleanPublicUrl = `${protocol}://${path}`;
+          console.log(`Fixed URL to remove double slashes: ${cleanPublicUrl}`);
+        }
+      }
+
+      console.log(`Document uploaded successfully: ${cleanPublicUrl}`);
 
       // Extract text content for recognized document types
       let extractedText = "";
@@ -176,7 +199,7 @@ export async function processDocument(attachments: any[] = []) {
       documentContent = extractedText || "";
       processedAttachment = {
         ...attachment,
-        url: urlData.publicUrl,
+        url: cleanPublicUrl,
         filename: storageFilename,
         source_document: sourceDocument // Add original filename as source_document
       };
@@ -199,9 +222,10 @@ export async function processDocument(attachments: any[] = []) {
     try {
       const firstAttachment = attachments[0];
       const filename = firstAttachment.filename || "unnamed_attachment";
-      const timestamp = new Date().getTime();
-      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      const timestamp = Date.now();
+      const fileId = crypto.randomUUID().substring(0, 8);
+      const originalExtension = filename.split('.').pop()?.toLowerCase() || 'bin';
+      const storageFilename = `invoice_${timestamp}_${fileId}.${originalExtension}`;
       
       let contentBuffer;
       const contentToProcess = firstAttachment.content;
@@ -230,13 +254,26 @@ export async function processDocument(attachments: any[] = []) {
         .from('invoices')
         .getPublicUrl(storageFilename);
         
+      // Clean up URL if needed
+      let cleanPublicUrl = urlData.publicUrl;
+      if (cleanPublicUrl.includes('//')) {
+        // Fix double slashes after protocol
+        if (cleanPublicUrl.includes('://')) {
+          const parts = cleanPublicUrl.split('://');
+          const protocol = parts[0];
+          let path = parts[1];
+          path = path.replace(/\/+/g, '/');
+          cleanPublicUrl = `${protocol}://${path}`;
+        }
+      }
+        
       processedAttachment = {
         ...firstAttachment,
-        url: urlData.publicUrl,
+        url: cleanPublicUrl,
         filename: storageFilename
       };
       
-      console.log(`Fallback attachment uploaded successfully: ${urlData.publicUrl}`);
+      console.log(`Fallback attachment uploaded successfully: ${cleanPublicUrl}`);
     } catch (fallbackError) {
       console.error("Error processing fallback attachment:", fallbackError);
     }

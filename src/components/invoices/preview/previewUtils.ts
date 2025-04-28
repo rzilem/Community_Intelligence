@@ -1,3 +1,4 @@
+
 import DOMPurify from 'dompurify';
 
 export const isValidUrl = (url: string): boolean => {
@@ -9,19 +10,22 @@ export const isValidUrl = (url: string): boolean => {
   }
 };
 
-// Comprehensive URL normalization function that handles double slashes properly
+// Improved URL normalization function that properly handles double slashes and protocols
 export const normalizeUrl = (url: string): string => {
   if (!url) return '';
   
   try {
     // Handle URLs with protocol (http/https)
-    if (url.startsWith('http')) {
+    if (url.includes('://')) {
+      // Parse with URL constructor for proper handling
       const parsed = new URL(url);
       
-      // Clean up the pathname by splitting by slashes, removing empty segments, and rejoining
+      // Clean up the pathname to remove double slashes
+      // Split by slashes, remove empty segments, and rejoin
       const pathSegments = parsed.pathname.split('/')
         .filter(segment => segment !== '');
       
+      // Reconstruct pathname with a single leading slash
       parsed.pathname = '/' + pathSegments.join('/');
       
       return parsed.toString();

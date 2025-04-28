@@ -143,9 +143,10 @@ serve(async (req) => {
         
         // Generate a unique filename
         const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
-        const fileName = `invoice_${Date.now()}${fileExt}`;
+        const fileId = crypto.randomUUID().substring(0, 8);
+        const fileName = `invoice_${Date.now()}_${fileId}${fileExt}`;
         
-        // Upload to storage - FIX: Upload directly to invoices bucket without leading slashes
+        // Upload to storage - with new simplified naming pattern
         try {
           // Convert content to Uint8Array for storage upload
           let content;
@@ -175,7 +176,7 @@ serve(async (req) => {
             pdfUrl = urlData.publicUrl;
             console.log("Attachment uploaded successfully:", pdfUrl);
             
-            // Verify the URL doesn't have double slashes in the path portion
+            // Verify and fix the URL to eliminate double slashes
             if (pdfUrl.includes('//')) {
               console.warn("Warning: Generated URL contains double slashes:", pdfUrl);
               
