@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDocumentViewer } from './hooks/useDocumentViewer';
@@ -25,10 +25,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen
 }) => {
+  const [debugMode, setDebugMode] = useState(false);
+  
   const {
     iframeError,
     loading,
     proxyUrl,
+    originalUrl,
     handleIframeError,
     handleRetry
   } = useDocumentViewer({
@@ -39,15 +42,25 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   });
   
   const handleDownload = () => {
-    if (isPdf && proxyUrl) {
+    if (isPdf && pdfUrl) {
+      let downloadUrl = pdfUrl;
+      // If it's not an absolute URL, use the proxyUrl which should work for download
+      if (!pdfUrl.startsWith('http') && proxyUrl) {
+        downloadUrl = proxyUrl;
+      }
+      
       const link = document.createElement('a');
-      link.href = proxyUrl;
+      link.href = downloadUrl;
       link.download = pdfUrl.split('/').pop() || 'document.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       toast.success("Download started");
     }
+  };
+  
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
   };
 
   if (isWordDocument) {
@@ -108,7 +121,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <ExternalLink className="h-4 w-4 mr-2" /> Open Original
             </Button>
           )}
+          <Button onClick={toggleDebugMode} variant="outline" size="sm">
+            {debugMode ? "Hide" : "Show"} Debug Info
+          </Button>
         </div>
+        
+        {debugMode && (
+          <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-w-md max-h-40 overflow-auto">
+            <p className="font-bold">Original URL:</p>
+            <p className="break-all mb-2">{originalUrl || "Not provided"}</p>
+            <p className="font-bold">Proxy URL:</p>
+            <p className="break-all mb-2">{proxyUrl || "Not generated"}</p>
+            <p className="font-bold">Is PDF:</p>
+            <p className="break-all">{String(isPdf)}</p>
+          </div>
+        )}
       </div>
     );
   }

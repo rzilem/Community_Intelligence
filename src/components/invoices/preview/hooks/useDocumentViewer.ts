@@ -21,11 +21,13 @@ export const useDocumentViewer = ({
   const [key, setKey] = useState(Date.now());
   const [attempt, setAttempt] = useState(1);
   const [proxyUrl, setProxyUrl] = useState('');
+  const [originalUrl, setOriginalUrl] = useState('');
   
   // Use useCallback for handlers to prevent unnecessary re-renders
   const handleIframeError = useCallback(() => {
     console.error('PDF loading error:', {
       proxyUrl,
+      originalUrl: pdfUrl,
       timestamp: new Date().toISOString()
     });
     
@@ -34,6 +36,7 @@ export const useDocumentViewer = ({
     if (onIframeError) onIframeError();
     
     if (attempt < 3) {
+      console.log(`Retrying PDF load (attempt ${attempt + 1})`);
       setTimeout(() => {
         setAttempt(prev => prev + 1);
         setKey(Date.now());
@@ -41,30 +44,40 @@ export const useDocumentViewer = ({
     } else {
       toast.error('Failed to load PDF preview. Please try again or open in a new tab.');
     }
-  }, [proxyUrl, attempt, onIframeError]);
+  }, [proxyUrl, pdfUrl, attempt, onIframeError]);
 
   const handleIframeLoad = useCallback(() => {
     console.log('PDF loaded successfully:', {
       proxyUrl,
+      originalUrl: pdfUrl,
       timestamp: new Date().toISOString()
     });
     setLoading(false);
     setIframeError(false);
     if (onIframeLoad) onIframeLoad();
-  }, [proxyUrl, onIframeLoad]);
+  }, [proxyUrl, pdfUrl, onIframeLoad]);
 
   const handleRetry = useCallback(() => {
-    console.log('Retrying PDF load...');
+    console.log('Manually retrying PDF load...');
     setAttempt(prev => prev + 1);
     setIframeError(false);
     setLoading(true);
     setKey(Date.now());
+    
+    // Toast to show user we're trying again
+    toast.info('Retrying PDF load...');
   }, []);
 
   // Generate proxy URL only when dependencies change
   useEffect(() => {
     if (isPdf && pdfUrl) {
       try {
+        // Check if URL has changed
+        if (pdfUrl !== originalUrl) {
+          setOriginalUrl(pdfUrl);
+          console.log('PDF URL changed, generating new proxy URL');
+        }
+        
         const url = createProxyUrl(pdfUrl, attempt);
         console.log('Generated proxy URL:', url);
         setProxyUrl(url);
@@ -76,13 +89,14 @@ export const useDocumentViewer = ({
         setLoading(false);
       }
     }
-  }, [pdfUrl, attempt, isPdf]);
+  }, [pdfUrl, attempt, isPdf, originalUrl]);
 
   return {
     iframeError,
     loading,
     key,
     proxyUrl,
+    originalUrl: pdfUrl,
     handleIframeError,
     handleIframeLoad,
     handleRetry

@@ -8,8 +8,6 @@ const enhancedHeaders = {
   'Content-Type': 'application/pdf',
   'Content-Disposition': 'inline; filename="document.pdf"',
   'X-Content-Type-Options': 'nosniff',
-  'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src *; img-src * data: blob:; frame-ancestors *;",
-  'X-Frame-Options': 'ALLOWALL',
   'Cache-Control': 'no-cache, no-store, must-revalidate',
   'Pragma': 'no-cache',
   'Expires': '0',
@@ -32,6 +30,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     let pdfPath = url.searchParams.get('pdf');
+    const fileId = url.searchParams.get('id');
     
     if (!pdfPath) {
       console.error('Missing PDF path parameter');
@@ -44,15 +43,43 @@ serve(async (req) => {
     pdfPath = decodeURIComponent(pdfPath);
     console.log(`Processing PDF request for path: ${pdfPath}`);
     
-    // First try to fetch using the storage API with admin privileges
+    // If we have an invoice ID, try to get the PDF URL from the invoices table
+    if (fileId) {
+      console.log(`Looking up invoice with ID: ${fileId}`);
+      try {
+        const { data: invoice, error: invoiceError } = await supabaseAdmin
+          .from('invoices')
+          .select('pdf_url')
+          .eq('id', fileId)
+          .single();
+          
+        if (invoiceError) {
+          console.error('Error fetching invoice:', invoiceError);
+        } else if (invoice && invoice.pdf_url) {
+          console.log(`Found PDF URL in invoice: ${invoice.pdf_url}`);
+          if (invoice.pdf_url.startsWith('http')) {
+            // Extract the filename from the URL
+            const urlParts = invoice.pdf_url.split('/');
+            pdfPath = urlParts[urlParts.length - 1];
+          } else {
+            pdfPath = invoice.pdf_url;
+          }
+          console.log(`Updated PDF path from invoice: ${pdfPath}`);
+        }
+      } catch (error) {
+        console.error('Error querying invoice:', error);
+      }
+    }
+    
+    // Try to fetch the PDF from storage
+    console.log(`Fetching PDF from storage: ${pdfPath}`);
     try {
-      console.log(`Fetching PDF from storage: ${pdfPath}`);
       const { data, error } = await supabaseAdmin.storage
         .from('invoices')
         .download(pdfPath);
       
       if (error) {
-        console.error('Error fetching PDF:', error);
+        console.error('Error fetching PDF from storage:', error);
         throw error;
       }
       
@@ -69,9 +96,37 @@ serve(async (req) => {
         },
         status: 200,
       });
-    } catch (error) {
-      console.error('Error in pdf-proxy function:', error);
-      throw error;
+    } catch (storageError) {
+      console.error('Storage fetch error:', storageError);
+      
+      // If we couldn't fetch from storage, check if the path is a full URL
+      if (pdfPath.startsWith('http')) {
+        console.log(`Attempting to proxy external URL: ${pdfPath}`);
+        try {
+          const response = await fetch(pdfPath);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const contentType = response.headers.get('content-type');
+          const data = await response.blob();
+          
+          console.log(`Fetched external PDF, size: ${data.size}, type: ${contentType}`);
+          
+          return new Response(data, {
+            headers: {
+              ...enhancedHeaders,
+              'Content-Type': contentType || 'application/pdf',
+              'Content-Length': data.size.toString(),
+            },
+            status: 200,
+          });
+        } catch (fetchError) {
+          console.error('External URL fetch error:', fetchError);
+          throw fetchError;
+        }
+      } else {
+        throw storageError;
+      }
     }
   } catch (error) {
     console.error('Error in pdf-proxy function:', error);
