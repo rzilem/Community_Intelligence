@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { createProxyUrl } from '../utils/pdfUtils';
 import { toast } from 'sonner';
@@ -37,11 +38,9 @@ export const useDocumentViewer = ({
     }
   }, [pdfUrl, attempt, isPdf]);
 
-  const handleIframeError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
+  const handleIframeError = () => {
     console.error('PDF loading error:', {
       proxyUrl,
-      event: e,
-      target: e.currentTarget?.src,
       timestamp: new Date().toISOString()
     });
     
