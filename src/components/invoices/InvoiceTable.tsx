@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { InvoiceColumn } from '@/hooks/invoices/useInvoiceColumns';
+import { InvoiceHoverPreview } from './preview/InvoiceHoverPreview';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -71,30 +71,40 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
   };
 
   const getCellContent = (invoice: Invoice, columnId: string) => {
-    switch (columnId) {
-      case 'invoice_number':
-        return invoice.invoice_number;
-      case 'vendor':
-        return invoice.vendor;
-      case 'association_name':
-        return invoice.association_name || 'Not assigned';
-      case 'invoice_date':
-        return new Date(invoice.invoice_date).toLocaleDateString();
-      case 'amount':
-        return formatCurrency(invoice.amount);
-      case 'due_date':
-        return new Date(invoice.due_date).toLocaleDateString();
-      case 'status':
-        return <InvoiceStatusBadge status={invoice.status} />;
-      case 'description':
-        return invoice.description || '—';
-      case 'payment_method':
-        return invoice.payment_method || '—';
-      case 'payment_status':
-        return invoice.payment_status || '—';
-      default:
-        return '—';
-    }
+    const content = (() => {
+      switch (columnId) {
+        case 'invoice_number':
+          return (
+            <InvoiceHoverPreview invoice={invoice}>
+              <span className="cursor-pointer hover:text-primary">
+                {invoice.invoice_number}
+              </span>
+            </InvoiceHoverPreview>
+          );
+        case 'vendor':
+          return invoice.vendor;
+        case 'association_name':
+          return invoice.association_name || 'Not assigned';
+        case 'invoice_date':
+          return new Date(invoice.invoice_date).toLocaleDateString();
+        case 'amount':
+          return formatCurrency(invoice.amount);
+        case 'due_date':
+          return new Date(invoice.due_date).toLocaleDateString();
+        case 'status':
+          return <InvoiceStatusBadge status={invoice.status} />;
+        case 'description':
+          return invoice.description || '—';
+        case 'payment_method':
+          return invoice.payment_method || '—';
+        case 'payment_status':
+          return invoice.payment_status || '—';
+        default:
+          return '—';
+      }
+    })();
+
+    return content;
   };
 
   console.log("Rendering InvoiceTable with invoices:", invoices.length);

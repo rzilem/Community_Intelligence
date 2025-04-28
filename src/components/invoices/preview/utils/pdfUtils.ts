@@ -18,7 +18,6 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
         relativePath = pathParts.slice(invoicesIndex + 1).join('/');
         console.log('Extracted from Supabase URL:', relativePath);
       } else {
-        // Fallback to the whole path if we can't parse it
         relativePath = urlObj.pathname;
         console.log('Using full pathname:', relativePath);
       }
@@ -28,33 +27,23 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       relativePath = fullStorageUrl;
       console.log('Using relative path directly:', relativePath);
     }
-    // Standard URL parsing for other cases - just get the filename
+    // Standard URL parsing for other cases
     else {
       relativePath = fullStorageUrl.split('/').pop() || '';
       console.log('Extracted filename from URL:', relativePath);
     }
+
+    // Add cache-busting parameters
+    const timestamp = Date.now();
+    const randomId = Math.random().toString(36).substring(2, 8);
+    const uniqueKey = `${timestamp}-${randomId}-${attempt}`;
+    
+    const proxyUrl = `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(relativePath)}&t=${uniqueKey}`;
+    console.log(`Generated proxy URL: ${proxyUrl} for relative path: ${relativePath}`);
+    
+    return proxyUrl;
   } catch (e) {
-    console.error('Failed to parse URL:', fullStorageUrl, e);
-    relativePath = fullStorageUrl.split('/').pop() || '';
+    console.error('Error generating proxy URL:', e);
+    throw e;
   }
-
-  if (!relativePath) {
-    console.error('Could not determine relative path for:', fullStorageUrl);
-    return '';
-  }
-
-  // Add unique identifiers to prevent caching issues
-  const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const uniqueKey = `${timestamp}-${randomId}-${attempt}`;
-  
-  const proxyUrl = `https://cahergndkwfqltxyikyr.supabase.co/functions/v1/pdf-proxy?pdf=${encodeURIComponent(relativePath)}&t=${uniqueKey}`;
-  console.log(`Generated proxy URL: ${proxyUrl} for relative path: ${relativePath}`);
-  
-  return proxyUrl;
 };
-
-export const createPdfViewerUrls = (proxyUrl: string) => ({
-  pdfJs: `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(proxyUrl)}`,
-  googleDocs: `https://docs.google.com/viewer?url=${encodeURIComponent(proxyUrl)}&embedded=true`
-});

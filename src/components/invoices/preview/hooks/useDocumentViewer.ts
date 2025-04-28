@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { createProxyUrl, createPdfViewerUrls } from '../utils/pdfUtils';
+import { createProxyUrl } from '../utils/pdfUtils';
 import { toast } from 'sonner';
 
 interface UseDocumentViewerProps {
@@ -24,11 +24,17 @@ export const useDocumentViewer = ({
   
   useEffect(() => {
     if (isPdf && pdfUrl) {
-      const url = createProxyUrl(pdfUrl, attempt);
-      console.log('Generated proxy URL:', url);
-      setProxyUrl(url);
-      setLoading(true);
-      setIframeError(false);
+      try {
+        const url = createProxyUrl(pdfUrl, attempt);
+        console.log('Generated proxy URL:', url);
+        setProxyUrl(url);
+        setLoading(true);
+        setIframeError(false);
+      } catch (error) {
+        console.error('Error creating proxy URL:', error);
+        setIframeError(true);
+        setLoading(false);
+      }
     }
   }, [pdfUrl, attempt, isPdf]);
 
@@ -44,7 +50,15 @@ export const useDocumentViewer = ({
     setLoading(false);
     if (onIframeError) onIframeError();
     
-    toast.error('Failed to load PDF preview. Please try again or open in a new tab.');
+    if (attempt < 3) {
+      // Auto-retry up to 3 times
+      setTimeout(() => {
+        setAttempt(prev => prev + 1);
+        setKey(Date.now());
+      }, 1000);
+    } else {
+      toast.error('Failed to load PDF preview. Please try again or open in a new tab.');
+    }
   };
 
   const handleIframeLoad = () => {
@@ -53,6 +67,7 @@ export const useDocumentViewer = ({
       timestamp: new Date().toISOString()
     });
     setLoading(false);
+    setIframeError(false);
     if (onIframeLoad) onIframeLoad();
   };
 
@@ -63,22 +78,6 @@ export const useDocumentViewer = ({
     setLoading(true);
     setKey(Date.now());
   };
-
-  // Add timeout for loading state
-  useEffect(() => {
-    if (!loading) return;
-    
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('PDF loading timeout reached');
-        setIframeError(true);
-        setLoading(false);
-        toast.error('PDF preview timed out. Please try again.');
-      }
-    }, 15000); // 15 second timeout
-
-    return () => clearTimeout(timeout);
-  }, [loading]);
 
   return {
     iframeError,
