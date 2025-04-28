@@ -57,17 +57,52 @@ serve(async (req) => {
           console.error('Error fetching invoice:', invoiceError);
         } else if (invoice && invoice.pdf_url) {
           console.log(`Found PDF URL in invoice: ${invoice.pdf_url}`);
-          if (invoice.pdf_url.startsWith('http')) {
-            // Extract the filename from the URL
-            const urlParts = invoice.pdf_url.split('/');
-            pdfPath = urlParts[urlParts.length - 1];
-          } else {
-            pdfPath = invoice.pdf_url;
-          }
+          // Update pdfPath with the correct URL from the database
+          pdfPath = invoice.pdf_url;
           console.log(`Updated PDF path from invoice: ${pdfPath}`);
         }
       } catch (error) {
         console.error('Error querying invoice:', error);
+      }
+    }
+    
+    // Handle full Supabase storage URLs
+    if (pdfPath.includes('supabase.co/storage/v1/object/public/')) {
+      // Extract bucket name and path from URL
+      try {
+        const pathMatch = pdfPath.match(/\/public\/([^\/]+)\/(.+)/);
+        if (pathMatch) {
+          const bucketName = pathMatch[1];
+          const objectPath = pathMatch[2];
+          
+          console.log(`Extracted from URL - bucket: ${bucketName}, path: ${objectPath}`);
+          
+          // Fetch directly from storage using extracted path
+          const { data, error } = await supabaseAdmin.storage
+            .from(bucketName)
+            .download(objectPath);
+            
+          if (error) {
+            throw error;
+          }
+          
+          if (!data) {
+            throw new Error('No data returned from storage');
+          }
+          
+          console.log(`PDF fetched successfully from URL path, size: ${data.size} bytes`);
+          
+          return new Response(data, {
+            headers: {
+              ...enhancedHeaders,
+              'Content-Length': data.size.toString(),
+            },
+            status: 200,
+          });
+        }
+      } catch (urlParseError) {
+        console.error('Error parsing Supabase URL:', urlParseError);
+        // Continue with normal processing if URL parsing failed
       }
     }
     

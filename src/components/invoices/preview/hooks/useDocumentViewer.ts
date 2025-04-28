@@ -79,6 +79,7 @@ export const useDocumentViewer = ({
           console.log('Original PDF URL:', pdfUrl);
         }
         
+        // Create proxy URL with full original URL to ensure proper path handling
         const url = createProxyUrl(pdfUrl, attempt);
         console.log('Generated proxy URL:', url);
         setProxyUrl(url);

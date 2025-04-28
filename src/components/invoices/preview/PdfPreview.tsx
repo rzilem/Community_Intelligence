@@ -2,6 +2,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { toast } from 'sonner';
+import { FileText, ExternalLink, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -16,12 +18,15 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   const [scale, setScale] = useState(1.5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string>('');
+  const [debugMode, setDebugMode] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
 
   useEffect(() => {
     if (!url) {
       console.error("No URL provided to PdfPreview component");
       setError(true);
+      setErrorDetails("No URL was provided for the PDF");
       setLoading(false);
       if (onError) onError();
       return;
@@ -78,6 +83,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       } catch (error) {
         console.error('Error loading PDF:', error);
         setError(true);
+        setErrorDetails(error.message || "Unknown error");
         setLoading(false);
         toast.error('Error loading PDF preview: ' + error.message);
         if (onError) onError();
@@ -96,6 +102,16 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
     };
   }, [url, scale, onError]);
 
+  const handleOpenExternal = () => {
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -110,18 +126,37 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
-        <div className="text-red-500 mb-2">Failed to load PDF preview</div>
-        <div className="text-sm text-muted-foreground">Check if the file exists in the storage bucket</div>
-        <div className="mt-4">
-          <a 
-            href={url} 
-            target="_blank" 
-            rel="noreferrer"
-            className="text-sm underline text-blue-500"
-          >
-            View PDF directly
-          </a>
+        <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+        <div className="text-red-500 mb-2 text-center">Failed to load PDF preview</div>
+        <div className="text-sm text-muted-foreground mb-4 text-center">
+          Check if the file exists in the storage bucket
         </div>
+        <div className="flex flex-wrap gap-2 justify-center">
+          <Button 
+            onClick={handleOpenExternal} 
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <ExternalLink className="h-4 w-4" /> View Direct URL
+          </Button>
+          <Button 
+            onClick={toggleDebugMode} 
+            variant="outline" 
+            size="sm"
+            className="text-xs"
+          >
+            {debugMode ? "Hide" : "Show"} Debug Info
+          </Button>
+        </div>
+        
+        {debugMode && (
+          <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-w-md max-h-48 overflow-auto">
+            <p className="font-bold">Error Message:</p>
+            <p className="break-all mb-2 text-red-600">{errorDetails}</p>
+            <p className="font-bold">URL:</p>
+            <p className="break-all mb-2">{url}</p>
+          </div>
+        )}
       </div>
     );
   }
