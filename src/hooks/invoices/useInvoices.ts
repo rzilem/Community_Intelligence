@@ -40,34 +40,25 @@ export const useInvoices = () => {
 
   // Fetch invoices using react-query with auto-refresh
   const { data: allInvoices = [], isLoading, refetch, error } = useQuery({
-    queryKey: ['invoices', statusFilter],
+    queryKey: ['invoices'],
     queryFn: async () => {
-      console.log(`Fetching invoices with status filter: ${statusFilter}`);
+      console.log('Fetching all invoices');
       
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from('invoices')
           .select('*')
           .order('created_at', { ascending: false });
-        
-        // Apply status filter if not 'all'
-        if (statusFilter !== 'all') {
-          query = query.eq('status', statusFilter);
-        }
-          
-        const { data, error } = await query;
           
         if (error) {
           console.error("Error fetching invoices:", error);
           throw error;
         }
         
-        console.log("Invoices fetched:", data?.length || 0, "records");
-        if (data && data.length > 0) {
-          console.log("First few invoices:", data.slice(0, 3));
-        } else {
-          console.log("No invoices found with current filter");
-        }
+        console.log("Invoices fetched:", {
+          total: data?.length || 0,
+          sample: data?.slice(0, 3)
+        });
         
         return data as Invoice[];
       } catch (err) {
@@ -77,7 +68,7 @@ export const useInvoices = () => {
       }
     },
     refetchInterval: autoRefreshEnabled ? refreshInterval : false,
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 5000,
   });
 
   useEffect(() => {
@@ -89,7 +80,6 @@ export const useInvoices = () => {
 
   const { updateInvoiceStatus, deleteInvoice } = useInvoiceActions(refetch);
 
-  // Handler to refresh invoices
   const refreshInvoices = async () => {
     try {
       console.log("Manually refreshing invoices...");
@@ -102,13 +92,18 @@ export const useInvoices = () => {
     }
   };
 
-  // Apply search filter to the invoices
+  // Apply filters to all invoices
   const filteredInvoices = applyFilters(allInvoices || []);
 
-  // Debug log for filtered invoices
+  // Debug logging
   useEffect(() => {
-    console.log(`After filtering: ${filteredInvoices.length} invoices match criteria (${statusFilter}, search: "${searchTerm}")`);
-  }, [filteredInvoices.length, statusFilter, searchTerm]);
+    console.log('Invoice hook state:', {
+      totalInvoices: allInvoices?.length || 0,
+      filteredCount: filteredInvoices.length,
+      status: statusFilter,
+      search: searchTerm
+    });
+  }, [allInvoices?.length, filteredInvoices.length, statusFilter, searchTerm]);
 
   return {
     invoices: filteredInvoices,

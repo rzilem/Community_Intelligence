@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { createProxyUrl, createPdfViewerUrls } from '../utils/pdfUtils';
+import { toast } from 'sonner';
 
 interface UseDocumentViewerProps {
   pdfUrl: string;
@@ -19,46 +20,36 @@ export const useDocumentViewer = ({
   const [loading, setLoading] = useState(true);
   const [key, setKey] = useState(Date.now());
   const [attempt, setAttempt] = useState(1);
+  const [proxyUrl, setProxyUrl] = useState('');
   
-  // Simplified: Now we only use direct view mode
-  const viewerType = 'direct';
-
-  // Generate the proxy URL
-  const proxyUrl = isPdf ? createProxyUrl(pdfUrl, attempt) : pdfUrl;
-  const { pdfJs: pdfJsUrl, googleDocs: googleDocsUrl } = createPdfViewerUrls(proxyUrl);
-
-  // Log information for debugging
   useEffect(() => {
-    if (isPdf) {
-      console.log(`DocumentViewer Debug [${viewerType}]:`, {
-        originalUrl: pdfUrl,
-        proxyUrl,
-        attempt,
-        viewerType,
-        key,
-        timestamp: new Date().toISOString()
-      });
-      
-      // No preflight check - we'll let the iframe handle success/failure directly
+    if (isPdf && pdfUrl) {
+      const url = createProxyUrl(pdfUrl, attempt);
+      console.log('Generated proxy URL:', url);
+      setProxyUrl(url);
+      setLoading(true);
+      setIframeError(false);
     }
-  }, [pdfUrl, proxyUrl, attempt, viewerType, isPdf, key]);
+  }, [pdfUrl, attempt, isPdf]);
 
   const handleIframeError = (e: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
-    console.error(`Failed to load document:`, {
+    console.error('PDF loading error:', {
       proxyUrl,
       event: e,
       target: e.currentTarget?.src,
       timestamp: new Date().toISOString()
     });
     
-    // Simplified error handling - no switching between viewer types
     setIframeError(true);
     setLoading(false);
     if (onIframeError) onIframeError();
+    
+    toast.error('Failed to load PDF preview. Please try again or open in a new tab.');
   };
 
   const handleIframeLoad = () => {
-    console.log(`Document loaded successfully`, {
+    console.log('PDF loaded successfully:', {
+      proxyUrl,
       timestamp: new Date().toISOString()
     });
     setLoading(false);
@@ -66,39 +57,34 @@ export const useDocumentViewer = ({
   };
 
   const handleRetry = () => {
-    console.log('Retrying with new attempt');
+    console.log('Retrying PDF load...');
     setAttempt(prev => prev + 1);
     setIframeError(false);
     setLoading(true);
     setKey(Date.now());
   };
 
+  // Add timeout for loading state
   useEffect(() => {
-    setKey(Date.now());
-    setLoading(true);
-    setIframeError(false);
-
-    const loadingTimeout = setTimeout(() => {
+    if (!loading) return;
+    
+    const timeout = setTimeout(() => {
       if (loading) {
-        console.warn(`Loading timeout reached`, {
-          timestamp: new Date().toISOString()
-        });
+        console.warn('PDF loading timeout reached');
         setIframeError(true);
         setLoading(false);
+        toast.error('PDF preview timed out. Please try again.');
       }
-    }, 10000); // Increased from 7s to 10s for more time
+    }, 15000); // 15 second timeout
 
-    return () => clearTimeout(loadingTimeout);
-  }, [pdfUrl, attempt]);
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   return {
     iframeError,
     loading,
     key,
-    viewerType,
     proxyUrl,
-    pdfJsUrl,
-    googleDocsUrl,
     handleIframeError,
     handleIframeLoad,
     handleRetry
