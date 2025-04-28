@@ -19,6 +19,8 @@ export const useGlobalNotifications = () => {
   const { allNotifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [globalNotifications, setGlobalNotifications] = useState<GlobalNotification[]>([]);
   const location = useLocation();
+  // Track shown notifications to prevent duplicates
+  const shownNotificationsRef = React.useRef(new Set<string>());
 
   // Convert standard notifications to global notifications
   useEffect(() => {
@@ -50,16 +52,23 @@ export const useGlobalNotifications = () => {
     );
     
     highPriorityUnread.forEach(notification => {
-      const toastMethod = notification.priority === 'urgent' ? toast.error : toast.warning;
-      
-      toastMethod(notification.title, {
-        description: notification.description,
-        action: notification.actionUrl ? {
-          label: notification.actionLabel || 'View',
-          onClick: () => window.location.href = notification.actionUrl!
-        } : undefined,
-        onDismiss: () => markAsRead(notification.id)
-      });
+      // Only show if not already shown in this session
+      if (!shownNotificationsRef.current.has(notification.id)) {
+        const toastMethod = notification.priority === 'urgent' ? toast.error : toast.warning;
+        
+        toastMethod(notification.title, {
+          id: `notification-${notification.id}`,
+          description: notification.description,
+          action: notification.actionUrl ? {
+            label: notification.actionLabel || 'View',
+            onClick: () => window.location.href = notification.actionUrl!
+          } : undefined,
+          onDismiss: () => markAsRead(notification.id)
+        });
+        
+        // Mark as shown
+        shownNotificationsRef.current.add(notification.id);
+      }
     });
   }, [globalNotifications, markAsRead]);
   

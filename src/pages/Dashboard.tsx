@@ -45,10 +45,16 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, loading, navigate]);
   
+  // Use a ref to track whether we've shown the welcome toast already
+  const welcomeToastShown = React.useRef(false);
+  
   useEffect(() => {
-    // Show welcome back toast when dashboard loads
-    if (profile) {
+    // Only show welcome toast when dashboard loads and only if it hasn't been shown yet
+    if (profile && !welcomeToastShown.current) {
+      welcomeToastShown.current = true;
+      // Use a unique ID to prevent duplicate toasts
       toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
+        id: `welcome-${profile.id}-${Date.now()}`,
         description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
       });
     }

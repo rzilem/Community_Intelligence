@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, FileText, Calendar, Users, File } from 'lucide-react';
@@ -12,10 +12,21 @@ import { toast } from 'sonner';
 const HomeownerDashboard = () => {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const toastIdsRef = useRef(new Map());
 
-  // Handler for changing association and reloading (follows PortalPageLayout usage)
   const handleAssociationChange = (associationId: string) => {
     window.location.reload();
+  };
+
+  const showUniqueToast = (title: string, description?: string) => {
+    const toastId = `${title}-${Date.now()}`;
+    if (!toastIdsRef.current.has(title)) {
+      toast.info(title, { id: toastId, description });
+      toastIdsRef.current.set(title, toastId);
+      setTimeout(() => {
+        toastIdsRef.current.delete(title);
+      }, 5000);
+    }
   };
 
   const quickLinks = [
@@ -24,14 +35,14 @@ const HomeownerDashboard = () => {
       path: '/portal/homeowner/payments', 
       icon: <CreditCard className="h-5 w-5" />, 
       color: 'bg-blue-100',
-      onClickToast: () => toast.info('Payment Portal', { description: 'Redirecting to payment options' })
+      onClickToast: () => showUniqueToast('Payment Portal', 'Redirecting to payment options')
     },
     { 
       title: 'Submit a Request', 
       path: '/portal/homeowner/requests', 
       icon: <FileText className="h-5 w-5" />, 
       color: 'bg-green-100',
-      onClickToast: () => toast.info('Request Portal', { description: 'Preparing request submission form' })
+      onClickToast: () => showUniqueToast('Request Portal', 'Preparing request submission form')
     },
     { title: 'Calendar', path: '/portal/homeowner/calendar', icon: <Calendar className="h-5 w-5" />, color: 'bg-purple-100' },
     { title: 'View Documents', path: '/portal/homeowner/documents', icon: <File className="h-5 w-5" />, color: 'bg-amber-100' },
@@ -47,7 +58,6 @@ const HomeownerDashboard = () => {
               Welcome back, {profile?.name || user?.email || 'Homeowner'}
             </p>
           </div>
-          {/* Swap out Community Intelligence button for Association selector */}
           <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
         </div>
 
@@ -64,7 +74,6 @@ const HomeownerDashboard = () => {
                   className="hover:shadow-md transition-shadow"
                   onClick={() => {
                     link.onClickToast && link.onClickToast();
-                    // Standard navigation
                     navigate(link.path);
                   }}
                 >

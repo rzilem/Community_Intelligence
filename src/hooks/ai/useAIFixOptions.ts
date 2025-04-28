@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { FixOption } from '@/components/ai/AIFixDialog';
@@ -11,6 +10,12 @@ export type AIIssueType =
 
 export function useAIFixOptions() {
   const navigate = useNavigate();
+
+  // Helper function to create toast with unique ID
+  const showUniqueToast = (message: string, type: 'success' | 'error' = 'success') => {
+    const id = `ai-fix-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    type === 'success' ? toast.success(message, { id }) : toast.error(message, { id });
+  };
 
   const getFixOptions = (issueType: AIIssueType): FixOption[] => {
     switch (issueType) {
@@ -29,7 +34,7 @@ export function useAIFixOptions() {
             action: async () => {
               // Simulate API call to approve invoices
               await new Promise(resolve => setTimeout(resolve, 1500));
-              toast.success('All pending invoices have been approved');
+              showUniqueToast('All pending invoices have been approved');
             }
           },
           {
@@ -49,7 +54,7 @@ export function useAIFixOptions() {
             action: async () => {
               // Simulate API call to renew certificates
               await new Promise(resolve => setTimeout(resolve, 1500));
-              toast.success('SSL certificates have been renewed successfully');
+              showUniqueToast('SSL certificates have been renewed successfully');
             }
           },
           {
@@ -58,7 +63,7 @@ export function useAIFixOptions() {
             description: 'Set up automatic renewal for all certificates',
             action: async () => {
               await new Promise(resolve => setTimeout(resolve, 1500));
-              toast.success('Automatic renewal has been scheduled');
+              showUniqueToast('Automatic renewal has been scheduled');
             }
           },
           {
@@ -77,7 +82,7 @@ export function useAIFixOptions() {
             description: 'Send notices to all homeowners immediately',
             action: async () => {
               await new Promise(resolve => setTimeout(resolve, 1500));
-              toast.success('Compliance notices have been sent to all homeowners');
+              showUniqueToast('Compliance notices have been sent to all homeowners');
             }
           },
           {
@@ -102,7 +107,7 @@ export function useAIFixOptions() {
             description: 'Notify residents about portal features and benefits',
             action: async () => {
               await new Promise(resolve => setTimeout(resolve, 1500));
-              toast.success('Portal usage reminders have been sent to all residents');
+              showUniqueToast('Portal usage reminders have been sent to all residents');
             }
           },
           {
@@ -127,7 +132,7 @@ export function useAIFixOptions() {
             description: 'Fix this issue using automated AI recommendations',
             action: async () => {
               await new Promise(resolve => setTimeout(resolve, 1000));
-              toast.success('The issue has been addressed successfully');
+              showUniqueToast('The issue has been addressed successfully');
             }
           }
         ];
