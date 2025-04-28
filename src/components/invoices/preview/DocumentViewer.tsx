@@ -4,6 +4,7 @@ import { FileQuestion, RefreshCcw, ExternalLink, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useDocumentViewer } from './hooks/useDocumentViewer';
 import { toast } from 'sonner';
+import { PdfPreview } from './PdfPreview';
 
 interface DocumentViewerProps {
   pdfUrl: string;
@@ -24,14 +25,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen
 }) => {
-  // Use the simplified hook
   const {
     iframeError,
     loading,
-    key,
     proxyUrl,
     handleIframeError,
-    handleIframeLoad,
     handleRetry
   } = useDocumentViewer({
     pdfUrl,
@@ -40,20 +38,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     onIframeLoad
   });
   
-  console.log('DocumentViewer render state:', { 
-    isPdf, 
-    isWordDocument, 
-    loading, 
-    iframeError,
-    hasProxyUrl: !!proxyUrl,
-    hasHtmlContent: !!htmlContent 
-  });
-  
   const handleDownload = () => {
     if (isPdf && proxyUrl) {
       const link = document.createElement('a');
       link.href = proxyUrl;
-      link.target = '_blank';
       link.download = pdfUrl.split('/').pop() || 'document.pdf';
       document.body.appendChild(link);
       link.click();
@@ -61,15 +49,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       toast.success("Download started");
     }
   };
-  
-  const handleOpenDirect = () => {
-    if (proxyUrl) {
-      window.open(proxyUrl, '_blank');
-      toast.success("Opening document in new tab");
-    }
-  };
 
-  // Handle Word documents - maintain original behavior
+  // Word document handling
   if (isWordDocument) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -85,7 +66,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // HTML content render - maintain original behavior
+  // HTML content render
   if (!isPdf && htmlContent) {
     return (
       <div className="h-full overflow-auto">
@@ -97,7 +78,6 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  // --- Simplified PDF Logic ---
   if (!isPdf || !proxyUrl) {
     return <div className="p-4 text-center text-muted-foreground">No valid content to display.</div>;
   }
@@ -125,37 +105,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <Button onClick={handleDownload} variant="outline">
             <Download className="h-4 w-4 mr-2" /> Download
           </Button>
-          <Button onClick={handleOpenDirect} variant="outline">
-            <ExternalLink className="h-4 w-4 mr-2" /> Open in New Tab
-          </Button>
           {onExternalOpen && (
             <Button onClick={onExternalOpen} variant="outline">
               <ExternalLink className="h-4 w-4 mr-2" /> Open Original
             </Button>
           )}
         </div>
-        <div className="mt-4 text-xs text-muted-foreground max-w-md overflow-hidden text-ellipsis">
-          <p>Debug information:</p>
-          <p className="text-wrap break-all">{proxyUrl}</p>
-        </div>
       </div>
     );
   }
 
-  // Only one view mode now - direct iframe
+  // Use the new PDF.js preview component
   return (
     <div className="relative w-full h-full">
-      {/* Add a wrapper to help with cross-browser iframe sizing */}
       <div className="absolute inset-0 bg-white">
-        <iframe
-          key={`pdf-frame-${key}`}
-          className="w-full h-full border-0"
-          src={proxyUrl}
-          title="PDF Preview"
-          onError={handleIframeError}
-          onLoad={handleIframeLoad}
-          sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-        />
+        <PdfPreview url={proxyUrl} onError={handleIframeError} />
       </div>
     </div>
   );
