@@ -1,4 +1,6 @@
 
+import { normalizeUrl } from '../previewUtils';
+
 // Function to create a proxy URL with proper URL normalization
 export const createProxyUrl = (fullStorageUrl: string, attempt: number): string => {
   if (!fullStorageUrl) return '';
@@ -17,35 +19,8 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // Improved URL normalization function
-    const normalizeUrlPath = (url: string): string => {
-      try {
-        if (!url) return '';
-        
-        // For URLs with protocol, use URL parsing for robust handling
-        if (url.includes('://')) {
-          const parsed = new URL(url);
-          
-          // Clean pathname - filter out empty segments
-          const pathSegments = parsed.pathname.split('/')
-            .filter(segment => segment !== '');
-          
-          parsed.pathname = '/' + pathSegments.join('/');
-          return parsed.toString();
-        }
-        
-        // For relative paths, clean up slashes
-        let normalized = url.replace(/^\/+/, '');
-        normalized = normalized.replace(/\/+/g, '/');
-        return normalized;
-      } catch (e) {
-        console.error('Error normalizing URL in pdfUtils:', e);
-        return url;
-      }
-    };
-    
     // Normalize the URL before processing
-    const normalizedUrl = normalizeUrlPath(fullStorageUrl);
+    const normalizedUrl = normalizeUrl(fullStorageUrl);
     
     // For Supabase URLs
     if (normalizedUrl.includes('supabase.co/storage/v1/object/public/')) {
@@ -61,7 +36,7 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     let relativePath = normalizedUrl;
     
     if (!normalizedUrl.startsWith('http')) {
-      relativePath = normalizeUrlPath(relativePath);
+      relativePath = normalizeUrl(relativePath);
     } else {
       // Extract the filename from full URLs
       const urlParts = normalizedUrl.split('/');

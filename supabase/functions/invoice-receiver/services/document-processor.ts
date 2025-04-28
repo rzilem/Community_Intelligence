@@ -1,3 +1,4 @@
+
 import { 
   extractTextFromPdf, 
   extractTextFromDocx, 
@@ -5,6 +6,7 @@ import {
   getDocumentType 
 } from "../utils/document-parser.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { normalizeUrl } from "../utils/url-normalizer.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -104,18 +106,21 @@ export async function processDocument(attachments: any[] = []) {
     }
 
     try {
-      // Generate a unique filename with timestamp only - no original filename to avoid issues
+      // Generate a unique filename with timestamp and sanitized original filename
       const timestamp = Date.now();
       const fileId = crypto.randomUUID().substring(0, 8); // Use first 8 chars of UUID for uniqueness
       
-      // Keep original extension
-      const originalExtension = filename.split('.').pop()?.toLowerCase() || 'pdf';
+      // Sanitize the filename to prevent special characters and double slashes
+      const safeFilename = filename
+        .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
+        .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+        .replace(/\/+/g, '_');  // Replace any slashes with underscores
       
       // Create a clean, simple filename format: timestamp_uuid.extension
-      const storageFilename = `invoice_${timestamp}_${fileId}.${originalExtension}`;
+      const storageFilename = `invoice_${timestamp}_${fileId}`;
       
       // Store original filename as source_document
-      const sourceDocument = filename;
+      const sourceDocument = safeFilename;
       
       // Upload to the 'invoices' bucket - make sure there's no leading slash
       console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
@@ -142,24 +147,8 @@ export async function processDocument(attachments: any[] = []) {
         continue;
       }
 
-      // Verify and fix URL if needed - ensure no double slashes in the path portion
-      let cleanPublicUrl = urlData.publicUrl;
-      if (cleanPublicUrl.includes('//')) {
-        // Fix the URL if it contains double slashes after the protocol
-        if (cleanPublicUrl.includes('://')) {
-          const parts = cleanPublicUrl.split('://');
-          const protocol = parts[0];
-          let path = parts[1];
-          
-          // Replace multiple consecutive slashes with single slash
-          path = path.replace(/\/+/g, '/');
-          
-          // Reconstruct the URL with fixed path
-          cleanPublicUrl = `${protocol}://${path}`;
-          console.log(`Fixed URL to remove double slashes: ${cleanPublicUrl}`);
-        }
-      }
-
+      // Normalize the URL to ensure no double slashes
+      const cleanPublicUrl = normalizeUrl(urlData.publicUrl);
       console.log(`Document uploaded successfully: ${cleanPublicUrl}`);
 
       // Extract text content for recognized document types
@@ -201,7 +190,7 @@ export async function processDocument(attachments: any[] = []) {
         ...attachment,
         url: cleanPublicUrl,
         filename: storageFilename,
-        source_document: sourceDocument // Add original filename as source_document
+        source_document: sourceDocument
       };
       
       // If we successfully processed a PDF, we can stop here
@@ -224,8 +213,14 @@ export async function processDocument(attachments: any[] = []) {
       const filename = firstAttachment.filename || "unnamed_attachment";
       const timestamp = Date.now();
       const fileId = crypto.randomUUID().substring(0, 8);
-      const originalExtension = filename.split('.').pop()?.toLowerCase() || 'bin';
-      const storageFilename = `invoice_${timestamp}_${fileId}.${originalExtension}`;
+      
+      // Sanitize filename for fallback attachment
+      const safeFilename = filename
+        .replace(/[^a-zA-Z0-9.-]/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .replace(/\/+/g, '_');
+      
+      const storageFilename = `invoice_${timestamp}_${fileId}`;
       
       let contentBuffer;
       const contentToProcess = firstAttachment.content;
@@ -253,24 +248,15 @@ export async function processDocument(attachments: any[] = []) {
       const { data: urlData } = supabase.storage
         .from('invoices')
         .getPublicUrl(storageFilename);
-        
-      // Clean up URL if needed
-      let cleanPublicUrl = urlData.publicUrl;
-      if (cleanPublicUrl.includes('//')) {
-        // Fix double slashes after protocol
-        if (cleanPublicUrl.includes('://')) {
-          const parts = cleanPublicUrl.split('://');
-          const protocol = parts[0];
-          let path = parts[1];
-          path = path.replace(/\/+/g, '/');
-          cleanPublicUrl = `${protocol}://${path}`;
-        }
-      }
-        
+      
+      // Normalize URL for fallback attachment as well
+      const cleanPublicUrl = normalizeUrl(urlData.publicUrl);
+      
       processedAttachment = {
         ...firstAttachment,
         url: cleanPublicUrl,
-        filename: storageFilename
+        filename: storageFilename,
+        source_document: safeFilename
       };
       
       console.log(`Fallback attachment uploaded successfully: ${cleanPublicUrl}`);

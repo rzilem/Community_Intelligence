@@ -5,7 +5,7 @@ import { processMultipartFormData, normalizeEmailData } from "./utils/request-pa
 import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
-import { simpleParser } from 'https://esm.sh/mailparser@3.6.4';
+import { normalizeUrl } from "./utils/url-normalizer.ts";
 
 // Remove the config lock to allow modifications
 const CURRENT_CONFIG_LOCKED = false;
@@ -141,12 +141,25 @@ serve(async (req) => {
       if (attachment) {
         console.log("Found document attachment:", attachment.filename);
         
-        // Generate a unique filename
-        const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
+        // Generate a unique filename with sanitized name
+        const timestamp = Date.now();
         const fileId = crypto.randomUUID().substring(0, 8);
-        const fileName = `invoice_${Date.now()}_${fileId}${fileExt}`;
         
-        // Upload to storage - with new simplified naming pattern
+        // Sanitize the filename to prevent special characters and double slashes
+        const safeFilename = (attachment.filename || "document")
+          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
+          .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
+          .replace(/\/+/g, '_'); // Replace any slashes with underscores
+          
+        const fileExt = safeFilename.includes('.') ? 
+          safeFilename.substring(safeFilename.lastIndexOf('.')) : 
+          '.pdf';
+          
+        const fileName = `invoice_${timestamp}_${fileId}${fileExt}`;
+        
+        console.log("Generated sanitized filename:", fileName);
+        
+        // Upload to storage with new simplified naming pattern
         try {
           // Convert content to Uint8Array for storage upload
           let content;
@@ -168,32 +181,14 @@ serve(async (req) => {
           if (uploadError) {
             console.error("Error uploading attachment:", uploadError);
           } else {
-            // Get public URL - this is where we fix the double slash issue
+            // Get public URL
             const { data: urlData } = supabase.storage
               .from('invoices')
               .getPublicUrl(fileName);
               
-            pdfUrl = urlData.publicUrl;
+            // Apply URL normalization to prevent double slashes
+            pdfUrl = normalizeUrl(urlData.publicUrl);
             console.log("Attachment uploaded successfully:", pdfUrl);
-            
-            // Verify and fix the URL to eliminate double slashes
-            if (pdfUrl.includes('//')) {
-              console.warn("Warning: Generated URL contains double slashes:", pdfUrl);
-              
-              // Fix the URL if it contains double slashes after the protocol
-              if (pdfUrl.includes('://')) {
-                const parts = pdfUrl.split('://');
-                const protocol = parts[0];
-                let path = parts[1];
-                
-                // Replace multiple consecutive slashes with single slash
-                path = path.replace(/\/+/g, '/');
-                
-                // Reconstruct the URL with fixed path
-                pdfUrl = `${protocol}://${path}`;
-                console.log("Fixed URL:", pdfUrl);
-              }
-            }
           }
         } catch (storageError) {
           console.error("Storage error:", storageError);
