@@ -19,7 +19,7 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // Normalize the URL before processing
+    // Normalize the URL before processing to fix double slashes
     const normalizedUrl = normalizeUrl(fullStorageUrl);
     
     // For Supabase URLs

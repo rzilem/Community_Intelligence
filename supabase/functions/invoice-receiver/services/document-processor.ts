@@ -1,4 +1,3 @@
-
 import { 
   extractTextFromPdf, 
   extractTextFromDocx, 
