@@ -1,6 +1,6 @@
 
 // Fix import path to use full URL for Edge Function compatibility
-import { createWorker } from "https://esm.sh/tesseract.js@5.0.5";
+import { createWorker } from "https://esm.sh/tesseract.js@4.1.1";
 
 export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unknown" {
   if (!filename) return "unknown";
@@ -20,7 +20,7 @@ export function getDocumentType(filename: string): "pdf" | "docx" | "doc" | "unk
 
 export async function extractTextFromPdf(content: string): Promise<string> {
   try {
-    // Initialize Tesseract worker
+    // Initialize Tesseract worker with v4 API
     const worker = await createWorker();
     
     // Configure worker for better invoice recognition
@@ -31,13 +31,13 @@ export async function extractTextFromPdf(content: string): Promise<string> {
     });
 
     // Perform OCR on the PDF content
-    const { data: { text } } = await worker.recognize(content);
+    const { data } = await worker.recognize(content);
     
     // Terminate worker to free resources
     await worker.terminate();
 
-    console.log('OCR extracted text:', text.substring(0, 200) + '...');
-    return text;
+    console.log('OCR extracted text:', data.text.substring(0, 200) + '...');
+    return data.text;
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
     return '';
