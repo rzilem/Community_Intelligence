@@ -23,27 +23,43 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [normalizedUrl, setNormalizedUrl] = useState<string>('');
 
-  // URL normalization function
+  // Thorough URL normalization function
   const normalizeUrlPath = (url: string): string => {
     if (!url) return '';
     
     try {
+      console.log('PdfPreview: Original URL before normalization:', url);
+      
       // Check for double slashes and log
       if (url.includes('//') && !url.includes('://')) {
         console.warn('⚠️ PdfPreview: Double slash detected in URL that needs fixing:', url);
       }
       
-      // For URLs with protocol, use URL parsing
+      // For URLs with protocol, use URL parsing for thorough normalization
       if (url.startsWith('http')) {
         const parsed = new URL(url);
-        // Normalize pathname by replacing multiple slashes with a single one
-        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+        
+        // Clean the pathname by:
+        // 1. Split by slashes
+        // 2. Filter out empty segments (which cause double slashes)
+        // 3. Join with single slashes
+        const pathParts = parsed.pathname.split('/')
+          .filter(segment => segment !== '');
+        
+        // Reconstruct pathname with a single leading slash
+        parsed.pathname = '/' + pathParts.join('/');
+        
         const normalized = parsed.toString();
         console.log('PdfPreview: Normalized URL with protocol:', normalized);
         return normalized;
       }
-      // For relative paths, just replace multiple slashes
-      const normalized = url.replace(/\/+/g, '/');
+      
+      // For relative paths, handle more carefully
+      // First remove leading slashes
+      let normalized = url.replace(/^\/+/, '');
+      // Then replace multiple consecutive slashes with a single one
+      normalized = normalized.replace(/\/+/g, '/');
+      
       console.log('PdfPreview: Normalized relative path:', normalized);
       return normalized;
     } catch (e) {
@@ -62,7 +78,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       return;
     }
 
-    // Normalize the URL first
+    // Normalize the URL first to fix any double slashes
     const normalizedUrl = normalizeUrlPath(url);
     setNormalizedUrl(normalizedUrl);
     

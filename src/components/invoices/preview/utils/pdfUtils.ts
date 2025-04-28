@@ -17,28 +17,41 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
       proxyParams.append('id', fileId);
     }
     
-    // Enhanced normalize function that's more aggressive with double slashes
+    // Thoroughly normalize URL to fix double slashes
     const normalizeUrl = (url: string): string => {
       try {
         console.log('Normalizing URL:', url);
         
         // Check for and log any double slashes which might cause issues
         if (url.includes('//') && !url.includes('://')) {
-          console.warn('⚠️ Double slash detected in URL that needs fixing:', url);
+          console.warn('⚠️ Double slash detected in URL:', url);
         }
         
-        // For URLs with protocol, use URL parsing
+        // For URLs with protocol, use URL parsing for robust handling
         if (url.startsWith('http')) {
           const parsed = new URL(url);
-          // Normalize pathname by replacing multiple consecutive slashes with a single one
-          parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
+          
+          // Clean the pathname by:
+          // 1. Split by slashes
+          // 2. Filter out empty segments (which cause double slashes)
+          // 3. Join with single slashes
+          const pathParts = parsed.pathname.split('/')
+            .filter(segment => segment !== '');
+          
+          // Reconstruct pathname with a single leading slash
+          parsed.pathname = '/' + pathParts.join('/');
+          
           const normalized = parsed.toString();
           console.log('Normalized URL with protocol:', normalized);
           return normalized;
         }
         
-        // For relative paths, just replace multiple slashes
-        const normalized = url.replace(/\/+/g, '/');
+        // For relative paths, handle more carefully
+        // Remove leading slashes first
+        let normalized = url.replace(/^\/+/, '');
+        // Then replace multiple consecutive slashes with a single one
+        normalized = normalized.replace(/\/+/g, '/');
+        
         console.log('Normalized relative path:', normalized);
         return normalized;
       } catch (e) {
@@ -51,9 +64,14 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     if (fullStorageUrl.includes('supabase.co/storage/v1/object/public/')) {
       console.log('Processing Supabase storage URL');
       
-      // Normalize the URL before sending to proxy
+      // Normalize the URL before sending to proxy - critical for fixing double slashes
       const normalizedUrl = normalizeUrl(fullStorageUrl);
       console.log('Normalized Supabase URL:', normalizedUrl);
+      
+      // Check again for any double slashes after normalization
+      if (normalizedUrl.includes('//') && !normalizedUrl.includes('://')) {
+        console.error('⚠️ Double slash STILL detected after normalization:', normalizedUrl);
+      }
       
       // Send the complete normalized URL to the proxy
       proxyParams.append('pdf', encodeURIComponent(normalizedUrl));
@@ -70,7 +88,7 @@ export const createProxyUrl = (fullStorageUrl: string, attempt: number): string 
     // If it's a relative path (no protocol prefix)
     if (!fullStorageUrl.startsWith('http')) {
       console.log('Processing relative path:', relativePath);
-      // Normalize the relative path
+      // Normalize the relative path - fix any double slashes
       relativePath = normalizeUrl(relativePath);
       console.log('Normalized relative path:', relativePath);
     } 

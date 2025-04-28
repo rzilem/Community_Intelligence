@@ -56,20 +56,45 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     setRefreshKey(Date.now());
   };
   
-  // Normalize URL function
+  // Thorough URL normalization function to fix double slashes
   const normalizeUrlPath = (url: string): string => {
     if (!url) return '';
     
     try {
-      // For URLs with protocol, use URL parsing
+      console.log('InvoicePreview: Original URL before normalization:', url);
+      
+      // For URLs with protocol, use URL parsing for thorough normalization
       if (url.startsWith('http')) {
         const parsed = new URL(url);
-        // Normalize pathname by replacing multiple slashes with a single one
-        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
-        return parsed.toString();
+        
+        // Check for double slashes in pathname
+        if (parsed.pathname.includes('//')) {
+          console.warn('⚠️ InvoicePreview: Double slash detected in pathname that needs fixing:', parsed.pathname);
+        }
+        
+        // Clean the pathname by:
+        // 1. Split by slashes
+        // 2. Filter out empty segments (which cause double slashes)
+        // 3. Join with single slashes
+        const pathParts = parsed.pathname.split('/')
+          .filter(segment => segment !== '');
+        
+        // Reconstruct pathname with a single leading slash
+        parsed.pathname = '/' + pathParts.join('/');
+        
+        const normalized = parsed.toString();
+        console.log('InvoicePreview: Normalized URL result:', normalized);
+        return normalized;
       }
-      // For relative paths, just replace multiple slashes
-      return url.replace(/\/+/g, '/');
+      
+      // For relative paths, handle more carefully
+      // First remove leading slashes
+      let normalized = url.replace(/^\/+/, '');
+      // Then replace multiple consecutive slashes with a single one
+      normalized = normalized.replace(/\/+/g, '/');
+      
+      console.log('InvoicePreview: Normalized relative path result:', normalized);
+      return normalized;
     } catch (e) {
       console.error('Error normalizing URL in InvoicePreview:', e);
       return url; // Return original if parsing fails
@@ -95,12 +120,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         // Normalize URL by ensuring it has a protocol and fixing double slashes
         let normalizedUrl = pdfUrl;
         
-        // Fix double slashes in the path part
+        // Fix double slashes in the path part using our thorough normalization
         normalizedUrl = normalizeUrlPath(normalizedUrl);
         
         // Add protocol if missing
         if (!normalizedUrl.startsWith('http')) {
-          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${normalizedUrl.replace(/^\/+/, '')}`;
+          // Ensure we don't have leading slashes before appending to the base URL
+          const cleanPath = normalizedUrl.replace(/^\/+/, '');
+          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${cleanPath}`;
         }
         
         setNormalizedPdfUrl(normalizedUrl);

@@ -68,20 +68,45 @@ export const useDocumentViewer = ({
     toast.info('Retrying PDF load...');
   }, []);
 
-  // Pre-normalize the URL to fix double slashes
+  // Thoroughly normalize the URL to fix double slashes
   const normalizeUrl = useCallback((url: string): string => {
     if (!url) return '';
     
     try {
-      // For URLs with protocol, use URL parsing
+      console.log('Original URL before normalization:', url);
+      
+      // For URLs with protocol, use URL parsing for robust handling
       if (url.startsWith('http')) {
         const parsed = new URL(url);
-        // Normalize pathname by replacing multiple slashes with a single one
-        parsed.pathname = parsed.pathname.replace(/\/+/g, '/');
-        return parsed.toString();
+        
+        // Check for double slashes in pathname
+        if (parsed.pathname.includes('//')) {
+          console.warn('⚠️ Double slash detected in pathname:', parsed.pathname);
+        }
+        
+        // Clean the pathname by:
+        // 1. Split by slashes
+        // 2. Filter out empty segments (which cause double slashes)
+        // 3. Join with single slashes
+        const pathParts = parsed.pathname.split('/')
+          .filter(segment => segment !== '');
+        
+        // Reconstruct pathname with a single leading slash
+        parsed.pathname = '/' + pathParts.join('/');
+        
+        const normalized = parsed.toString();
+        console.log('Normalized URL result:', normalized);
+        return normalized;
       }
-      // For relative paths, just replace multiple slashes
-      return url.replace(/\/+/g, '/');
+      
+      // For relative paths, handle more carefully
+      // First remove leading slashes
+      let normalized = url.replace(/^\/+/, '');
+      // Then replace multiple consecutive slashes with a single one
+      normalized = normalized.replace(/\/+/g, '/');
+      
+      console.log('Normalized relative path result:', normalized);
+      return normalized;
     } catch (e) {
       console.error('Error normalizing URL in useDocumentViewer:', e);
       return url; // Return original if parsing fails
