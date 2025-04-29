@@ -1,3 +1,4 @@
+
 import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType } from "../utils/document-parser.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -21,6 +22,7 @@ export async function processDocument(attachments = []) {
     contentLength: a.content ? typeof a.content === 'string' ? a.content.length : 'binary' : 0
   })));
 
+  // Sort attachments to prioritize PDFs
   const sortedAttachments = [...attachments].sort((a, b) => {
     const aIsPdf = a.contentType === 'application/pdf' || (a.filename && a.filename.toLowerCase().endsWith('.pdf'));
     const bIsPdf = b.contentType === 'application/pdf' || (b.filename && b.filename.toLowerCase().endsWith('.pdf'));
@@ -86,11 +88,12 @@ export async function processDocument(attachments = []) {
 
     try {
       const timestamp = new Date().getTime();
+      // Consistently sanitize the filename and use the same format throughout
       const safeFilename = filename.toLowerCase().endsWith('.pdf')
         ? filename.replace(/[^a-zA-Z0-9.-]/g, '_')
         : `${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}.pdf`;
       const storageFilename = `invoice_${timestamp}_${safeFilename}`;
-      const sourceDocument = safeFilename;
+      const sourceDocument = safeFilename; // Store the sanitized filename for reference
 
       console.log(`Uploading ${filename} to invoices bucket as ${storageFilename} (contentType: ${contentType}, size: ${contentBuffer.byteLength})`);
       const uploadResult = await supabase.storage.from('invoices').upload(storageFilename, contentBuffer, {
@@ -104,6 +107,7 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
+      // Get a signed URL for secure access with expiration
       const { data: signedData, error: signedError } = await supabase.storage
         .from('invoices')
         .createSignedUrl(storageFilename, 3600);
@@ -113,7 +117,13 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
+      // Also get a public URL for reference
+      const { data: urlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(storageFilename);
+      
       console.log(`Document uploaded successfully: ${signedData.signedUrl}`);
+      console.log(`Public URL: ${urlData.publicUrl}`);
 
       let extractedText = "";
       const documentType = getDocumentType(filename);
@@ -142,7 +152,7 @@ export async function processDocument(attachments = []) {
         ...attachment,
         url: signedData.signedUrl,
         filename: storageFilename,
-        source_document: sourceDocument
+        source_document: storageFilename // Use the full storage filename for source_document
       };
 
       if (documentType === "pdf" || contentType.includes('pdf')) {
@@ -204,7 +214,7 @@ export async function processDocument(attachments = []) {
         ...firstAttachment,
         url: signedData.signedUrl,
         filename: storageFilename,
-        source_document: safeFilename
+        source_document: storageFilename
       };
       console.log(`Fallback attachment uploaded successfully: ${signedData.signedUrl}`);
     } catch (fallbackError) {

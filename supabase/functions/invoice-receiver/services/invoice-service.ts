@@ -51,6 +51,13 @@ export async function createInvoice(invoiceData: any) {
       invoiceWithTracking.invoice_date = new Date().toISOString().split('T')[0];
     }
     
+    // Remove association_type if it exists in the data
+    // This field isn't in our database schema
+    if ('association_type' in invoiceWithTracking) {
+      console.log(`Removing 'association_type' field from invoice data as it doesn't exist in the schema`);
+      delete invoiceWithTracking.association_type;
+    }
+    
     // Log the invoice data being saved
     console.log("Creating invoice with data:", {
       tracking_number: trackingNumber,
