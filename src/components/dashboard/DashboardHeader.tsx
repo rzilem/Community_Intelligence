@@ -18,9 +18,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { unreadCount } = useNotificationContext();
 
   const handleViewAllNotifications = () => {
-    // Navigate to the invoices pending tab directly
-    navigate('/accounting/invoice-queue');
-    toast.success('Navigating to invoice queue');
+    // Navigate to the notifications page
+    navigate('/notifications');
+    toast.success('Navigating to notifications page');
   };
 
   return (
@@ -42,16 +42,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             New HOA
           </Link>
         </TooltipButton>
-        {unreadCount > 0 && (
-          <TooltipButton
-            tooltip="View pending notifications"
-            onClick={handleViewAllNotifications}
-            variant="outline"
-            className="text-amber-600 border-amber-200 hover:bg-amber-50"
-          >
-            Pending Items <Badge className="ml-1 bg-amber-500">{unreadCount}</Badge>
-          </TooltipButton>
-        )}
+        <TooltipButton
+          tooltip="View all notifications"
+          onClick={handleViewAllNotifications}
+        >
+          View All <Badge>{unreadCount}</Badge>
+        </TooltipButton>
       </div>
     </div>
   );

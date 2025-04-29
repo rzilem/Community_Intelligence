@@ -18,11 +18,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   
   // Get notifications from different sources
   const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
-  const { unreadInvoicesCount, recentInvoices, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
+  const { unreadInvoicesCount, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
   const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
 
-  // Memoized function to aggregate notifications - only show new/pending items
+  // Memoized function to aggregate notifications
   const aggregateNotifications = useCallback(() => {
     if (!user) {
       return [];
@@ -46,23 +46,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       });
     }
     
-    // Add invoice notifications - only for pending invoices
-    if (recentInvoices && recentInvoices.length > 0) {
-      recentInvoices.forEach((invoice, i) => {
+    // Add mock notifications for other types
+    if (unreadInvoicesCount > 0) {
+      for (let i = 0; i < unreadInvoicesCount; i++) {
         aggregatedNotifications.push({
-          id: `invoice-${invoice.id}`,
-          title: `Pending Invoice: ${invoice.invoice_number || `INV-${i}`}`,
-          description: `Vendor: ${invoice.vendor || 'Unknown'} - Needs Review`,
+          id: `invoice-${i}`,
+          title: `New Invoice Received`,
+          description: 'Review pending invoice',
           type: 'invoice',
-          severity: 'warning',
+          severity: 'info',
           read: false,
-          timestamp: invoice.created_at,
-          route: `/accounting/invoice-queue?id=${invoice.id}`
+          timestamp: new Date().toISOString(),
+          route: '/accounting/invoice-queue'
         });
-      });
+      }
     }
     
-    // Add mock notifications for other types - only if they're new/pending
     if (unreadRequestsCount > 0) {
       for (let i = 0; i < unreadRequestsCount; i++) {
         aggregatedNotifications.push({
@@ -97,7 +96,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return aggregatedNotifications.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-  }, [user, unreadLeadsCount, unreadRequestsCount, unreadEventsCount, recentLeads, recentInvoices]);
+  }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
 
   // Update notifications when dependencies change
   useEffect(() => {
