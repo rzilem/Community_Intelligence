@@ -25,16 +25,16 @@ export const useRealTimeNotifications = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const newNotification = payload.new as NotificationItem;
+          const newNotification = payload.new as Partial<NotificationItem>;
           if (setNotifications) {
             const notificationWithMessage: Notification = {
-              ...newNotification, 
+              ...newNotification as NotificationItem, 
               message: newNotification.description || '',
               read: false,
               type: newNotification.type || 'info',
               id: newNotification.id || `notification-${Date.now()}`,
               title: newNotification.title || 'Notification',
-              timestamp: newNotification.created_at || new Date().toISOString()
+              timestamp: newNotification.created_at || newNotification.timestamp || new Date().toISOString()
             };
             
             setNotifications([

@@ -17,11 +17,12 @@ export interface NotificationItem {
   id: string;
   title: string;
   description?: string;
-  type: 'invoice' | 'lead' | 'request' | 'event' | 'message' | 'info';
+  type: 'invoice' | 'lead' | 'request' | 'event' | 'message' | 'info' | string;
   severity?: 'info' | 'success' | 'warning' | 'error';
   read: boolean;
   timestamp: string;
   route?: string;
+  created_at?: string;
 }
 
 export const useNotifications = () => {
