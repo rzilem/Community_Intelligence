@@ -25,10 +25,22 @@ export const AppRouter = () => {
   return (
     <Routes>
       {/* Portal routes - giving these priority */}
-      {portalRoutes}
+      {portalRoutes.map((route, index) => (
+        <Route 
+          key={`portal-route-${index}`} 
+          path={route.props.path} 
+          element={route.props.element} 
+        />
+      ))}
       
       {/* Portal page routes */}
-      {portalPageRoutes}
+      {portalPageRoutes.map((route, index) => (
+        <Route 
+          key={`portal-page-route-${index}`} 
+          path={route.props.path} 
+          element={route.props.element} 
+        />
+      ))}
       
       {/* Resale Portal routes */}
       {resalePortalRoutes}
