@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText, MessageSquare } from 'lucide-react';
@@ -6,6 +7,7 @@ import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
 import { NavItemProps } from './types';
 import { useNotificationContext } from '@/contexts/notifications';
+
 interface SidebarProps {
   isMobile: boolean;
   isSidebarOpen: boolean;
@@ -13,6 +15,7 @@ interface SidebarProps {
   mainNavItems: NavItemProps[];
   handleSignOut: () => void;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({
   isMobile,
   isSidebarOpen,
@@ -25,7 +28,14 @@ const Sidebar: React.FC<SidebarProps> = ({
   const {
     notifications
   } = useNotificationContext();
+
   useEffect(() => {
+    // Check if we're in a portal route to auto-expand the portal section
+    if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/resale-portal')) {
+      setActiveSection('portal-selection');
+    }
+
+    // Check for other section matches
     mainNavItems.forEach(item => {
       if (item.submenu) {
         const isSubmenuActive = item.submenu.some(subItem => location.pathname === subItem.path);
@@ -35,6 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     });
   }, [location.pathname, mainNavItems]);
+
   const toggleSection = (section: string) => {
     if (activeSection === section) {
       setActiveSection(null);
@@ -42,10 +53,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       setActiveSection(section);
     }
   };
+
   const hasActiveSubmenu = (item: NavItemProps) => {
     if (!item.submenu) return false;
     return item.submenu.some(subItem => location.pathname === subItem.path);
   };
+
   const getNotificationCount = (itemPath: string): number => {
     const section = itemPath.replace('/', '');
     if (section === 'lead-management') {
@@ -61,6 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
     return 0;
   };
+
   const homeownerPortalItems = [{
     name: 'Dashboard',
     path: '/portal/homeowner',
@@ -86,6 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     path: '/portal/homeowner/documents',
     icon: File
   }];
+
   const boardPortalItems = [{
     name: 'Dashboard',
     path: '/portal/board/dashboard',
@@ -143,6 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     path: '/portal/board/reimbursement',
     icon: DollarSign
   }];
+
   const resalePortalItems = [{
     name: 'Dashboard',
     path: '/resale-portal',
@@ -160,9 +176,40 @@ const Sidebar: React.FC<SidebarProps> = ({
     path: '/resale-portal/settings',
     icon: Users
   }];
+
   const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
   const isBoardPortal = location.pathname.startsWith('/portal/board');
   const isResalePortal = location.pathname.startsWith('/resale-portal');
+  const isVendorPortal = location.pathname.startsWith('/portal/vendor');
+
+  // Portal menu items for the portal selection submenu
+  const portalMenuItems = [
+    {
+      name: 'Homeowner Portal',
+      path: '/portal/homeowner',
+      icon: Home,
+      isActive: location.pathname.startsWith('/portal/homeowner')
+    },
+    {
+      name: 'Board Portal',
+      path: '/portal/board',
+      icon: Building,
+      isActive: location.pathname.startsWith('/portal/board')
+    },
+    {
+      name: 'Vendor Portal',
+      path: '/portal/vendor',
+      icon: Truck,
+      isActive: location.pathname.startsWith('/portal/vendor')
+    },
+    {
+      name: 'Resale Portal',
+      path: '/resale-portal',
+      icon: ScrollText,
+      isActive: location.pathname.startsWith('/resale-portal')
+    }
+  ];
+
   return <div className={cn("fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out", isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0")}>
       <div className="h-16 py-2.5 px-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-2">
@@ -175,13 +222,22 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
-          <div className="mb-2 pb-2 border-b border-white/10">
-            <Link to="/portal" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal' && "bg-white/10 font-medium")}>
-              <Home size={20} />
-              <span>Portal Selection</span>
-            </Link>
-          </div>
+          {/* Portal Selection with submenu */}
+          <SidebarNavItem 
+            name="Portal Selection" 
+            path="/portal" 
+            icon={Home} 
+            isOpen={activeSection === 'portal-selection'} 
+            toggleSection={() => toggleSection('portal-selection')} 
+            isActive={location.pathname === '/portal' || portalMenuItems.some(item => item.isActive)}
+            submenu={portalMenuItems.map(item => ({
+              name: item.name,
+              path: item.path,
+              icon: item.icon
+            }))}
+          />
           
+          {/* Render specific portal content when on that portal */}
           {isHomeownerPortal && <div className="mb-2 pb-2 border-b border-white/10">
               <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
               {homeownerPortalItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === item.path && "bg-white/10 font-medium")}>
@@ -206,16 +262,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </Link>)}
             </div>}
 
-          <SidebarNavItem name="Homeowner Portal" path="/portal/homeowner" icon={Home} isOpen={activeSection === 'homeowner-portal'} toggleSection={() => toggleSection('homeowner-portal')} isActive={location.pathname === '/portal/homeowner'} />
-          
-          <SidebarNavItem name="Board Portal" path="/portal/board" icon={Building} isOpen={activeSection === 'board-portal'} toggleSection={() => toggleSection('board-portal')} isActive={location.pathname === '/portal/board'} />
-          
-          <SidebarNavItem name="Vendor Portal" path="/portal/vendor" icon={Truck} isOpen={activeSection === 'vendor-portal'} toggleSection={() => toggleSection('vendor-portal')} isActive={location.pathname === '/portal/vendor'} />
+          {isVendorPortal && <div className="mb-2 pb-2 border-b border-white/10">
+              <p className="px-3 py-1 text-white/60 text-xs uppercase">Vendor Portal</p>
+              {/* Vendor portal items would go here once implemented */}
+            </div>}
 
-          <SidebarNavItem name="Resale Portal" path="/resale-portal" icon={ScrollText} isOpen={activeSection === 'resale-portal'} toggleSection={() => toggleSection('resale-portal')} isActive={location.pathname === '/resale-portal'} />
-
-          
-
+          {/* Main navigation items */}
           {mainNavItems.map(item => <SidebarNavItem key={item.path} name={item.name} path={item.path} icon={item.icon} isOpen={activeSection === item.path.replace('/', '')} toggleSection={() => toggleSection(item.path.replace('/', ''))} isActive={hasActiveSubmenu(item)} submenu={item.submenu} showBadge={true} badgeCount={getNotificationCount(item.path)} />)}
         </div>
       </div>
@@ -228,4 +280,5 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </div>;
 };
+
 export default Sidebar;
