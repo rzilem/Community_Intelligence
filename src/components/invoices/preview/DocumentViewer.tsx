@@ -27,6 +27,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 }) => {
   const [debugMode, setDebugMode] = useState(false);
   
+  // Extract file ID or filename from URL for use with the hook
+  const fileId = isPdf ? pdfUrl.split('?')[0].split('/').pop() || '' : '';
+  
   const {
     pdfUrl: fetchedPdfUrl,
     loading,
@@ -36,15 +39,15 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     originalUrl,
     handleIframeError,
     handleRetry
-  } = useDocumentViewer(isPdf ? pdfUrl.split('?')[0].split('/').pop() || '' : '');
+  } = useDocumentViewer(fileId);
   
   const handleDownload = () => {
     if (isPdf && pdfUrl) {
-      let downloadUrl = pdfUrl;
+      let downloadUrl = fetchedPdfUrl || pdfUrl;
       
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = pdfUrl.split('/').pop() || 'document.pdf';
+      link.download = downloadUrl.split('/').pop() || 'document.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -86,7 +89,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     return <div className="p-4 text-center text-muted-foreground">No valid content to display.</div>;
   }
 
-  const displayUrl = proxyUrl || pdfUrl;
+  const displayUrl = fetchedPdfUrl || proxyUrl || pdfUrl;
 
   if (loading) {
     return (
@@ -141,9 +144,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <div className="absolute inset-0 bg-white">
         <PdfPreview 
           url={displayUrl} 
-          onError={handleIframeError} 
+          onError={() => handleIframeError()} 
         />
       </div>
     </div>
   );
-};
+}
