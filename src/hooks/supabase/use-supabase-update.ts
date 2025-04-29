@@ -3,6 +3,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { KnownTables, showErrorToast, showSuccessToast } from './supabase-utils';
 
+// Define a custom error interface that includes the code property
+interface SupabaseError extends Error {
+  code?: string;
+}
+
 /**
  * Custom hook for updating data in Supabase tables with enhanced security
  */
@@ -111,9 +116,10 @@ export function useSupabaseUpdate<T = any>(
       console.error(`Error in ${table} update:`, error);
       
       // Don't expose sensitive error details to the function consumer
+      // Cast the error to our SupabaseError type to safely access the code property
       const safeError = {
         message: error instanceof Error ? error.message : 'Unknown error occurred',
-        code: error.code || 'UNKNOWN_ERROR'
+        code: (error as SupabaseError).code || 'UNKNOWN_ERROR'
       };
       
       if (onError) {
