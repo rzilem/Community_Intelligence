@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
 import { NavItemProps } from './types';
 import { useNotificationContext } from '@/contexts/notifications';
+
 interface SidebarProps {
   isMobile: boolean;
   isSidebarOpen: boolean;
@@ -13,6 +14,7 @@ interface SidebarProps {
   mainNavItems: NavItemProps[];
   handleSignOut: () => void;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({
   isMobile,
   isSidebarOpen,
@@ -25,6 +27,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const {
     notifications
   } = useNotificationContext();
+
   useEffect(() => {
     mainNavItems.forEach(item => {
       if (item.submenu) {
@@ -35,6 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       }
     });
   }, [location.pathname, mainNavItems]);
+
   const toggleSection = (section: string) => {
     if (activeSection === section) {
       setActiveSection(null);
@@ -42,10 +46,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       setActiveSection(section);
     }
   };
+
   const hasActiveSubmenu = (item: NavItemProps) => {
     if (!item.submenu) return false;
     return item.submenu.some(subItem => location.pathname === subItem.path);
   };
+
   const getNotificationCount = (itemPath: string): number => {
     const section = itemPath.replace('/', '');
     if (section === 'lead-management') {
@@ -61,108 +67,39 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
     return 0;
   };
-  const homeownerPortalItems = [{
-    name: 'Dashboard',
-    path: '/portal/homeowner',
-    icon: LayoutDashboard
-  }, {
-    name: 'Payments',
-    path: '/portal/homeowner/payments',
-    icon: CreditCard
-  }, {
-    name: 'Requests',
-    path: '/portal/homeowner/requests',
-    icon: FileText
-  }, {
-    name: 'Calendar & Events',
-    path: '/portal/homeowner/calendar',
-    icon: Calendar
-  }, {
-    name: 'Directory',
-    path: '/portal/homeowner/directory',
-    icon: Users
-  }, {
-    name: 'Documents',
-    path: '/portal/homeowner/documents',
-    icon: File
-  }];
-  const boardPortalItems = [{
-    name: 'Dashboard',
-    path: '/portal/board/dashboard',
-    icon: LayoutDashboard
-  }, {
-    name: 'Invoices',
-    path: '/portal/board/invoices',
-    icon: CreditCard
-  }, {
-    name: 'Work Orders',
-    path: '/portal/board/work-orders',
-    icon: WrenchIcon
-  }, {
-    name: 'Collections',
-    path: '/portal/board/collections',
-    icon: PiggyBank
-  }, {
-    name: 'Homeowners',
-    path: '/portal/board/homeowners',
-    icon: Users
-  }, {
-    name: 'Bank Accounts',
-    path: '/portal/board/bank-accounts',
-    icon: Building
-  }, {
-    name: 'Reports',
-    path: '/portal/board/reports',
-    icon: BarChart
-  }, {
-    name: 'Violations',
-    path: '/portal/board/violations',
-    icon: AlertTriangle
-  }, {
-    name: 'Board Tasks',
-    path: '/portal/board/tasks',
-    icon: CheckSquare
-  }, {
-    name: 'Email Community',
-    path: '/portal/board/email',
-    icon: Mail
-  }, {
-    name: 'Board Portal Training',
-    path: '/portal/board/training',
-    icon: BookOpen
-  }, {
-    name: 'Board Member Video Education',
-    path: '/portal/board/video-education',
-    icon: Video
-  }, {
-    name: 'Board Member AI Assistant',
-    path: '/portal/board/ai-assistant',
-    icon: Sparkles
-  }, {
-    name: 'Board Reimbursement',
-    path: '/portal/board/reimbursement',
-    icon: DollarSign
-  }];
-  const resalePortalItems = [{
-    name: 'Dashboard',
-    path: '/resale-portal',
-    icon: LayoutDashboard
-  }, {
-    name: 'My Orders',
-    path: '/resale-portal/my-orders',
-    icon: FileText
-  }, {
-    name: 'New Order',
-    path: '/resale-portal/order',
-    icon: FileText
-  }, {
-    name: 'Account Settings',
-    path: '/resale-portal/settings',
-    icon: Users
-  }];
-  const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
-  const isBoardPortal = location.pathname.startsWith('/portal/board');
-  const isResalePortal = location.pathname.startsWith('/resale-portal');
+
+  // All portal items grouped under portal selection
+  const portalItems = [
+    {
+      name: 'Portal Selection',
+      path: '/portal',
+      icon: Home
+    },
+    {
+      name: 'Homeowner Portal',
+      path: '/portal/homeowner',
+      icon: Home
+    },
+    {
+      name: 'Board Portal',
+      path: '/portal/board',
+      icon: Building
+    },
+    {
+      name: 'Vendor Portal',
+      path: '/portal/vendor',
+      icon: Truck
+    },
+    {
+      name: 'Resale Portal',
+      path: '/resale-portal',
+      icon: ScrollText
+    }
+  ];
+
+  // Check if current path is related to any portal
+  const isPortalPath = location.pathname.startsWith('/portal') || location.pathname.startsWith('/resale-portal');
+
   return <div className={cn("fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out", isMobile && !isSidebarOpen ? "-translate-x-full" : "translate-x-0")}>
       <div className="h-16 py-2.5 px-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-2">
@@ -175,48 +112,130 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
+          {/* Portal Navigation Section */}
           <div className="mb-2 pb-2 border-b border-white/10">
-            <Link to="/portal" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal' && "bg-white/10 font-medium")}>
-              <Home size={20} />
-              <span>Portal Selection</span>
-            </Link>
+            <p className="px-3 py-1 text-white/60 text-xs uppercase">Portals</p>
+            {portalItems.map((item, index) => (
+              <Link 
+                key={item.path} 
+                to={item.path} 
+                className={cn(
+                  "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
+                  location.pathname === item.path && "bg-white/10 font-medium",
+                  // Add special styling for Portal Selection as the main item
+                  index === 0 ? "font-medium" : "pl-6"
+                )}
+              >
+                <item.icon size={20} />
+                <span>{item.name}</span>
+              </Link>
+            ))}
           </div>
           
-          {isHomeownerPortal && <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
-              {homeownerPortalItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === item.path && "bg-white/10 font-medium")}>
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>)}
-            </div>}
-          
-          {isBoardPortal && <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Board Portal</p>
-              {boardPortalItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === item.path && "bg-white/10 font-medium")}>
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>)}
-            </div>}
-          
-          {isResalePortal && <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Resale Portal</p>
-              {resalePortalItems.map(item => <Link key={item.path} to={item.path} className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === item.path && "bg-white/10 font-medium")}>
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>)}
-            </div>}
+          {/* Render portal-specific menu if in a portal route */}
+          {isPortalPath && location.pathname !== '/portal' && (
+            <div className="mb-2 pb-2 border-b border-white/10">
+              {location.pathname.startsWith('/portal/homeowner') && (
+                <>
+                  <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
+                  <Link to="/portal/homeowner/payments" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/homeowner/payments' && "bg-white/10 font-medium")}>
+                    <CreditCard size={20} />
+                    <span>Payments</span>
+                  </Link>
+                  <Link to="/portal/homeowner/requests" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/homeowner/requests' && "bg-white/10 font-medium")}>
+                    <FileText size={20} />
+                    <span>Requests</span>
+                  </Link>
+                  <Link to="/portal/homeowner/calendar" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/homeowner/calendar' && "bg-white/10 font-medium")}>
+                    <Calendar size={20} />
+                    <span>Calendar & Events</span>
+                  </Link>
+                  <Link to="/portal/homeowner/directory" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/homeowner/directory' && "bg-white/10 font-medium")}>
+                    <Users size={20} />
+                    <span>Directory</span>
+                  </Link>
+                  <Link to="/portal/homeowner/documents" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/homeowner/documents' && "bg-white/10 font-medium")}>
+                    <File size={20} />
+                    <span>Documents</span>
+                  </Link>
+                </>
+              )}
+              
+              {location.pathname.startsWith('/portal/board') && (
+                <>
+                  <p className="px-3 py-1 text-white/60 text-xs uppercase">Board Portal</p>
+                  {/* Board portal items */}
+                  <Link to="/portal/board/dashboard" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/board/dashboard' && "bg-white/10 font-medium")}>
+                    <LayoutDashboard size={20} />
+                    <span>Dashboard</span>
+                  </Link>
+                  <Link to="/portal/board/invoices" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/board/invoices' && "bg-white/10 font-medium")}>
+                    <CreditCard size={20} />
+                    <span>Invoices</span>
+                  </Link>
+                  <Link to="/portal/board/work-orders" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/board/work-orders' && "bg-white/10 font-medium")}>
+                    <WrenchIcon size={20} />
+                    <span>Work Orders</span>
+                  </Link>
+                  <Link to="/portal/board/collections" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/board/collections' && "bg-white/10 font-medium")}>
+                    <PiggyBank size={20} />
+                    <span>Collections</span>
+                  </Link>
+                  {/* Add more board portal links as needed */}
+                </>
+              )}
+              
+              {location.pathname.startsWith('/portal/vendor') && (
+                <>
+                  <p className="px-3 py-1 text-white/60 text-xs uppercase">Vendor Portal</p>
+                  {/* Vendor portal items */}
+                  <Link to="/portal/vendor/bids" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/vendor/bids' && "bg-white/10 font-medium")}>
+                    <FileText size={20} />
+                    <span>Bids & Opportunities</span>
+                  </Link>
+                  <Link to="/portal/vendor/invoices" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/portal/vendor/invoices' && "bg-white/10 font-medium")}>
+                    <CreditCard size={20} />
+                    <span>Invoices & Payments</span>
+                  </Link>
+                </>
+              )}
+              
+              {location.pathname.startsWith('/resale-portal') && (
+                <>
+                  <p className="px-3 py-1 text-white/60 text-xs uppercase">Resale Portal</p>
+                  {/* Resale portal items */}
+                  <Link to="/resale-portal/order" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/resale-portal/order' && "bg-white/10 font-medium")}>
+                    <FileText size={20} />
+                    <span>Order Documents</span>
+                  </Link>
+                  <Link to="/resale-portal/my-orders" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/resale-portal/my-orders' && "bg-white/10 font-medium")}>
+                    <FileText size={20} />
+                    <span>My Orders</span>
+                  </Link>
+                  <Link to="/resale-portal/settings" className={cn("flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10", location.pathname === '/resale-portal/settings' && "bg-white/10 font-medium")}>
+                    <Users size={20} />
+                    <span>Account Settings</span>
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
 
-          <SidebarNavItem name="Homeowner Portal" path="/portal/homeowner" icon={Home} isOpen={activeSection === 'homeowner-portal'} toggleSection={() => toggleSection('homeowner-portal')} isActive={location.pathname === '/portal/homeowner'} />
-          
-          <SidebarNavItem name="Board Portal" path="/portal/board" icon={Building} isOpen={activeSection === 'board-portal'} toggleSection={() => toggleSection('board-portal')} isActive={location.pathname === '/portal/board'} />
-          
-          <SidebarNavItem name="Vendor Portal" path="/portal/vendor" icon={Truck} isOpen={activeSection === 'vendor-portal'} toggleSection={() => toggleSection('vendor-portal')} isActive={location.pathname === '/portal/vendor'} />
-
-          <SidebarNavItem name="Resale Portal" path="/resale-portal" icon={ScrollText} isOpen={activeSection === 'resale-portal'} toggleSection={() => toggleSection('resale-portal')} isActive={location.pathname === '/resale-portal'} />
-
-          
-
-          {mainNavItems.map(item => <SidebarNavItem key={item.path} name={item.name} path={item.path} icon={item.icon} isOpen={activeSection === item.path.replace('/', '')} toggleSection={() => toggleSection(item.path.replace('/', ''))} isActive={hasActiveSubmenu(item)} submenu={item.submenu} showBadge={true} badgeCount={getNotificationCount(item.path)} />)}
+          {/* Main Navigation Items */}
+          {!isPortalPath && mainNavItems.map(item => (
+            <SidebarNavItem 
+              key={item.path} 
+              name={item.name} 
+              path={item.path} 
+              icon={item.icon} 
+              isOpen={activeSection === item.path.replace('/', '')} 
+              toggleSection={() => toggleSection(item.path.replace('/', ''))} 
+              isActive={hasActiveSubmenu(item)} 
+              submenu={item.submenu} 
+              showBadge={true} 
+              badgeCount={getNotificationCount(item.path)} 
+            />
+          ))}
         </div>
       </div>
       
@@ -228,4 +247,5 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
     </div>;
 };
+
 export default Sidebar;
