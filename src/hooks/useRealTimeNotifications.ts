@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { NotificationContext } from '@/contexts/notifications/NotificationContext';
+import { NotificationContext, Notification } from '@/contexts/notifications/NotificationContext';
 import { NotificationItem } from './useNotifications';
 import { useAuth } from '@/contexts/auth';
 import { useNotificationContext } from '@/contexts/notifications';
@@ -27,9 +27,16 @@ export const useRealTimeNotifications = () => {
         (payload) => {
           const newNotification = payload.new as NotificationItem;
           if (setNotifications) {
+            const notificationWithMessage: Notification = {
+              ...newNotification, 
+              message: newNotification.description || '',
+              read: false,
+              type: newNotification.type || 'info'
+            };
+            
             setNotifications([
-              { ...newNotification, message: newNotification.description || '' },
-              ...notifications
+              notificationWithMessage,
+              ...notifications as Notification[]
             ]);
           }
         }

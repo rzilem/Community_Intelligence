@@ -6,7 +6,7 @@ export interface Notification extends NotificationItem {
   id: string;
   title: string;
   message: string;
-  type: 'lead' | 'invoice' | 'request' | 'event' | 'message' | string;
+  type: 'lead' | 'invoice' | 'request' | 'event' | 'message' | 'info' | string;
   read: boolean;
   timestamp: string;
   link?: string;

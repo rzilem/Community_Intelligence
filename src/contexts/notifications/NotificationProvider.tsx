@@ -1,6 +1,6 @@
 
 import React, { ReactNode, useEffect, useState, useCallback } from 'react';
-import { NotificationContext } from './NotificationContext';
+import { NotificationContext, Notification } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
@@ -13,7 +13,7 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const { user } = useAuth();
   
   // Get notifications from different sources
@@ -28,7 +28,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       return [];
     }
 
-    const aggregatedNotifications: NotificationItem[] = [];
+    const aggregatedNotifications: Notification[] = [];
     
     // Add lead notifications
     if (recentLeads && recentLeads.length > 0) {
@@ -37,6 +37,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `lead-${lead.id}`,
           title: `New Lead: ${lead.name || 'Unnamed Lead'}`,
           description: lead.association_name || lead.city || 'No location provided',
+          message: lead.association_name || lead.city || 'No location provided',
           type: 'lead',
           severity: 'info',
           read: false,
@@ -53,6 +54,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `invoice-${i}`,
           title: `New Invoice Received`,
           description: 'Review pending invoice',
+          message: 'Review pending invoice',
           type: 'invoice',
           severity: 'info',
           read: false,
@@ -68,6 +70,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `request-${i}`,
           title: 'New Homeowner Request',
           description: 'Homeowner request needs attention',
+          message: 'Homeowner request needs attention',
           type: 'request',
           severity: 'info',
           read: false,
@@ -83,6 +86,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `event-${i}`,
           title: 'Resale Calendar Update',
           description: 'New event on the resale calendar',
+          message: 'New event on the resale calendar',
           type: 'event',
           severity: 'info',
           read: false,
@@ -123,6 +127,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Safe type casting for setNotifications
+  const setNotificationsHandler = useCallback((newNotifications: Notification[]) => {
+    setNotifications(newNotifications);
+  }, []);
+
   return (
     <NotificationContext.Provider 
       value={{ 
@@ -131,7 +140,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         markAsRead, 
         markAllAsRead, 
         deleteNotification,
-        setNotifications 
+        setNotifications: setNotificationsHandler 
       }}
     >
       {children}

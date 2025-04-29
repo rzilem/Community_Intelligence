@@ -9,12 +9,13 @@ import AppLayoutHeader from './AppLayoutHeader';
 import AppLayoutContent from './AppLayoutContent';
 import { getFilteredNavItems } from './navigation-utils';
 import { AppLayoutProps } from './types';
+import { useAppLayoutState } from './hooks/useAppLayoutState';
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
-  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
+  const { isSidebarOpen, toggleSidebar, setIsSidebarOpen } = useAppLayoutState(isMobile);
 
   console.log('AppLayout rendering, auth state:', { 
     isAuthenticated: isAuthenticated ? 'yes' : 'no',
@@ -27,12 +28,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (isMobile) {
       setIsSidebarOpen(false);
     }
-  }, [location.pathname, isMobile]);
+  }, [location.pathname, isMobile, setIsSidebarOpen]);
 
-  useEffect(() => {
-    setIsSidebarOpen(!isMobile);
-  }, [isMobile]);
-
+  // Initialize real-time notifications
   useRealTimeNotifications();
 
   const handleSignOut = async () => {
@@ -44,10 +42,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   };
 
   const mainNavItems = getFilteredNavItems(userRole);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(prev => !prev);
-  };
 
   return (
     <div className="flex min-h-screen w-full bg-gray-50">

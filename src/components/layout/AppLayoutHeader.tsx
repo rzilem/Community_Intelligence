@@ -3,7 +3,7 @@ import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Header from './Header';
 import { User } from '@supabase/supabase-js';
-import { Profile } from '@/contexts/auth/types';
+import { Profile } from '@/types/profile-types';
 
 interface AppLayoutHeaderProps {
   user: User | null;

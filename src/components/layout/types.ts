@@ -5,7 +5,7 @@ export interface NavItemProps {
   name: string;
   path: string;
   icon: ElementType;
-  isActive?: boolean; // Add isActive property to fix TS errors
+  isActive?: boolean;
   submenu?: {
     name: string;
     path: string;
