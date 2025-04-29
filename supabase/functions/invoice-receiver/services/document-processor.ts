@@ -55,10 +55,18 @@ export async function processDocument(attachments = []) {
         contentBuffer = new Uint8Array(arrayBuffer);
       } else if (typeof attachment.content === 'string') {
         console.log(`Attachment is string, checking for base64 encoding`);
-        const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(attachment.content.trim().replace(/\s/g, ''));
-        contentBuffer = isBase64
-          ? new Uint8Array(Array.from(atob(attachment.content), c => c.charCodeAt(0)))
-          : new TextEncoder().encode(attachment.content);
+        // Check for base64 encoding or data URL format
+        if (attachment.content.startsWith('data:application/pdf;base64,') || 
+            attachment.contentType?.includes('base64')) {
+          const base64Content = attachment.content.startsWith('data:') 
+            ? attachment.content.split(',')[1] 
+            : attachment.content;
+          console.log(`Decoding base64 content, length: ${base64Content.length}`);
+          contentBuffer = new Uint8Array(Array.from(atob(base64Content), c => c.charCodeAt(0)));
+        } else {
+          // Just use the string content directly
+          contentBuffer = new TextEncoder().encode(attachment.content);
+        }
       } else {
         console.warn(`Unsupported content type for ${safeFilename}: ${typeof attachment.content}`);
         continue;
@@ -108,17 +116,40 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
-      console.log(`Generated signed URL: "${signedData.signedUrl}"`);
+      // Validate URL format - remove double slashes in path portion
+      let cleanedUrl = signedData.signedUrl;
+      if (cleanedUrl.includes('://')) {
+        const [protocol, rest] = cleanedUrl.split('://');
+        // Only normalize the path portion, not the query parameters
+        if (rest.includes('?')) {
+          const [path, query] = rest.split('?');
+          cleanedUrl = `${protocol}://${path.replace(/\/+/g, '/')}?${query}`;
+        } else {
+          cleanedUrl = `${protocol}://${rest.replace(/\/+/g, '/')}`;
+        }
+      }
+
+      console.log(`Generated signed URL: "${cleanedUrl}"`);
       processedAttachment = {
         ...attachment,
-        url: signedData.signedUrl,
+        url: cleanedUrl,
         filename: storageFilename,
         source_document: safeFilename
       };
 
       // Extract text if PDF
       if (contentType.includes('pdf')) {
-        documentContent = await extractTextFromPdf(contentBuffer);
+        try {
+          documentContent = await extractTextFromPdf(contentBuffer);
+          console.log(`Extracted ${documentContent.length} characters of text from PDF`);
+        } catch (extractError) {
+          console.error(`Error extracting text from PDF: ${extractError.message}`);
+        }
+      }
+      
+      // If we processed a PDF successfully, stop here
+      if (processedAttachment && contentType.includes('pdf')) {
+        break;
       }
     } catch (error) {
       console.error(`Error processing document ${safeFilename}:`, error);

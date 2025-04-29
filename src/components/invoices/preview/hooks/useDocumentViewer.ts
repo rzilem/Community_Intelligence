@@ -108,8 +108,15 @@ export function useDocumentViewer(invoiceId: string) {
       // Normalize URL to remove double slashes (excluding protocol://)
       if (finalUrl.includes('://')) {
         const [protocol, path] = finalUrl.split('://');
-        const normalizedPath = path.replace(/\/+/g, '/');
-        finalUrl = `${protocol}://${normalizedPath}`;
+        // Only replace double slashes in the path portion, not in query params
+        if (path.includes('?')) {
+          const [pathPart, queryPart] = path.split('?');
+          const normalizedPath = pathPart.replace(/\/+/g, '/');
+          finalUrl = `${protocol}://${normalizedPath}?${queryPart}`;
+        } else {
+          const normalizedPath = path.replace(/\/+/g, '/');
+          finalUrl = `${protocol}://${normalizedPath}`;
+        }
       } else {
         finalUrl = finalUrl.replace(/\/+/g, '/');
       }
@@ -125,13 +132,23 @@ export function useDocumentViewer(invoiceId: string) {
         }
         
         console.log('Generating signed URL for:', filename);
+        
+        // Check if the filename includes the "invoices/" prefix
+        const storageFilename = filename.startsWith('invoices/') 
+          ? filename.substring('invoices/'.length) // Remove the "invoices/" prefix
+          : filename;
+          
+        console.log('Storage path for signed URL:', storageFilename);
+        
         const { data: signedData, error: signedError } = await supabase.storage
           .from('invoices')
-          .createSignedUrl(filename, 3600); // Signed URL valid for 1 hour
+          .createSignedUrl(storageFilename, 3600); // Signed URL valid for 1 hour
 
         if (signedError) throw new Error(`Failed to generate signed URL: ${signedError.message}`);
         finalUrl = signedData.signedUrl;
         setProxyUrl(finalUrl);
+        
+        console.log('Generated signed URL:', finalUrl);
       }
 
       console.log('Final PDF URL:', finalUrl);

@@ -1,15 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, RefreshCcw } from "lucide-react";
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { NoPreviewState } from './preview/NoPreviewState';
-import { DocumentViewer } from './preview/DocumentViewer';
-import { EmailPreview } from './preview/EmailPreview';
-import { PreviewErrorState } from './preview/PreviewErrorState';
-import { PreviewHeader } from './preview/PreviewHeader';
-import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
-import { Button } from "@/components/ui/button";
+import { useDocumentViewer } from './preview/hooks/useDocumentViewer';
+import { Button } from '@/components/ui/button';
+import { RefreshCcw, AlertCircle, FileText } from 'lucide-react';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -17,221 +11,118 @@ interface InvoicePreviewProps {
   emailContent?: string;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
-  htmlContent, 
-  pdfUrl,
-  emailContent
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
+  htmlContent = '',
+  pdfUrl = '',
+  emailContent = ''
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
-  const [hasContent, setHasContent] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('document');
-  const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [activeTab, setActiveTab] = useState('document');
+  const { 
+    pdfUrl: resolvedPdfUrl, 
+    loading, 
+    error, 
+    iframeError, 
+    handleIframeError, 
+    handleRetry 
+  } = useDocumentViewer(pdfUrl);
   
-  // Determine if the document is a Word document based on file extension
-  const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
-                          getFileExtension(pdfUrl || '') === 'docx';
+  const hasError = error || iframeError;
+  const isLoading = loading;
+  const hasHtml = htmlContent && htmlContent.trim().length > 0;
+  const hasEmailContent = emailContent && emailContent.trim().length > 0;
+  const hasPdf = !!resolvedPdfUrl;
   
-  // Check if we have valid email content to show the email tab
-  const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
-  
-  // Handle opening the document in a new tab
-  const handleExternalOpen = () => {
-    if (normalizedPdfUrl) {
-      window.open(normalizedPdfUrl, '_blank');
-    }
-  };
-  
-  // Handle toggling fullscreen mode
-  const handleToggleFullscreen = () => {
-    setFullscreen(!fullscreen);
-  };
-
-  // Handle refresh action
-  const handleRefresh = () => {
-    setError(null);
-    setLoading(true);
-    setRefreshKey(Date.now());
-  };
-  
-  // Thorough URL normalization function to fix double slashes
-  const normalizeUrlPath = (url: string): string => {
-    if (!url) return '';
-    
-    try {
-      console.log('InvoicePreview: Original URL before normalization:', url);
-      
-      // For URLs with protocol, use URL parsing for thorough normalization
-      if (url.startsWith('http')) {
-        const parsed = new URL(url);
-        
-        // Check for double slashes in pathname
-        if (parsed.pathname.includes('//')) {
-          console.warn('⚠️ InvoicePreview: Double slash detected in pathname that needs fixing:', parsed.pathname);
-        }
-        
-        // Clean the pathname by:
-        // 1. Split by slashes
-        // 2. Filter out empty segments (which cause double slashes)
-        // 3. Join with single slashes
-        const pathParts = parsed.pathname.split('/')
-          .filter(segment => segment !== '');
-        
-        // Reconstruct pathname with a single leading slash
-        parsed.pathname = '/' + pathParts.join('/');
-        
-        const normalized = parsed.toString();
-        console.log('InvoicePreview: Normalized URL result:', normalized);
-        return normalized;
-      }
-      
-      // For relative paths, handle more carefully
-      // First remove leading slashes
-      let normalized = url.replace(/^\/+/, '');
-      // Then replace multiple consecutive slashes with a single one
-      normalized = normalized.replace(/\/+/g, '/');
-      
-      console.log('InvoicePreview: Normalized relative path result:', normalized);
-      return normalized;
-    } catch (e) {
-      console.error('Error normalizing URL in InvoicePreview:', e);
-      return url; // Return original if parsing fails
-    }
-  };
-  
-  useEffect(() => {
-    // Reset states
-    setLoading(true);
-    setError(null);
-    
-    // Validate PDF URL
-    if (pdfUrl) {
-      try {
-        // For debugging, log the original URL
-        console.log("Original PDF URL:", pdfUrl);
-        
-        // Check for and log any double slashes which might cause issues
-        if (pdfUrl.includes('//') && !pdfUrl.includes('://')) {
-          console.warn('⚠️ Double slash detected in PDF URL that needs fixing:', pdfUrl);
-        }
-        
-        // Normalize URL by ensuring it has a protocol and fixing double slashes
-        let normalizedUrl = pdfUrl;
-        
-        // Fix double slashes in the path part using our thorough normalization
-        normalizedUrl = normalizeUrlPath(normalizedUrl);
-        
-        // Add protocol if missing
-        if (!normalizedUrl.startsWith('http')) {
-          // Ensure we don't have leading slashes before appending to the base URL
-          const cleanPath = normalizedUrl.replace(/^\/+/, '');
-          normalizedUrl = `https://cahergndkwfqltxyikyr.supabase.co/storage/v1/object/public/invoices/${cleanPath}`;
-        }
-        
-        setNormalizedPdfUrl(normalizedUrl);
-        setHasContent(true);
-        console.log("Normalized PDF URL:", normalizedUrl);
-      } catch (e) {
-        console.error("Invalid PDF URL:", pdfUrl, e);
-        setError("Invalid PDF URL format");
-        setLoading(false);
-      }
-    } else {
-      setNormalizedPdfUrl('');
-    }
-    
-    // Check if we have HTML content
-    const validHtml = htmlContent && isValidHtml(htmlContent);
-    
-    // Update has content state
-    setHasContent(!!normalizedPdfUrl || !!validHtml);
-    
-    // Log for debugging
-    console.log("Invoice Preview Data:", {
-      hasPdfUrl: !!pdfUrl,
-      normalizedPdfUrl: normalizedPdfUrl || "none",
-      hasHtmlContent: !!htmlContent,
-      htmlContentLength: htmlContent?.length || 0,
-      hasEmailContent: !!emailContent,
-      emailContentLength: emailContent?.length || 0,
-      hasContent: hasContent,
-      isPdfFile: isPdf(pdfUrl || '')
-    });
-  }, [htmlContent, pdfUrl, emailContent, refreshKey]);
-
-  // If no content and no email, show no preview state
-  if (!hasContent && !hasEmailContent && !loading && !error) {
-    return <NoPreviewState />;
-  }
-
-  // If there's an error, show error state with retry option
-  if (error) {
-    return (
-      <PreviewErrorState 
-        error={error} 
-        pdfUrl={normalizedPdfUrl}
-        onExternalOpen={handleExternalOpen}
-        onRetry={handleRefresh}
-      />
-    );
-  }
-
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <PreviewHeader
-        isPdf={isPdf(normalizedPdfUrl)}
-        isWordDocument={isWordDocument}
-        pdfUrl={normalizedPdfUrl}
-        onExternalOpen={handleExternalOpen}
-        onToggleFullscreen={handleToggleFullscreen}
-        showActions={!!normalizedPdfUrl}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        hasEmail={hasEmailContent}
-        onRefresh={handleRefresh}
-      />
-      
-      <Tabs value={activeTab} className="flex-1 overflow-hidden">
-        <TabsContent value="document" className="h-full m-0">
-          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
-            {normalizedPdfUrl ? (
-              <DocumentViewer 
-                pdfUrl={normalizedPdfUrl}
-                htmlContent={undefined}
-                isPdf={isPdf(normalizedPdfUrl)}
-                isWordDocument={isWordDocument}
-                onIframeError={() => setError("Failed to load document")}
-                onIframeLoad={() => setLoading(false)}
-                onExternalOpen={handleExternalOpen}
-              />
-            ) : htmlContent && isValidHtml(htmlContent) ? (
-              <div className="h-full">
-                <div 
-                  className="invoice-html-content h-full"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
-                />
+    <div className="invoice-preview h-full flex flex-col">
+      <Tabs 
+        defaultValue={activeTab} 
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full h-full flex flex-col"
+      >
+        <TabsList className="mb-2">
+          <TabsTrigger value="document">
+            Document
+          </TabsTrigger>
+          {hasHtml && (
+            <TabsTrigger value="html">
+              HTML
+            </TabsTrigger>
+          )}
+          {hasEmailContent && (
+            <TabsTrigger value="email">
+              Email
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="document" className="h-full flex-grow overflow-auto">
+          {isLoading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center space-y-4 text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                <p className="text-sm text-muted-foreground">Loading document preview...</p>
               </div>
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <Alert variant="destructive" className="max-w-md">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No preview available</AlertTitle>
-                  <AlertDescription>
-                    No valid PDF or HTML content is available for this invoice.
-                  </AlertDescription>
-                </Alert>
+            </div>
+          )}
+          
+          {hasError && !isLoading && (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center space-y-4 text-center max-w-md">
+                <AlertCircle className="h-12 w-12 text-destructive" />
+                <h3 className="text-lg font-semibold">Failed to load document</h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {error || "The document couldn't be loaded. This could be due to an invalid URL or missing file."}
+                </p>
+                <Button variant="outline" onClick={handleRetry} className="flex items-center gap-2">
+                  <RefreshCcw className="h-4 w-4" />
+                  Try Again
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+          
+          {hasPdf && !isLoading && !hasError && (
+            <iframe
+              className="w-full h-full border-none"
+              src={resolvedPdfUrl}
+              title="Invoice PDF"
+              onError={handleIframeError}
+              sandbox="allow-scripts allow-same-origin"
+            />
+          )}
+          
+          {!hasPdf && !isLoading && !hasError && (
+            <div className="flex items-center justify-center h-full">
+              <div className="flex flex-col items-center space-y-4 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground" />
+                <h3 className="text-lg font-semibold">No Document Available</h3>
+                <p className="text-sm text-muted-foreground">
+                  This invoice doesn't have an attached document.
+                  {hasHtml && " Try viewing the HTML content instead."}
+                  {hasEmailContent && " Try viewing the email content instead."}
+                </p>
+              </div>
+            </div>
+          )}
         </TabsContent>
-        
-        <TabsContent value="email" className="h-full m-0">
-          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
-            <EmailPreview emailContent={emailContent} />
-          </div>
-        </TabsContent>
+
+        {hasHtml && (
+          <TabsContent value="html" className="h-full flex-grow overflow-auto">
+            <div 
+              className="p-4 bg-white rounded-md shadow-sm border" 
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+          </TabsContent>
+        )}
+
+        {hasEmailContent && (
+          <TabsContent value="email" className="h-full flex-grow overflow-auto">
+            <div className="p-4 bg-white rounded-md shadow-sm border">
+              <pre className="whitespace-pre-wrap">{emailContent}</pre>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

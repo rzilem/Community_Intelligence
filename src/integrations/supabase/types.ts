@@ -2893,6 +2893,7 @@ export type Database = {
           amount: number
           association_id: string | null
           association_name: string | null
+          association_type: string | null
           bank_account_id: string | null
           created_at: string
           description: string | null
@@ -2918,6 +2919,7 @@ export type Database = {
           amount: number
           association_id?: string | null
           association_name?: string | null
+          association_type?: string | null
           bank_account_id?: string | null
           created_at?: string
           description?: string | null
@@ -2943,6 +2945,7 @@ export type Database = {
           amount?: number
           association_id?: string | null
           association_name?: string | null
+          association_type?: string | null
           bank_account_id?: string | null
           created_at?: string
           description?: string | null
