@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useNotifications, NotificationItem } from '@/hooks/useNotifications';
 import { useLocation } from 'react-router-dom';
@@ -19,10 +18,8 @@ export const useGlobalNotifications = () => {
   const { allNotifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [globalNotifications, setGlobalNotifications] = useState<GlobalNotification[]>([]);
   const location = useLocation();
-  // Track shown notifications to prevent duplicates
-  const shownNotificationsRef = React.useRef(new Set<string>());
+  const shownNotificationsRef = useRef(new Set<string>());
 
-  // Convert standard notifications to global notifications
   useEffect(() => {
     const convertedNotifications = allNotifications.map(notification => ({
       ...notification,
@@ -33,7 +30,6 @@ export const useGlobalNotifications = () => {
     setGlobalNotifications(convertedNotifications);
   }, [allNotifications]);
   
-  // Map severity to priority
   const getPriorityFromSeverity = (severity?: 'info' | 'success' | 'warning' | 'error'): NotificationPriority => {
     switch (severity) {
       case 'error': return 'urgent';
@@ -45,14 +41,12 @@ export const useGlobalNotifications = () => {
     }
   };
   
-  // Show toast for new high priority notifications
   useEffect(() => {
     const highPriorityUnread = globalNotifications.filter(
       n => (n.priority === 'high' || n.priority === 'urgent') && !n.read
     );
     
     highPriorityUnread.forEach(notification => {
-      // Only show if not already shown in this session
       if (!shownNotificationsRef.current.has(notification.id)) {
         const toastMethod = notification.priority === 'urgent' ? toast.error : toast.warning;
         
@@ -66,13 +60,11 @@ export const useGlobalNotifications = () => {
           onDismiss: () => markAsRead(notification.id)
         });
         
-        // Mark as shown
         shownNotificationsRef.current.add(notification.id);
       }
     });
   }, [globalNotifications, markAsRead]);
   
-  // Clear location-specific notifications when route changes
   useEffect(() => {
     const locationRelatedNotifications = globalNotifications.filter(
       n => n.route && n.route === location.pathname
@@ -83,10 +75,7 @@ export const useGlobalNotifications = () => {
     }
   }, [location.pathname, globalNotifications, markAsRead]);
   
-  // Add a new notification programmatically
   const addNotification = (notification: Omit<GlobalNotification, 'id' | 'timestamp' | 'read'>) => {
-    // This would integrate with your backend notification system
-    // For now we'll just show a toast
     const severity = getSeverityFromPriority(notification.priority);
     
     switch (severity) {
@@ -104,7 +93,6 @@ export const useGlobalNotifications = () => {
     }
   };
   
-  // Map priority to severity
   const getSeverityFromPriority = (priority: NotificationPriority): 'info' | 'success' | 'warning' | 'error' => {
     switch (priority) {
       case 'urgent': return 'error';

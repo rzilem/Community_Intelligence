@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import TemplateSearch from './TemplateSearch';
 import TemplatesGrid from './TemplatesGrid';
 import AITemplateGenerator from '../ai-templates/AITemplateGenerator';
-import { useToast } from '@/components/ui/use-toast';
+import { showToast } from '@/utils/toast-helpers';
 import {
   Dialog,
   DialogContent,
@@ -29,14 +30,9 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
   onUseTemplate,
   onTemplateAction
 }) => {
-  const { toast } = useToast();
-  
   const handleSaveTemplate = (template: { title: string; content: string; type: string }) => {
     // In a real implementation, you would save this to the database
-    toast({
-      title: 'Template Created',
-      description: `"${template.title}" has been saved as a ${template.type} template.`,
-    });
+    showToast.success("Template Created", `"${template.title}" has been saved as a ${template.type} template.`);
     
     // Refresh template list or add to local state
   };

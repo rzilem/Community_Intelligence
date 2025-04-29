@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { showToast } from '@/utils/toast-helpers';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
@@ -14,7 +14,6 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 const InvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,10 +53,7 @@ const InvoiceDetail = () => {
     try {
       await saveInvoice();
       
-      toast({
-        title: "Invoice updated",
-        description: "The invoice has been updated successfully.",
-      });
+      showToast.success("Invoice updated", "The invoice has been updated successfully.");
     } catch (error) {
       console.error("Error saving invoice:", error);
       
@@ -67,11 +63,7 @@ const InvoiceDetail = () => {
         errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
       }
       
-      toast({
-        title: "Error updating invoice",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      showToast.error("Error updating invoice", errorMessage);
     } finally {
       setIsSaving(false);
     }

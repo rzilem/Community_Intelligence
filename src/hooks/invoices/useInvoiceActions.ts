@@ -1,10 +1,8 @@
 
-import { useToast } from '@/components/ui/use-toast';
+import { showToast } from '@/utils/toast-helpers';
 import { supabase } from '@/integrations/supabase/client';
 
 export function useInvoiceActions(refetch: () => Promise<any>) {
-  const { toast } = useToast();
-
   // Function to update invoice status
   const updateInvoiceStatus = async (id: string, status: string) => {
     try {
@@ -18,19 +16,12 @@ export function useInvoiceActions(refetch: () => Promise<any>) {
       // Refresh data
       await refetch();
       
-      toast({
-        title: "Invoice updated",
-        description: `Invoice status has been updated to ${status}.`
-      });
+      showToast.success(`Invoice updated`, `Invoice status has been updated to ${status}.`);
       
       return true;
     } catch (error) {
       console.error("Error updating invoice status:", error);
-      toast({
-        title: "Error updating invoice",
-        description: "There was an error updating the invoice status.",
-        variant: "destructive"
-      });
+      showToast.error(`Error updating invoice`, `There was an error updating the invoice status.`);
       
       return false;
     }
@@ -49,19 +40,12 @@ export function useInvoiceActions(refetch: () => Promise<any>) {
       // Refresh data
       await refetch();
       
-      toast({
-        title: "Invoice deleted",
-        description: "The invoice has been deleted successfully."
-      });
+      showToast.success(`Invoice deleted`, `The invoice has been deleted successfully.`);
       
       return true;
     } catch (error) {
       console.error("Error deleting invoice:", error);
-      toast({
-        title: "Error deleting invoice",
-        description: "There was an error deleting the invoice.",
-        variant: "destructive"
-      });
+      showToast.error(`Error deleting invoice`, `There was an error deleting the invoice.`);
       
       return false;
     }

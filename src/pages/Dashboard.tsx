@@ -53,8 +53,9 @@ const Dashboard = () => {
     if (profile && !welcomeToastShown.current) {
       welcomeToastShown.current = true;
       // Use a unique ID to prevent duplicate toasts
+      const toastId = `welcome-${profile.id}-${Date.now()}`;
       toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
-        id: `welcome-${profile.id}-${Date.now()}`,
+        id: toastId,
         description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
       });
     }
