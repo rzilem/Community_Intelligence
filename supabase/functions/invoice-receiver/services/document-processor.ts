@@ -1,5 +1,4 @@
-
-import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType, normalizeFilename, isPdfContent } from "../utils/document-parser.ts";
+import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType } from "../utils/document-parser.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -45,13 +44,22 @@ export async function processDocument(attachments = []) {
     let contentBuffer;
     try {
       if (attachment.content instanceof Blob || attachment.content instanceof File) {
+        console.log(`Attachment is Blob/File, converting to ArrayBuffer`);
         const arrayBuffer = await attachment.content.arrayBuffer();
         contentBuffer = new Uint8Array(arrayBuffer);
       } else if (typeof attachment.content === 'string') {
-        const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(attachment.content.trim().replace(/\s/g, ''));
-        contentBuffer = isBase64
-          ? new Uint8Array(Array.from(atob(attachment.content), c => c.charCodeAt(0)))
-          : new TextEncoder().encode(attachment.content);
+        console.log(`Attachment is string, checking for base64 encoding`);
+        // Only decode as base64 if explicitly marked as such
+        if (attachment.contentType?.includes('base64') || attachment.content.startsWith('data:application/pdf;base64,')) {
+          console.log(`Content is base64 encoded, decoding now`);
+          const base64String = attachment.content.startsWith('data:application/pdf;base64,')
+            ? attachment.content.split(',')[1]
+            : attachment.content;
+          contentBuffer = new Uint8Array(Array.from(atob(base64String), c => c.charCodeAt(0)));
+        } else {
+          console.error(`Attachment content is a string but not base64-encoded, cannot process as PDF: ${filename}`);
+          continue;
+        }
       } else {
         console.warn(`Unsupported content type for ${filename}: ${typeof attachment.content}`);
         continue;
@@ -62,13 +70,14 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
-      // Log the first few bytes to check if it's a valid PDF
-      const fileHeader = new TextDecoder().decode(contentBuffer.slice(0, Math.min(20, contentBuffer.length)));
-      console.log(`Content header for ${filename}: ${fileHeader}`);
-      
-      // For PDF files, validate the header
-      if (contentType.includes('pdf') && !isPdfContent(contentBuffer)) {
-        console.warn(`File ${filename} has content type ${contentType} but doesn't start with %PDF- header`);
+      // Log the first few bytes to confirm PDF content
+      console.log(`Content buffer sample: ${new TextDecoder().decode(contentBuffer.slice(0, 5))}`);
+
+      // Validate PDF content
+      const pdfHeader = new TextDecoder().decode(contentBuffer.slice(0, 5));
+      if (contentType.includes('pdf') && !pdfHeader.startsWith('%PDF')) {
+        console.error(`Invalid PDF content for ${filename}: missing %PDF header`);
+        continue;
       }
     } catch (processError) {
       console.error(`Error processing attachment content: ${processError.message}`);
@@ -77,13 +86,15 @@ export async function processDocument(attachments = []) {
 
     try {
       const timestamp = new Date().getTime();
-      const safeFilename = normalizeFilename(filename);
-      const storageFilename = `invoices/${timestamp}_${safeFilename}`;
+      const safeFilename = filename.toLowerCase().endsWith('.pdf')
+        ? filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+        : `${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}.pdf`;
+      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
       const sourceDocument = safeFilename;
 
-      console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
+      console.log(`Uploading ${filename} to invoices bucket as ${storageFilename} (contentType: ${contentType}, size: ${contentBuffer.byteLength})`);
       const uploadResult = await supabase.storage.from('invoices').upload(storageFilename, contentBuffer, {
-        contentType: contentType.includes('pdf') ? 'application/pdf' : contentType,
+        contentType: contentType,
         upsert: true,
         duplex: 'full'
       });
@@ -93,14 +104,6 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
-      // Get a public URL for reference
-      const { data: publicUrlData } = supabase.storage
-        .from('invoices')
-        .getPublicUrl(storageFilename);
-
-      console.log(`Public URL: ${publicUrlData?.publicUrl || 'none'}`);
-
-      // Generate a signed URL for secure access (valid for 1 hour)
       const { data: signedData, error: signedError } = await supabase.storage
         .from('invoices')
         .createSignedUrl(storageFilename, 3600);
@@ -157,12 +160,22 @@ export async function processDocument(attachments = []) {
       const firstAttachment = attachments[0];
       const filename = firstAttachment.filename || "unnamed_attachment.pdf";
       const timestamp = new Date().getTime();
-      const safeFilename = normalizeFilename(filename);
-      const storageFilename = `invoices/${timestamp}_${safeFilename}`;
+      const safeFilename = filename.toLowerCase().endsWith('.pdf')
+        ? filename.replace(/[^a-zA-Z0-9.-]/g, '_')
+        : `${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}.pdf`;
+      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
       let contentBuffer;
 
       if (typeof firstAttachment.content === 'string') {
-        contentBuffer = new TextEncoder().encode(firstAttachment.content);
+        if (firstAttachment.contentType?.includes('base64') || firstAttachment.content.startsWith('data:application/pdf;base64,')) {
+          const base64String = firstAttachment.content.startsWith('data:application/pdf;base64,')
+            ? firstAttachment.content.split(',')[1]
+            : firstAttachment.content;
+          contentBuffer = new Uint8Array(Array.from(atob(base64String), c => c.charCodeAt(0)));
+        } else {
+          console.error(`Fallback attachment content is a string but not base64-encoded, cannot process as PDF: ${filename}`);
+          throw new Error("Unsupported content type for fallback attachment");
+        }
       } else if (firstAttachment.content instanceof Blob || firstAttachment.content instanceof File) {
         const arrayBuffer = await firstAttachment.content.arrayBuffer();
         contentBuffer = new Uint8Array(arrayBuffer);
@@ -190,7 +203,8 @@ export async function processDocument(attachments = []) {
       processedAttachment = {
         ...firstAttachment,
         url: signedData.signedUrl,
-        filename: storageFilename
+        filename: storageFilename,
+        source_document: safeFilename
       };
       console.log(`Fallback attachment uploaded successfully: ${signedData.signedUrl}`);
     } catch (fallbackError) {
