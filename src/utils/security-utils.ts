@@ -1,93 +1,83 @@
 
-import DOMPurify from 'dompurify';
-
 /**
- * Sanitizes HTML content to prevent XSS attacks
+ * Validates a URL for security and format correctness.
+ * 
+ * @param url The URL to validate
+ * @returns The URL if valid, empty string otherwise
  */
-export function sanitizeHtml(html: string | undefined): string {
-  if (!html) return '';
-  
-  return DOMPurify.sanitize(html, {
-    FORBID_TAGS: ['script', 'iframe', 'form', 'object', 'embed', 'link'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'eval', 'javascript:']
-  });
-}
-
-/**
- * Validates that a URL belongs to trusted domains
- */
-export function validateUrl(url: string | undefined): string {
+export function validateUrl(url: string): string {
   if (!url) return '';
   
   try {
-    const parsedUrl = new URL(url);
+    // Check if the string is a valid URL
+    const urlObj = new URL(url);
     
-    // List of domains considered trusted
-    const trustedDomains = [
-      'cahergndkwfqltxyikyr.supabase.co',
-      'lovable.app',
-      'hoa-ai-community-nexus.lovable.app'
-    ];
-    
-    if (!trustedDomains.some(domain => parsedUrl.hostname.includes(domain))) {
-      console.warn('URL from untrusted domain:', parsedUrl.hostname);
+    // Check for allowed protocols
+    const allowedProtocols = ['https:', 'http:'];
+    if (!allowedProtocols.includes(urlObj.protocol)) {
+      console.error('URL validation failed: Invalid protocol', url);
       return '';
     }
     
+    // Block potentially dangerous hostnames
+    const blockedHosts = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      'evil.com'
+    ];
+    
+    if (blockedHosts.some(host => urlObj.hostname.includes(host))) {
+      console.error('URL validation failed: Blocked hostname', url);
+      return '';
+    }
+    
+    // Additional checks can be added here
+    
     return url;
-  } catch (e) {
-    console.error('Invalid URL:', e);
+  } catch (error) {
+    console.error('URL validation failed:', error, url);
     return '';
   }
 }
 
 /**
- * Validates UUID format
+ * Validates if a file type is allowed for upload
+ * 
+ * @param fileType MIME type of the file
+ * @returns Boolean indicating if the file type is allowed
  */
-export function isValidUuid(id: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(id);
+export function isAllowedFileType(fileType: string): boolean {
+  const allowedTypes = [
+    'application/pdf',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'text/csv'
+  ];
+  
+  return allowedTypes.includes(fileType);
 }
 
 /**
- * Creates a sanitized object safe for logging
- * Removes sensitive fields and truncates large values
+ * Sanitizes a filename to remove potentially dangerous characters
+ * 
+ * @param filename The input filename
+ * @returns Sanitized filename
  */
-export function createSafeLogObject(obj: any): any {
-  if (!obj || typeof obj !== 'object') return obj;
+export function sanitizeFilename(filename: string): string {
+  if (!filename) return '';
   
-  // List of sensitive field names to redact
-  const sensitiveFields = ['password', 'token', 'key', 'secret', 'auth', 'jwt', 'credit_card'];
+  // Replace potentially dangerous characters
+  let sanitized = filename.replace(/[\/\?<>\\:\*\|"]/g, '_');
   
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => {
-      // Check if this is a sensitive field
-      if (sensitiveFields.some(field => key.toLowerCase().includes(field))) {
-        return [key, '[REDACTED]'];
-      }
-      
-      // Handle nested objects
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        return [key, createSafeLogObject(value)];
-      }
-      
-      // Truncate very long string values
-      if (typeof value === 'string' && value.length > 200) {
-        return [key, `${value.substring(0, 200)}... [truncated]`];
-      }
-      
-      return [key, value];
-    })
-  );
-}
-
-/**
- * Safe console logging function that redacts sensitive data
- */
-export function safeLog(message: string, data?: any): void {
-  if (data) {
-    console.log(message, createSafeLogObject(data));
-  } else {
-    console.log(message);
-  }
+  // Remove any path traversal attempts
+  sanitized = sanitized.replace(/\.\.\//g, '');
+  
+  return sanitized;
 }
