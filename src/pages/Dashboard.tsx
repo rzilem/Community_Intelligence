@@ -49,17 +49,38 @@ const Dashboard = () => {
   const welcomeToastShown = React.useRef(false);
   
   useEffect(() => {
-    // Only show welcome toast when dashboard loads and only if it hasn't been shown yet
+    // Only show welcome toast when dashboard loads and only if it hasn't been shown yet in this session
     if (profile && !welcomeToastShown.current) {
       welcomeToastShown.current = true;
-      // Use a unique ID to prevent duplicate toasts
+      
+      // Use a unique ID based on the user's ID to prevent duplicate toasts
       const toastId = `welcome-${profile.id}-${Date.now()}`;
-      toast.success(`Welcome back, ${profile.name || 'Homeowner'}!`, {
+      
+      // Use the user's name if available, otherwise use their role or a default
+      const userName = profile.first_name || profile.name || profile.role || 'Homeowner';
+      
+      toast.success(`Welcome back, ${userName}!`, {
         id: toastId,
         description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
       });
+      
+      // Store in sessionStorage to prevent the toast from showing on page refreshes during the same session
+      sessionStorage.setItem('welcomeToastShown', 'true');
     }
   }, [profile, currentAssociation]);
+  
+  // On component mount, check if we've already shown the toast in this session
+  useEffect(() => {
+    // Check sessionStorage on component mount
+    if (sessionStorage.getItem('welcomeToastShown')) {
+      welcomeToastShown.current = true;
+    }
+    
+    // Clean up on component unmount
+    return () => {
+      // We don't reset the sessionStorage here to maintain toast state across navigation
+    };
+  }, []);
   
   if (loading) {
     return (
