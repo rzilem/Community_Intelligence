@@ -43,8 +43,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { useWorkspace } from '@/contexts/workspace';
-import { useRole } from '@/hooks/useRole';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 
 interface NavItemProps {
@@ -79,17 +77,34 @@ const SidebarNavItem: React.FC<NavItemProps> = ({ to, icon, children, badge }) =
 
 interface SidebarProps {
   className?: string;
+  isMobile?: boolean;
+  isSidebarOpen?: boolean;
+  closeSidebar?: () => void;
+  mainNavItems?: any[];
+  handleSignOut?: () => Promise<void>;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  className, 
+  isMobile,
+  isSidebarOpen,
+  closeSidebar,
+  mainNavItems,
+  handleSignOut: externalHandleSignOut
+}) => {
   const { signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { workspace } = useWorkspace();
-  const { role } = useRole();
+  // We removed the workspace and role references that were causing issues
   const { unreadInvoicesCount } = useInvoiceNotifications();
 
   const handleSignOut = async () => {
+    // Use external handler if provided, otherwise use local implementation
+    if (externalHandleSignOut) {
+      await externalHandleSignOut();
+      return;
+    }
+    
     await signOut();
     toast({
       title: "Signed out successfully.",
@@ -197,9 +212,28 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       <SidebarNavItem to="/developers/webhooks" icon={GitFork}>Webhooks</SidebarNavItem>
     </div>
   );
+  
+  // Handle mobile sidebar
+  const sidebarClasses = cn(
+    "flex h-full w-[280px] flex-col border-r bg-background py-4",
+    isMobile && isSidebarOpen ? "block absolute z-30 h-screen" : "",
+    isMobile && !isSidebarOpen ? "hidden" : "",
+    className
+  );
 
   return (
-    <div className={cn("flex h-full w-[280px] flex-col border-r bg-background py-4", className)}>
+    <div className={sidebarClasses}>
+      {isMobile && isSidebarOpen && (
+        <div className="absolute top-2 right-2">
+          <button 
+            onClick={closeSidebar}
+            className="p-2 rounded-full hover:bg-gray-100"
+            aria-label="Close sidebar"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       <div className="px-6 pb-4">
         <Link to="/dashboard" className="flex items-center font-semibold">
           <svg

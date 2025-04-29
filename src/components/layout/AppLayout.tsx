@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -48,12 +49,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     setIsSidebarOpen(prev => !prev);
   };
 
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       <Sidebar 
         isMobile={isMobile}
         isSidebarOpen={isSidebarOpen}
-        closeSidebar={() => setIsSidebarOpen(false)}
+        closeSidebar={closeSidebar}
         mainNavItems={mainNavItems}
         handleSignOut={handleSignOut}
       />
