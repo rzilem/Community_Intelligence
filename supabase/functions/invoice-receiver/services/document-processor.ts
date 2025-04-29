@@ -1,6 +1,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { extractTextFromPdf } from "../utils/document-parser.ts";
+import { normalizeUrl } from "../utils/url-normalizer.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -124,13 +125,17 @@ export async function processDocument(attachments = []) {
         .from('invoices')
         .getPublicUrl(storageFilename);
       
-      console.log(`Generated signed URL (valid for 24 hours): ${signedData.signedUrl}`);
-      console.log(`Also generated public URL: ${publicUrlData.publicUrl}`);
+      // Normalize the URLs to avoid malformed paths
+      const signedUrl = normalizeUrl(signedData.signedUrl);
+      const publicUrl = normalizeUrl(publicUrlData.publicUrl);
+      
+      console.log(`Generated signed URL (valid for 24 hours): ${signedUrl}`);
+      console.log(`Also generated public URL: ${publicUrl}`);
 
       processedAttachment = {
         ...attachment,
-        url: signedData.signedUrl,
-        public_url: publicUrlData.publicUrl,
+        url: signedUrl,
+        public_url: publicUrl,
         filename: storageFilename,
         source_document: safeFilename,
         original_filename: originalFilename

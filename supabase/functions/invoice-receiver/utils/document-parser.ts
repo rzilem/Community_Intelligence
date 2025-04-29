@@ -12,7 +12,7 @@ export function normalizeFilename(filename) {
   if (!filename) return "unnamed_document.pdf";
   
   // Ensure the filename has a proper extension
-  let normalizedName = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+  let normalizedName = filename.trim().replace(/[^a-zA-Z0-9.-]/g, '_');
   
   // Add .pdf extension if not present
   if (!normalizedName.toLowerCase().endsWith('.pdf')) {
@@ -43,9 +43,9 @@ export async function extractTextFromPdf(content) {
       return ""; // Return empty string instead of trying to extract
     }
     
-    // For now, we'll return an empty string as text extraction is failing
-    // and blocking the processing. We'll improve this in a future update.
-    console.log("Skipping text extraction to avoid errors");
+    // For now, we'll return a placeholder as text extraction is causing issues
+    // This can be improved in a future update with a proper PDF text extraction library
+    console.log("Skipping detailed text extraction to avoid errors");
     return "";
   } catch (error) {
     console.error('Error in extractTextFromPdf:', error);

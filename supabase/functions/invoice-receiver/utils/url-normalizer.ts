@@ -15,9 +15,13 @@ export function normalizeUrl(url) {
       // Only normalize the path portion, not the query parameters
       if (rest.includes('?')) {
         const [path, query] = rest.split('?');
-        return `${protocol}://${path.replace(/\/+/g, '/')}?${query}`;
+        // Replace multiple consecutive slashes with a single slash
+        const normalizedPath = path.replace(/\/+/g, '/');
+        return `${protocol}://${normalizedPath}?${query}`;
       } else {
-        return `${protocol}://${rest.replace(/\/+/g, '/')}`;
+        // Replace multiple consecutive slashes with a single slash
+        const normalizedPath = rest.replace(/\/+/g, '/');
+        return `${protocol}://${normalizedPath}`;
       }
     } else {
       // No protocol, just normalize slashes

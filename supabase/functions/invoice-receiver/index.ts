@@ -128,6 +128,12 @@ serve(async (req) => {
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
     console.log("Extracted invoice data:", JSON.stringify(invoiceData, null, 2));
 
+    // Remove association_type if it exists to avoid database errors
+    if (invoiceData.association_type !== undefined) {
+      delete invoiceData.association_type;
+      console.log("Removed association_type from invoice data to avoid schema errors");
+    }
+
     // Always attempt to create the invoice, even with partial data
     try {
       const invoice = await createInvoice(invoiceData);

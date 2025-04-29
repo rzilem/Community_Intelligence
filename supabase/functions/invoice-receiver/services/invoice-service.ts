@@ -47,6 +47,11 @@ export async function createInvoice(invoiceData) {
       pdf_url: invoiceWithTracking.pdf_url || 'None'
     });
 
+    // Remove association_type if it's not in the database schema
+    if (invoiceWithTracking.association_type !== undefined) {
+      delete invoiceWithTracking.association_type;
+    }
+
     const { data, error } = await supabase.from("invoices").insert(invoiceWithTracking).select().single();
     if (error) {
       console.error("Error creating invoice in database:", error);
