@@ -7,9 +7,6 @@ import { createInvoice } from "./services/invoice-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 import { normalizeUrl } from "./utils/url-normalizer.ts";
 
-// Remove the config lock to allow modifications
-const CURRENT_CONFIG_LOCKED = false;
-
 // Create a Supabase client with the service role key to bypass RLS and ensure proper authorization
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') || '',
@@ -126,76 +123,6 @@ serve(async (req) => {
       );
     }
 
-    // Process attachments if present
-    let pdfUrl = null;
-    if (normalizedEmailData.attachments && normalizedEmailData.attachments.length > 0) {
-      console.log("Processing attachments:", normalizedEmailData.attachments.length);
-      
-      // Find the first PDF or Word document attachment
-      const attachment = normalizedEmailData.attachments.find(att => 
-        att.contentType.includes('pdf') || 
-        att.contentType.includes('word') || 
-        att.contentType.includes('doc')
-      );
-      
-      if (attachment) {
-        console.log("Found document attachment:", attachment.filename);
-        
-        // Generate a unique filename with sanitized name
-        const timestamp = Date.now();
-        const fileId = crypto.randomUUID().substring(0, 8);
-        
-        // Sanitize the filename to prevent special characters and double slashes
-        const safeFilename = (attachment.filename || "document")
-          .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
-          .replace(/^_+|_+$/g, '') // Remove leading/trailing underscores
-          .replace(/\/+/g, '_'); // Replace any slashes with underscores
-          
-        const fileExt = safeFilename.includes('.') ? 
-          safeFilename.substring(safeFilename.lastIndexOf('.')) : 
-          '.pdf';
-          
-        const fileName = `invoice_${timestamp}_${fileId}${fileExt}`;
-        
-        console.log("Generated sanitized filename:", fileName);
-        
-        // Upload to storage with new simplified naming pattern
-        try {
-          // Convert content to Uint8Array for storage upload
-          let content;
-          if (typeof attachment.content === 'string') {
-            content = new TextEncoder().encode(attachment.content);
-          } else if (attachment.content instanceof Blob) {
-            content = new Uint8Array(await attachment.content.arrayBuffer());
-          } else {
-            content = attachment.content;
-          }
-          
-          const { error: uploadError } = await supabase.storage
-            .from('invoices')
-            .upload(fileName, content, {
-              contentType: attachment.contentType,
-              upsert: true
-            });
-            
-          if (uploadError) {
-            console.error("Error uploading attachment:", uploadError);
-          } else {
-            // Get public URL
-            const { data: urlData } = supabase.storage
-              .from('invoices')
-              .getPublicUrl(fileName);
-              
-            // Apply URL normalization to prevent double slashes
-            pdfUrl = normalizeUrl(urlData.publicUrl);
-            console.log("Attachment uploaded successfully:", pdfUrl);
-          }
-        } catch (storageError) {
-          console.error("Storage error:", storageError);
-        }
-      }
-    }
-
     // Process the email to extract invoice information
     console.log("Processing invoice email to extract data");
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
@@ -203,11 +130,6 @@ serve(async (req) => {
 
     // Always attempt to create the invoice, even with partial data
     try {
-      // If we have a PDF URL, add it to the invoice data
-      if (pdfUrl) {
-        invoiceData.pdf_url = pdfUrl;
-      }
-      
       const invoice = await createInvoice(invoiceData);
 
       console.log("Invoice created successfully:", JSON.stringify({

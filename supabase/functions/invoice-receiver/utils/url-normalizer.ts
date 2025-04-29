@@ -1,65 +1,30 @@
 
 /**
- * Normalizes URLs by removing redundant slashes and ensuring proper formatting.
- * 
- * @param url The URL to normalize
- * @returns The normalized URL
+ * Normalizes URLs to prevent double slashes and other malformations
+ * @param {string} url The URL to normalize
+ * @returns {string} Normalized URL
  */
-export function normalizeUrl(url: string): string {
-  if (!url) return '';
+export function normalizeUrl(url) {
+  if (!url) return url;
   
   try {
-    // For URLs with protocol, use URL parsing for thorough normalization
-    if (url.startsWith('http')) {
-      const parsed = new URL(url);
+    // Handle protocol correctly
+    if (url.includes('://')) {
+      const [protocol, rest] = url.split('://');
       
-      // Clean the pathname by filtering empty segments
-      const pathSegments = parsed.pathname.split('/')
-        .filter(segment => segment !== '');
-      
-      // Reconstruct pathname with a single leading slash
-      parsed.pathname = '/' + pathSegments.join('/');
-      
-      return parsed.toString();
+      // Only normalize the path portion, not the query parameters
+      if (rest.includes('?')) {
+        const [path, query] = rest.split('?');
+        return `${protocol}://${path.replace(/\/+/g, '/')}?${query}`;
+      } else {
+        return `${protocol}://${rest.replace(/\/+/g, '/')}`;
+      }
+    } else {
+      // No protocol, just normalize slashes
+      return url.replace(/\/+/g, '/');
     }
-    
-    // For relative paths, handle carefully
-    // First remove leading slashes
-    let normalized = url.replace(/^\/+/, '');
-    // Then replace multiple consecutive slashes with a single one
-    normalized = normalized.replace(/\/+/g, '/');
-    
-    return normalized;
-  } catch (e) {
-    console.error('Error normalizing URL:', e);
-    // For any parsing errors, do basic normalization
-    return url.replace(/([^:])\/+/g, '$1/');
-  }
-}
-
-/**
- * Validates if a path exists within a Supabase storage bucket
- * 
- * @param supabase Supabase client
- * @param bucketName Name of the storage bucket
- * @param path Path within the bucket to check
- * @returns Boolean indicating if the file exists
- */
-export async function validateStoragePath(supabase: any, bucketName: string, path: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.storage
-      .from(bucketName)
-      .getPublicUrl(path);
-    
-    if (error) {
-      console.error("Error validating storage path:", error);
-      return false;
-    }
-    
-    const response = await fetch(data.publicUrl, { method: 'HEAD' });
-    return response.ok;
-  } catch (e) {
-    console.error("Exception validating storage path:", e);
-    return false;
+  } catch (error) {
+    console.error("Error normalizing URL:", error);
+    return url; // Return original URL if normalization fails
   }
 }

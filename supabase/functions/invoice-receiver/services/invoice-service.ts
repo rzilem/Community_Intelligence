@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getNextTrackingNumber, registerCommunication } from "./tracking-service.ts";
 
@@ -34,8 +35,7 @@ export async function createInvoice(invoiceData) {
       invoiceWithTracking.invoice_date = new Date().toISOString().split('T')[0];
     }
 
-    // Keep association_type if it exists in the schema
-    // We've added the column via SQL, so this is safe now
+    // Store both the signed URL (pdf_url) and the source document name
     console.log("Creating invoice with data:", {
       tracking_number: trackingNumber,
       invoice_number: invoiceWithTracking.invoice_number,
@@ -44,7 +44,7 @@ export async function createInvoice(invoiceData) {
       due_date: invoiceWithTracking.due_date,
       status: invoiceWithTracking.status,
       source_document: invoiceWithTracking.source_document || 'None',
-      association_type: invoiceWithTracking.association_type || null
+      pdf_url: invoiceWithTracking.pdf_url || 'None'
     });
 
     const { data, error } = await supabase.from("invoices").insert(invoiceWithTracking).select().single();
@@ -57,7 +57,8 @@ export async function createInvoice(invoiceData) {
       invoice_id: data.id,
       vendor: data.vendor,
       amount: data.amount,
-      invoice_number: data.invoice_number
+      invoice_number: data.invoice_number,
+      pdf_url: data.pdf_url
     });
 
     console.log(`Invoice created successfully with ID: ${data.id} and tracking number: ${trackingNumber}`);

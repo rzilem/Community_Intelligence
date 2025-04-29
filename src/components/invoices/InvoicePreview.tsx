@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDocumentViewer } from './preview/hooks/useDocumentViewer';
 import { Button } from '@/components/ui/button';
-import { RefreshCcw, AlertCircle, FileText } from 'lucide-react';
+import { RefreshCcw, AlertCircle, FileText, ExternalLink } from 'lucide-react';
+import { PdfPreview } from './preview/PdfPreview';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -22,6 +23,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     loading, 
     error, 
     iframeError, 
+    originalUrl,
     handleIframeError, 
     handleRetry 
   } = useDocumentViewer(pdfUrl);
@@ -31,6 +33,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const hasHtml = htmlContent && htmlContent.trim().length > 0;
   const hasEmailContent = emailContent && emailContent.trim().length > 0;
   const hasPdf = !!resolvedPdfUrl;
+
+  const openInNewTab = () => {
+    if (resolvedPdfUrl) {
+      window.open(resolvedPdfUrl, '_blank');
+    }
+  };
   
   return (
     <div className="invoice-preview h-full flex flex-col">
@@ -74,22 +82,34 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 <p className="text-sm text-muted-foreground mb-2">
                   {error || "The document couldn't be loaded. This could be due to an invalid URL or missing file."}
                 </p>
-                <Button variant="outline" onClick={handleRetry} className="flex items-center gap-2">
-                  <RefreshCcw className="h-4 w-4" />
-                  Try Again
-                </Button>
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={handleRetry} className="flex items-center gap-2">
+                    <RefreshCcw className="h-4 w-4" />
+                    Try Again
+                  </Button>
+                  {pdfUrl && (
+                    <Button variant="outline" onClick={openInNewTab} className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      Open in New Tab
+                    </Button>
+                  )}
+                </div>
+                {originalUrl && (
+                  <div className="mt-4 text-xs text-muted-foreground break-all max-w-full">
+                    <p>Original URL: {originalUrl.substring(0, 100)}{originalUrl.length > 100 ? '...' : ''}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
           
           {hasPdf && !isLoading && !hasError && (
-            <iframe
-              className="w-full h-full border-none"
-              src={resolvedPdfUrl}
-              title="Invoice PDF"
-              onError={handleIframeError}
-              sandbox="allow-scripts allow-same-origin"
-            />
+            <div className="h-full w-full">
+              <PdfPreview
+                url={resolvedPdfUrl}
+                onError={handleIframeError}
+              />
+            </div>
           )}
           
           {!hasPdf && !isLoading && !hasError && (

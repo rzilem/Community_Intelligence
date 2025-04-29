@@ -34,11 +34,14 @@ export async function processDocument(attachments = []) {
   });
 
   for (const attachment of sortedAttachments) {
-    const filename = attachment.filename || "unnamed_attachment.pdf";
-    const trimmedFilename = filename.trim();
-    const safeFilename = trimmedFilename.toLowerCase().endsWith('.pdf')
-      ? trimmedFilename.replace(/[^a-zA-Z0-9.-]/g, '_')
-      : `${trimmedFilename.replace(/[^a-zA-Z0-9.-]/g, '_')}.pdf`;
+    const originalFilename = attachment.filename || "unnamed_attachment.pdf";
+    const timestamp = new Date().getTime();
+    const safeFilename = originalFilename.trim()
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9.-]/g, '_');
+    
+    // Create a unique filename to avoid collisions
+    const storageFilename = `invoice_${timestamp}_${safeFilename}`;
     const contentType = attachment.contentType || "application/pdf";
     console.log(`Processing attachment: ${safeFilename} (${contentType})`);
 
@@ -91,10 +94,8 @@ export async function processDocument(attachments = []) {
     }
 
     try {
-      const timestamp = new Date().getTime();
-      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
-      console.log(`Uploading to Supabase with storageFilename: "${storageFilename}"`);
-
+      console.log(`Uploading file "${storageFilename}" to Supabase storage`);
+      
       const uploadResult = await supabase.storage.from('invoices').upload(storageFilename, contentBuffer, {
         contentType: contentType,
         upsert: true,
@@ -106,35 +107,33 @@ export async function processDocument(attachments = []) {
         continue;
       }
 
-      // Generate a signed URL instead of a public URL
+      console.log(`Successfully uploaded file to storage: ${storageFilename}`);
+      
+      // Generate a signed URL with 24-hour validity
       const { data: signedData, error: signedError } = await supabase.storage
         .from('invoices')
-        .createSignedUrl(storageFilename, 3600); // URL valid for 1 hour
+        .createSignedUrl(storageFilename, 24 * 60 * 60); // 24 hours in seconds
 
       if (signedError || !signedData?.signedUrl) {
         console.error("Failed to generate signed URL:", signedError);
         continue;
       }
 
-      // Validate URL format - remove double slashes in path portion
-      let cleanedUrl = signedData.signedUrl;
-      if (cleanedUrl.includes('://')) {
-        const [protocol, rest] = cleanedUrl.split('://');
-        // Only normalize the path portion, not the query parameters
-        if (rest.includes('?')) {
-          const [path, query] = rest.split('?');
-          cleanedUrl = `${protocol}://${path.replace(/\/+/g, '/')}?${query}`;
-        } else {
-          cleanedUrl = `${protocol}://${rest.replace(/\/+/g, '/')}`;
-        }
-      }
+      // Generate public URL as well (for later access)
+      const { data: publicUrlData } = await supabase.storage
+        .from('invoices')
+        .getPublicUrl(storageFilename);
+      
+      console.log(`Generated signed URL (valid for 24 hours): ${signedData.signedUrl}`);
+      console.log(`Also generated public URL: ${publicUrlData.publicUrl}`);
 
-      console.log(`Generated signed URL: "${cleanedUrl}"`);
       processedAttachment = {
         ...attachment,
-        url: cleanedUrl,
+        url: signedData.signedUrl,
+        public_url: publicUrlData.publicUrl,
         filename: storageFilename,
-        source_document: safeFilename
+        source_document: safeFilename,
+        original_filename: originalFilename
       };
 
       // Extract text if PDF
@@ -144,6 +143,7 @@ export async function processDocument(attachments = []) {
           console.log(`Extracted ${documentContent.length} characters of text from PDF`);
         } catch (extractError) {
           console.error(`Error extracting text from PDF: ${extractError.message}`);
+          // Continue anyway - we have the PDF file stored successfully
         }
       }
       

@@ -55,6 +55,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   };
   
+  const handleExternalOpen = () => {
+    if (onExternalOpen) {
+      onExternalOpen();
+    } else if (isPdf && (fetchedPdfUrl || pdfUrl)) {
+      window.open(fetchedPdfUrl || pdfUrl, '_blank');
+    }
+  };
+  
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
   };
@@ -65,11 +73,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
         <p className="text-center mb-4">Word documents cannot be previewed directly.</p>
         <p className="text-center text-sm text-muted-foreground mb-6">Please download and open in a compatible application.</p>
-        {onExternalOpen && (
-          <Button onClick={onExternalOpen} variant="outline">
-            <ExternalLink className="h-4 w-4 mr-2" /> Open Original
-          </Button>
-        )}
+        <Button onClick={handleExternalOpen} variant="outline">
+          <ExternalLink className="h-4 w-4 mr-2" /> Open Original
+        </Button>
       </div>
     );
   }
@@ -114,11 +120,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <Button onClick={handleDownload} variant="outline">
             <Download className="h-4 w-4 mr-2" /> Download
           </Button>
-          {onExternalOpen && (
-            <Button onClick={onExternalOpen} variant="outline">
-              <ExternalLink className="h-4 w-4 mr-2" /> Open Original
-            </Button>
-          )}
+          <Button onClick={handleExternalOpen} variant="outline">
+            <ExternalLink className="h-4 w-4 mr-2" /> Open in Browser
+          </Button>
           <Button onClick={toggleDebugMode} variant="outline" size="sm">
             {debugMode ? "Hide" : "Show"} Debug Info
           </Button>
