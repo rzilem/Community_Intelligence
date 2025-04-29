@@ -1,4 +1,6 @@
+
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   BarChart2,
   Building,
@@ -11,13 +13,11 @@ import {
   Calendar,
   MessageSquare,
   Settings,
-  HelpCircle,
-  LogOut,
-  LayoutDashboard,
-  LucideIcon,
+  ShieldCheck,
+  BookOpenCheck,
+  Contact2,
   Mail,
-  Bell,
-  CheckSquare,
+  Zap,
   ListChecks,
   UserPlus,
   ShoppingCart,
@@ -25,544 +25,15 @@ import {
   Coins,
   DollarSign,
   Key,
-  ShieldCheck,
-  BookOpenCheck,
-  BarChart,
-  ClipboardList,
-  KanbanSquare,
-  Contact2,
-  Badge as LucideBadge,
-  Headphones,
-  CircleUserRound,
   ScrollText,
-  Image,
-  Link as LucideLink,
-  GitFork,
   ListOrdered,
-  GalleryVertical,
-  Lucide,
-  UserCog,
-  User,
-  Tag,
   Tags,
-  Pencil,
-  Trash2,
-  Copy,
-  Move,
-  Plus,
-  Edit,
-  Eye,
-  EyeOff,
-  ChevronsUpDown,
-  ChevronDown,
-  ChevronUp,
-  DoubleArrowRight,
-  PanelLeft,
-  PanelRight,
-  PanelTop,
-  PanelBottom,
-  PanelLeftOpen,
-  PanelRightOpen,
-  PanelTopOpen,
-  PanelBottomOpen,
-  PanelLeftClose,
-  PanelRightClose,
-  PanelTopClose,
-  PanelBottomClose,
-  PanelLeftShrink,
-  PanelRightShrink,
-  PanelTopShrink,
-  PanelBottomShrink,
-  PanelLeftExpand,
-  PanelRightExpand,
-  PanelTopExpand,
-  PanelBottomExpand,
-  PanelLeftCenter,
-  PanelRightCenter,
-  PanelTopCenter,
-  PanelBottomCenter,
-  PanelLeftAlign,
-  PanelRightAlign,
-  PanelTopAlign,
-  PanelBottomAlign,
-  PanelLeftJustify,
-  PanelRightJustify,
-  PanelTopJustify,
-  PanelBottomJustify,
-  PanelLeftDistributeHorizontal,
-  PanelRightDistributeHorizontal,
-  PanelTopDistributeHorizontal,
-  PanelBottomDistributeHorizontal,
-  PanelLeftDistributeVertical,
-  PanelRightDistributeVertical,
-  PanelTopDistributeVertical,
-  PanelBottomDistributeVertical,
-  PanelLeftDistributeBoth,
-  PanelRightDistributeBoth,
-  PanelTopDistributeBoth,
-  PanelBottomDistributeBoth,
-  PanelLeftDistributeNone,
-  PanelRightDistributeNone,
-  PanelTopDistributeNone,
-  PanelBottomDistributeNone,
-  PanelLeftDistributeEvenly,
-  PanelRightDistributeEvenly,
-  PanelTopDistributeEvenly,
-  PanelBottomDistributeEvenly,
-  PanelLeftDistributeCenter,
-  PanelRightDistributeCenter,
-  PanelTopDistributeCenter,
-  PanelBottomDistributeCenter,
-  PanelLeftDistributeAround,
-  PanelRightDistributeAround,
-  PanelTopDistributeAround,
-  PanelBottomDistributeAround,
-  PanelLeftDistributeBetween,
-  PanelRightDistributeBetween,
-  PanelTopDistributeBetween,
-  PanelBottomDistributeBetween,
-  PanelLeftDistributeStretch,
-  PanelRightDistributeStretch,
-  PanelTopDistributeStretch,
-  PanelBottomDistributeStretch,
-  PanelLeftDistributeSpaceAround,
-  PanelRightDistributeSpaceAround,
-  PanelTopDistributeSpaceAround,
-  PanelBottomDistributeSpaceAround,
-  PanelLeftDistributeSpaceBetween,
-  PanelRightDistributeSpaceBetween,
-  PanelTopDistributeSpaceBetween,
-  PanelBottomDistributeSpaceBetween,
-  PanelLeftDistributeSpaceEvenly,
-  PanelRightDistributeSpaceEvenly,
-  PanelTopDistributeSpaceEvenly,
-  PanelBottomDistributeSpaceEvenly,
-  PanelLeftDistributeSpaceStretch,
-  PanelRightDistributeSpaceStretch,
-  PanelTopDistributeSpaceStretch,
-  PanelBottomDistributeSpaceStretch,
-  PanelLeftDistributeSpaceCenter,
-  PanelRightDistributeSpaceCenter,
-  PanelTopDistributeSpaceCenter,
-  PanelBottomDistributeSpaceCenter,
-  PanelLeftDistributeSpaceAroundCenter,
-  PanelRightDistributeSpaceAroundCenter,
-  PanelTopDistributeSpaceAroundCenter,
-  PanelBottomDistributeSpaceAroundCenter,
-  PanelLeftDistributeSpaceBetweenCenter,
-  PanelRightDistributeSpaceBetweenCenter,
-  PanelTopDistributeSpaceBetweenCenter,
-  PanelBottomDistributeSpaceBetweenCenter,
-  PanelLeftDistributeSpaceEvenlyCenter,
-  PanelRightDistributeSpaceEvenlyCenter,
-  PanelTopDistributeSpaceEvenlyCenter,
-  PanelBottomDistributeSpaceEvenlyCenter,
-  PanelLeftDistributeSpaceStretchCenter,
-  PanelRightDistributeSpaceStretchCenter,
-  PanelTopDistributeSpaceStretchCenter,
-  PanelBottomDistributeSpaceStretchCenter,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceBetweenStretch,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundAround,
-  PanelRightDistributeSpaceAroundAround,
-  PanelTopDistributeSpaceAroundAround,
-  PanelBottomDistributeSpaceAroundAround,
-  PanelLeftDistributeSpaceBetweenBetween,
-  PanelRightDistributeSpaceBetweenBetween,
-  PanelTopDistributeSpaceBetweenBetween,
-  PanelBottomDistributeSpaceBetweenBetween,
-  PanelLeftDistributeSpaceEvenlyEvenly,
-  PanelRightDistributeSpaceEvenlyEvenly,
-  PanelTopDistributeSpaceEvenlyEvenly,
-  PanelBottomDistributeSpaceEvenlyEvenly,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
-  PanelLeftDistributeSpaceAroundBetween,
-  PanelRightDistributeSpaceAroundBetween,
-  PanelTopDistributeSpaceAroundBetween,
-  PanelBottomDistributeSpaceAroundBetween,
-  PanelLeftDistributeSpaceBetweenAround,
-  PanelRightDistributeSpaceBetweenAround,
-  PanelTopDistributeSpaceBetweenAround,
-  PanelBottomDistributeSpaceBetweenAround,
-  PanelLeftDistributeSpaceEvenlyAround,
-  PanelRightDistributeSpaceEvenlyAround,
-  PanelTopDistributeSpaceEvenlyAround,
-  PanelBottomDistributeSpaceEvenlyAround,
-  PanelLeftDistributeSpaceStretchAround,
-  PanelRightDistributeSpaceStretchAround,
-  PanelTopDistributeSpaceStretchAround,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceAroundEvenly,
-  PanelRightDistributeSpaceAroundEvenly,
-  PanelTopDistributeSpaceAroundEvenly,
-  PanelBottomDistributeSpaceAroundEvenly,
-  PanelLeftDistributeSpaceBetweenEvenly,
-  PanelRightDistributeSpaceBetweenEvenly,
-  PanelTopDistributeSpaceBetweenEvenly,
-  PanelBottomDistributeSpaceBetweenEvenly,
-  PanelLeftDistributeSpaceEvenlyBetween,
-  PanelRightDistributeSpaceEvenlyBetween,
-  PanelTopDistributeSpaceEvenlyBetween,
-  PanelBottomDistributeSpaceEvenlyBetween,
-  PanelLeftDistributeSpaceStretchEvenly,
-  PanelRightDistributeSpaceStretchEvenly,
-  PanelTopDistributeSpaceStretchEvenly,
-  PanelBottomDistributeSpaceStretchEvenly,
-  PanelLeftDistributeSpaceAroundStretch,
-  PanelRightDistributeSpaceAroundStretch,
-  PanelTopDistributeSpaceAroundStretch,
-  PanelBottomDistributeSpaceStretchAround,
-  PanelLeftDistributeSpaceBetweenStretch,
-  PanelRightDistributeSpaceBetweenStretch,
-  PanelTopDistributeSpaceBetweenStretch,
-  PanelBottomDistributeSpaceStretchBetween,
-  PanelLeftDistributeSpaceEvenlyStretch,
-  PanelRightDistributeSpaceEvenlyStretch,
-  PanelTopDistributeSpaceEvenlyStretch,
-  PanelBottomDistributeSpaceEvenlyStretch,
-  PanelLeftDistributeSpaceStretchStretch,
-  PanelRightDistributeSpaceStretchStretch,
-  PanelTopDistributeSpaceStretchStretch,
-  PanelBottomDistributeSpaceStretchStretch,
+  Image,
+  GitFork,
+  LucideIcon,
+  LayoutDashboard
 } from 'lucide-react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -668,25 +139,25 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   const renderAccounting = () => (
     <div className="space-y-1">
-      <SidebarNavItem to="/accounting/dashboard" icon={<BarChart2 className="h-5 w-5" />}>Dashboard</SidebarNavItem>
-      <SidebarNavItem to="/accounting/bank-accounts" icon={<Building className="h-5 w-5" />}>Bank Accounts</SidebarNavItem>
+      <SidebarNavItem to="/accounting/dashboard" icon={BarChart2}>Dashboard</SidebarNavItem>
+      <SidebarNavItem to="/accounting/bank-accounts" icon={Building}>Bank Accounts</SidebarNavItem>
     
-    {/* Updated to show notification badge on Invoice Queue */}
-    <SidebarNavItem 
-      to="/accounting/invoice-queue" 
-      icon={<Inbox className="h-5 w-5" />}
-      badge={unreadInvoicesCount > 0 ? unreadInvoicesCount : undefined}
-    >
-      Invoice Queue
-    </SidebarNavItem>
+      {/* Updated to show notification badge on Invoice Queue */}
+      <SidebarNavItem 
+        to="/accounting/invoice-queue" 
+        icon={Inbox}
+        badge={unreadInvoicesCount > 0 ? unreadInvoicesCount : undefined}
+      >
+        Invoice Queue
+      </SidebarNavItem>
     
-      <SidebarNavItem to="/accounting/transactions" icon={<RefreshCcw className="h-5 w-5" />}>
+      <SidebarNavItem to="/accounting/transactions" icon={RefreshCcw}>
         Transactions
       </SidebarNavItem>
-      <SidebarNavItem to="/accounting/gl-accounts" icon={<FileText className="h-5 w-5" />}>
+      <SidebarNavItem to="/accounting/gl-accounts" icon={FileText}>
         GL Accounts
       </SidebarNavItem>
-      <SidebarNavItem to="/accounting/budgeting" icon={<PieChart className="h-5 w-5" />}>
+      <SidebarNavItem to="/accounting/budgeting" icon={PieChart}>
         Budget Planning
       </SidebarNavItem>
     </div>
@@ -740,4 +211,91 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           >
             <rect width="32" height="32" rx="16" fill="#725BFF" />
             <path
-              d="M17.875 21.3333C17.875 19.4926 16.3824 18 14.5417 18C12.701 18 11.2083 19.4926 11.2083 21.3333C11.2083 23.174 12.701 24.6667 14.5417 24.6667C16.3824 24.6667 17.875 23.174 17.875 21.3333ZM20.2083 13C20.2083 14.8407 18.7157 16.3333 16.875 16.3333C15.0343 16.3333 13.5417 14.8407 13.5417 13C13.5417 11.1593 15.0343 9.66667 16.875 9.66667C18.7157 9.66667 20.2083 11.1593 20.2083 13ZM20.875 19.6667C20.875 21.0926 22.0326 22.25 23.4583 22.25C24.884 22.25 26.0417 21.0926 26.0417 19.6667C26.0417 18.2407 24.884 17.0833 23.4583 17.0833C22.0326 17.0833 20.875 18.2407 20.875 19.6667ZM8.54167 13C8.54167 14.4259 9.69933 15.5833 11.125 15.5833C12.5507 15.5833 13.7083 14.4259 13.7083 13C13.7083 11.5741 12.5507 10.4167 11.125 10.4167C9.69933 10.4167 8.54167 11.5741 8.54167 13ZM5.95833 19.6667C5.95833 21.7333 7.64167 23.4167 9.70833 23.4167C11.775 23.4167 13.4583 21.7333 13.4583 19.6667C13.4583 17.6 11.775 15.9167 9.70833 15.9167C7.64167 15.9167 5.95833 17.6 5.95833 19.6667ZM23.4583 15.5
+              d="M17.875 21.3333C17.875 19.4926 16.3824 18 14.5417 18C12.701 18 11.2083 19.4926 11.2083 21.3333C11.2083 23.174 12.701 24.6667 14.5417 24.6667C16.3824 24.6667 17.875 23.174 17.875 21.3333ZM20.2083 13C20.2083 14.8407 18.7157 16.3333 16.875 16.3333C15.0343 16.3333 13.5417 14.8407 13.5417 13C13.5417 11.1593 15.0343 9.66667 16.875 9.66667C18.7157 9.66667 20.2083 11.1593 20.2083 13ZM20.875 19.6667C20.875 21.0926 22.0326 22.25 23.4583 22.25C24.884 22.25 26.0417 21.0926 26.0417 19.6667C26.0417 18.2407 24.884 17.0833 23.4583 17.0833C22.0326 17.0833 20.875 18.2407 20.875 19.6667ZM8.54167 13C8.54167 14.4259 9.69933 15.5833 11.125 15.5833C12.5507 15.5833 13.7083 14.4259 13.7083 13C13.7083 11.5741 12.5507 10.4167 11.125 10.4167C9.69933 10.4167 8.54167 11.5741 8.54167 13ZM5.95833 19.6667C5.95833 21.7333 7.64167 23.4167 9.70833 23.4167C11.775 23.4167 13.4583 21.7333 13.4583 19.6667C13.4583 17.6 11.775 15.9167 9.70833 15.9167C7.64167 15.9167 5.95833 17.6 5.95833 19.6667Z"
+              fill="white"
+            />
+          </svg>
+          <span className="ml-2">Community Intelligence</span>
+        </Link>
+      </div>
+
+      <div className="flex-1 px-3">
+        <div className="space-y-4 py-3">
+          <Accordion type="multiple" defaultValue={["accounting"]}>
+            <AccordionItem value="dashboard">
+              <AccordionTrigger className="px-3">Dashboard</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderDashboard()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="community">
+              <AccordionTrigger className="px-3">Community Management</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderCommunityManagement()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="leads">
+              <AccordionTrigger className="px-3">Lead Management</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderLeadManagement()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="resale">
+              <AccordionTrigger className="px-3">Resale Management</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderResaleManagement()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="marketplace">
+              <AccordionTrigger className="px-3">Marketplace</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderMarketplace()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="accounting">
+              <AccordionTrigger className="px-3">Accounting</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderAccounting()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="system">
+              <AccordionTrigger className="px-3">System</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderSystem()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="portal">
+              <AccordionTrigger className="px-3">Portal</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderPortal()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="knowledge">
+              <AccordionTrigger className="px-3">Knowledge Base</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderKnowledgeBase()}
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="developers">
+              <AccordionTrigger className="px-3">Developers</AccordionTrigger>
+              <AccordionContent className="pl-3">
+                {renderDevelopers()}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Sidebar;
