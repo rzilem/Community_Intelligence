@@ -28,6 +28,12 @@ export function useDocumentViewer(invoiceId: string) {
       setIframeError(false);
 
       console.log(`Fetching PDF URL for invoice: ${invoiceId}`);
+      
+      if (!invoiceId) {
+        setLoading(false);
+        return;
+      }
+      
       const { data: invoice, error: fetchError } = await supabase
         .from('invoices')
         .select('pdf_url, source_document')
@@ -44,11 +50,16 @@ export function useDocumentViewer(invoiceId: string) {
       setOriginalUrl(invoice.pdf_url);
 
       // Create a proxy URL to handle the PDF display more reliably
-      const pdfProxyEndpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-proxy`;
-      const proxyUrl = `${pdfProxyEndpoint}?pdf=${encodeURIComponent(invoice.pdf_url)}`;
+      if (import.meta.env.VITE_SUPABASE_URL) {
+        const pdfProxyEndpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/pdf-proxy`;
+        const proxyUrl = `${pdfProxyEndpoint}?pdf=${encodeURIComponent(invoice.pdf_url)}`;
+        
+        console.log(`Generated proxy URL: ${proxyUrl}`);
+        setProxyUrl(proxyUrl);
+      } else {
+        console.warn("VITE_SUPABASE_URL environment variable not found, using original PDF URL");
+      }
       
-      console.log(`Generated proxy URL: ${proxyUrl}`);
-      setProxyUrl(proxyUrl);
       setPdfUrl(invoice.pdf_url);
     } catch (err) {
       console.error("useDocumentViewer error:", err);
