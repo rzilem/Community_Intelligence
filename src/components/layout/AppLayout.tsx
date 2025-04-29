@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
 import Sidebar from './Sidebar';
-import Header from './Header';
+import AppLayoutHeader from './AppLayoutHeader';
+import AppLayoutContent from './AppLayoutContent';
 import { getFilteredNavItems } from './navigation-utils';
 import { AppLayoutProps } from './types';
 
@@ -58,14 +59,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         handleSignOut={handleSignOut}
       />
 
-      <div 
-        className={cn(
-          "flex flex-col w-full transition-all duration-300 ease-in-out",
-          !isMobile && isSidebarOpen ? "md:ml-64" : ""
-        )}
+      <AppLayoutContent 
+        isMobile={isMobile}
+        isSidebarOpen={isSidebarOpen}
       >
-        <Header 
-          isMobile={isMobile}
+        <AppLayoutHeader 
           user={user}
           profile={profile}
           toggleSidebar={toggleSidebar}
@@ -75,7 +73,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <main className="flex-1 overflow-auto">
           {children}
         </main>
-      </div>
+      </AppLayoutContent>
     </div>
   );
 };

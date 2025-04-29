@@ -1,7 +1,8 @@
 
 import { createContext } from 'react';
+import { NotificationItem } from '@/hooks/useNotifications';
 
-export interface Notification {
+export interface Notification extends NotificationItem {
   id: string;
   title: string;
   message: string;
@@ -17,6 +18,8 @@ interface NotificationContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   unreadCount: number;
+  deleteNotification?: (id: string) => void;
+  setNotifications?: (notifications: Notification[]) => void;
 }
 
 export const NotificationContext = createContext<NotificationContextType>({
