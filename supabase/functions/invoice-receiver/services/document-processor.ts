@@ -1,4 +1,5 @@
-import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType } from "../utils/document-parser.ts";
+
+import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType, normalizeFilename, isPdfContent } from "../utils/document-parser.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -32,8 +33,8 @@ export async function processDocument(attachments = []) {
   });
 
   for (const attachment of sortedAttachments) {
-    const filename = attachment.filename || "unnamed_attachment";
-    const contentType = attachment.contentType || "application/octet-stream";
+    const filename = attachment.filename || "unnamed_attachment.pdf";
+    const contentType = attachment.contentType || "application/pdf";
     console.log(`Processing attachment: ${filename} (${contentType})`);
 
     if (!attachment.content) {
@@ -60,6 +61,15 @@ export async function processDocument(attachments = []) {
         console.error("Empty content buffer after processing");
         continue;
       }
+
+      // Log the first few bytes to check if it's a valid PDF
+      const fileHeader = new TextDecoder().decode(contentBuffer.slice(0, Math.min(20, contentBuffer.length)));
+      console.log(`Content header for ${filename}: ${fileHeader}`);
+      
+      // For PDF files, validate the header
+      if (contentType.includes('pdf') && !isPdfContent(contentBuffer)) {
+        console.warn(`File ${filename} has content type ${contentType} but doesn't start with %PDF- header`);
+      }
     } catch (processError) {
       console.error(`Error processing attachment content: ${processError.message}`);
       continue;
@@ -67,13 +77,13 @@ export async function processDocument(attachments = []) {
 
     try {
       const timestamp = new Date().getTime();
-      const safeFilename = filename.replace(/ RENAMED TO AVOID CODEBLOCK BREAK -[^a-zA-Z0-9.-]/g, '_').replace(/\/+/g, '_'); // Avoid slashes
-      const storageFilename = `invoices/invoice_${timestamp}_${safeFilename}`; // Add folder prefix
+      const safeFilename = normalizeFilename(filename);
+      const storageFilename = `invoices/${timestamp}_${safeFilename}`;
       const sourceDocument = safeFilename;
 
       console.log(`Uploading ${filename} to invoices bucket as ${storageFilename}`);
       const uploadResult = await supabase.storage.from('invoices').upload(storageFilename, contentBuffer, {
-        contentType: contentType,
+        contentType: contentType.includes('pdf') ? 'application/pdf' : contentType,
         upsert: true,
         duplex: 'full'
       });
@@ -82,6 +92,13 @@ export async function processDocument(attachments = []) {
         console.error("Failed to upload document:", uploadResult.error);
         continue;
       }
+
+      // Get a public URL for reference
+      const { data: publicUrlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(storageFilename);
+
+      console.log(`Public URL: ${publicUrlData?.publicUrl || 'none'}`);
 
       // Generate a signed URL for secure access (valid for 1 hour)
       const { data: signedData, error: signedError } = await supabase.storage
@@ -138,10 +155,10 @@ export async function processDocument(attachments = []) {
     console.log("No documents were successfully processed, using first attachment as fallback");
     try {
       const firstAttachment = attachments[0];
-      const filename = firstAttachment.filename || "unnamed_attachment";
+      const filename = firstAttachment.filename || "unnamed_attachment.pdf";
       const timestamp = new Date().getTime();
-      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\/+/g, '_');
-      const storageFilename = `invoices/invoice_${timestamp}_${safeFilename}`;
+      const safeFilename = normalizeFilename(filename);
+      const storageFilename = `invoices/${timestamp}_${safeFilename}`;
       let contentBuffer;
 
       if (typeof firstAttachment.content === 'string') {
@@ -154,7 +171,7 @@ export async function processDocument(attachments = []) {
       }
 
       const uploadResult = await supabase.storage.from('invoices').upload(storageFilename, contentBuffer, {
-        contentType: firstAttachment.contentType || 'application/octet-stream',
+        contentType: firstAttachment.contentType || 'application/pdf',
         upsert: true
       });
 

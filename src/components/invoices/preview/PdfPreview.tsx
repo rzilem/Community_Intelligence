@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { toast } from 'sonner';
-import { FileText, ExternalLink, Download, Bug } from 'lucide-react';
+import { FileText, ExternalLink, Download, Bug, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // Set worker source
@@ -22,6 +22,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
   const [debugMode, setDebugMode] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [normalizedUrl, setNormalizedUrl] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
 
   // Enhanced URL normalization function
   const normalizeUrlPath = (url: string): string => {
@@ -40,6 +41,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
         
         parsed.pathname = '/' + pathSegments.join('/');
         
+        // Preserve query parameters (important for signed URLs with tokens)
         const normalized = parsed.toString();
         console.log('PdfPreview: Normalized URL result:', normalized);
         return normalized;
@@ -64,7 +66,15 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
 
   // Check if the URL is a signed URL
   const isSignedUrl = (url: string): boolean => {
-    return url.includes('token=') && url.includes('supabase.co');
+    return url.includes('token=');
+  };
+
+  // Check if URL is likely to be valid
+  const isValidPdfUrl = (url: string): boolean => {
+    if (!url) return false;
+    // Check if URL has a PDF extension or is a Supabase storage URL
+    return url.toLowerCase().endsWith('.pdf') || 
+           (isSupabaseStorageUrl(url) && (url.includes('/invoices/') || url.includes('/pdf-proxy')));
   };
 
   useEffect(() => {
@@ -77,17 +87,23 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
       return;
     }
 
+    if (!isValidPdfUrl(url)) {
+      console.warn(`URL may not be a valid PDF: ${url}`);
+    }
+
     // Normalize the URL
     const normalizedUrl = normalizeUrlPath(url);
     setNormalizedUrl(normalizedUrl);
     
     // Log URL type for debugging
     if (isSupabaseStorageUrl(normalizedUrl)) {
-      console.log("Using direct Supabase storage URL");
-    } else if (isSignedUrl(normalizedUrl)) {
-      console.log("Using signed Supabase URL");
+      if (isSignedUrl(normalizedUrl)) {
+        console.log("Using signed Supabase URL");
+      } else {
+        console.log("Using direct Supabase storage URL");
+      }
     } else {
-      console.log("Using proxy or external URL");
+      console.log("Using external URL");
     }
 
     const loadPdf = async () => {
@@ -102,13 +118,24 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
           setPdfDoc(null);
         }
         
-        // Load the PDF
-        const loadingTask = pdfjsLib.getDocument({
+        // Prepare headers for CORS
+        const loadingOptions: pdfjsLib.DocumentInitParameters = {
           url: normalizedUrl,
           withCredentials: false,
           cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdfjs-dist/3.11.174/cmaps/',
           cMapPacked: true,
-        });
+        };
+
+        // For signed URLs, add a cache-busting query param
+        if (isSignedUrl(normalizedUrl)) {
+          // Use the existing URL object to preserve all parameters
+          const urlObj = new URL(normalizedUrl);
+          urlObj.searchParams.append('_cb', Date.now().toString());
+          loadingOptions.url = urlObj.toString();
+        }
+        
+        // Load the PDF
+        const loadingTask = pdfjsLib.getDocument(loadingOptions);
         
         // Add progress logging
         loadingTask.onProgress = (progressData) => {
@@ -142,13 +169,22 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
             setLoading(false);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading PDF:', error);
         setError(true);
         setErrorDetails(error.message || "Unknown error");
         setLoading(false);
-        toast.error('Error loading PDF preview: ' + error.message);
         if (onError) onError();
+
+        // If this was a network error and we haven't retried too many times, try again
+        if (error.name === 'MissingPDFException' || error.message?.includes('network') || error.message?.includes('Failed to fetch')) {
+          if (retryCount < 2) {
+            console.log(`Retrying PDF load (attempt ${retryCount + 1})...`);
+            setRetryCount(prev => prev + 1);
+            // Try again after a short delay
+            setTimeout(() => loadPdf(), 2000);
+          }
+        }
       }
     };
 
@@ -162,7 +198,7 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
         pdfDoc.destroy().catch(err => console.error("Error destroying PDF document:", err));
       }
     };
-  }, [url, scale, onError]);
+  }, [url, scale, onError, retryCount]);
 
   // Function to open the PDF in a new tab
   const handleOpenExternal = () => {
@@ -171,9 +207,26 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
     }
   };
 
+  // Manually retry loading
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+  };
+
   // Toggle debug mode
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  // Download the PDF
+  const handleDownload = () => {
+    if (normalizedUrl) {
+      const link = document.createElement('a');
+      link.href = normalizedUrl;
+      link.download = 'document.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   // Determine URL type for debug information
@@ -201,15 +254,29 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
         <FileText className="h-16 w-16 text-muted-foreground mb-4" />
         <div className="text-red-500 mb-2 text-center">Failed to load PDF preview</div>
         <div className="text-sm text-muted-foreground mb-4 text-center">
-          Check if the file exists in the storage bucket
+          The PDF file could not be loaded
         </div>
         <div className="flex flex-wrap gap-2 justify-center">
+          <Button 
+            onClick={handleRetry} 
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <RefreshCcw className="h-4 w-4 mr-1" /> Retry
+          </Button>
           <Button 
             onClick={handleOpenExternal} 
             variant="outline"
             className="flex items-center gap-1"
           >
             <ExternalLink className="h-4 w-4" /> Open in New Tab
+          </Button>
+          <Button 
+            onClick={handleDownload} 
+            variant="outline"
+            className="flex items-center gap-1"
+          >
+            <Download className="h-4 w-4" /> Download
           </Button>
           <Button 
             onClick={toggleDebugMode} 
@@ -232,6 +299,8 @@ export const PdfPreview: React.FC<PdfPreviewProps> = ({ url, onError }) => {
             <p className="break-all mb-2">{url}</p>
             <p className="font-bold">Normalized URL:</p>
             <p className="break-all mb-2">{normalizedUrl}</p>
+            <p className="font-bold">Retry Count:</p>
+            <p className="mb-2">{retryCount}</p>
             {url.includes('//') && !url.includes('://') && (
               <p className="text-orange-500 font-bold">Warning: URL contains suspicious double slashes!</p>
             )}
