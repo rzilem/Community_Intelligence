@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText, MessageSquare } from 'lucide-react';
@@ -33,25 +32,23 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Check if we're in a portal route to auto-expand the portal section
     if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/resale-portal')) {
       setActiveSection('portal-selection');
-    }
-
-    // Check for other section matches
-    mainNavItems.forEach(item => {
-      if (item.submenu) {
-        const isSubmenuActive = item.submenu.some(subItem => location.pathname === subItem.path);
-        if (isSubmenuActive) {
-          setActiveSection(item.path.replace('/', ''));
+    } else {
+      // Check for other section matches
+      mainNavItems.forEach(item => {
+        if (item.submenu) {
+          const isSubmenuActive = item.submenu.some(subItem => location.pathname === subItem.path);
+          if (isSubmenuActive) {
+            setActiveSection(item.path.replace('/', ''));
+          }
         }
-      }
-    });
+      });
+    }
   }, [location.pathname, mainNavItems]);
 
   const toggleSection = (section: string) => {
-    if (activeSection === section) {
-      setActiveSection(null);
-    } else {
-      setActiveSection(section);
-    }
+    // Fixed toggle logic: If the clicked section is already active, close it.
+    // Otherwise, open the clicked section and close others
+    setActiveSection(activeSection === section ? null : section);
   };
 
   const hasActiveSubmenu = (item: NavItemProps) => {
