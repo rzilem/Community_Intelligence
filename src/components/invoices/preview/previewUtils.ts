@@ -37,11 +37,7 @@ export const normalizeUrl = (url: string): string => {
       // Replace multiple consecutive slashes with a single one
       normalized = normalized.replace(/\/+/g, '/');
       
-      // Add protocol if needed for displaying in browser
-      if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
-        return 'https://' + normalized;
-      }
-      
+      // Don't add protocol for storage paths or relative URLs
       return normalized;
     }
   } catch (e) {
@@ -68,7 +64,8 @@ export const isPdf = (urlOrFilename: string): boolean => {
 
 export const isImage = (urlOrFilename: string): boolean => {
   const lowerUrl = urlOrFilename.toLowerCase();
-  return lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.gif');
+  return lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || 
+         lowerUrl.endsWith('.png') || lowerUrl.endsWith('.gif');
 };
 
 export const getFileExtension = (urlOrFilename: string): string => {
