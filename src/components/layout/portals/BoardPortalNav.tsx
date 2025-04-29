@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export const boardPortalItems = [{
   name: 'Dashboard',
-  path: '/portal/board/dashboard',
+  path: '/portal/board',
   icon: LayoutDashboard
 }, {
   name: 'Invoices',

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Home } from 'lucide-react';
@@ -30,6 +31,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { notifications } = useNotificationContext();
 
+  // Determine if we're in any portal area
+  const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
+  const isBoardPortal = location.pathname.startsWith('/portal/board');
+  const isResalePortal = location.pathname.startsWith('/resale-portal');
+  const isVendorPortal = location.pathname.startsWith('/portal/vendor');
+
   useEffect(() => {
     // Check if we're in a portal route to auto-expand the portal section
     if (location.pathname.startsWith('/portal') || location.pathname.startsWith('/resale-portal')) {
@@ -45,7 +52,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         }
       });
     }
-  }, [location.pathname, mainNavItems]);
+    
+    console.log('Current path:', location.pathname);
+    console.log('isHomeownerPortal:', isHomeownerPortal);
+    console.log('isBoardPortal:', isBoardPortal);
+    console.log('isVendorPortal:', isVendorPortal);
+    console.log('isResalePortal:', isResalePortal);
+    
+  }, [location.pathname, mainNavItems, isHomeownerPortal, isBoardPortal, isVendorPortal, isResalePortal]);
 
   const toggleSection = (section: string) => {
     // Fixed toggle logic: If the clicked section is already active, close it.
@@ -57,11 +71,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (!item.submenu) return false;
     return item.submenu.some(subItem => location.pathname === subItem.path);
   };
-
-  const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
-  const isBoardPortal = location.pathname.startsWith('/portal/board');
-  const isResalePortal = location.pathname.startsWith('/resale-portal');
-  const isVendorPortal = location.pathname.startsWith('/portal/vendor');
 
   // Portal menu items for the portal selection submenu
   const portalMenuItems = getPortalMenuItems(location.pathname);
