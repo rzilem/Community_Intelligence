@@ -28,26 +28,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [debugMode, setDebugMode] = useState(false);
   
   const {
-    iframeError,
+    pdfUrl: fetchedPdfUrl,
     loading,
+    error,
+    iframeError,
     proxyUrl,
     originalUrl,
     handleIframeError,
     handleRetry
-  } = useDocumentViewer({
-    pdfUrl,
-    isPdf,
-    onIframeError,
-    onIframeLoad
-  });
+  } = useDocumentViewer(isPdf ? pdfUrl.split('?')[0].split('/').pop() || '' : '');
   
   const handleDownload = () => {
     if (isPdf && pdfUrl) {
       let downloadUrl = pdfUrl;
-      // If it's not an absolute URL, use the proxyUrl which should work for download
-      if (!pdfUrl.startsWith('http') && proxyUrl) {
-        downloadUrl = proxyUrl;
-      }
       
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -89,9 +82,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  if (!isPdf || !proxyUrl) {
+  if (!isPdf) {
     return <div className="p-4 text-center text-muted-foreground">No valid content to display.</div>;
   }
+
+  const displayUrl = proxyUrl || pdfUrl;
 
   if (loading) {
     return (
@@ -104,7 +99,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     );
   }
 
-  if (iframeError) {
+  if (error || iframeError) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
         <FileQuestion className="h-16 w-16 text-muted-foreground mb-4" />
@@ -129,22 +124,25 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         {debugMode && (
           <div className="mt-4 p-4 bg-gray-100 rounded text-xs max-w-md max-h-40 overflow-auto">
             <p className="font-bold">Original URL:</p>
-            <p className="break-all mb-2">{originalUrl || "Not provided"}</p>
+            <p className="break-all mb-2">{originalUrl || pdfUrl || "Not provided"}</p>
             <p className="font-bold">Proxy URL:</p>
             <p className="break-all mb-2">{proxyUrl || "Not generated"}</p>
-            <p className="font-bold">Is PDF:</p>
-            <p className="break-all">{String(isPdf)}</p>
+            <p className="font-bold">Error:</p>
+            <p className="break-all">{error || "Unknown error"}</p>
           </div>
         )}
       </div>
     );
   }
 
-  // Use the improved PdfPreview component
+  // Use the PdfPreview component
   return (
     <div className="relative w-full h-full">
       <div className="absolute inset-0 bg-white">
-        <PdfPreview url={proxyUrl} onError={handleIframeError} />
+        <PdfPreview 
+          url={displayUrl} 
+          onError={handleIframeError} 
+        />
       </div>
     </div>
   );
