@@ -22,9 +22,33 @@ serve(async (req) => {
     });
   }
 
+  // Validate request origin
+  const origin = req.headers.get("origin");
+  if (origin) {
+    // Only allow requests from trusted origins
+    // This should be configured based on your deployment environment
+    const allowedOrigins = [
+      "https://hoa-ai-community-nexus.lovable.app", 
+      "https://cahergndkwfqltxyikyr.supabase.co"
+    ];
+    
+    if (!allowedOrigins.includes(origin)) {
+      console.warn(`Blocked request from untrusted origin: ${origin}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Unauthorized origin" 
+        }),
+        { 
+          headers: { "Content-Type": "application/json" },
+          status: 403 
+        }
+      );
+    }
+  }
+
   try {
     console.log("Received invoice email with content-type:", req.headers.get("content-type"));
-    console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
     
     // Make a copy of the request to inspect the raw body if needed
     const reqCopy = req.clone();
@@ -33,9 +57,11 @@ serve(async (req) => {
       const rawText = await reqCopy.text();
       console.log(`Raw request body length: ${rawText.length} characters`);
       if (rawText.length < 10000) { // Only log if not too large
-        console.log("Raw request body:", rawText);
+        // Redact potential sensitive information before logging
+        const redactedText = rawText.replace(/("password"|"token"|"key"|"secret"):\s*"[^"]*"/g, '$1: "[REDACTED]"');
+        console.log("Raw request body (redacted):", redactedText);
       } else {
-        console.log("Raw request body (truncated):", rawText.substring(0, 1000) + "...");
+        console.log("Raw request body too large to log");
       }
     } catch (e) {
       console.log("Could not read raw request body:", e);
@@ -53,7 +79,15 @@ serve(async (req) => {
         // Clone the request before trying to parse as JSON
         const jsonReqCopy = req.clone();
         // Fallback to regular JSON parsing
-        emailData = await jsonReqCopy.json();
+        const rawJson = await jsonReqCopy.json();
+        
+        // Validate the JSON structure
+        if (typeof rawJson !== 'object') {
+          throw new Error("Invalid JSON structure");
+        }
+        
+        // Assign the validated data
+        emailData = rawJson;
         console.log("Successfully parsed as JSON fallback");
       } catch (jsonError) {
         console.error("Error parsing request as JSON:", jsonError);
@@ -61,8 +95,7 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false, 
             error: "Invalid request format", 
-            details: `${parseError.message}, then ${jsonError.message}`,
-            headers: Object.fromEntries([...req.headers.entries()])
+            details: `${parseError.message}, then ${jsonError.message}`
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -79,8 +112,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false, 
           error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid",
-          headers: Object.fromEntries([...req.headers.entries()])
+          details: "The email webhook payload was empty or invalid"
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -88,6 +120,11 @@ serve(async (req) => {
         }
       );
     }
+    
+    // Apply rate limiting for invoice processing
+    // This would typically be implemented at the network level or using Redis/etc
+    // For simplicity, we're just logging the concept here
+    console.log("Rate limiting would be applied here");
     
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
@@ -97,14 +134,7 @@ serve(async (req) => {
       subject: normalizedEmailData.subject,
       hasHtml: !!normalizedEmailData.html,
       hasText: !!normalizedEmailData.text,
-      attachmentsCount: normalizedEmailData.attachments?.length,
-      attachmentSummary: normalizedEmailData.attachments?.map(a => ({
-        name: a.filename,
-        type: a.contentType,
-        hasContent: !!a.content,
-        contentLength: typeof a.content === 'string' ? a.content.length : (a.content instanceof Blob ? a.content.size : 'unknown'),
-        contentType: typeof a.content
-      }))
+      attachmentsCount: normalizedEmailData.attachments?.length
     }, null, 2));
 
     // Check if we have either HTML content, text content, or subject (minimum required to process)
@@ -126,12 +156,37 @@ serve(async (req) => {
     // Process the email to extract invoice information
     console.log("Processing invoice email to extract data");
     const invoiceData = await processInvoiceEmail(normalizedEmailData);
-    console.log("Extracted invoice data:", JSON.stringify(invoiceData, null, 2));
+    
+    // Log invoice data without sensitive content
+    const redactedInvoiceData = { ...invoiceData };
+    if (redactedInvoiceData.html_content) {
+      redactedInvoiceData.html_content = "[HTML_CONTENT_REDACTED]";
+    }
+    if (redactedInvoiceData.email_content) {
+      redactedInvoiceData.email_content = "[EMAIL_CONTENT_REDACTED]";
+    }
+    console.log("Extracted invoice data:", JSON.stringify(redactedInvoiceData, null, 2));
 
     // Remove association_type if it exists to avoid database errors
     if (invoiceData.association_type !== undefined) {
       delete invoiceData.association_type;
       console.log("Removed association_type from invoice data to avoid schema errors");
+    }
+
+    // Input validation for invoice data before database insertion
+    if (invoiceData.amount && (typeof invoiceData.amount !== 'number' || isNaN(invoiceData.amount))) {
+      console.error("Invalid invoice amount:", invoiceData.amount);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Invalid invoice data", 
+          details: "Invoice amount must be a valid number"
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 422 
+        }
+      );
     }
 
     // Always attempt to create the invoice, even with partial data
@@ -142,7 +197,7 @@ serve(async (req) => {
         id: invoice.id,
         vendor: invoice.vendor,
         amount: invoice.amount,
-        pdf_url: invoice.pdf_url || 'none',
+        pdf_url: invoice.pdf_url ? 'present' : 'none',
         html_content: invoice.html_content ? 'present' : 'none'
       }, null, 2));
 
@@ -153,7 +208,12 @@ serve(async (req) => {
             success: true, 
             warning: "Invoice created with partial data", 
             message: "Invoice was created but may need manual review",
-            invoice: invoice 
+            invoice: {
+              id: invoice.id,
+              vendor: invoice.vendor,
+              amount: invoice.amount,
+              status: invoice.status
+            } 
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -164,20 +224,28 @@ serve(async (req) => {
 
       // All data looks good
       return new Response(
-        JSON.stringify({ success: true, message: "Invoice created", invoice }),
+        JSON.stringify({ 
+          success: true, 
+          message: "Invoice created", 
+          invoice: {
+            id: invoice.id,
+            vendor: invoice.vendor,
+            amount: invoice.amount,
+            status: invoice.status
+          }
+        }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 201 
         }
       );
-    } catch (dbError: any) {
+    } catch (dbError) {
       console.error("Database error creating invoice:", dbError);
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: "Database error", 
-          details: dbError.message,
-          extracted_data: invoiceData
+          details: dbError.message
         }),
         { 
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -185,13 +253,13 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error handling invoice email:", error);
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: "Processing error", 
-        details: error.message
+        details: "An internal server error occurred"  // Don't expose raw error details to client
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
