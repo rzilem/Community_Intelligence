@@ -1,21 +1,27 @@
 
 import { createContext } from 'react';
-import { NotificationItem } from '@/hooks/useNotifications';
 
-export interface NotificationContextType {
-  notifications: NotificationItem[];
-  unreadCount: number;
-  markAsRead: (notificationId: string) => void;
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'lead' | 'invoice' | 'request' | 'event' | 'message' | string;
+  read: boolean;
+  timestamp: string;
+  link?: string;
+  data?: Record<string, any>;
+}
+
+interface NotificationContextType {
+  notifications: Notification[];
+  markAsRead: (id: string) => void;
   markAllAsRead: () => void;
-  deleteNotification: (notificationId: string) => void;
-  setNotifications: React.Dispatch<React.SetStateAction<NotificationItem[]>>;
+  unreadCount: number;
 }
 
 export const NotificationContext = createContext<NotificationContextType>({
   notifications: [],
-  unreadCount: 0,
   markAsRead: () => {},
   markAllAsRead: () => {},
-  deleteNotification: () => {},
-  setNotifications: () => {},
+  unreadCount: 0
 });
