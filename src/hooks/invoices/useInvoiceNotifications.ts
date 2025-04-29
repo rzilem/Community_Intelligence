@@ -25,14 +25,15 @@ export const useInvoiceNotifications = () => {
     localStorage.getItem('lastInvoiceCheckTimestamp') || new Date().toISOString()
   );
 
-  // Get recent invoices to check for unread ones
+  // Get recent pending invoices to check for unread ones
   const { data: recentInvoices = [] } = useSupabaseQuery<Invoice[]>(
     'invoices',
     {
       select: '*',
       order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
+        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp },
+        { column: 'status', operator: 'eq', value: 'pending' }
       ]
     }
   );
@@ -43,8 +44,8 @@ export const useInvoiceNotifications = () => {
     
     // If we have new invoices, show a toast
     if (recentInvoices.length > 0) {
-      toast(`${recentInvoices.length} new invoice${recentInvoices.length > 1 ? 's' : ''} received`, {
-        description: "Check the invoice queue for details",
+      toast(`${recentInvoices.length} new pending invoice${recentInvoices.length > 1 ? 's' : ''}`, {
+        description: "Check the invoice queue for review",
         action: {
           label: "View",
           onClick: () => {
@@ -65,6 +66,7 @@ export const useInvoiceNotifications = () => {
 
   return {
     unreadInvoicesCount,
-    markAllAsRead
+    markAllAsRead,
+    recentInvoices
   };
 };

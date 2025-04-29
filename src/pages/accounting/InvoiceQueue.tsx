@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger, 
   DropdownMenuContent 
 } from '@/components/ui/dropdown-menu';
+import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
@@ -40,10 +42,20 @@ const InvoiceQueue = () => {
     autoRefreshEnabled,
     toggleAutoRefresh
   } = useInvoices();
+
+  // Add the invoice notifications hook to show the badge
+  const { unreadInvoicesCount, markAllAsRead } = useInvoiceNotifications();
   
   useEffect(() => {
     setStatusFilter(activeTab);
   }, [activeTab, setStatusFilter]);
+
+  // Mark notifications as read when viewing the invoice queue
+  useEffect(() => {
+    if (!isLoading && activeTab === 'pending') {
+      markAllAsRead();
+    }
+  }, [isLoading, activeTab, markAllAsRead]);
 
   const handleAddInvoice = () => {
     navigate("/accounting/invoice-queue/new");
@@ -65,7 +77,19 @@ const InvoiceQueue = () => {
   return (
     <PageTemplate
       title="Invoice Queue"
-      icon={<Inbox className="h-8 w-8" />}
+      icon={
+        <div className="relative">
+          <Inbox className="h-8 w-8" />
+          {unreadInvoicesCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadInvoicesCount > 99 ? '99+' : unreadInvoicesCount}
+            </Badge>
+          )}
+        </div>
+      }
       description="Review, code, and process invoices for payment"
       actions={
         <div className="flex items-center gap-2">

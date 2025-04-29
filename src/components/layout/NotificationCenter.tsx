@@ -37,10 +37,15 @@ const NotificationCenter: React.FC = () => {
     }
   };
   
-  // Filter notifications based on active tab
+  // Filter notifications - now prioritizing pending items
   const filteredNotifications = notifications.filter(notification => {
-    if (activeTab === 'all') return true;
-    return notification.type === activeTab;
+    // First filter by tab
+    if (activeTab !== 'all' && notification.type !== activeTab) {
+      return false;
+    }
+    
+    // Only show unread/pending notifications
+    return !notification.read;
   });
   
   // Group notifications by date
@@ -60,6 +65,15 @@ const NotificationCenter: React.FC = () => {
   const sortedDateKeys = Object.keys(groupedNotifications).sort(
     (a, b) => new Date(b).getTime() - new Date(a).getTime()
   );
+
+  // Count notifications by type
+  const typeCounts = {
+    invoice: notifications.filter(n => !n.read && n.type === 'invoice').length,
+    lead: notifications.filter(n => !n.read && n.type === 'lead').length,
+    request: notifications.filter(n => !n.read && n.type === 'request').length,
+    event: notifications.filter(n => !n.read && n.type === 'event').length,
+    message: notifications.filter(n => !n.read && n.type === 'message').length,
+  };
   
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -78,7 +92,7 @@ const NotificationCenter: React.FC = () => {
       </PopoverTrigger>
       <PopoverContent className="w-[380px] p-0" align="end">
         <div className="flex items-center justify-between border-b px-4 py-2">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold">Pending Notifications</h3>
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
@@ -111,6 +125,9 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('all')}
               >
                 All
+                {unreadCount > 0 && (
+                  <Badge className="ml-2 bg-blue-500">{unreadCount}</Badge>
+                )}
               </button>
               <button 
                 className={cn(
@@ -120,6 +137,9 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('invoice')}
               >
                 Invoices
+                {typeCounts.invoice > 0 && (
+                  <Badge className="ml-2 bg-amber-500">{typeCounts.invoice}</Badge>
+                )}
               </button>
               <button 
                 className={cn(
@@ -129,6 +149,9 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('lead')}
               >
                 Leads
+                {typeCounts.lead > 0 && (
+                  <Badge className="ml-2 bg-green-500">{typeCounts.lead}</Badge>
+                )}
               </button>
               <button 
                 className={cn(
@@ -138,6 +161,9 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('request')}
               >
                 Requests
+                {typeCounts.request > 0 && (
+                  <Badge className="ml-2 bg-purple-500">{typeCounts.request}</Badge>
+                )}
               </button>
               <button 
                 className={cn(
@@ -147,6 +173,9 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('event')}
               >
                 Events
+                {typeCounts.event > 0 && (
+                  <Badge className="ml-2 bg-red-500">{typeCounts.event}</Badge>
+                )}
               </button>
               <button 
                 className={cn(
@@ -156,16 +185,19 @@ const NotificationCenter: React.FC = () => {
                 onClick={() => setActiveTab('message')}
               >
                 Messages
+                {typeCounts.message > 0 && (
+                  <Badge className="ml-2 bg-orange-500">{typeCounts.message}</Badge>
+                )}
               </button>
             </div>
           </div>
           
           <div className="w-3/4">
             <ScrollArea className="h-[350px]">
-              {notifications.length === 0 ? (
+              {filteredNotifications.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full py-8 text-gray-500">
                   <Bell className="h-10 w-10 mb-2 text-gray-300" />
-                  <p>No notifications</p>
+                  <p>No pending notifications</p>
                 </div>
               ) : (
                 <div className="divide-y">
