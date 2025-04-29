@@ -1,77 +1,62 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
-import { processInvoiceEmail } from "./services/invoice-processor.ts";
-import { createInvoice } from "./services/invoice-service.ts";
-import { corsHeaders } from "./utils/cors-headers.ts";
-import { processDocument } from "./services/document-processor.ts";
 
-const supabase = createClient(Deno.env.get('SUPABASE_URL') || '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '');
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
+const Index = () => {
+  const navigate = useNavigate();
 
-  try {
-    console.log("Received invoice email with content-type:", req.headers.get("content-type"));
-    const emailData = await processMultipartFormData(req).catch(async () => await req.json());
+  return (
+    <div className="container mx-auto px-4 py-10">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+        <h1 className="text-4xl font-bold mb-6">Welcome to Community Intelligence</h1>
+        
+        <p className="text-xl mb-8 text-gray-700 max-w-2xl">
+          The AI-powered enterprise-grade HOA management platform for modern associations.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6 mb-12 max-w-4xl">
+          <FeatureCard 
+            title="Unified Management" 
+            description="Manage multiple HOAs within a single platform with unique portals for each community."
+          />
+          <FeatureCard 
+            title="AI Integration" 
+            description="Harness the power of AI for intelligent insights and automated workflows."
+          />
+          <FeatureCard 
+            title="Comprehensive Tools" 
+            description="From accounting to resident communications, everything you need in one place."
+          />
+        </div>
+        
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Button 
+            onClick={() => navigate('/dashboard')}
+            size="lg"
+            className="text-lg px-8"
+          >
+            Go to Dashboard
+          </Button>
+          <Button 
+            onClick={() => navigate('/associations')}
+            size="lg" 
+            variant="outline"
+            className="text-lg px-8"
+          >
+            View Associations
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-    if (!emailData || (typeof emailData === 'object' && Object.keys(emailData).length === 0)) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: "Empty email data",
-        details: "The email webhook payload was empty or invalid"
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 });
-    }
+const FeatureCard = ({ title, description }: { title: string; description: string }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <h3 className="text-lg font-semibold mb-2">{title}</h3>
+    <p className="text-gray-600">{description}</p>
+  </div>
+);
 
-    const normalizedEmailData = normalizeEmailData(emailData);
-    console.log("Normalized invoice email data:", {
-      from: normalizedEmailData.from,
-      subject: normalizedEmailData.subject,
-      attachmentsCount: normalizedEmailData.attachments?.length,
-      attachmentDetails: normalizedEmailData.attachments?.map(a => ({
-        filename: a.filename,
-        contentType: a.contentType,
-        contentLength: a.content instanceof Blob ? a.content.size : typeof a.content === 'string' ? a.content.length : 'unknown'
-      }))
-    });
-
-    if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: "Missing required content",
-        details: "Email must contain HTML, text content, or at least a subject"
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 422 });
-    }
-
-    const { documentContent, processedAttachment } = await processDocument(normalizedEmailData.attachments);
-    const invoiceData = await processInvoiceEmail(normalizedEmailData);
-
-    if (processedAttachment) {
-      invoiceData.pdf_url = processedAttachment.url;
-      invoiceData.source_document = processedAttachment.source_document;
-    }
-
-    const invoice = await createInvoice(invoiceData);
-    console.log("Invoice created successfully:", {
-      id: invoice.id,
-      vendor: invoice.vendor,
-      pdf_url: invoice.pdf_url || 'none',
-      source_document: invoice.source_document || 'none'
-    });
-
-    return new Response(JSON.stringify({
-      success: true,
-      message: "Invoice created",
-      invoice
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 201 });
-  } catch (error) {
-    console.error("Error handling invoice email:", error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: "Processing error",
-      details: error.message
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 });
-  }
-});
+export default Index;
