@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, FileText, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DOMPurify from 'dompurify';
+import { validateUrl } from '@/utils/security-utils';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -35,26 +36,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
 
   // Validate PDF URL
   const validatedPdfUrl = React.useMemo(() => {
-    if (!pdfUrl) return '';
-    
-    // Ensure URL is from trusted domain
-    try {
-      const url = new URL(pdfUrl);
-      const trustedDomains = [
-        'cahergndkwfqltxyikyr.supabase.co',
-        'lovable.app'
-      ];
-      
-      if (!trustedDomains.some(domain => url.hostname.includes(domain))) {
-        console.error('PDF URL from untrusted domain:', url.hostname);
-        return '';
-      }
-      
-      return pdfUrl;
-    } catch (e) {
-      console.error('Invalid PDF URL:', e);
-      return '';
-    }
+    return validateUrl(pdfUrl || '');
   }, [pdfUrl]);
   
   // Reset errors when URL changes
