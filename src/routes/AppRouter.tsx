@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import ForumPage from '../pages/forum/ForumPage';
@@ -23,6 +24,15 @@ export const AppRouter = () => {
 
   return (
     <Routes>
+      {/* Portal routes - giving these priority */}
+      {portalRoutes}
+      
+      {/* Portal page routes */}
+      {portalPageRoutes}
+      
+      {/* Resale Portal routes */}
+      {resalePortalRoutes}
+      
       {/* Main routes */}
       {mainRoutes.map((route, index) => (
         <Route 
@@ -34,15 +44,6 @@ export const AppRouter = () => {
       
       {/* Add Forum Route */}
       <Route path="/forum" element={<ForumPage />} />
-      
-      {/* Portal routes */}
-      {portalRoutes}
-      
-      {/* Portal page routes */}
-      {portalPageRoutes}
-      
-      {/* Resale Portal routes */}
-      {resalePortalRoutes}
       
       {/* Community Management routes */}
       {communityManagementRoutes.map((route, index) => (

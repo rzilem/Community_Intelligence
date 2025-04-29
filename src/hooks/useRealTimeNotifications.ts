@@ -31,7 +31,10 @@ export const useRealTimeNotifications = () => {
               ...newNotification, 
               message: newNotification.description || '',
               read: false,
-              type: newNotification.type || 'info'
+              type: newNotification.type || 'info',
+              id: newNotification.id || `notification-${Date.now()}`,
+              title: newNotification.title || 'Notification',
+              timestamp: newNotification.created_at || new Date().toISOString()
             };
             
             setNotifications([
