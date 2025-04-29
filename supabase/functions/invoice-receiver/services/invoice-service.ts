@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getNextTrackingNumber, registerCommunication } from "./tracking-service.ts";
 
@@ -33,6 +34,22 @@ export async function createInvoice(invoiceData) {
     if (!invoiceWithTracking.invoice_date) {
       invoiceWithTracking.invoice_date = new Date().toISOString().split('T')[0];
     }
+
+    // Remove association_type if present to avoid schema issues
+    if ('association_type' in invoiceWithTracking) {
+      console.log("Removing association_type from invoice data as it may not exist in the schema");
+      delete invoiceWithTracking.association_type;
+    }
+
+    console.log("Creating invoice with data:", {
+      tracking_number: trackingNumber,
+      invoice_number: invoiceWithTracking.invoice_number,
+      vendor: invoiceWithTracking.vendor,
+      amount: invoiceWithTracking.amount,
+      due_date: invoiceWithTracking.due_date,
+      status: invoiceWithTracking.status,
+      source_document: invoiceWithTracking.source_document || 'None'
+    });
 
     const { data, error } = await supabase.from("invoices").insert(invoiceWithTracking).select().single();
     if (error) {

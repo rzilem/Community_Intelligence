@@ -15,16 +15,28 @@ export function useDocumentViewer(invoiceId: string) {
   const [iframeError, setIframeError] = useState<boolean>(false);
   const [proxyUrl, setProxyUrl] = useState<string | null>(null);
   const [originalUrl, setOriginalUrl] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
+  
+  const maxRetries = 3;
 
   const handleIframeError = () => {
     console.error('PDF iframe failed to load');
     setIframeError(true);
+    
+    // Auto retry once if iframe fails to load
+    if (retryCount < 1) {
+      setTimeout(() => {
+        handleRetry();
+      }, 1000);
+    }
   };
 
   const handleRetry = async () => {
     setLoading(true);
     setError(null);
     setIframeError(false);
+    setRetryCount(prevCount => prevCount + 1);
+    
     try {
       // Re-fetch the URL when retrying
       await fetchPdfUrl();
@@ -37,7 +49,10 @@ export function useDocumentViewer(invoiceId: string) {
 
   // Effect to fetch the PDF URL when invoiceId changes
   useEffect(() => {
-    if (invoiceId) fetchPdfUrl();
+    if (invoiceId) {
+      setRetryCount(0); // Reset retry count on new invoiceId
+      fetchPdfUrl();
+    }
   }, [invoiceId]);
 
   // Function to fetch PDF URL
@@ -89,6 +104,16 @@ export function useDocumentViewer(invoiceId: string) {
       // Store the original URL for reference
       setOriginalUrl(invoice.pdf_url);
       let finalUrl = invoice.pdf_url;
+      
+      // Normalize URL to remove double slashes (excluding protocol://)
+      if (finalUrl.includes('://')) {
+        const [protocol, path] = finalUrl.split('://');
+        const normalizedPath = path.replace(/\/+/g, '/');
+        finalUrl = `${protocol}://${normalizedPath}`;
+      } else {
+        finalUrl = finalUrl.replace(/\/+/g, '/');
+      }
+      console.log('Normalized URL:', finalUrl);
 
       // Check if the URL is not a signed URL (lacks 'token=') and generate one if needed
       if (!finalUrl.includes('token=')) {
@@ -118,12 +143,32 @@ export function useDocumentViewer(invoiceId: string) {
       console.error('Error in fetchPdfUrl:', err);
       setError(err.message || 'Failed to load PDF');
       setPdfUrl(null);
+      
+      // Auto retry if we haven't exceeded max retries
+      if (retryCount < maxRetries - 1) {
+        console.log(`Auto-retrying (${retryCount + 1}/${maxRetries})...`);
+        setTimeout(() => {
+          setRetryCount(prevCount => prevCount + 1);
+          fetchPdfUrl();
+        }, 2000); // Retry after 2 seconds
+      }
     } finally {
       // Ensure loading is turned off after the operation
-      setLoading(false);
+      if (retryCount >= maxRetries - 1 || pdfUrl) {
+        setLoading(false);
+      }
     }
   }
 
   // Return the current state for use in components
-  return { pdfUrl, loading, error, iframeError, proxyUrl, originalUrl, handleIframeError, handleRetry };
+  return { 
+    pdfUrl, 
+    loading, 
+    error, 
+    iframeError, 
+    proxyUrl, 
+    originalUrl, 
+    handleIframeError, 
+    handleRetry 
+  };
 }

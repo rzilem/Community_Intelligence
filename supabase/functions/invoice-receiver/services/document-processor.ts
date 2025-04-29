@@ -1,4 +1,6 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { extractTextFromPdf } from "../utils/document-parser.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -13,7 +15,14 @@ export async function processDocument(attachments = []) {
     return { documentContent: "", processedAttachment: null };
   }
 
-  console.log(`Processing ${attachments.length} attachments:`, attachments Ascendingly sorted attachments by preference for PDFs
+  console.log(`Processing ${attachments.length} attachments:`, attachments.map(a => ({
+    filename: a.filename || "unnamed",
+    contentType: a.contentType || "unknown",
+    hasContent: !!a.content,
+    contentLength: a.content ? typeof a.content === 'string' ? a.content.length : 'binary' : 0
+  })));
+
+  // Ascendingly sorted attachments by preference for PDFs
   const sortedAttachments = [...attachments].sort((a, b) => {
     const aIsPdf = a.contentType === 'application/pdf' || (a.filename && a.filename.toLowerCase().endsWith('.pdf'));
     const bIsPdf = b.contentType === 'application/pdf' || (b.filename && b.filename.toLowerCase().endsWith('.pdf'));
@@ -41,9 +50,11 @@ export async function processDocument(attachments = []) {
     let contentBuffer;
     try {
       if (attachment.content instanceof Blob || attachment.content instanceof File) {
+        console.log(`Attachment is Blob/File, converting to ArrayBuffer`);
         const arrayBuffer = await attachment.content.arrayBuffer();
         contentBuffer = new Uint8Array(arrayBuffer);
       } else if (typeof attachment.content === 'string') {
+        console.log(`Attachment is string, checking for base64 encoding`);
         const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(attachment.content.trim().replace(/\s/g, ''));
         contentBuffer = isBase64
           ? new Uint8Array(Array.from(atob(attachment.content), c => c.charCodeAt(0)))
@@ -56,6 +67,15 @@ export async function processDocument(attachments = []) {
       if (!contentBuffer || contentBuffer.byteLength === 0) {
         console.error("Empty content buffer after processing");
         continue;
+      }
+
+      console.log(`Content buffer size: ${contentBuffer.byteLength} bytes`);
+      if (contentType.includes('pdf')) {
+        const pdfHeader = new TextDecoder().decode(contentBuffer.slice(0, 5));
+        console.log(`PDF header check: "${pdfHeader}"`);
+        if (!pdfHeader.startsWith('%PDF')) {
+          console.warn(`Content may not be a valid PDF (missing %PDF header): ${safeFilename}`);
+        }
       }
     } catch (processError) {
       console.error(`Error processing attachment content: ${processError.message}`);
