@@ -4,7 +4,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
-import InvoiceHeader from '@/components/invoices/InvoiceHeader';
+import { InvoiceHeader } from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
 import { InvoicePreview } from '@/components/invoices/InvoicePreview';
 import { InvoiceNavigation } from '@/components/invoices/InvoiceNavigation';
@@ -17,7 +17,6 @@ const InvoiceDetail = () => {
   const { toast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
 
   const {
     invoice,
@@ -28,54 +27,45 @@ const InvoiceDetail = () => {
     isBalanced,
     allInvoices,
     isLoadingAllInvoices,
-    saveInvoice,
     updateInvoice,
     isNewInvoice
   } = useInvoiceDetail(id);
 
-  // Debug log to see invoice data changes
-  useEffect(() => {
-    console.log("Invoice data in component:", {
-      association: invoice.association,
-      vendor: invoice.vendor,
-      invoiceNumber: invoice.invoiceNumber
+  // Debug log to check if we have the invoice data with HTML content
+  React.useEffect(() => {
+    console.group('Invoice Preview Debug');
+    console.log("Invoice ID:", id);
+    console.log("Invoice detail rendered with invoice:", {
+      id: invoice.id,
+      hasHtmlContent: !!invoice.htmlContent,
+      hasPdfUrl: !!invoice.pdfUrl,
+      htmlContentLength: invoice.htmlContent?.length || 0,
+      pdfUrlValue: invoice.pdfUrl
     });
+    console.groupEnd();
   }, [invoice]);
 
-  const handleSave = async () => {
-    console.log("Saving invoice with association:", invoice.association);
-    console.log("Saving invoice with vendor:", invoice.vendor);
-    
-    if (isSaving) return; // Prevent multiple save attempts
-    
-    setIsSaving(true);
-    
-    try {
-      await saveInvoice();
-      
-      toast({
-        title: "Invoice updated",
-        description: "The invoice has been updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error saving invoice:", error);
-      
-      // Provide a more specific error message based on the error
-      let errorMessage = "There was an error updating the invoice. Please try again.";
-      
-      // Check if the error message contains specific information about UUID
-      if (error instanceof Error && error.message.includes("uuid")) {
-        errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
+  const handleSave = () => {
+    updateInvoice({
+      id: invoice.id,
+      data: {
+        vendor: invoice.vendor,
+        association_id: invoice.association,
+        invoice_number: invoice.invoiceNumber,
+        invoice_date: invoice.invoiceDate,
+        due_date: invoice.dueDate,
+        amount: invoice.totalAmount,
+        status: invoice.status,
+        payment_method: invoice.paymentType,
       }
-      
-      toast({
-        title: "Error updating invoice",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    }, {
+      onSuccess: () => {
+        toast({
+          title: "Invoice updated",
+          description: "The invoice has been updated successfully.",
+        });
+      }
+    });
   };
 
   const handleApprove = () => {
@@ -141,7 +131,6 @@ const InvoiceDetail = () => {
                 isBalanced={isBalanced}
                 onSave={handleSave}
                 onApprove={handleApprove}
-                isSaving={isSaving}
               />
             </div>
           </ResizablePanel>

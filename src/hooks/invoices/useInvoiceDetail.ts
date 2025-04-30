@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -20,7 +19,6 @@ export const useInvoiceDetail = (id: string | undefined) => {
     htmlContent: '',
     pdfUrl: '',
     emailContent: '',
-    description: '',
   });
 
   const [lines, setLines] = useState([{
@@ -58,18 +56,62 @@ export const useInvoiceDetail = (id: string | undefined) => {
       console.log("Invoice ID:", id);
       console.log("Raw Invoice Data:", invoiceData);
       
-      // Explicitly log association and vendor data
-      console.log("Association ID:", {
-        raw: invoiceData.association_id,
-        type: typeof invoiceData.association_id,
-        isValid: !!invoiceData.association_id
+      // Explicitly check for PDF URL and HTML content
+      console.log("PDF URL Check:", {
+        raw: invoiceData.pdf_url,
+        type: typeof invoiceData.pdf_url,
+        length: invoiceData.pdf_url?.length || 0,
+        isValid: !!invoiceData.pdf_url && typeof invoiceData.pdf_url === 'string' && invoiceData.pdf_url.trim().length > 0
       });
       
-      console.log("Vendor:", {
-        raw: invoiceData.vendor,
-        type: typeof invoiceData.vendor
+      console.log("HTML Content Check:", {
+        exists: !!invoiceData.html_content,
+        length: invoiceData.html_content?.length || 0,
+        sample: invoiceData.html_content ? invoiceData.html_content.substring(0, 100) + '...' : 'none'
       });
       
+      // Get the cleaned values, defaulting to empty strings
+      const htmlContent = invoiceData.html_content || '';
+      const emailContent = invoiceData.email_content || '';
+      
+      // Ensure PDF URL is properly formatted
+      let pdfUrl = invoiceData.pdf_url || '';
+      
+      // Analyze HTML content for PDF mentions
+      if (htmlContent && !pdfUrl) {
+        console.log("Checking HTML content for PDF mentions");
+        const pdfMentionRegex = /attach(ed|ment)|pdf|invoice|document/i;
+        const hasPdfMention = pdfMentionRegex.test(htmlContent);
+        console.log("PDF mention detected:", hasPdfMention);
+        
+        if (hasPdfMention) {
+          // Check communications_log for possible attachments
+          // Fix: Using the correct toast syntax for sonner
+          toast("The invoice mentions an attachment but no PDF was found");
+        }
+      }
+      
+      // Make sure the PDF URL doesn't have any whitespace or control characters
+      if (pdfUrl) {
+        pdfUrl = pdfUrl.trim();
+        
+        // Fix common URL issues
+        if (!pdfUrl.startsWith('http://') && !pdfUrl.startsWith('https://') && !pdfUrl.startsWith('/')) {
+          console.log('Adding https:// to PDF URL:', pdfUrl);
+          pdfUrl = 'https://' + pdfUrl;
+        }
+        
+        // Log the final PDF URL
+        console.log("Final PDF URL after formatting:", pdfUrl);
+      }
+      
+      console.log("Using values:", {
+        htmlContent: htmlContent ? 'present' : 'empty',
+        pdfUrl: pdfUrl || 'empty',
+        emailContent: emailContent ? 'present' : 'empty',
+      });
+      console.groupEnd();
+
       // Ensure full decimal precision for amount
       const fullAmount = invoiceData.amount !== null 
         ? parseFloat(invoiceData.amount.toFixed(2)) 
@@ -85,69 +127,20 @@ export const useInvoiceDetail = (id: string | undefined) => {
         totalAmount: fullAmount,
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
-        htmlContent: invoiceData.html_content || '',
-        pdfUrl: invoiceData.pdf_url || '',
-        emailContent: invoiceData.email_content || '',
-        description: invoiceData.description || invoiceData.subject || '',
+        htmlContent: htmlContent,
+        pdfUrl: pdfUrl,
+        emailContent: emailContent,
       });
-
-      console.groupEnd();
     }
   }, [invoiceData, id]);
 
   const handleInvoiceChange = (field: string, value: string | number) => {
-    console.log(`Updating invoice field: ${field} with value:`, value);
-    
     // For amount fields, ensure we maintain decimal precision
     if (field === 'totalAmount' || field === 'amount') {
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
       setInvoice({ ...invoice, [field]: parseFloat(numValue.toFixed(2)) });
     } else {
       setInvoice({ ...invoice, [field]: value });
-    }
-  };
-
-  const saveInvoice = async () => {
-    console.group('Saving Invoice');
-    console.log("Invoice to save:", {
-      vendor: invoice.vendor,
-      association_id: invoice.association || null,
-      invoice_number: invoice.invoiceNumber,
-      invoice_date: invoice.invoiceDate,
-      due_date: invoice.dueDate,
-      amount: invoice.totalAmount,
-      status: invoice.status,
-      payment_method: invoice.paymentType,
-    });
-    
-    try {
-      // Send the association_id as null if it's an empty string to avoid UUID validation errors
-      // This is crucial for proper handling in the database
-      const association_id = invoice.association ? invoice.association : null;
-      console.log('Final association_id value being sent:', association_id);
-      console.log('Final vendor value being sent:', invoice.vendor);
-      
-      const result = await updateInvoice({
-        id: invoice.id,
-        data: {
-          vendor: invoice.vendor,
-          association_id: association_id,
-          invoice_number: invoice.invoiceNumber,
-          invoice_date: invoice.invoiceDate,
-          due_date: invoice.dueDate,
-          amount: invoice.totalAmount,
-          status: invoice.status,
-          payment_method: invoice.paymentType,
-        }
-      });
-      
-      console.log('Save result:', result);
-      console.groupEnd();
-      return result;
-    } catch (error) {
-      console.error("Error saving invoice:", error);
-      console.groupEnd();
-      throw error;
     }
   };
 
@@ -165,7 +158,6 @@ export const useInvoiceDetail = (id: string | undefined) => {
     isLoadingAllInvoices,
     isLoadingInvoice,
     updateInvoice,
-    saveInvoice,
     isNewInvoice
   };
 };

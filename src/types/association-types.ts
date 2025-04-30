@@ -9,7 +9,7 @@ export interface Association {
   zip?: string;
   created_at: string;
   updated_at: string;
-  status?: string; // Changed from restricted enum to accept any string
+  status?: 'active' | 'inactive' | 'pending';
   logo_url?: string | null;
   primary_color?: string | null;
   secondary_color?: string | null;

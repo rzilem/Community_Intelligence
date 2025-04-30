@@ -15,7 +15,6 @@ export const useDashboardRoleContent = (
   const getContentForRole = () => {
     if (!user) return null;
     
-    // Use string comparison for roles
     switch (user.role) {
       case 'treasurer':
         return <TreasurerDashboard />;

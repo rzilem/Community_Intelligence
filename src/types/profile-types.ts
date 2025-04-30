@@ -4,7 +4,7 @@ export interface Profile {
   email?: string;
   first_name?: string;
   last_name?: string;
-  role: string; // Keep this as string to support any roles coming from the database
+  role: string;
   profile_image_url?: string | null;
   phone?: string | null;
   created_at: string;
