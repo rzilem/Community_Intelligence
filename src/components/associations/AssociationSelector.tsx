@@ -57,21 +57,27 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
     }
   }, [error]);
 
-  // Set initial association when data loads
+  // Update selected association when initialAssociationId changes
   useEffect(() => {
-    if (associations && associations.length > 0 && !selectedAssociationId) {
-      const firstAssociationId = associations[0].id;
-      setSelectedAssociationId(firstAssociationId);
-      onAssociationChange(firstAssociationId);
-    }
-  }, [associations, selectedAssociationId, onAssociationChange]);
+    console.log('initialAssociationId changed:', initialAssociationId);
+    setSelectedAssociationId(initialAssociationId);
+  }, [initialAssociationId]);
 
   // Find selected association name
   const selectedAssociation = associations.find(assoc => assoc.id === selectedAssociationId);
+  console.log('Selected association:', selectedAssociation);
 
   const handleSelect = (associationId: string) => {
+    console.log('Association selected:', associationId);
     setSelectedAssociationId(associationId);
     onAssociationChange(associationId);
+    setOpen(false);
+  };
+
+  const handleClear = () => {
+    console.log('Association cleared');
+    setSelectedAssociationId(undefined);
+    onAssociationChange('');
     setOpen(false);
   };
 
@@ -100,6 +106,19 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
               <CommandList>
                 <CommandEmpty>No association found.</CommandEmpty>
                 <CommandGroup>
+                  {/* Add an option to clear the selection */}
+                  <CommandItem
+                    value="clear"
+                    onSelect={handleClear}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        !selectedAssociationId ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    No association
+                  </CommandItem>
                   {associations.map((assoc) => (
                     <CommandItem
                       key={assoc.id}

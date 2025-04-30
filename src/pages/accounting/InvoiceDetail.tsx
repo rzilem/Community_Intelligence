@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Receipt } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
-import { InvoiceHeader } from '@/components/invoices/InvoiceHeader';
+import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
 import { InvoicePreview } from '@/components/invoices/InvoicePreview';
 import { InvoiceNavigation } from '@/components/invoices/InvoiceNavigation';
@@ -18,6 +17,7 @@ const InvoiceDetail = () => {
   const { toast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     invoice,
@@ -28,45 +28,53 @@ const InvoiceDetail = () => {
     isBalanced,
     allInvoices,
     isLoadingAllInvoices,
+    saveInvoice,
     updateInvoice,
     isNewInvoice
   } = useInvoiceDetail(id);
 
-  // Debug log to check if we have the invoice data with HTML content
-  React.useEffect(() => {
-    console.group('Invoice Preview Debug');
-    console.log("Invoice ID:", id);
-    console.log("Invoice detail rendered with invoice:", {
-      id: invoice.id,
-      hasHtmlContent: !!invoice.htmlContent,
-      hasPdfUrl: !!invoice.pdfUrl,
-      htmlContentLength: invoice.htmlContent?.length || 0,
-      pdfUrlValue: invoice.pdfUrl
+  useEffect(() => {
+    console.log("Invoice data in component:", {
+      association: invoice.association,
+      vendor: invoice.vendor,
+      invoiceNumber: invoice.invoiceNumber,
+      hasEmailContent: !!invoice.emailContent,
+      emailContentLength: invoice.emailContent?.length || 0
     });
-    console.groupEnd();
   }, [invoice]);
 
-  const handleSave = () => {
-    updateInvoice({
-      id: invoice.id,
-      data: {
-        vendor: invoice.vendor,
-        association_id: invoice.association,
-        invoice_number: invoice.invoiceNumber,
-        invoice_date: invoice.invoiceDate,
-        due_date: invoice.dueDate,
-        amount: invoice.totalAmount,
-        status: invoice.status,
-        payment_method: invoice.paymentType,
+  const handleSave = async () => {
+    console.log("Saving invoice with association:", invoice.association);
+    console.log("Saving invoice with vendor:", invoice.vendor);
+    
+    if (isSaving) return; // Prevent multiple save attempts
+    
+    setIsSaving(true);
+    
+    try {
+      await saveInvoice();
+      
+      toast({
+        title: "Invoice updated",
+        description: "The invoice has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      
+      let errorMessage = "There was an error updating the invoice. Please try again.";
+      
+      if (error instanceof Error && error.message.includes("uuid")) {
+        errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
       }
-    }, {
-      onSuccess: () => {
-        toast({
-          title: "Invoice updated",
-          description: "The invoice has been updated successfully.",
-        });
-      }
-    });
+      
+      toast({
+        title: "Error updating invoice",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleApprove = () => {
@@ -80,20 +88,33 @@ const InvoiceDetail = () => {
     });
   };
 
+  // Get pending invoices and current position
+  const pendingInvoices = allInvoices?.filter(inv => inv.status === 'pending') || [];
+  const currentPosition = pendingInvoices.findIndex(inv => inv.id === id) + 1;
+  const totalPending = pendingInvoices.length;
+
   const navigateToInvoice = (direction: 'next' | 'prev') => {
     if (!allInvoices || allInvoices.length === 0) return;
     
-    const currentIndex = allInvoices.findIndex(inv => inv.id === id);
-    if (currentIndex === -1) return;
+    if (pendingInvoices.length === 0) return;
     
-    let nextIndex;
-    if (direction === 'next') {
-      nextIndex = (currentIndex + 1) % allInvoices.length;
-    } else {
-      nextIndex = (currentIndex - 1 + allInvoices.length) % allInvoices.length;
+    // Find current index within pending invoices
+    const currentIndex = pendingInvoices.findIndex(inv => inv.id === id);
+    if (currentIndex === -1) {
+      // If current invoice is not pending, navigate to the first pending invoice
+      navigate(`/accounting/invoice-queue/${pendingInvoices[0].id}`);
+      return;
     }
     
-    navigate(`/accounting/invoice-queue/${allInvoices[nextIndex].id}`);
+    // Calculate next index
+    let nextIndex;
+    if (direction === 'next') {
+      nextIndex = (currentIndex + 1) % pendingInvoices.length;
+    } else {
+      nextIndex = (currentIndex - 1 + pendingInvoices.length) % pendingInvoices.length;
+    }
+    
+    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`);
   };
 
   return (
@@ -108,7 +129,9 @@ const InvoiceDetail = () => {
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
           onNavigate={navigateToInvoice}
-          disableNavigation={isLoadingAllInvoices || (allInvoices?.length || 0) <= 1}
+          disableNavigation={isLoadingAllInvoices || pendingInvoices.length <= 1}
+          currentPosition={currentPosition}
+          totalPending={totalPending}
         />
 
         <ResizablePanelGroup direction="horizontal">
@@ -123,6 +146,8 @@ const InvoiceDetail = () => {
                 lines={lines}
                 onLinesChange={setLines}
                 associationId={invoice.association}
+                showPreview={showPreview}
+                invoiceTotal={invoice.totalAmount}
               />
               
               <InvoiceSummary 
@@ -131,6 +156,7 @@ const InvoiceDetail = () => {
                 isBalanced={isBalanced}
                 onSave={handleSave}
                 onApprove={handleApprove}
+                isSaving={isSaving}
               />
             </div>
           </ResizablePanel>
@@ -142,7 +168,7 @@ const InvoiceDetail = () => {
                 <InvoicePreview 
                   htmlContent={invoice.htmlContent} 
                   pdfUrl={invoice.pdfUrl}
-                  emailContent={invoice.emailContent}
+                  emailContent={invoice.emailContent || ''}
                 />
               </ResizablePanel>
             </>

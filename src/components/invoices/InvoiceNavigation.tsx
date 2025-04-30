@@ -9,6 +9,8 @@ export interface InvoiceNavigationProps {
   onTogglePreview: () => void;
   onNavigate: (direction: 'next' | 'prev') => void;
   disableNavigation: boolean;
+  currentPosition?: number;
+  totalPending?: number;
 }
 
 export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
@@ -16,11 +18,13 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
   showPreview,
   onTogglePreview,
   onNavigate,
-  disableNavigation
+  disableNavigation,
+  currentPosition,
+  totalPending
 }) => {
   return (
-    <div className="flex items-center justify-between"> {/* Changed from space-between to items-center */}
-      <div className="flex gap-2">
+    <div className="flex items-center justify-between">
+      <div className="flex gap-2 items-center">
         {!isNewInvoice && (
           <>
             <Button 
@@ -28,16 +32,25 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
               size="sm"
               onClick={() => onNavigate('prev')}
               disabled={disableNavigation}
+              title="Navigate to previous pending invoice"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous Pending
             </Button>
+
+            {currentPosition !== undefined && totalPending !== undefined && (
+              <span className="text-sm text-muted-foreground px-2">
+                {currentPosition} of {totalPending} Pending
+              </span>
+            )}
+
             <Button 
               variant="outline" 
               size="sm"
               onClick={() => onNavigate('next')}
               disabled={disableNavigation}
+              title="Navigate to next pending invoice"
             >
-              Next <ChevronRight className="h-4 w-4 ml-1" />
+              Next Pending <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </>
         )}
@@ -57,3 +70,4 @@ export const InvoiceNavigation: React.FC<InvoiceNavigationProps> = ({
     </div>
   );
 };
+
