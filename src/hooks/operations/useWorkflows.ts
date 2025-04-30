@@ -5,12 +5,10 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseDelete } from '../supabase/use-supabase-delete';
 
 export const useWorkflows = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
@@ -104,26 +102,14 @@ export const useWorkflows = () => {
         if (templateError) throw new Error(templateError.message);
         
         // Create a new workflow from the template
+        // Fixed RLS issue by ensuring all required fields are properly set
+        // and specifically using auth.getUser() to set created_by
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id;
         
         if (!userId) {
           throw new Error("User not authenticated");
         }
-        
-        // Get the user's current association
-        // In a real implementation, you might get this from a context or state
-        const { data: userAssociations, error: associationError } = await supabase
-          .from('association_users')
-          .select('association_id')
-          .eq('user_id', userId)
-          .limit(1);
-          
-        if (associationError) throw new Error(associationError.message);
-        
-        const associationId = userAssociations && userAssociations.length > 0 
-          ? userAssociations[0].association_id 
-          : null;
         
         const { data, error } = await supabase
           .from('workflows')
@@ -134,8 +120,7 @@ export const useWorkflows = () => {
             status: 'active',
             steps: template.steps,
             is_template: false,
-            created_by: userId,
-            association_id: associationId
+            created_by: userId
           })
           .select()
           .single();
@@ -204,55 +189,32 @@ export const useWorkflows = () => {
 
   // Create custom template mutation
   const createTemplateMutation = useMutation({
-    mutationFn: async (workflowData: {
-      name: string;
-      description?: string;
-      type: WorkflowType;
-    }) => {
-      setLoading(true);
-      
-      try {
-        // Get current user for audit
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData.user?.id;
+    mutationFn: async (workflowData: Partial<Workflow>) => {
+      // Convert steps to a format compatible with JSON storage
+      const stepsToInsert = workflowData.steps ? 
+        JSON.parse(JSON.stringify(workflowData.steps)) : 
+        [];
         
-        // Initialize with a single default step
-        const initialSteps = [
-          {
-            id: crypto.randomUUID(),
-            name: "First Step",
-            description: "The first step in your workflow",
-            order: 0,
-            isComplete: false
-          }
-        ];
-            
-        const { data, error } = await supabase
-          .from('workflow_templates')
-          .insert({
-            name: workflowData.name,
-            description: workflowData.description || '',
-            type: workflowData.type,
-            status: 'template',
-            steps: initialSteps,
-            is_template: true,
-            is_popular: false,
-            created_by: userId
-          })
-          .select()
-          .single();
-            
-        if (error) throw new Error(error.message);
+      const { data, error } = await supabase
+        .from('workflow_templates')
+        .insert({
+          name: workflowData.name || 'New Template',
+          description: workflowData.description || '',
+          type: workflowData.type || 'Governance',
+          status: 'template',
+          steps: stepsToInsert,
+          is_template: true,
+          is_popular: false
+        })
+        .select()
+        .single();
         
-        return data;
-      } finally {
-        setLoading(false);
-      }
+      if (error) throw new Error(error.message);
+      return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Custom template created successfully');
       queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
-      navigate(`/operations/workflows/${data.id}`);
     },
     onError: (error) => {
       toast.error(`Error creating template: ${error.message}`);
@@ -325,31 +287,6 @@ export const useWorkflows = () => {
     }
   });
 
-  // Delete template mutation
-  const deleteTemplateMutation = useMutation({
-    mutationFn: async (templateId: string) => {
-      setIsDeleting(true);
-      try {
-        const { error } = await supabase
-          .from('workflow_templates')
-          .delete()
-          .eq('id', templateId);
-          
-        if (error) throw error;
-        return templateId;
-      } finally {
-        setIsDeleting(false);
-      }
-    },
-    onSuccess: () => {
-      toast.success('Template deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['workflowTemplates'] });
-    },
-    onError: (error) => {
-      toast.error(`Error deleting template: ${error.message}`);
-    }
-  });
-
   // Handler functions
   const useWorkflowTemplate = (workflowId: string) => {
     useTemplateMutation.mutate(workflowId);
@@ -359,12 +296,23 @@ export const useWorkflows = () => {
     duplicateTemplateMutation.mutate(workflowId);
   };
 
-  const createCustomTemplate = (workflowData: {
-    name: string;
-    description?: string;
-    type: WorkflowType;
-  }) => {
-    createTemplateMutation.mutate(workflowData);
+  const createCustomTemplate = () => {
+    // For now, just create a simple template
+    // In the future, this would open a dialog with a form
+    createTemplateMutation.mutate({
+      name: 'Custom Workflow',
+      description: 'A custom workflow template',
+      type: 'Governance',
+      steps: [
+        {
+          id: 'step-1',
+          name: 'First Step',
+          description: 'The first step in the custom workflow',
+          order: 0,
+          isComplete: false
+        }
+      ]
+    });
   };
 
   const pauseWorkflow = (workflowId: string) => {
@@ -377,10 +325,6 @@ export const useWorkflows = () => {
 
   const cancelWorkflow = (workflowId: string) => {
     cancelWorkflowMutation.mutate(workflowId);
-  };
-
-  const deleteTemplate = (templateId: string) => {
-    deleteTemplateMutation.mutate(templateId);
   };
 
   const viewWorkflowDetails = (workflowId: string) => {
@@ -399,12 +343,9 @@ export const useWorkflows = () => {
     resumeWorkflow,
     cancelWorkflow,
     viewWorkflowDetails,
-    deleteTemplate,
-    isDeleting,
     refreshWorkflows: () => {
       refetch();
       refetchActive();
-    },
-    isCreating: createTemplateMutation.isPending
+    }
   };
 };

@@ -1,156 +1,166 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PlayCircle, PauseCircle, Eye, XCircle, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  CreditCard, 
+  AlertTriangle, 
+  ClipboardList, 
+  MessageSquare, 
+  Calendar, 
+  Home,
+  Eye,
+  XCircle,
+  PlayCircle,
+  PauseCircle
+} from 'lucide-react';
 import { Workflow } from '@/types/workflow-types';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ActiveWorkflowCardProps {
   workflow: Workflow;
-  onViewDetails: (id: string) => void;
-  onPauseWorkflow: (id: string) => void;
-  onResumeWorkflow: (id: string) => void;
-  onCancelWorkflow: (id: string) => void;
-  onEditWorkflow?: (id: string) => void;
-  onDeleteWorkflow?: (id: string) => void;
+  onViewDetails?: (workflowId: string) => void;
+  onPauseWorkflow?: (workflowId: string) => void;
+  onResumeWorkflow?: (workflowId: string) => void;
+  onCancelWorkflow?: (workflowId: string) => void;
 }
 
-const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({
+const ActiveWorkflowCard: React.FC<ActiveWorkflowCardProps> = ({ 
   workflow,
   onViewDetails,
   onPauseWorkflow,
   onResumeWorkflow,
-  onCancelWorkflow,
-  onEditWorkflow,
-  onDeleteWorkflow
+  onCancelWorkflow
 }) => {
-  // Function to check if all steps are completed
-  const getProgressPercentage = () => {
-    if (!workflow.steps || workflow.steps.length === 0) return 0;
-    const completedSteps = workflow.steps.filter(step => step.isComplete).length;
-    return Math.round((completedSteps / workflow.steps.length) * 100);
+  const getWorkflowIcon = () => {
+    switch (workflow.type) {
+      case 'Financial':
+        return <CreditCard className="h-10 w-10 text-orange-500" />;
+      case 'Compliance':
+        return <AlertTriangle className="h-10 w-10 text-red-500" />;
+      case 'Maintenance':
+        return <ClipboardList className="h-10 w-10 text-green-500" />;
+      case 'Resident Management':
+        return <MessageSquare className="h-10 w-10 text-blue-500" />;
+      case 'Governance':
+        return <Calendar className="h-10 w-10 text-purple-500" />;
+      case 'Communication':
+        return <MessageSquare className="h-10 w-10 text-indigo-500" />;
+      default:
+        return <Home className="h-10 w-10 text-gray-500" />;
+    }
   };
 
-  const isActive = workflow.status === 'active';
-  const progressPercentage = getProgressPercentage();
+  const getStatusBadge = () => {
+    switch (workflow.status) {
+      case 'active':
+        return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
+      case 'draft':
+        return <Badge className="bg-gray-100 text-gray-800 border-gray-200">Draft</Badge>;
+      case 'inactive':
+        return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Paused</Badge>;
+      default:
+        return <Badge>{workflow.status}</Badge>;
+    }
+  };
+
+  const completedSteps = workflow.steps.filter(step => step.isComplete).length;
+  const totalSteps = workflow.steps.length;
+  const progress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
   return (
-    <Card className="transition-all hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-xl font-bold">{workflow.name}</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Badge 
-              variant={isActive ? "default" : "secondary"}
-              className="capitalize"
-            >
-              {workflow.status}
-            </Badge>
-            
-            {(onEditWorkflow || onDeleteWorkflow) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0" aria-label="More options">
-                    <MoreHorizontal className="h-4 w-4" />
+    <Card className="h-full">
+      <CardContent className="pt-6 pb-4 px-6 flex flex-col h-full">
+        <div className="flex justify-between items-start mb-4">
+          {getWorkflowIcon()}
+          <div>{getStatusBadge()}</div>
+        </div>
+
+        <h3 className="text-lg font-semibold mb-2">{workflow.name}</h3>
+        <p className="text-sm text-gray-500 mb-4 flex-grow">{workflow.description}</p>
+        
+        <div className="mt-auto">
+          <div className="mb-3">
+            <div className="flex justify-between text-sm mb-1">
+              <span>Progress:</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-primary rounded-full h-2" 
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+          </div>
+          
+          <div className="flex justify-between text-sm mb-3">
+            <span className="text-muted-foreground">Steps:</span>
+            <span className="font-medium">{completedSteps} of {totalSteps} completed</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            {workflow.status === 'active' && onPauseWorkflow && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => onPauseWorkflow(workflow.id)} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <PauseCircle className="h-4 w-4 mr-2" />
+                    Pause
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {onEditWorkflow && (
-                    <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                  )}
-                  {onDeleteWorkflow && (
-                    <DropdownMenuItem 
-                      onClick={() => onDeleteWorkflow(workflow.id)}
-                      className="text-red-600"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </TooltipTrigger>
+                <TooltipContent>Pause this workflow</TooltipContent>
+              </Tooltip>
+            )}
+            
+            {workflow.status === 'inactive' && onResumeWorkflow && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => onResumeWorkflow(workflow.id)} 
+                    variant="outline"
+                    size="sm"
+                  >
+                    <PlayCircle className="h-4 w-4 mr-2" />
+                    Resume
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Resume this workflow</TooltipContent>
+              </Tooltip>
+            )}
+
+            {onCancelWorkflow && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => onCancelWorkflow(workflow.id)} 
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Cancel this workflow</TooltipContent>
+              </Tooltip>
             )}
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground text-sm mb-4">
-          {workflow.description || 'No description provided.'}
-        </p>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-medium">{progressPercentage}%</span>
-          </div>
-          
-          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-primary h-2 rounded-full" 
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
-          
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <div>
-              <span className="font-medium">Type: </span>
-              {workflow.type}
-            </div>
-            <div>
-              <span className="font-medium">Steps: </span>
-              {workflow.steps?.length || 0}
-            </div>
-          </div>
+
+          {onViewDetails && (
+            <Button 
+              onClick={() => onViewDetails(workflow.id)} 
+              className="w-full"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </Button>
+          )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between pt-3 border-t">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => isActive ? onPauseWorkflow(workflow.id) : onResumeWorkflow(workflow.id)}
-        >
-          {isActive ? (
-            <>
-              <PauseCircle className="h-4 w-4 mr-2" />
-              Pause
-            </>
-          ) : (
-            <>
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Resume
-            </>
-          )}
-        </Button>
-        <div className="space-x-2">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={() => onCancelWorkflow(workflow.id)}
-            className="text-destructive hover:text-destructive"
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button 
-            size="sm"
-            onClick={() => onViewDetails(workflow.id)}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View
-          </Button>
-        </div>
-      </CardFooter>
     </Card>
   );
 };

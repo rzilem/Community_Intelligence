@@ -1,44 +1,223 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
+import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
+import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
+import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
+import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
-import HomeownerRequestHeader from './components/HomeownerRequestHeader';
-import HomeownerRequestContent from './components/HomeownerRequestContent'; 
-import HomeownerRequestDialogs from './components/HomeownerRequestDialogs';
-import HomeownerRequestDebugInfo from '@/components/homeowners/debug/HomeownerRequestDebugInfo';
+import { HOMEOWNER_REQUEST_COLUMNS, HomeownerRequest } from '@/types/homeowner-request-types';
+import { Button } from '@/components/ui/button';
+import { Loader2, RefreshCw, Plus, Bug } from 'lucide-react';
+import { HomeownerRequestForm } from '@/components/homeowners/HomeownerRequestForm';
+import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth';
+import { Card, CardContent } from '@/components/ui/card';
+import { useUserColumns } from '@/hooks/useUserColumns';
+import HomeownerRequestsColumnSelector from '@/components/homeowners/HomeownerRequestsColumnSelector';
 
 const HomeownerRequestsPage = () => {
-  const requestsHook = useHomeownerRequests();
-  
+  const { currentAssociation } = useAuth();
+  const {
+    filteredRequests,
+    homeownerRequests,
+    isLoading,
+    error,
+    activeTab,
+    setActiveTab,
+    searchTerm,
+    setSearchTerm,
+    priority,
+    setPriority,
+    type,
+    setType,
+    lastRefreshed,
+    handleRefresh,
+    createDummyRequest
+  } = useHomeownerRequests();
+
+  // Use the hook for column customization
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns, 
+    reorderColumns, 
+    resetToDefaults 
+  } = useUserColumns(HOMEOWNER_REQUEST_COLUMNS, 'homeowner-requests-page');
+
+  const [selectedRequest, setSelectedRequest] = React.useState<HomeownerRequest | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isCommentOpen, setIsCommentOpen] = React.useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = React.useState(false);
+  const [isNewRequestFormOpen, setIsNewRequestFormOpen] = React.useState(false);
+  const [showDebugInfo, setShowDebugInfo] = React.useState(true); // Default to true to help diagnose the issue
+
+  // Handle view request
+  const handleViewRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsDetailOpen(true);
+  };
+
+  // Handle edit request
+  const handleEditRequest = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsEditOpen(true);
+  };
+
+  // Handle add comment
+  const handleAddComment = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsCommentOpen(true);
+  };
+
+  // Handle view history
+  const handleViewHistory = (request: HomeownerRequest) => {
+    setSelectedRequest(request);
+    setIsHistoryOpen(true);
+  };
+
+  // Handle new request form success
+  const handleNewRequestSuccess = () => {
+    setIsNewRequestFormOpen(false);
+    toast.success("Request created successfully!");
+    handleRefresh();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <HomeownerRequestHeader 
-        isLoading={requestsHook.isLoading}
-        onRefresh={requestsHook.handleRefresh}
-        onCreateTest={requestsHook.createDummyRequest}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Homeowner Requests</h1>
+          <p className="text-muted-foreground">
+            Manage and respond to homeowner requests
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+            Refresh
+          </Button>
+          <Button onClick={() => setIsNewRequestFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> New Request
+          </Button>
+          <HomeownerRequestsColumnSelector
+            columns={HOMEOWNER_REQUEST_COLUMNS}
+            selectedColumns={visibleColumnIds}
+            onChange={updateVisibleColumns}
+            onReorder={reorderColumns}
+            onResetDefault={resetToDefaults}
+          />
+          <Button variant="outline" onClick={() => setShowDebugInfo(!showDebugInfo)}>
+            <Bug className="h-4 w-4 mr-2" /> {showDebugInfo ? 'Hide Debug' : 'Show Debug'}
+          </Button>
+          <Button variant="outline" onClick={createDummyRequest}>
+            Create Test Request
+          </Button>
+        </div>
+      </div>
+
+      {showDebugInfo && (
+        <Card className="mb-4">
+          <CardContent className="pt-4">
+            <h3 className="font-semibold mb-2">Debug Information</h3>
+            <div className="text-sm space-y-1">
+              <p><strong>Current Association:</strong> {currentAssociation?.id || 'None selected'}</p>
+              <p><strong>Association Name:</strong> {currentAssociation?.name || 'N/A'}</p>
+              <p><strong>Total Requests (unfiltered):</strong> {homeownerRequests.length}</p>
+              <p><strong>Filtered Requests:</strong> {filteredRequests.length}</p>
+              <p><strong>Active Tab:</strong> {activeTab}</p>
+              <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Loaded'}</p>
+              <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+              <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleString()}</p>
+              <p><strong>Visible Columns:</strong> {visibleColumnIds.join(', ')}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <HomeownerRequestFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        priority={priority}
+        setPriority={setPriority}
+        type={type}
+        setType={setType}
       />
-      
-      <HomeownerRequestContent 
-        filteredRequests={requestsHook.filteredRequests}
-        isLoading={requestsHook.isLoading}
-        error={requestsHook.error}
-        activeTab={requestsHook.activeTab}
-        setActiveTab={(tab) => requestsHook.setActiveTab(tab as any)}
-        searchTerm={requestsHook.searchTerm}
-        setSearchTerm={requestsHook.setSearchTerm}
-        priority={requestsHook.priority}
-        setPriority={(priority) => requestsHook.setPriority(priority as any)}
-        type={requestsHook.type}
-        setType={(type) => requestsHook.setType(type as any)}
+
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => setActiveTab(value as any)}
+        className="mt-6"
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="open">Open</TabsTrigger>
+          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
+          <TabsTrigger value="resolved">Resolved</TabsTrigger>
+          <TabsTrigger value="closed">Closed</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab}>
+          <HomeownerRequestsTable 
+            requests={filteredRequests}
+            isLoading={isLoading}
+            error={error}
+            columns={HOMEOWNER_REQUEST_COLUMNS}
+            visibleColumnIds={visibleColumnIds}
+            onViewRequest={handleViewRequest}
+            onEditRequest={handleEditRequest}
+            onAddComment={handleAddComment}
+            onViewHistory={handleViewHistory}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Detail Dialog */}
+      <HomeownerRequestDetailDialog
+        request={selectedRequest}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
       />
-      
-      <HomeownerRequestDialogs 
-        handleRefresh={requestsHook.handleRefresh}
+
+      {/* Edit Dialog */}
+      <HomeownerRequestEditDialog
+        request={selectedRequest}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onSuccess={handleRefresh}
       />
-      
-      <HomeownerRequestDebugInfo 
-        requests={requestsHook.homeownerRequests}
-        filteredRequests={requestsHook.filteredRequests}
+
+      {/* Comment Dialog */}
+      <HomeownerRequestCommentDialog
+        request={selectedRequest}
+        open={isCommentOpen}
+        onOpenChange={setIsCommentOpen}
+        onSuccess={handleRefresh}
       />
+
+      {/* History Dialog */}
+      <HomeownerRequestHistoryDialog
+        request={selectedRequest}
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+      />
+
+      {/* New Request Dialog */}
+      {isNewRequestFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">Create New Request</h2>
+            <HomeownerRequestForm onSuccess={handleNewRequestSuccess} />
+            <div className="mt-4 flex justify-end">
+              <Button variant="outline" onClick={() => setIsNewRequestFormOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,59 +1,72 @@
 
-import { SystemSettings } from '@/types/settings-types';
 import { supabase } from '@/integrations/supabase/client';
+import { SystemSettings } from '@/types/settings-types';
 
-export const saveSystemSettings = async (settings: SystemSettings) => {
+// Helper function to check if user is admin
+export const isUserAdmin = async (): Promise<boolean> => {
   try {
-    // Save appearance settings
-    if (settings.appearance) {
-      await updateSettingWithFunction('appearance', settings.appearance);
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
     
-    // Save notifications settings
-    if (settings.notifications) {
-      await updateSettingWithFunction('notifications', settings.notifications);
-    }
-    
-    // Save security settings
-    if (settings.security) {
-      await updateSettingWithFunction('security', settings.security);
-    }
-    
-    // Save preferences settings
-    if (settings.preferences) {
-      await updateSettingWithFunction('preferences', settings.preferences);
-    }
-    
-    // Save integrations settings
-    if (settings.integrations) {
-      await updateSettingWithFunction('integrations', settings.integrations);
-    }
-    
-    return { success: true };
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+      
+    return data?.role === 'admin';
   } catch (error) {
-    console.error('Error saving system settings:', error);
-    throw error;
+    console.error('Error checking admin status:', error);
+    return false;
   }
 };
 
-const updateSettingWithFunction = async (key: string, value: any) => {
-  console.log(`Updating ${key} settings:`, JSON.stringify(value, (k, v) => {
-    // Mask API keys in logs
-    if ((k === 'apiKey' || k === 'secret' || k === 'webhookSecret') && typeof v === 'string') {
-      return v ? '[PRESENT]' : '[MISSING]';
-    }
-    return v;
-  }));
+// Function to save system settings
+export const saveSystemSettings = async (
+  settings: SystemSettings
+): Promise<void> => {
+  // Get the user session and user ID properly
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
   
-  const { error } = await supabase.functions.invoke(`settings/${key}`, {
-    method: 'POST',
-    body: value,
-  });
-  
-  if (error) {
-    console.error(`Error updating ${key} settings:`, error);
-    throw new Error(`Failed to update ${key} settings: ${error.message}`);
+  if (!userId) {
+    throw new Error("You must be logged in to update system settings");
   }
   
-  return { success: true };
+  // Get the user's profile to check if they're an admin
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  if (profileData?.role !== 'admin') {
+    throw new Error("Only administrators can update system settings");
+  }
+  
+  // Save all settings that have changed
+  const savePromises = Object.keys(settings).map(async (key) => {
+    const settingKey = key as keyof SystemSettings;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cahergndkwfqltxyikyr.supabase.co';
+    
+    // Fix: Explicitly convert symbol to string
+    const settingKeyStr = String(settingKey);
+    
+    // Call the settings edge function with the full URL
+    const response = await fetch(`${supabaseUrl}/functions/v1/settings/${settingKeyStr}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+      },
+      body: JSON.stringify(settings[settingKey]),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Response parsing error' }));
+      throw new Error(errorData.error || `Failed to save ${String(settingKey)} settings`);
+    }
+  });
+  
+  await Promise.all(savePromises);
 };

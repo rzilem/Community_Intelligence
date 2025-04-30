@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
 import { toast } from 'sonner';
@@ -5,7 +6,7 @@ import { useAuth } from '@/contexts/auth';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useHomeownerRequests = () => {
-  const [activeTab, setActiveTab] = useState<HomeownerRequestStatus | 'all' | 'active'>('active');
+  const [activeTab, setActiveTab] = useState<HomeownerRequestStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [priority, setPriority] = useState<HomeownerRequestPriority | 'all'>('all');
   const [type, setType] = useState<HomeownerRequestType | 'all'>('all');
@@ -16,12 +17,14 @@ export const useHomeownerRequests = () => {
   
   const { currentAssociation } = useAuth();
 
+  // Fetch homeowner requests directly using Supabase client
   useEffect(() => {
     fetchRequests();
     
+    // Set up an interval to refresh the data every 30 seconds
     const interval = setInterval(() => {
       console.log('Auto-refreshing homeowner requests...');
-      fetchRequests(false);
+      fetchRequests(false); // Silent refresh without loading indicator
     }, 30000);
     
     return () => clearInterval(interval);
@@ -36,6 +39,7 @@ export const useHomeownerRequests = () => {
 
       console.log('Fetching homeowner requests, current association:', currentAssociation?.id);
       
+      // First check if we can access the homeowner_requests table
       const { error: accessError } = await supabase
         .from('homeowner_requests')
         .select('count', { count: 'exact', head: true });
@@ -45,8 +49,11 @@ export const useHomeownerRequests = () => {
         throw new Error(`Cannot access homeowner requests: ${accessError.message}`);
       }
       
+      // Get all requests instead of filtering by association
+      // This approach allows us to show all requests and filter client-side
       let query = supabase.from('homeowner_requests').select('*');
       
+      // Order by created date, most recent first
       query = query.order('created_at', { ascending: false });
       
       const { data, error: requestsError } = await query;
@@ -58,6 +65,7 @@ export const useHomeownerRequests = () => {
       
       console.log(`Received ${data?.length || 0} homeowner requests after querying`);
       
+      // Properly cast the data to ensure it matches the HomeownerRequest type
       const typedRequests: HomeownerRequest[] = (data || []).map(item => ({
         id: item.id,
         title: item.title,
@@ -90,12 +98,16 @@ export const useHomeownerRequests = () => {
     }
   };
 
+  // Filter requests based on search and filter criteria
+  // Include association filtering at the client side
   const filteredRequests = manualRequests.filter(request => {
+    // First, apply association filter if a current association is selected
     if (currentAssociation?.id && request.association_id && 
         request.association_id !== currentAssociation.id) {
       return false;
     }
     
+    // Safety check for null or undefined values
     if (!request || !request.title || !request.description) {
       console.warn('Invalid request data encountered:', request);
       return false;
@@ -106,11 +118,8 @@ export const useHomeownerRequests = () => {
       request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (request.tracking_number && request.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesStatus = 
-      activeTab === 'all' ? true :
-      activeTab === 'active' ? request.status !== 'closed' :
-      request.status === activeTab;
-      
+    // Apply status filter correctly - ensure we're comparing the same status values
+    const matchesStatus = activeTab === 'all' || request.status === activeTab;
     const matchesPriority = priority === 'all' || request.priority === priority;
     const matchesType = type === 'all' || request.type === type;
 
@@ -122,10 +131,12 @@ export const useHomeownerRequests = () => {
     setLastRefreshed(new Date());
   };
 
+  // Create a dummy request for testing if no requests exist
   const createDummyRequest = async () => {
     try {
       setLoading(true);
       
+      // Create a test request that includes association_id when available
       const testRequest: any = {
         title: 'Test Request',
         description: 'This is a test homeowner request',
@@ -135,6 +146,7 @@ export const useHomeownerRequests = () => {
         tracking_number: `HOR-${Math.floor(Math.random() * 10000)}`
       };
       
+      // Always add association_id 
       testRequest.association_id = currentAssociation?.id || "85bdb4ea-4288-414d-8f17-83b4a33725b8";
       
       console.log('Creating test request:', testRequest);

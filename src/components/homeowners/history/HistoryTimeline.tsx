@@ -1,26 +1,13 @@
 
 import React from 'react';
 import HistoryItem, { HistoryItemData } from './HistoryItem';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { useHistoryData } from './useHistoryData';
 
 interface HistoryTimelineProps {
-  request?: HomeownerRequest;
-  history?: HistoryItemData[];
-  loading?: boolean;
+  history: HistoryItemData[];
+  loading: boolean;
 }
 
-const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ 
-  request, 
-  history: externalHistory, 
-  loading: externalLoading 
-}) => {
-  const { history: fetchedHistory, loading: fetchedLoading } = useHistoryData(request, true);
-  
-  // Use provided history/loading props if available, otherwise use fetched data
-  const history = externalHistory || fetchedHistory;
-  const loading = externalLoading !== undefined ? externalLoading : fetchedLoading;
-
+const HistoryTimeline: React.FC<HistoryTimelineProps> = ({ history, loading }) => {
   if (loading) {
     return <div className="text-center py-8">Loading history...</div>;
   }

@@ -114,40 +114,6 @@ function processAttachments(data: any): any[] {
     attachments = [data.Attachment];
   }
   
-  // Check for CloudMailin specific formats
-  if (attachments.length === 0 && data.attachments && typeof data.attachments === 'string') {
-    try {
-      const parsedAttachments = JSON.parse(data.attachments);
-      if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
-        console.log(`Found ${parsedAttachments.length} attachments in parsed data.attachments string`);
-        attachments = parsedAttachments;
-      }
-    } catch (e) {
-      console.log("Could not parse attachments string as JSON");
-    }
-  }
-  
-  // Also check for Sendgrid style attachments
-  if (attachments.length === 0 && data.email && data.email.attachments) {
-    console.log(`Found ${data.email.attachments.length} attachments in data.email.attachments`);
-    attachments = data.email.attachments;
-  }
-  
-  // Attempt to find raw attachments in any other key that might contain them
-  if (attachments.length === 0) {
-    for (const key in data) {
-      const value = data[key];
-      if (Array.isArray(value) && value.length > 0 && 
-          value[0] && (value[0].filename || value[0].content || value[0].contentType)) {
-        console.log(`Found potential attachments in data.${key}`);
-        attachments = value;
-        break;
-      }
-    }
-  }
-  
-  console.log(`Processing ${attachments.length} attachments`);
-  
   // Standardize attachment object structure
   return attachments.map(attachment => {
     if (!attachment) return { filename: "unknown", contentType: "application/octet-stream", content: "", size: 0 };

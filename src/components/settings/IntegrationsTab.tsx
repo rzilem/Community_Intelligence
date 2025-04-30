@@ -54,7 +54,7 @@ const IntegrationsTab = () => {
   const handleDisconnectIntegration = (name: string) => {
     const updatedSettings = { ...integrationSettings };
     
-    if (updatedSettings.integrationSettings && updatedSettings.integrationSettings[name]) {
+    if (updatedSettings.integrationSettings[name]) {
       delete updatedSettings.integrationSettings[name];
       
       updateIntegrationSettings(updatedSettings, {
@@ -78,7 +78,7 @@ const IntegrationsTab = () => {
   const handleSaveConfig = () => {
     if (selectedIntegration) {
       const updatedSettings = { 
-        ...integrationSettings || { integrationSettings: {} }
+        ...integrationSettings || { integrationSettings: {} },
       };
       
       if (!updatedSettings.integrationSettings) {
@@ -98,16 +98,7 @@ const IntegrationsTab = () => {
         };
       }
       
-      console.log("Saving integration settings:", JSON.stringify({
-        ...updatedSettings,
-        integrationSettings: {
-          ...updatedSettings.integrationSettings,
-          OpenAI: updatedSettings.integrationSettings.OpenAI ? {
-            ...updatedSettings.integrationSettings.OpenAI,
-            apiKey: updatedSettings.integrationSettings.OpenAI.apiKey ? "[PRESENT]" : "[MISSING]"
-          } : undefined
-        }
-      }));
+      console.log("Saving integration settings:", JSON.stringify(updatedSettings));
       
       updateIntegrationSettings(updatedSettings, {
         onSuccess: () => {

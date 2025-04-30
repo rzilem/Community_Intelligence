@@ -1,20 +1,29 @@
 
 import React from 'react';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { AlertCircle } from 'lucide-react';
 
 interface EmptyRequestsRowProps {
-  colSpan: number;
+  columnsCount: number;
+  message?: string;
 }
 
-const EmptyRequestsRow: React.FC<EmptyRequestsRowProps> = ({ colSpan }) => {
+const EmptyRequestsRow: React.FC<EmptyRequestsRowProps> = ({ 
+  columnsCount, 
+  message = "No requests found." 
+}) => {
   return (
-    <tr>
-      <td colSpan={colSpan} className="py-6 text-center text-muted-foreground">
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <p>No homeowner requests found.</p>
-          <p className="text-sm">Create a new request or adjust your filters.</p>
+    <TableRow>
+      <TableCell colSpan={columnsCount + 1} className="h-32 text-center">
+        <div className="flex flex-col items-center justify-center text-muted-foreground">
+          <AlertCircle className="h-8 w-8 mb-2" />
+          <p>{message}</p>
+          <p className="text-sm mt-1">
+            Try adjusting your filters or create a new request.
+          </p>
         </div>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 };
 

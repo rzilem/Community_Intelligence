@@ -1,3 +1,4 @@
+
 export interface Invoice {
   id: string;
   tracking_number?: string;
@@ -11,15 +12,9 @@ export interface Invoice {
   association_name?: string;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
-  pdf_url?: string;
-  email_content?: string;
   source_document?: string;
   created_at: string;
   updated_at: string;
-  payment_method?: string;
-  payment_date?: string;
-  gl_account_id?: string;
-  bank_account_id?: string;
 }
 
 export interface InvoiceFilterOptions {

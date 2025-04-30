@@ -16,25 +16,11 @@ import { useWorkflows } from '@/hooks/operations/useWorkflows';
 import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
 import { WorkflowType } from '@/types/workflow-types';
 import WorkflowAnalyticsDashboard from '@/components/operations/WorkflowAnalyticsDashboard';
-import WorkflowCreateDialog from '@/components/operations/dialogs/WorkflowCreateDialog';
-import WorkflowDeleteDialog from '@/components/operations/dialogs/WorkflowDeleteDialog';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<WorkflowType | 'all'>('all');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [deleteDialogState, setDeleteDialogState] = useState<{
-    isOpen: boolean;
-    workflowId: string | null;
-    workflowName: string;
-    isTemplate: boolean;
-  }>({
-    isOpen: false,
-    workflowId: null,
-    workflowName: '',
-    isTemplate: true
-  });
   
   const { 
     workflowTemplates, 
@@ -46,12 +32,10 @@ const Workflows = () => {
     pauseWorkflow,
     resumeWorkflow,
     cancelWorkflow,
-    viewWorkflowDetails,
-    deleteTemplate,
-    isDeleting,
-    isCreating
+    viewWorkflowDetails
   } = useWorkflows();
 
+  // Filter workflows based on search term and type filter
   const filteredTemplates = useMemo(() => {
     return workflowTemplates.filter(workflow => {
       const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -70,6 +54,7 @@ const Workflows = () => {
     });
   }, [activeWorkflows, searchTerm, typeFilter]);
 
+  // Available workflow types for filtering
   const workflowTypes: WorkflowType[] = [
     'Financial', 
     'Compliance', 
@@ -78,38 +63,6 @@ const Workflows = () => {
     'Governance', 
     'Communication'
   ];
-
-  const handleCreateWorkflow = async (values: {
-    name: string;
-    description?: string;
-    type: WorkflowType;
-  }) => {
-    await createCustomTemplate(values);
-  };
-
-  const openDeleteDialog = (id: string, name: string, isTemplate: boolean) => {
-    setDeleteDialogState({
-      isOpen: true,
-      workflowId: id,
-      workflowName: name,
-      isTemplate
-    });
-  };
-
-  const handleDelete = async () => {
-    if (!deleteDialogState.workflowId) return;
-    
-    try {
-      if (deleteDialogState.isTemplate) {
-        await deleteTemplate(deleteDialogState.workflowId);
-      } else {
-        await cancelWorkflow(deleteDialogState.workflowId);
-      }
-      setDeleteDialogState(prev => ({ ...prev, isOpen: false }));
-    } catch (error) {
-      console.error('Error deleting workflow:', error);
-    }
-  };
 
   return (
     <PageTemplate 
@@ -144,9 +97,9 @@ const Workflows = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={createCustomTemplate}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Custom Workflow
+            Create Custom Template
           </Button>
         </div>
       }
@@ -176,8 +129,6 @@ const Workflows = () => {
                       workflow={workflow}
                       onUseTemplate={useWorkflowTemplate}
                       onDuplicateTemplate={duplicateTemplate}
-                      onEditTemplate={viewWorkflowDetails}
-                      onDeleteTemplate={(id) => openDeleteDialog(id, workflow.name, true)}
                     />
                   ))}
                 </div>
@@ -208,9 +159,7 @@ const Workflows = () => {
                       onViewDetails={viewWorkflowDetails}
                       onPauseWorkflow={pauseWorkflow}
                       onResumeWorkflow={resumeWorkflow}
-                      onCancelWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
-                      onEditWorkflow={viewWorkflowDetails}
-                      onDeleteWorkflow={(id) => openDeleteDialog(id, workflow.name, false)}
+                      onCancelWorkflow={cancelWorkflow}
                     />
                   ))}
                 </div>
@@ -246,22 +195,6 @@ const Workflows = () => {
           </TabsContent>
         </Tabs>
       </div>
-
-      <WorkflowCreateDialog 
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onCreateWorkflow={handleCreateWorkflow}
-        isCreating={isCreating}
-      />
-
-      <WorkflowDeleteDialog
-        open={deleteDialogState.isOpen}
-        onOpenChange={(isOpen) => setDeleteDialogState(prev => ({ ...prev, isOpen }))}
-        onConfirm={handleDelete}
-        isDeleting={isDeleting}
-        workflowName={deleteDialogState.workflowName}
-        isTemplate={deleteDialogState.isTemplate}
-      />
     </PageTemplate>
   );
 };

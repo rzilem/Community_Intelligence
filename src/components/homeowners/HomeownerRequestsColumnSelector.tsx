@@ -1,7 +1,10 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Columns } from 'lucide-react';
 import ColumnSelector from '@/components/table/ColumnSelector';
 import { HomeownerRequestColumn } from '@/types/homeowner-request-types';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 interface HomeownerRequestsColumnSelectorProps {
   columns: HomeownerRequestColumn[];
@@ -9,7 +12,6 @@ interface HomeownerRequestsColumnSelectorProps {
   onChange: (selectedColumns: string[]) => void;
   onReorder?: (sourceIndex: number, destinationIndex: number) => void;
   onResetDefault?: () => void;
-  className?: string;
 }
 
 const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorProps> = ({
@@ -17,22 +19,16 @@ const HomeownerRequestsColumnSelector: React.FC<HomeownerRequestsColumnSelectorP
   selectedColumns,
   onChange,
   onReorder,
-  onResetDefault,
-  className = "ml-2"
+  onResetDefault
 }) => {
-  // Filter out invalid column IDs
-  const validSelectedColumns = selectedColumns.filter(
-    columnId => columns.some(col => col.id === columnId)
-  );
-  
   return (
     <ColumnSelector
       columns={columns}
-      selectedColumns={validSelectedColumns}
+      selectedColumns={selectedColumns}
       onChange={onChange}
       onReorder={onReorder}
       resetToDefaults={onResetDefault}
-      className={className}
+      className="ml-2"
     />
   );
 };

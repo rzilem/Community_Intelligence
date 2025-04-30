@@ -1,187 +1,140 @@
+/**
+ * Service to process email data and extract homeowner request information
+ */
 
-import { extractTrackingNumber } from "../utils/request-parser.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-
-// Create a Supabase client
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-export interface RequestData {
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  type: string;
-  html_content?: string;
-  tracking_number?: string;
-  resident_id?: string;
-  property_id?: string;
-  association_id?: string;
+export async function processEmailData(emailData: any) {
+  console.log("Processing email for homeowner request extraction");
+  console.log("Email data received:", JSON.stringify({
+    from: emailData.from,
+    to: emailData.to,
+    subject: emailData.subject,
+    has_html: !!emailData.html,
+    has_text: !!emailData.text,
+    attachments: emailData.attachments?.length || 0
+  }, null, 2));
+  
+  // Extract the data we need to create a request
+  const requestData: Record<string, any> = {
+    title: emailData.subject || "Email Request",
+    status: "open",
+    priority: determinePriority(emailData.subject),
+    type: determineRequestType(emailData.subject, emailData.text || "", emailData.html || ""),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    tracking_number: emailData.tracking_number || `REQ-${Date.now()}`,
+  };
+  
+  // Extract email content
+  if (emailData.html) {
+    requestData.html_content = emailData.html;
+    
+    // Extract the first 500 characters of HTML content for description
+    // Strip HTML tags for a clean description
+    let textContent = emailData.html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+      
+    requestData.description = textContent.substring(0, 500);
+  } else if (emailData.text) {
+    requestData.description = emailData.text.substring(0, 500);
+  } else {
+    requestData.description = "Request submitted via email. No content provided.";
+  }
+  
+  // Extract sender information for possible resident matching
+  const senderEmail = extractSenderEmail(emailData.from || "");
+  if (senderEmail) {
+    requestData.sender_email = senderEmail;
+    console.log("Extracted sender email:", senderEmail);
+  }
+  
+  // IMPORTANT: Always set the default association ID
+  // This ensures all requests are visible in the queue
+  requestData.association_id = "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Default to Reeceville COA
+  console.log("Using association ID:", requestData.association_id);
+  
+  // Handle attachments if present
+  if (emailData.attachments && emailData.attachments.length > 0) {
+    console.log(`Processing ${emailData.attachments.length} attachments`);
+    // Store attachment metadata in the request
+    requestData.attachment_data = emailData.attachments.map((attachment: any) => ({
+      filename: attachment.filename,
+      contentType: attachment.contentType,
+      size: attachment.size
+    }));
+    
+    // Include attachment info in description
+    const attachmentInfo = emailData.attachments
+      .map((a: any) => `${a.filename} (${a.contentType})`)
+      .join(", ");
+    
+    requestData.description += `\n\nAttachments: ${attachmentInfo}`;
+  }
+  
+  console.log("Extracted request data:", JSON.stringify(requestData, null, 2));
+  return requestData;
 }
 
-export async function processEmailData(emailData: any): Promise<RequestData> {
-  console.log("Processing email data:", JSON.stringify(emailData, null, 2));
+function determinePriority(subject: string): string {
+  if (!subject) return "medium";
   
-  // Extract basic info from email with extensive sender email detection
-  const { subject, from, text, html } = emailData;
+  subject = subject.toLowerCase();
   
-  // Extract email using multiple methods to ensure we get it right
-  let fromEmail = "";
-  
-  // Try structured properties first
-  if (from?.address) {
-    fromEmail = from.address;
-  } else if (from?.email) {
-    fromEmail = from.email;
-  } 
-  // Try to extract from string formats next
-  else if (typeof from === 'string') {
-    // Check for format "name <email@example.com>"
-    const angleMatch = from.match(/<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
-    if (angleMatch) {
-      fromEmail = angleMatch[1];
-    } else {
-      // Simple email pattern extraction
-      const emailMatch = from.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
-      if (emailMatch) {
-        fromEmail = emailMatch[1];
-      }
-    }
+  if (subject.includes("urgent") || 
+      subject.includes("emergency") || 
+      subject.includes("immediate")) {
+    return "urgent";
+  } else if (subject.includes("important") || 
+             subject.includes("high priority")) {
+    return "high";
+  } else if (subject.includes("low priority") || 
+             subject.includes("minor")) {
+    return "low";
   }
   
-  // Check headers as a last resort
-  if (!fromEmail && emailData.headers) {
-    const fromHeader = emailData.headers.From || emailData.headers.from;
-    if (fromHeader) {
-      const headerMatch = fromHeader.match(/<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
-      if (headerMatch) {
-        fromEmail = headerMatch[1];
-      } else {
-        const simpleMatch = fromHeader.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
-        if (simpleMatch) {
-          fromEmail = simpleMatch[1];
-        }
-      }
-    }
+  return "medium";
+}
+
+function determineRequestType(subject: string, text: string, html: string): string {
+  const combinedText = `${subject || ""} ${text || ""} ${html || ""}`.toLowerCase();
+  
+  if (combinedText.includes("maintenance") || 
+      combinedText.includes("repair") || 
+      combinedText.includes("broken") ||
+      combinedText.includes("fix")) {
+    return "maintenance";
+  } else if (combinedText.includes("billing") || 
+             combinedText.includes("payment") || 
+             combinedText.includes("invoice") ||
+             combinedText.includes("fee")) {
+    return "billing";
+  } else if (combinedText.includes("compliance") || 
+             combinedText.includes("violation") || 
+             combinedText.includes("rule") ||
+             combinedText.includes("regulation")) {
+    return "compliance";
+  } else if (combinedText.includes("amenity") || 
+             combinedText.includes("pool") || 
+             combinedText.includes("gym") ||
+             combinedText.includes("common area")) {
+    return "amenity";
   }
   
-  const fromName = from?.name || "";
+  return "general";
+}
+
+function extractSenderEmail(fromHeader: string): string | null {
+  if (!fromHeader) return null;
   
-  console.log(`Email from: ${fromName} <${fromEmail}>`);
-  
-  // Generate a tracking number that includes the sender's email for easier tracking
-  const baseTrackingNumber = extractTrackingNumber(subject, text) || 
-    `HOR-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`;
-  
-  // Include email in tracking number for better identification
-  const tracking_number = fromEmail 
-    ? `${baseTrackingNumber}-${fromEmail}`
-    : baseTrackingNumber;
-  
-  // Set default priority and type
-  let priority = "medium";
-  let type = "general";
-  
-  // Check for keywords indicating urgency
-  const urgentKeywords = ["urgent", "emergency", "immediate", "asap", "critical"];
-  const urgentRegex = new RegExp(urgentKeywords.join("|"), "i");
-  if (urgentRegex.test(subject) || urgentRegex.test(text)) {
-    priority = "high";
-  }
-  
-  // Try to determine the type based on keywords
-  const typeKeywords = {
-    maintenance: ["repair", "broken", "fix", "maintenance", "not working"],
-    compliance: ["violation", "rule", "regulation", "compliance", "against policy"],
-    billing: ["payment", "invoice", "bill", "dues", "fee", "charge", "assessment"],
-    amenity: ["pool", "gym", "clubhouse", "facility", "common area", "tennis", "basketball"]
-  };
-  
-  // Check for type keywords in subject and body
-  for (const [requestType, keywords] of Object.entries(typeKeywords)) {
-    const typeRegex = new RegExp(keywords.join("|"), "i");
-    if (typeRegex.test(subject) || typeRegex.test(text)) {
-      type = requestType;
-      break;
-    }
-  }
-  
-  // Try to find a resident with this email address
-  let resident_id;
-  let property_id;
-  let association_id;
-  
-  try {
-    console.log(`Looking up resident with email: ${fromEmail}`);
-    
-    if (fromEmail) {
-      const { data: resident, error } = await supabase
-        .from('residents')
-        .select('id, property_id, email')
-        .eq('email', fromEmail)
-        .limit(1)
-        .single();
-      
-      if (error) {
-        console.log(`No resident found with exact email ${fromEmail}: ${error.message}`);
-        
-        // Try with a case-insensitive search as a fallback
-        const { data: residents, error: insensitiveError } = await supabase
-          .from('residents')
-          .select('id, property_id, email')
-          .ilike('email', fromEmail)
-          .limit(1);
-        
-        if (!insensitiveError && residents && residents.length > 0) {
-          console.log(`Found resident with case-insensitive email match: ${residents[0].id}`);
-          resident_id = residents[0].id;
-          property_id = residents[0].property_id;
-        }
-      } else if (resident) {
-        console.log(`Found resident: ${resident.id}`);
-        resident_id = resident.id;
-        property_id = resident.property_id;
-      }
-      
-      // If we have a property, get its association
-      if (property_id) {
-        const { data: property, error: propertyError } = await supabase
-          .from('properties')
-          .select('association_id')
-          .eq('id', property_id)
-          .limit(1)
-          .single();
-        
-        if (propertyError) {
-          console.log(`Error fetching property ${property_id}: ${propertyError.message}`);
-        }
-        
-        if (property) {
-          console.log(`Found association: ${property.association_id}`);
-          association_id = property.association_id;
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error looking up resident:", error);
-  }
-  
-  // Prepare request data
-  const requestData: RequestData = {
-    title: subject || "Email Request",
-    description: text || "No text content provided",
-    status: "open",
-    priority,
-    type,
-    html_content: html,
-    tracking_number,
-    resident_id,
-    property_id,
-    association_id
-  };
-  
-  console.log("Processed request data:", requestData);
-  
-  return requestData;
+  // Simple regex to extract email from From header
+  const emailMatch = fromHeader.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+  return emailMatch ? emailMatch[1] : null;
+}
+
+function extractAssociationId(emailData: any): string | null {
+  // Always return a default association ID to ensure requests appear in the queue
+  return "85bdb4ea-4288-414d-8f17-83b4a33725b8"; // Reeceville COA
 }

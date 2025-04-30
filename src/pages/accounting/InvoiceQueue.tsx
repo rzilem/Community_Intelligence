@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -13,7 +14,7 @@ const InvoiceQueue = () => {
   const navigate = useNavigate();
   const { markAllAsRead } = useInvoiceNotifications();
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('all-invoices');
   
   const {
     invoices,
@@ -24,10 +25,12 @@ const InvoiceQueue = () => {
     lastRefreshed
   } = useInvoices();
 
+  // Mark notifications as read when visiting this page
   useEffect(() => {
     markAllAsRead();
   }, []);
 
+  // Filter invoices based on search term and active tab
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = searchTerm === '' || 
       Object.values(invoice).some(value => 
@@ -66,14 +69,34 @@ const InvoiceQueue = () => {
     >
       <div className="mt-6 space-y-4">
         <Card className="p-6">
-          <Tabs defaultValue="pending" onValueChange={setActiveTab}>
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
             <TabsList>
+              <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="approved">Approved</TabsTrigger>
               <TabsTrigger value="rejected">Rejected</TabsTrigger>
               <TabsTrigger value="paid">Paid</TabsTrigger>
-              <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
             </TabsList>
+            <TabsContent value="all-invoices" className="mt-4">
+              <InvoiceToolbar 
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+              />
+              
+              <div className="mt-4">
+                <InvoiceTable 
+                  invoices={filteredInvoices}
+                  isLoading={isLoading}
+                  onViewInvoice={handleViewInvoice}
+                  onApproveInvoice={handleApproveInvoice}
+                  onRejectInvoice={handleRejectInvoice}
+                />
+              </div>
+            </TabsContent>
+            
             <TabsContent value="pending" className="mt-4">
               <InvoiceToolbar 
                 searchTerm={searchTerm}
@@ -140,25 +163,6 @@ const InvoiceQueue = () => {
                   invoices={filteredInvoices}
                   isLoading={isLoading}
                   onViewInvoice={handleViewInvoice}
-                />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="all-invoices" className="mt-4">
-              <InvoiceToolbar 
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                onAddInvoice={handleAddInvoice}
-                onRefresh={refreshInvoices}
-                onFilterChange={setActiveTab}
-              />
-              <div className="mt-4">
-                <InvoiceTable 
-                  invoices={filteredInvoices}
-                  isLoading={isLoading}
-                  onViewInvoice={handleViewInvoice}
-                  onApproveInvoice={handleApproveInvoice}
-                  onRejectInvoice={handleRejectInvoice}
                 />
               </div>
             </TabsContent>

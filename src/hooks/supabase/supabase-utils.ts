@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { PostgrestError } from '@supabase/supabase-js';
 
@@ -32,18 +31,18 @@ export interface QueryFilter {
   operator?: 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte' | 'like' | 'ilike' | 'is';
 }
 
-// Order options - Updated to support both single order and array of orders
+// Order options
 export interface QueryOrder {
   column: string;
   ascending?: boolean;
 }
 
-// Query options - Updated to accept either a single order object or an array
+// Query options
 export interface QueryOptions<T = any> {
   select?: string;
   filter?: QueryFilter[];
   limit?: number;
-  order?: QueryOrder | QueryOrder[];
+  order?: QueryOrder;
   single?: boolean;
   onSuccess?: (data: T) => void;
   onError?: (error: PostgrestError) => void;

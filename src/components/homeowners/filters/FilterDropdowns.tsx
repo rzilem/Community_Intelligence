@@ -5,11 +5,11 @@ import { HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType 
 
 interface FilterDropdownsProps {
   status: HomeownerRequestStatus | 'all';
-  setStatus: (status: string) => void;
+  setStatus: (status: HomeownerRequestStatus | 'all') => void;
   priority: HomeownerRequestPriority | 'all';
-  setPriority: (priority: string) => void;
+  setPriority: (priority: HomeownerRequestPriority | 'all') => void;
   type: HomeownerRequestType | 'all';
-  setType: (type: string) => void;
+  setType: (type: HomeownerRequestType | 'all') => void;
 }
 
 const FilterDropdowns: React.FC<FilterDropdownsProps> = ({
@@ -49,26 +49,23 @@ const FilterDropdowns: React.FC<FilterDropdownsProps> = ({
     <div className="flex flex-wrap gap-2">
       <FilterSelect
         value={status}
-        onChange={setStatus}
+        onValueChange={(value) => setStatus(value as HomeownerRequestStatus | 'all')}
         label="Status"
         options={statusOptions}
-        placeholder="Status"
       />
       
       <FilterSelect
         value={priority}
-        onChange={setPriority}
+        onValueChange={(value) => setPriority(value as HomeownerRequestPriority | 'all')}
         label="Priority"
         options={priorityOptions}
-        placeholder="Priority"
       />
       
       <FilterSelect
         value={type}
-        onChange={setType}
+        onValueChange={(value) => setType(value as HomeownerRequestType | 'all')}
         label="Type"
         options={typeOptions}
-        placeholder="Type"
       />
     </div>
   );
