@@ -16,6 +16,3 @@ export const PriorityBadge = ({ priority }: { priority: string }) => {
       return <Badge>{priority}</Badge>;
   }
 };
-
-// Add a default export that points to the same component
-export default PriorityBadge;

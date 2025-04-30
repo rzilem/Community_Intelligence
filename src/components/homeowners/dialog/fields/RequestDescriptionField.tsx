@@ -14,24 +14,51 @@ interface RequestDescriptionFieldProps {
 }
 
 const RequestDescriptionField: React.FC<RequestDescriptionFieldProps> = ({ form }) => {
+  // Function to decode HTML entities when displaying in textarea
+  const decodeHtmlEntities = (value: string): string => {
+    if (!value) return '';
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.innerHTML = value;
+      return textArea.value;
+    } catch (error) {
+      console.error('Error decoding HTML entities:', error);
+      return value; // Return original value if decoding fails
+    }
+  };
+
   return (
     <FormField
       control={form.control}
       name="description"
-      render={({ field }) => (
-        <FormItem className="h-full">
-          <FormControl>
-            <Textarea 
-              {...field} 
-              placeholder="Request description" 
-              className="min-h-[200px] h-full resize-none"
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
+      render={({ field }) => {
+        // Get the raw value from the form
+        const rawValue = field.value || '';
+        
+        // Decode any HTML entities in the value
+        const decodedValue = decodeHtmlEntities(rawValue);
+        
+        return (
+          <FormItem>
+            <FormControl>
+              <Textarea 
+                {...field}
+                value={decodedValue}
+                onChange={(e) => {
+                  // Update the form with the user's input
+                  field.onChange(e.target.value);
+                }}
+                placeholder="Request description" 
+                className="min-h-[120px] h-[120px] resize-none"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        );
+      }}
     />
   );
 };
 
 export default RequestDescriptionField;
+

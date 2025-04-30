@@ -16,6 +16,3 @@ export const StatusBadge = ({ status }: { status: string }) => {
       return <Badge>{status}</Badge>;
   }
 };
-
-// Add a default export that points to the same component
-export default StatusBadge;

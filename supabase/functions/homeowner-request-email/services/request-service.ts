@@ -2,7 +2,7 @@
 /**
  * Service to create and manage homeowner requests in the database
  */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "https://cahergndkwfqltxyikyr.supabase.co";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -23,6 +23,50 @@ export async function createRequest(requestData: any) {
         persistSession: false,
       },
     });
+    
+    // Process any attachments if present
+    if (requestData.attachments && requestData.attachments.length > 0) {
+      const processedAttachments = [];
+      
+      for (const attachment of requestData.attachments) {
+        if (attachment.content) {
+          // Generate a unique filename
+          const timestamp = new Date().getTime();
+          const fileName = `request_${timestamp}_${attachment.filename}`;
+          
+          try {
+            // Upload file directly to the documents bucket
+            const { data, error } = await supabase.storage
+              .from('documents')
+              .upload(fileName, Buffer.from(attachment.content, 'base64'), {
+                contentType: attachment.contentType,
+                upsert: true
+              });
+              
+            if (error) {
+              console.error("Error uploading attachment:", error);
+            } else {
+              const { data: urlData } = supabase.storage
+                .from('documents')
+                .getPublicUrl(fileName);
+                
+              processedAttachments.push({
+                filename: fileName,
+                originalName: attachment.filename,
+                url: urlData.publicUrl,
+                contentType: attachment.contentType
+              });
+            }
+          } catch (error) {
+            console.error("Error processing attachment:", error);
+          }
+        }
+      }
+      
+      if (processedAttachments.length > 0) {
+        requestData.attachments = processedAttachments;
+      }
+    }
     
     console.log("Inserting request into homeowner_requests table with data:", JSON.stringify(requestData, null, 2));
     

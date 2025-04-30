@@ -1,87 +1,91 @@
 
-import React from 'react';
-import { 
-  Table, 
-  TableBody
-} from '@/components/ui/table';
+import React, { useState } from 'react';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import HomeownerRequestDetailDialog from './HomeownerRequestDetailDialog';
-import HomeownerRequestEditDialog from './dialog/HomeownerRequestEditDialog';
-import HomeownerRequestCommentDialog from './HomeownerRequestCommentDialog';
-import HomeownerRequestHistoryDialog from './history/HomeownerRequestHistoryDialog';
 import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
 import EmptyRequestsRow from './table/EmptyRequestsRow';
+import HomeownerRequestPagination from './HomeownerRequestPagination';
+import { Table, TableBody } from '@/components/ui/table';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
   columns: HomeownerRequestColumn[];
-  visibleColumnIds?: string[]; // Make this prop optional
+  visibleColumnIds: string[];
   isLoading?: boolean;
   error?: Error | null;
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
-  onAddComment: (request: HomeownerRequest) => void;
-  onViewHistory: (request: HomeownerRequest) => void;
 }
 
-const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({ 
-  requests, 
+const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
+  requests,
   columns,
-  visibleColumnIds: propVisibleColumnIds,
+  visibleColumnIds,
   isLoading,
   error,
   onViewRequest,
   onEditRequest,
-  onAddComment,
-  onViewHistory
 }) => {
-  // Use provided visibleColumnIds or default to columns with defaultVisible=true
-  const visibleColumnIds = propVisibleColumnIds || 
-    columns.filter(column => column.defaultVisible).map(column => column.id);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const totalPages = Math.ceil(requests.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedRequests = requests.slice(startIndex, startIndex + pageSize);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   if (isLoading) {
-    return (
-      <div className="rounded-md border p-8 text-center">
-        <p className="text-muted-foreground">Loading requests...</p>
-      </div>
-    );
+    return <div className="text-center py-8">Loading requests...</div>;
   }
 
   if (error) {
-    return (
-      <div className="rounded-md border p-8 text-center">
-        <p className="text-red-500">Error loading requests: {error.message}</p>
-      </div>
-    );
+    return <div className="text-center py-8 text-red-500">{error.message}</div>;
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <RequestTableHeader 
-          columns={columns} 
-          visibleColumnIds={visibleColumnIds} 
+    <div className="space-y-4">
+      <div className="overflow-x-auto border rounded-md">
+        <Table>
+          <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
+          <TableBody>
+            {paginatedRequests.length === 0 ? (
+              <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
+            ) : (
+              paginatedRequests.map((request) => (
+                <RequestTableRow
+                  key={request.id}
+                  request={request}
+                  columns={columns}
+                  visibleColumnIds={visibleColumnIds}
+                  onViewRequest={onViewRequest}
+                  onEditRequest={onEditRequest}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      
+      {requests.length > 0 && (
+        <HomeownerRequestPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalRequests={requests.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
-        <TableBody>
-          {requests.length === 0 ? (
-            <EmptyRequestsRow columnsCount={visibleColumnIds.length} />
-          ) : (
-            requests.map((request) => (
-              <RequestTableRow
-                key={`${request.id}-${request.updated_at}`}
-                request={request}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-                onViewRequest={onViewRequest}
-                onEditRequest={onEditRequest}
-                onAddComment={onAddComment}
-                onViewHistory={onViewHistory}
-              />
-            ))
-          )}
-        </TableBody>
-      </Table>
+      )}
     </div>
   );
 };

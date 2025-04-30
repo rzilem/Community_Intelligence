@@ -1,12 +1,10 @@
-
 import React from 'react';
-import { TableCell, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Eye, Edit2, MessageSquare, History } from 'lucide-react';
+import { formatRelativeDate } from '@/lib/date-utils';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
-import StatusBadge from '../history/badges/StatusBadge';
-import { PriorityBadge } from '../history/badges/PriorityBadge';
-import { formatDistanceToNow } from 'date-fns';
+import { useSupabaseQuery } from '@/hooks/supabase/use-supabase-query';
+import { useResidentFromEmail } from '@/hooks/homeowners/useResidentFromEmail';
+import { RequestStatusBadge } from './RequestStatusBadge';
+import { RequestActions } from './RequestActions';
 
 interface RequestTableRowProps {
   request: HomeownerRequest;
@@ -14,90 +12,178 @@ interface RequestTableRowProps {
   visibleColumnIds: string[];
   onViewRequest: (request: HomeownerRequest) => void;
   onEditRequest: (request: HomeownerRequest) => void;
-  onAddComment: (request: HomeownerRequest) => void;
-  onViewHistory: (request: HomeownerRequest) => void;
 }
 
-const RequestTableRow: React.FC<RequestTableRowProps> = ({ 
-  request, 
+const RequestTableRow: React.FC<RequestTableRowProps> = ({
+  request,
   columns,
-  visibleColumnIds, 
-  onViewRequest, 
+  visibleColumnIds,
+  onViewRequest,
   onEditRequest,
-  onAddComment,
-  onViewHistory
 }) => {
-  // Function to render cell content based on column id
-  const renderCellContent = (columnId: string) => {
+  const senderEmail = extractPrimarySenderEmail(request);
+  
+  const { data: association } = useSupabaseQuery(
+    'associations',
+    {
+      select: 'name',
+      filter: [{ column: 'id', value: request.association_id }],
+      single: true
+    },
+    !!request.association_id
+  );
+
+  const { resident, property, email, association: residentAssociation } = useResidentFromEmail(
+    request.html_content,
+    senderEmail
+  );
+
+  const getDescription = () => {
+    if (!request.description && !request.html_content) return 'No description provided';
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = request.html_content || request.description;
+    let plainText = tempDiv.textContent || tempDiv.innerText || '';
+    
+    plainText = plainText.replace(/(\w+)\s*{[^}]*}/g, '');
+    plainText = plainText.replace(/\[Image\]/gi, '');
+    plainText = plainText.replace(/\s+/g, ' ').trim();
+    
+    const words = plainText.split(/\s+/);
+    return words.length > 15 ? `${words.slice(0, 15).join(' ')}...` : plainText;
+  };
+
+  React.useEffect(() => {
+    const shouldUpdateRequest = (
+      resident && 
+      property && 
+      (!request.resident_id || !request.property_id || !request.association_id)
+    );
+    
+    if (shouldUpdateRequest && onEditRequest) {
+      console.log('Resident info found that could update request:', {
+        resident_id: resident.id,
+        property_id: property.id,
+        association_id: property.association_id
+      });
+    }
+  }, [resident, property, request]);
+
+  const renderCell = (columnId: string) => {
     switch (columnId) {
-      case 'title':
-        return request.title;
-      case 'status':
-        return <StatusBadge status={request.status} />;
       case 'priority':
-        return <PriorityBadge priority={request.priority} />;
+        return <RequestStatusBadge status={request.priority} type="priority" />;
+      case 'status':
+        return <RequestStatusBadge status={request.status} type="status" />;
+      case 'title':
+        return <div className="text-sm font-medium">{request.title || 'Untitled Request'}</div>;
       case 'type':
-        return request.type;
-      case 'tracking_number':
-        return request.tracking_number || 'N/A';
-      case 'created_at':
-        return request.created_at 
-          ? formatDistanceToNow(new Date(request.created_at), { addSuffix: true }) 
-          : 'N/A';
-      case 'updated_at':
-        return request.updated_at 
-          ? formatDistanceToNow(new Date(request.updated_at), { addSuffix: true }) 
-          : 'N/A';
+        return <div className="text-sm">{request.type}</div>;
       case 'description':
         return (
-          <div className="max-w-xs truncate">
-            {request.description}
+          <div 
+            className="text-sm text-muted-foreground max-w-[200px] truncate" 
+            title={getDescription()}
+          >
+            {getDescription()}
+          </div>
+        );
+      case 'tracking_number':
+        return <div className="text-sm font-mono">{request.tracking_number || 'N/A'}</div>;
+      case 'created_at':
+        return (
+          <div className="text-sm text-muted-foreground">
+            {request.created_at ? formatRelativeDate(request.created_at) : 'Unknown'}
           </div>
         );
       case 'resident_id':
-        return request.resident_id || 'Unassigned';
+        return <div className="text-sm">{resident?.name || 'Not assigned'}</div>;
       case 'property_id':
-        return request.property_id || 'Unassigned';
+        return (
+          <div className="text-sm">
+            {property ? `${property.address}${property.unit_number ? ` #${property.unit_number}` : ''}` : 'Not assigned'}
+          </div>
+        );
       case 'association_id':
-        return request.association_id || 'Unassigned';
-      case 'assigned_to':
-        return request.assigned_to || 'Unassigned';
-      case 'resolved_at':
-        return request.resolved_at 
-          ? formatDistanceToNow(new Date(request.resolved_at), { addSuffix: true }) 
-          : 'N/A';
+        return <div className="text-sm">{association?.name || residentAssociation?.name || 'Not assigned'}</div>;
+      case 'email':
+        return <div className="text-sm">{email || senderEmail || 'No email found'}</div>;
       default:
-        return 'N/A';
+        return <div>-</div>;
     }
   };
 
   return (
-    <TableRow>
+    <tr className="hover:bg-muted/50">
       {visibleColumnIds.map((columnId) => (
-        <TableCell key={columnId}>
-          {renderCellContent(columnId)}
-        </TableCell>
+        <td 
+          key={columnId} 
+          className="py-2 px-4 last:border-r-0"
+        >
+          {renderCell(columnId)}
+        </td>
       ))}
-      
-      {/* Actions cell always visible */}
-      <TableCell className="text-right">
-        <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon" onClick={() => onViewRequest(request)}>
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => onEditRequest(request)}>
-            <Edit2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => onAddComment(request)}>
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => onViewHistory(request)}>
-            <History className="h-4 w-4" />
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+      <td className="py-2 px-4 text-center border-l border-border/20">
+        <RequestActions 
+          request={request}
+          onViewRequest={onViewRequest}
+          onEditRequest={onEditRequest}
+        />
+      </td>
+    </tr>
   );
+};
+
+const extractPrimarySenderEmail = (request: HomeownerRequest): string | null => {
+  if (request.html_content) {
+    const pspropMatch = request.html_content.match(/([a-zA-Z0-9._-]+@psprop\.net)/i);
+    if (pspropMatch) {
+      console.log('Found psprop.net email:', pspropMatch[0]);
+      return pspropMatch[0];
+    }
+  }
+  
+  if (request.tracking_number && request.tracking_number.includes('rickyz@psprop.net')) {
+    console.log('Found rickyz@psprop.net in tracking number');
+    return 'rickyz@psprop.net';
+  }
+  
+  if (request.html_content) {
+    const fromHeaderMatch = request.html_content.match(/From:\s*([^<\r\n]*?)<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i);
+    if (fromHeaderMatch && fromHeaderMatch[2]) {
+      console.log('Found email in From header:', fromHeaderMatch[2]);
+      return fromHeaderMatch[2];
+    }
+  }
+  
+  if (request.tracking_number) {
+    const emailMatch = request.tracking_number.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i);
+    if (emailMatch) {
+      console.log('Found email in tracking number:', emailMatch[1]);
+      return emailMatch[1];
+    }
+  }
+  
+  if (request.html_content) {
+    const emailPatterns = [
+      /Reply-To:\s*(?:[^<\r\n]*?)<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i,
+      /Reply-To:\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /Return-Path:\s*<([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)>/i,
+      /envelope-from\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /email=([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i,
+      /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/i
+    ];
+    
+    for (const pattern of emailPatterns) {
+      const match = request.html_content.match(pattern);
+      if (match && match[1]) {
+        console.log('Found email using pattern:', pattern, match[1]);
+        return match[1];
+      }
+    }
+  }
+  
+  return null;
 };
 
 export default RequestTableRow;

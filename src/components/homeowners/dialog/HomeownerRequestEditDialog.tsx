@@ -1,16 +1,19 @@
 
 import React from 'react';
-import { 
-  ResponsiveDialog,
-  ResponsiveDialogContent, 
-  ResponsiveDialogHeader, 
-  ResponsiveDialogTitle
-} from '@/components/ui/responsive-dialog';
-import { Button } from '@/components/ui/button';
+import { ResponsiveDialog, ResponsiveDialogContent } from '@/components/ui/responsive-dialog';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
-import { toast } from 'sonner';
-import { useSupabaseUpdate } from '@/hooks/supabase';
-import RequestEditForm from './RequestEditForm';
+import { cleanHtmlContent } from '@/lib/format-utils';
+import { TabsContent } from '@/components/ui/tabs';
+import { Form } from '@/components/ui/form';
+import DetailsTab from '../detail/tabs/DetailsTab';
+import CommentsTab from '../detail/tabs/CommentsTab';
+import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
+import AttachmentsTab from './tabs/AttachmentsTab';
+import RequestDialogHeader from './edit/RequestDialogHeader';
+import RequestDialogTabs from './edit/RequestDialogTabs';
+import RequestFormFields from './edit/RequestFormFields';
+import RequestFormActions from './edit/RequestFormActions';
+import { useRequestForm } from './edit/useRequestForm';
 
 interface HomeownerRequestEditDialogProps {
   request: HomeownerRequest | null;
@@ -25,72 +28,101 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   onOpenChange,
   onSuccess
 }) => {
-  const { mutate: updateRequest, isPending } = useSupabaseUpdate<HomeownerRequest>(
-    'homeowner_requests',
-    {
-      onSuccess: () => {
-        toast.success('Request updated successfully');
-        // Ensure we're properly closing the dialog first before triggering other state changes
-        onOpenChange(false);
-        // Add a small delay before triggering the onSuccess callback to prevent state conflicts
-        if (onSuccess) {
-          setTimeout(() => {
-            onSuccess();
-          }, 100);
-        }
-      },
-      showErrorToast: true, // Using the built-in error handling instead of onError
-    }
-  );
+  const [activeTab, setActiveTab] = React.useState('details');
+  const [fullscreenEmail, setFullscreenEmail] = React.useState(false);
+  
+  const {
+    form,
+    isPending,
+    comments,
+    loadingComments,
+    fetchComments,
+    handleSubmit
+  } = useRequestForm(request, onOpenChange, onSuccess);
 
-  const handleSubmit = (values: any) => {
-    if (!request) return;
-    
-    console.log('Submitting form values:', values);
-    
-    // Make sure we're using the database column names and handle empty values properly
-    const updatedData: Partial<HomeownerRequest> = {
-      title: values.title,
-      description: values.description,
-      status: values.status,
-      priority: values.priority,
-      type: values.type,
-      // Handle unassigned values by setting them to null for the database
-      assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to,
-      association_id: values.association_id === 'unassigned' ? null : values.association_id,
-      property_id: values.property_id === 'unassigned' ? null : values.property_id,
-      resident_id: values.resident_id === 'unassigned' ? null : values.resident_id
-    };
-    
-    console.log('Transformed data for update:', updatedData);
-    
-    if (values.status === 'resolved' && request.status !== 'resolved') {
-      updatedData.resolved_at = new Date().toISOString();
+  React.useEffect(() => {
+    if (open && request && activeTab === 'activity') {
+      fetchComments();
     }
-    
-    if (values.status !== 'resolved' && request.status === 'resolved') {
-      updatedData.resolved_at = null;
-    }
-    
-    updateRequest({
-      id: request.id,
-      data: updatedData,
-    });
+  }, [open, request, activeTab, fetchComments]);
+
+  const handleAssignChange = (value: string) => {
+    form.setValue('assigned_to', value);
   };
+
+  const handleAssociationChange = (value: string) => {
+    form.setValue('association_id', value);
+    form.setValue('property_id', 'unassigned');
+  };
+
+  const handlePropertyChange = (value: string) => {
+    form.setValue('property_id', value);
+  };
+
+  if (!request) return null;
+
+  const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-5xl w-[95%]">
-        <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>Edit Request</ResponsiveDialogTitle>
-        </ResponsiveDialogHeader>
-        
-        <RequestEditForm 
-          request={request} 
-          onSubmit={handleSubmit} 
-          isPending={isPending}
-          onCancel={() => onOpenChange(false)}
+      <ResponsiveDialogContent 
+        className="max-w-[95%] w-[105%] flex flex-col max-h-[95vh]" 
+      >
+        <RequestDialogHeader 
+          title={request.title}
+          trackingNumber={request.tracking_number}
+          onClose={() => onOpenChange(false)}
         />
+
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-4 pt-2 pb-2 overflow-y-auto flex-shrink-0 flex flex-col" style={{ height: '500px' }}>
+            <RequestDialogTabs 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab}
+              assignedTo={form.watch('assigned_to')}
+              associationId={form.watch('association_id')}
+              propertyId={form.watch('property_id')}
+              onAssignChange={handleAssignChange}
+              onAssociationChange={handleAssociationChange}
+              onPropertyChange={handlePropertyChange}
+            >
+              <div className="flex-1 h-full overflow-auto">
+                <TabsContent value="details" className="h-full m-0">
+                  <DetailsTab request={request} processedDescription={processedDescription} />
+                </TabsContent>
+
+                <TabsContent value="activity" className="h-full m-0">
+                  <CommentsTab comments={comments} loadingComments={loadingComments} />
+                </TabsContent>
+
+                <TabsContent value="email" className="h-full m-0">
+                  <OriginalEmailTab 
+                    htmlContent={request.html_content} 
+                    fullscreenEmail={fullscreenEmail}
+                    setFullscreenEmail={setFullscreenEmail}
+                  />
+                </TabsContent>
+
+                <TabsContent value="attachments" className="h-full m-0">
+                  <AttachmentsTab request={request} />
+                </TabsContent>
+              </div>
+            </RequestDialogTabs>
+          </div>
+
+          <div className="p-3 border-t bg-background flex-shrink-0 h-auto">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <RequestFormFields form={form} />
+                <RequestFormActions 
+                  trackingNumber={request.tracking_number}
+                  isPending={isPending}
+                  onCancel={() => onOpenChange(false)}
+                />
+              </form>
+            </Form>
+          </div>
+        </div>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

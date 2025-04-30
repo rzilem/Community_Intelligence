@@ -31,6 +31,11 @@ export function useSupabaseQuery<T = any>(
 
       // Apply filters
       filter.forEach(({ column, value, operator = 'eq' }) => {
+        if (value === null || value === undefined) {
+          // Skip filters with null/undefined values to prevent query errors
+          return;
+        }
+        
         if (operator === 'eq') {
           query = query.eq(column, value);
         } else if (operator === 'neq') {
@@ -57,31 +62,44 @@ export function useSupabaseQuery<T = any>(
         query = query.limit(limit);
       }
 
-      // Apply ordering
+      // Apply ordering - fix the order handling to support both object and array formats
       if (order) {
-        query = query.order(order.column, { ascending: order.ascending ?? true });
+        if (Array.isArray(order)) {
+          // Handle array of order objects
+          order.forEach(orderItem => {
+            query = query.order(orderItem.column, { ascending: orderItem.ascending ?? true });
+          });
+        } else {
+          // Handle single order object
+          query = query.order(order.column, { ascending: order.ascending ?? true });
+        }
       }
 
       // Get single result if requested
       if (single) {
         console.log('Executing single() query');
-        const { data, error } = await query.single();
-        
-        if (error) {
-          console.error(`Error fetching from ${table}:`, error);
+        try {
+          const { data, error } = await query.single();
           
-          // Use custom error handler if provided, otherwise show toast
-          if (onError) {
-            onError(error);
-          } else {
-            showErrorToast('fetching', table, error);
+          if (error) {
+            console.error(`Error fetching from ${table}:`, error);
+            
+            // Use custom error handler if provided, otherwise show toast
+            if (onError) {
+              onError(error);
+            } else {
+              showErrorToast('fetching', table, error);
+            }
+            
+            return null; // Return null instead of throwing so the UI can handle it gracefully
           }
           
-          throw error;
+          console.log(`Data fetched from ${table} (single):`, data);
+          return data as T;
+        } catch (error: any) {
+          console.error(`Error with single() from ${table}:`, error);
+          return null; // Return null on any error
         }
-        
-        console.log(`Data fetched from ${table} (single):`, data);
-        return data as T;
       }
 
       // Get multiple results
@@ -98,7 +116,7 @@ export function useSupabaseQuery<T = any>(
           showErrorToast('fetching', table, error);
         }
         
-        throw error;
+        return [] as T; // Return empty array instead of throwing
       }
       
       console.log(`Data fetched from ${table}:`, data);

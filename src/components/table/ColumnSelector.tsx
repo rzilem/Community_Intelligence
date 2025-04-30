@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Columns, GripVertical } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
 
 interface Column {
   id: string;
@@ -27,103 +27,129 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   resetToDefaults,
   className
 }) => {
-  const [open, setOpen] = useState(false);
-  const [localSelectedColumns, setLocalSelectedColumns] = useState<string[]>(selectedColumns);
-  const [draggedItem, setDraggedItem] = useState<number | null>(null);
-
-  // Update local state when selectedColumns prop changes
-  React.useEffect(() => {
-    setLocalSelectedColumns(selectedColumns);
-  }, [selectedColumns]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const handleColumnToggle = (columnId: string) => {
-    const updatedColumns = localSelectedColumns.includes(columnId)
-      ? localSelectedColumns.filter(id => id !== columnId)
-      : [...localSelectedColumns, columnId];
-
-    // Ensure at least one column is selected
-    if (updatedColumns.length === 0) {
-      return;
+    const updatedColumns = selectedColumns.includes(columnId)
+      ? selectedColumns.filter(id => id !== columnId)
+      : [...selectedColumns, columnId];
+    
+    if (updatedColumns.length > 0) {
+      onChange(updatedColumns);
     }
-
-    setLocalSelectedColumns(updatedColumns);
-    onChange(updatedColumns);
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (index: number) => {
-    setDraggedItem(index);
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
-    if (draggedItem === null || !onReorder) return;
+    if (draggedIndex === null || !onReorder) return;
     
-    const draggedOverItem = index;
-    
-    if (draggedItem === draggedOverItem) return;
-    
-    onReorder(draggedItem, draggedOverItem);
-    setDraggedItem(draggedOverItem);
+    if (draggedIndex !== index) {
+      onReorder(draggedIndex, index);
+      setDraggedIndex(index);
+    }
   };
 
   const handleDragEnd = () => {
-    setDraggedItem(null);
+    setDraggedIndex(null);
   };
 
+  // Filter only valid columns that exist in the columns array
+  const validSelectedColumns = selectedColumns.filter(
+    columnId => columns.some(col => col.id === columnId)
+  );
+
+  // Get full column objects for selected columns to display them
+  const selectedColumnObjects = validSelectedColumns.map(
+    columnId => columns.find(col => col.id === columnId)
+  ).filter(Boolean) as Column[];
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover>
       <PopoverTrigger asChild>
-        <TooltipButton variant="outline" className={className} tooltip="Customize visible columns">
+        <Button variant="outline" className={className}>
           <Columns className="h-4 w-4 mr-2" />
           Customize Columns
-        </TooltipButton>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-4" align="end">
         <h3 className="font-medium mb-2">Display Columns</h3>
         <p className="text-xs text-muted-foreground mb-2">
-          Drag to reorder columns
+          {onReorder ? "Drag to reorder columns" : "Select columns to display"}
         </p>
         <div className="space-y-1 max-h-[300px] overflow-auto">
-          {columns.map((column, index) => (
-            <div 
-              key={column.id} 
-              className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-move"
-              draggable={onReorder !== undefined}
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-            >
-              <div className="flex items-center justify-center">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <Checkbox 
-                id={`column-${column.id}`}
-                checked={localSelectedColumns.includes(column.id)}
-                onCheckedChange={() => handleColumnToggle(column.id)}
-              />
-              <label 
-                htmlFor={`column-${column.id}`}
-                className="text-sm leading-none flex-1 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          {selectedColumnObjects.map((column, index) => {
+            if (!column) return null;
+            
+            return (
+              <div 
+                key={column.id}
+                draggable={onReorder !== undefined}
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
               >
-                {column.label}
-              </label>
-            </div>
-          ))}
+                {onReorder && (
+                  <div className="cursor-grab">
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                )}
+                <Checkbox 
+                  checked={validSelectedColumns.includes(column.id)}
+                  onCheckedChange={() => handleColumnToggle(column.id)}
+                  id={`column-${column.id}`}
+                />
+                <label 
+                  htmlFor={`column-${column.id}`}
+                  className="text-sm leading-none flex-1 cursor-pointer"
+                >
+                  {column.label}
+                </label>
+              </div>
+            );
+          })}
         </div>
-        <div className="text-xs text-muted-foreground mt-4">
-          At least one column must be selected
+
+        <div className="border-t pt-2 mt-2">
+          <p className="text-xs text-muted-foreground mb-2">Available Columns</p>
+          <div className="space-y-1 max-h-[150px] overflow-auto">
+            {columns
+              .filter(column => !validSelectedColumns.includes(column.id))
+              .map(column => (
+                <div 
+                  key={column.id}
+                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted cursor-pointer"
+                >
+                  <Checkbox 
+                    checked={false}
+                    onCheckedChange={() => handleColumnToggle(column.id)}
+                    id={`column-${column.id}`}
+                  />
+                  <label 
+                    htmlFor={`column-${column.id}`}
+                    className="text-sm leading-none flex-1 cursor-pointer"
+                  >
+                    {column.label}
+                  </label>
+                </div>
+              ))}
+          </div>
         </div>
+        
         {resetToDefaults && (
-          <TooltipButton 
+          <Button 
             variant="outline" 
             size="sm" 
             className="mt-4 w-full"
             onClick={resetToDefaults}
-            tooltip="Reset columns to default configuration"
           >
             Reset to Defaults
-          </TooltipButton>
+          </Button>
         )}
       </PopoverContent>
     </Popover>

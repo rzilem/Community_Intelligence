@@ -1,5 +1,9 @@
 
-// Process raw multipart form data using native FormData API
+// This file contains utility functions for parsing requests from email providers like CloudMailin
+
+/**
+ * Process multipart/form-data requests and extract relevant fields
+ */
 export async function processMultipartFormData(request: Request): Promise<any> {
   const contentType = request.headers.get("content-type");
   
@@ -13,7 +17,7 @@ export async function processMultipartFormData(request: Request): Promise<any> {
     }
   }
 
-  console.log("Processing multipart form data");
+  console.log("Processing multipart form data with content type:", contentType);
   let formData;
   
   try {
@@ -25,9 +29,57 @@ export async function processMultipartFormData(request: Request): Promise<any> {
   
   const result: Record<string, any> = {};
   
+  // Log all form data keys for debugging
+  console.log("Form data keys:", Array.from(formData.keys()));
+  
   // Process each form field
   for (const [key, value] of formData.entries()) {
-    if (typeof value === "string") {
+    // Check if this might be a CloudMailin attachment
+    if (key.startsWith('attachments[') || key === 'attachments[]') {
+      console.log(`Found potential CloudMailin attachment with key: ${key}, type: ${typeof value}, is file: ${value instanceof File}`);
+      
+      if (!result.attachments) {
+        result.attachments = [];
+      }
+      
+      // CloudMailin sends attachments as files
+      if (value instanceof File || value instanceof Blob) {
+        // Get the file details
+        const fileContent = value;
+        const fileName = value instanceof File ? value.name : key.replace(/attachments\[\d*\]/, 'attachment');
+        const contentType = value instanceof File ? value.type : 'application/octet-stream';
+        
+        console.log(`Processing file attachment: name=${fileName}, type=${contentType}, size=${fileContent.size}`);
+        
+        // Add to the attachments array
+        result.attachments.push({
+          filename: fileName,
+          contentType: contentType,
+          content: fileContent,
+          size: fileContent.size
+        });
+      }
+    } else if (key.startsWith('attachment_details[') || key === 'attachment_details[]') {
+      // Process CloudMailin attachment details
+      console.log(`Found attachment details with key: ${key}, value: ${value}`);
+      
+      // We'll process these after gathering all attachment files
+      if (!result.attachment_details) {
+        result.attachment_details = [];
+      }
+      
+      // Try to parse the value as JSON if it's a string
+      if (typeof value === 'string') {
+        try {
+          const parsedValue = JSON.parse(value);
+          result.attachment_details.push(parsedValue);
+        } catch {
+          result.attachment_details.push(value);
+        }
+      } else {
+        result.attachment_details.push(value);
+      }
+    } else if (typeof value === "string") {
       try {
         // Try to parse JSON values
         result[key] = JSON.parse(value);
@@ -36,16 +88,57 @@ export async function processMultipartFormData(request: Request): Promise<any> {
         result[key] = value;
       }
     } else {
-      // Handle file data if needed
+      // Handle any other form fields
       result[key] = value;
     }
   }
 
-  console.log("Processed form data:", result);
+  // Match up CloudMailin attachment details with the actual files
+  if (result.attachments && result.attachment_details) {
+    console.log("Matching attachment details with files");
+    
+    try {
+      // CloudMailin specific format where attachment details are provided separately
+      for (let i = 0; i < result.attachments.length; i++) {
+        const attachment = result.attachments[i];
+        const details = result.attachment_details[i];
+        
+        if (details) {
+          if (typeof details === 'object') {
+            // Copy relevant properties
+            attachment.filename = details.filename || attachment.filename;
+            attachment.contentType = details.content_type || details.contentType || attachment.contentType;
+          } else if (typeof details === 'string') {
+            // Try to extract details from the string
+            try {
+              const detailsObj = JSON.parse(details);
+              attachment.filename = detailsObj.filename || attachment.filename;
+              attachment.contentType = detailsObj.content_type || detailsObj.contentType || attachment.contentType;
+            } catch {
+              // If parsing fails, just continue with what we have
+            }
+          }
+        }
+      }
+    } catch (matchError) {
+      console.error("Error matching attachment details:", matchError);
+    }
+    
+    // Remove the attachment_details from the result to avoid confusion
+    delete result.attachment_details;
+  }
+
+  console.log("Processed form data result:", Object.keys(result));
+  if (result.attachments) {
+    console.log(`Found ${result.attachments.length} attachments in form data`);
+  }
+  
   return result;
 }
 
-// Function to extract the most important fields from different email webhook formats
+/**
+ * Normalize email data from different providers into a standard format
+ */
 export function normalizeEmailData(data: any): any {
   const normalizedData: Record<string, any> = {};
   
@@ -88,13 +181,15 @@ export function normalizeEmailData(data: any): any {
   normalizedData.tracking_number = data.message_id || data.messageId || data.id || 
     data.envelope?.messageId || `email-${Date.now()}`;
   
-  // Add original data for reference
+  // Add original data for reference in case we need to debug
   normalizedData.original = data;
   
   return normalizedData;
 }
 
-// Extract and normalize attachments from different email service formats
+/**
+ * Process attachments from different email service formats
+ */
 function processAttachments(data: any): any[] {
   // Safely check if data exists
   if (!data) return [];
@@ -102,17 +197,55 @@ function processAttachments(data: any): any[] {
   // Initialize with empty array as fallback
   let attachments: any[] = [];
   
-  // Handle different attachment field names based on email service providers
+  // Check if we already have processed attachments in the data
   if (Array.isArray(data.attachments)) {
+    console.log(`Using ${data.attachments.length} attachments from data.attachments array`);
     attachments = data.attachments;
   } else if (Array.isArray(data.Attachments)) {
+    console.log(`Using ${data.Attachments.length} attachments from data.Attachments array`);
     attachments = data.Attachments;
   } else if (data.attachment && !Array.isArray(data.attachment)) {
     // Some services might provide a single attachment object
+    console.log("Using single attachment from data.attachment");
     attachments = [data.attachment];
   } else if (data.Attachment && !Array.isArray(data.Attachment)) {
+    console.log("Using single attachment from data.Attachment");
     attachments = [data.Attachment];
   }
+  
+  // Check for CloudMailin specific formats
+  if (attachments.length === 0 && data.attachments && typeof data.attachments === 'string') {
+    try {
+      const parsedAttachments = JSON.parse(data.attachments);
+      if (Array.isArray(parsedAttachments) && parsedAttachments.length > 0) {
+        console.log(`Found ${parsedAttachments.length} attachments in parsed data.attachments string`);
+        attachments = parsedAttachments;
+      }
+    } catch (e) {
+      console.log("Could not parse attachments string as JSON");
+    }
+  }
+  
+  // Also check for Sendgrid style attachments
+  if (attachments.length === 0 && data.email && data.email.attachments) {
+    console.log(`Found ${data.email.attachments.length} attachments in data.email.attachments`);
+    attachments = data.email.attachments;
+  }
+  
+  // Attempt to find raw attachments in any other key that might contain them
+  if (attachments.length === 0) {
+    for (const key in data) {
+      const value = data[key];
+      if (Array.isArray(value) && value.length > 0 && 
+          value[0] && (value[0].filename || value[0].content || value[0].contentType)) {
+        console.log(`Found potential attachments in data.${key}`);
+        attachments = value;
+        break;
+      }
+    }
+  }
+  
+  console.log(`Processing ${attachments.length} attachments`);
   
   // Standardize attachment object structure
   return attachments.map(attachment => {

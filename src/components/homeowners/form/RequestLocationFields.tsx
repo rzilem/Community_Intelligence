@@ -21,7 +21,7 @@ const RequestLocationFields = ({
   // Filter properties based on selected association
   const filteredProperties = selectedAssociationId 
     ? properties.filter(property => property.association_id === selectedAssociationId)
-    : properties;
+    : [];
 
   const associationOptions = associations.map(association => ({
     value: association.id,
@@ -32,6 +32,11 @@ const RequestLocationFields = ({
     value: property.id,
     label: `${property.address} ${property.unit_number ? `Unit ${property.unit_number}` : ''}`
   }));
+
+  // Clear property selection when association changes
+  React.useEffect(() => {
+    form.setValue('propertyId', '');
+  }, [selectedAssociationId, form]);
 
   return (
     <div className="space-y-4">
