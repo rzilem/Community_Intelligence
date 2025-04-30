@@ -1,53 +1,63 @@
 
 /**
- * Normalizes URLs to prevent double slashes and other malformations
- * @param {string} url The URL to normalize
- * @returns {string} Normalized URL
+ * Normalizes a URL by:
+ * - Ensuring proper protocol (https:// or http://)
+ * - Removing duplicate slashes in the path
+ * - Preserving query parameters
+ * 
+ * @param url The URL to normalize
+ * @returns The normalized URL
  */
-export function normalizeUrl(url) {
-  if (!url) return url;
-  
+export function normalizeUrl(url: string): string {
+  if (!url) return '';
+
   try {
-    // Validate input is a string
-    if (typeof url !== 'string') {
-      console.warn("Invalid URL type provided to normalizer:", typeof url);
-      return '';
-    }
+    // Parse the URL
+    const parsed = new URL(url);
     
-    // Prevent XSS by removing javascript: protocol
-    if (url.toLowerCase().trim().startsWith('javascript:')) {
-      console.warn("Blocked potential XSS attempt with javascript: protocol in URL");
-      return '';
-    }
+    // Get the protocol and host
+    const protocol = parsed.protocol;
+    const host = parsed.host;
     
-    // Handle protocol correctly
-    if (url.includes('://')) {
-      const [protocol, rest] = url.split('://');
-      
-      // Validate protocol is a safe one
-      const safeProtocols = ['http', 'https', 'ftp', 'ftps'];
-      if (!safeProtocols.includes(protocol.toLowerCase())) {
-        console.warn(`Blocked potentially unsafe protocol: ${protocol}`);
-        return '';
-      }
-      
-      // Only normalize the path portion, not the query parameters
-      if (rest.includes('?')) {
-        const [path, query] = rest.split('?');
-        // Replace multiple consecutive slashes with a single slash
-        const normalizedPath = path.replace(/\/+/g, '/');
-        return `${protocol}://${normalizedPath}?${query}`;
-      } else {
-        // Replace multiple consecutive slashes with a single slash
-        const normalizedPath = rest.replace(/\/+/g, '/');
-        return `${protocol}://${normalizedPath}`;
-      }
-    } else {
-      // No protocol, just normalize slashes
-      return url.replace(/\/+/g, '/');
-    }
+    // Split path and query/hash
+    let path = parsed.pathname;
+    const search = parsed.search;
+    const hash = parsed.hash;
+    
+    // Remove duplicate slashes in the path
+    path = path.replace(/\/+/g, '/');
+    
+    // Reconstruct the URL
+    return `${protocol}//${host}${path}${search}${hash}`;
   } catch (error) {
-    console.error("Error normalizing URL:", error);
-    return ''; // Return empty string on error to prevent security issues
+    console.error('Error normalizing URL:', error);
+    
+    // If URL parsing fails, do basic normalization
+    // Add https:// if missing
+    if (!url.match(/^https?:\/\//i)) {
+      url = 'https://' + url;
+    }
+    
+    // Remove duplicate slashes in the path portion
+    const urlParts = url.split('://');
+    if (urlParts.length > 1) {
+      const protocol = urlParts[0];
+      let rest = urlParts[1];
+      
+      // Find where the path starts (after the first slash following the domain)
+      const firstSlashPos = rest.indexOf('/');
+      if (firstSlashPos > -1) {
+        const domain = rest.substring(0, firstSlashPos);
+        let path = rest.substring(firstSlashPos);
+        
+        // Remove duplicate slashes only in the path portion
+        path = path.replace(/\/+/g, '/');
+        
+        return `${protocol}://${domain}${path}`;
+      }
+    }
+    
+    // If all else fails, return the original URL
+    return url;
   }
 }

@@ -13,6 +13,10 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 );
 
+// Log environment variables for debugging (not the full secret key)
+console.log("SUPABASE_URL is set:", !!Deno.env.get('SUPABASE_URL'));
+console.log("SUPABASE_SERVICE_ROLE_KEY is set:", !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -169,8 +173,8 @@ serve(async (req) => {
 
     // Remove association_type if it exists to avoid database errors
     if (invoiceData.association_type !== undefined) {
+      console.log("Removing association_type from invoice data to avoid schema errors");
       delete invoiceData.association_type;
-      console.log("Removed association_type from invoice data to avoid schema errors");
     }
 
     // Input validation for invoice data before database insertion
@@ -187,6 +191,58 @@ serve(async (req) => {
           status: 422 
         }
       );
+    }
+
+    // Process attachments if present
+    if (normalizedEmailData.attachments && normalizedEmailData.attachments.length > 0) {
+      console.log("Processing attachments:", normalizedEmailData.attachments.length);
+      
+      // Find PDF attachments
+      const pdfAttachments = normalizedEmailData.attachments.filter(att => 
+        att.contentType.includes('pdf') || 
+        att.filename.toLowerCase().endsWith('.pdf')
+      );
+      
+      if (pdfAttachments.length > 0) {
+        console.log(`Found ${pdfAttachments.length} PDF attachment(s)`);
+        const attachment = pdfAttachments[0]; // Use the first PDF
+        
+        try {
+          // Generate a unique filename
+          const fileExt = '.pdf';
+          const fileName = `invoice_${Date.now()}${fileExt}`;
+          
+          // Convert base64 content to binary
+          const binaryContent = Uint8Array.from(atob(attachment.content), c => c.charCodeAt(0));
+          
+          // Upload to storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('invoices')
+            .upload(fileName, binaryContent, {
+              contentType: 'application/pdf',
+              upsert: true
+            });
+            
+          if (uploadError) {
+            console.error("PDF upload error:", uploadError);
+          } else {
+            console.log("PDF uploaded successfully:", fileName);
+            
+            // Get public URL
+            const { data: urlData } = supabase.storage
+              .from('invoices')
+              .getPublicUrl(fileName);
+              
+            if (urlData?.publicUrl) {
+              invoiceData.pdf_url = urlData.publicUrl;
+              invoiceData.source_document = fileName;
+              console.log("PDF public URL generated:", urlData.publicUrl);
+            }
+          }
+        } catch (pdfError) {
+          console.error("Error processing PDF:", pdfError);
+        }
+      }
     }
 
     // Always attempt to create the invoice, even with partial data
