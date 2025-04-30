@@ -1,13 +1,13 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import VendorSelector from '@/components/vendors/VendorSelector';
@@ -32,8 +32,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-      {/* First row with Association and Vendor */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        {/* First row - 3 columns */}
         <div className="md:col-span-2">
           <AssociationSelector
             initialAssociationId={invoice.association}
@@ -42,18 +42,28 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           />
         </div>
 
-        <div className="md:col-span-4">
+        <div className="md:col-span-3">
           <VendorSelector
             onVendorChange={(value) => onInvoiceChange('vendor', value)}
             initialVendorName={invoice.vendor}
             className="w-full"
-            label="Vendor"
           />
         </div>
-      </div>
 
-      {/* Date and Invoice Number row */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
+        <div className="md:col-span-1">
+          <div className="space-y-2">
+            <Label htmlFor="invoiceNumber">Invoice Number</Label>
+            <Input
+              id="invoiceNumber"
+              value={invoice.invoiceNumber}
+              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
+              placeholder="Enter invoice number"
+              className="w-full"
+            />
+          </div>
+        </div>
+
+        {/* Second row - 3 columns */}
         <div className="md:col-span-2">
           <div className="space-y-2">
             <Label htmlFor="invoiceDate">Invoice Date</Label>
@@ -67,35 +77,6 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </div>
         </div>
 
-        <div className="md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={invoice.dueDate}
-              onChange={(e) => onInvoiceChange('dueDate', e.target.value)}
-              className="w-full"
-            />
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <div className="space-y-2">
-            <Label htmlFor="invoiceNumber">Invoice Number</Label>
-            <Input
-              id="invoiceNumber"
-              value={invoice.invoiceNumber}
-              onChange={(e) => onInvoiceChange('invoiceNumber', e.target.value)}
-              placeholder="Enter invoice number"
-              className="w-full"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Payment type and Total row */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
         <div className="md:col-span-2">
           <div className="space-y-2">
             <Label>Payment Type</Label>
@@ -115,7 +96,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </div>
         </div>
 
-        <div className="md:col-span-2 md:col-start-5">
+        <div className="md:col-span-2">
           <div className="space-y-2">
             <Label htmlFor="invoiceTotal">Total</Label>
             <Input
@@ -128,6 +109,17 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             />
           </div>
         </div>
+      </div>
+
+      {/* Description area */}
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <Textarea
+          value={invoice.description}
+          onChange={(e) => onInvoiceChange('description', e.target.value)}
+          placeholder="Enter description"
+          className="min-h-[100px]"
+        />
       </div>
     </div>
   );

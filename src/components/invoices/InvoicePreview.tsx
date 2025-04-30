@@ -32,9 +32,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
                           getFileExtension(pdfUrl || '') === 'docx';
   
-  // Check if we have valid email content to show the email tab
-  const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
-  
   // Handle opening the document in a new tab
   const handleExternalOpen = () => {
     if (normalizedPdfUrl) {
@@ -84,14 +81,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       hasContent: hasContent,
       isPdfFile: isPdf(pdfUrl || '')
     });
-  }, [htmlContent, pdfUrl, emailContent]);
+  }, [htmlContent, pdfUrl]);
 
-  // If no content and no email, show no preview state
-  if (!hasContent && !hasEmailContent && !loading && !error) {
+  if (!hasContent && !loading && !error) {
     return <NoPreviewState />;
   }
 
-  // If there's an error, show error state
   if (error) {
     return <PreviewErrorState error={error} />;
   }
@@ -107,7 +102,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         showActions={!!normalizedPdfUrl}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        hasEmail={hasEmailContent}
+        hasEmail={!!emailContent}
       />
       
       <Tabs value={activeTab} className="flex-1 overflow-hidden">

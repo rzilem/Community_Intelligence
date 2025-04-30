@@ -34,7 +34,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
   const { data: allInvoices, isLoading: isLoadingAllInvoices } = useSupabaseQuery(
     'invoices',
     {
-      select: 'id, status', // Added status for filtering pending invoices
+      select: 'id',
       order: { column: 'created_at', ascending: false },
     },
     !isNewInvoice

@@ -33,13 +33,12 @@ const InvoiceDetail = () => {
     isNewInvoice
   } = useInvoiceDetail(id);
 
+  // Debug log to see invoice data changes
   useEffect(() => {
     console.log("Invoice data in component:", {
       association: invoice.association,
       vendor: invoice.vendor,
-      invoiceNumber: invoice.invoiceNumber,
-      hasEmailContent: !!invoice.emailContent,
-      emailContentLength: invoice.emailContent?.length || 0
+      invoiceNumber: invoice.invoiceNumber
     });
   }, [invoice]);
 
@@ -61,8 +60,10 @@ const InvoiceDetail = () => {
     } catch (error) {
       console.error("Error saving invoice:", error);
       
+      // Provide a more specific error message based on the error
       let errorMessage = "There was an error updating the invoice. Please try again.";
       
+      // Check if the error message contains specific information about UUID
       if (error instanceof Error && error.message.includes("uuid")) {
         errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
       }
@@ -88,33 +89,20 @@ const InvoiceDetail = () => {
     });
   };
 
-  // Get pending invoices and current position
-  const pendingInvoices = allInvoices?.filter(inv => inv.status === 'pending') || [];
-  const currentPosition = pendingInvoices.findIndex(inv => inv.id === id) + 1;
-  const totalPending = pendingInvoices.length;
-
   const navigateToInvoice = (direction: 'next' | 'prev') => {
     if (!allInvoices || allInvoices.length === 0) return;
     
-    if (pendingInvoices.length === 0) return;
+    const currentIndex = allInvoices.findIndex(inv => inv.id === id);
+    if (currentIndex === -1) return;
     
-    // Find current index within pending invoices
-    const currentIndex = pendingInvoices.findIndex(inv => inv.id === id);
-    if (currentIndex === -1) {
-      // If current invoice is not pending, navigate to the first pending invoice
-      navigate(`/accounting/invoice-queue/${pendingInvoices[0].id}`);
-      return;
-    }
-    
-    // Calculate next index
     let nextIndex;
     if (direction === 'next') {
-      nextIndex = (currentIndex + 1) % pendingInvoices.length;
+      nextIndex = (currentIndex + 1) % allInvoices.length;
     } else {
-      nextIndex = (currentIndex - 1 + pendingInvoices.length) % pendingInvoices.length;
+      nextIndex = (currentIndex - 1 + allInvoices.length) % allInvoices.length;
     }
     
-    navigate(`/accounting/invoice-queue/${pendingInvoices[nextIndex].id}`);
+    navigate(`/accounting/invoice-queue/${allInvoices[nextIndex].id}`);
   };
 
   return (
@@ -129,9 +117,7 @@ const InvoiceDetail = () => {
           showPreview={showPreview}
           onTogglePreview={() => setShowPreview(!showPreview)}
           onNavigate={navigateToInvoice}
-          disableNavigation={isLoadingAllInvoices || pendingInvoices.length <= 1}
-          currentPosition={currentPosition}
-          totalPending={totalPending}
+          disableNavigation={isLoadingAllInvoices || (allInvoices?.length || 0) <= 1}
         />
 
         <ResizablePanelGroup direction="horizontal">
@@ -147,7 +133,6 @@ const InvoiceDetail = () => {
                 onLinesChange={setLines}
                 associationId={invoice.association}
                 showPreview={showPreview}
-                invoiceTotal={invoice.totalAmount}
               />
               
               <InvoiceSummary 
@@ -168,7 +153,7 @@ const InvoiceDetail = () => {
                 <InvoicePreview 
                   htmlContent={invoice.htmlContent} 
                   pdfUrl={invoice.pdfUrl}
-                  emailContent={invoice.emailContent || ''}
+                  emailContent={invoice.emailContent}
                 />
               </ResizablePanel>
             </>

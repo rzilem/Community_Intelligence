@@ -4,7 +4,7 @@ export interface Profile {
   email?: string;
   first_name?: string;
   last_name?: string;
-  role: "maintenance" | "admin" | "manager" | "resident" | "accountant" | "user";
+  role: string;
   profile_image_url?: string | null;
   phone?: string | null;
   created_at: string;

@@ -5,7 +5,7 @@ import { Profile, UserSettings } from '@/types/profile-types';
 /**
  * Update a user's profile in Supabase
  */
-export const updateProfile = async (userId: string, data: Partial<Omit<Profile, 'role'>> & { role?: "maintenance" | "admin" | "manager" | "resident" | "accountant" | "user" }): Promise<{ success: boolean; error?: string }> => {
+export const updateProfile = async (userId: string, data: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('profiles')
