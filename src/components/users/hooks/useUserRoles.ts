@@ -4,23 +4,27 @@ import { UserWithProfile } from '@/types/user-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+type UserRole = "maintenance" | "admin" | "manager" | "resident" | "accountant" | "user";
+
 export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void) => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [userRoles, setUserRoles] = useState<Record<string, string>>({});
+  const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
   const [refreshingProfile, setRefreshingProfile] = useState<Record<string, boolean>>({});
 
   // Initialize user roles
   useEffect(() => {
-    const rolesMap: Record<string, string> = {};
+    const rolesMap: Record<string, UserRole> = {};
     users.forEach(user => {
       if (user.profile?.role) {
-        rolesMap[user.id] = user.profile.role;
+        // Validate that the role is one of the allowed types
+        const role = user.profile.role as UserRole;
+        rolesMap[user.id] = role;
       }
     });
     setUserRoles(rolesMap);
   }, [users]);
 
-  const updateUserRole = async (userId: string, role: string) => {
+  const updateUserRole = async (userId: string, role: UserRole) => {
     try {
       setLoading(prev => ({ ...prev, [userId]: true }));
       
@@ -53,12 +57,14 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
         throw new Error('User not found');
       }
       
+      const defaultRole: UserRole = 'user';
+      
       const { error } = await supabase
         .from('profiles')
         .upsert({
           id: userId,
           email: user.email,
-          role: user.profile?.role || 'user',
+          role: user.profile?.role as UserRole || defaultRole,
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()

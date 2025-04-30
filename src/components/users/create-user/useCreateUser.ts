@@ -6,6 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { NewUserFormValues, newUserSchema } from './types';
 
+type UserRole = "maintenance" | "admin" | "manager" | "resident" | "accountant" | "user";
+
 export function useCreateUser(
   onOpenChange: (open: boolean) => void, 
   onUserCreated: () => void
@@ -57,7 +59,7 @@ export function useCreateUser(
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
-              role: formData.role,
+              role: formData.role as UserRole,
               first_name: formData.firstName,
               last_name: formData.lastName,
               email: formData.email
