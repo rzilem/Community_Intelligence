@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { FormField, FormFieldType, FormTemplate } from '@/types/form-builder-types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,8 +23,6 @@ interface FormPreviewProps {
 }
 
 const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) => {
-  const [formValues, setFormValues] = useState<Record<string, any>>({});
-
   if (!form) {
     return (
       <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-lg p-4 text-center text-muted-foreground">
@@ -36,38 +34,15 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
     );
   }
 
-  // Handle field value changes (for conditional logic)
-  const handleFieldChange = (fieldId: string, value: any) => {
-    setFormValues(prev => ({
-      ...prev,
-      [fieldId]: value
-    }));
-  };
-
-  // Determine if a field should be visible based on conditional logic
-  const shouldShowField = (field: FormField): boolean => {
-    if (!field.conditionalDisplay) return true;
-    
-    const { dependsOn, showWhen } = field.conditionalDisplay;
-    const dependentValue = formValues[dependsOn];
-    
-    // Handle boolean values (checkbox)
-    if (typeof showWhen === 'boolean') {
-      return Boolean(dependentValue) === showWhen;
-    }
-    
-    // Handle array values (multiple select)
-    if (Array.isArray(dependentValue)) {
-      return dependentValue.includes(showWhen);
-    }
-    
-    // Handle string/number values
-    return String(dependentValue) === String(showWhen);
-  };
-
-  // Get visible fields based on current values and conditional logic
-  const getVisibleFields = (fields: FormField[]): FormField[] => {
-    return fields.filter(shouldShowField);
+  // Filter fields based on conditional logic
+  const getVisibleFields = (fields: FormField[]) => {
+    return fields.filter(field => {
+      if (!field.conditionalDisplay) return true;
+      
+      // Simple implementation - we would need more complex logic for production
+      // This just shows the concept of conditional fields
+      return false; // Hide all conditional fields for now
+    });
   };
 
   const renderField = (field: FormField) => {
@@ -87,13 +62,10 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
               id={field.id}
               type={field.type} 
               placeholder={field.placeholder}
-              value={formValues[field.id] || field.defaultValue as string || ''}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              defaultValue={field.defaultValue as string || ''}
+              disabled 
               className="mt-1"
             />
-            {field.helpText && (
-              <p className="text-xs text-muted-foreground mt-1">{field.helpText}</p>
-            )}
           </div>
         );
       
@@ -106,13 +78,10 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
             <Textarea 
               id={field.id}
               placeholder={field.placeholder}
-              value={formValues[field.id] || field.defaultValue as string || ''}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              defaultValue={field.defaultValue as string || ''}
+              disabled 
               className="mt-1"
             />
-            {field.helpText && (
-              <p className="text-xs text-muted-foreground mt-1">{field.helpText}</p>
-            )}
           </div>
         );
       
@@ -122,10 +91,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
             <Label htmlFor={field.id} className={cn(field.required && "after:content-['*'] after:ml-0.5 after:text-red-500")}>
               {field.label}
             </Label>
-            <Select 
-              value={formValues[field.id] || field.defaultValue as string || ''} 
-              onValueChange={(value) => handleFieldChange(field.id, value)}
-            >
+            <Select disabled>
               <SelectTrigger id={field.id} className="mt-1">
                 <SelectValue placeholder={field.placeholder || "Select an option"} />
               </SelectTrigger>
@@ -137,29 +103,17 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
                 ))}
               </SelectContent>
             </Select>
-            {field.helpText && (
-              <p className="text-xs text-muted-foreground mt-1">{field.helpText}</p>
-            )}
           </div>
         );
       
       case 'checkbox':
         return (
           <div className="flex items-start space-x-2 mb-4" key={field.id}>
-            <Checkbox 
-              id={field.id} 
-              checked={formValues[field.id] || field.defaultValue as boolean || false}
-              onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
-            />
-            <div>
-              <Label htmlFor={field.id} className="text-sm font-normal">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-0.5">*</span>}
-              </Label>
-              {field.helpText && (
-                <p className="text-xs text-muted-foreground">{field.helpText}</p>
-              )}
-            </div>
+            <Checkbox id={field.id} disabled />
+            <Label htmlFor={field.id} className="text-sm font-normal">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
+            </Label>
           </div>
         );
       
@@ -169,11 +123,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
             <Label className={cn(field.required && "after:content-['*'] after:ml-0.5 after:text-red-500")}>
               {field.label}
             </Label>
-            <RadioGroup 
-              value={formValues[field.id] || field.defaultValue as string || ''} 
-              onValueChange={(value) => handleFieldChange(field.id, value)}
-              className="mt-2"
-            >
+            <RadioGroup defaultValue={field.defaultValue as string} className="mt-2" disabled>
               {field.options?.map(option => (
                 <div className="flex items-center space-x-2" key={option.value}>
                   <RadioGroupItem value={option.value} id={`${field.id}-${option.value}`} />
@@ -183,9 +133,6 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
                 </div>
               ))}
             </RadioGroup>
-            {field.helpText && (
-              <p className="text-xs text-muted-foreground mt-1">{field.helpText}</p>
-            )}
           </div>
         );
       
@@ -198,9 +145,6 @@ const FormPreview: React.FC<FormPreviewProps> = ({ form, showHeader = true }) =>
             <div className="border rounded-md p-4 mt-1 text-center text-muted-foreground">
               File upload placeholder
             </div>
-            {field.helpText && (
-              <p className="text-xs text-muted-foreground mt-1">{field.helpText}</p>
-            )}
           </div>
         );
       

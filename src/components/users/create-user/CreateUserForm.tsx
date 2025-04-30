@@ -27,8 +27,11 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <EmailField form={form} />
+        
         <NameFields form={form} />
+        
         <PasswordField form={form} />
+        
         <RoleField form={form} roles={roles} />
         
         <AlertDialogFooter>

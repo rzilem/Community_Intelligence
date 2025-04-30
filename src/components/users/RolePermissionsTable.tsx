@@ -1,173 +1,157 @@
+
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AccessButton } from '@/components/users/permissions/AccessIcon';
-import { defaultRoles, defaultMenus, MenuItemWithSubmenu, hasPermission } from '@/services/permission-service';
-import { SearchBar } from './permissions/SearchBar';
-import { Button } from '@/components/ui/button';
-import { GitCompareIcon } from 'lucide-react';
-import CompareRolesDialog from './permissions/CompareRolesDialog';
-import { usePermissionOperations } from '@/hooks/users/usePermissionOperations';
+import { CheckCircle, XCircle, Eye, Edit, Lock } from 'lucide-react';
+import { menuPermissions, defaultRoles } from '@/services/permission-service';
+import { Role } from '@/types/permission-types';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Icons for different access levels
+const AccessIcon = ({ access }: { access: 'full' | 'read' | 'none' }) => {
+  switch (access) {
+    case 'full':
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
+    case 'read':
+      return <Eye className="h-4 w-4 text-blue-500" />;
+    case 'none':
+      return <XCircle className="h-4 w-4 text-gray-300" />;
+  }
+};
+
+// Display text for access levels
+const AccessText = ({ access }: { access: 'full' | 'read' | 'none' }) => {
+  switch (access) {
+    case 'full':
+      return <span className="text-xs text-green-600">Full Access</span>;
+    case 'read':
+      return <span className="text-xs text-blue-600">Read Only</span>;
+    case 'none':
+      return <span className="text-xs text-gray-400">No Access</span>;
+  }
+};
 
 const RolePermissionsTable: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isCompareOpen, setIsCompareOpen] = useState(false);
-  const [selectedRolesToCompare, setSelectedRolesToCompare] = useState<string[]>([]);
-  const { updatePermission, canEditPermissions, isUpdating } = usePermissionOperations();
+  const [activeTab, setActiveTab] = useState('overview');
+  const roles = defaultRoles;
 
-  // Filter menus by search term
-  const filteredMenus = searchTerm ? 
-    defaultMenus.filter(menu => 
-      menu.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      menu.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (menu.submenus?.some(submenu => 
-        submenu.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        submenu.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      ))
-    ) : defaultMenus;
-  
-  const handlePermissionUpdate = (roleId: string, menuId: string, submenuId: string | undefined, access: 'full' | 'read' | 'none') => {
-    if (!canEditPermissions) return;
-    
-    const role = defaultRoles.find(r => r.id === roleId);
-    if (role) {
-      updatePermission(role, menuId, submenuId, access);
+  // Get access level for a specific menu/role combination
+  const getAccess = (role: Role, menuId: string): 'full' | 'read' | 'none' => {
+    const permission = role.permissions.find(p => p.menuId === menuId && !p.submenuId);
+    return permission?.access || 'none';
+  };
+
+  // Get access level for a specific submenu/role combination
+  const getSubmenuAccess = (role: Role, menuId: string, submenuId: string): 'full' | 'read' | 'none' => {
+    const permission = role.permissions.find(p => p.menuId === menuId && p.submenuId === submenuId);
+    // If no specific permission, inherit from parent menu
+    if (!permission) {
+      return getAccess(role, menuId);
     }
-  };
-  
-  const toggleRoleForComparison = (roleId: string) => {
-    setSelectedRolesToCompare(prev => {
-      if (prev.includes(roleId)) {
-        return prev.filter(id => id !== roleId);
-      } else if (prev.length < 2) {
-        return [...prev, roleId];
-      }
-      return prev;
-    });
-  };
-  
-  const isRoleSelectedForComparison = (roleId: string) => {
-    return selectedRolesToCompare.includes(roleId);
+    return permission.access;
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <SearchBar value={searchTerm} onChange={setSearchTerm} />
-        <Button 
-          variant="outline" 
-          onClick={() => setIsCompareOpen(true)}
-          disabled={selectedRolesToCompare.length !== 2}
-          className="flex items-center gap-2"
-        >
-          <GitCompareIcon size={16} />
-          Compare Roles
-        </Button>
-      </div>
+    <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+      <TabsList className="mb-4">
+        <TabsTrigger value="overview">Role Overview</TabsTrigger>
+        <TabsTrigger value="detailed">Detailed Permissions</TabsTrigger>
+      </TabsList>
       
-      <div className="overflow-x-auto">
-        <Table className="border">
-          <TableHeader className="bg-muted/50">
+      <TabsContent value="overview">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableHead className="w-[250px]">Feature</TableHead>
-              {defaultRoles.map((role) => (
-                <TableHead key={role.id} className="text-center">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="font-bold">{role.name}</div>
-                    <div className="text-xs text-muted-foreground">{role.accessLevel}</div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className={`mt-1 ${isRoleSelectedForComparison(role.id) ? 'bg-primary/20' : ''}`}
-                      onClick={() => toggleRoleForComparison(role.id)}
-                    >
-                      {isRoleSelectedForComparison(role.id) ? 'Selected' : 'Select for compare'}
-                    </Button>
-                  </div>
-                </TableHead>
-              ))}
+              <TableHead>Role</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Access Level</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredMenus.map(menu => (
-              <React.Fragment key={menu.id}>
-                <TableRow className="bg-muted/30">
-                  <TableCell className="font-bold">
-                    {menu.title}
-                    {menu.description && (
-                      <p className="text-xs text-muted-foreground">{menu.description}</p>
+            {roles.map(role => (
+              <TableRow key={role.id}>
+                <TableCell>
+                  <div className="font-medium">{role.name}</div>
+                </TableCell>
+                <TableCell>{role.description}</TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    {role.accessLevel === 'unrestricted' && (
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
                     )}
-                  </TableCell>
-                  {defaultRoles.map((role) => {
-                    const access = hasPermission(role, menu.id) ? 'full' : 'none';
-                    return (
-                      <TableCell key={`${menu.id}-${role.id}`} className="text-center">
-                        <AccessButton 
-                          access={access}
-                          onClick={() => handlePermissionUpdate(
-                            role.id, 
-                            menu.id, 
-                            undefined, 
-                            access === 'full' ? 'none' : 'full'
-                          )}
-                          disabled={!canEditPermissions || isUpdating || role.systemRole}
-                        />
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-                {menu.submenus?.map(submenu => (
-                  <TableRow key={`${menu.id}-${submenu.id}`}>
-                    <TableCell className="pl-8">
-                      {submenu.title}
-                      {submenu.description && (
-                        <p className="text-xs text-muted-foreground">{submenu.description}</p>
-                      )}
-                    </TableCell>
-                    {defaultRoles.map((role) => {
-                      // Check if the parent menu gives full access
-                      const parentAccess = hasPermission(role, menu.id);
-                      // If parent has full access, all submenus inherit it
-                      const effectiveAccess = parentAccess ? 'full' : 
-                        hasPermission(role, menu.id, submenu.id, 'full') ? 'full' :
-                        hasPermission(role, menu.id, submenu.id, 'read') ? 'read' : 'none';
-                      
-                      return (
-                        <TableCell key={`${menu.id}-${submenu.id}-${role.id}`} className="text-center">
-                          <AccessButton 
-                            access={effectiveAccess}
-                            onClick={() => handlePermissionUpdate(
-                              role.id, 
-                              menu.id, 
-                              submenu.id, 
-                              effectiveAccess === 'none' ? 'read' : 
-                              effectiveAccess === 'read' ? 'full' : 'none'
-                            )}
-                            disabled={!canEditPermissions || isUpdating || role.systemRole || parentAccess}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </React.Fragment>
-            ))}
-            {filteredMenus.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={defaultRoles.length + 1} className="text-center py-8 text-muted-foreground">
-                  No features match your search term.
+                    {role.accessLevel === 'high' && (
+                      <CheckCircle className="h-4 w-4 text-blue-500 mr-2" />
+                    )}
+                    {role.accessLevel === 'medium' && (
+                      <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
+                    )}
+                    {role.accessLevel === 'low' && (
+                      <CheckCircle className="h-4 w-4 text-gray-500 mr-2" />
+                    )}
+                    <span className="capitalize">{role.accessLevel}</span>
+                  </div>
                 </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
-      </div>
-
-      <CompareRolesDialog 
-        isOpen={isCompareOpen} 
-        onOpenChange={setIsCompareOpen} 
-        roleIds={selectedRolesToCompare} 
-      />
-    </div>
+      </TabsContent>
+      
+      <TabsContent value="detailed">
+        <ScrollArea className="h-[500px]">
+          <Table>
+            <TableHeader className="sticky top-0 bg-background">
+              <TableRow>
+                <TableHead className="w-48">Feature</TableHead>
+                {roles.map(role => (
+                  <TableHead key={role.id} className="text-center w-32">
+                    {role.name}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {menuPermissions.map(menu => (
+                <React.Fragment key={menu.id}>
+                  {/* Menu row */}
+                  <TableRow className="bg-muted/30">
+                    <TableCell className="font-medium">
+                      {menu.name}
+                    </TableCell>
+                    {roles.map(role => (
+                      <TableCell key={`${role.id}-${menu.id}`} className="text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <AccessIcon access={getAccess(role, menu.id)} />
+                          <AccessText access={getAccess(role, menu.id)} />
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Submenu rows */}
+                  {menu.submenuPermissions && menu.submenuPermissions.length > 0 && 
+                    menu.submenuPermissions.map(submenu => (
+                      <TableRow key={submenu.id}>
+                        <TableCell className="pl-8">
+                          {submenu.name}
+                        </TableCell>
+                        {roles.map(role => (
+                          <TableCell key={`${role.id}-${submenu.id}`} className="text-center">
+                            <div className="flex flex-col items-center justify-center">
+                              <AccessIcon access={getSubmenuAccess(role, menu.id, submenu.id)} />
+                              <AccessText access={getSubmenuAccess(role, menu.id, submenu.id)} />
+                            </div>
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </TabsContent>
+    </Tabs>
   );
 };
 

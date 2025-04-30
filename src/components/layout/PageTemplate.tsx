@@ -1,17 +1,13 @@
 
 import React from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface PageTemplateProps {
   title: string;
   icon: React.ReactNode;
   description?: string;
   children?: React.ReactNode;
-  actions?: React.ReactNode;
-  backLink?: string; // Add backLink prop to support navigation back
+  actions?: React.ReactNode; // Add support for actions prop
 }
 
 const PageTemplate: React.FC<PageTemplateProps> = ({ 
@@ -19,21 +15,13 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
   icon, 
   description = "This page is currently under development.",
   children,
-  actions,
-  backLink
+  actions // Include actions in the destructuring
 }) => {
   return (
     <AppLayout>
       <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {backLink && (
-              <Link to={backLink}>
-                <Button variant="ghost" size="icon" className="mr-2">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </Link>
-            )}
             {icon}
             <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           </div>

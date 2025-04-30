@@ -1,20 +1,25 @@
 
 import React from 'react';
 
-export interface RequestsStatusFooterProps {
-  status: string;
-  count: number;
+interface RequestsStatusFooterProps {
+  filteredCount: number;
+  totalCount: number;
+  lastRefreshed: Date;
 }
 
-export const RequestsStatusFooter: React.FC<RequestsStatusFooterProps> = ({
-  status,
-  count
+const RequestsStatusFooter: React.FC<RequestsStatusFooterProps> = ({ 
+  filteredCount, 
+  totalCount, 
+  lastRefreshed 
 }) => {
   return (
-    <div className="px-4 py-2 border-t bg-muted/30 text-sm flex justify-between items-center">
-      <span className="text-muted-foreground">
-        Showing {count} {status !== 'all' ? status : ''} {count === 1 ? 'request' : 'requests'}
-      </span>
+    <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+      <p>
+        Showing {filteredCount} of {totalCount} requests
+      </p>
+      <p>
+        Last updated: {lastRefreshed.toLocaleString()}
+      </p>
     </div>
   );
 };

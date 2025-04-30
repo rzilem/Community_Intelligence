@@ -15,8 +15,44 @@ export const useProfileSync = (users: UserWithProfile[]) => {
   const [syncResult, setSyncResult] = useState<{
     success: number;
     failed: number;
-    needsSupabaseAdmin?: boolean;
   } | null>(null);
+  
+  // Check for missing profiles when users data changes
+  useEffect(() => {
+    const checkMissingProfiles = async () => {
+      try {
+        // Get all users from auth.users
+        const { data, error } = await supabase.auth.admin.listUsers({
+          page: 1,
+          perPage: 100 // Adjust based on expected user count
+        });
+        
+        if (error) throw error;
+        
+        if (data && data.users) {
+          const authUsers = data.users;
+          setAuthUserCount(authUsers.length);
+          
+          // Create a set of existing profile IDs for fast lookup
+          const existingProfileIds = new Set(users.map(user => user.id));
+          
+          // Find auth users without profiles
+          const missingProfiles = authUsers.filter(
+            (authUser: User) => !existingProfileIds.has(authUser.id)
+          );
+          
+          setSyncInfo({
+            totalAuthUsers: authUsers.length,
+            missingProfiles: missingProfiles.length
+          });
+        }
+      } catch (error) {
+        console.error('Error checking for missing profiles:', error);
+      }
+    };
+    
+    checkMissingProfiles();
+  }, [users]);
   
   // Function to sync missing profiles
   const syncMissingProfiles = async () => {
@@ -26,26 +62,13 @@ export const useProfileSync = (users: UserWithProfile[]) => {
     setSyncResult(null);
     
     try {
-      // Attempt to fetch users - this will fail without admin privileges in Supabase
+      // Get all users from auth.users
       const { data, error } = await supabase.auth.admin.listUsers({
         page: 1,
         perPage: 100
       });
       
-      if (error) {
-        console.error('Error accessing auth users:', error);
-        
-        // Set special flag to indicate this is a Supabase admin permission issue
-        setSyncResult({
-          success: 0,
-          failed: 0,
-          needsSupabaseAdmin: true
-        });
-        
-        toast.error('This feature requires Supabase admin privileges');
-        setSyncInProgress(false);
-        return;
-      }
+      if (error) throw error;
       
       if (!data || !data.users || !data.users.length) {
         toast.error('No users found in the authentication system');
@@ -54,7 +77,6 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       }
       
       const authUsers = data.users;
-      setAuthUserCount(authUsers.length);
       
       // Create a set of existing profile IDs for fast lookup
       const existingProfileIds = new Set(users.map(user => user.id));
@@ -132,7 +154,7 @@ export const useProfileSync = (users: UserWithProfile[]) => {
       setSyncInProgress(false);
     }
   };
-
+  
   return {
     syncInProgress,
     syncResult,

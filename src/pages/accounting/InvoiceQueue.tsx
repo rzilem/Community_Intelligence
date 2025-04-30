@@ -1,146 +1,190 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Inbox, Plus, Clock } from 'lucide-react';
+import { Receipt, Check } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInvoices } from '@/hooks/invoices/useInvoices';
-import InvoiceTable from '@/components/invoices/InvoiceTable';
-import { Badge } from '@/components/ui/badge';
-import { formatDateTime } from '@/lib/date-utils';
-import { InvoiceQueueFilters } from '@/components/invoices/InvoiceQueueFilters';
-import { InvoiceQueueSettings } from '@/components/invoices/InvoiceQueueSettings';
-import { InvoiceQueueEmptyState } from '@/components/invoices/InvoiceQueueEmptyState';
-import { 
-  DropdownMenu, 
-  DropdownMenuTrigger, 
-  DropdownMenuContent 
-} from '@/components/ui/dropdown-menu';
+import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
+import { useToast } from '@/hooks/use-toast';
+import InvoicePaymentAlert from '@/components/invoices/InvoicePaymentAlert';
+import InvoiceTabContent from '@/components/invoices/InvoiceTabContent';
+import { Button } from '@/components/ui/button';
 
 const InvoiceQueue = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { markAllAsRead } = useInvoiceNotifications();
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
-  
-  const { 
-    invoices, 
+  const [showPaymentAlert, setShowPaymentAlert] = useState(false);
+
+  const {
+    invoices,
     isLoading,
-    columns, 
-    visibleColumnIds, 
-    updateVisibleColumns, 
-    reorderColumns, 
-    resetToDefaults,
-    refreshInvoices, 
-    updateInvoiceStatus, 
+    refreshInvoices,
+    updateInvoiceStatus,
     deleteInvoice,
-    lastRefreshed,
-    statusFilter,
-    setStatusFilter,
-    searchTerm,
-    setSearchTerm,
-    autoRefreshEnabled,
-    toggleAutoRefresh
+    lastRefreshed
   } = useInvoices();
-  
+
   useEffect(() => {
-    setStatusFilter(activeTab);
-  }, [activeTab, setStatusFilter]);
+    markAllAsRead();
+  }, []);
+
+  useEffect(() => {
+    const approvedInvoices = invoices.filter(
+      inv => inv.status === 'approved' && !('payment_id' in inv)
+    );
+    setShowPaymentAlert(approvedInvoices.length > 0);
+  }, [invoices]);
+
+  const filteredInvoices = invoices.filter(invoice => {
+    const matchesSearch = searchTerm === '' ||
+      Object.values(invoice).some(value =>
+        typeof value === 'string' &&
+        value.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+    const matchesStatus =
+      activeTab === 'all-invoices' ||
+      activeTab === invoice.status;
+
+    return matchesSearch && matchesStatus;
+  });
 
   const handleAddInvoice = () => {
-    navigate("/accounting/invoice-queue/new");
+    navigate('/accounting/invoice-queue/new');
   };
 
   const handleViewInvoice = (id: string) => {
     navigate(`/accounting/invoice-queue/${id}`);
   };
 
-  // Count invoices by status
-  const counts = {
-    total: invoices.length,
-    pending: invoices.filter(inv => inv.status === 'pending').length,
-    approved: invoices.filter(inv => inv.status === 'approved').length,
-    rejected: invoices.filter(inv => inv.status === 'rejected').length,
-    paid: invoices.filter(inv => inv.status === 'paid').length
+  const handleApproveInvoice = (id: string) => {
+    updateInvoiceStatus(id, 'approved');
+    toast({
+      title: "Invoice Approved",
+      description: "The invoice has been approved and is now ready for payment processing.",
+    });
+  };
+
+  const handleRejectInvoice = (id: string) => {
+    updateInvoiceStatus(id, 'rejected');
+    toast({
+      title: "Invoice Rejected",
+      description: "The invoice has been rejected and will not be processed for payment.",
+    });
+  };
+
+  const handleViewPaymentsQueue = () => {
+    navigate('/accounting/transactions-payments');
   };
 
   return (
     <PageTemplate
       title="Invoice Queue"
-      icon={<Inbox className="h-8 w-8" />}
-      description="Review, code, and process invoices for payment"
-      actions={
-        <div className="flex items-center gap-2">
-          <Button onClick={handleAddInvoice}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Invoice
-          </Button>
-        </div>
-      }
+      icon={<Receipt className="h-8 w-8" />}
+      description="Process and approve incoming vendor invoices for payment."
     >
-      <div className="flex justify-between items-center mb-4">
-        <InvoiceQueueFilters
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          counts={counts}
-          isLoading={isLoading}
+      <div className="mt-6 space-y-4">
+        <InvoicePaymentAlert 
+          show={showPaymentAlert} 
+          onViewPaymentsQueue={handleViewPaymentsQueue} 
         />
-        
-        <InvoiceQueueSettings
-          columns={columns}
-          visibleColumnIds={visibleColumnIds}
-          updateVisibleColumns={updateVisibleColumns}
-          resetToDefaults={resetToDefaults}
-          refreshInvoices={refreshInvoices}
-          autoRefreshEnabled={autoRefreshEnabled}
-          toggleAutoRefresh={toggleAutoRefresh}
-        />
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>Last updated: {formatDateTime(lastRefreshed)}</span>
-          {autoRefreshEnabled && (
-            <Badge variant="outline" className="bg-green-50 border-green-200">
-              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-              Auto-refresh on
-            </Badge>
-          )}
-        </div>
-
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="p-4">
-                <div className="flex items-center justify-center py-8">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-8 w-8 animate-spin text-primary border-2 border-current border-t-transparent rounded-full" />
-                    <p>Loading invoices...</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <InvoiceTable
-                invoices={invoices}
-                columns={columns}
-                visibleColumnIds={visibleColumnIds}
-                onViewInvoice={handleViewInvoice}
-                onApproveInvoice={(id) => updateInvoiceStatus(id, 'approved')}
-                onRejectInvoice={(id) => updateInvoiceStatus(id, 'rejected')}
+        <Card className="p-6">
+          <Tabs defaultValue="pending" onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="pending">Pending</TabsTrigger>
+              <TabsTrigger value="approved">Approved</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="paid">Paid</TabsTrigger>
+              <TabsTrigger value="all-invoices">All Invoices</TabsTrigger>
+            </TabsList>
+            <TabsContent value="pending" className="mt-4">
+              <InvoiceTabContent
+                tabKey="pending"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+                invoices={filteredInvoices}
                 isLoading={isLoading}
+                onViewInvoice={handleViewInvoice}
+                onApproveInvoice={handleApproveInvoice}
+                onRejectInvoice={handleRejectInvoice}
               />
-            )}
-          </CardContent>
+            </TabsContent>
+            <TabsContent value="approved" className="mt-4">
+              <InvoiceTabContent
+                tabKey="approved"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+                invoices={filteredInvoices}
+                isLoading={isLoading}
+                onViewInvoice={handleViewInvoice}
+              />
+              <div className="mt-4 flex justify-end">
+                <Button
+                  onClick={handleViewPaymentsQueue}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  <Check className="h-4 w-4 mr-2" /> Process Approved Invoices
+                </Button>
+              </div>
+            </TabsContent>
+            <TabsContent value="rejected" className="mt-4">
+              <InvoiceTabContent
+                tabKey="rejected"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+                invoices={filteredInvoices}
+                isLoading={isLoading}
+                onViewInvoice={handleViewInvoice}
+              />
+            </TabsContent>
+            <TabsContent value="paid" className="mt-4">
+              <InvoiceTabContent
+                tabKey="paid"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+                invoices={filteredInvoices}
+                isLoading={isLoading}
+                onViewInvoice={handleViewInvoice}
+              />
+            </TabsContent>
+            <TabsContent value="all-invoices" className="mt-4">
+              <InvoiceTabContent
+                tabKey="all-invoices"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onAddInvoice={handleAddInvoice}
+                onRefresh={refreshInvoices}
+                onFilterChange={setActiveTab}
+                invoices={filteredInvoices}
+                isLoading={isLoading}
+                onViewInvoice={handleViewInvoice}
+                onApproveInvoice={handleApproveInvoice}
+                onRejectInvoice={handleRejectInvoice}
+              />
+            </TabsContent>
+          </Tabs>
         </Card>
-        
-        {!isLoading && invoices.length === 0 && (
-          <InvoiceQueueEmptyState
-            onAddInvoice={handleAddInvoice}
-            invoicesExist={!!counts.total}
-            statusFilter={statusFilter}
-          />
-        )}
+        <div className="flex justify-between items-center text-sm text-gray-500">
+          <div>Showing {filteredInvoices.length} of {invoices.length} invoices</div>
+          <div>Last updated: {lastRefreshed.toLocaleString()}</div>
+        </div>
       </div>
     </PageTemplate>
   );

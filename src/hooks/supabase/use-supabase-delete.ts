@@ -7,7 +7,6 @@ export function useSupabaseDelete(
   table: KnownTables,
   options: {
     onSuccess?: () => void;
-    onError?: (error: any) => void;
     showSuccessToast?: boolean;
     showErrorToast?: boolean;
     invalidateQueries?: string[] | string[][];
@@ -17,7 +16,6 @@ export function useSupabaseDelete(
   const queryClient = useQueryClient();
   const { 
     onSuccess, 
-    onError,
     showSuccessToast: shouldShowSuccessToast = true,
     showErrorToast: shouldShowErrorToast = true,
     invalidateQueries = [[table]],
@@ -57,11 +55,6 @@ export function useSupabaseDelete(
       // Call custom onSuccess handler if provided
       if (onSuccess) {
         onSuccess();
-      }
-    },
-    onError: (error) => {
-      if (onError) {
-        onError(error);
       }
     }
   });

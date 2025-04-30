@@ -1,24 +1,20 @@
 
 import React from 'react';
-import { InboxIcon } from 'lucide-react';
 
 interface EmptyRequestsRowProps {
-  message?: string;
+  colSpan: number;
 }
 
-export const EmptyRequestsRow: React.FC<EmptyRequestsRowProps> = ({ 
-  message = 'No requests found'
-}) => {
+const EmptyRequestsRow: React.FC<EmptyRequestsRowProps> = ({ colSpan }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="bg-muted/30 p-4 rounded-full mb-4">
-        <InboxIcon className="h-8 w-8 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-medium mb-1">{message}</h3>
-      <p className="text-sm text-muted-foreground max-w-sm">
-        No matching requests were found. Try adjusting your filters or creating a new request.
-      </p>
-    </div>
+    <tr>
+      <td colSpan={colSpan} className="py-6 text-center text-muted-foreground">
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <p>No homeowner requests found.</p>
+          <p className="text-sm">Create a new request or adjust your filters.</p>
+        </div>
+      </td>
+    </tr>
   );
 };
 

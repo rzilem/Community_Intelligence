@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Shield, Info } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { UserWithProfile } from '@/types/user-types';
 import UserManagement from '@/components/users/UserManagement';
@@ -10,9 +10,7 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
-// Define roles array with correct typing
 const roles = [
   { id: 'admin', name: 'Administrator' },
   { id: 'manager', name: 'Manager' },
@@ -20,20 +18,20 @@ const roles = [
   { id: 'maintenance', name: 'Maintenance' },
   { id: 'accountant', name: 'Accountant' },
   { id: 'user', name: 'Basic User' },
-] as const;
+];
 
 const Permissions = () => {
-  // Query all users and profiles in a single query
+  // Query directly from profiles table with more detailed logging
   const { data = [], isLoading, error, refetch } = useSupabaseQuery(
     'profiles', 
     {
-      select: 'id, email, created_at, first_name, last_name, role, profile_image_url, phone_number',
+      select: 'id, email, created_at, first_name, last_name, role, profile_image_url',
       filter: [],
       order: { column: 'created_at', ascending: false },
     }
   );
   
-  // Log the raw data fetched from Supabase for debugging
+  // Log the raw data fetched from Supabase
   console.log('Permissions - Raw profiles data:', data);
   
   // Transform the profiles data to match the UserWithProfile structure
@@ -47,12 +45,11 @@ const Permissions = () => {
       last_name: profile.last_name,
       role: profile.role,
       email: profile.email,
-      phone_number: profile.phone_number,
       profile_image_url: profile.profile_image_url
     }
   })) as UserWithProfile[];
 
-  // Log the transformed users data for debugging
+  // Log the transformed users data
   console.log('Permissions - Transformed users:', users);
 
   // Use the profile sync hook to manage sync operations
@@ -76,9 +73,6 @@ const Permissions = () => {
     refetch();
   };
 
-  // Create a mutable copy of the roles array to pass to UserManagement
-  const mutableRoles = [...roles];
-
   return (
     <PageTemplate 
       title="User Permissions" 
@@ -91,15 +85,6 @@ const Permissions = () => {
         />
       }
     >
-      <Alert variant="default" className="mb-6">
-        <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Note about Supabase Admin Privileges:</strong> The sync feature requires special Supabase admin privileges
-          to access all authentication users. Without these privileges, you can still view and manage user profiles that exist in the database,
-          and you can create new users directly through this application.
-        </AlertDescription>
-      </Alert>
-      
       <ProfileSyncAlert
         syncInfo={syncInfo}
         syncResult={syncResult}
@@ -111,7 +96,7 @@ const Permissions = () => {
         users={users} 
         isLoading={isLoading} 
         error={error} 
-        roles={mutableRoles}
+        roles={roles}
         onRefresh={handleRefresh} 
       />
       <RolePermissionsCard />

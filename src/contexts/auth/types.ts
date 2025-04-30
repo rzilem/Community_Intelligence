@@ -15,7 +15,6 @@ export interface UserAssociation {
 export interface AuthContextType {
   session: Session | null;
   user: User | null;
-  currentUser: User | null; // Map to user for backward compatibility
   profile: Profile | null;
   loading: boolean;
   isLoading: boolean;

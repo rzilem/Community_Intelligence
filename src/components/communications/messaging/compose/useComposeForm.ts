@@ -2,15 +2,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { communicationService } from '@/services/communication-service';
+import { replaceMergeTags } from '@/utils/mergeTags';
 import { ResidentType } from '@/types/resident-types';
-import { MessageCategory } from '@/types/communication-types';
-import { useCategory } from './useCategory';
-import { usePreview } from './usePreview';
 
-// -----------------------------------------------------------
-// Compose form central state & core handlers (excluding category and preview)
-
-interface ComposeFormState {
+export interface ComposeFormState {
   messageType: 'email' | 'sms';
   subject: string;
   messageContent: string;
@@ -18,10 +13,45 @@ interface ComposeFormState {
   selectedAssociationId: string;
   isLoading: boolean;
   previewMode: boolean;
-  scheduleMessage: boolean;
-  scheduledDate: Date | null;
-  previewData: any;
-  category: MessageCategory;
+  previewData: {
+    resident: {
+      name: string;
+      email: string;
+      phone: string;
+      move_in_date: string;
+      resident_type: ResidentType;
+    };
+    property: {
+      address: string;
+      unit_number: string;
+      city: string;
+      state: string;
+      zip: string;
+      property_type: string;
+      square_feet: number;
+    };
+    association: {
+      name: string;
+      contact_email: string;
+      phone: string;
+      website: string;
+      address: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
+    payment: {
+      amount: number;
+      dueDate: Date;
+      lateFee: number;
+      pastDue: number;
+    };
+    compliance: {
+      violation: string;
+      fine: number;
+      deadline: Date;
+    };
+  };
 }
 
 interface UseComposeFormProps {
@@ -35,24 +65,50 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
-  const [scheduleMessage, setScheduleMessage] = useState(false);
-  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
-
-  // Category hook (split logic)
-  const { category, setCategory, categories } = useCategory();
-  // Preview hook (split logic)
-  const {
-    previewMode,
-    setPreviewMode,
-    togglePreview,
-    previewContent,
-    previewSubject,
-    previewData
-  } = usePreview(subject, messageContent);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [previewData] = useState({
+    resident: {
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '(512) 555-1234',
+      move_in_date: '2022-06-15',
+      resident_type: 'Owner' as ResidentType
+    },
+    property: {
+      address: '123 Oak Lane',
+      unit_number: '4B',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701',
+      property_type: 'Condo',
+      square_feet: 1250
+    },
+    association: {
+      name: 'Oakridge Estates',
+      contact_email: 'info@oakridgeestates.org',
+      phone: '(512) 555-9000',
+      website: 'www.oakridgeestates.org',
+      address: '500 Main Street, Suite 300',
+      city: 'Austin',
+      state: 'TX',
+      zip: '78701'
+    },
+    payment: {
+      amount: 350,
+      dueDate: new Date('2025-05-01'),
+      lateFee: 25,
+      pastDue: 725
+    },
+    compliance: {
+      violation: 'Landscaping',
+      fine: 100,
+      deadline: new Date('2025-05-15')
+    }
+  });
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
-    setSelectedGroups([]);
+    setSelectedGroups([]); // Clear selected groups when association changes
   };
 
   const handleSendMessage = async () => {
@@ -60,20 +116,20 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       toast.error('Please fill out all required fields and select at least one recipient group');
       return;
     }
-    if (scheduleMessage && !scheduledDate) {
-      toast.error('Please select a date and time to schedule your message');
-      return;
-    }
+
     setIsLoading(true);
+
     try {
+      // Process merge tags in content before sending
+      const processedContent = replaceMergeTags(messageContent, previewData);
+      const processedSubject = replaceMergeTags(subject, previewData);
+
       await communicationService.sendMessage({
-        subject: previewSubject,
-        content: previewContent,
+        subject: processedSubject,
+        content: processedContent,
         association_id: selectedAssociationId,
         recipient_groups: selectedGroups,
-        type: messageType,
-        scheduled_date: scheduleMessage ? scheduledDate?.toISOString() : undefined,
-        category: category as MessageCategory,  // Explicit cast to fix typing error
+        type: messageType
       });
 
       // Reset form
@@ -81,11 +137,8 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       setMessageContent('');
       setSelectedGroups([]);
       setPreviewMode(false);
-      setScheduleMessage(false);
-      setScheduledDate(null);
-      setCategory('general' as MessageCategory); // Cast here as well
       onMessageSent();
-      toast.success(scheduleMessage ? 'Message scheduled successfully' : 'Message sent successfully');
+      toast.success('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Failed to send message. Please try again.');
@@ -99,24 +152,20 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setMessageContent('');
     setSelectedGroups([]);
     setPreviewMode(false);
-    setScheduleMessage(false);
-    setScheduledDate(null);
-    setCategory('general' as MessageCategory);
   };
 
-  const toggleSchedule = () => {
-    setScheduleMessage((current) => {
-      const next = !current;
-      if (!current) {
-        // When turning on scheduling, default to tomorrow at current time
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        setScheduledDate(tomorrow);
-      }
-      return next;
-    });
+  const togglePreview = () => {
+    setPreviewMode(!previewMode);
   };
 
+  const previewContent = previewMode 
+    ? replaceMergeTags(messageContent, previewData)
+    : messageContent;
+
+  const previewSubject = previewMode
+    ? replaceMergeTags(subject, previewData)
+    : subject;
+  
   return {
     state: {
       messageType,
@@ -126,10 +175,7 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
       selectedAssociationId,
       isLoading,
       previewMode,
-      scheduleMessage,
-      scheduledDate,
-      previewData,
-      category
+      previewData
     },
     previewContent,
     previewSubject,
@@ -137,13 +183,9 @@ export function useComposeForm({ onMessageSent }: UseComposeFormProps) {
     setSubject,
     setMessageContent,
     setSelectedGroups,
-    setScheduledDate,
     handleAssociationChange,
     handleSendMessage,
     handleReset,
-    togglePreview,
-    toggleSchedule,
-    setCategory,
-    categories
+    togglePreview
   };
 }

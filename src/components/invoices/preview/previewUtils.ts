@@ -10,40 +10,11 @@ export const isValidUrl = (url: string): boolean => {
   }
 };
 
-// Improved URL normalization function that properly handles double slashes and protocols
 export const normalizeUrl = (url: string): string => {
-  if (!url) return '';
-  
-  try {
-    // Handle URLs with protocol (http/https)
-    if (url.includes('://')) {
-      // Parse with URL constructor for proper handling
-      const parsed = new URL(url);
-      
-      // Clean up the pathname to remove double slashes
-      // Split by slashes, remove empty segments, and rejoin
-      const pathSegments = parsed.pathname.split('/')
-        .filter(segment => segment !== '');
-      
-      // Reconstruct pathname with a single leading slash
-      parsed.pathname = '/' + pathSegments.join('/');
-      
-      return parsed.toString();
-    } 
-    // For relative paths or storage paths
-    else {
-      // Remove leading slashes
-      let normalized = url.replace(/^\/+/, '');
-      // Replace multiple consecutive slashes with a single one
-      normalized = normalized.replace(/\/+/g, '/');
-      
-      // Don't add protocol for storage paths or relative URLs
-      return normalized;
-    }
-  } catch (e) {
-    console.error('Error normalizing URL:', e);
-    return url; // Return original if parsing fails
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return 'https://' + url;
   }
+  return url;
 };
 
 export const isValidHtml = (html: string): boolean => {
@@ -64,8 +35,7 @@ export const isPdf = (urlOrFilename: string): boolean => {
 
 export const isImage = (urlOrFilename: string): boolean => {
   const lowerUrl = urlOrFilename.toLowerCase();
-  return lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || 
-         lowerUrl.endsWith('.png') || lowerUrl.endsWith('.gif');
+  return lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.gif');
 };
 
 export const getFileExtension = (urlOrFilename: string): string => {

@@ -5,49 +5,25 @@ import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { Invoice } from '@/types/invoice-types';
 import InvoiceStatusBadge from './InvoiceStatusBadge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { InvoiceColumn } from '@/hooks/invoices/useInvoiceColumns';
-import { InvoiceHoverPreview } from './preview/InvoiceHoverPreview';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { DocumentViewer } from './preview/DocumentViewer';
 
 interface InvoiceTableProps {
   invoices: Invoice[];
-  columns: InvoiceColumn[];
-  visibleColumnIds: string[];
   isLoading?: boolean;
   onViewInvoice: (id: string) => void;
   onApproveInvoice?: (id: string) => void;
   onRejectInvoice?: (id: string) => void;
-  selectedInvoiceIds?: string[];
-  onSelectionChange?: (ids: string[]) => void;
 }
 
 const InvoiceTable: React.FC<InvoiceTableProps> = ({
   invoices,
-  columns,
-  visibleColumnIds,
   isLoading = false,
   onViewInvoice,
   onApproveInvoice,
   onRejectInvoice,
-  selectedInvoiceIds = [],
-  onSelectionChange = () => {},
 }) => {
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelectionChange(invoices.map(inv => inv.id));
-    } else {
-      onSelectionChange([]);
-    }
-  };
-
-  const handleSelectRow = (invoiceId: string, checked: boolean) => {
-    if (checked) {
-      onSelectionChange([...selectedInvoiceIds, invoiceId]);
-    } else {
-      onSelectionChange(selectedInvoiceIds.filter(id => id !== invoiceId));
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="w-full py-10 text-center text-gray-500">
@@ -56,7 +32,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     );
   }
 
-  if (!invoices || invoices.length === 0) {
+  if (invoices.length === 0) {
     return (
       <div className="w-full py-10 text-center text-gray-500">
         No invoices found. Add invoices or adjust your filters.
@@ -70,62 +46,18 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
     return !!invoice[field] && field !== 'html_content';
   };
 
-  const getCellContent = (invoice: Invoice, columnId: string) => {
-    const content = (() => {
-      switch (columnId) {
-        case 'invoice_number':
-          return (
-            <InvoiceHoverPreview invoice={invoice}>
-              <span className="cursor-pointer hover:text-primary">
-                {invoice.invoice_number}
-              </span>
-            </InvoiceHoverPreview>
-          );
-        case 'vendor':
-          return invoice.vendor;
-        case 'association_name':
-          return invoice.association_name || 'Not assigned';
-        case 'invoice_date':
-          return new Date(invoice.invoice_date).toLocaleDateString();
-        case 'amount':
-          return formatCurrency(invoice.amount);
-        case 'due_date':
-          return new Date(invoice.due_date).toLocaleDateString();
-        case 'status':
-          return <InvoiceStatusBadge status={invoice.status} />;
-        case 'description':
-          return invoice.description || '—';
-        case 'payment_method':
-          return invoice.payment_method || '—';
-        case 'payment_status':
-          return invoice.payment_status || '—';
-        default:
-          return '—';
-      }
-    })();
-
-    return content;
-  };
-
-  console.log("Rendering InvoiceTable with invoices:", invoices.length);
-
   return (
-    <div className="rounded-md border">
+    <div className="border rounded-md">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">
-              <Checkbox
-                checked={selectedInvoiceIds.length === invoices.length && invoices.length > 0}
-                onCheckedChange={handleSelectAll}
-              />
-            </TableHead>
-            {visibleColumnIds.map((columnId) => {
-              const column = columns.find(col => col.id === columnId);
-              return column && (
-                <TableHead key={columnId}>{column.label}</TableHead>
-              );
-            })}
+            <TableHead>Invoice #</TableHead>
+            <TableHead>Vendor</TableHead>
+            <TableHead>HOA</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Due Date</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -133,21 +65,115 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({
           {invoices.map((invoice) => (
             <TableRow key={invoice.id}>
               <TableCell>
-                <Checkbox
-                  checked={selectedInvoiceIds.includes(invoice.id)}
-                  onCheckedChange={(checked) => handleSelectRow(invoice.id, checked as boolean)}
-                />
+                <div className="flex items-center">
+                  {invoice.invoice_number}
+                  {isAIAssisted(invoice, 'invoice_number') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
               </TableCell>
-              {visibleColumnIds.map((columnId) => (
-                <TableCell key={`${invoice.id}-${columnId}`}>
-                  {getCellContent(invoice, columnId)}
-                </TableCell>
-              ))}
+              <TableCell>
+                <div className="flex items-center">
+                  {invoice.vendor}
+                  {isAIAssisted(invoice, 'vendor') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>{invoice.association_name || 'Not assigned'}</TableCell>
+              <TableCell>{new Date(invoice.invoice_date).toLocaleDateString()}</TableCell>
+              <TableCell className="text-right">
+                <div className="flex items-center justify-end">
+                  {formatCurrency(invoice.amount)}
+                  {isAIAssisted(invoice, 'amount') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  {new Date(invoice.due_date).toLocaleDateString()}
+                  {isAIAssisted(invoice, 'due_date') && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="ml-1 text-xs bg-blue-100 text-blue-800 rounded-full px-1.5 py-0.5">
+                            AI
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This field was extracted using AI</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <InvoiceStatusBadge status={invoice.status} />
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
-                  <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                  <HoverCard>
+                    <HoverCardTrigger asChild>
+                      <Button variant="ghost" size="icon" onClick={() => onViewInvoice(invoice.id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-[600px] h-[400px] p-0">
+                      {(invoice.pdf_url || invoice.html_content) ? (
+                        <div className="w-full h-full">
+                          <DocumentViewer
+                            pdfUrl={invoice.pdf_url}
+                            htmlContent={invoice.html_content}
+                            isPdf={!!invoice.pdf_url}
+                            isWordDocument={false}
+                            onIframeError={() => {}}
+                            onIframeLoad={() => {}}
+                            onExternalOpen={() => onViewInvoice(invoice.id)}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-muted-foreground">
+                          No preview available
+                        </div>
+                      )}
+                    </HoverCardContent>
+                  </HoverCard>
+                  
                   {invoice.status === 'pending' && onApproveInvoice && (
                     <Button variant="ghost" size="icon" onClick={() => onApproveInvoice(invoice.id)}>
                       <CheckCircle className="h-4 w-4 text-green-600" />

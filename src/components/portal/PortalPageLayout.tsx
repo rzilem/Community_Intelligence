@@ -6,7 +6,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth';
 import { useNavigate } from 'react-router-dom';
-import AssociationPortalSelector from './AssociationPortalSelector';
 
 interface PortalPageLayoutProps {
   title: string;
@@ -23,7 +22,7 @@ export const PortalPageLayout: React.FC<PortalPageLayoutProps> = ({
   children,
   portalType
 }) => {
-  const { user, isAuthenticated, currentAssociation } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Check if user is authenticated, redirect to login if not
@@ -33,24 +32,12 @@ export const PortalPageLayout: React.FC<PortalPageLayoutProps> = ({
     }
   }, [isAuthenticated, navigate]);
 
-  const handleAssociationChange = (associationId: string) => {
-    // This will refresh the current page with the new association context
-    window.location.reload();
-  };
-
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {icon}
-            <h1 className="text-2xl font-bold">{title}</h1>
-          </div>
-          
-          {/* Only render the selector if user and currentAssociation are defined */}
-          {user && currentAssociation && (
-            <AssociationPortalSelector onAssociationChange={handleAssociationChange} />
-          )}
+        <div className="flex items-center gap-2">
+          {icon}
+          <h1 className="text-2xl font-bold">{title}</h1>
         </div>
         
         {description && (

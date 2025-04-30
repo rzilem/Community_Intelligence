@@ -5,64 +5,40 @@ import { Profile } from '@/types/profile-types';
 import { Association } from '@/types/association-types';
 import { UserAssociation } from './types';
 
-interface AuthContextValue {
-  // Session and authentication state
-  session: Session | null;
+export interface AuthContextType {
   user: User | null;
-  currentUser: User | null; // For backward compatibility
-  isAuthenticated: boolean;
-  loading: boolean;
-  isLoading: boolean; // For backward compatibility
-
-  // Profile and role information
   profile: Profile | null;
+  session: Session | null;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, userData: { first_name: string; last_name: string }) => Promise<void>;
+  signOut: () => Promise<void>;
+  loading: boolean;
+  isLoading: boolean;
   userRole: string | null;
   isAdmin: boolean;
-
-  // Association management
+  isAuthenticated: boolean;
   userAssociations: UserAssociation[];
   currentAssociation: Association | null;
-  setCurrentAssociation: (association: Association | null) => void;
-
-  // Authentication methods
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { 
-    first_name: string; 
-    last_name: string 
-  }) => Promise<void>;
-  signOut: () => Promise<void>;
-
-  // Profile management
+  setCurrentAssociation: (association: Association) => void;
   refreshProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue>({
-  // Session and authentication defaults
-  session: null,
+const AuthContext = createContext<AuthContextType>({
   user: null,
-  currentUser: null,
-  isAuthenticated: false,
-  loading: true,
-  isLoading: true,
-
-  // Profile and role defaults
   profile: null,
-  userRole: null,
-  isAdmin: false,
-
-  // Association defaults
-  userAssociations: [],
-  currentAssociation: null,
-  setCurrentAssociation: () => {},
-
-  // Authentication method stubs
+  session: null,
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
-
-  // Profile management stub
+  loading: true,
+  isLoading: true,
+  userRole: null,
+  isAdmin: false,
+  isAuthenticated: false,
+  userAssociations: [],
+  currentAssociation: null,
+  setCurrentAssociation: () => {},
   refreshProfile: async () => {},
 });
 
-export type { AuthContextValue };
 export default AuthContext;

@@ -74,12 +74,9 @@ export function showErrorToast(
     errorMessage = 'This operation would violate database integrity.';
   }
   
-  // Generate a unique ID for this toast
-  const toastId = `supabase-error-${table}-${operation}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  
   toast.error(errorMessage, {
     duration: 5000,
-    id: toastId
+    id: `supabase-error-${table}-${operation}`, // Ensure we don't show duplicate toasts
   });
 }
 
@@ -93,11 +90,8 @@ export function showSuccessToast(
     operation === 'updated' ? `${table} successfully updated` :
     `${table} successfully deleted`;
   
-  // Generate a unique ID for this toast
-  const toastId = `supabase-success-${table}-${operation}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  
   toast.success(successMessage, {
     duration: 3000,
-    id: toastId
+    id: `supabase-success-${table}-${operation}`, // Ensure we don't show duplicate toasts
   });
 }

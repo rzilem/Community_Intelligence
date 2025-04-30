@@ -1,6 +1,6 @@
 
-import React, { ReactNode, useEffect, useState, useCallback } from 'react';
-import { NotificationContext, Notification } from './NotificationContext';
+import React, { ReactNode, useEffect, useState } from 'react';
+import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
 import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotifications';
@@ -13,7 +13,7 @@ interface NotificationProviderProps {
 }
 
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
   
   // Get notifications from different sources
@@ -22,13 +22,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
 
-  // Memoized function to aggregate notifications
-  const aggregateNotifications = useCallback(() => {
+  // Aggregate notifications when user or notification counts change
+  useEffect(() => {
     if (!user) {
-      return [];
+      setNotifications([]);
+      return;
     }
 
-    const aggregatedNotifications: Notification[] = [];
+    const aggregatedNotifications: NotificationItem[] = [];
     
     // Add lead notifications
     if (recentLeads && recentLeads.length > 0) {
@@ -37,7 +38,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `lead-${lead.id}`,
           title: `New Lead: ${lead.name || 'Unnamed Lead'}`,
           description: lead.association_name || lead.city || 'No location provided',
-          message: lead.association_name || lead.city || 'No location provided',
           type: 'lead',
           severity: 'info',
           read: false,
@@ -47,14 +47,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       });
     }
     
-    // Add mock notifications for other types
+    // Add mock notifications for other types (these would be replaced with real data in a full implementation)
     if (unreadInvoicesCount > 0) {
       for (let i = 0; i < unreadInvoicesCount; i++) {
         aggregatedNotifications.push({
           id: `invoice-${i}`,
           title: `New Invoice Received`,
           description: 'Review pending invoice',
-          message: 'Review pending invoice',
           type: 'invoice',
           severity: 'info',
           read: false,
@@ -70,7 +69,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `request-${i}`,
           title: 'New Homeowner Request',
           description: 'Homeowner request needs attention',
-          message: 'Homeowner request needs attention',
           type: 'request',
           severity: 'info',
           read: false,
@@ -86,7 +84,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
           id: `event-${i}`,
           title: 'Resale Calendar Update',
           description: 'New event on the resale calendar',
-          message: 'New event on the resale calendar',
           type: 'event',
           severity: 'info',
           read: false,
@@ -97,40 +94,32 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
     
     // Sort by timestamp (newest first)
-    return aggregatedNotifications.sort((a, b) => 
+    aggregatedNotifications.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
+    
+    setNotifications(aggregatedNotifications);
   }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
 
-  // Update notifications when dependencies change
-  useEffect(() => {
-    setNotifications(aggregateNotifications());
-  }, [aggregateNotifications]);
-
-  const markAsRead = useCallback((notificationId: string) => {
+  const markAsRead = (notificationId: string) => {
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
     );
-  }, []);
+  };
 
-  const markAllAsRead = useCallback(() => {
+  const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     markLeadsAsRead();
     markInvoicesAsRead();
     markRequestsAsRead();
     markEventsAsRead();
-  }, [markLeadsAsRead, markInvoicesAsRead, markRequestsAsRead, markEventsAsRead]);
+  };
 
-  const deleteNotification = useCallback((notificationId: string) => {
+  const deleteNotification = (notificationId: string) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
-  }, []);
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  // Safe type casting for setNotifications
-  const setNotificationsHandler = useCallback((newNotifications: Notification[]) => {
-    setNotifications(newNotifications);
-  }, []);
 
   return (
     <NotificationContext.Provider 
@@ -139,8 +128,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         unreadCount, 
         markAsRead, 
         markAllAsRead, 
-        deleteNotification,
-        setNotifications: setNotificationsHandler 
+        deleteNotification 
       }}
     >
       {children}

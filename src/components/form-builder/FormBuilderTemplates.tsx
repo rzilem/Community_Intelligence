@@ -11,7 +11,6 @@ import { FormBuilderTemplatesProps, FormTemplate } from '@/types/form-builder-ty
 import { useFormTemplates } from '@/hooks/form-builder/useFormTemplates';
 import FieldTemplatesLibrary from './FieldTemplatesLibrary';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
 interface ExtendedFormBuilderTemplatesProps extends FormBuilderTemplatesProps {
   onTemplateSelect?: (template: FormTemplate) => void;
@@ -21,11 +20,10 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
   associationId,
   onTemplateSelect 
 }) => {
-  const { data: templates = [], isLoading, error } = useFormTemplates(associationId);
+  const { data: templates = [] } = useFormTemplates(associationId);
   const [filterCategory, setFilterCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
-  const navigate = useNavigate();
 
   // Filter templates based on search and category
   const filteredTemplates = templates.filter(template => {
@@ -50,56 +48,6 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
     toast.success(`Added ${fields.length} fields to library`);
     // This would typically update the backend through an API call
   };
-
-  const handleEditTemplate = (template: FormTemplate, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the card click from selecting the template
-    navigate(`/system/form-builder/edit/${template.id}`);
-  };
-
-  const handlePreviewTemplate = (template: FormTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    handleSelectTemplate(template);
-  };
-
-  const handleDuplicateTemplate = (template: FormTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.success(`Duplicating template: ${template.name}`);
-    // Add the implementation for duplicating a template here
-  };
-
-  const handleGetEmbedCode = (template: FormTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const embedCode = `<iframe src="${window.location.origin}/embed/forms/${template.id}" width="100%" height="600" frameborder="0"></iframe>`;
-    navigator.clipboard.writeText(embedCode);
-    toast.success('Embed code copied to clipboard');
-  };
-
-  const handleDeleteTemplate = (template: FormTemplate, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      toast.success(`Template "${template.name}" deleted`);
-      // Add the implementation for deleting a template here
-    }
-  };
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center p-8">Loading templates...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-red-500">Error loading templates: {error.message}</p>
-        <Button 
-          variant="outline" 
-          className="mt-4"
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </Button>
-      </div>
-    );
-  }
 
   if (templates.length === 0) {
     return (
@@ -152,7 +100,6 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
               <CardTitle className="text-xl">{template.name}</CardTitle>
               <CardDescription>
                 {template.category ? (template.category.charAt(0).toUpperCase() + template.category.slice(1)) : 'Uncategorized'}
-                {template.is_global && <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Global</span>}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
@@ -167,34 +114,27 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
               </div>
             </CardContent>
             <CardFooter className="pt-2 border-t flex justify-between">
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={(e) => handleEditTemplate(template, e)}
-              >
+              <Button variant="ghost" size="sm">
                 <Edit className="h-4 w-4 mr-2" /> Edit
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>Actions</Button>
+                  <Button variant="ghost" size="sm">Actions</Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem onClick={(e) => handlePreviewTemplate(template, e)}>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
                     <Eye className="mr-2 h-4 w-4" /> Preview
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => handleDuplicateTemplate(template, e)}>
+                  <DropdownMenuItem>
                     <Copy className="mr-2 h-4 w-4" /> Duplicate
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => handleGetEmbedCode(template, e)}>
+                  <DropdownMenuItem>
                     <Link className="mr-2 h-4 w-4" /> Get Embed Code
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={(e) => window.open(`/public/forms/${template.id}`, '_blank')}>
-                    <ExternalLink className="mr-2 h-4 w-4" /> Open Public Link
+                  <DropdownMenuItem>
+                    <ExternalLink className="mr-2 h-4 w-4" /> Preview
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={(e) => handleDeleteTemplate(template, e)}
-                  >
+                  <DropdownMenuItem className="text-destructive">
                     <Trash className="mr-2 h-4 w-4" /> Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -205,4 +145,4 @@ export const FormBuilderTemplates: React.FC<ExtendedFormBuilderTemplatesProps> =
       </div>
     </div>
   );
-}
+};

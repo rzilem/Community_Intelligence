@@ -1,21 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
 import Sidebar from './Sidebar';
-import AppLayoutHeader from './AppLayoutHeader';
-import AppLayoutContent from './AppLayoutContent';
+import Header from './Header';
 import { getFilteredNavItems } from './navigation-utils';
 import { AppLayoutProps } from './types';
-import { useAppLayoutState } from './hooks/useAppLayoutState';
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
   const location = useLocation();
   const isMobile = useIsMobile();
-  const { isSidebarOpen, toggleSidebar, setIsSidebarOpen } = useAppLayoutState(isMobile);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
 
   console.log('AppLayout rendering, auth state:', { 
     isAuthenticated: isAuthenticated ? 'yes' : 'no',
@@ -28,10 +26,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     if (isMobile) {
       setIsSidebarOpen(false);
     }
-  }, [location.pathname, isMobile, setIsSidebarOpen]);
+  }, [location.pathname, isMobile]);
 
-  // Initialize real-time notifications
-  useRealTimeNotifications();
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const handleSignOut = async () => {
     try {
@@ -43,6 +42,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const mainNavItems = getFilteredNavItems(userRole);
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
+
   return (
     <div className="flex min-h-screen w-full bg-gray-50">
       <Sidebar 
@@ -53,11 +56,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         handleSignOut={handleSignOut}
       />
 
-      <AppLayoutContent 
-        isMobile={isMobile}
-        isSidebarOpen={isSidebarOpen}
+      <div 
+        className={cn(
+          "flex flex-col w-full transition-all duration-300 ease-in-out",
+          !isMobile && isSidebarOpen ? "md:ml-64" : ""
+        )}
       >
-        <AppLayoutHeader 
+        <Header 
+          isMobile={isMobile}
           user={user}
           profile={profile}
           toggleSidebar={toggleSidebar}
@@ -67,7 +73,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <main className="flex-1 overflow-auto">
           {children}
         </main>
-      </AppLayoutContent>
+      </div>
     </div>
   );
 };

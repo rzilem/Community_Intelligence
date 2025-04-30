@@ -19,14 +19,12 @@ import { useAuth } from '@/contexts/auth';
 import { PortalNavigation } from '@/components/portal/PortalNavigation';
 import { CollectionsTable } from '@/components/collections/CollectionsTable';
 import { useCollectionsData } from '@/hooks/collections/useCollectionsData';
-import { useInvoiceColumns } from '@/hooks/invoices/useInvoiceColumns';
 
 const OperationsPage = () => {
   const [activeTab, setActiveTab] = useState('invoices');
   const [searchTerm, setSearchTerm] = useState('');
   const { currentAssociation } = useAuth();
   const { accounts, isLoading: collectionsLoading } = useCollectionsData(currentAssociation?.id || '');
-  const { columns, visibleColumnIds } = useInvoiceColumns('operations-invoices');
 
   const tabs = [
     { id: 'invoices', label: 'Invoices', icon: <FileText className="h-4 w-4" /> },
@@ -67,8 +65,6 @@ const OperationsPage = () => {
                   invoices={[]}
                   isLoading={false}
                   onViewInvoice={() => {}}
-                  columns={columns}
-                  visibleColumnIds={visibleColumnIds}
                 />
               )}
               {activeTab === 'work-orders' && (

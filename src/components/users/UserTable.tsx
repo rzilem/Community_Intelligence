@@ -27,11 +27,6 @@ const UserTable: React.FC<UserTableProps> = ({
     refreshUserProfile 
   } = useUserRoles(users, onRoleUpdate);
   
-  // Debug logging
-  useEffect(() => {
-    console.log('UserTable - Users received:', users);
-  }, [users]);
-  
   return (
     <Table>
       <UserTableHeader />

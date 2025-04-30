@@ -1,250 +1,163 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  HomeownerRequestStatus, 
-  HomeownerRequestPriority,
-  HomeownerRequestType
-} from '@/types/homeowner-request-types';
-import { FileText, Filter } from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import PageTemplate from '@/components/layout/PageTemplate';
-import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
-import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Tabs } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+import { HOMEOWNER_REQUEST_COLUMNS } from '@/types/homeowner-request-types';
+import HomeownerRequestsHeader from '@/components/homeowners/queue/HomeownerRequestsHeader';
+import RequestsCardHeader from '@/components/homeowners/queue/RequestsCardHeader';
 import RequestsTabsList from '@/components/homeowners/queue/RequestsTabsList';
 import RequestsTabContent from '@/components/homeowners/queue/RequestsTabContent';
-import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
-import HomeownerRequestAdvancedFilters from '@/components/homeowners/HomeownerRequestAdvancedFilters';
+import RequestsStatusFooter from '@/components/homeowners/queue/RequestsStatusFooter';
+import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
-import { useRequestColumns } from '@/hooks/homeowners/useRequestColumns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { InfoIcon, Bug, Plus, RefreshCw, Loader2 } from 'lucide-react';
 
 const HomeownerRequestsQueue = () => {
-  const [view, setView] = useState<'table' | 'queue'>('table');
-  const [activeTab, setActiveTab] = useState<'all' | 'open' | 'in-progress' | 'closed' | 'rejected'>('open');
-  const [showFilters, setShowFilters] = useState(false);
-  const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
-  const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
-  
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<HomeownerRequestStatus | 'all'>('all');
-  const [priorityFilter, setPriorityFilter] = useState<HomeownerRequestPriority | 'all'>('all');
-  const [typeFilter, setTypeFilter] = useState<HomeownerRequestType | 'all'>('all');
-  const [assignedToFilter, setAssignedToFilter] = useState('');
-  const [dateRangeFilter, setDateRangeFilter] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: null,
-    endDate: null
-  });
-  
-  // Get columns config and requests data
-  const { columns, visibleColumns, toggleColumn } = useRequestColumns();
-  const { 
-    homeownerRequests: requests, 
+  const [open, setOpen] = useState(false);
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(false);
+  const {
     filteredRequests,
-    isLoading, 
-    error,
-    handleRefresh: refreshRequests,
-    handleBulkStatusChange: updateRequestStatus, // Using handleBulkStatusChange as onStatusChange
-    activeTab: requestsActiveTab,
-    setActiveTab: setRequestsActiveTab,
-    // Using dummy data for requestCounts if not available
-    lastRefreshed
+    isLoading,
+    activeTab,
+    setActiveTab,
+    searchTerm,
+    setSearchTerm,
+    priority,
+    setPriority,
+    type,
+    setType,
+    lastRefreshed,
+    handleRefresh,
+    homeownerRequests,
+    createDummyRequest,
+    error
   } = useHomeownerRequests();
-  
-  // Set up request counts object based on filtered data
-  const requestCounts = {
-    all: filteredRequests.length,
-    open: filteredRequests.filter(r => r.status === 'open').length,
-    inProgress: filteredRequests.filter(r => r.status === 'in-progress').length,
-    closed: filteredRequests.filter(r => r.status === 'closed').length,
-    rejected: filteredRequests.filter(r => r.status === 'rejected').length
-  };
-  
-  // Reset selected requests when tab or filters change
+
+  // Load column preferences from localStorage on component mount
   useEffect(() => {
-    setSelectedRequestIds([]);
-  }, [activeTab, statusFilter, priorityFilter, typeFilter, searchTerm]);
-  
-  const getStatusFromTab = (tab: string): HomeownerRequestStatus | 'all' | 'active' => {
-    switch(tab) {
-      case 'open': return 'open';
-      case 'in-progress': return 'in-progress'; 
-      case 'closed': return 'closed';
-      case 'rejected': return 'rejected';
-      default: return 'all';
-    }
-  };
-
-  const getFilteredRequests = () => {
-    if (view === 'table') {
-      return filteredRequests;
-    }
-    
-    // For queue view, filter by active tab
-    if (activeTab === 'all') {
-      return filteredRequests;
-    }
-    
-    const tabStatus = getStatusFromTab(activeTab);
-    if (tabStatus === 'all' || tabStatus === 'active') {
-      return filteredRequests;
-    }
-    
-    return filteredRequests.filter(req => req.status === tabStatus);
-  };
-
-  const handleToggleRequestSelection = (id: string) => {
-    if (selectedRequestIds.includes(id)) {
-      setSelectedRequestIds(selectedRequestIds.filter(requestId => requestId !== id));
+    const savedColumns = localStorage.getItem('homeownerRequestColumns');
+    if (savedColumns) {
+      setVisibleColumnIds(JSON.parse(savedColumns));
     } else {
-      setSelectedRequestIds([...selectedRequestIds, id]);
+      // Default to columns marked as defaultVisible
+      setVisibleColumnIds(HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id));
     }
+  }, []);
+
+  const handleFormSuccess = () => {
+    setOpen(false);
+    handleRefresh();
+    toast.success('Request created successfully');
   };
 
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('all');
-    setPriorityFilter('all');
-    setTypeFilter('all');
-    setAssignedToFilter('');
-    setDateRangeFilter({
-      startDate: null,
-      endDate: null
-    });
+  const handleExport = () => {
+    toast.success('Export functionality will be implemented soon');
   };
 
-  // Function to handle status changes for individual requests
-  const handleStatusChange = (id: string, status: string) => {
-    updateRequestStatus(status, [id]);
+  const handleColumnChange = (selectedColumnIds: string[]) => {
+    console.log("Column selection changed:", selectedColumnIds);
+    setVisibleColumnIds(selectedColumnIds);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(selectedColumnIds));
   };
 
-  return (
-    <PageTemplate
-      title="Homeowner Requests"
-      icon={<FileText className="h-8 w-8" />}
-      description="Manage and respond to homeowner requests and inquiries."
-      actions={
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            {showFilters ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-          <Button 
-            size="sm" 
-            onClick={() => setShowNewRequestDialog(true)}
-          >
-            New Request
-          </Button>
-        </div>
-      }
-    >
-      {/* Basic filters */}
-      <HomeownerRequestFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        onStatusChange={setStatusFilter}
-        priorityFilter={priorityFilter}
-        onPriorityChange={setPriorityFilter}
-        typeFilter={typeFilter}
-        onTypeChange={setTypeFilter}
-      />
-      
-      {/* Advanced filters */}
-      {showFilters && (
-        <HomeownerRequestAdvancedFilters
-          assignedToFilter={assignedToFilter}
-          onAssignedToChange={setAssignedToFilter}
-          dateRangeFilter={dateRangeFilter}
-          onDateRangeChange={setDateRangeFilter}
-          onClearFilters={handleClearFilters}
-        />
-      )}
-      
-      {/* View toggle */}
-      <Tabs 
-        value={view} 
-        onValueChange={(v) => setView(v as 'table' | 'queue')}
-        className="mt-4"
-      >
-        <TabsList className="mb-4">
-          <TabsTrigger value="table">Table View</TabsTrigger>
-          <TabsTrigger value="queue">Queue View</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="table" className="mt-0">
-          <HomeownerRequestsTable
-            requests={getFilteredRequests()}
-            isLoading={isLoading}
-            error={error}
-            columns={visibleColumns}
-            visibleColumnIds={visibleColumns.map(col => col.id)}
-            onViewRequest={(req) => console.log('View request', req.id)}
-            onEditRequest={(req) => console.log('Edit request', req.id)}
-            onStatusChange={handleStatusChange}
-            onRefresh={refreshRequests}
-            selectedRequestIds={selectedRequestIds}
-            setSelectedRequestIds={setSelectedRequestIds}
-            toggleSelectRequest={handleToggleRequestSelection}
-            onToggleColumn={toggleColumn}
-          />
-        </TabsContent>
-        
-        <TabsContent value="queue" className="mt-0">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-            <RequestsTabsList
-              requestCounts={requestCounts}
-              activeTab={activeTab}
-              onTabChange={(tab) => setActiveTab(tab as any)}
-            />
+  const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
+    console.log("Reordering columns:", sourceIndex, "to", destinationIndex);
+    const newVisibleColumns = [...visibleColumnIds];
+    const [removed] = newVisibleColumns.splice(sourceIndex, 1);
+    newVisibleColumns.splice(destinationIndex, 0, removed);
+    setVisibleColumnIds(newVisibleColumns);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(newVisibleColumns));
+  };
+
+  const handleResetColumns = () => {
+    console.log("Resetting columns to default");
+    const defaultColumns = HOMEOWNER_REQUEST_COLUMNS.filter(col => col.defaultVisible).map(col => col.id);
+    setVisibleColumnIds(defaultColumns);
+    localStorage.setItem('homeownerRequestColumns', JSON.stringify(defaultColumns));
+  };
+
+  return <AppLayout>
+      <div className="p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <HomeownerRequestsHeader onRefresh={handleRefresh} onExport={handleExport} open={open} setOpen={setOpen} onSuccess={handleFormSuccess} />
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowDebug(!showDebug)}>
+              <Bug className="h-4 w-4 mr-2" /> 
+              {showDebug ? 'Hide Debug' : 'Debug'}
+            </Button>
             
-            <div className="mt-4 grid gap-4 grid-cols-1">
-              <RequestsTabContent
-                status={getStatusFromTab(activeTab) as string}
-                title={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Requests`}
-                requests={getFilteredRequests()}
-                totalCount={
-                  activeTab === 'all'
-                    ? requestCounts.all
-                    : activeTab === 'open'
-                    ? requestCounts.open
-                    : activeTab === 'in-progress'
-                    ? requestCounts.inProgress
-                    : activeTab === 'closed'
-                    ? requestCounts.closed
-                    : requestCounts.rejected
-                }
-                isLoading={isLoading}
-                onStatusChange={handleStatusChange}
-                columns={visibleColumns}
-                selectedRequestIds={selectedRequestIds}
-                setSelectedRequestIds={setSelectedRequestIds}
-                toggleSelectRequest={handleToggleRequestSelection}
+          </div>
+        </div>
+
+        {showDebug && <Card className="bg-muted/50">
+            <CardContent className="p-4">
+              <h3 className="text-sm font-semibold mb-2">Debug Information</h3>
+              <div className="text-xs space-y-1">
+                <p><strong>Total Requests:</strong> {homeownerRequests.length}</p>
+                <p><strong>Filtered Requests:</strong> {filteredRequests.length}</p>
+                <p><strong>Active Tab:</strong> {activeTab}</p>
+                <p><strong>Loading State:</strong> {isLoading ? 'Loading...' : 'Done'}</p>
+                <p><strong>Error:</strong> {error ? error.message : 'None'}</p>
+                <p><strong>Last Refreshed:</strong> {lastRefreshed.toLocaleTimeString()}</p>
+                <p><strong>Visible Columns:</strong> {visibleColumnIds.join(', ')}</p>
+                <div className="mt-2">
+                  <Button variant="secondary" size="sm" onClick={handleRefresh} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-2" />}
+                    Force Refresh
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>}
+
+        {homeownerRequests.length === 0 && !isLoading && <Alert>
+            <InfoIcon className="h-4 w-4" />
+            <AlertTitle>No requests found</AlertTitle>
+            <AlertDescription>
+              There are no homeowner requests in the system yet. You can create a test request using the "Create Test Request" button, or wait for email requests to come in.
+            </AlertDescription>
+          </Alert>}
+
+        <Card>
+          <CardHeader>
+            <RequestsCardHeader visibleColumnIds={visibleColumnIds} columns={HOMEOWNER_REQUEST_COLUMNS} onColumnChange={handleColumnChange} onReorderColumns={handleReorderColumns} onResetColumns={handleResetColumns} />
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue={activeTab} onValueChange={value => setActiveTab(value as any)}>
+              <RequestsTabsList activeTab={activeTab} onTabChange={value => setActiveTab(value as any)} />
+              
+              <HomeownerRequestFilters 
+                searchTerm={searchTerm} 
+                setSearchTerm={setSearchTerm} 
+                priority={priority} 
+                setPriority={(value) => setPriority(value as any)} 
+                type={type} 
+                setType={(value) => setType(value as any)}
               />
-            </div>
-          </Tabs>
-        </TabsContent>
-      </Tabs>
-      
-      <NewRequestDialog
-        isOpen={showNewRequestDialog}
-        onClose={() => setShowNewRequestDialog(false)}
-        onSuccess={() => {
-          refreshRequests();
-          setShowNewRequestDialog(false);
-          return Promise.resolve(true);
-        }}
-      />
-    </PageTemplate>
-  );
+              
+              <RequestsTabContent value="all" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="active" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="open" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="in-progress" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="resolved" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+              
+              <RequestsTabContent value="closed" isLoading={isLoading} requests={filteredRequests} columns={HOMEOWNER_REQUEST_COLUMNS} visibleColumnIds={visibleColumnIds} />
+            </Tabs>
+            
+            <RequestsStatusFooter filteredCount={filteredRequests.length} totalCount={homeownerRequests.length} lastRefreshed={lastRefreshed} />
+          </CardContent>
+        </Card>
+      </div>
+    </AppLayout>;
 };
 
 export default HomeownerRequestsQueue;

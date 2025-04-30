@@ -1,65 +1,47 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar, Eye, EyeOff, Send, Undo2 } from 'lucide-react';
-import { MessageFormActionsProps } from '@/types/message-form-types';
 
-const FormActions: React.FC<MessageFormActionsProps> = ({
-  isSubmitting,
-  canSubmit,
-  isScheduled,
-  onSubmit,
-  onReset,
-  onPreviewToggle
+interface FormActionsProps {
+  isPreviewMode: boolean;
+  togglePreview: () => void;
+  handleReset: () => void;
+  handleSendMessage: () => void;
+  canSend: boolean;
+  isLoading: boolean;
+}
+
+const FormActions: React.FC<FormActionsProps> = ({
+  isPreviewMode,
+  togglePreview,
+  handleReset,
+  handleSendMessage,
+  canSend,
+  isLoading
 }) => {
   return (
-    <div className="flex flex-wrap gap-2 justify-end">
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onReset}
+    <div className="flex justify-between pt-4">
+      <Button 
+        variant="outline" 
+        onClick={togglePreview}
       >
-        <Undo2 className="mr-2 h-4 w-4" />
-        Reset
+        {isPreviewMode ? 'Edit Message' : 'Preview with Sample Data'}
       </Button>
       
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onPreviewToggle}
-      >
-        {isScheduled ? (
-          <>
-            <EyeOff className="mr-2 h-4 w-4" />
-            Edit Message
-          </>
-        ) : (
-          <>
-            <Eye className="mr-2 h-4 w-4" />
-            Preview
-          </>
-        )}
-      </Button>
-      
-      <Button
-        type="button"
-        disabled={!canSubmit || isSubmitting}
-        onClick={onSubmit}
-      >
-        {isSubmitting ? (
-          'Processing...'
-        ) : isScheduled ? (
-          <>
-            <Calendar className="mr-2 h-4 w-4" />
-            Schedule Message
-          </>
-        ) : (
-          <>
-            <Send className="mr-2 h-4 w-4" />
-            Send Message
-          </>
-        )}
-      </Button>
+      <div className="flex gap-3">
+        <Button 
+          variant="outline" 
+          onClick={handleReset}
+        >
+          Cancel
+        </Button>
+        <Button 
+          disabled={!canSend || isLoading}
+          onClick={handleSendMessage}
+        >
+          {isLoading ? 'Sending...' : 'Send Message'}
+        </Button>
+      </div>
     </div>
   );
 };

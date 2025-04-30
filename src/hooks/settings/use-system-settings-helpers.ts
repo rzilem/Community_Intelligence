@@ -37,36 +37,23 @@ export const saveSystemSettings = async (settings: SystemSettings) => {
 };
 
 const updateSettingWithFunction = async (key: string, value: any) => {
-  // Create a replacer function to mask sensitive information in logs
-  const replacer = (k: string, v: any) => {
+  console.log(`Updating ${key} settings:`, JSON.stringify(value, (k, v) => {
     // Mask API keys in logs
     if ((k === 'apiKey' || k === 'secret' || k === 'webhookSecret') && typeof v === 'string') {
       return v ? '[PRESENT]' : '[MISSING]';
     }
     return v;
-  };
-
-  // Log the masked version of the value
-  console.log(`Updating ${key} settings:`, JSON.stringify(value, replacer, 2));
+  }));
   
-  try {
-    // Ensure the value is properly serializable by explicitly converting to a clean object
-    const safeValue = JSON.parse(JSON.stringify(value));
-    
-    // Make the request to the Supabase Edge Function
-    const { error } = await supabase.functions.invoke(`settings/${key}`, {
-      method: 'POST',
-      body: safeValue,
-    });
-    
-    if (error) {
-      console.error(`Error updating ${key} settings:`, error);
-      throw new Error(`Failed to update ${key} settings: ${error.message}`);
-    }
-    
-    return { success: true };
-  } catch (error) {
-    console.error(`Error in updateSettingWithFunction for ${key}:`, error);
-    throw new Error(`Failed to process ${key} settings: ${error.message || 'Unknown error'}`);
+  const { error } = await supabase.functions.invoke(`settings/${key}`, {
+    method: 'POST',
+    body: value,
+  });
+  
+  if (error) {
+    console.error(`Error updating ${key} settings:`, error);
+    throw new Error(`Failed to update ${key} settings: ${error.message}`);
   }
+  
+  return { success: true };
 };

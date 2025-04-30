@@ -36,7 +36,7 @@ const GLAccountTabs: React.FC<GLAccountTabsProps> = ({
   const [contentTab, setContentTab] = useState<'accounts' | 'categories'>('accounts');
 
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+    <Tabs defaultValue="master" className="w-full" value={activeTab} onValueChange={onTabChange}>
       <div className="flex justify-between items-center mb-6">
         <TabsList>
           <TabsTrigger value="master">

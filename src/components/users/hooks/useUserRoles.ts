@@ -1,17 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { UserWithProfile, UserRole } from '@/types/user-types';
+import { UserWithProfile } from '@/types/user-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void) => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
+  const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [refreshingProfile, setRefreshingProfile] = useState<Record<string, boolean>>({});
 
   // Initialize user roles
   useEffect(() => {
-    const rolesMap: Record<string, UserRole> = {};
+    const rolesMap: Record<string, string> = {};
     users.forEach(user => {
       if (user.profile?.role) {
         rolesMap[user.id] = user.profile.role;
@@ -20,7 +20,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
     setUserRoles(rolesMap);
   }, [users]);
 
-  const updateUserRole = async (userId: string, role: UserRole) => {
+  const updateUserRole = async (userId: string, role: string) => {
     try {
       setLoading(prev => ({ ...prev, [userId]: true }));
       
@@ -58,7 +58,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
         .upsert({
           id: userId,
           email: user.email,
-          role: user.profile?.role || 'user' as UserRole,
+          role: user.profile?.role || 'user',
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { File, Save, Settings } from 'lucide-react';
+import { FilePdf, Save, Settings } from 'lucide-react';
 import { FormTemplate } from '@/types/form-builder-types';
 import { toast } from 'sonner';
 
@@ -84,7 +84,7 @@ const FormSubmissionPDFExport: React.FC<FormSubmissionPDFExportProps> = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <File className="mr-2 h-4 w-4" />
+          <FilePdf className="mr-2 h-4 w-4" />
           Export to PDF
         </Button>
       </DialogTrigger>

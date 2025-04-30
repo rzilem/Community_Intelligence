@@ -5,7 +5,6 @@ import CalendarTab from '@/components/dashboard/CalendarTab';
 import ActivityFeed from '@/components/dashboard/ActivityFeed';
 import MessagesFeed from '@/components/dashboard/MessagesFeed';
 import TreasurerDashboard from '@/components/dashboard/TreasurerDashboard';
-import { UserRole } from '@/types/user-types';
 
 export const useDashboardRoleContent = (
   user: Profile | null,
@@ -17,12 +16,8 @@ export const useDashboardRoleContent = (
     if (!user) return null;
     
     switch (user.role) {
-      case 'admin':
-      case 'manager':
-      case 'resident':
-      case 'maintenance':
-      case 'accountant':
-      case 'user':
+      case 'treasurer':
+        return <TreasurerDashboard />;
       default:
         return (
           <>

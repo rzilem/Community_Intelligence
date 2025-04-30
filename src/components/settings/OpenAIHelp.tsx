@@ -1,6 +1,9 @@
 
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
+import {
+  HelpCircle,
+  ExternalLink
+} from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -8,31 +11,37 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const OpenAIHelp: React.FC = () => {
+const OpenAIHelp = () => {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+          <button className="inline-flex items-center text-muted-foreground hover:text-primary">
+            <HelpCircle className="h-4 w-4" />
+          </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-md">
+        <TooltipContent className="w-80 p-4">
           <div className="space-y-2">
-            <p>OpenAI is used to power AI features throughout the platform, including:</p>
-            <ul className="list-disc pl-4 text-sm">
-              <li>AI-assisted form field suggestions</li>
-              <li>Automated content generation</li>
-              <li>Email template generation</li>
-              <li>Invoice analysis</li>
-              <li>Document summarization</li>
-              <li>Natural language interactions across HOA data</li>
-              <li>AI-driven workflow automation</li>
-            </ul>
-            <p className="text-xs text-muted-foreground pt-1">
-              Your API key is stored securely in Supabase and used only for the features you enable.
+            <h4 className="font-medium">OpenAI API Key</h4>
+            <p className="text-sm">
+              You can find your API key in the OpenAI dashboard under API keys.
             </p>
-            <p className="text-xs text-amber-600 pt-1">
-              Note: After saving your API key, click "Test Connection" to verify it's working correctly.
-            </p>
+            <a 
+              href="https://platform.openai.com/api-keys" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-sm text-blue-500 hover:underline"
+            >
+              Go to OpenAI Dashboard
+              <ExternalLink className="ml-1 h-3 w-3" />
+            </a>
+            <div className="pt-2">
+              <h4 className="font-medium">Model Selection</h4>
+              <p className="text-sm mt-1">
+                • GPT-4o Mini - Less expensive, faster responses<br />
+                • GPT-4o - More powerful, better reasoning
+              </p>
+            </div>
           </div>
         </TooltipContent>
       </Tooltip>

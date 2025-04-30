@@ -1,134 +1,157 @@
 
-import { useState } from 'react';
-import { HomeownerRequest, HomeownerRequestStatus, HomeownerRequestPriority, HomeownerRequestType } from '@/types/homeowner-request-types';
+import { useState, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { toast } from 'sonner';
+import { useSupabaseUpdate } from '@/hooks/supabase';
+import { supabase } from '@/integrations/supabase/client';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
+import { useAuth } from '@/contexts/auth';
 
-interface UseRequestFormProps {
-  initialRequest?: Partial<HomeownerRequest>;
-  onSubmit: (request: HomeownerRequest) => Promise<boolean>;
-  onCancel: () => void;
-}
+const formSchema = z.object({
+  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  description: z.string().min(10, { message: "Description must be at least 10 characters" }),
+  status: z.enum(['open', 'in-progress', 'resolved', 'closed']),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  type: z.enum(['maintenance', 'compliance', 'billing', 'general', 'amenity']),
+  assigned_to: z.string().optional(),
+  association_id: z.string().optional(),
+  property_id: z.string().optional(),
+  resident_id: z.string().optional(),
+  note: z.string().optional(),
+});
 
-export const useRequestForm = ({ initialRequest, onSubmit, onCancel }: UseRequestFormProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [request, setRequest] = useState<Partial<HomeownerRequest>>({
-    title: '',
-    description: '',
-    status: 'open' as HomeownerRequestStatus,
-    priority: 'medium' as HomeownerRequestPriority,
-    type: 'general' as HomeownerRequestType,
-    property_id: '',
-    association_id: '',
-    ...initialRequest
+export const useRequestForm = (
+  request: HomeownerRequest | null,
+  onOpenChange: (open: boolean) => void,
+  onSuccess?: () => void
+) => {
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const { user } = useAuth();
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: request?.title || '',
+      description: request?.description || '',
+      status: request?.status || 'open',
+      priority: request?.priority || 'medium',
+      type: request?.type || 'general',
+      assigned_to: request?.assigned_to || 'unassigned',
+      association_id: request?.association_id || 'unassigned',
+      property_id: request?.property_id || 'unassigned',
+      resident_id: request?.resident_id || 'unassigned',
+      note: '',
+    },
   });
 
-  const [errors, setErrors] = useState<{
-    title?: string;
-    description?: string;
-    status?: string;
-    priority?: string;
-    type?: string;
-    property_id?: string;
-    association_id?: string;
-  }>({});
-
-  const updateField = (field: keyof HomeownerRequest, value: any) => {
-    setRequest(prev => ({
-      ...prev,
-      [field]: value
-    }));
-
-    // Clear error when field is updated
-    if (errors[field as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: undefined
-      }));
+  const { mutate: updateRequest, isPending } = useSupabaseUpdate<HomeownerRequest>(
+    'homeowner_requests',
+    {
+      onSuccess: () => {
+        toast.success('Request updated successfully');
+        onOpenChange(false);
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 100);
+        }
+      },
+      showErrorToast: true,
     }
-  };
+  );
 
-  const validateForm = (): boolean => {
-    const newErrors: typeof errors = {};
-
-    if (!request.title) {
-      newErrors.title = 'Title is required';
-    }
-
-    if (!request.description) {
-      newErrors.description = 'Description is required';
-    }
-
-    if (!request.status) {
-      newErrors.status = 'Status is required';
-    }
-
-    if (!request.priority) {
-      newErrors.priority = 'Priority is required';
-    }
-
-    if (!request.type) {
-      newErrors.type = 'Type is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-
-    if (!validateForm()) {
-      return false;
-    }
-
-    setIsSubmitting(true);
-
+  const fetchComments = useCallback(async () => {
+    if (!request) return;
+    
     try {
-      // Create full request object with all required fields
-      const fullRequest: HomeownerRequest = {
-        id: request.id || `req-${Date.now()}`,
-        title: request.title || '',
-        description: request.description || '',
-        status: request.status as HomeownerRequestStatus,
-        priority: request.priority as HomeownerRequestPriority,
-        type: request.type as HomeownerRequestType,
-        created_at: request.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        association_id: request.association_id || '',
-        resolved_at: request.resolved_at || undefined,
-        tracking_number: request.tracking_number || `TRK-${Date.now()}`,
-        attachments: request.attachments || [],
-        property_id: request.property_id,
-        resident_id: request.resident_id,
-        assigned_to: request.assigned_to,
-        html_content: request.html_content,
+      setLoadingComments(true);
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          *,
+          user:user_id (
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('parent_id', request.id)
+        .eq('parent_type', 'homeowner_request')
+        .order('created_at', { ascending: false });
         
-        // Virtual properties
-        createdAt: request.createdAt,
-        updatedAt: request.updatedAt,
-        residentId: request.residentId,
-        propertyId: request.propertyId,
-        associationId: request.associationId,
-        resolvedAt: request.resolvedAt
-      };
-
-      const success = await onSubmit(fullRequest);
-      return success;
+      if (error) throw error;
+      
+      setComments(data || []);
     } catch (error) {
-      console.error('Error submitting request:', error);
-      return false;
+      console.error('Error fetching comments:', error);
+      toast.error('Failed to load comments');
     } finally {
-      setIsSubmitting(false);
+      setLoadingComments(false);
     }
+  }, [request]);
+
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!request) return;
+    
+    console.log('Form submitted with values:', values);
+    
+    // Convert 'unassigned' values to null to prevent database UUID errors
+    const updatedData: Partial<HomeownerRequest> = {
+      title: values.title,
+      description: values.description,
+      status: values.status,
+      priority: values.priority,
+      type: values.type,
+      assigned_to: values.assigned_to === 'unassigned' ? null : values.assigned_to,
+      association_id: values.association_id === 'unassigned' ? null : values.association_id,
+      property_id: values.property_id === 'unassigned' ? null : values.property_id,
+      resident_id: values.resident_id === 'unassigned' ? null : values.resident_id
+    };
+    
+    if (values.status === 'resolved' && request.status !== 'resolved') {
+      updatedData.resolved_at = new Date().toISOString();
+    }
+    
+    if (values.status !== 'resolved' && request.status === 'resolved') {
+      updatedData.resolved_at = null;
+    }
+    
+    if (values.note?.trim()) {
+      try {
+        const { error: commentError } = await supabase
+          .from('comments')
+          .insert({
+            parent_id: request.id,
+            parent_type: 'homeowner_request',
+            content: values.note.trim(),
+            user_id: user?.id || null,
+          });
+          
+        if (commentError) throw commentError;
+      } catch (error) {
+        console.error('Error adding note:', error);
+        toast.error('Failed to add note');
+        return;
+      }
+    }
+    
+    console.log('Updating request with data:', updatedData);
+    
+    updateRequest({
+      id: request.id,
+      data: updatedData,
+    });
   };
 
   return {
-    request,
-    updateField,
+    form,
+    isPending,
+    comments,
+    loadingComments,
+    fetchComments,
     handleSubmit,
-    handleCancel: onCancel,
-    isSubmitting,
-    errors
   };
 };

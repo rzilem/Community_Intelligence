@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { LogOut, Menu, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,8 +50,10 @@ const Header: React.FC<HeaderProps> = ({
     return 'U';
   };
 
-  const handleProfileImageUpdated = () => {
-    // No need to do anything specific here, as the image will update via context
+  // Handle profile image update
+  const handleProfileImageUpdated = (newUrl: string) => {
+    // The image will be updated automatically since the Header component
+    // will re-render with the new profile data from context
   };
 
   return (

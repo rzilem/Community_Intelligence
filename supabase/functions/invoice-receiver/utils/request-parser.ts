@@ -73,14 +73,11 @@ export async function processMultipartFormData(request: Request): Promise<any> {
         try {
           const parsedValue = JSON.parse(value);
           result.attachment_details.push(parsedValue);
-          console.log(`Parsed attachment detail: ${JSON.stringify(parsedValue)}`);
         } catch {
           result.attachment_details.push(value);
-          console.log(`Using attachment detail as string: ${value}`);
         }
       } else {
         result.attachment_details.push(value);
-        console.log(`Using attachment detail as object: ${JSON.stringify(value)}`);
       }
     } else if (typeof value === "string") {
       try {
@@ -111,17 +108,14 @@ export async function processMultipartFormData(request: Request): Promise<any> {
             // Copy relevant properties
             attachment.filename = details.filename || attachment.filename;
             attachment.contentType = details.content_type || details.contentType || attachment.contentType;
-            console.log(`Updated attachment ${i} with details: filename=${attachment.filename}, contentType=${attachment.contentType}`);
           } else if (typeof details === 'string') {
             // Try to extract details from the string
             try {
               const detailsObj = JSON.parse(details);
               attachment.filename = detailsObj.filename || attachment.filename;
               attachment.contentType = detailsObj.content_type || detailsObj.contentType || attachment.contentType;
-              console.log(`Updated attachment ${i} with parsed details: filename=${attachment.filename}, contentType=${attachment.contentType}`);
             } catch {
               // If parsing fails, just continue with what we have
-              console.log(`Could not parse attachment details for attachment ${i}`);
             }
           }
         }
@@ -137,10 +131,6 @@ export async function processMultipartFormData(request: Request): Promise<any> {
   console.log("Processed form data result:", Object.keys(result));
   if (result.attachments) {
     console.log(`Found ${result.attachments.length} attachments in form data`);
-    // Log attachment summaries
-    result.attachments.forEach((attachment: any, i: number) => {
-      console.log(`Attachment ${i}: filename=${attachment.filename}, contentType=${attachment.contentType}, size=${attachment.size || 'N/A'}`);
-    });
   }
   
   return result;

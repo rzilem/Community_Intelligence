@@ -1,4 +1,5 @@
-export type HomeownerRequestStatus = 'open' | 'in-progress' | 'resolved' | 'closed' | 'rejected';
+
+export type HomeownerRequestStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
 export type HomeownerRequestPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type HomeownerRequestType = 'maintenance' | 'compliance' | 'billing' | 'general' | 'amenity';
 

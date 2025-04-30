@@ -5,7 +5,6 @@ export interface NavItemProps {
   name: string;
   path: string;
   icon: ElementType;
-  isActive?: boolean;
   submenu?: {
     name: string;
     path: string;

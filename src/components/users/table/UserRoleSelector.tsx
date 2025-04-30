@@ -1,37 +1,30 @@
 
 import React from 'react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { UserRole } from '@/types/user-types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface UserRoleSelectorProps {
   userId: string;
-  currentRole: UserRole;
+  currentRole: string;
   roles: { id: string; name: string }[];
-  onRoleChange: (userId: string, role: UserRole) => void;
+  onRoleChange: (userId: string, role: string) => void;
   isDisabled?: boolean;
 }
 
-const UserRoleSelector: React.FC<UserRoleSelectorProps> = ({
-  userId,
-  currentRole,
-  roles,
+const UserRoleSelector: React.FC<UserRoleSelectorProps> = ({ 
+  userId, 
+  currentRole, 
+  roles, 
   onRoleChange,
-  isDisabled = false
+  isDisabled
 }) => {
   return (
     <Select
-      defaultValue={currentRole}
-      onValueChange={(value) => onRoleChange(userId, value as UserRole)}
+      value={currentRole}
+      onValueChange={(value) => onRoleChange(userId, value)}
       disabled={isDisabled}
     >
       <SelectTrigger className="w-full">
-        <SelectValue placeholder="Select a role" />
+        <SelectValue placeholder="Select role" />
       </SelectTrigger>
       <SelectContent>
         {roles.map((role) => (

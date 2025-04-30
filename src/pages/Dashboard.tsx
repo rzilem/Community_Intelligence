@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { toast } from 'sonner';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
@@ -45,43 +44,6 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, loading, navigate]);
   
-  // Use a ref to track whether we've shown the welcome toast already
-  const welcomeToastShown = React.useRef(false);
-  
-  useEffect(() => {
-    // Only show welcome toast when dashboard loads and only if it hasn't been shown yet in this session
-    if (profile && !welcomeToastShown.current) {
-      welcomeToastShown.current = true;
-      
-      // Use a unique ID based on the user's ID to prevent duplicate toasts
-      const toastId = `welcome-${profile.id}-${Date.now()}`;
-      
-      // Use the user's name if available, otherwise use their role or a default
-      const userName = profile.first_name || profile.name || profile.role || 'Homeowner';
-      
-      toast.success(`Welcome back, ${userName}!`, {
-        id: toastId,
-        description: `You're currently viewing the ${currentAssociation?.name || 'default'} dashboard.`
-      });
-      
-      // Store in sessionStorage to prevent the toast from showing on page refreshes during the same session
-      sessionStorage.setItem('welcomeToastShown', 'true');
-    }
-  }, [profile, currentAssociation]);
-  
-  // On component mount, check if we've already shown the toast in this session
-  useEffect(() => {
-    // Check sessionStorage on component mount
-    if (sessionStorage.getItem('welcomeToastShown')) {
-      welcomeToastShown.current = true;
-    }
-    
-    // Clean up on component unmount
-    return () => {
-      // We don't reset the sessionStorage here to maintain toast state across navigation
-    };
-  }, []);
-  
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -107,9 +69,6 @@ const Dashboard = () => {
     error
   );
 
-  // Check if user role is 'accountant' (previously 'treasurer')
-  const isTreasurer = profile?.role === 'accountant';
-
   return (
     <AppLayout>
       <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
@@ -133,7 +92,7 @@ const Dashboard = () => {
         {/* Community Intelligence AI */}
         <AiQueryInput />
         
-        {isTreasurer ? (
+        {profile?.role === 'treasurer' ? (
           getContentForRole()
         ) : (
           <Tabs defaultValue="calendar" className="space-y-4">

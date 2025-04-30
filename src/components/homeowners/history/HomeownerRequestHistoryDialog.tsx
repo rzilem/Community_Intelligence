@@ -1,47 +1,51 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
+import HistoryTimeline from './HistoryTimeline';
+import { useHistoryData } from './useHistoryData';
 
-export interface HomeownerRequestHistoryDialogProps {
+interface HomeownerRequestHistoryDialogProps {
+  request: HomeownerRequest | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  requestId: string;
 }
 
-const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps> = ({
-  open,
-  onOpenChange,
-  requestId
+const HomeownerRequestHistoryDialog: React.FC<HomeownerRequestHistoryDialogProps> = ({ 
+  request, 
+  open, 
+  onOpenChange 
 }) => {
-  // This would be a placeholder for a real implementation
+  const { history, loading } = useHistoryData(request, open);
+  
+  if (!request) return null;
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Request History</DialogTitle>
+          <DialogTitle>Request History: {request.title}</DialogTitle>
         </DialogHeader>
         
-        <div className="mt-4">
-          <p className="text-sm text-muted-foreground">
-            Showing history for request ID: {requestId}
-          </p>
-          
-          <div className="mt-4 space-y-4">
-            <div className="border-l-2 border-primary pl-4 py-2">
-              <p className="text-sm font-medium">Status changed to "Open"</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date().toLocaleString()}
-              </p>
-            </div>
-            
-            <div className="border-l-2 border-primary pl-4 py-2">
-              <p className="text-sm font-medium">Request created</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date().toLocaleString()}
-              </p>
-            </div>
+        <ScrollArea className="h-[60vh]">
+          <div className="p-4">
+            <HistoryTimeline history={history} loading={loading} />
           </div>
-        </div>
+        </ScrollArea>
+        
+        <DialogFooter>
+          <Button onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

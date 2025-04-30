@@ -1,56 +1,64 @@
 
 import React, { useState } from 'react';
-import { useGlobalNotifications } from '@/hooks/useGlobalNotifications';
 import HomeownerRequestDetailDialog from '@/components/homeowners/HomeownerRequestDetailDialog';
+import HomeownerRequestEditDialog from '@/components/homeowners/dialog/HomeownerRequestEditDialog';
+import HomeownerRequestCommentDialog from '@/components/homeowners/HomeownerRequestCommentDialog';
 import HomeownerRequestHistoryDialog from '@/components/homeowners/history/HomeownerRequestHistoryDialog';
-import { HomeownerRequest } from '@/types/homeowner-request-types';
+import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
 import { toast } from 'sonner';
+import { HomeownerRequest } from '@/types/homeowner-request-types';
 
 interface HomeownerRequestDialogsProps {
   handleRefresh: () => void;
 }
 
-const HomeownerRequestDialogs: React.FC<HomeownerRequestDialogsProps> = ({ handleRefresh }) => {
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps) => {
   const [selectedRequest, setSelectedRequest] = useState<HomeownerRequest | null>(null);
-  
-  // This function will be called when status changes
-  const handleStatusChange = (id: string, status: string) => {
-    console.log(`Changing status of request ${id} to ${status}`);
-    toast.success(`Status updated to ${status}`);
-    handleRefresh();
-  };
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isNewRequestFormOpen, setIsNewRequestFormOpen] = useState(false);
 
-  // These functions would be connected to buttons or other UI elements
-  const openDetailDialog = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setDetailOpen(true);
-  };
-  
-  const openHistoryDialog = (request: HomeownerRequest) => {
-    setSelectedRequest(request);
-    setHistoryOpen(true);
+  const handleNewRequestSuccess = () => {
+    setIsNewRequestFormOpen(false);
+    toast.success("Request created successfully!");
+    handleRefresh();
   };
 
   return (
     <>
-      {selectedRequest && (
-        <>
-          <HomeownerRequestDetailDialog
-            request={selectedRequest}
-            open={detailOpen}
-            onOpenChange={setDetailOpen}
-            onStatusChange={handleStatusChange}
-          />
-          
-          <HomeownerRequestHistoryDialog
-            requestId={selectedRequest.id}
-            open={historyOpen}
-            onOpenChange={setHistoryOpen}
-          />
-        </>
-      )}
+      <HomeownerRequestDetailDialog
+        request={selectedRequest}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+      />
+
+      <HomeownerRequestEditDialog
+        request={selectedRequest}
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onSuccess={handleRefresh}
+      />
+
+      <HomeownerRequestCommentDialog
+        request={selectedRequest}
+        open={isCommentOpen}
+        onOpenChange={setIsCommentOpen}
+        onSuccess={handleRefresh}
+      />
+
+      <HomeownerRequestHistoryDialog
+        request={selectedRequest}
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+      />
+
+      <NewRequestDialog
+        isOpen={isNewRequestFormOpen}
+        onClose={() => setIsNewRequestFormOpen(false)}
+        onSuccess={handleNewRequestSuccess}
+      />
     </>
   );
 };

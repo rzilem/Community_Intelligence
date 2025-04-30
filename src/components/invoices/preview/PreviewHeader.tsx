@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, ExternalLink, Maximize, Minimize, RefreshCcw } from "lucide-react";
+import { ExternalLink, FileText, File, Maximize2, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PreviewHeaderProps {
   isPdf: boolean;
@@ -13,9 +13,7 @@ interface PreviewHeaderProps {
   showActions: boolean;
   activeTab: string;
   onTabChange: (value: string) => void;
-  hasEmail?: boolean;
-  isFullscreen?: boolean;
-  onRefresh?: () => void;
+  hasEmail: boolean;
 }
 
 export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
@@ -27,69 +25,62 @@ export const PreviewHeader: React.FC<PreviewHeaderProps> = ({
   showActions,
   activeTab,
   onTabChange,
-  hasEmail = false,
-  isFullscreen = false,
-  onRefresh
+  hasEmail
 }) => {
   return (
-    <div className="flex items-center justify-between p-2 border-b bg-muted/40">
-      <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
-        <TabsList>
-          <TabsTrigger 
-            value="document"
-            className={activeTab === 'document' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
-          >
-            Document
-          </TabsTrigger>
-          {hasEmail && (
-            <TabsTrigger 
-              value="email"
-              className={activeTab === 'email' ? 'data-[state=active]:bg-primary data-[state=active]:text-primary-foreground' : ''}
-            >
-              Email
-            </TabsTrigger>
+    <div className="bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b flex items-center justify-between">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center">
+          {isPdf ? (
+            <FileText className="h-4 w-4 mr-2 text-red-500" />
+          ) : isWordDocument ? (
+            <File className="h-4 w-4 mr-2 text-blue-500" />
+          ) : (
+            <FileText className="h-4 w-4 mr-2" />
           )}
-        </TabsList>
-      </Tabs>
+          <span className="font-medium">Invoice Preview</span>
+        </div>
+      </div>
       
-      <div className="flex items-center gap-2">
-        {onRefresh && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onRefresh} 
-            title="Refresh preview"
-          >
-            <RefreshCcw className="h-4 w-4" />
-          </Button>
+      <div className="flex items-center gap-4">
+        {hasEmail && (
+          <Tabs value={activeTab} onValueChange={onTabChange} className="w-auto">
+            <TabsList>
+              <TabsTrigger value="document" className="flex items-center gap-1">
+                <FileText className="h-3.5 w-3.5" />
+                <span>Document</span>
+              </TabsTrigger>
+              <TabsTrigger value="email" className="flex items-center gap-1">
+                <Mail className="h-3.5 w-3.5" />
+                <span>Original Email</span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         )}
         
         {showActions && (
-          <>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onExternalOpen} 
-              title="Open in new tab"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-            
-            {isPdf && (
+          <div className="flex gap-2">
+            {pdfUrl && (
               <Button 
                 variant="ghost" 
-                size="icon" 
-                onClick={onToggleFullscreen} 
-                title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                size="sm" 
+                className="p-0 h-8 w-8"
+                onClick={onExternalOpen}
+                title="Open in new tab"
               >
-                {isFullscreen ? (
-                  <Minimize className="h-4 w-4" />
-                ) : (
-                  <Maximize className="h-4 w-4" />
-                )}
+                <ExternalLink className="h-4 w-4" />
               </Button>
             )}
-          </>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-0 h-8 w-8"
+              onClick={onToggleFullscreen}
+              title="Toggle fullscreen"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          </div>
         )}
       </div>
     </div>

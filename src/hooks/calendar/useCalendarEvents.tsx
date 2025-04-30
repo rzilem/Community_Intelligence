@@ -67,7 +67,7 @@ export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
   };
 
   // Handler to create event, using the mutation hook
-  const createEventHandler = () => {
+  const createEventHandler = (): boolean => {
     return handleCreateEvent(newEvent, resetForm, refetch);
   };
 

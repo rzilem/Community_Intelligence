@@ -42,8 +42,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     }
   };
   
-  const handleSubmitEvent = async () => {
-    const success = await handleCreateEvent();
+  const handleSubmitEvent = () => {
+    const success = handleCreateEvent();
     if (success) {
       setIsDialogOpen(false);
     }

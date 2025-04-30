@@ -1,77 +1,64 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import TooltipButton from '@/components/ui/tooltip-button';
 
 const TestOpenAIButton = () => {
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const testConnection = async () => {
+  const handleTestConnection = async () => {
     try {
-      setTesting(true);
-      setTestResult(null);
+      setIsLoading(true);
+      toast.info("Testing OpenAI connection...");
       
-      const response = await supabase.functions.invoke('test-openai', {
-        method: 'POST',
-      });
+      console.log("Invoking test-openai function");
+      const { data, error } = await supabase.functions.invoke('test-openai');
       
-      if (response.error) {
-        console.error('Connection test failed:', response.error);
-        setTestResult('error');
-        toast.error('Connection failed: ' + response.error.message);
-        return;
+      console.log("Test OpenAI response:", data);
+      
+      if (error) {
+        console.error("Error invoking test-openai function:", error);
+        throw new Error(error.message || 'Error connecting to OpenAI test service');
       }
       
-      const data = response.data as { success: boolean; message?: string; error?: string };
+      if (!data) {
+        throw new Error('No response received from OpenAI test function');
+      }
       
       if (data.success) {
-        setTestResult('success');
-        toast.success('OpenAI connection successful!');
+        toast.success(`Connection successful! Response: "${data.response}" using model ${data.model}`);
       } else {
-        console.error('Connection test failed:', data.error);
-        setTestResult('error');
-        toast.error('Connection failed: ' + (data.error || 'Unknown error'));
+        console.error("OpenAI connection failed:", data.error, data);
+        toast.error(`Connection failed: ${data.error || 'Unknown error'}`);
       }
-    } catch (error) {
-      console.error('Error testing OpenAI connection:', error);
-      setTestResult('error');
-      toast.error('Connection test error: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      
+    } catch (err) {
+      console.error("Error testing OpenAI connection:", err);
+      toast.error(`Error: ${err.message || 'Unknown error'}`);
     } finally {
-      setTesting(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Button 
-      variant="outline" 
+    <TooltipButton 
+      variant="secondary" 
       size="sm" 
-      onClick={testConnection} 
-      disabled={testing}
-      className={`${testResult === 'success' ? 'text-green-500 border-green-500' : 
-                    testResult === 'error' ? 'text-red-500 border-red-500' : ''}`}
+      onClick={handleTestConnection}
+      disabled={isLoading}
+      tooltip="Test the OpenAI API connection using your current API key"
     >
-      {testing ? (
+      {isLoading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           Testing...
-        </>
-      ) : testResult === 'success' ? (
-        <>
-          <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-          Connection Successful
-        </>
-      ) : testResult === 'error' ? (
-        <>
-          <XCircle className="mr-2 h-4 w-4 text-red-500" />
-          Connection Failed
         </>
       ) : (
         'Test Connection'
       )}
-    </Button>
+    </TooltipButton>
   );
 };
 

@@ -52,15 +52,9 @@ const IntegrationsTab = () => {
   };
 
   const handleDisconnectIntegration = (name: string) => {
-    const updatedSettings = { 
-      ...integrationSettings || { integrationSettings: {} }
-    };
+    const updatedSettings = { ...integrationSettings };
     
-    if (!updatedSettings.integrationSettings) {
-      updatedSettings.integrationSettings = {};
-    }
-    
-    if (updatedSettings.integrationSettings[name]) {
+    if (updatedSettings.integrationSettings && updatedSettings.integrationSettings[name]) {
       delete updatedSettings.integrationSettings[name];
       
       updateIntegrationSettings(updatedSettings, {

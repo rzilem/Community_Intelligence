@@ -3,111 +3,155 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Invoice } from '@/types/invoice-types';
-import { useInvoiceFilters } from './useInvoiceFilters';
-import { useInvoiceColumns } from './useInvoiceColumns';
-import { useAutoRefresh } from './useAutoRefresh';
-import { useInvoiceActions } from './useInvoiceActions';
-import { toast } from 'sonner';
+import { Invoice } from './useInvoiceNotifications';
+
+// Column configuration type
+export type InvoiceColumn = {
+  id: string;
+  label: string;
+  accessorKey: string;
+  sortable: boolean;
+};
 
 export const useInvoices = () => {
-  const { toast: uiToast } = useToast();
-  const { 
-    statusFilter, 
-    setStatusFilter, 
-    searchTerm, 
-    setSearchTerm, 
-    debouncedSearchTerm, 
-    applyFilters 
-  } = useInvoiceFilters();
-  
-  const { 
-    columns, 
-    visibleColumnIds, 
-    updateVisibleColumns, 
-    reorderColumns, 
-    resetToDefaults 
-  } = useInvoiceColumns();
-  
-  const { 
-    lastRefreshed, 
-    updateLastRefreshed, 
-    autoRefreshEnabled, 
-    toggleAutoRefresh, 
-    refreshInterval, 
-    setRefreshInterval 
-  } = useAutoRefresh();
+  const { toast } = useToast();
+  const [visibleColumnIds, setVisibleColumnIds] = useState<string[]>(
+    JSON.parse(localStorage.getItem('invoiceColumnsVisible') || 'null') || 
+    ['invoice_number', 'vendor', 'association_name', 'invoice_date', 'amount', 'due_date', 'status']
+  );
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  // Fetch invoices using react-query with auto-refresh
-  const { data: allInvoices = [], isLoading, refetch, error } = useQuery({
+  // Define columns for the invoices table
+  const columns: InvoiceColumn[] = [
+    { id: 'invoice_number', label: 'Invoice #', accessorKey: 'invoice_number', sortable: true },
+    { id: 'vendor', label: 'Vendor', accessorKey: 'vendor', sortable: true },
+    { id: 'association_name', label: 'HOA', accessorKey: 'association_name', sortable: true },
+    { id: 'invoice_date', label: 'Invoice Date', accessorKey: 'invoice_date', sortable: true },
+    { id: 'amount', label: 'Amount', accessorKey: 'amount', sortable: true },
+    { id: 'due_date', label: 'Due Date', accessorKey: 'due_date', sortable: true },
+    { id: 'status', label: 'Status', accessorKey: 'status', sortable: true },
+    { id: 'description', label: 'Description', accessorKey: 'description', sortable: false },
+  ];
+
+  // Fetch invoices using react-query directly
+  const { data: invoices = [], isLoading, refetch } = useQuery({
     queryKey: ['invoices'],
     queryFn: async () => {
-      console.log('Fetching all invoices');
-      
-      try {
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('*')
-          .order('created_at', { ascending: false });
-          
-        if (error) {
-          console.error("Error fetching invoices:", error);
-          throw error;
-        }
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
         
-        console.log("Invoices fetched:", {
-          total: data?.length || 0,
-          sample: data?.slice(0, 3)
-        });
-        
-        return data as Invoice[];
-      } catch (err) {
-        console.error("Query execution error:", err);
-        toast.error("Failed to fetch invoices");
-        return [];
+      if (error) {
+        throw error;
       }
+      
+      return data as Invoice[];
     },
-    refetchInterval: autoRefreshEnabled ? refreshInterval : false,
-    staleTime: 5000,
   });
 
+  // Update visible columns in local storage
   useEffect(() => {
-    if (error) {
-      console.error("Error in invoice query:", error);
-      toast.error("Failed to load invoices");
-    }
-  }, [error]);
+    localStorage.setItem('invoiceColumnsVisible', JSON.stringify(visibleColumnIds));
+  }, [visibleColumnIds]);
 
-  const { updateInvoiceStatus, deleteInvoice } = useInvoiceActions(refetch);
+  // Handler to update visible columns
+  const updateVisibleColumns = (selectedColumns: string[]) => {
+    setVisibleColumnIds(selectedColumns);
+  };
 
+  // Handler to reorder columns
+  const reorderColumns = (startIndex: number, endIndex: number) => {
+    const result = Array.from(visibleColumnIds);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    setVisibleColumnIds(result);
+  };
+
+  // Handler to reset columns to defaults
+  const resetToDefaults = () => {
+    setVisibleColumnIds([
+      'invoice_number', 'vendor', 'association_name', 'invoice_date', 'amount', 'due_date', 'status'
+    ]);
+  };
+
+  // Handler to refresh invoices
   const refreshInvoices = async () => {
     try {
-      console.log("Manually refreshing invoices...");
       await refetch();
-      updateLastRefreshed();
-      toast.success("Invoices refreshed");
+      setLastRefreshed(new Date());
+      toast({
+        title: "Invoices refreshed",
+        description: "The invoice list has been updated."
+      });
     } catch (error) {
-      console.error("Error refreshing invoices:", error);
-      toast.error("Failed to refresh invoices");
+      toast({
+        title: "Error refreshing invoices",
+        description: "There was an error refreshing the invoice list.",
+        variant: "destructive"
+      });
     }
   };
 
-  // Apply filters to all invoices
-  const filteredInvoices = applyFilters(allInvoices || []);
+  // Function to update invoice status
+  const updateInvoiceStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Refresh data
+      await refetch();
+      
+      toast({
+        title: "Invoice updated",
+        description: `Invoice status has been updated to ${status}.`
+      });
+      
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
+      toast({
+        title: "Error updating invoice",
+        description: "There was an error updating the invoice status.",
+        variant: "destructive"
+      });
+    }
+  };
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Invoice hook state:', {
-      totalInvoices: allInvoices?.length || 0,
-      filteredCount: filteredInvoices.length,
-      status: statusFilter,
-      search: searchTerm
-    });
-  }, [allInvoices?.length, filteredInvoices.length, statusFilter, searchTerm]);
+  // Function to delete invoice
+  const deleteInvoice = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Refresh data
+      await refetch();
+      
+      toast({
+        title: "Invoice deleted",
+        description: "The invoice has been deleted successfully."
+      });
+      
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast({
+        title: "Error deleting invoice",
+        description: "There was an error deleting the invoice.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return {
-    invoices: filteredInvoices,
-    allInvoices,
+    invoices,
     isLoading,
     refreshInvoices,
     updateInvoiceStatus,
@@ -119,12 +163,6 @@ export const useInvoices = () => {
     resetToDefaults,
     lastRefreshed,
     statusFilter,
-    setStatusFilter,
-    searchTerm,
-    setSearchTerm,
-    autoRefreshEnabled,
-    toggleAutoRefresh,
-    refreshInterval,
-    setRefreshInterval
+    setStatusFilter
   };
 };

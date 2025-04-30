@@ -3,13 +3,19 @@ import React from 'react';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import RecipientSelector from '@/components/communications/RecipientSelector';
 import RecipientWarning from '../RecipientWarning';
-import { MessageRecipientsProps } from '@/types/message-form-types';
+
+interface MessageRecipientsProps {
+  selectedAssociationId: string;
+  selectedGroups: string[];
+  onAssociationChange: (associationId: string) => void;
+  onSelectionChange: (selectedGroups: string[]) => void;
+}
 
 const MessageRecipients: React.FC<MessageRecipientsProps> = ({
-  selectedGroups,
   selectedAssociationId,
-  onGroupsChange,
-  onAssociationChange
+  selectedGroups,
+  onAssociationChange,
+  onSelectionChange
 }) => {
   return (
     <div className="space-y-6">
@@ -27,7 +33,7 @@ const MessageRecipients: React.FC<MessageRecipientsProps> = ({
           <label className="block font-medium">Recipients</label>
         </div>
         <RecipientSelector 
-          onSelectionChange={onGroupsChange} 
+          onSelectionChange={onSelectionChange} 
           associationId={selectedAssociationId}
         />
         {selectedGroups.length === 0 && <RecipientWarning />}

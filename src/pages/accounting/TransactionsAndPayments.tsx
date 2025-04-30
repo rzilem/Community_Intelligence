@@ -8,13 +8,14 @@ import PaymentsSection from '@/components/accounting/PaymentsSection';
 import JournalEntriesSection from '@/components/accounting/JournalEntriesSection';
 import { useTransactionPaymentData } from '@/hooks/accounting/useTransactionPaymentData';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { showToast } from '@/utils/toast-helpers';
+import { useToast } from '@/components/ui/use-toast';
 import { useSupabaseQuery } from '@/hooks/supabase';
 
 const TransactionsAndPayments = () => {
   const [mainTab, setMainTab] = useState('transactions');
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const { transactions, payments, journalEntries, updatePaymentStatus } = useTransactionPaymentData(selectedAssociationId);
+  const { toast } = useToast();
 
   // Fetch approved invoices that need payment
   const { data: approvedInvoices } = useSupabaseQuery(
@@ -45,7 +46,10 @@ const TransactionsAndPayments = () => {
     updatePaymentStatus(paymentId, 'processed');
     
     // Show success message
-    showToast.success("Payment Processed", `Payment ${paymentId} has been successfully processed.`);
+    toast({
+      title: "Payment Processed",
+      description: `Payment ${paymentId} has been successfully processed.`,
+    });
   };
 
   return (

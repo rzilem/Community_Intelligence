@@ -1,86 +1,118 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MERGE_TAGS, MergeTag, MergeTagCategory } from '@/utils/mergeTags';
+import { 
+  MERGE_TAGS, 
+  MergeTag, 
+  getMergeTagsByCategory, 
+  MergeTagCategory 
+} from '@/utils/mergeTags';
 
 interface MergeTagsPopoverProps {
   onSelectTag: (tag: string) => void;
 }
 
 const MergeTagsPopover: React.FC<MergeTagsPopoverProps> = ({ onSelectTag }) => {
-  const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<MergeTagCategory>('resident');
-
-  const categories: MergeTagCategory[] = ['resident', 'property', 'association', 'payment', 'compliance'];
+  const [searchTerm, setSearchTerm] = useState('');
   
-  const filteredTags = MERGE_TAGS[activeTab].filter(tag => 
-    tag.tag.toLowerCase().includes(search.toLowerCase()) ||
-    tag.description.toLowerCase().includes(search.toLowerCase())
-  );
-
+  const categories: { id: MergeTagCategory; name: string; }[] = [
+    { id: 'resident', name: 'Resident' },
+    { id: 'property', name: 'Property' },
+    { id: 'association', name: 'Association' },
+    { id: 'date', name: 'Date' },
+    { id: 'payment', name: 'Payment' },
+    { id: 'compliance', name: 'Compliance' }
+  ];
+  
+  const filteredTags = searchTerm 
+    ? MERGE_TAGS.filter(tag => 
+        tag.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        tag.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    : [];
+  
+  const handleSelectTag = (tag: MergeTag) => {
+    onSelectTag(`{${tag.id}}`);
+  };
+  
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Search className="h-4 w-4" />
-          Insert Merge Tag
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-96 p-4" align="start">
-        <div className="space-y-4">
-          <Input
-            placeholder="Search merge tags..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="mb-2"
-          />
-          
-          <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as MergeTagCategory)}>
-            <TabsList className="w-full">
-              {categories.map((category) => (
-                <TabsTrigger 
-                  key={category} 
-                  value={category}
-                  className="capitalize"
-                >
-                  {category}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            
-            {categories.map((category) => (
-              <TabsContent key={category} value={category}>
-                <ScrollArea className="h-[300px] pr-4">
-                  <div className="space-y-2">
-                    {filteredTags.map((tag) => (
-                      <button
-                        key={tag.tag}
-                        onClick={() => onSelectTag(tag.tag)}
-                        className="w-full p-2 text-left hover:bg-muted rounded-md transition-colors"
-                      >
-                        <div className="font-medium">{tag.tag}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {tag.description}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-            ))}
-          </Tabs>
+    <div className="w-[400px] p-4">
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search merge tags..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-3 py-2 border rounded-md"
+        />
+      </div>
+      
+      {searchTerm ? (
+        <div>
+          <h3 className="font-medium mb-2">Search Results</h3>
+          <ScrollArea className="h-[300px]">
+            <div className="space-y-1">
+              {filteredTags.length > 0 ? (
+                filteredTags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => handleSelectTag(tag)}
+                    className="w-full text-left p-2 hover:bg-muted rounded-md flex items-start"
+                  >
+                    <div>
+                      <p className="font-medium">{tag.name}</p>
+                      <p className="text-sm text-muted-foreground">{tag.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Example: {tag.example}</p>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <p className="text-muted-foreground p-2">No merge tags found.</p>
+              )}
+            </div>
+          </ScrollArea>
         </div>
-      </PopoverContent>
-    </Popover>
+      ) : (
+        <Tabs defaultValue="resident">
+          <TabsList className="w-full grid grid-cols-3 mb-4">
+            {categories.slice(0, 3).map((category) => (
+              <TabsTrigger key={category.id} value={category.id}>
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsList className="w-full grid grid-cols-3 mb-4">
+            {categories.slice(3).map((category) => (
+              <TabsTrigger key={category.id} value={category.id}>
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          {categories.map((category) => (
+            <TabsContent key={category.id} value={category.id}>
+              <ScrollArea className="h-[300px]">
+                <div className="space-y-1">
+                  {getMergeTagsByCategory(category.id).map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => handleSelectTag(tag)}
+                      className="w-full text-left p-2 hover:bg-muted rounded-md flex items-start"
+                    >
+                      <div>
+                        <p className="font-medium">{tag.name}</p>
+                        <p className="text-sm text-muted-foreground">{tag.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Example: {tag.example}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+    </div>
   );
 };
 

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -17,7 +18,8 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const [imageVersion, setImageVersion] = useState(Date.now());
 
-  const handleProfileImageUpdated = async () => {
+  const handleProfileImageUpdated = async (newUrl: string) => {
+    toast.success('Profile image updated successfully');
     await refreshProfile();
     setImageVersion(Date.now());
   };

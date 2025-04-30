@@ -7,7 +7,7 @@ import PaymentFilters from './PaymentFilters';
 import PaymentTable from './PaymentTable';
 import PaymentHistorySummary from './PaymentHistorySummary';
 import { Payment } from '@/types/transaction-payment-types';
-import { showToast } from '@/utils/toast-helpers';
+import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
 interface PaymentsSectionProps {
@@ -18,6 +18,7 @@ interface PaymentsSectionProps {
 const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments, onProcessPayment }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const { toast } = useToast();
   const navigate = useNavigate();
   
   const filteredPayments = payments.filter(payment => {
@@ -39,22 +40,34 @@ const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments, onProcessPa
     }
     
     // Show a toast for demo purposes
-    showToast.success("Payment processed", `Payment ${paymentId} has been successfully processed.`);
+    toast({
+      title: "Payment processed",
+      description: `Payment ${paymentId} has been successfully processed.`,
+    });
   };
 
   const handleCreatePayment = () => {
     // For now, this can navigate to a new route in the future
-    showToast.info("Create payment", "Payment creation flow would start here.");
+    toast({
+      title: "Create payment",
+      description: "Payment creation flow would start here.",
+    });
   };
 
   const handleViewPayment = (paymentId: string) => {
     // For demo purposes, just show a toast
-    showToast.info("View payment details", `Viewing details for payment ${paymentId}.`);
+    toast({
+      title: "View payment details",
+      description: `Viewing details for payment ${paymentId}.`,
+    });
   };
   
   const handleEditPayment = (paymentId: string) => {
     // For demo purposes, just show a toast
-    showToast.info("Edit payment", `Editing payment ${paymentId}.`);
+    toast({
+      title: "Edit payment",
+      description: `Editing payment ${paymentId}.`,
+    });
   };
 
   return (

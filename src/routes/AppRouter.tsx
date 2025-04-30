@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import ForumPage from '../pages/forum/ForumPage';
 import { mainRoutes } from './mainRoutes';
 import { communityManagementRoutes } from './communityManagementRoutes';
 import { accountingRoutes } from './accountingRoutes';
@@ -15,36 +14,19 @@ import { portalRoutes } from './portalRoutes';
 import { portalPageRoutes } from './portalPageRoutes';
 import { resalePortalRoutes } from './resalePortalRoutes';
 
+/**
+ * Main application router component that consolidates all routes
+ */
 export const AppRouter = () => {
   const location = useLocation();
   
+  // Log routing for debugging purposes
   React.useEffect(() => {
     console.log('Route changed:', location.pathname);
   }, [location]);
 
   return (
     <Routes>
-      {/* Portal routes - giving these priority */}
-      {portalRoutes.map((route, index) => (
-        <Route 
-          key={`portal-route-${index}`} 
-          path={route.props.path} 
-          element={route.props.element} 
-        />
-      ))}
-      
-      {/* Portal page routes */}
-      {portalPageRoutes.map((route, index) => (
-        <Route 
-          key={`portal-page-route-${index}`} 
-          path={route.props.path} 
-          element={route.props.element} 
-        />
-      ))}
-      
-      {/* Resale Portal routes */}
-      {resalePortalRoutes}
-      
       {/* Main routes */}
       {mainRoutes.map((route, index) => (
         <Route 
@@ -54,8 +36,14 @@ export const AppRouter = () => {
         />
       ))}
       
-      {/* Add Forum Route */}
-      <Route path="/forum" element={<ForumPage />} />
+      {/* Portal routes */}
+      {portalRoutes}
+      
+      {/* Portal page routes */}
+      {portalPageRoutes}
+      
+      {/* Resale Portal routes */}
+      {resalePortalRoutes}
       
       {/* Community Management routes */}
       {communityManagementRoutes.map((route, index) => (

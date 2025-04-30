@@ -1,182 +1,134 @@
 
-import React, { FormEvent } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import { ResponsiveDialog, ResponsiveDialogContent } from '@/components/ui/responsive-dialog';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
-import RequestStatusSelect from '@/components/homeowners/form/RequestStatusSelect';
-import RequestTypeSelect from '@/components/homeowners/form/RequestTypeSelect';
-import RequestPrioritySelect from '@/components/homeowners/form/RequestPrioritySelect';
-import { Textarea } from '@/components/ui/textarea';
+import { cleanHtmlContent } from '@/lib/format-utils';
+import { TabsContent } from '@/components/ui/tabs';
+import { Form } from '@/components/ui/form';
+import DetailsTab from '../detail/tabs/DetailsTab';
+import CommentsTab from '../detail/tabs/CommentsTab';
+import OriginalEmailTab from '../detail/tabs/OriginalEmailTab';
+import AttachmentsTab from './tabs/AttachmentsTab';
+import RequestDialogHeader from './edit/RequestDialogHeader';
+import RequestDialogTabs from './edit/RequestDialogTabs';
+import RequestFormFields from './edit/RequestFormFields';
+import RequestFormActions from './edit/RequestFormActions';
+import { useRequestForm } from './edit/useRequestForm';
 
-export interface HomeownerRequestEditDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  request: Partial<HomeownerRequest>;
-  updateField: (field: keyof HomeownerRequest, value: any) => void;
-  handleSubmit: (e?: FormEvent) => Promise<boolean>;
-  handleCancel: () => void;
-  isSubmitting: boolean;
-  errors: {
-    [key: string]: string;
-  };
+interface HomeownerRequestEditDialogProps {
+  request: HomeownerRequest | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
-  isOpen,
-  onClose,
-  request,
-  updateField,
-  handleSubmit,
-  handleCancel,
-  isSubmitting,
-  errors
+const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({ 
+  request, 
+  open, 
+  onOpenChange,
+  onSuccess
 }) => {
+  const [activeTab, setActiveTab] = React.useState('details');
+  const [fullscreenEmail, setFullscreenEmail] = React.useState(false);
+  
+  const {
+    form,
+    isPending,
+    comments,
+    loadingComments,
+    fetchComments,
+    handleSubmit
+  } = useRequestForm(request, onOpenChange, onSuccess);
+
+  React.useEffect(() => {
+    if (open && request && activeTab === 'activity') {
+      fetchComments();
+    }
+  }, [open, request, activeTab, fetchComments]);
+
+  const handleAssignChange = (value: string) => {
+    form.setValue('assigned_to', value);
+  };
+
+  const handleAssociationChange = (value: string) => {
+    form.setValue('association_id', value);
+    form.setValue('property_id', 'unassigned');
+  };
+
+  const handlePropertyChange = (value: string) => {
+    form.setValue('property_id', value);
+  };
+  
+  const onCancel = () => {
+    onOpenChange(false);
+  };
+
+  if (!request) return null;
+
+  const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
+
   return (
-    <Dialog open={isOpen} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Request</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs defaultValue="general">
-            <TabsList>
-              <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="resident">Resident</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="general" className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={request.title || ''}
-                    onChange={(e) => updateField('title', e.target.value)}
-                    required
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent 
+        className="max-w-[95%] w-[105%] flex flex-col max-h-[95vh]" 
+      >
+        <RequestDialogHeader 
+          title={request.title}
+          trackingNumber={request.tracking_number}
+          onClose={() => onOpenChange(false)}
+        />
+
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-4 pt-2 pb-2 overflow-y-auto flex-shrink-0 flex flex-col" style={{ height: '500px' }}>
+            <RequestDialogTabs 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab}
+              assignedTo={form.watch('assigned_to')}
+              associationId={form.watch('association_id')}
+              propertyId={form.watch('property_id')}
+              onAssignChange={handleAssignChange}
+              onAssociationChange={handleAssociationChange}
+              onPropertyChange={handlePropertyChange}
+            >
+              <div className="flex-1 h-full overflow-auto">
+                <TabsContent value="details" className="h-full m-0">
+                  <DetailsTab request={request} processedDescription={processedDescription} />
+                </TabsContent>
+
+                <TabsContent value="activity" className="h-full m-0">
+                  <CommentsTab comments={comments} loadingComments={loadingComments} />
+                </TabsContent>
+
+                <TabsContent value="email" className="h-full m-0">
+                  <OriginalEmailTab 
+                    htmlContent={request.html_content} 
+                    fullscreenEmail={fullscreenEmail}
+                    setFullscreenEmail={setFullscreenEmail}
                   />
-                  {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="tracking_number">Tracking Number</Label>
-                  <Input
-                    id="tracking_number"
-                    value={request.tracking_number || ''}
-                    onChange={(e) => updateField('tracking_number', e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <RequestStatusSelect
-                    value={request.status || 'open'}
-                    onChange={(value) => updateField('status', value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <RequestPrioritySelect
-                    value={request.priority || 'medium'}
-                    onChange={(value) => updateField('priority', value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <RequestTypeSelect
-                    value={request.type || 'general'}
-                    onChange={(value) => updateField('type', value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="assigned_to">Assigned To</Label>
-                  <Input
-                    id="assigned_to"
-                    value={request.assigned_to || ''}
-                    onChange={(e) => updateField('assigned_to', e.target.value)}
-                    placeholder="Enter user ID or email"
-                  />
-                </div>
+                </TabsContent>
+
+                <TabsContent value="attachments" className="h-full m-0">
+                  <AttachmentsTab request={request} />
+                </TabsContent>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={request.description || ''}
-                  onChange={(e) => updateField('description', e.target.value)}
-                  placeholder="Enter a detailed description"
-                  rows={4}
+            </RequestDialogTabs>
+          </div>
+
+          <div className="p-3 border-t bg-background flex-shrink-0 h-auto">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <RequestFormFields form={form} />
+                <RequestFormActions 
+                  trackingNumber={request.tracking_number}
+                  isPending={isPending}
+                  onCancel={onCancel}
                 />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="details" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Original HTML Content</Label>
-                <div className="border rounded-md p-4 max-h-[400px] overflow-y-auto">
-                  {request.html_content ? (
-                    <div dangerouslySetInnerHTML={{ __html: request.html_content }} />
-                  ) : (
-                    <p className="text-muted-foreground">No HTML content available</p>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="resident" className="space-y-4 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="resident_id">Resident ID</Label>
-                  <Input
-                    id="resident_id"
-                    value={request.resident_id || ''}
-                    onChange={(e) => updateField('resident_id', e.target.value)}
-                    placeholder="Enter resident ID"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="property_id">Property ID</Label>
-                  <Input
-                    id="property_id"
-                    value={request.property_id || ''}
-                    onChange={(e) => updateField('property_id', e.target.value)}
-                    placeholder="Enter property ID"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="association_id">Association ID</Label>
-                  <Input
-                    id="association_id"
-                    value={request.association_id || ''}
-                    onChange={(e) => updateField('association_id', e.target.value)}
-                    placeholder="Enter association ID"
-                  />
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-          
-          <DialogFooter>
-            <Button variant="outline" type="button" onClick={handleCancel} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              </form>
+            </Form>
+          </div>
+        </div>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 };
 

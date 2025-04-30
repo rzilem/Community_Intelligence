@@ -86,28 +86,8 @@ serve(async (req) => {
       if (action) {
         try {
           // Parse the request body
-          let requestData = null;
-          try {
-            const rawBody = await req.text();
-            console.log(`Raw request body for '${action}':`, rawBody);
-            
-            if (rawBody.trim() === '') {
-              requestData = {};
-            } else {
-              requestData = JSON.parse(rawBody);
-            }
-          } catch (parseError) {
-            console.error("Error parsing request JSON:", parseError);
-            return new Response(JSON.stringify({ 
-              success: false,
-              error: 'Invalid JSON in request body: ' + (parseError.message || 'Unknown parsing error')
-            }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 200,
-            });
-          }
-          
-          console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData, null, 2));
+          const requestData = await req.json();
+          console.log(`Updating setting '${action}' with data:`, JSON.stringify(requestData));
           
           // Log specific integration data for debugging
           if (action === 'integrations' && requestData.integrationSettings) {
@@ -115,7 +95,7 @@ serve(async (req) => {
               console.log(`Integration ${integration} config:`, JSON.stringify({
                 ...requestData.integrationSettings[integration],
                 apiKey: requestData.integrationSettings[integration].apiKey ? "PRESENT" : "MISSING"
-              }, null, 2));
+              }));
             });
           }
           
@@ -151,11 +131,11 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
           });
-        } catch (error) {
-          console.error("Error processing request:", error);
+        } catch (parseError) {
+          console.error("Error parsing request JSON:", parseError);
           return new Response(JSON.stringify({ 
             success: false,
-            error: 'Error processing request: ' + (error.message || 'Unknown error')
+            error: 'Invalid JSON in request body: ' + (parseError.message || 'Unknown parsing error')
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,

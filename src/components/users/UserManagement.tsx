@@ -47,10 +47,6 @@ const UserManagement: React.FC<UserManagementProps> = ({
     console.log('UserManagement - Filtered users:', filteredUsers);
   }, [users, filteredUsers]);
 
-  const handleOpenCreateDialog = () => {
-    setIsCreateDialogOpen(true);
-  };
-
   return (
     <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -70,7 +66,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button onClick={handleOpenCreateDialog}>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
             <UserPlus className="mr-2 h-4 w-4" />
             Create User
           </Button>
@@ -106,7 +102,8 @@ const UserManagement: React.FC<UserManagementProps> = ({
             </p>
             {!searchTerm && (
               <p className="text-muted-foreground text-sm">
-                You can create new users directly in this application using the "Create User" button above.
+                Try clicking "Sync Missing Profiles" at the top of the page to sync user profiles 
+                from the authentication system.
               </p>
             )}
           </div>

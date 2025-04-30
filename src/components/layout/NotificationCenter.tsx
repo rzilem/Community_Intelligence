@@ -8,7 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useNotificationContext } from '@/contexts/notifications';
-import { Notification } from '@/contexts/notifications/NotificationContext';
+import { NotificationItem } from '@/hooks/useNotifications';
 
 const NotificationCenter: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ const NotificationCenter: React.FC = () => {
     markAllAsRead();
   };
   
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: NotificationItem) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
@@ -44,7 +44,7 @@ const NotificationCenter: React.FC = () => {
   });
   
   // Group notifications by date
-  const groupedNotifications = filteredNotifications.reduce<Record<string, Notification[]>>(
+  const groupedNotifications = filteredNotifications.reduce<Record<string, NotificationItem[]>>(
     (groups, notification) => {
       const dateKey = new Date(notification.timestamp).toDateString();
       if (!groups[dateKey]) {
