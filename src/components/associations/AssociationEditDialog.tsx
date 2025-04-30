@@ -12,19 +12,19 @@ import {
 } from '@/components/ui/dialog';
 import {
   Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Association } from '@/types/association-types';
 
-import AssociationFormSectionAddress from './edit/AssociationFormSectionAddress';
-import AssociationFormSectionContact from './edit/AssociationFormSectionContact';
-import AssociationFormSectionPropertyInfo from './edit/AssociationFormSectionPropertyInfo';
-import AssociationFormSectionDatesDescription from './edit/AssociationFormSectionDatesDescription';
-
-// Add all relevant association fields for editing
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  contact_email: z.string().email({ message: 'Invalid email address.' }).or(z.literal('')).optional(),
+  contact_email: z.string().email({ message: 'Invalid email address.' }).optional().or(z.literal('')),
   address: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -32,19 +32,9 @@ const formSchema = z.object({
   phone: z.string().optional(),
   property_type: z.string().optional(),
   total_units: z.coerce.number().optional(),
-  website: z.string().url({ message: 'Please enter a valid URL.' }).or(z.literal('')).optional(),
+  website: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
   description: z.string().optional(),
-  insurance_expiration: z.string().optional(),
-  fire_inspection_due: z.string().optional(),
-  founded_date: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'pending']).or(z.string()).optional()
 });
-
-export const statuses = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'pending', label: 'Pending' }
-];
 
 interface AssociationEditDialogProps {
   open: boolean;
@@ -59,8 +49,6 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
   association,
   onSave,
 }) => {
-  console.log('Initial association data:', association);
-  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,53 +60,176 @@ const AssociationEditDialog: React.FC<AssociationEditDialogProps> = ({
       zip: association.zip || '',
       phone: association.phone || '',
       property_type: association.property_type || '',
-      total_units: association.total_units ?? undefined,
+      total_units: association.total_units || undefined,
       website: association.website || '',
       description: association.description || '',
-      insurance_expiration: association.insurance_expiration || '',
-      fire_inspection_due: association.fire_inspection_due || '',
-      founded_date: association.founded_date || '',
-      status: association.status ?? undefined
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('Submitting form values:', values);
-    
-    // Ensure we have the correct data type for total_units
-    const formattedValues = {
-      ...values,
-      total_units: values.total_units ? parseInt(String(values.total_units)) : undefined
-    };
-    
-    onSave(formattedValues);
+    onSave(values);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[575px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Edit Association</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Association Name</label>
-              <input
-                className="input input-bordered w-full"
-                placeholder="Enter association name"
-                {...form.register("name")}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Association Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter association name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="property_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Property Type</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., HOA, Condo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="total_units"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Total Units</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Number of units" 
+                        {...field}
+                        value={field.value || ''}
+                        onChange={(e) => field.onChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            {/* Address Section */}
-            <AssociationFormSectionAddress control={form.control} />
-            {/* Contact Section */}
-            <AssociationFormSectionContact control={form.control} />
-            {/* Property Info Section */}
-            <AssociationFormSectionPropertyInfo control={form.control} />
-            {/* Dates & Description Section */}
-            <AssociationFormSectionDatesDescription control={form.control} />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter street address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>City</FormLabel>
+                    <FormControl>
+                      <Input placeholder="City" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>State</FormLabel>
+                    <FormControl>
+                      <Input placeholder="State" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="zip"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>ZIP Code</FormLabel>
+                    <FormControl>
+                      <Input placeholder="ZIP Code" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="contact_email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contact email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Phone number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Website</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Website URL" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button type="submit">Save Changes</Button>
             </DialogFooter>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { CreditCard, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,48 +8,14 @@ import PaymentsSection from '@/components/accounting/PaymentsSection';
 import JournalEntriesSection from '@/components/accounting/JournalEntriesSection';
 import { useTransactionPaymentData } from '@/hooks/accounting/useTransactionPaymentData';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { useToast } from '@/components/ui/use-toast';
-import { useSupabaseQuery } from '@/hooks/supabase';
 
 const TransactionsAndPayments = () => {
   const [mainTab, setMainTab] = useState('transactions');
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
-  const { transactions, payments, journalEntries, updatePaymentStatus } = useTransactionPaymentData(selectedAssociationId);
-  const { toast } = useToast();
-
-  // Fetch approved invoices that need payment
-  const { data: approvedInvoices } = useSupabaseQuery(
-    'invoices',
-    {
-      select: '*',
-      filter: [
-        { column: 'status', value: 'approved', operator: 'eq' },
-        { column: 'payment_id', value: null, operator: 'is' }
-      ]
-    }
-  );
-
-  // Process approved invoices into scheduled payments
-  useEffect(() => {
-    if (approvedInvoices && approvedInvoices.length > 0) {
-      console.log('Found approved invoices that need payment scheduling:', approvedInvoices);
-      // In a real implementation, this would create payment records in the database
-    }
-  }, [approvedInvoices]);
+  const { transactions, payments, journalEntries } = useTransactionPaymentData(selectedAssociationId);
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
-  };
-
-  const handleProcessPayment = (paymentId: string) => {
-    // Update the payment status to processed
-    updatePaymentStatus(paymentId, 'processed');
-    
-    // Show success message
-    toast({
-      title: "Payment Processed",
-      description: `Payment ${paymentId} has been successfully processed.`,
-    });
   };
 
   return (
@@ -78,10 +44,7 @@ const TransactionsAndPayments = () => {
         </TabsContent>
         
         <TabsContent value="payments">
-          <PaymentsSection 
-            payments={payments} 
-            onProcessPayment={handleProcessPayment}
-          />
+          <PaymentsSection payments={payments} />
         </TabsContent>
         
         <TabsContent value="journal-entries">

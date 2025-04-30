@@ -4,11 +4,49 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+/**
+ * Fetches resident data in batches to avoid "URL too long" errors
+ * @param propertyIds Array of property IDs to fetch residents for
+ * @param batchSize Maximum number of property IDs to include in a single query
+ * @returns Combined array of resident data from all batches
+ */
+const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
+  let allResidents: any[] = [];
+  
+  for (let i = 0; i < propertyIds.length; i += batchSize) {
+    const batchIds = propertyIds.slice(i, i + batchSize);
+    console.log(`Fetching batch ${Math.floor(i/batchSize) + 1} with ${batchIds.length} properties`);
+    
+    const { data: residentsData, error: residentsError } = await supabase
+      .from('residents')
+      .select(`
+        *,
+        properties:property_id (
+          id,
+          address,
+          unit_number,
+          association_id
+        )
+      `)
+      .in('property_id', batchIds);
+    
+    if (residentsError) {
+      console.error('Error fetching residents batch:', residentsError);
+      throw new Error('Failed to load residents: ' + residentsError.message);
+    }
+    
+    if (residentsData) {
+      allResidents = [...allResidents, ...residentsData];
+    }
+  }
+  
+  return allResidents;
+};
+
 export const useHomeownersData = () => {
   const [residents, setResidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
 
   // Fetch associations from Supabase
   const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery(
@@ -27,8 +65,7 @@ export const useHomeownersData = () => {
     }
   }, [associationsError]);
 
-  // More efficient data fetching with direct property join
-  const fetchResidentsByAssociationId = async (associationId: string | null = null, page = 1, pageSize = 25) => {
+  const fetchResidentsByAssociationId = async (associationId: string | null = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -48,85 +85,82 @@ export const useHomeownersData = () => {
         console.log('No associations found for user');
         setLoading(false);
         setResidents([]);
-        setTotalCount(0);
         return;
       }
-
-      // First get the total count - FIX: Use a more reliable count query
-      // Create a properly structured query for counting
-      const { count, error: countError } = await supabase
-        .from('residents')
-        .select(`
-          id,
-          properties:property_id (
-            association_id
-          )
-        `, { count: 'exact' })
-        .in('properties.association_id', associationIds);
-
-      if (countError) {
-        console.error('Error fetching resident count:', countError);
-        setError('Failed to load count: ' + countError.message);
-        setTotalCount(0);
-      } else {
-        console.log('Total resident count:', count);
-        setTotalCount(count || 0);
-      }
       
-      // Direct join with properties and limiting results with pagination
-      const { data: residentsData, error: residentsError } = await supabase
-        .from('residents')
-        .select(`
-          *,
-          properties:property_id (
-            id,
-            address,
-            unit_number,
-            association_id
-          )
-        `)
-        .in('properties.association_id', associationIds)
-        .range((page - 1) * pageSize, page * pageSize - 1);
+      // First, get all properties for these associations
+      console.log('Fetching properties for associations:', associationIds);
       
-      if (residentsError) {
-        console.error('Error fetching residents:', residentsError);
-        setError('Failed to load residents: ' + residentsError.message);
+      const { data: properties, error: propertiesError } = await supabase
+        .from('properties')
+        .select('*')
+        .in('association_id', associationIds);
+        
+      if (propertiesError) {
+        console.error('Error fetching properties:', propertiesError);
+        setError('Failed to load properties: ' + propertiesError.message);
         setLoading(false);
         return;
       }
       
-      console.log(`Found ${residentsData?.length || 0} residents for page ${page}`);
+      console.log(`Found ${properties?.length || 0} properties`);
       
-      // Create association name lookup
-      const associationsMap = associations.reduce((map: any, assoc: any) => {
-        map[assoc.id] = assoc.name;
-        return map;
-      }, {});
+      if (!properties || properties.length === 0) {
+        console.log('No properties found for associations:', associationIds);
+        setLoading(false);
+        setResidents([]);
+        return;
+      }
       
-      // Map the results
-      const formattedResidents = (residentsData || []).map(resident => {
-        const property = resident.properties;
-        const associationId = property?.association_id;
+      // Get all property IDs
+      const propertyIds = properties.map(p => p.id);
+      
+      // Fetch all residents for these properties - in batches to avoid URL too long errors
+      console.log(`Fetching residents for ${propertyIds.length} properties`);
+      
+      try {
+        // Use the extracted batched fetching function
+        const allResidents = await fetchResidentsBatched(propertyIds);
         
-        return {
-          id: resident.id,
-          name: resident.name || 'Unknown',
-          email: resident.email || '',
-          phone: resident.phone || '',
-          propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
-          type: resident.resident_type,
-          status: resident.move_out_date ? 'inactive' : 'active',
-          moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
-          moveOutDate: resident.move_out_date,
-          association: associationId || '',
-          associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
-          lastPayment: null,
-          closingDate: null,
-          hasValidAssociation: !!associationsMap[associationId]
-        };
-      });
+        console.log(`Found ${allResidents.length || 0} residents in total`);
+        
+        // Create association name lookup
+        const associationsMap = associations.reduce((map: any, assoc: any) => {
+          map[assoc.id] = assoc.name;
+          return map;
+        }, {});
+        
+        // Map the results
+        const formattedResidents = (allResidents || []).map(resident => {
+          const property = resident.properties;
+          const associationId = property?.association_id;
+          
+          return {
+            id: resident.id,
+            name: resident.name || 'Unknown',
+            email: resident.email || '',
+            phone: resident.phone || '',
+            propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
+            type: resident.resident_type,
+            status: resident.move_out_date ? 'inactive' : 'active',
+            moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
+            moveOutDate: resident.move_out_date,
+            association: associationId || '',
+            associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
+            lastPayment: null,
+            closingDate: null,
+            hasValidAssociation: !!associationsMap[associationId]
+          };
+        });
+        
+        console.log('Formatted residents:', formattedResidents);
+        setResidents(formattedResidents);
+      } catch (batchError: any) {
+        console.error('Error in batched fetching:', batchError);
+        setError('Error fetching resident data: ' + batchError.message);
+        toast.error('Failed to load residents');
+      }
       
-      setResidents(formattedResidents);
     } catch (error: any) {
       console.error('Error loading residents:', error);
       setError('Failed to load residents data: ' + (error?.message || 'Unknown error'));
@@ -143,7 +177,6 @@ export const useHomeownersData = () => {
     associations,
     isLoadingAssociations,
     fetchResidentsByAssociationId,
-    setError,
-    totalCount
+    setError
   };
 };

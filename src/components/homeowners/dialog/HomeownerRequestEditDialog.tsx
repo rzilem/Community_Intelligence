@@ -58,10 +58,6 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
   const handlePropertyChange = (value: string) => {
     form.setValue('property_id', value);
   };
-  
-  const onCancel = () => {
-    onOpenChange(false);
-  };
 
   if (!request) return null;
 
@@ -121,7 +117,7 @@ const HomeownerRequestEditDialog: React.FC<HomeownerRequestEditDialogProps> = ({
                 <RequestFormActions 
                   trackingNumber={request.tracking_number}
                   isPending={isPending}
-                  onCancel={onCancel}
+                  onCancel={() => onOpenChange(false)}
                 />
               </form>
             </Form>

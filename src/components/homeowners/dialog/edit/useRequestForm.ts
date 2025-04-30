@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -63,7 +63,7 @@ export const useRequestForm = (
     }
   );
 
-  const fetchComments = useCallback(async () => {
+  const fetchComments = async () => {
     if (!request) return;
     
     try {
@@ -91,14 +91,11 @@ export const useRequestForm = (
     } finally {
       setLoadingComments(false);
     }
-  }, [request]);
+  };
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!request) return;
     
-    console.log('Form submitted with values:', values);
-    
-    // Convert 'unassigned' values to null to prevent database UUID errors
     const updatedData: Partial<HomeownerRequest> = {
       title: values.title,
       description: values.description,
@@ -137,8 +134,6 @@ export const useRequestForm = (
         return;
       }
     }
-    
-    console.log('Updating request with data:', updatedData);
     
     updateRequest({
       id: request.id,

@@ -7,8 +7,6 @@ import HomeownerRequestsQueue from "@/pages/community-management/HomeownerReques
 import Compliance from "@/pages/Compliance";
 import BidRequests from "@/pages/community-management/BidRequests";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
-import ResaleCertificate from "@/pages/resale-management/ResaleCertificate";
-import CreateBidRequest from "@/pages/community-management/CreateBidRequest";
 
 // Community Management Routes
 export const communityManagementRoutes: RouteObject[] = [
@@ -35,13 +33,5 @@ export const communityManagementRoutes: RouteObject[] = [
   {
     path: "/bid-requests",
     element: <RequireAuth><BidRequests /></RequireAuth>
-  },
-  {
-    path: "/community-management/create-bid-request",
-    element: <RequireAuth><CreateBidRequest /></RequireAuth>
-  },
-  {
-    path: "/resale-management/certificate",
-    element: <RequireAuth><ResaleCertificate /></RequireAuth>
   }
 ];

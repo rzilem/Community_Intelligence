@@ -33,7 +33,6 @@ import {
 } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
 import AssociationSelector from '@/components/associations/AssociationSelector';
-import { useAuth } from '@/contexts/AuthContext';
 
 const dataTypes = [
   { value: 'properties_owners', label: 'Properties & Owners' },
@@ -52,9 +51,8 @@ const propertyTypes = [
 ];
 
 const CustomDataGenerator: React.FC = () => {
-  const { currentAssociation } = useAuth();
   const [dataType, setDataType] = useState('properties_owners');
-  const [associationName, setAssociationName] = useState('');
+  const [associationName, setAssociationName] = useState('Nolan City');
   const [recordCount, setRecordCount] = useState(100);
   const [propertyType, setPropertyType] = useState('mixed');
   const [zipCode, setZipCode] = useState('78724');
@@ -62,16 +60,7 @@ const CustomDataGenerator: React.FC = () => {
   const [state, setState] = useState('TX');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
-  const [customNameEnabled, setCustomNameEnabled] = useState(false);
-  
-  // Set default values when current association changes
-  useEffect(() => {
-    if (currentAssociation?.id && currentAssociation?.name) {
-      setSelectedAssociationId(currentAssociation.id);
-      setAssociationName(currentAssociation.name);
-      setCustomNameEnabled(false);
-    }
-  }, [currentAssociation]);
+  const [customNameEnabled, setCustomNameEnabled] = useState(true);
   
   // Function to handle association selection
   const handleAssociationChange = (associationId: string) => {
@@ -91,11 +80,6 @@ const CustomDataGenerator: React.FC = () => {
   }, [selectedAssociationId]);
   
   const handleGenerateData = () => {
-    if (!associationName) {
-      toast.error("Please select an association or enter a custom name");
-      return;
-    }
-    
     setIsGenerating(true);
     toast.info(`Preparing ${recordCount} records for ${associationName}...`);
     
@@ -122,7 +106,7 @@ const CustomDataGenerator: React.FC = () => {
       toast.success(`${dataType.replace('_', ' ')} data generated successfully for ${associationName}!`);
     } catch (error) {
       console.error("Error generating data:", error);
-      toast.error("Failed to generate data: " + (error instanceof Error ? error.message : "Unknown error"));
+      toast.error("Failed to generate data");
     } finally {
       setIsGenerating(false);
     }
@@ -184,6 +168,7 @@ const CustomDataGenerator: React.FC = () => {
                   setCustomNameEnabled(true);
                   setSelectedAssociationId('');
                 }}
+                disabled={!customNameEnabled}
                 placeholder="Enter association name"
               />
             </div>

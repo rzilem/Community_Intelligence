@@ -172,7 +172,7 @@ async function processPropertiesOwnersImport(
     
     // If properties were successfully imported, get their IDs and attach to owners
     if (propertyResult.successfulImports > 0) {
-      // Get created properties by matching addresses - ensure we also match on unit_number
+      // Get created properties by matching addresses
       const { data: createdProperties } = await import('@/integrations/supabase/client').then(mod => 
         mod.supabase
           .from('properties')
@@ -186,21 +186,11 @@ async function processPropertiesOwnersImport(
       for (let i = 0; i < processedRows.length; i++) {
         const { propertyData, ownerData } = processedRows[i];
         
-        if (!propertyData.address) {
-          failedImports++;
-          details.push({
-            status: 'error',
-            message: `Missing address for property at row ${i + 1}`
-          });
-          continue;
-        }
-        
-        // Find matching property - exact match on address and unit_number
-        // If unit_number is null/undefined in both, that's a match too
+        // Find matching property
         const matchingProperty = createdProperties?.find(p => 
           p.address === propertyData.address && 
-          ((p.unit_number === propertyData.unit_number) || 
-           (!p.unit_number && !propertyData.unit_number))
+          (p.unit_number === propertyData.unit_number || 
+            (!p.unit_number && !propertyData.unit_number))
         );
         
         if (matchingProperty) {
@@ -209,10 +199,9 @@ async function processPropertiesOwnersImport(
           ownerDataToImport.push(ownerData);
         } else {
           failedImports++;
-          const unitInfo = propertyData.unit_number ? `, Unit ${propertyData.unit_number}` : '';
           details.push({
             status: 'error',
-            message: `Could not find matching property for address: ${propertyData.address}${unitInfo}`
+            message: `Could not find matching property for address: ${propertyData.address} ${propertyData.unit_number || ''}`
           });
         }
       }
@@ -246,7 +235,7 @@ async function processPropertiesOwnersImport(
     );
     
     // Update job status
-    const finalStatus = failedImports === 0 ? 'completed' : 'completed_with_issues';
+    const finalStatus = failedImports === 0 ? 'completed' : 'failed';
     await jobService.updateImportJobStatus(importJob.id, finalStatus as ImportJob['status'], {
       processed: data.length,
       succeeded: successfulImports,

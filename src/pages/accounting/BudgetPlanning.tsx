@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Button } from '@/components/ui/button';
@@ -26,31 +27,30 @@ import {
 } from '@/types/accounting-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
-// Mock data for GL accounts - now with is_active property
-const mockGLAccounts = ensureGLAccountsHaveIsActive([
-  { id: '1000', code: '1000', name: 'First Citizens Bank Operating-X2806', type: 'Asset', balance: 0, description: 'First Citizens Bank Operating-X2806', category: 'Assets', account_number: '1000' },
-  { id: '4000', code: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, description: 'Assessment Income', category: 'Income', account_number: '4000' },
-  { id: '4010', code: '4010', name: 'Special Assessment', type: 'Revenue', balance: 0, description: 'Special Assessment', category: 'Income', account_number: '4010' },
-  { id: '4100', code: '4100', name: 'Interest Income', type: 'Revenue', balance: 0, description: 'Interest Income', category: 'Income', account_number: '4100' },
-  { id: '4110', code: '4110', name: 'Late Charge Income', type: 'Revenue', balance: 0, description: 'Late Charge Income', category: 'Income', account_number: '4110' },
-  { id: '4115', code: '4115', name: 'Demand Letter Income', type: 'Revenue', balance: 0, description: 'Demand Letter Income', category: 'Income', account_number: '4115' },
-  { id: '4120', code: '4120', name: 'Returned Payment Income', type: 'Revenue', balance: 0, description: 'Returned Payment Income', category: 'Income', account_number: '4120' },
-  { id: '4130', code: '4130', name: 'Admin Fee', type: 'Revenue', balance: 0, description: 'Admin Fee', category: 'Income', account_number: '4130' },
-  { id: '4505', code: '4505', name: 'Key Fob Income', type: 'Revenue', balance: 0, description: 'Key Fob Income', category: 'Income', account_number: '4505' },
-  { id: '4515', code: '4515', name: 'Meeting Room Rental Income', type: 'Revenue', balance: 0, description: 'Meeting Room Rental Income', category: 'Income', account_number: '4515' },
-  { id: '5000', code: '5000', name: 'Admin Expenses', type: 'Expense', balance: 0, description: 'Admin Expenses', category: 'Expenses', account_number: '5000' },
-  { id: '5010', code: '5010', name: 'Bank Charges', type: 'Expense', balance: 0, description: 'Bank Charges', category: 'Expenses', account_number: '5010' },
-  { id: '5012', code: '5012', name: 'Social Committee Expense', type: 'Expense', balance: 0, description: 'Social Committee Expense', category: 'Expenses', account_number: '5012' },
-  { id: '5030', code: '5030', name: 'Management Fee', type: 'Expense', balance: 0, description: 'Management Fee', category: 'Expenses', account_number: '5030' },
-  { id: '5200', code: '5200', name: 'General Repairs & Maintenance', type: 'Expense', balance: 0, description: 'General Repairs & Maintenance', category: 'Expenses', account_number: '5200' },
-  { id: '5710', code: '5710', name: 'Landscaping Expense', type: 'Expense', balance: 0, description: 'Landscaping Expense', category: 'Expenses', account_number: '5710' },
-  { id: '5920', code: '5920', name: 'Landscaping Contract', type: 'Expense', balance: 0, description: 'Landscaping Contract', category: 'Expenses', account_number: '5920' },
-  { id: '6250', code: '6250', name: 'Trash', type: 'Expense', balance: 0, description: 'Trash', category: 'Expenses', account_number: '6250' },
-  { id: '8010', code: '8010', name: 'General Liability + D&O Insurance', type: 'Expense', balance: 0, description: 'General Liability + D&O Insurance', category: 'Expenses', account_number: '8010' },
-  { id: '9050', code: '9050', name: 'Contribution to Reserves', type: 'Expense', balance: 0, description: 'Contribution to Reserves', category: 'Expenses', account_number: '9050' },
-]);
+// Mock data for GL accounts
+const mockGLAccounts: GLAccount[] = [
+  { id: '1000', number: '1000', name: 'First Citizens Bank Operating-X2806', type: 'Asset', balance: 0, code: '1000', description: 'First Citizens Bank Operating-X2806', category: 'Assets' },
+  { id: '4000', number: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, code: '4000', description: 'Assessment Income', category: 'Income' },
+  { id: '4010', number: '4010', name: 'Special Assessment', type: 'Revenue', balance: 0, code: '4010', description: 'Special Assessment', category: 'Income' },
+  { id: '4100', number: '4100', name: 'Interest Income', type: 'Revenue', balance: 0, code: '4100', description: 'Interest Income', category: 'Income' },
+  { id: '4110', number: '4110', name: 'Late Charge Income', type: 'Revenue', balance: 0, code: '4110', description: 'Late Charge Income', category: 'Income' },
+  { id: '4115', number: '4115', name: 'Demand Letter Income', type: 'Revenue', balance: 0, code: '4115', description: 'Demand Letter Income', category: 'Income' },
+  { id: '4120', number: '4120', name: 'Returned Payment Income', type: 'Revenue', balance: 0, code: '4120', description: 'Returned Payment Income', category: 'Income' },
+  { id: '4130', number: '4130', name: 'Admin Fee', type: 'Revenue', balance: 0, code: '4130', description: 'Admin Fee', category: 'Income' },
+  { id: '4505', number: '4505', name: 'Key Fob Income', type: 'Revenue', balance: 0, code: '4505', description: 'Key Fob Income', category: 'Income' },
+  { id: '4515', number: '4515', name: 'Meeting Room Rental Income', type: 'Revenue', balance: 0, code: '4515', description: 'Meeting Room Rental Income', category: 'Income' },
+  { id: '5000', number: '5000', name: 'Admin Expenses', type: 'Expense', balance: 0, code: '5000', description: 'Admin Expenses', category: 'Expenses' },
+  { id: '5010', number: '5010', name: 'Bank Charges', type: 'Expense', balance: 0, code: '5010', description: 'Bank Charges', category: 'Expenses' },
+  { id: '5012', number: '5012', name: 'Social Committee Expense', type: 'Expense', balance: 0, code: '5012', description: 'Social Committee Expense', category: 'Expenses' },
+  { id: '5030', number: '5030', name: 'Management Fee', type: 'Expense', balance: 0, code: '5030', description: 'Management Fee', category: 'Expenses' },
+  { id: '5200', number: '5200', name: 'General Repairs & Maintenance', type: 'Expense', balance: 0, code: '5200', description: 'General Repairs & Maintenance', category: 'Expenses' },
+  { id: '5710', number: '5710', name: 'Landscaping Expense', type: 'Expense', balance: 0, code: '5710', description: 'Landscaping Expense', category: 'Expenses' },
+  { id: '5920', number: '5920', name: 'Landscaping Contract', type: 'Expense', balance: 0, code: '5920', description: 'Landscaping Contract', category: 'Expenses' },
+  { id: '6250', number: '6250', name: 'Trash', type: 'Expense', balance: 0, code: '6250', description: 'Trash', category: 'Expenses' },
+  { id: '8010', number: '8010', name: 'General Liability + D&O Insurance', type: 'Expense', balance: 0, code: '8010', description: 'General Liability + D&O Insurance', category: 'Expenses' },
+  { id: '9050', number: '9050', name: 'Contribution to Reserves', type: 'Expense', balance: 0, code: '9050', description: 'Contribution to Reserves', category: 'Expenses' },
+];
 
 const BudgetPlanning = () => {
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -59,6 +59,7 @@ const BudgetPlanning = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [aiInsightsLoading, setAiInsightsLoading] = useState<boolean>(false);
   
+  // The current budget being edited
   const [currentBudget, setCurrentBudget] = useState<Budget>({
     id: '1',
     name: 'Annual Operating Budget',
@@ -73,12 +74,13 @@ const BudgetPlanning = () => {
     fundType: 'operating'
   });
   
+  // State for GL account grouping
   const [accountGroups, setAccountGroups] = useState<GLAccountGroup[]>([
     { 
       id: '10', 
       code: '10', 
       name: 'Income', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Revenue' && a.code.startsWith('4') && !a.code.startsWith('45')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Revenue' && a.number.startsWith('4') && !a.number.startsWith('45')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -88,7 +90,7 @@ const BudgetPlanning = () => {
       id: '12', 
       code: '12', 
       name: 'Other Income', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Revenue' && a.code.startsWith('45')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Revenue' && a.number.startsWith('45')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -98,7 +100,7 @@ const BudgetPlanning = () => {
       id: '13', 
       code: '13', 
       name: 'Administrative Expense', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('5') && !a.code.startsWith('52') && !a.code.startsWith('57')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('5') && !a.number.startsWith('52') && !a.number.startsWith('57')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -108,7 +110,7 @@ const BudgetPlanning = () => {
       id: '14', 
       code: '14', 
       name: 'Repairs & Maintenance', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('52')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('52')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -118,7 +120,7 @@ const BudgetPlanning = () => {
       id: '15', 
       code: '15', 
       name: 'Grounds Expense', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('57')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('57')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -128,7 +130,7 @@ const BudgetPlanning = () => {
       id: '16', 
       code: '16', 
       name: 'Contracts', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('59')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('59')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -138,7 +140,7 @@ const BudgetPlanning = () => {
       id: '17', 
       code: '17', 
       name: 'Utility', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('62')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('62')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -148,7 +150,7 @@ const BudgetPlanning = () => {
       id: '18', 
       code: '18', 
       name: 'Insurance & Taxes', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('8')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('8')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -158,7 +160,7 @@ const BudgetPlanning = () => {
       id: '19', 
       code: '19', 
       name: 'Reserve', 
-      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.code.startsWith('9')),
+      accounts: mockGLAccounts.filter(a => a.type === 'Expense' && a.number.startsWith('9')),
       totalBudget: 0,
       totalPreviousYear: 0,
       change: 0,
@@ -166,29 +168,32 @@ const BudgetPlanning = () => {
     },
   ]);
   
+  // Budget entries for the current budget
   const [budgetEntries, setBudgetEntries] = useState<Record<string, BudgetEntry>>({});
   
+  // AI predictions
   const [aiPredictions, setAiPredictions] = useState<BudgetPrediction[]>([
     {
-      glAccountId: '5200',
+      glAccountId: '5200 - General Repairs & Maintenance',
       suggestedAmount: 10000,
       confidence: 0.85,
       reasoning: "Based on historical data, spending in this category has been trending higher than budgeted for the past 3 years."
     },
     {
-      glAccountId: '5710',
+      glAccountId: '5710 - Landscaping Expense',
       suggestedAmount: 40000,
       confidence: 0.92,
       reasoning: "Landscaping costs in the area have increased by an average of 7% this year."
     },
     {
-      glAccountId: '6250',
+      glAccountId: '6250 - Trash',
       suggestedAmount: 1600,
       confidence: 0.78,
       reasoning: "Local waste management services have announced a 5% rate increase for the coming year."
     }
   ]);
   
+  // Budget summary
   const [budgetSummary, setBudgetSummary] = useState<BudgetSummary>({
     totalRevenue: 550795,
     totalExpenses: 550795,
@@ -204,9 +209,11 @@ const BudgetPlanning = () => {
   const generateMockBudgetEntries = () => {
     setIsLoading(true);
     
+    // Generate mock budget entries for all accounts
     const entries: Record<string, BudgetEntry> = {};
     
     mockGLAccounts.forEach(account => {
+      // Generate mock data
       const isIncome = account.type === 'Revenue';
       const basePreviousYear = isIncome ? 
         Math.floor(Math.random() * 50000) + 5000 : 
@@ -216,9 +223,11 @@ const BudgetPlanning = () => {
         basePreviousYear * (1 + (Math.random() * 0.2 - 0.1)) :
         basePreviousYear * (1 + (Math.random() * 0.3 - 0.1));
       
+      // Generate monthly amounts
       const monthlyAmounts = [];
       for (let month = 1; month <= 12; month++) {
         let monthAmount = baseAnnual / 12;
+        // Add some variability
         monthAmount = monthAmount * (1 + (Math.random() * 0.1 - 0.05));
         monthlyAmounts.push({
           month,
@@ -239,6 +248,7 @@ const BudgetPlanning = () => {
     
     setBudgetEntries(entries);
     
+    // Update group totals
     updateGroupTotals(entries);
     
     setTimeout(() => {
@@ -246,6 +256,7 @@ const BudgetPlanning = () => {
     }, 800);
   };
   
+  // Initialize with mock data
   useEffect(() => {
     generateMockBudgetEntries();
   }, []);
@@ -274,6 +285,7 @@ const BudgetPlanning = () => {
     
     setAccountGroups(updatedGroups);
     
+    // Update budget summary
     const revenueGroups = updatedGroups.filter(g => g.code.startsWith('1') && !g.code.startsWith('13') && !g.code.startsWith('14') && !g.code.startsWith('15') && !g.code.startsWith('16') && !g.code.startsWith('17') && !g.code.startsWith('18') && !g.code.startsWith('19'));
     const expenseGroups = updatedGroups.filter(g => g.code.startsWith('13') || g.code.startsWith('14') || g.code.startsWith('15') || g.code.startsWith('16') || g.code.startsWith('17') || g.code.startsWith('18') || g.code.startsWith('19'));
     
@@ -295,6 +307,7 @@ const BudgetPlanning = () => {
         ((totalRevenue - totalExpenses) - (prevYearRevenue - prevYearExpenses)) / Math.abs(prevYearRevenue - prevYearExpenses) * 100 : 0
     });
     
+    // Update budget totals
     setCurrentBudget(prev => ({
       ...prev,
       totalRevenue,
@@ -312,6 +325,7 @@ const BudgetPlanning = () => {
         previousYearActual: 0
       };
       
+      // Find the monthly amount or create new one
       const monthIndex = entry.monthlyAmounts.findIndex(m => m.month === month);
       const updatedMonthlyAmounts = [...entry.monthlyAmounts];
       
@@ -321,6 +335,7 @@ const BudgetPlanning = () => {
         updatedMonthlyAmounts.push({ month, amount });
       }
       
+      // Calculate annual total
       const annualTotal = updatedMonthlyAmounts.reduce((sum, month) => sum + month.amount, 0);
       
       const updatedEntry = {
@@ -331,6 +346,7 @@ const BudgetPlanning = () => {
       
       const updatedEntries = { ...prev, [glAccountId]: updatedEntry };
       
+      // Update group totals on the next render
       setTimeout(() => updateGroupTotals(updatedEntries), 0);
       
       return updatedEntries;
@@ -341,6 +357,7 @@ const BudgetPlanning = () => {
     setSelectedAssociationId(associationId);
     setCurrentBudget(prev => ({ ...prev, associationId }));
     
+    // In a real implementation, we would fetch budget data for this association
     toast.info("Loading budget data for the selected association");
     generateMockBudgetEntries();
   };
@@ -351,6 +368,7 @@ const BudgetPlanning = () => {
     if (key === 'year') {
       setSelectedYear(value);
       
+      // In a real implementation, we would fetch data for the selected year
       toast.info("Loading budget data for " + value);
       setTimeout(generateMockBudgetEntries, 500);
     }
@@ -399,7 +417,7 @@ const BudgetPlanning = () => {
       status: 'draft',
       totalRevenue: parseFloat(data.estimatedRevenue) || 0,
       totalExpenses: parseFloat(data.estimatedExpenses) || 0,
-      createdBy: 'Current User',
+      createdBy: 'Current User', // Would come from authentication context in a real app
       createdAt: new Date().toISOString(),
       description: data.description,
       associationId: selectedAssociationId,
@@ -410,6 +428,7 @@ const BudgetPlanning = () => {
     setSelectedYear(data.year);
     setIsDialogOpen(false);
     
+    // Generate mock data for the new budget
     generateMockBudgetEntries();
     
     toast.success("New budget created");
@@ -418,6 +437,7 @@ const BudgetPlanning = () => {
   const handleGenerateAIInsights = () => {
     setAiInsightsLoading(true);
     
+    // Simulate AI analysis
     setTimeout(() => {
       toast.success("AI analysis generated");
       setAiInsightsLoading(false);
@@ -425,18 +445,23 @@ const BudgetPlanning = () => {
   };
   
   const handleApplyAISuggestion = (prediction: BudgetPrediction) => {
-    const accountNumber = prediction.glAccountId;
+    // Extract the GL account ID from the prediction
+    const parts = prediction.glAccountId.split(' - ');
+    const accountNumber = parts[0];
     
-    const account = mockGLAccounts.find(a => a.code === accountNumber);
+    // Find the account
+    const account = mockGLAccounts.find(a => a.number === accountNumber);
     if (!account) return;
     
+    // Update the budget entry
     const suggestedMonthlyAmount = prediction.suggestedAmount / 12;
     
+    // Apply the monthly amounts
     for (let month = 1; month <= 12; month++) {
       handleBudgetChange(account.id, month, Math.round(suggestedMonthlyAmount));
     }
     
-    toast.success(`Applied AI suggestion for ${account.name}`);
+    toast.success(`Applied AI suggestion for ${prediction.glAccountId}`);
   };
   
   const handleApplyAllSuggestions = () => {

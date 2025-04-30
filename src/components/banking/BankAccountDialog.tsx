@@ -14,7 +14,6 @@ interface BankAccountDialogProps {
   onClose: () => void;
   account?: BankAccount;
   onSubmit: (data: Partial<BankAccount>) => void;
-  isEditMode?: boolean;
 }
 
 const BankAccountDialog: React.FC<BankAccountDialogProps> = ({
@@ -22,11 +21,12 @@ const BankAccountDialog: React.FC<BankAccountDialogProps> = ({
   onClose,
   account,
   onSubmit,
-  isEditMode = false,
 }) => {
+  const isEditMode = !!account;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Get form data and pass to onSubmit
+    // In a real implementation, we'd get form data and pass to onSubmit
     const formData = new FormData(e.target as HTMLFormElement);
     const data: Partial<BankAccount> = {
       name: formData.get('name') as string,
@@ -54,7 +54,6 @@ const BankAccountDialog: React.FC<BankAccountDialogProps> = ({
           onSubmit={handleSubmit}
           onCancel={onClose}
           isEditMode={isEditMode}
-          initialData={account}
         />
       </DialogContent>
     </Dialog>

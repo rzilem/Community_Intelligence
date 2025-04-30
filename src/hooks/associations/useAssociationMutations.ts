@@ -3,13 +3,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
-import { useQueryClient } from '@tanstack/react-query';
 
 export const useAssociationMutations = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const queryClient = useQueryClient();
 
   const createAssociation = async (association: Omit<Association, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -27,10 +25,6 @@ export const useAssociationMutations = () => {
 
       if (error) throw error;
       
-      // Invalidate queries to ensure fresh data is fetched
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      
-      toast.success(`Association "${association.name}" created successfully`);
       return data;
     } catch (error: any) {
       console.error('Error creating association:', error);
@@ -44,8 +38,6 @@ export const useAssociationMutations = () => {
   const updateAssociation = async ({ id, data }: { id: string, data: Partial<Association> }) => {
     try {
       setIsUpdating(true);
-      console.log('Updating association with ID:', id);
-      console.log('Update data:', data);
       
       const { data: updatedData, error } = await supabase
         .from('associations')
@@ -56,12 +48,6 @@ export const useAssociationMutations = () => {
 
       if (error) throw error;
       
-      console.log('Association updated successfully:', updatedData);
-      
-      // Invalidate queries to ensure fresh data is fetched
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      
-      toast.success('Association updated successfully');
       return updatedData;
     } catch (error: any) {
       console.error('Error updating association:', error);
@@ -84,10 +70,6 @@ export const useAssociationMutations = () => {
 
       if (error) throw error;
       
-      // Invalidate queries to ensure fresh data is fetched
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      
-      toast.success('Association archived successfully');
       return true;
     } catch (error: any) {
       console.error('Error archiving association:', error);
@@ -119,10 +101,6 @@ export const useAssociationMutations = () => {
         throw new Error(`Failed to update ${errors.length} associations`);
       }
       
-      // Invalidate queries to ensure fresh data is fetched
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      
-      toast.success(`${ids.length} associations updated successfully`);
       return true;
     } catch (error: any) {
       console.error('Error updating associations:', error);
@@ -154,10 +132,6 @@ export const useAssociationMutations = () => {
         throw new Error(`Failed to archive ${errors.length} associations`);
       }
       
-      // Invalidate queries to ensure fresh data is fetched
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      
-      toast.success(`${ids.length} associations archived successfully`);
       return true;
     } catch (error: any) {
       console.error('Error archiving associations:', error);

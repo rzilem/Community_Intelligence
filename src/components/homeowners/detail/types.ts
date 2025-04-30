@@ -1,34 +1,38 @@
 
-export interface Homeowner {
-  id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  moveInDate?: string;
-  moveOutDate?: string;
-  property?: string;
-  propertyAddress?: string; // Added to match form usage
-  unit?: string;
-  unitNumber?: string; // Added to match form usage
-  balance?: string;
-  status?: string;
-  tags?: string[];
-  violations?: number | string[];
-  lastContact?: {
-    email?: string;
-    called?: string;
-    visit?: string;
-  } | string;
-  lastLoginDate?: string;
-  notes?: NoteType[];
-  avatarUrl?: string;
-  type?: 'owner' | 'tenant' | 'family-member' | 'other';
+export interface NoteType {
+  type: 'system' | 'manual';
+  author: string;
+  content: string;
+  date: string;
 }
 
-export interface NoteType {
-  id?: string;
-  content: string;
-  author: string;
-  date: string;
-  type: 'manual' | 'system';
+export interface Homeowner {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  moveInDate: string;
+  property: string;
+  unit: string;
+  balance: number;
+  tags: string[];
+  violations: string[];
+  lastContact: {
+    called: string;
+    visit: string;
+    email: string;
+  };
+  status: string;
+  avatarUrl: string;
+  notes: NoteType[];
+  // Additional fields from homeowner-types.ts for compatibility
+  type?: 'owner' | 'tenant' | 'family-member' | 'other';
+  propertyId?: string;
+  propertyAddress?: string;
+  association?: string;
+  moveOutDate?: string;
+  lastPayment?: { amount: number; date: string };
+  aclStartDate?: string;
+  unitNumber?: string;
+  closingDate?: string; // Added the missing closingDate property
 }

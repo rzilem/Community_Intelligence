@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchAllAssociations, fetchAssociationById } from '@/services/association-service';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,14 +40,6 @@ export const fetchAssociationsViaUserMemberships = async (): Promise<Association
 export const useAssociationsList = () => {
   const queryClient = useQueryClient();
   const [retryCount, setRetryCount] = useState(0);
-  const isMountedRef = useRef(true);
-  
-  // Use effect to set isMounted ref on unmount
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
   
   const { 
     data: associations = [], 
@@ -75,17 +67,14 @@ export const useAssociationsList = () => {
     },
     retry: 3,
     retryDelay: attempt => Math.min(attempt > 1 ? 2000 : 1000, 30 * 1000),
-    staleTime: 60000, // Cache data for 1 minute to prevent frequent refetches
   });
   
   // Auto-retry if we get back an empty list but there should be data
   useEffect(() => {
-    if (!isLoading && Array.isArray(associations) && associations.length === 0 && retryCount < 3 && !error && isMountedRef.current) {
+    if (!isLoading && Array.isArray(associations) && associations.length === 0 && retryCount < 3 && !error) {
       const timer = setTimeout(() => {
-        if (isMountedRef.current) {
-          console.log(`Auto-retrying association fetch (attempt ${retryCount + 1})...`);
-          setRetryCount(prev => prev + 1);
-        }
+        console.log(`Auto-retrying association fetch (attempt ${retryCount + 1})...`);
+        setRetryCount(prev => prev + 1);
       }, 2000);
       
       return () => clearTimeout(timer);
@@ -93,11 +82,9 @@ export const useAssociationsList = () => {
   }, [associations, isLoading, retryCount, error]);
   
   const manuallyRefresh = () => {
-    if (isMountedRef.current) {
-      console.log('Manually refreshing associations...');
-      queryClient.invalidateQueries({ queryKey: ['associations'] });
-      setRetryCount(prev => prev + 1);
-    }
+    console.log('Manually refreshing associations...');
+    queryClient.invalidateQueries({ queryKey: ['associations'] });
+    setRetryCount(prev => prev + 1);
   };
   
   return { associations, isLoading, error, refetch, manuallyRefresh, retryCount };
@@ -110,7 +97,6 @@ export const useAssociationById = (id: string) => {
   return useQuery({
     queryKey: ['association', id],
     queryFn: () => fetchAssociationById(id),
-    enabled: !!id,
-    staleTime: 60000, // Cache for 1 minute
+    enabled: !!id
   });
 };

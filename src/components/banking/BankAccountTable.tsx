@@ -1,12 +1,9 @@
 
 import React, { useState } from 'react';
-import { Edit, Trash2, ArrowUpDown, Upload, Download, FileText } from 'lucide-react';
+import { Edit, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import ColumnSelector from '@/components/table/ColumnSelector';
-import BankAccountDialog from './BankAccountDialog';
-import BankStatementDialog from './BankStatementDialog';
-import { format } from 'date-fns';
 
 export type BankAccount = {
   id: string;
@@ -16,32 +13,23 @@ export type BankAccount = {
   balance: number;
   accountType: string;
   institution: string;
-  lastReconciled?: string;
-  lastReconciledDate?: string | Date;
-  lastStatementDate?: string | Date;
+  lastReconciled: string;
 };
 
-type ColumnKey = 'name' | 'accountNumber' | 'routingNumber' | 'balance' | 'accountType' | 'institution' | 'lastReconciled' | 'actions';
+type ColumnKey = 'name' | 'accountNumber' | 'routingNumber' | 'balance' | 'accountType' | 'institution' | 'lastReconciled';
 
 interface BankAccountTableProps {
   accounts: BankAccount[];
   searchTerm?: string;
-  onUpdateAccount?: (account: BankAccount) => void;
-  onDeleteAccount?: (id: string) => void;
 }
 
 const BankAccountTable: React.FC<BankAccountTableProps> = ({
   accounts,
-  searchTerm = '',
-  onUpdateAccount,
-  onDeleteAccount
+  searchTerm = ''
 }) => {
   const [visibleColumns, setVisibleColumns] = useState<ColumnKey[]>([
-    'name', 'accountNumber', 'balance', 'accountType', 'institution', 'lastReconciled', 'actions'
+    'name', 'accountNumber', 'balance', 'accountType', 'institution', 'lastReconciled'
   ]);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [currentAccount, setCurrentAccount] = useState<BankAccount | null>(null);
-  const [isStatementDialogOpen, setIsStatementDialogOpen] = useState(false);
 
   const columnOptions = [
     { id: 'name', label: 'Account Name' },
@@ -50,52 +38,11 @@ const BankAccountTable: React.FC<BankAccountTableProps> = ({
     { id: 'balance', label: 'Current Balance' },
     { id: 'accountType', label: 'Account Type' },
     { id: 'institution', label: 'Financial Institution' },
-    { id: 'lastReconciled', label: 'Last Reconciled' },
-    { id: 'actions', label: 'Actions' }
+    { id: 'lastReconciled', label: 'Last Reconciled' }
   ];
 
   const handleColumnChange = (selectedColumns: string[]) => {
     setVisibleColumns(selectedColumns as ColumnKey[]);
-  };
-
-  const handleEdit = (account: BankAccount) => {
-    setCurrentAccount(account);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (onDeleteAccount) {
-      onDeleteAccount(id);
-    }
-  };
-
-  const handleStatementUpload = (account: BankAccount) => {
-    setCurrentAccount(account);
-    setIsStatementDialogOpen(true);
-  };
-
-  const handleUpdateAccount = (data: Partial<BankAccount>) => {
-    if (currentAccount && onUpdateAccount) {
-      const updatedAccount = { ...currentAccount, ...data };
-      onUpdateAccount(updatedAccount);
-    }
-    setIsEditDialogOpen(false);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD' 
-    }).format(amount);
-  };
-
-  const formatDate = (date: string | Date | undefined) => {
-    if (!date) return 'Never';
-    try {
-      return format(new Date(date), 'MM/dd/yyyy');
-    } catch (error) {
-      return 'Invalid date';
-    }
   };
 
   const filteredAccounts = accounts.filter(account => {
@@ -103,6 +50,13 @@ const BankAccountTable: React.FC<BankAccountTableProps> = ({
            account.accountNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
            account.institution.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'USD' 
+    }).format(amount);
+  };
 
   return (
     <div>
@@ -174,15 +128,13 @@ const BankAccountTable: React.FC<BankAccountTableProps> = ({
                   </div>
                 </TableHead>
               )}
-              {visibleColumns.includes('actions') && (
-                <TableHead className="text-right">Actions</TableHead>
-              )}
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredAccounts.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={visibleColumns.length} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground">
                   No bank accounts found matching your search.
                 </TableCell>
               </TableRow>
@@ -210,61 +162,24 @@ const BankAccountTable: React.FC<BankAccountTableProps> = ({
                     <TableCell>{account.institution}</TableCell>
                   )}
                   {visibleColumns.includes('lastReconciled') && (
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span>{formatDate(account.lastReconciledDate)}</span>
-                        {account.lastStatementDate && (
-                          <span className="text-xs text-muted-foreground">
-                            Last statement: {formatDate(account.lastStatementDate)}
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
+                    <TableCell>{account.lastReconciled}</TableCell>
                   )}
-                  {visibleColumns.includes('actions') && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleStatementUpload(account)}>
-                          <Upload className="h-4 w-4 mr-1" /> Statement
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEdit(account)}>
-                          <Edit className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-destructive"
-                          onClick={() => handleDelete(account.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive">
+                        <Trash2 className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
-
-      {currentAccount && (
-        <>
-          <BankAccountDialog 
-            isOpen={isEditDialogOpen}
-            onClose={() => setIsEditDialogOpen(false)}
-            onSubmit={handleUpdateAccount}
-            account={currentAccount}
-            isEditMode={true}
-          />
-          
-          <BankStatementDialog
-            isOpen={isStatementDialogOpen}
-            onClose={() => setIsStatementDialogOpen(false)}
-            account={currentAccount}
-          />
-        </>
-      )}
     </div>
   );
 };

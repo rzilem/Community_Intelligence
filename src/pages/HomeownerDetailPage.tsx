@@ -43,6 +43,7 @@ const HomeownerDetailPage: React.FC = () => {
       
       await addHomeownerNote(note);
       
+      // Switch to the Notes tab and Manual Notes subtab
       setActiveTab('Notes');
       setActiveNotesTab('Manual Notes');
     } catch (error) {
@@ -67,20 +68,8 @@ const HomeownerDetailPage: React.FC = () => {
     );
   }
 
-  const getViolationsCount = (): number => {
-    if (!homeowner?.violations) return 0;
-    
-    if (typeof homeowner.violations === 'number') {
-      return homeowner.violations;
-    }
-    
-    if (Array.isArray(homeowner.violations)) {
-      return homeowner.violations.length;
-    }
-    
-    return 0;
-  };
-
+  // Extract the most recent contact date from the lastContact object
+  // or use an empty string if it's not available
   const getLastContactString = () => {
     if (!homeowner?.lastContact) return '';
     
@@ -88,6 +77,7 @@ const HomeownerDetailPage: React.FC = () => {
       return homeowner.lastContact;
     }
     
+    // If it's an object with dates, find the most recent one
     const dates = [
       homeowner.lastContact.called,
       homeowner.lastContact.visit,
@@ -96,11 +86,11 @@ const HomeownerDetailPage: React.FC = () => {
     
     if (dates.length === 0) return '';
     
-    return dates.sort((a, b) => new Date(b!).getTime() - new Date(a!).getTime())[0] || '';
+    // Sort dates in descending order and take the first one
+    return dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
   };
 
   const lastContactValue = getLastContactString();
-  const violationsCount = getViolationsCount();
 
   return (
     <AppLayout>
@@ -111,13 +101,13 @@ const HomeownerDetailPage: React.FC = () => {
               id={id || homeowner?.id || ''}
               name={homeowner?.name}
               status={homeowner?.status}
-              tags={homeowner?.tags || []}
-              violations={violationsCount} // Now this properly accepts a number
+              tags={homeowner?.tags}
+              violations={homeowner?.violations}
               avatarUrl={homeowner?.avatarUrl}
               onProfileImageUpdated={updateHomeownerImage}
               onEditClick={isAdmin ? handleEdit : undefined}
             />
-            
+
             {isEditing && isAdmin ? (
               <HomeownerEditForm 
                 homeowner={homeowner}
@@ -133,7 +123,7 @@ const HomeownerDetailPage: React.FC = () => {
                 property={homeowner?.property}
                 unit={homeowner?.unit}
                 balance={homeowner?.balance}
-                lastContact={lastContactValue} // This is a string, which is correct
+                lastContact={lastContactValue}
               />
             )}
           </div>
@@ -154,8 +144,6 @@ const HomeownerDetailPage: React.FC = () => {
           notes={homeowner?.notes || []}
           onAddNote={handleAddNote}
           homeownerId={id || homeowner?.id || ''}
-          email={homeowner?.email}
-          lastLoginDate={homeowner?.lastLoginDate || undefined}
         />
       </div>
     </AppLayout>

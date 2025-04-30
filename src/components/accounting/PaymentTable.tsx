@@ -4,22 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import TooltipButton from '@/components/ui/tooltip-button';
 import { Payment } from '@/types/transaction-payment-types';
 import { getStatusBadge, getMethodBadge } from './PaymentStatusBadges';
-import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
 
 interface PaymentTableProps {
   payments: Payment[];
-  onProcessPayment?: (paymentId: string) => void;
-  onViewPayment?: (paymentId: string) => void;
-  onEditPayment?: (paymentId: string) => void;
 }
 
-const PaymentTable: React.FC<PaymentTableProps> = ({ 
-  payments, 
-  onProcessPayment,
-  onViewPayment,
-  onEditPayment
-}) => {
+const PaymentTable: React.FC<PaymentTableProps> = ({ payments }) => {
   return (
     <div className="rounded-md border">
       <Table>
@@ -50,44 +40,18 @@ const PaymentTable: React.FC<PaymentTableProps> = ({
                 <TableCell>{payment.vendor}</TableCell>
                 <TableCell>{payment.associationName}</TableCell>
                 <TableCell>{payment.category}</TableCell>
-                <TableCell className="font-medium">{formatCurrency(payment.amount)}</TableCell>
+                <TableCell className="font-medium">${payment.amount.toLocaleString()}</TableCell>
                 <TableCell>{getMethodBadge(payment.method)}</TableCell>
-                <TableCell>{format(new Date(payment.date), 'MMM d, yyyy')}</TableCell>
+                <TableCell>{payment.date}</TableCell>
                 <TableCell>{getStatusBadge(payment.status)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {onViewPayment && (
-                      <TooltipButton 
-                        size="sm" 
-                        variant="ghost" 
-                        tooltip="View payment details"
-                        onClick={() => onViewPayment(payment.id)}
-                      >
-                        View
-                      </TooltipButton>
-                    )}
-                    
-                    {payment.status === 'scheduled' && onEditPayment && (
-                      <TooltipButton 
-                        size="sm" 
-                        variant="outline" 
-                        className="border-amber-500 text-amber-500" 
-                        tooltip="Edit payment details"
-                        onClick={() => onEditPayment(payment.id)}
-                      >
+                    <TooltipButton size="sm" variant="ghost" tooltip="View payment details">
+                      View
+                    </TooltipButton>
+                    {payment.status === 'scheduled' && (
+                      <TooltipButton size="sm" variant="outline" className="border-amber-500 text-amber-500" tooltip="Edit payment details">
                         Edit
-                      </TooltipButton>
-                    )}
-                    
-                    {payment.status === 'scheduled' && onProcessPayment && (
-                      <TooltipButton 
-                        size="sm" 
-                        variant="default" 
-                        className="bg-green-500 hover:bg-green-600" 
-                        tooltip="Process this payment"
-                        onClick={() => onProcessPayment(payment.id)}
-                      >
-                        Process
                       </TooltipButton>
                     )}
                   </div>

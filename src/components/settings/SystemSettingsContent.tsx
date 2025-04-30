@@ -6,7 +6,6 @@ import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
 import SystemPreferencesTab from '@/components/settings/SystemPreferencesTab';
 import IntegrationsTab from '@/components/settings/IntegrationsTab';
-import FormSettingsTab from '@/components/settings/FormSettingsTab';
 import { 
   AppearanceSettings, 
   NotificationSettings, 
@@ -63,10 +62,6 @@ const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
 
       <TabsContent value="integrations">
         <IntegrationsTab />
-      </TabsContent>
-      
-      <TabsContent value="forms">
-        <FormSettingsTab />
       </TabsContent>
     </>
   );

@@ -113,10 +113,21 @@ export const createAssociation = async (associationData: {
 /**
  * Updates an association's details
  */
-export const updateAssociation = async (id: string, associationData: Partial<Association>) => {
+export const updateAssociation = async (id: string, associationData: {
+  name?: string,
+  address?: string,
+  contact_email?: string,
+  city?: string,
+  state?: string,
+  zip?: string,
+  phone?: string,
+  website?: string,
+  property_type?: string,
+  total_units?: number,
+  description?: string,
+  is_archived?: boolean
+}) => {
   try {
-    console.log('Updating association with data:', associationData);
-    
     const { data, error } = await supabase
       .from('associations')
       .update(associationData)
@@ -129,12 +140,10 @@ export const updateAssociation = async (id: string, associationData: Partial<Ass
       throw error;
     }
 
-    console.log('Updated association:', data);
-    toast.success('Association updated successfully');
     return data;
   } catch (error) {
     console.error(`Error in updateAssociation for ID ${id}:`, error);
-    throw error;
+    return null;
   }
 };
 
@@ -153,7 +162,6 @@ export const deleteAssociation = async (id: string) => {
       throw error;
     }
 
-    toast.success('Association deleted successfully');
     return true;
   } catch (error) {
     console.error(`Error in deleteAssociation for ID ${id}:`, error);

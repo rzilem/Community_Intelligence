@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
@@ -10,10 +10,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { JournalEntry } from './JournalEntryTable';
-import { useGLAccounts, getFormattedGLAccountLabel } from '@/hooks/accounting/useGLAccounts';
-import { useAuth } from '@/contexts/auth/useAuth';
-import { LoadingState } from '@/components/ui/loading-state';
-import { GLAccount } from '@/types/accounting-types';
+
+interface GLAccount {
+  id: string;
+  number: string;
+  name: string;
+  type: string;
+  balance: number;
+}
 
 interface JournalEntryLineItem {
   accountId: string;
@@ -38,30 +42,21 @@ const formSchema = z.object({
   }, { message: 'Total debits must equal total credits' }),
 });
 
-export interface JournalEntryDialogProps {
+interface JournalEntryDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   entry?: JournalEntry;
-  accounts?: GLAccount[]; // Add the accounts property to the interface
+  accounts: GLAccount[];
 }
 
 const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  entry,
-  accounts: providedAccounts
+  entry, 
+  accounts 
 }) => {
-  const { currentAssociation } = useAuth();
-  const { accounts: fetchedAccounts, isLoading } = useGLAccounts({
-    associationId: currentAssociation?.id,
-    includeMaster: true
-  });
-
-  // Use provided accounts if available, otherwise use fetched accounts
-  const accounts = providedAccounts || fetchedAccounts;
-
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: entry ? {
@@ -93,16 +88,6 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
   const totalDebits = lineItems.reduce((sum, item) => sum + (Number(item.debit) || 0), 0);
   const totalCredits = lineItems.reduce((sum, item) => sum + (Number(item.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebits - totalCredits) < 0.001;
-
-  if (isLoading && !providedAccounts) {
-    return (
-      <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <LoadingState variant="spinner" text="Loading GL accounts..." className="py-10" />
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
@@ -183,7 +168,7 @@ const JournalEntryDialog: React.FC<JournalEntryDialogProps> = ({
                       <SelectContent>
                         {accounts.map(account => (
                           <SelectItem key={account.id} value={account.id}>
-                            {getFormattedGLAccountLabel(account)}
+                            {account.number} - {account.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -24,36 +24,20 @@ export function useSupabaseUpdate<T = any>(
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<T> }): Promise<T> => {
-      console.log(`Updating ${table} with ID ${id}:`, data);
-      
-      // Make sure we're not sending any 'unassigned' string values to the database
-      // Convert any 'unassigned' values to null
-      const cleanData = Object.fromEntries(
-        Object.entries(data as any).map(([key, value]) => [
-          key, 
-          value === 'unassigned' ? null : value
-        ])
-      );
-      
-      console.log(`Cleaned data for ${table} update:`, cleanData);
-      
       const { data: result, error } = await supabase
         .from(table as any)
-        .update(cleanData)
+        .update(data as any)
         .eq(idField, id)
         .select()
         .single();
 
       if (error) {
-        console.error(`Error updating ${table}:`, error);
         if (shouldShowErrorToast) {
           showErrorToast('updating', table, error);
         }
         throw error;
       }
 
-      console.log(`${table} updated successfully:`, result);
-      
       if (shouldShowSuccessToast) {
         showSuccessToast('updated', table);
       }
@@ -61,7 +45,6 @@ export function useSupabaseUpdate<T = any>(
       return result as T;
     },
     onSuccess: (data) => {
-      console.log('Mutation successful, invalidating queries');
       // Invalidate related queries
       if (Array.isArray(invalidateQueries[0])) {
         // Multiple query keys to invalidate

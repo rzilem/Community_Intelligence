@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +10,6 @@ import { Upload, FileText, FileUp, Database, CheckCircle2, XCircle, RefreshCw, S
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import { GLAccount } from '@/types/accounting-types';
 import { toast } from 'sonner';
-import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
 interface GLCodeMapping {
   fromCode: string;
@@ -40,18 +40,18 @@ const FinancialReportMapping = () => {
   const [analysisResult, setAnalysisResult] = useState<ReportAnalysisResult | null>(null);
   
   // Mock GL accounts for destination mapping
-  const destinationGLAccounts: GLAccount[] = ensureGLAccountsHaveIsActive([
-    { id: '1', code: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, description: 'Assessment Income', category: 'Income', account_number: '4000' },
-    { id: '2', code: '4010', name: 'Special Assessment', type: 'Revenue', balance: 0, description: 'Special Assessment', category: 'Income', account_number: '4010' },
-    { id: '3', code: '4100', name: 'Interest Income', type: 'Revenue', balance: 0, description: 'Interest Income', category: 'Income', account_number: '4100' },
-    { id: '4', code: '5000', name: 'Admin Expenses', type: 'Expense', balance: 0, description: 'Admin Expenses', category: 'Expenses', account_number: '5000' },
-    { id: '5', code: '5010', name: 'Bank Charges', type: 'Expense', balance: 0, description: 'Bank Charges', category: 'Expenses', account_number: '5010' },
-    { id: '6', code: '5200', name: 'General Repairs & Maintenance', type: 'Expense', balance: 0, description: 'General Repairs & Maintenance', category: 'Expenses', account_number: '5200' },
-    { id: '7', code: '5710', name: 'Landscaping Expense', type: 'Expense', balance: 0, description: 'Landscaping Expense', category: 'Expenses', account_number: '5710' },
-    { id: '8', code: '6250', name: 'Trash', type: 'Expense', balance: 0, description: 'Trash', category: 'Expenses', account_number: '6250' },
-    { id: '9', code: '8010', name: 'General Liability + D&O Insurance', type: 'Expense', balance: 0, description: 'General Liability + D&O Insurance', category: 'Expenses', account_number: '8010' },
-    { id: '10', code: '9050', name: 'Contribution to Reserves', type: 'Expense', balance: 0, description: 'Contribution to Reserves', category: 'Expenses', account_number: '9050' },
-  ]);
+  const destinationGLAccounts: GLAccount[] = [
+    { id: '1', number: '4000', name: 'Assessment Income', type: 'Revenue', balance: 0, code: '4000', description: 'Assessment Income', category: 'Income' },
+    { id: '2', number: '4010', name: 'Special Assessment', type: 'Revenue', balance: 0, code: '4010', description: 'Special Assessment', category: 'Income' },
+    { id: '3', number: '4100', name: 'Interest Income', type: 'Revenue', balance: 0, code: '4100', description: 'Interest Income', category: 'Income' },
+    { id: '4', number: '5000', name: 'Admin Expenses', type: 'Expense', balance: 0, code: '5000', description: 'Admin Expenses', category: 'Expenses' },
+    { id: '5', number: '5010', name: 'Bank Charges', type: 'Expense', balance: 0, code: '5010', description: 'Bank Charges', category: 'Expenses' },
+    { id: '6', number: '5200', name: 'General Repairs & Maintenance', type: 'Expense', balance: 0, code: '5200', description: 'General Repairs & Maintenance', category: 'Expenses' },
+    { id: '7', number: '5710', name: 'Landscaping Expense', type: 'Expense', balance: 0, code: '5710', description: 'Landscaping Expense', category: 'Expenses' },
+    { id: '8', number: '6250', name: 'Trash', type: 'Expense', balance: 0, code: '6250', description: 'Trash', category: 'Expenses' },
+    { id: '9', number: '8010', name: 'General Liability + D&O Insurance', type: 'Expense', balance: 0, code: '8010', description: 'General Liability + D&O Insurance', category: 'Expenses' },
+    { id: '10', number: '9050', name: 'Contribution to Reserves', type: 'Expense', balance: 0, code: '9050', description: 'Contribution to Reserves', category: 'Expenses' },
+  ];
 
   const handleAssociationChange = (associationId: string) => {
     setSelectedAssociationId(associationId);
@@ -310,16 +310,16 @@ const FinancialReportMapping = () => {
                                     className="w-full p-2 border rounded bg-background"
                                     value={mapping.toCode}
                                     onChange={(e) => {
-                                      const selected = destinationGLAccounts.find(a => a.code === e.target.value);
+                                      const selected = destinationGLAccounts.find(a => a.number === e.target.value);
                                       if (selected) {
-                                        handleMappingChange(index, selected.code, selected.name);
+                                        handleMappingChange(index, selected.number, selected.name);
                                       }
                                     }}
                                   >
                                     <option value="">Select GL code</option>
                                     {destinationGLAccounts.map(account => (
-                                      <option key={account.id} value={account.code}>
-                                        {account.code}
+                                      <option key={account.id} value={account.number}>
+                                        {account.number}
                                       </option>
                                     ))}
                                   </select>

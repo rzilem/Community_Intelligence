@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   LayoutDashboard,
@@ -140,7 +141,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Resale Calendar', path: '/resale-management/calendar', icon: Calendar },
         { name: 'Order Queue', path: '/resale-management/order-queue', icon: ListOrdered },
         { name: 'Analytics', path: '/resale-management/analytics', icon: BarChart },
-        { name: 'Resale Portal', path: '/resale-portal', icon: ScrollText },
       ]
     });
   }
@@ -157,7 +157,6 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Financial Report Mapping', path: '/system/financial-report-mapping', icon: FileBarChart },
         { name: 'Workflow Schedule', path: '/system/workflow-schedule', icon: Clock },
         { name: 'Permissions', path: '/system/permissions', icon: Shield },
-        { name: 'Form Builder', path: '/system/form-builder', icon: FileText },
       ]
     });
   }

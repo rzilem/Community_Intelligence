@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users, Plus, RefreshCw } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -12,8 +12,6 @@ import { useHomeownersData } from './hooks/useHomeownersData';
 import { useHomeownerFilters } from './hooks/useHomeownerFilters';
 import HomeownerListFilters from './components/HomeownerListFilters';
 import HomeownerTable from './components/HomeownerTable';
-import { Skeleton } from '@/components/ui/skeleton';
-import ApiError from '@/components/ui/api-error';
 
 const HomeownerListPage = () => {
   const navigate = useNavigate();
@@ -28,8 +26,7 @@ const HomeownerListPage = () => {
     associations,
     isLoadingAssociations,
     fetchResidentsByAssociationId,
-    setError,
-    totalCount
+    setError
   } = useHomeownersData();
 
   const {
@@ -45,24 +42,25 @@ const HomeownerListPage = () => {
     extractStreetAddress
   } = useHomeownerFilters(residents);
 
-  // Fetch data when filters change with pagination
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterAssociation, filterStatus, filterType]);
+
+  // Count residents with invalid associations
+  const invalidAssociationCount = residents.filter(
+    resident => !resident.hasValidAssociation
+  ).length;
+
   useEffect(() => {
     if (!isLoadingAssociations) {
-      fetchResidentsByAssociationId(
-        filterAssociation === 'all' ? null : filterAssociation,
-        currentPage,
-        pageSize
-      );
+      fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
     }
-  }, [filterAssociation, isLoadingAssociations, currentPage, pageSize]);
+  }, [filterAssociation, isLoadingAssociations]);
 
   const handleRetry = () => {
     setError(null);
-    fetchResidentsByAssociationId(
-      filterAssociation === 'all' ? null : filterAssociation,
-      currentPage,
-      pageSize
-    );
+    fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
   };
 
   const handlePageChange = (page: number) => {
@@ -78,11 +76,6 @@ const HomeownerListPage = () => {
     setPageSize(size);
     setCurrentPage(1); // Reset to first page when changing page size
   };
-
-  // Count residents with invalid associations
-  const invalidAssociationCount = residents.filter(
-    resident => !resident.hasValidAssociation
-  ).length;
 
   return (
     <AppLayout>
@@ -117,16 +110,15 @@ const HomeownerListPage = () => {
             {error && (
               <Alert className="mb-6" variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error Loading Data</AlertTitle>
-                <AlertDescription className="flex items-center gap-4">
-                  <span>{error}</span>
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {error}
                   <Button 
                     variant="outline" 
                     size="sm" 
+                    className="ml-4"
                     onClick={handleRetry}
-                    className="gap-1 items-center"
                   >
-                    <RefreshCw className="h-3 w-3" />
                     Retry
                   </Button>
                 </AlertDescription>
@@ -150,29 +142,19 @@ const HomeownerListPage = () => {
             />
             
             <div id="homeowner-table-top"></div>
-            
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : (
-              <HomeownerTable
-                loading={loading}
-                filteredHomeowners={residents}
-                visibleColumnIds={visibleColumnIds}
-                extractStreetAddress={extractStreetAddress}
-                allResidentsCount={totalCount}
-                error={error}
-                onRetry={handleRetry}
-                currentPage={currentPage}
-                pageSize={pageSize}
-                onPageChange={handlePageChange}
-                onPageSizeChange={handlePageSizeChange}
-              />
-            )}
+            <HomeownerTable
+              loading={loading}
+              filteredHomeowners={filteredHomeowners}
+              visibleColumnIds={visibleColumnIds}
+              extractStreetAddress={extractStreetAddress}
+              allResidentsCount={residents.length}
+              error={error}
+              onRetry={handleRetry}
+              currentPage={currentPage}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </CardContent>
         </Card>
       </div>

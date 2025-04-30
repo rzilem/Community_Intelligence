@@ -10,17 +10,16 @@ import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
 import FinancialReportMapping from "@/pages/accounting/FinancialReportMapping";
-import FormBuilder from "@/pages/system/FormBuilder";
 
 // System Management Routes
 export const systemRoutes: RouteObject[] = [
   {
     path: "/system",
-    element: <RequireAuth menuId="system"><System /></RequireAuth>
+    element: <RequireAuth><System /></RequireAuth>
   },
   {
     path: "/system/settings",
-    element: <RequireAuth menuId="system" submenuId="settings" requiredAccess="full"><SystemSettings /></RequireAuth>
+    element: <RequireAuth><SystemSettings /></RequireAuth>
   },
   {
     path: "/system/integrations",
@@ -28,11 +27,11 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/permissions",
-    element: <RequireAuth menuId="system" submenuId="permissions" requiredAccess="full"><Permissions /></RequireAuth>
+    element: <RequireAuth><Permissions /></RequireAuth>
   },
   {
     path: "/system/data-management",
-    element: <RequireAuth menuId="system" submenuId="data-management"><DataManagement /></RequireAuth>
+    element: <RequireAuth><DataManagement /></RequireAuth>
   },
   {
     path: "/system/import-export",
@@ -44,7 +43,7 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/financial-report-mapping",
-    element: <RequireAuth menuId="system" submenuId="financial-report-mapping"><FinancialReportMapping /></RequireAuth>
+    element: <RequireAuth><FinancialReportMapping /></RequireAuth>
   },
   {
     path: "/system/associations",
@@ -52,18 +51,14 @@ export const systemRoutes: RouteObject[] = [
   },
   {
     path: "/system/associations/:id",
-    element: <RequireAuth menuId="system"><AssociationProfile /></RequireAuth>
+    element: <RequireAuth><AssociationProfile /></RequireAuth>
   },
   {
     path: "/system/email-workflows",
-    element: <RequireAuth menuId="system" submenuId="email-workflows"><EmailWorkflows /></RequireAuth>
+    element: <RequireAuth><EmailWorkflows /></RequireAuth>
   },
   {
     path: "/system/workflow-schedule",
-    element: <RequireAuth menuId="system" submenuId="workflow-schedule"><WorkflowSchedule /></RequireAuth>
-  },
-  {
-    path: "/system/form-builder",
-    element: <RequireAuth menuId="system" submenuId="form-builder"><FormBuilder /></RequireAuth>
+    element: <RequireAuth><WorkflowSchedule /></RequireAuth>
   }
 ];

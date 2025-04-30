@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Dialog, 
@@ -18,7 +17,6 @@ import OriginalEmailTab from './detail/tabs/OriginalEmailTab';
 import ActivityFeedTab from './detail/tabs/ActivityFeedTab';
 import RequestDialogTabs from './dialog/edit/RequestDialogTabs';
 import HistoryTimeline from './history/HistoryTimeline';
-import AttachmentsTab from './dialog/tabs/AttachmentsTab';
 
 interface HomeownerRequestDetailDialogProps {
   request: HomeownerRequest | null;
@@ -78,34 +76,10 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
       fetchComments();
     }
   };
-
-  const handleAssignChange = (value: string) => {
-    console.log('Assign change:', value);
-    // In view-only mode, we just log this action
-    toast.info(`Assignment would change to: ${value}`);
-  };
-
-  const handleAssociationChange = (value: string) => {
-    console.log('Association change:', value);
-    // In view-only mode, we just log this action
-    toast.info(`Association would change to: ${value}`);
-  };
-
-  const handlePropertyChange = (value: string) => {
-    console.log('Property change:', value);
-    // In view-only mode, we just log this action
-    toast.info(`Property would change to: ${value}`);
-  };
   
   if (!request) return null;
   
   const processedDescription = request.description ? cleanHtmlContent(request.description) : '';
-  
-  // Prepare a request object with attachments if none exist
-  const requestWithAttachments = {
-    ...request,
-    attachments: request.attachments || []
-  };
   
   return (
     <Dialog 
@@ -130,9 +104,9 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
           assignedTo={request.assigned_to || null}
           associationId={request.association_id || null}
           propertyId={request.property_id || null}
-          onAssignChange={handleAssignChange}
-          onAssociationChange={handleAssociationChange}
-          onPropertyChange={handlePropertyChange}
+          onAssignChange={(value) => console.log('Assign change:', value)}
+          onAssociationChange={(value) => console.log('Association change:', value)}
+          onPropertyChange={(value) => console.log('Property change:', value)}
         >
           <div className="flex-1 min-h-0">
             <TabsContent value="details" className="h-full m-0">
@@ -162,7 +136,9 @@ const HomeownerRequestDetailDialog: React.FC<HomeownerRequestDetailDialogProps> 
             
             <TabsContent value="attachments" className="h-full m-0">
               <ScrollArea className="h-full">
-                <AttachmentsTab request={requestWithAttachments} />
+                <div className="p-4">
+                  Attachments content will go here
+                </div>
               </ScrollArea>
             </TabsContent>
           </div>

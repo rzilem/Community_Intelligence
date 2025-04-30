@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { LogOut, X, Home, Building, Truck, CreditCard, FileText, Calendar, Users, File, WrenchIcon, PiggyBank, BarChart, AlertTriangle, CheckSquare, Mail, BookOpen, Video, Sparkles, DollarSign, LayoutDashboard, ScrollText } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { LogOut, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SidebarNavItem from './SidebarNavItem';
@@ -27,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { notifications } = useNotificationContext();
   
   useEffect(() => {
+    // Initialize active section based on current path
     mainNavItems.forEach(item => {
       if (item.submenu) {
         const isSubmenuActive = item.submenu.some(
@@ -41,13 +43,16 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [location.pathname, mainNavItems]);
 
   const toggleSection = (section: string) => {
+    // If clicking the currently active section, close it
     if (activeSection === section) {
       setActiveSection(null);
     } else {
+      // Otherwise, set it as the new active section (and close the previous one)
       setActiveSection(section);
     }
   };
 
+  // Helper function to check if a main nav item has the current path in its submenu
   const hasActiveSubmenu = (item: NavItemProps) => {
     if (!item.submenu) return false;
     
@@ -56,9 +61,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
+  // Function to get notification count for a specific section
   const getNotificationCount = (itemPath: string): number => {
     const section = itemPath.replace('/', '');
     
+    // Count notifications by type
     if (section === 'lead-management') {
       return notifications.filter(n => n.type === 'lead' && !n.read).length;
     } else if (section === 'accounting') {
@@ -73,43 +80,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     
     return 0;
   };
-
-  const homeownerPortalItems = [
-    { name: 'Dashboard', path: '/portal/homeowner', icon: LayoutDashboard },
-    { name: 'Payments', path: '/portal/homeowner/payments', icon: CreditCard },
-    { name: 'Requests', path: '/portal/homeowner/requests', icon: FileText },
-    { name: 'Calendar & Events', path: '/portal/homeowner/calendar', icon: Calendar },
-    { name: 'Directory', path: '/portal/homeowner/directory', icon: Users },
-    { name: 'Documents', path: '/portal/homeowner/documents', icon: File },
-  ];
-
-  const boardPortalItems = [
-    { name: 'Dashboard', path: '/portal/board/dashboard', icon: LayoutDashboard },
-    { name: 'Invoices', path: '/portal/board/invoices', icon: CreditCard },
-    { name: 'Work Orders', path: '/portal/board/work-orders', icon: WrenchIcon },
-    { name: 'Collections', path: '/portal/board/collections', icon: PiggyBank },
-    { name: 'Homeowners', path: '/portal/board/homeowners', icon: Users },
-    { name: 'Bank Accounts', path: '/portal/board/bank-accounts', icon: Building },
-    { name: 'Reports', path: '/portal/board/reports', icon: BarChart },
-    { name: 'Violations', path: '/portal/board/violations', icon: AlertTriangle },
-    { name: 'Board Tasks', path: '/portal/board/tasks', icon: CheckSquare },
-    { name: 'Email Community', path: '/portal/board/email', icon: Mail },
-    { name: 'Board Portal Training', path: '/portal/board/training', icon: BookOpen },
-    { name: 'Board Member Video Education', path: '/portal/board/video-education', icon: Video },
-    { name: 'Board Member AI Assistant', path: '/portal/board/ai-assistant', icon: Sparkles },
-    { name: 'Board Reimbursement', path: '/portal/board/reimbursement', icon: DollarSign },
-  ];
-
-  const resalePortalItems = [
-    { name: 'Dashboard', path: '/resale-portal', icon: LayoutDashboard },
-    { name: 'My Orders', path: '/resale-portal/my-orders', icon: FileText },
-    { name: 'New Order', path: '/resale-portal/order', icon: FileText },
-    { name: 'Account Settings', path: '/resale-portal/settings', icon: Users },
-  ];
-
-  const isHomeownerPortal = location.pathname.startsWith('/portal/homeowner');
-  const isBoardPortal = location.pathname.startsWith('/portal/board');
-  const isResalePortal = location.pathname.startsWith('/resale-portal');
 
   return (
     <div
@@ -136,112 +106,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <div className="flex-1 overflow-y-auto">
         <div className="py-2 px-2 space-y-1">
-          <div className="mb-2 pb-2 border-b border-white/10">
-            <Link
-              to="/portal"
-              className={cn(
-                "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
-                location.pathname === '/portal' && "bg-white/10 font-medium"
-              )}
-            >
-              <Home size={20} />
-              <span>Portal Selection</span>
-            </Link>
-          </div>
-          
-          {isHomeownerPortal && (
-            <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Homeowner Portal</p>
-              {homeownerPortalItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
-                    location.pathname === item.path && "bg-white/10 font-medium"
-                  )}
-                >
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-          
-          {isBoardPortal && (
-            <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Board Portal</p>
-              {boardPortalItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
-                    location.pathname === item.path && "bg-white/10 font-medium"
-                  )}
-                >
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-          
-          {isResalePortal && (
-            <div className="mb-2 pb-2 border-b border-white/10">
-              <p className="px-3 py-1 text-white/60 text-xs uppercase">Resale Portal</p>
-              {resalePortalItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-2 py-2 px-3 rounded-md text-white hover:bg-white/10",
-                    location.pathname === item.path && "bg-white/10 font-medium"
-                  )}
-                >
-                  <item.icon size={20} />
-                  <span>{item.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          <SidebarNavItem
-            name="Homeowner Portal"
-            path="/portal/homeowner"
-            icon={Home}
-            isOpen={activeSection === 'homeowner-portal'}
-            toggleSection={() => toggleSection('homeowner-portal')}
-            isActive={location.pathname === '/portal/homeowner'}
-          />
-          
-          <SidebarNavItem
-            name="Board Portal"
-            path="/portal/board"
-            icon={Building}
-            isOpen={activeSection === 'board-portal'}
-            toggleSection={() => toggleSection('board-portal')}
-            isActive={location.pathname === '/portal/board'}
-          />
-          
-          <SidebarNavItem
-            name="Vendor Portal"
-            path="/portal/vendor"
-            icon={Truck}
-            isOpen={activeSection === 'vendor-portal'}
-            toggleSection={() => toggleSection('vendor-portal')}
-            isActive={location.pathname === '/portal/vendor'}
-          />
-
-          <SidebarNavItem
-            name="Resale Portal"
-            path="/resale-portal"
-            icon={ScrollText}
-            isOpen={activeSection === 'resale-portal'}
-            toggleSection={() => toggleSection('resale-portal')}
-            isActive={location.pathname === '/resale-portal'}
-          />
-
           {mainNavItems.map((item) => (
             <SidebarNavItem
               key={item.path}

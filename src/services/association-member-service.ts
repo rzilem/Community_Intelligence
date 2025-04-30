@@ -1,10 +1,24 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AssociationMember, MemberFormData } from '@/types/member-types';
+import { AssociationMemberRole } from '@/types/communication-types';
+
+export interface AssociationMember {
+  id: string;
+  user_id: string;
+  association_id: string;
+  role_type: 'board' | 'committee';
+  role_name: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const associationMemberService = {
-  getAssociationMembers: async (associationId: string): Promise<AssociationMember[]> => {
+  // Fetch board and committee members for an association
+  getAssociationMembers: async (associationId: string) => {
     try {
       const { data, error } = await supabase
         .from('association_member_roles')
@@ -18,6 +32,7 @@ export const associationMemberService = {
         throw error;
       }
 
+      // For each member, fetch their profile information
       const membersWithProfiles = await Promise.all(
         data.map(async (member) => {
           const { data: profileData, error: profileError } = await supabase
@@ -31,34 +46,39 @@ export const associationMemberService = {
           }
 
           return {
-            ...member,
+            id: member.id,
+            user_id: member.user_id,
+            association_id: member.association_id,
+            role_type: member.role_type,
+            role_name: member.role_name,
             first_name: profileData?.first_name || '',
             last_name: profileData?.last_name || '',
             email: profileData?.email || '',
-            member_type: 'homeowner' // Default to homeowner since member_type column doesn't exist
-          } as AssociationMember;
+            created_at: member.created_at,
+            updated_at: member.updated_at
+          };
         })
       );
 
-      return membersWithProfiles;
+      return membersWithProfiles as AssociationMember[];
     } catch (error) {
       console.error('Error in getAssociationMembers:', error);
       throw error;
     }
   },
 
-  addAssociationMember: async (memberData: MemberFormData): Promise<AssociationMember> => {
+  // Add a new board or committee member
+  addAssociationMember: async (memberData: {
+    user_id: string;
+    association_id: string;
+    role_type: 'board' | 'committee';
+    role_name: string;
+  }) => {
     try {
-      // Exclude member_type from insertion if it doesn't exist in the table
+      // First, insert the member role
       const { data, error } = await supabase
         .from('association_member_roles')
-        .insert({
-          user_id: memberData.user_id,
-          association_id: memberData.association_id,
-          role_type: memberData.role_type,
-          role_name: memberData.role_name
-          // member_type is omitted as it doesn't exist in the database table
-        })
+        .insert(memberData)
         .select()
         .single();
 
@@ -67,6 +87,7 @@ export const associationMemberService = {
         throw error;
       }
 
+      // Then fetch the profile data for the user
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, last_name, email')
@@ -80,11 +101,16 @@ export const associationMemberService = {
       toast.success(`Member added as ${memberData.role_name} successfully`);
 
       return {
-        ...data,
+        id: data.id,
+        user_id: data.user_id,
+        association_id: data.association_id,
+        role_type: data.role_type,
+        role_name: data.role_name,
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type // Add to the returned object even if not in DB
+        created_at: data.created_at,
+        updated_at: data.updated_at
       } as AssociationMember;
     } catch (error) {
       console.error('Error in addAssociationMember:', error);
@@ -92,17 +118,15 @@ export const associationMemberService = {
     }
   },
 
-  updateAssociationMember: async (id: string, memberData: Partial<MemberFormData>): Promise<AssociationMember> => {
+  // Update an existing board or committee member
+  updateAssociationMember: async (id: string, memberData: {
+    role_type: 'board' | 'committee';
+    role_name: string;
+  }) => {
     try {
-      // Exclude member_type from update if it doesn't exist in the table
       const { data, error } = await supabase
         .from('association_member_roles')
-        .update({ 
-          role_type: memberData.role_type,
-          role_name: memberData.role_name,
-          user_id: memberData.user_id
-          // member_type is omitted as it doesn't exist in the database table
-        })
+        .update(memberData)
         .eq('id', id)
         .select()
         .single();
@@ -112,6 +136,7 @@ export const associationMemberService = {
         throw error;
       }
 
+      // Fetch the profile data for the user
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('first_name, last_name, email')
@@ -125,11 +150,16 @@ export const associationMemberService = {
       toast.success(`Member updated successfully`);
 
       return {
-        ...data,
+        id: data.id,
+        user_id: data.user_id,
+        association_id: data.association_id,
+        role_type: data.role_type,
+        role_name: data.role_name,
         first_name: profileData?.first_name || '',
         last_name: profileData?.last_name || '',
         email: profileData?.email || '',
-        member_type: memberData.member_type || 'homeowner' // Add to the returned object even if not in DB
+        created_at: data.created_at,
+        updated_at: data.updated_at
       } as AssociationMember;
     } catch (error) {
       console.error('Error in updateAssociationMember:', error);
@@ -137,7 +167,8 @@ export const associationMemberService = {
     }
   },
 
-  removeAssociationMember: async (id: string): Promise<void> => {
+  // Remove a board or committee member
+  removeAssociationMember: async (id: string) => {
     const { error } = await supabase
       .from('association_member_roles')
       .delete()
@@ -149,5 +180,34 @@ export const associationMemberService = {
     }
 
     toast.success('Member removed successfully');
+  },
+
+  // Get all association users for selection
+  getAssociationUsers: async (associationId: string) => {
+    const { data, error } = await supabase
+      .from('association_users')
+      .select(`
+        *,
+        profiles:user_id (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('association_id', associationId);
+
+    if (error) {
+      console.error('Error fetching association users:', error);
+      throw error;
+    }
+
+    return data.map(user => ({
+      id: user.user_id,
+      first_name: user.profiles?.first_name,
+      last_name: user.profiles?.last_name,
+      email: user.profiles?.email,
+      role: user.role
+    }));
   }
 };

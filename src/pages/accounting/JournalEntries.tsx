@@ -9,50 +9,68 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import JournalEntryTable, { JournalEntry } from '@/components/banking/JournalEntryTable';
 import JournalEntryDialog from '@/components/banking/JournalEntryDialog';
-import { GLAccount } from '@/types/accounting-types';
-import { ensureGLAccountsHaveIsActive } from '@/utils/mock-data-helpers';
 
-// Updated mock GL accounts to match the GLAccount interface
-const mockGLAccounts = ensureGLAccountsHaveIsActive([
-  { id: '1', number: '1000', code: '1000', name: 'Cash', type: 'Asset', description: 'Cash operating account', category: 'Cash & Equivalents', balance: 10000 },
-  { id: '2', number: '1100', code: '1100', name: 'Accounts Receivable', type: 'Asset', description: 'Accounts receivable', category: 'Receivables', balance: 5000 },
-  { id: '3', number: '2000', code: '2000', name: 'Accounts Payable', type: 'Liability', description: 'Accounts payable', category: 'Payables', balance: 3000 },
-  { id: '4', number: '3000', code: '3000', name: 'Retained Earnings', type: 'Equity', description: 'Retained earnings', category: 'Equity', balance: 7000 },
-  { id: '5', number: '4000', code: '4000', name: 'Revenue', type: 'Revenue', description: 'Revenue', category: 'Revenue', balance: 15000 },
-  { id: '6', number: '5000', code: '5000', name: 'Expenses', type: 'Expense', description: 'General expenses', category: 'Expenses', balance: 8000 },
-]);
+// Mock GL accounts
+const mockGLAccounts = [
+  { id: '1', number: '1000', name: 'Cash', type: 'Asset', balance: 10000 },
+  { id: '2', number: '1100', name: 'Accounts Receivable', type: 'Asset', balance: 5000 },
+  { id: '3', number: '2000', name: 'Accounts Payable', type: 'Liability', balance: 3000 },
+  { id: '4', number: '3000', name: 'Retained Earnings', type: 'Equity', balance: 7000 },
+  { id: '5', number: '4000', name: 'Revenue', type: 'Revenue', balance: 15000 },
+  { id: '6', number: '5000', name: 'Expenses', type: 'Expense', balance: 8000 },
+];
 
-// Sample mock journal entries data
-const mockJournalEntriesData: JournalEntry[] = [
+// Mock journal entries
+const mockJournalEntries: JournalEntry[] = [
   {
     id: '1',
-    date: '2025-03-15',
+    date: '2025-04-01',
     reference: 'JE-2025-001',
-    description: 'Monthly utility expense',
-    amount: 1500,
+    description: 'Monthly rent revenue recognition',
+    amount: 5000,
     status: 'posted',
-    createdBy: 'System Admin',
-    createdAt: '2025-03-15T08:30:00Z'
+    createdBy: 'John Smith',
+    createdAt: '2025-04-01T10:30:00Z'
   },
   {
     id: '2',
-    date: '2025-03-16',
+    date: '2025-04-02',
     reference: 'JE-2025-002',
-    description: 'Assessment revenue recognition',
-    amount: 12000,
+    description: 'Office supplies expense',
+    amount: 350.75,
     status: 'posted',
-    createdBy: 'John Doe',
-    createdAt: '2025-03-16T09:15:00Z'
+    createdBy: 'John Smith',
+    createdAt: '2025-04-02T11:15:00Z'
   },
   {
     id: '3',
-    date: '2025-03-20',
+    date: '2025-04-05',
     reference: 'JE-2025-003',
-    description: 'Office supplies expense',
-    amount: 350,
+    description: 'Maintenance service payment',
+    amount: 1200,
+    status: 'reconciled',
+    createdBy: 'Jane Doe',
+    createdAt: '2025-04-05T14:45:00Z'
+  },
+  {
+    id: '4',
+    date: '2025-04-08',
+    reference: 'JE-2025-004',
+    description: 'Adjustment for overpayment of assessment fees',
+    amount: 475.25,
     status: 'draft',
-    createdBy: 'Jane Smith',
-    createdAt: '2025-03-20T14:45:00Z'
+    createdBy: 'Jane Doe',
+    createdAt: '2025-04-08T09:20:00Z'
+  },
+  {
+    id: '5',
+    date: '2025-04-09',
+    reference: 'JE-2025-005',
+    description: 'Transfer to reserve account',
+    amount: 2500,
+    status: 'posted',
+    createdBy: 'John Smith',
+    createdAt: '2025-04-09T15:10:00Z'
   }
 ];
 
@@ -60,7 +78,7 @@ const JournalEntries = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntriesData);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | undefined>();
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>();
   

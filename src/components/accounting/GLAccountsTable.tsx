@@ -1,107 +1,60 @@
-import React, { useState } from 'react';
-import { Search, PlusCircle, SortAsc, SortDesc } from 'lucide-react';
+
+import React from 'react';
+import { Search, ArrowUpDown, Download, PlusCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ColumnSelector from '@/components/table/ColumnSelector';
 import { GLAccount } from '@/types/accounting-types';
-import GLAccountGroups from './GLAccountGroups';
-import { GLAccountDialog } from './GLAccountDialog';
-import GLAccountImportExport from './GLAccountImportExport';
-import { useAuth } from '@/contexts/auth/useAuth';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { useUserColumns } from '@/hooks/useUserColumns';
+
+type ColumnKey = 'code' | 'description' | 'type' | 'category';
 
 interface GLAccountsTableProps {
   accounts: GLAccount[];
   searchTerm: string;
   accountType: string;
+  visibleColumns: ColumnKey[];
   onSearchChange: (value: string) => void;
   onAccountTypeChange: (value: string) => void;
-  onEdit?: (account: GLAccount) => void;
-  onAccountAdded?: (account: GLAccount) => void;
+  onColumnChange: (columns: string[]) => void;
 }
 
 const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
   accounts,
   searchTerm,
   accountType,
+  visibleColumns,
   onSearchChange,
   onAccountTypeChange,
-  onEdit,
-  onAccountAdded
+  onColumnChange
 }) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { currentAssociation } = useAuth();
-  const [balanceRange, setBalanceRange] = useState<[number, number]>([0, 20000]);
-  const [sortField, setSortField] = useState<string>('code');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const columnOptions = [
+    { id: 'code', label: 'Code' },
+    { id: 'description', label: 'Description' },
+    { id: 'type', label: 'GL Type' },
+    { id: 'category', label: 'Category' }
+  ];
 
-  const categories = Array.from(new Set(accounts.map(account => account.category))).filter(Boolean) as string[];
+  const { 
+    visibleColumnIds, 
+    updateVisibleColumns
+  } = useUserColumns(columnOptions, 'gl-accounts-table');
+
+  // Use visibleColumns passed from the parent component
+  const handleColumnChange = (columns: string[]) => {
+    updateVisibleColumns(columns);
+    onColumnChange(columns);
+  };
 
   const filteredAccounts = accounts.filter(account => {
+    const matchesSearch = account.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         account.code.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = accountType === 'all' || account.type === accountType;
-    const matchesCategory = categoryFilter === 'all' || account.category === categoryFilter;
-    const matchesBalance = account.balance >= balanceRange[0] && account.balance <= balanceRange[1];
-    const matchesActive =
-      activeFilter === 'all' ||
-      (activeFilter === 'active' && account.is_active) ||
-      (activeFilter === 'inactive' && !account.is_active);
-    return matchesType && matchesCategory && matchesBalance && matchesActive;
+    
+    return matchesSearch && matchesType;
   });
-
-  const sortedAccounts = [...filteredAccounts].sort((a, b) => {
-    let valueA, valueB;
-    switch (sortField) {
-      case 'code':
-        valueA = a.code;
-        valueB = b.code;
-        break;
-      case 'name':
-        valueA = a.name;
-        valueB = b.name;
-        break;
-      case 'balance':
-        valueA = a.balance || 0;
-        valueB = b.balance || 0;
-        break;
-      default:
-        valueA = a.code;
-        valueB = b.code;
-    }
-    if (typeof valueA === 'number' && typeof valueB === 'number') {
-      return sortDirection === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-    if (typeof valueA === 'string' && typeof valueB === 'string') {
-      return sortDirection === 'asc'
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
-    }
-    return 0;
-  });
-
-  const toggleSortDirection = () => {
-    setSortDirection(current => current === 'asc' ? 'desc' : 'asc');
-  };
-
-  const handleSortChange = (field: string) => {
-    if (sortField === field) {
-      toggleSortDirection();
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const maxBalance = Math.max(...accounts.map(account => account.balance || 0));
-  
-  const handleActiveFilterChange = (value: string) => {
-    setActiveFilter(value as 'all' | 'active' | 'inactive');
-  };
 
   return (
     <>
@@ -130,118 +83,99 @@ const GLAccountsTable: React.FC<GLAccountsTableProps> = ({
             </SelectContent>
           </Select>
           
-          <Select value={activeFilter} onValueChange={handleActiveFilterChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Active Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-          >
-            {showAdvancedFilters ? 'Hide Filters' : 'Advanced Filters'}
-          </Button>
-          
-          <GLAccountImportExport 
-            accounts={accounts} 
-            associationId={currentAssociation?.id}
-            onImportComplete={() => onAccountAdded && onAccountAdded({} as GLAccount)}
+          <ColumnSelector 
+            columns={columnOptions} 
+            selectedColumns={visibleColumns} 
+            onChange={handleColumnChange} 
           />
           
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" /> Export
+          </Button>
+          
+          <Button>
             <PlusCircle className="h-4 w-4 mr-2" /> Add Account
           </Button>
         </div>
       </div>
 
-      {showAdvancedFilters && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="categoryFilter">Filter by Category</Label>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger id="categoryFilter" className="w-full">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label>Balance Range: ${balanceRange[0]} - ${balanceRange[1]}</Label>
-                <Slider
-                  className="mt-2"
-                  min={0}
-                  max={maxBalance + 1000}
-                  step={100}
-                  value={balanceRange}
-                  onValueChange={(value) => setBalanceRange(value as [number, number])}
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label>Sort By</Label>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <Badge 
-                    variant={sortField === 'code' ? 'default' : 'outline'} 
-                    className="cursor-pointer"
-                    onClick={() => handleSortChange('code')}
-                  >
-                    Code {sortField === 'code' && (
-                      sortDirection === 'asc' ? <SortAsc className="inline h-3 w-3 ml-1" /> : <SortDesc className="inline h-3 w-3 ml-1" />
-                    )}
-                  </Badge>
-                  <Badge 
-                    variant={sortField === 'name' ? 'default' : 'outline'} 
-                    className="cursor-pointer"
-                    onClick={() => handleSortChange('name')}
-                  >
-                    Name {sortField === 'name' && (
-                      sortDirection === 'asc' ? <SortAsc className="inline h-3 w-3 ml-1" /> : <SortDesc className="inline h-3 w-3 ml-1" />
-                    )}
-                  </Badge>
-                  <Badge 
-                    variant={sortField === 'balance' ? 'default' : 'outline'} 
-                    className="cursor-pointer"
-                    onClick={() => handleSortChange('balance')}
-                  >
-                    Balance {sortField === 'balance' && (
-                      sortDirection === 'asc' ? <SortAsc className="inline h-3 w-3 ml-1" /> : <SortDesc className="inline h-3 w-3 ml-1" />
-                    )}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <GLAccountGroups 
-        accounts={sortedAccounts}
-        searchTerm={searchTerm}
-        onEdit={onEdit}
-      />
-
-      <GLAccountDialog 
-        isOpen={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
-        associationId={currentAssociation?.id}
-        onAccountAdded={onAccountAdded}
-      />
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {visibleColumns.includes('code') && (
+                <TableHead className="w-[100px]">
+                  <div className="flex items-center">
+                    Code
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </div>
+                </TableHead>
+              )}
+              {visibleColumns.includes('description') && (
+                <TableHead>
+                  <div className="flex items-center">
+                    Description
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </div>
+                </TableHead>
+              )}
+              {visibleColumns.includes('type') && (
+                <TableHead>
+                  <div className="flex items-center">
+                    GL Type
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </div>
+                </TableHead>
+              )}
+              {visibleColumns.includes('category') && (
+                <TableHead>
+                  <div className="flex items-center">
+                    Category
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </div>
+                </TableHead>
+              )}
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredAccounts.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={visibleColumns.length + 1} className="text-center py-6 text-muted-foreground">
+                  No accounts found matching your search.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredAccounts.map((account) => (
+                <TableRow key={account.code}>
+                  {visibleColumns.includes('code') && (
+                    <TableCell className="font-medium">{account.code}</TableCell>
+                  )}
+                  {visibleColumns.includes('description') && (
+                    <TableCell>{account.description}</TableCell>
+                  )}
+                  {visibleColumns.includes('type') && (
+                    <TableCell>{account.type}</TableCell>
+                  )}
+                  {visibleColumns.includes('category') && (
+                    <TableCell>{account.category}</TableCell>
+                  )}
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-destructive">
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </>
   );
 };

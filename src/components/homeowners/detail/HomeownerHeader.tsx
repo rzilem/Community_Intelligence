@@ -11,7 +11,7 @@ interface HomeownerHeaderProps {
   avatarUrl?: string;
   status?: string;
   tags?: string[];
-  violations?: number | string[]; // Update type to accept either number or string[]
+  violations?: string[];
   onProfileImageUpdated?: (url: string) => void;
   onEditClick?: () => void;
 }
@@ -22,7 +22,7 @@ export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
   avatarUrl,
   status = '',
   tags = [],
-  violations = [], // Default to empty array
+  violations = [],
   onProfileImageUpdated,
   onEditClick
 }) => {
@@ -80,17 +80,11 @@ export const HomeownerHeader: React.FC<HomeownerHeaderProps> = ({
                   {tag}
                 </span>
               ))}
-              {Array.isArray(violations) ? (
-                violations.map((violation, index) => (
-                  <span key={index} className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                    {violation}
-                  </span>
-                ))
-              ) : violations > 0 ? (
-                <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                  {violations} Violation{violations !== 1 ? 's' : ''}
+              {violations && violations.map((violation, index) => (
+                <span key={index} className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded">
+                  {violation}
                 </span>
-              ) : null}
+              ))}
             </div>
           </div>
           

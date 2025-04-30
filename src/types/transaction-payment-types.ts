@@ -21,10 +21,6 @@ export interface Payment {
   associationName: string;
   category: string;
   associationId?: string;
-  invoiceId?: string; // Link to the invoice
-  scheduledDate?: string;
-  processedDate?: string;
-  notes?: string;
 }
 
 export interface TransactionTableProps {

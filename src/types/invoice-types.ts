@@ -1,4 +1,3 @@
-
 export interface Invoice {
   id: string;
   tracking_number?: string;
@@ -21,9 +20,6 @@ export interface Invoice {
   payment_date?: string;
   gl_account_id?: string;
   bank_account_id?: string;
-  payment_id?: string; // Link to payment record
-  payment_status?: 'scheduled' | 'processing' | 'completed' | 'failed';
-  scheduled_payment_date?: string;
 }
 
 export interface InvoiceFilterOptions {

@@ -1,3 +1,4 @@
+
 import { saveAs } from 'file-saver';
 import * as XLSX from 'xlsx';
 import { MaintenanceRequest } from '@/types/maintenance-types';
@@ -141,12 +142,9 @@ export const generateAddresses = (
                            propertyTypes[3];                         // 10% villa
       
       // For condos and townhomes, add unit numbers
-      const unitLetter = (propertyType === "Condo" || propertyType === "Townhome") 
+      const unitNumber = (propertyType === "Condo" || propertyType === "Townhome") 
         ? String.fromCharCode(65 + Math.floor(Math.random() * 4)) // Unit A, B, C, or D
         : "";
-      
-      // Properly format unit number (just the letter, not "Unit X X")
-      const unitNumber = unitLetter ? unitLetter : null;
       
       // Square footage varies by property type
       let squareFeet;
@@ -176,8 +174,10 @@ export const generateAddresses = (
         bathrooms = 1 + Math.floor(Math.random() * 2); // 1-2 bathrooms
       }
       
-      // Format address without duplicating the unit number in the address field
-      const address = `${houseNumber} ${street}`;
+      // Format address with unit if present
+      const address = unitNumber 
+        ? `${houseNumber} ${street}, Unit ${unitNumber}` 
+        : `${houseNumber} ${street}`;
       
       // Generate owner information
       const ownerFirstNameIndex = Math.floor(Math.random() * firstNames.length);
@@ -195,7 +195,7 @@ export const generateAddresses = (
       addresses.push({
         // Property data
         address: address,
-        unit_number: unitNumber,
+        unit_number: unitNumber || null,
         city: city,
         state: state,
         zip: zipCode,
@@ -615,10 +615,7 @@ export const exportAddressesAsCSV = (
   const addresses = generateAddresses(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(addresses);
   const workbook = XLSX.utils.book_new();
-  
-  // Truncate worksheet name to stay under Excel's 31 character limit
-  const worksheetName = `${communityName} Properties`.substring(0, 30);
-  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Properties & Owners`);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -639,10 +636,7 @@ export const exportMaintenanceRequestsAsCSV = (
   const requests = generateMaintenanceRequests(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(requests);
   const workbook = XLSX.utils.book_new();
-  
-  // Truncate worksheet name to stay under Excel's 31 character limit
-  const worksheetName = `${communityName} Maintenance`.substring(0, 30);
-  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Maintenance Requests`);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -663,10 +657,7 @@ export const exportComplianceIssuesAsCSV = (
   const issues = generateComplianceIssues(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(issues);
   const workbook = XLSX.utils.book_new();
-  
-  // Truncate worksheet name to stay under Excel's 31 character limit
-  const worksheetName = `${communityName} Compliance`.substring(0, 30);
-  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Compliance Issues`);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
@@ -687,10 +678,7 @@ export const exportFinancialRecordsAsCSV = (
   const records = generateFinancialRecords(count, communityName, zipCode, city, state);
   const worksheet = XLSX.utils.json_to_sheet(records);
   const workbook = XLSX.utils.book_new();
-  
-  // Truncate worksheet name to stay under Excel's 31 character limit
-  const worksheetName = `${communityName} Financial`.substring(0, 30);
-  XLSX.utils.book_append_sheet(workbook, worksheet, worksheetName);
+  XLSX.utils.book_append_sheet(workbook, worksheet, `${communityName} Financial Records`);
   
   // Generate buffer
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,22 +19,24 @@ import {
 } from '@/components/ui/alert-dialog';
 import AssociationEditDialog from './AssociationEditDialog';
 import { LoadingState } from '@/components/ui/loading-state';
-import { useUserColumns } from '@/hooks/useUserColumns';
+import ColumnSelector from '@/components/table/ColumnSelector';
 
 export const associationTableColumns = [
-  { id: 'name', label: 'Association Name', defaultVisible: true },
-  { id: 'property_type', label: 'Type', defaultVisible: true },
-  { id: 'location', label: 'Location', defaultVisible: true },
-  { id: 'contact_email', label: 'Contact', defaultVisible: true },
-  { id: 'status', label: 'Status', defaultVisible: true },
-  { id: 'total_units', label: 'Units', defaultVisible: false },
-  { id: 'phone', label: 'Phone', defaultVisible: false },
-  { id: 'created_at', label: 'Created', defaultVisible: false },
-  { id: 'founded_date', label: 'Founded', defaultVisible: false },
-  { id: 'insurance_expiration', label: 'Insurance Exp.', defaultVisible: false },
-  { id: 'fire_inspection_due', label: 'Fire Insp. Due', defaultVisible: false },
-  { id: 'actions', label: 'Actions', defaultVisible: true }
+  { id: 'name', label: 'Association Name' },
+  { id: 'property_type', label: 'Type' },
+  { id: 'location', label: 'Location' },
+  { id: 'contact_email', label: 'Contact' },
+  { id: 'status', label: 'Status' },
+  { id: 'total_units', label: 'Units' },
+  { id: 'phone', label: 'Phone' },
+  { id: 'created_at', label: 'Created' },
+  { id: 'founded_date', label: 'Founded' },
+  { id: 'insurance_expiration', label: 'Insurance Exp.' },
+  { id: 'fire_inspection_due', label: 'Fire Insp. Due' },
+  { id: 'actions', label: 'Actions' }
 ];
+
+const defaultColumns = ['name', 'property_type', 'location', 'contact_email', 'status', 'actions'];
 
 interface AssociationTableProps {
   associations: Association[];
@@ -44,7 +46,6 @@ interface AssociationTableProps {
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
   onViewProfile?: (id: string) => void;
-  visibleColumnIds?: string[]; // Add this prop to receive visible columns from parent
 }
 
 const AssociationTable: React.FC<AssociationTableProps> = ({ 
@@ -54,27 +55,12 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   onDelete,
   onToggleSelect,
   selectedAssociations = [],
-  onViewProfile,
-  visibleColumnIds: propVisibleColumnIds // Rename to avoid conflicts
+  onViewProfile
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedAssociation, setSelectedAssociation] = useState<Association | null>(null);
-  
-  // Use the user columns hook if no visibleColumnIds are provided as props
-  const { visibleColumnIds: hookVisibleColumnIds } = useUserColumns(
-    associationTableColumns,
-    'associations-table'
-  );
-  
-  // Use prop values if provided, otherwise use the hook values
-  const visibleColumnIds = propVisibleColumnIds || hookVisibleColumnIds;
-  
-  // Memoized values to prevent unnecessary renders
-  const isSelected = useMemo(() => {
-    const selectedMap = new Map(selectedAssociations.map(a => [a.id, true]));
-    return (association: Association) => selectedMap.has(association.id);
-  }, [selectedAssociations]);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(defaultColumns);
 
   const handleEditClick = (association: Association) => {
     setSelectedAssociation(association);
@@ -100,6 +86,10 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     setEditDialogOpen(false);
   };
 
+  const isSelected = (association: Association) => {
+    return selectedAssociations.some(a => a.id === association.id);
+  };
+
   // Format date for display
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
@@ -110,35 +100,58 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     return <LoadingState variant="skeleton" count={3} />;
   }
   
+  // Reorder columns function
+  const handleReorderColumns = (sourceIndex: number, destinationIndex: number) => {
+    const orderedColumns = [...visibleColumns];
+    const [removed] = orderedColumns.splice(sourceIndex, 1);
+    orderedColumns.splice(destinationIndex, 0, removed);
+    setVisibleColumns(orderedColumns);
+  };
+
+  // Set local storage with column preferences
+  const handleColumnsChange = (columns: string[]) => {
+    setVisibleColumns(columns);
+    localStorage.setItem('associationTableColumns', JSON.stringify(columns));
+  };
+  
   return (
     <>
+      <div className="flex justify-end mb-4">
+        <ColumnSelector
+          columns={associationTableColumns}
+          selectedColumns={visibleColumns}
+          onChange={handleColumnsChange}
+          onReorder={handleReorderColumns}
+          className="mb-2"
+        />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {onToggleSelect && (
+              {onToggleSelect && visibleColumns.some(col => col === 'select') && (
                 <TableHead className="w-[50px]">
                   <span className="sr-only">Select</span>
                 </TableHead>
               )}
-              {visibleColumnIds.includes('name') && <TableHead>Association Name</TableHead>}
-              {visibleColumnIds.includes('property_type') && <TableHead>Type</TableHead>}
-              {visibleColumnIds.includes('location') && <TableHead>Location</TableHead>}
-              {visibleColumnIds.includes('contact_email') && <TableHead>Contact</TableHead>}
-              {visibleColumnIds.includes('total_units') && <TableHead>Units</TableHead>}
-              {visibleColumnIds.includes('phone') && <TableHead>Phone</TableHead>}
-              {visibleColumnIds.includes('created_at') && <TableHead>Created</TableHead>}
-              {visibleColumnIds.includes('founded_date') && <TableHead>Founded</TableHead>}
-              {visibleColumnIds.includes('insurance_expiration') && <TableHead>Insurance Exp.</TableHead>}
-              {visibleColumnIds.includes('fire_inspection_due') && <TableHead>Fire Insp. Due</TableHead>}
-              {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
-              {visibleColumnIds.includes('actions') && <TableHead className="text-right">Actions</TableHead>}
+              {visibleColumns.includes('name') && <TableHead>Association Name</TableHead>}
+              {visibleColumns.includes('property_type') && <TableHead>Type</TableHead>}
+              {visibleColumns.includes('location') && <TableHead>Location</TableHead>}
+              {visibleColumns.includes('contact_email') && <TableHead>Contact</TableHead>}
+              {visibleColumns.includes('total_units') && <TableHead>Units</TableHead>}
+              {visibleColumns.includes('phone') && <TableHead>Phone</TableHead>}
+              {visibleColumns.includes('created_at') && <TableHead>Created</TableHead>}
+              {visibleColumns.includes('founded_date') && <TableHead>Founded</TableHead>}
+              {visibleColumns.includes('insurance_expiration') && <TableHead>Insurance Exp.</TableHead>}
+              {visibleColumns.includes('fire_inspection_due') && <TableHead>Fire Insp. Due</TableHead>}
+              {visibleColumns.includes('status') && <TableHead>Status</TableHead>}
+              {visibleColumns.includes('actions') && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {associations.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={visibleColumns.length + (onToggleSelect ? 1 : 0)} className="text-center py-8 text-muted-foreground">
                   No associations found
                 </TableCell>
               </TableRow>
@@ -148,7 +161,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                   key={association.id}
                   className={isSelected(association) ? "bg-muted/50" : ""}
                 >
-                  {onToggleSelect && (
+                  {onToggleSelect && visibleColumns.includes('select') && (
                     <TableCell>
                       <Checkbox 
                         checked={isSelected(association)}
@@ -157,7 +170,7 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                       />
                     </TableCell>
                   )}
-                  {visibleColumnIds.includes('name') && (
+                  {visibleColumns.includes('name') && (
                     <TableCell>
                       {onViewProfile ? (
                         <button 
@@ -173,38 +186,38 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                       )}
                     </TableCell>
                   )}
-                  {visibleColumnIds.includes('property_type') && (
+                  {visibleColumns.includes('property_type') && (
                     <TableCell>{association.property_type || 'HOA'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('location') && (
+                  {visibleColumns.includes('location') && (
                     <TableCell>
                       {association.city && association.state 
                         ? `${association.city}, ${association.state}`
                         : association.address || 'No location data'}
                     </TableCell>
                   )}
-                  {visibleColumnIds.includes('contact_email') && (
+                  {visibleColumns.includes('contact_email') && (
                     <TableCell>{association.contact_email || 'No contact info'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('total_units') && (
+                  {visibleColumns.includes('total_units') && (
                     <TableCell>{association.total_units || 'N/A'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('phone') && (
+                  {visibleColumns.includes('phone') && (
                     <TableCell>{association.phone || 'N/A'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('created_at') && (
+                  {visibleColumns.includes('created_at') && (
                     <TableCell>{formatDate(association.created_at)}</TableCell>
                   )}
-                  {visibleColumnIds.includes('founded_date') && (
+                  {visibleColumns.includes('founded_date') && (
                     <TableCell>{association.founded_date || 'N/A'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('insurance_expiration') && (
+                  {visibleColumns.includes('insurance_expiration') && (
                     <TableCell>{association.insurance_expiration || 'N/A'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('fire_inspection_due') && (
+                  {visibleColumns.includes('fire_inspection_due') && (
                     <TableCell>{association.fire_inspection_due || 'N/A'}</TableCell>
                   )}
-                  {visibleColumnIds.includes('status') && (
+                  {visibleColumns.includes('status') && (
                     <TableCell>
                       {!association.is_archived ? (
                         <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Active</Badge>
@@ -213,29 +226,25 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
                       )}
                     </TableCell>
                   )}
-                  {visibleColumnIds.includes('actions') && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {onEdit && (
-                          <TooltipButton
-                            size="icon"
-                            variant="ghost"
-                            tooltip="Edit Association"
-                            onClick={() => handleEditClick(association)}
-                          >
-                            <PencilLine className="h-4 w-4" />
-                          </TooltipButton>
-                        )}
-                        {onDelete && (
-                          <TooltipButton
-                            size="icon"
-                            variant="ghost"
-                            tooltip="Delete Association"
-                            onClick={() => handleDeleteClick(association)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </TooltipButton>
-                        )}
+                  {visibleColumns.includes('actions') && (
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <TooltipButton
+                          size="icon"
+                          variant="ghost"
+                          tooltip="Edit Association"
+                          onClick={() => handleEditClick(association)}
+                        >
+                          <PencilLine className="h-4 w-4" />
+                        </TooltipButton>
+                        <TooltipButton
+                          size="icon"
+                          variant="ghost"
+                          tooltip="Delete Association"
+                          onClick={() => handleDeleteClick(association)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </TooltipButton>
                       </div>
                     </TableCell>
                   )}
@@ -278,4 +287,4 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   );
 };
 
-export default React.memo(AssociationTable);
+export default AssociationTable;

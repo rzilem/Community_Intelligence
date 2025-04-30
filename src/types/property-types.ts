@@ -34,8 +34,4 @@ export interface Property {
   unit_number?: string;
   created_at: string; // Making this required to match app-types.ts
   updated_at: string; // Making this required to match app-types.ts
-  status?: string;
-  year_built?: number;
-  lot_size?: number;
-  notes?: string;
 }

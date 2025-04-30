@@ -10,7 +10,6 @@ export const usePropertyList = (associationId?: string) => {
 
   useEffect(() => {
     const loadProperties = async () => {
-      // Clear properties and return if no valid associationId
       if (!associationId) {
         setProperties([]);
         return;

@@ -31,7 +31,7 @@ export const ResidentSelectField: React.FC<ResidentSelectFieldProps> = ({
   return (
     <ResidentFormField id={id} label={label} error={error?.message}>
       <Select 
-        defaultValue={value || "unassigned"} 
+        defaultValue={value} 
         onValueChange={onChange}
       >
         <SelectTrigger>

@@ -38,11 +38,11 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         : undefined,
       order: { column: 'address', ascending: true },
     },
-    // Only execute query if we have a valid association ID (not 'unassigned')
+    // Only execute query if we have a valid association ID
     !!(selectedAssociationId && selectedAssociationId !== 'unassigned')
   );
 
-  // Fetch residents for the select dropdown - only if property ID is valid
+  // Fetch residents for the select dropdown
   const { data: residents = [], isLoading: isLoadingResidents } = useSupabaseQuery<any[]>(
     'residents',
     {
@@ -52,7 +52,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
         : undefined,
       order: { column: 'name', ascending: true },
     },
-    // Only execute query if we have a valid property ID (not 'unassigned')
+    // Only execute query if we have a valid property ID
     !!(selectedPropertyId && selectedPropertyId !== 'unassigned')
   );
 
@@ -71,7 +71,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     label: resident.name || resident.email || `Resident ${resident.id.substring(0, 8)}`,
   }));
 
-  // Reset propertyId when association changes
+  // Reset propertyId when association changes - use setTimeout to prevent state conflicts
   useEffect(() => {
     if (selectedAssociationId === 'unassigned' || selectedAssociationId === undefined) {
       setTimeout(() => {
@@ -81,7 +81,7 @@ const RequestAssignmentFields: React.FC<RequestAssignmentFieldsProps> = ({
     }
   }, [selectedAssociationId, form]);
 
-  // Reset residentId when property changes
+  // Reset residentId when property changes - use setTimeout to prevent state conflicts
   useEffect(() => {
     if (selectedPropertyId === 'unassigned' || selectedPropertyId === undefined) {
       setTimeout(() => {

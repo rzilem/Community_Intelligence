@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Settings, Workflow, Network, Shield, Puzzle, Database, Download, BarChart } from 'lucide-react';
+import { Settings, Workflow, Network, Shield, Puzzle, Database, Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
@@ -58,7 +58,7 @@ const System = () => {
     },
     {
       title: 'Financial Report Mapping',
-      icon: <BarChart className="h-5 w-5" />,
+      icon: <FileText className="h-5 w-5" />,
       description: 'Map GL codes from financial reports during client transitions.',
       link: '/system/financial-report-mapping'
     },
@@ -73,12 +73,6 @@ const System = () => {
       icon: <Shield className="h-5 w-5" />,
       description: 'Configure user roles, permissions, and access controls.',
       link: '/system/permissions'
-    },
-    {
-      title: 'Form Builder',
-      icon: <Download className="h-5 w-5" />,
-      description: 'Create and manage custom forms for portals and external websites.',
-      link: '/system/form-builder'
     }
   ];
 
@@ -104,4 +98,3 @@ const System = () => {
 };
 
 export default System;
-

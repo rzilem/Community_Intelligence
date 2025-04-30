@@ -7,19 +7,14 @@ import PaymentFilters from './PaymentFilters';
 import PaymentTable from './PaymentTable';
 import PaymentHistorySummary from './PaymentHistorySummary';
 import { Payment } from '@/types/transaction-payment-types';
-import { useToast } from '@/components/ui/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 interface PaymentsSectionProps {
   payments: Payment[];
-  onProcessPayment?: (paymentId: string) => void;
 }
 
-const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments, onProcessPayment }) => {
+const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const { toast } = useToast();
-  const navigate = useNavigate();
   
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = 
@@ -32,43 +27,6 @@ const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments, onProcessPa
     
     return matchesSearch && matchesStatus;
   });
-
-  const handleProcessPayment = (paymentId: string) => {
-    // Process the payment
-    if (onProcessPayment) {
-      onProcessPayment(paymentId);
-    }
-    
-    // Show a toast for demo purposes
-    toast({
-      title: "Payment processed",
-      description: `Payment ${paymentId} has been successfully processed.`,
-    });
-  };
-
-  const handleCreatePayment = () => {
-    // For now, this can navigate to a new route in the future
-    toast({
-      title: "Create payment",
-      description: "Payment creation flow would start here.",
-    });
-  };
-
-  const handleViewPayment = (paymentId: string) => {
-    // For demo purposes, just show a toast
-    toast({
-      title: "View payment details",
-      description: `Viewing details for payment ${paymentId}.`,
-    });
-  };
-  
-  const handleEditPayment = (paymentId: string) => {
-    // For demo purposes, just show a toast
-    toast({
-      title: "Edit payment",
-      description: `Editing payment ${paymentId}.`,
-    });
-  };
 
   return (
     <Card className="shadow-sm">
@@ -88,15 +46,9 @@ const PaymentsSection: React.FC<PaymentsSectionProps> = ({ payments, onProcessPa
               setSearchTerm={setSearchTerm}
               filterStatus={filterStatus}
               setFilterStatus={setFilterStatus}
-              onCreatePayment={handleCreatePayment}
             />
             
-            <PaymentTable 
-              payments={filteredPayments} 
-              onProcessPayment={handleProcessPayment}
-              onViewPayment={handleViewPayment}
-              onEditPayment={handleEditPayment}
-            />
+            <PaymentTable payments={filteredPayments} />
           </TabsContent>
           
           <TabsContent value="history" className="pt-4">
