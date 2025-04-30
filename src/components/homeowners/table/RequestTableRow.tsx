@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, Edit2, MessageSquare, History } from 'lucide-react';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import StatusBadge from '../history/badges/StatusBadge';
-import PriorityBadge from '../history/badges/PriorityBadge';
+import { PriorityBadge } from '../history/badges/PriorityBadge';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RequestTableRowProps {
