@@ -5,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FilePdf, Save, Settings } from 'lucide-react';
+import { FileText, Save, Settings } from 'lucide-react';
 import { FormTemplate } from '@/types/form-builder-types';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 
 interface FormSubmissionPDFExportProps {
   formTemplate: FormTemplate;
@@ -52,20 +52,30 @@ const FormSubmissionPDFExport: React.FC<FormSubmissionPDFExportProps> = ({
   
   const handleExport = () => {
     if (selectedIds.length === 0) {
-      toast.error("Please select at least one submission to export");
+      toast({
+        title: "Error",
+        description: "Please select at least one submission to export",
+        variant: "destructive"
+      });
       return;
     }
     
-    toast.success(`Exporting ${selectedIds.length} submissions as PDF`);
+    toast({
+      title: "Exporting PDF",
+      description: `Exporting ${selectedIds.length} submissions as PDF`,
+    });
+    
     // In a real implementation, this would call an API to generate and download the PDF
     setTimeout(() => {
       setOpen(false);
-      toast("PDF generated successfully", {
+      toast({
+        title: "PDF generated successfully",
         description: "Your PDF has been downloaded",
-        action: {
-          label: "Open",
-          onClick: () => console.log("Open PDF")
-        }
+        action: (
+          <Button variant="outline" size="sm" onClick={() => console.log("Open PDF")}>
+            Open
+          </Button>
+        ),
       });
     }, 1500);
   };
@@ -84,7 +94,7 @@ const FormSubmissionPDFExport: React.FC<FormSubmissionPDFExportProps> = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <FilePdf className="mr-2 h-4 w-4" />
+          <FileText className="mr-2 h-4 w-4" />
           Export to PDF
         </Button>
       </DialogTrigger>
