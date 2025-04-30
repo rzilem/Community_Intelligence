@@ -12,6 +12,11 @@ export function normalizeUrl(url: string): string {
   if (!url) return '';
 
   try {
+    // Handle URLs that don't have a protocol
+    if (!url.match(/^https?:\/\//i)) {
+      url = 'https://' + url;
+    }
+    
     // Parse the URL
     const parsed = new URL(url);
     
@@ -24,7 +29,7 @@ export function normalizeUrl(url: string): string {
     const search = parsed.search;
     const hash = parsed.hash;
     
-    // Remove duplicate slashes in the path
+    // Remove duplicate slashes in the path (but preserve initial double slash after protocol)
     path = path.replace(/\/+/g, '/');
     
     // Reconstruct the URL
@@ -32,17 +37,17 @@ export function normalizeUrl(url: string): string {
   } catch (error) {
     console.error('Error normalizing URL:', error);
     
-    // If URL parsing fails, do basic normalization
+    // If URL parsing fails, do basic cleanup
     // Add https:// if missing
     if (!url.match(/^https?:\/\//i)) {
       url = 'https://' + url;
     }
     
-    // Remove duplicate slashes in the path portion
-    const urlParts = url.split('://');
-    if (urlParts.length > 1) {
-      const protocol = urlParts[0];
-      let rest = urlParts[1];
+    // Remove duplicate slashes in the path portion, preserving protocol slashes
+    let parts = url.split('://');
+    if (parts.length > 1) {
+      const protocol = parts[0];
+      const rest = parts.slice(1).join('://'); 
       
       // Find where the path starts (after the first slash following the domain)
       const firstSlashPos = rest.indexOf('/');
@@ -55,6 +60,9 @@ export function normalizeUrl(url: string): string {
         
         return `${protocol}://${domain}${path}`;
       }
+      
+      // No path in URL, just return as is
+      return url;
     }
     
     // If all else fails, return the original URL

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserRound, Upload } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,6 +24,14 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   size = 'md'
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [hasImageError, setHasImageError] = useState(false);
+  
+  // Reset image state when imageUrl changes
+  useEffect(() => {
+    setImageLoaded(false);
+    setHasImageError(false);
+  }, [imageUrl]);
   
   // Get user initials for avatar fallback
   const getInitials = () => {
@@ -52,6 +60,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     }
     
     setIsUploading(true);
+    setImageLoaded(false);
     
     try {
       // Upload the profile image using our service
@@ -66,6 +75,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
     } catch (error: any) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image');
+      setHasImageError(true);
     } finally {
       setIsUploading(false);
     }
@@ -83,6 +93,19 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
         return 'h-10 w-10';
     }
   };
+
+  // Handle image load success
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+    setHasImageError(false);
+  };
+
+  // Handle image load error
+  const handleImageError = () => {
+    console.log('Profile image failed to load:', imageUrl);
+    setHasImageError(true);
+    setImageLoaded(false);
+  };
   
   return (
     <div className="relative group">
@@ -96,10 +119,18 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
       />
       <label htmlFor={`profile-upload-${userId}`} className="cursor-pointer">
         <Avatar className={`${getAvatarSize()} border border-gray-200`}>
-          {imageUrl ? (
-            <AvatarImage src={imageUrl} alt="Profile" />
+          {imageUrl && !hasImageError ? (
+            <AvatarImage 
+              src={imageUrl} 
+              alt="Profile" 
+              onLoad={handleImageLoad}
+              onError={handleImageError}
+              className={imageLoaded ? 'opacity-100' : 'opacity-0'} 
+            />
           ) : null}
-          <AvatarFallback className={`${getInitials() ? 'bg-primary/10 text-primary' : 'bg-muted'}`}>
+          <AvatarFallback 
+            className={`${getInitials() ? 'bg-primary/10 text-primary' : 'bg-muted'} ${imageUrl && !hasImageError && !imageLoaded ? 'opacity-100' : imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+          >
             {getInitials() || <UserRound size={size === 'lg' ? 32 : size === 'sm' ? 16 : 20} />}
           </AvatarFallback>
         </Avatar>
