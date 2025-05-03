@@ -1,10 +1,11 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
-import { Invoice } from "./services/invoice-types.ts";
+import { Invoice } from "./types/invoice-types.ts";  // Updated path to match actual file location
 
 const CURRENT_CONFIG_LOCKED = false;
 const supabase = createClient(Deno.env.get('SUPABASE_URL') || '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '');
