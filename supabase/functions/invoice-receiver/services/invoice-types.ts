@@ -1,4 +1,4 @@
 
-import { Invoice, Attachment } from "../../../../src/types/invoice-types.ts";
+import { Invoice, Attachment } from "../types/invoice-types.ts";
 
 export { Invoice, Attachment };
