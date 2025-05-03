@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { normalizeUrl } from '@/components/invoices/preview/previewUtils';
+import { normalizeUrl } from '@/components/invoices/preview/utils/urlUtils';
 
 export const useInvoiceDetail = (id: string | undefined) => {
   const isNewInvoice = id === 'new';
