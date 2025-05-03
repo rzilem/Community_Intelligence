@@ -19,12 +19,12 @@ const LeadOriginalEmailTab: React.FC<LeadOriginalEmailTabProps> = ({ lead }) => 
               className="w-full h-[65vh]" 
               sandbox="allow-same-origin"
             />
-          ) : lead.email_content ? (
-            <div className="p-4 whitespace-pre-wrap font-mono text-sm">
-              {lead.email_content}
-            </div>
           ) : (
-            <div className="p-4 text-muted-foreground">No content available for this lead.</div>
+            <div className="p-4 whitespace-pre-wrap font-mono text-sm">
+              {lead.html_content ? lead.html_content : (
+                <div className="p-4 text-muted-foreground">No content available for this lead.</div>
+              )}
+            </div>
           )}
         </div>
       </div>
