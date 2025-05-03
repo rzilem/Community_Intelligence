@@ -4,6 +4,7 @@ import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { normalizeUrl } from '@/components/invoices/preview/previewUtils';
 
 export const useInvoiceDetail = (id: string | undefined) => {
   const isNewInvoice = id === 'new';
@@ -54,8 +55,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   useEffect(() => {
     if (invoiceData) {
-      console.group('Invoice Data Debug');
-      console.log("Invoice ID:", id);
+      console.group('Invoice Data Processing');
       console.log("Raw Invoice Data:", invoiceData);
       
       // Explicitly log association and vendor data
@@ -69,6 +69,18 @@ export const useInvoiceDetail = (id: string | undefined) => {
         raw: invoiceData.vendor,
         type: typeof invoiceData.vendor
       });
+
+      // Process PDF URL if available
+      let normalizedPdfUrl = '';
+      if (invoiceData.pdf_url) {
+        try {
+          normalizedPdfUrl = normalizeUrl(invoiceData.pdf_url);
+          console.log("Normalized PDF URL:", normalizedPdfUrl);
+        } catch (err) {
+          console.error("Error normalizing PDF URL:", err);
+          normalizedPdfUrl = invoiceData.pdf_url;
+        }
+      }
       
       // Ensure full decimal precision for amount
       const fullAmount = invoiceData.amount !== null 
@@ -86,9 +98,15 @@ export const useInvoiceDetail = (id: string | undefined) => {
         status: invoiceData.status || 'pending',
         paymentType: invoiceData.payment_method || '',
         htmlContent: invoiceData.html_content || '',
-        pdfUrl: invoiceData.pdf_url || '',
+        pdfUrl: normalizedPdfUrl || invoiceData.pdf_url || '',
         emailContent: invoiceData.email_content || '',
         description: invoiceData.description || invoiceData.subject || '',
+      });
+
+      console.log("Processed Invoice Data:", {
+        pdfUrl: normalizedPdfUrl || invoiceData.pdf_url || 'none',
+        htmlContentLength: (invoiceData.html_content || '').length,
+        emailContentLength: (invoiceData.email_content || '').length
       });
 
       console.groupEnd();

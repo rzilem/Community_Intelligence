@@ -12,9 +12,10 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
   const [isLoading, setIsLoading] = useState(true);
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
   const [pdfMentioned, setPdfMentioned] = useState(false);
+  const [pdfAccessChecked, setPdfAccessChecked] = useState(false);
   
   useEffect(() => {
-    console.group('InvoicePreview Component');
+    console.group('InvoicePreview Component Debug');
     console.log('Props received:', {
       hasHtmlContent: !!htmlContent,
       htmlContentLength: htmlContent?.length || 0,
@@ -24,6 +25,7 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
 
     setPreviewError(null);
     setIsLoading(true);
+    setPdfAccessChecked(false);
 
     // Check if HTML content mentions a PDF attachment
     if (htmlContent && !pdfUrl) {
@@ -57,51 +59,74 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
       
       console.log('Normalized URL for checking:', urlToCheck);
       
-      // Check if the URL is accessible
-      fetch(urlToCheck, { method: 'HEAD', cache: 'no-store' })
-        .then((response) => {
-          setIsLoading(false);
-          if (!response.ok) {
-            console.error('PDF URL inaccessible:', {
-              status: response.status,
-              statusText: response.statusText,
-              url: pdfUrl
-            });
-            
-            // Try a direct fetch instead of HEAD request as some servers might not support HEAD
-            return fetch(urlToCheck, { cache: 'no-store' }).then(directResponse => {
-              if (directResponse.ok) {
-                console.log('PDF URL is accessible via direct GET:', pdfUrl);
-                setContentType('pdf');
-                return;
-              }
-              
-              // Fallback to HTML content if available
-              if (htmlContent) {
-                console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
-                setContentType('html');
-              } else {
-                setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
-                setContentType('none');
-              }
-            });
-          } else {
-            console.log('PDF URL is accessible:', pdfUrl);
+      // Check if the URL is accessible with both HEAD and GET methods
+      const checkUrlAccess = async () => {
+        try {
+          // Try HEAD request first (lightweight)
+          const headResponse = await fetch(urlToCheck, { 
+            method: 'HEAD', 
+            cache: 'no-store',
+            headers: { 'Accept': 'application/pdf' } 
+          });
+          
+          if (headResponse.ok) {
+            console.log('PDF URL is accessible via HEAD:', urlToCheck);
             setContentType('pdf');
+            setIsLoading(false);
+            setPdfAccessChecked(true);
+            return;
           }
-        })
-        .catch((err) => {
-          console.error('Error accessing PDF URL:', err.message, pdfUrl);
-          setIsLoading(false);
+          
+          console.log('HEAD request failed, trying GET request as fallback');
+          
+          // If HEAD fails, try a direct GET request
+          const getResponse = await fetch(urlToCheck, { 
+            method: 'GET', 
+            cache: 'no-store',
+            headers: { 'Accept': 'application/pdf' } 
+          });
+          
+          if (getResponse.ok) {
+            console.log('PDF URL is accessible via GET:', urlToCheck);
+            setContentType('pdf');
+            setIsLoading(false);
+            setPdfAccessChecked(true);
+            return;
+          }
+          
+          // Both HEAD and GET failed, try to use HTML content as fallback
+          console.error('PDF URL inaccessible:', {
+            status: getResponse.status,
+            statusText: getResponse.statusText,
+            url: pdfUrl
+          });
           
           if (htmlContent) {
-            console.log('PDF URL error but HTML content available, will use HTML instead');
+            console.log('Falling back to HTML content');
+            setContentType('html');
+          } else {
+            setPreviewError(`Failed to access PDF (Status: ${getResponse.status})`);
+            setContentType('none');
+          }
+          
+        } catch (err: any) {
+          console.error('Error accessing PDF URL:', err.message);
+          
+          if (htmlContent) {
+            console.log('Error occurred, falling back to HTML content');
             setContentType('html');
           } else {
             setPreviewError(`Error accessing PDF: ${err.message}`);
             setContentType('none');
           }
-        });
+        } finally {
+          setIsLoading(false);
+          setPdfAccessChecked(true);
+          console.groupEnd();
+        }
+      };
+      
+      checkUrlAccess();
     } else if (htmlContent) {
       console.log('No PDF URL provided, using HTML content for preview');
       setContentType('html');
@@ -124,5 +149,6 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
     setIsLoading,
     contentType,
     pdfMentioned,
+    pdfAccessChecked
   };
 };

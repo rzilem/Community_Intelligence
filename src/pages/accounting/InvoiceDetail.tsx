@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Receipt } from 'lucide-react';
+import { Receipt, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { InvoiceLineItems } from '@/components/invoices/InvoiceLineItems';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';
 import { InvoiceSummary } from '@/components/invoices/InvoiceSummary';
@@ -14,10 +17,11 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 const InvoiceDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const {
     invoice,
@@ -34,14 +38,21 @@ const InvoiceDetail = () => {
   } = useInvoiceDetail(id);
 
   useEffect(() => {
-    console.log("Invoice data in component:", {
+    console.group("Invoice Data Debug");
+    console.log("Invoice ID:", id);
+    console.log("Invoice Data:", {
       association: invoice.association,
       vendor: invoice.vendor,
       invoiceNumber: invoice.invoiceNumber,
+      hasHtmlContent: !!invoice.htmlContent,
+      htmlContentLength: invoice.htmlContent?.length || 0,
+      hasPdfUrl: !!invoice.pdfUrl,
+      pdfUrl: invoice.pdfUrl || 'none',
       hasEmailContent: !!invoice.emailContent,
       emailContentLength: invoice.emailContent?.length || 0
     });
-  }, [invoice]);
+    console.groupEnd();
+  }, [invoice, id]);
 
   const handleSave = async () => {
     console.log("Saving invoice with association:", invoice.association);
@@ -50,15 +61,13 @@ const InvoiceDetail = () => {
     if (isSaving) return; // Prevent multiple save attempts
     
     setIsSaving(true);
+    setPreviewError(null);
     
     try {
       await saveInvoice();
       
-      toast({
-        title: "Invoice updated",
-        description: "The invoice has been updated successfully.",
-      });
-    } catch (error) {
+      toast.success("Invoice updated successfully");
+    } catch (error: any) {
       console.error("Error saving invoice:", error);
       
       let errorMessage = "There was an error updating the invoice. Please try again.";
@@ -67,11 +76,8 @@ const InvoiceDetail = () => {
         errorMessage = "There was an error with the association field. Please select a valid association or leave it empty.";
       }
       
-      toast({
-        title: "Error updating invoice",
-        description: errorMessage,
-        variant: "destructive"
-      });
+      toast.error(errorMessage);
+      setPreviewError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -84,7 +90,14 @@ const InvoiceDetail = () => {
         status: 'approved'
       }
     }, {
-      onSuccess: () => navigate("/accounting/invoice-queue")
+      onSuccess: () => {
+        toast.success("Invoice approved successfully");
+        navigate("/accounting/invoice-queue");
+      },
+      onError: (error) => {
+        toast.error(`Error approving invoice: ${error.message}`);
+        setPreviewError(`Error approving invoice: ${error.message}`);
+      }
     });
   };
 
@@ -124,6 +137,13 @@ const InvoiceDetail = () => {
       description="Process and code invoice for payment."
     >
       <div className="mt-6 space-y-4">
+        {previewError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{previewError}</AlertDescription>
+          </Alert>
+        )}
+        
         <InvoiceNavigation 
           isNewInvoice={isNewInvoice}
           showPreview={showPreview}

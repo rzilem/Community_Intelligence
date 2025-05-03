@@ -1,7 +1,8 @@
 
-import React, { useEffect } from 'react';
-import { ExternalLink, FileText, File } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ExternalLink, FileText, File, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface DocumentViewerProps {
   pdfUrl?: string;
@@ -22,6 +23,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onIframeLoad,
   onExternalOpen,
 }) => {
+  const [pdfLoadFailed, setPdfLoadFailed] = useState(false);
+  const [pdfLoadAttempts, setPdfLoadAttempts] = useState(0);
+  
   // Log component props on mount and when they change
   useEffect(() => {
     console.group('DocumentViewer Props');
@@ -31,6 +35,19 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log('isWordDocument:', isWordDocument);
     console.groupEnd();
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+
+  // Handle PDF load failure and retry
+  useEffect(() => {
+    if (pdfLoadFailed && pdfLoadAttempts < 2) {
+      const retryTimer = setTimeout(() => {
+        console.log(`Retrying PDF load, attempt ${pdfLoadAttempts + 1}`);
+        setPdfLoadFailed(false);
+        setPdfLoadAttempts(prev => prev + 1);
+      }, 1000);
+      
+      return () => clearTimeout(retryTimer);
+    }
+  }, [pdfLoadFailed, pdfLoadAttempts]);
 
   const createHtmlContent = () => {
     if (!htmlContent) return '';
@@ -95,26 +112,46 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   // Improved PDF embed function with better fallback
   const createPdfEmbed = () => {
-    if (!pdfUrl) return null;
+    if (!pdfUrl || pdfLoadFailed && pdfLoadAttempts >= 2) {
+      // Show error if we've failed multiple times
+      return (
+        <div className="flex flex-col items-center justify-center h-full p-6">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mb-4" />
+          <h3 className="text-lg font-medium mb-2">PDF Preview Failed</h3>
+          <p className="text-center mb-4 text-muted-foreground">
+            The PDF could not be loaded directly in the browser.
+          </p>
+          <Button 
+            onClick={onExternalOpen}
+            className="flex items-center"
+          >
+            Open PDF in New Tab <ExternalLink className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      );
+    }
     
     return (
       <div className="w-full h-full flex flex-col">
-        {/* Use both object and embed for better browser compatibility */}
-        <object
-          data={pdfUrl}
-          type="application/pdf"
+        {/* Use embed for better browser compatibility */}
+        <embed 
+          src={pdfUrl} 
+          type="application/pdf" 
+          width="100%" 
+          height="100%"
           className="w-full h-full border-0"
-          onError={onIframeError}
-          onLoad={onIframeLoad}
-        >
-          <embed 
-            src={pdfUrl} 
-            type="application/pdf" 
-            width="100%" 
-            height="100%"
-            onError={onIframeError}
-            onLoad={onIframeLoad}
-          />
+          onError={() => {
+            console.error('PDF embed error occurred');
+            setPdfLoadFailed(true);
+            onIframeError();
+          }}
+          onLoad={() => {
+            console.log('PDF embed loaded successfully');
+            onIframeLoad();
+          }}
+        />
+        {/* Fallback content only shown if embed fails */}
+        <noembed>
           <div className="flex flex-col items-center justify-center h-full p-6">
             <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
             <Button 
@@ -124,7 +161,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               Open PDF <ExternalLink className="h-4 w-4 ml-2" />
             </Button>
           </div>
-        </object>
+        </noembed>
       </div>
     );
   };
