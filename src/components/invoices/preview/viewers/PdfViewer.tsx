@@ -78,8 +78,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   }, [onLoad, pdfUrl]);
 
   const handleLoadError = () => {
-    console.error('PDF object error occurred', {
-      url: pdfUrl,
+    console.error('PDF load error:', {
+      pdfUrl,
       attempts: pdfLoadAttempts,
       timestamp: new Date().toISOString()
     });
@@ -88,8 +88,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   };
   
   const handleLoadSuccess = () => {
-    console.log('PDF object loaded successfully', {
-      url: pdfUrl,
+    console.log('PDF load success:', {
+      pdfUrl,
       timestamp: new Date().toISOString()
     });
     if (objectRef.current) {

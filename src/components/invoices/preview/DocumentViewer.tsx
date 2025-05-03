@@ -44,7 +44,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     try {
       // If it's already an absolute URL, return it
       if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url;
+        // Fix double slashes in path (not in protocol)
+        return url.replace(/([^:])\/\/+/g, '$1/');
       }
       
       // Handle relative URLs

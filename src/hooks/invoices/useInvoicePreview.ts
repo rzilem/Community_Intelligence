@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
-import { showToast } from '@/utils/toast-utils';
+import { showToast, showErrorToast } from '@/utils/toast-utils';
+import { PDFPreviewOptions, PreviewContentType, PDFLoadStatus } from '@/types/invoice-view-types';
 
 interface UseInvoicePreviewProps {
   pdfUrl?: string;
@@ -18,7 +19,7 @@ export const useInvoicePreview = ({
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPdfLoaded, setIsPdfLoaded] = useState(false);
-  const [contentType, setContentType] = useState<'pdf' | 'html' | 'none'>('none');
+  const [contentType, setContentType] = useState<PreviewContentType>('none');
   const [pdfAccessible, setPdfAccessible] = useState<boolean | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -83,7 +84,12 @@ export const useInvoicePreview = ({
           setPdfAccessible(isValidPdf);
         }
       } catch (error) {
-        console.warn("PDF accessibility checks failed:", error);
+        console.error("PDF accessibility checks failed:", {
+          error,
+          url: normalizedPdfUrl,
+          retryCount,
+          timestamp: new Date().toISOString()
+        });
         
         // After multiple retries, assume inaccessible
         if (retryCount >= 2) {
@@ -191,7 +197,7 @@ export const useInvoicePreview = ({
       // If we have email content and the document fails to load,
       // automatically switch to the email tab
       if (previewError && activeTab === 'document') {
-        showToast("Showing email content", {
+        showErrorToast("Showing email content", {
           description: "Document preview failed. Showing original email instead."
         });
         setActiveTab('email');
