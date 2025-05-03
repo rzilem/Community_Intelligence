@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
 import { showToast, showErrorToast } from '@/utils/toast-utils';
@@ -126,12 +127,16 @@ export const useInvoicePreview = ({
       isPdfAccessible: pdfAccessible
     });
 
-    if (pdfAccessible && isPdfFile) {
+    if (pdfAccessible === true && isPdfFile) {
       setContentType('pdf');
       setPreviewError(null);
     } else if (hasHtmlContent) {
       setContentType('html');
       setPreviewError(null);
+    } else if (normalizedPdfUrl && pdfAccessible === false) {
+      // We have a PDF URL but it's not accessible - show error
+      setContentType('pdf');
+      setPreviewError("PDF cannot be displayed directly in the browser. Please try the external view option.");
     } else {
       setContentType('none');
     }
