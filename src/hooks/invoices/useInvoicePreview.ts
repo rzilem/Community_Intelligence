@@ -1,140 +1,151 @@
 
 import { useState, useEffect } from 'react';
+import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
 import { toast } from '@/hooks/use-toast';
-import { isPdf } from '@/components/invoices/preview/utils/fileTypeUtils';
 
 interface UseInvoicePreviewProps {
-  htmlContent?: string;
   pdfUrl?: string;
+  htmlContent?: string;
+  emailContent?: string;
 }
 
-export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProps) => {
-  const [fullscreenPreview, setFullscreenPreview] = useState(false);
+export const useInvoicePreview = ({
+  pdfUrl,
+  htmlContent,
+  emailContent
+}: UseInvoicePreviewProps) => {
+  const [activeTab, setActiveTab] = useState<string>('document');
   const [previewError, setPreviewError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
-  const [pdfMentioned, setPdfMentioned] = useState(false);
-  const [pdfAccessChecked, setPdfAccessChecked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPdfLoaded, setIsPdfLoaded] = useState(false);
+  const [contentType, setContentType] = useState<'pdf' | 'html' | 'none'>('none');
+  const [pdfAccessible, setPdfAccessible] = useState<boolean | null>(null);
+
+  // Normalize the PDF URL if it exists
+  const normalizedPdfUrl = pdfUrl ? normalizeUrl(pdfUrl) : '';
+  const isPdfFile = pdfUrl ? isPdf(pdfUrl) : false;
   
+  const hasHtmlContent = !!htmlContent && htmlContent.trim().length > 0;
+  const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
+  
+  // Check if PDF is accessible
   useEffect(() => {
-    console.group('InvoicePreview Component Debug');
-    console.log('Props received:', {
-      hasHtmlContent: !!htmlContent,
-      htmlContentLength: htmlContent?.length || 0,
-      pdfUrl: pdfUrl || 'none',
-      pdfUrlValid: typeof pdfUrl === 'string' && pdfUrl.trim().length > 0
-    });
-
-    setPreviewError(null);
-    setIsLoading(true);
-    setPdfAccessChecked(false);
-
-    // Check if HTML content mentions a PDF attachment
-    if (htmlContent && !pdfUrl) {
-      const pdfMentionRegex = /attach(ed|ment)|pdf|invoice|document/i;
-      const containsPdfMention = pdfMentionRegex.test(htmlContent);
-      setPdfMentioned(containsPdfMention);
-      console.log('PDF mention detected in HTML:', containsPdfMention);
-    }
-
-    // First, determine what content we have to display
-    if (!htmlContent && !pdfUrl) {
-      console.warn('No preview content available (no HTML or PDF URL)');
-      setContentType('none');
-      setIsLoading(false);
-      console.groupEnd();
-      return;
-    }
-
-    // If we have a PDF URL, always check if it's accessible first
-    if (pdfUrl && pdfUrl.trim() !== '') {
-      console.log('Checking PDF URL accessibility:', pdfUrl);
-      setContentType('pdf');
-      
-      // Handle different URL formats (including relative URLs)
-      let urlToCheck = pdfUrl;
-      if (pdfUrl.startsWith('/')) {
-        urlToCheck = `${window.location.origin}${pdfUrl}`;
-      } else if (!pdfUrl.startsWith('http://') && !pdfUrl.startsWith('https://')) {
-        urlToCheck = `https://${pdfUrl}`;
+    const checkPdfUrl = async () => {
+      if (!normalizedPdfUrl) {
+        setPdfAccessible(false);
+        return;
       }
       
-      console.log('Normalized URL for checking:', urlToCheck);
+      console.log("Checking PDF URL accessibility:", normalizedPdfUrl);
+      console.log("Normalized URL for checking:", normalizedPdfUrl);
       
-      // Check if the URL is accessible with both HEAD and GET methods
-      const checkUrlAccess = async () => {
-        try {
-          // Try a direct GET request with no-cors to avoid CORS issues
-          const getResponse = await fetch(urlToCheck, { 
-            method: 'GET', 
-            cache: 'no-store',
-            mode: 'no-cors' // This should help with CORS issues
-          }).catch(err => {
-            console.warn('Fetch error (expected with no-cors):', err);
-            // This will likely error with no-cors but may succeed
-            return { ok: true, status: 200 };
-          });
-          
-          if (getResponse.ok) {
-            console.log('PDF URL is likely accessible:', urlToCheck);
-            setContentType('pdf');
-            setIsLoading(false);
-            setPdfAccessChecked(true);
-            return;
-          }
-          
-          console.warn('GET request failed, trying alternative approach');
-          
-          // Both HEAD and GET failed, try to use HTML content as fallback
-          if (htmlContent) {
-            console.log('Falling back to HTML content');
-            setContentType('html');
-          } else {
-            setPreviewError(`Failed to access PDF (Status: ${getResponse.status || 'unknown'})`);
-            toast.error("PDF document could not be loaded");
-            setContentType('none');
-          }
-          
-        } catch (err: any) {
-          console.error('Error accessing PDF URL:', err.message);
-          
-          if (htmlContent) {
-            console.log('Error occurred, falling back to HTML content');
-            setContentType('html');
-          } else {
-            setPreviewError(`Error accessing PDF: ${err.message}`);
-            setContentType('none');
-          }
-        } finally {
-          setIsLoading(false);
-          setPdfAccessChecked(true);
-          console.groupEnd();
+      try {
+        console.log("Testing PDF accessibility for:", normalizedPdfUrl);
+        const response = await fetch(normalizedPdfUrl, { 
+          method: 'HEAD',
+          mode: 'no-cors' 
+        });
+        
+        console.log("PDF accessibility test result:", {
+          status: response.status,
+          ok: response.ok,
+          contentType: response.headers.get('content-type')
+        });
+        
+        setPdfAccessible(response.ok);
+      } catch (error) {
+        console.warn("GET request failed, trying alternative approach");
+        
+        // If fetch fails, try a different approach or fallback
+        // For now, just assume it might be accessible if we have the URL
+        setPdfAccessible(!!normalizedPdfUrl);
+        
+        if (hasHtmlContent) {
+          console.log("Falling back to HTML content");
+          setContentType('html');
         }
-      };
-      
-      checkUrlAccess();
-    } else if (htmlContent) {
-      console.log('No PDF URL provided, using HTML content for preview');
+      }
+    };
+
+    checkPdfUrl();
+  }, [normalizedPdfUrl, hasHtmlContent]);
+
+  // Determine the content type to show
+  useEffect(() => {
+    console.log("Invoice Preview Data:", {
+      hasPdfUrl: !!normalizedPdfUrl,
+      normalizedPdfUrl: normalizedPdfUrl || 'none',
+      hasHtmlContent,
+      htmlContentLength: htmlContent?.length || 0,
+      hasEmailContent,
+      emailContentLength: emailContent?.length || 0,
+      isPdfFile,
+      contentType
+    });
+
+    if (pdfAccessible && isPdfFile) {
+      setContentType('pdf');
+    } else if (hasHtmlContent) {
       setContentType('html');
-      setIsLoading(false);
-      console.groupEnd();
     } else {
-      console.warn('Both PDF URL and HTML content are empty or invalid');
       setContentType('none');
-      setIsLoading(false);
-      console.groupEnd();
     }
-  }, [htmlContent, pdfUrl]);
+  }, [normalizedPdfUrl, hasHtmlContent, pdfAccessible, isPdfFile, htmlContent, emailContent]);
+
+  // Handle tab switching
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  // Handle PDF load error
+  const handlePreviewError = () => {
+    setPreviewError("We couldn't display the invoice preview. Please try downloading the file instead.");
+    setIsPdfLoaded(false);
+  };
+
+  // Handle PDF load success
+  const handlePreviewLoad = () => {
+    setIsPdfLoaded(true);
+    setPreviewError(null);
+  };
+
+  // Handle external open action
+  const handleExternalOpen = () => {
+    if (normalizedPdfUrl) {
+      window.open(normalizedPdfUrl, '_blank');
+      toast({
+        title: "Opening PDF",
+        description: "The PDF is opening in a new tab",
+      });
+    }
+  };
+
+  // Toggle fullscreen view
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
+
+  // Retry loading the PDF
+  const handleRetry = () => {
+    setPreviewError(null);
+    setPdfAccessible(null); // Reset to trigger re-check
+  };
 
   return {
-    fullscreenPreview,
-    setFullscreenPreview,
+    activeTab,
+    isPdf: isPdfFile,
+    isWordDocument: false,
+    isPdfLoaded,
     previewError,
-    setPreviewError,
-    isLoading,
-    setIsLoading,
+    pdfUrl: normalizedPdfUrl,
     contentType,
-    pdfMentioned,
-    pdfAccessChecked
+    isFullscreen,
+    hasEmailContent,
+    handleTabChange,
+    handlePreviewError,
+    handlePreviewLoad,
+    handleExternalOpen,
+    toggleFullscreen,
+    handleRetry,
   };
 };

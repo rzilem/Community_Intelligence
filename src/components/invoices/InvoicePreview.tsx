@@ -1,221 +1,85 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import React from 'react';
+import { Card } from '@/components/ui/card';
+import { useInvoicePreview } from '@/hooks/invoices/useInvoicePreview';
+import { PreviewHeader } from './preview/PreviewHeader';
+import { PreviewErrorState } from './preview/PreviewErrorState';
 import { NoPreviewState } from './preview/NoPreviewState';
 import { DocumentViewer } from './preview/DocumentViewer';
 import { EmailPreview } from './preview/EmailPreview';
-import { PreviewErrorState } from './preview/PreviewErrorState';
-import { PreviewHeader } from './preview/PreviewHeader';
-import { 
-  isValidUrl, 
-  normalizeUrl, 
-  isValidHtml, 
-  sanitizeHtml, 
-  isPdf, 
-  isImage, 
-  getFileExtension 
-} from './preview/utils';
-import { useInvoicePreview } from '@/hooks/invoices/useInvoicePreview';
-import { toast } from '@/hooks/use-toast';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 
 interface InvoicePreviewProps {
-  htmlContent?: string;
   pdfUrl?: string;
+  htmlContent?: string;
   emailContent?: string;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ 
-  htmlContent, 
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   pdfUrl,
+  htmlContent,
   emailContent
 }) => {
   const {
-    fullscreenPreview,
-    setFullscreenPreview,
+    activeTab,
+    isPdf,
+    isWordDocument,
     previewError,
-    setPreviewError,
-    isLoading,
-    setIsLoading,
     contentType,
-    pdfMentioned,
-    pdfAccessChecked
-  } = useInvoicePreview({ htmlContent, pdfUrl });
+    isFullscreen,
+    hasEmailContent,
+    handleTabChange,
+    handlePreviewError,
+    handlePreviewLoad,
+    handleExternalOpen,
+    toggleFullscreen,
+    handleRetry,
+  } = useInvoicePreview({ pdfUrl, htmlContent, emailContent });
 
-  const [activeTab, setActiveTab] = useState<string>('document');
-  const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
-  
-  // Check if we have valid email content to show the email tab
-  const hasEmailContent = !!emailContent && emailContent.trim().length > 0;
-  
-  // Determine if the document is a Word document based on file extension
-  const isWordDocument = getFileExtension(pdfUrl || '') === 'doc' || 
-                          getFileExtension(pdfUrl || '') === 'docx';
-  
-  // Handle opening the document in a new tab
-  const handleExternalOpen = useCallback(() => {
-    if (normalizedPdfUrl) {
-      console.log("Opening external URL:", normalizedPdfUrl);
-      window.open(normalizedPdfUrl, '_blank', 'noopener,noreferrer');
-      toast.info("Opening PDF in new tab");
-    }
-  }, [normalizedPdfUrl]);
-  
-  // Handle toggling fullscreen mode
-  const handleToggleFullscreen = useCallback(() => {
-    setFullscreenPreview(!fullscreenPreview);
-  }, [fullscreenPreview, setFullscreenPreview]);
-
-  // Test the PDF URL accessibility 
-  const testPdfAccessibility = useCallback(async (url: string) => {
-    if (!url) return false;
-
-    try {
-      console.log('Testing PDF accessibility for:', url);
-      const response = await fetch(url, { 
-        method: 'HEAD',
-        cache: 'no-store'
-      });
-      
-      const ok = response.ok;
-      console.log('PDF accessibility test result:', { 
-        status: response.status, 
-        ok, 
-        contentType: response.headers.get('content-type') 
-      });
-      
-      return ok;
-    } catch (err) {
-      console.error('Error testing PDF accessibility:', err);
-      return false;
-    }
-  }, []);
-  
-  useEffect(() => {
-    // Validate and normalize PDF URL
-    if (pdfUrl) {
-      try {
-        // Ensure URL has a protocol
-        const normalized = normalizeUrl(pdfUrl);
-        setNormalizedPdfUrl(normalized);
-        
-        // Log normalized URL for debugging
-        console.log("Normalized PDF URL:", normalized);
-        
-        // Test if the PDF is actually accessible
-        testPdfAccessibility(normalized)
-          .then(accessible => {
-            console.log('PDF accessibility result:', accessible);
-            if (!accessible) {
-              console.warn('PDF may not be accessible:', normalized);
-            }
-          });
-      } catch (e) {
-        console.error("Invalid PDF URL:", pdfUrl, e);
-        setPreviewError("Invalid PDF URL format");
-      }
-    } else {
-      setNormalizedPdfUrl('');
-    }
-    
-    // Log for debugging
-    console.log("Invoice Preview Data:", {
-      hasPdfUrl: !!pdfUrl,
-      normalizedPdfUrl: normalizedPdfUrl || "none",
-      hasHtmlContent: !!htmlContent,
-      htmlContentLength: htmlContent?.length || 0,
-      hasEmailContent: !!emailContent,
-      emailContentLength: emailContent?.length || 0,
-      isPdfFile: isPdf(pdfUrl || ''),
-      contentType
-    });
-  }, [pdfUrl, htmlContent, emailContent, contentType, setPreviewError, testPdfAccessibility]);
-
-  // If no content and no email, show no preview state
-  if ((!pdfUrl && !htmlContent && !hasEmailContent) || 
-      (contentType === 'none' && pdfAccessChecked && !previewError && !hasEmailContent)) {
-    return <NoPreviewState 
-      pdfMentioned={pdfMentioned} 
-      onExternalOpen={normalizedPdfUrl ? handleExternalOpen : undefined}
-      pdfUrl={normalizedPdfUrl}
-    />;
-  }
-
-  // If there's an error, show error state
-  if (previewError && !hasEmailContent) {
-    return <PreviewErrorState 
-      error={previewError} 
-      pdfUrl={normalizedPdfUrl} 
-      onExternalOpen={handleExternalOpen}
-    />;
-  }
+  const fullscreenClass = isFullscreen
+    ? 'fixed inset-0 z-50 bg-background p-4'
+    : 'h-[600px]';
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className={`flex flex-col border rounded-lg overflow-hidden ${fullscreenClass}`}>
       <PreviewHeader
-        isPdf={isPdf(normalizedPdfUrl)}
+        isPdf={isPdf}
         isWordDocument={isWordDocument}
-        pdfUrl={normalizedPdfUrl}
+        pdfUrl={pdfUrl}
         onExternalOpen={handleExternalOpen}
-        onToggleFullscreen={handleToggleFullscreen}
-        showActions={!!normalizedPdfUrl}
+        onToggleFullscreen={toggleFullscreen}
+        showActions={true}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         hasEmail={hasEmailContent}
       />
       
-      <Tabs value={activeTab} className="flex-1 overflow-hidden">
-        <TabsContent value="document" className="h-full m-0">
-          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
-            {isLoading ? (
-              <div className="flex justify-center items-center h-full">
-                <div className="animate-pulse text-center">
-                  <div className="h-8 w-8 mx-auto mb-4 rounded-full bg-gray-300 dark:bg-gray-700"></div>
-                  <div className="h-4 w-32 mx-auto rounded bg-gray-300 dark:bg-gray-700"></div>
-                </div>
-              </div>
-            ) : contentType === 'pdf' && normalizedPdfUrl ? (
-              <DocumentViewer 
-                pdfUrl={normalizedPdfUrl}
-                htmlContent={undefined}
-                isPdf={isPdf(normalizedPdfUrl)}
-                isWordDocument={isWordDocument}
-                onIframeError={() => {
-                  console.error("Failed to load document");
-                  setIsLoading(false);
-                }}
-                onIframeLoad={() => {
-                  console.log("Document loaded successfully");
-                  setIsLoading(false);
-                }}
-                onExternalOpen={handleExternalOpen}
-              />
-            ) : contentType === 'html' && htmlContent && isValidHtml(htmlContent) ? (
-              <div className="h-full">
-                <div 
-                  className="invoice-html-content h-full bg-white p-6 rounded-lg shadow"
-                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }} 
-                />
-              </div>
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <Alert variant="destructive" className="max-w-md">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>No preview available</AlertTitle>
-                  <AlertDescription>
-                    {previewError || "No valid PDF or HTML content is available for this invoice."}
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
-          </div>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1">
+        <TabsContent value="document" className="h-full">
+          {previewError ? (
+            <PreviewErrorState
+              error={previewError}
+              pdfUrl={pdfUrl}
+              onExternalOpen={handleExternalOpen}
+              onRetry={handleRetry}
+            />
+          ) : contentType === 'none' ? (
+            <NoPreviewState />
+          ) : (
+            <DocumentViewer
+              pdfUrl={pdfUrl}
+              htmlContent={htmlContent}
+              isPdf={contentType === 'pdf'}
+              isWordDocument={isWordDocument}
+              onIframeError={handlePreviewError}
+              onIframeLoad={handlePreviewLoad}
+              onExternalOpen={handleExternalOpen}
+            />
+          )}
         </TabsContent>
         
-        <TabsContent value="email" className="h-full m-0">
-          <div className="flex-1 overflow-auto p-4 bg-gray-50 dark:bg-gray-900 h-full">
-            <EmailPreview emailContent={emailContent} />
-          </div>
+        <TabsContent value="email" className="h-full">
+          <EmailPreview emailContent={emailContent} />
         </TabsContent>
       </Tabs>
     </div>
