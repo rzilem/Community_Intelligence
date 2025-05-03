@@ -1,15 +1,9 @@
-
-/**
- * Helper functions for extracting HOA/association information from email content
- */
-
 export function extractAssociationInformation(content: string): {
   association_name?: string;
   association_type?: string;
 } {
   const result: { association_name?: string; association_type?: string } = {};
   
-  // Special case for Falcon Pointe Community Association
   if (content.includes("Falcon Pointe Community Association") || 
       content.includes("falconpointecommunity.com")) {
     result.association_name = "Falcon Pointe Community Association";
@@ -17,7 +11,6 @@ export function extractAssociationInformation(content: string): {
     return result;
   }
   
-  // Common patterns for association names
   const associationPatterns = [
     /association[:\s]+([^,\n\r<>]+)/i,
     /hoa[:\s]+([^,\n\r<>]+)/i,
@@ -33,7 +26,6 @@ export function extractAssociationInformation(content: string): {
     if (match && match[1] && match[1].trim()) {
       result.association_name = match[1].trim();
       
-      // If association name contains HOA-related terms, set type to HOA
       if (result.association_name.toLowerCase().includes("hoa") || 
           result.association_name.toLowerCase().includes("homeowner") ||
           result.association_name.toLowerCase().includes("community association")) {
@@ -44,7 +36,6 @@ export function extractAssociationInformation(content: string): {
     }
   }
   
-  // Check for association type patterns if not already determined
   if (!result.association_type) {
     const typePatterns = [
       /association\s+type[:\s]+([^,\n\r<>]+)/i,
