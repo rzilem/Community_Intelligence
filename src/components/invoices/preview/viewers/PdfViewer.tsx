@@ -19,7 +19,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 }) => {
   const [pdfLoadFailed, setPdfLoadFailed] = useState(false);
   const [pdfLoadAttempts, setPdfLoadAttempts] = useState(0);
-  const objectRef = useRef<HTMLObjectElement>(null);
+  const objectRef = useRef<HTMLObjectElement | null>(null);
   
   // Log the URL we're trying to load
   useEffect(() => {

@@ -22,59 +22,82 @@ const createToast = () => {
     }
   };
 
-  // Create the base toast function that can be directly called
-  const toastFunction = (message: string, options?: Omit<ToastProps, "title">) => {
-    const id = sonnerToast(message, options);
-    toasts.push({ title: message, ...options, id: id.toString() });
-    return id;
+  // Create the base toast function that can be called directly
+  const toastFunction = (props: string | ToastProps, options?: Omit<ToastProps, "title">) => {
+    // Handle both string and object formats
+    if (typeof props === 'string') {
+      const id = sonnerToast(props, options);
+      toasts.push({ title: props, ...options, id: id.toString() });
+      return id;
+    } else {
+      const { title, description, ...rest } = props;
+      const id = sonnerToast(title || '', { description, ...rest });
+      toasts.push({ ...props, id: id.toString() });
+      return id;
+    }
   };
 
   // Add methods to the toast function
   const toast = Object.assign(toastFunction, {
     // Standard toast method (for objects)
-    toast: (props: ToastProps) => {
-      const id = sonnerToast(props.title as string, {
-        description: props.description,
-      });
-      toasts.push({ ...props, id: id.toString() });
-      return id;
+    toast: (props: string | ToastProps, options?: Omit<ToastProps, "title">) => {
+      return toastFunction(props, options);
     },
     
     // Success toast
-    success: (message: string, options?: Omit<ToastProps, "description">) => {
-      const id = sonnerToast.success(message);
-      toasts.push({ title: message, ...options, id: id.toString() });
-      return id;
+    success: (props: string | Omit<ToastProps, "variant">, options?: Omit<ToastProps, "title" | "variant">) => {
+      if (typeof props === 'string') {
+        const id = sonnerToast.success(props, options);
+        toasts.push({ title: props, ...options, variant: "default", id: id.toString() });
+        return id;
+      } else {
+        const { title, description, ...rest } = props;
+        const id = sonnerToast.success(title || '', { description, ...rest });
+        toasts.push({ ...props, variant: "default", id: id.toString() });
+        return id;
+      }
     },
     
     // Error toast
-    error: (message: string, options?: Omit<ToastProps, "description">) => {
-      const id = sonnerToast.error(message);
-      toasts.push({ title: message, ...options, id: id.toString() });
-      return id;
+    error: (props: string | Omit<ToastProps, "variant">, options?: Omit<ToastProps, "title" | "variant">) => {
+      if (typeof props === 'string') {
+        const id = sonnerToast.error(props, options);
+        toasts.push({ title: props, ...options, variant: "destructive", id: id.toString() });
+        return id;
+      } else {
+        const { title, description, ...rest } = props;
+        const id = sonnerToast.error(title || '', { description, ...rest });
+        toasts.push({ ...props, variant: "destructive", id: id.toString() });
+        return id;
+      }
     },
     
     // Info toast
-    info: (message: string, options?: Omit<ToastProps, "description">) => {
-      const id = sonnerToast.info(message);
-      toasts.push({ title: message, ...options, id: id.toString() });
-      return id;
+    info: (props: string | Omit<ToastProps, "variant">, options?: Omit<ToastProps, "title" | "variant">) => {
+      if (typeof props === 'string') {
+        const id = sonnerToast.info(props, options);
+        toasts.push({ title: props, ...options, variant: "default", id: id.toString() });
+        return id;
+      } else {
+        const { title, description, ...rest } = props;
+        const id = sonnerToast.info(title || '', { description, ...rest });
+        toasts.push({ ...props, variant: "default", id: id.toString() });
+        return id;
+      }
     },
     
     // Warning toast
-    warning: (message: string, options?: Omit<ToastProps, "description">) => {
-      const id = sonnerToast.warning(message);
-      toasts.push({ title: message, ...options, id: id.toString() });
-      return id;
-    },
-    
-    // Custom toast
-    custom: (props: ToastProps) => {
-      const id = sonnerToast(props.title as string, {
-        description: props.description,
-      });
-      toasts.push({ ...props, id: id.toString() });
-      return id;
+    warning: (props: string | Omit<ToastProps, "variant">, options?: Omit<ToastProps, "title" | "variant">) => {
+      if (typeof props === 'string') {
+        const id = sonnerToast.warning(props, options);
+        toasts.push({ title: props, ...options, variant: "default", id: id.toString() });
+        return id;
+      } else {
+        const { title, description, ...rest } = props;
+        const id = sonnerToast.warning(title || '', { description, ...rest });
+        toasts.push({ ...props, variant: "default", id: id.toString() });
+        return id;
+      }
     },
     
     // Handle promises
@@ -96,8 +119,8 @@ const { toast, dismiss, toasts } = createToast();
 
 // Export for easy usage
 export { toast, dismiss, toasts };
-export type { ToastProps };
 
+// Export the hook
 export function useToast() {
   return {
     toast,

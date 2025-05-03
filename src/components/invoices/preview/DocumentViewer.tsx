@@ -56,7 +56,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   const normalizedPdfUrl = getNormalizedUrl(pdfUrl);
-  const isPdfFile = pdfUrl ? isPdf(normalizedPdfUrl) : false;
+  const isPdfFile = isPdf(normalizedPdfUrl);
 
   // Prioritize PDF viewing when available
   if (normalizedPdfUrl && (isPdfProp || isPdfFile)) {
