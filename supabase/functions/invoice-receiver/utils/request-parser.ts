@@ -72,17 +72,17 @@ export async function processMultipartFormData(request: Request): Promise<any> {
     console.log("Matching attachment details with files");
     try {
       for (let i = 0; i < result.attachments.length; i++) {
-        const attachment = result.attachments[i];
+        const att = result.attachments[i];
         const details = result.attachment_details[i];
         if (details) {
           if (typeof details === 'object') {
-            attachment.filename = details.filename || attachment.filename;
-            attachment.contentType = details.content_type || details.contentType || attachment.contentType;
+            att.filename = details.filename || att.filename;
+            att.contentType = details.content_type || details.contentType || att.contentType;
           } else if (typeof details === 'string') {
             try {
               const detailsObj = JSON.parse(details);
-              attachment.filename = detailsObj.filename || attachment.filename;
-              attachment.contentType = detailsObj.content_type || detailsObj.contentType || attachment.contentType;
+              att.filename = detailsObj.filename || att.filename;
+              att.contentType = detailsObj.content_type || detailsObj.contentType || att.contentType;
             } catch {}
           }
         }
@@ -176,17 +176,16 @@ function processAttachments(data: any): any[] {
   }
 
   console.log(`Processing ${attachments.length} attachments`);
-  return attachments.map((attachment) => {
-    if (!attachment) return { filename: "unknown", contentType: "application/octet-stream", content: "", size: 0 };
+  return attachments.map((att: any) => {
+    if (!att) return { filename: "unknown", contentType: "application/octet-stream", content: "", size: 0 };
 
     const normalized = {
-      filename: attachment.filename || attachment.name || attachment.fileName || attachment.Filename || attachment.Name || "unknown",
-      contentType: attachment.contentType || attachment.content_type || attachment.type || attachment.Type || attachment.mime || "application/octet-stream",
-      content: attachment.content || attachment.data || attachment.Content || attachment.Data || attachment.body || attachment.Body || "",
-      size: attachment.size || attachment.Size || 0
+      filename: att.filename || att.name || att.fileName || att.Filename || att.Name || "unknown",
+      contentType: att.contentType || att.content_type || att.type || att.Type || att.mime || "application/octet-stream",
+      content: att.content || att.data || att.Content || att.Data || att.body || att.Body || "",
+      size: att.size || att.Size || 0
     };
 
-    // Validate PDF content
     if (normalized.contentType === 'application/pdf') {
       if (typeof normalized.content === 'string') {
         const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(normalized.content.trim());
@@ -196,8 +195,10 @@ function processAttachments(data: any): any[] {
           normalized.contentType = "application/octet-stream";
         } else {
           try {
-            const base64Content = normalized.content.replace(/^data:application\/pdf;base64,/, '');
-            const buffer = new Uint8Array(Array.from(atob(base64Content), c => c.charCodeAt(0)));
+            const base64Content = normalized.content
+              .replace(/^data:application\/pdf;base64,/, '')
+              .replace(/\s/g, '');
+            const buffer = decode(base64Content);
             const pdfHeader = Array.from(buffer.slice(0, 4)).map(b => b.toString(16)).join('');
             if (pdfHeader !== '25504446') {
               console.error(`Invalid PDF header in attachment ${normalized.filename}: ${pdfHeader}`);
@@ -211,7 +212,6 @@ function processAttachments(data: any): any[] {
           }
         }
       } else if (normalized.content instanceof Blob || normalized.content instanceof File) {
-        // Validate Blob content
         try {
           const arrayBuffer = await normalized.content.arrayBuffer();
           const buffer = new Uint8Array(arrayBuffer);
