@@ -1,6 +1,8 @@
+import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType } from "../utils/document-parser.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Attachment } from "../services/invoice-types.ts";
+import { createHash } from "https://deno.land/std@0.190.0/hash/mod.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -59,8 +61,11 @@ export async function processDocument(attachments: Attachment[] = []) {
         if (isBase64 && contentType === 'application/pdf') {
           console.log(`Decoding base64 PDF: ${filename}`);
           try {
-            const base64Content = contentToProcess.replace(/^data:application\/pdf;base64,/, '');
-            contentBuffer = new Uint8Array(Array.from(atob(base64Content), c => c.charCodeAt(0)));
+            // Remove any data URI prefix and normalize the base64 string
+            const base64Content = contentToProcess
+              .replace(/^data:application\/pdf;base64,/, '')
+              .replace(/\s/g, ''); // Remove whitespace
+            contentBuffer = decode(base64Content);
             console.log(`Base64 decoded: ${filename}`, {
               length: contentBuffer.byteLength,
               firstBytes: Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('')
@@ -83,21 +88,21 @@ export async function processDocument(attachments: Attachment[] = []) {
         continue;
       }
 
-      // Validate PDF header
+      // Validate PDF header and compute checksum
+      let originalChecksum = '';
       if (contentType === 'application/pdf') {
         const pdfHeader = Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('');
         if (pdfHeader !== '25504446') {
           console.error(`Invalid PDF header for ${filename}: ${pdfHeader}`);
           throw new Error(`Invalid PDF content: File does not start with %PDF`);
         }
+        const hasher = createHash("sha256");
+        hasher.update(contentBuffer);
+        originalChecksum = hasher.toString();
+        console.log(`Original checksum for ${filename}: ${originalChecksum}`);
       }
 
-    } catch (processError) {
-      console.error(`Error processing attachment content for ${filename}: ${processError.message}`);
-      continue;
-    }
-
-    try {
+      // Upload to Supabase
       const timestamp = new Date().toISOString().replace(/[:.]/g, '');
       const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
       const storageFilename = `invoice_${timestamp}_${safeFilename}`;
@@ -105,16 +110,14 @@ export async function processDocument(attachments: Attachment[] = []) {
       const sourceDocument = safeFilename;
 
       console.log(`Uploading ${filename} to invoices bucket as ${normalizedStorageFilename}`);
-
-      // Upload with integrity check
-      const { error: uploadError } = await supabase.storage.from('invoices').upload(normalizedStorageFilename, contentBuffer, {
+      const uploadResult = await supabase.storage.from('invoices').upload(normalizedStorageFilename, contentBuffer, {
         contentType: contentType,
         upsert: true,
         duplex: 'full'
       });
 
-      if (uploadError) {
-        console.error(`Failed to upload document ${filename}:`, uploadError);
+      if (uploadResult.error) {
+        console.error(`Failed to upload document ${filename}:`, uploadResult.error);
         continue;
       }
 
@@ -125,7 +128,6 @@ export async function processDocument(attachments: Attachment[] = []) {
       }
 
       let publicUrl = urlData.publicUrl;
-      // Fix double slashes
       publicUrl = publicUrl.replace(/([^:])\/\/+/g, '$1/');
       console.log(`Document uploaded: ${filename}`, {
         publicUrl,
@@ -156,9 +158,19 @@ export async function processDocument(attachments: Attachment[] = []) {
           });
           throw new Error(`Uploaded file size does not match original`);
         }
+        const hasher = createHash("sha256");
+        hasher.update(uploadedBuffer);
+        const uploadedChecksum = hasher.toString();
+        console.log(`Uploaded checksum for ${filename}: ${uploadedChecksum}`);
+        if (originalChecksum && originalChecksum !== uploadedChecksum) {
+          console.error(`Checksum mismatch for ${filename}:`, {
+            originalChecksum,
+            uploadedChecksum
+          });
+          throw new Error(`Uploaded file content does not match original`);
+        }
       } catch (validationError) {
         console.error(`Error validating uploaded file ${filename}: ${validationError.message}`);
-        // Remove the corrupted file
         await supabase.storage.from('invoices').remove([normalizedStorageFilename]);
         throw validationError;
       }
