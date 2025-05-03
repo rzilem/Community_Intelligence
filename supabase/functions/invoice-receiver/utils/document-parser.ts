@@ -1,5 +1,11 @@
+
 import { createWorker } from "https://esm.sh/tesseract.js@4.1.1";
 
+/**
+ * Determines the document type based on file extension
+ * @param filename The name of the file
+ * @returns Document type string ("pdf", "docx", "doc", or "unknown")
+ */
 export function getDocumentType(filename: string): string {
   if (!filename) return "unknown";
   const lowerFilename = filename.toLowerCase();
@@ -9,13 +15,18 @@ export function getDocumentType(filename: string): string {
   return "unknown";
 }
 
+/**
+ * Extracts text from PDF using OCR
+ * @param content Base64 encoded PDF content
+ * @returns Extracted text
+ */
 export async function extractTextFromPdf(content: string): Promise<string> {
   try {
     const worker = await createWorker();
     await worker.loadLanguage('eng');
     await worker.initialize('eng');
     await worker.setParameters({
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$,.-():/'
+      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$,.-():/\\'
     });
     const { data } = await worker.recognize(content);
     await worker.terminate();
@@ -24,16 +35,26 @@ export async function extractTextFromPdf(content: string): Promise<string> {
       extractedLength: data.text.length
     });
     return data.text || "No text extracted from PDF";
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error extracting text from PDF:', error);
     return '';
   }
 }
 
+/**
+ * Extracts text from DOCX file (placeholder)
+ * @param content DOCX content
+ * @returns Extracted text
+ */
 export async function extractTextFromDocx(content: string): Promise<string> {
   return "DOCX content extraction not implemented";
 }
 
+/**
+ * Extracts text from DOC file (placeholder)
+ * @param content DOC content
+ * @returns Extracted text
+ */
 export async function extractTextFromDoc(content: string): Promise<string> {
   return "DOC content extraction not implemented";
 }

@@ -4,8 +4,9 @@ import { extractInvoiceDetails } from "./extractors/invoice-details-extractor.ts
 import { extractAssociationInformation } from "./extractors/association-extractor.ts";
 import { cleanupInvoiceData } from "./utils/invoice-cleanup.ts";
 import { processDocument } from "./document-processor.ts";
-import { processHtmlContent } from "./html-processor.ts";
+import { ContentExtractionService } from "./content-extraction-service.ts";
 import { Invoice } from "../types/invoice-types.ts"; // Updated import path
+import { Attachment } from "./invoice-types.ts";
 
 export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoice>> {
   const requestId = emailData.tracking_number || `email_${Date.now()}`;
@@ -68,7 +69,16 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       console.log(`[${requestId}] No valid attachments processed`);
     }
 
-    const content = await processHtmlContent(documentContent, rawHtmlContent, rawTextContent, subject);
+    // Use content extraction service to get the best content
+    const contentExtractor = new ContentExtractionService();
+    const content = contentExtractor.getBestAvailableContent(
+      documentContent, 
+      rawHtmlContent, 
+      rawTextContent, 
+      subject
+    );
+    
+    // Extract information from content
     const vendorInfo = extractVendorInformation(content, from);
     const invoiceDetails = extractInvoiceDetails(content, subject);
     const associationInfo = extractAssociationInformation(content);
@@ -94,7 +104,7 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       }
     }
 
-    const cleanedInvoice = cleanupInvoiceData(invoice, processedAttachment, subject, content);
+    const cleanedInvoice = cleanupInvoiceData(invoice, processedAttachment as any, subject, content);
     if (!cleanedInvoice.invoice_number) {
       cleanedInvoice.invoice_number = `INV-${Date.now().toString().slice(-6)}`;
       console.log(`[${requestId}] Generated invoice number: ${cleanedInvoice.invoice_number}`);
@@ -102,7 +112,7 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
 
     console.log(`[${requestId}] Extracted invoice data`, cleanedInvoice);
     return cleanedInvoice;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`[${requestId}] Error processing invoice email: ${error.message}`);
     throw new Error(`Failed to process invoice email: ${error.message}`);
   }
