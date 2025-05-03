@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ExternalLink, AlertTriangle, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { showToast } from '@/utils/toast-utils';
 
 interface PdfViewerProps {
   pdfUrl: string;
@@ -43,11 +43,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       
       return () => clearTimeout(retryTimer);
     } else if (pdfLoadFailed && pdfLoadAttempts >= 2) {
-      console.error('PDF load attempts exhausted');
+      console.error('PDF load attempts exhausted', {
+        url: pdfUrl,
+        attempts: pdfLoadAttempts,
+        timestamp: new Date().toISOString()
+      });
       setIsLoading(false);
       onError();
     }
-  }, [pdfLoadFailed, pdfLoadAttempts, onError]);
+  }, [pdfLoadFailed, pdfLoadAttempts, onError, pdfUrl]);
 
   // Try to detect if the PDF loads successfully through the object element
   useEffect(() => {
@@ -58,7 +62,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-loaded') {
-          console.log('PDF object successfully loaded');
+          console.log('PDF object successfully loaded', {
+            url: pdfUrl,
+            timestamp: new Date().toISOString()
+          });
           setIsLoading(false);
           onLoad();
         }
@@ -68,16 +75,23 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     observer.observe(obj, { attributes: true });
     
     return () => observer.disconnect();
-  }, [onLoad]);
+  }, [onLoad, pdfUrl]);
 
   const handleLoadError = () => {
-    console.error('PDF object error occurred');
+    console.error('PDF object error occurred', {
+      url: pdfUrl,
+      attempts: pdfLoadAttempts,
+      timestamp: new Date().toISOString()
+    });
     setPdfLoadFailed(true);
     onError();
   };
   
   const handleLoadSuccess = () => {
-    console.log('PDF object loaded successfully');
+    console.log('PDF object loaded successfully', {
+      url: pdfUrl,
+      timestamp: new Date().toISOString()
+    });
     if (objectRef.current) {
       objectRef.current.setAttribute('data-loaded', 'true');
     }
@@ -105,7 +119,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     }
     
-    toast("Reloading PDF", {
+    showToast("Reloading PDF", {
       description: "Attempting to reload the document..."
     });
   };

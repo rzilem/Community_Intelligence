@@ -2,7 +2,7 @@
 import React from 'react';
 import { AlertCircle, ExternalLink, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { showToast } from '@/utils/toast-utils';
 
 interface PreviewErrorStateProps {
   error: string;
@@ -19,7 +19,7 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
 }) => {
   const handleRetry = () => {
     if (onRetry) {
-      toast("Reloading document", {
+      showToast("Reloading document", {
         description: "Attempting to reload the preview..."
       });
       onRetry();
@@ -29,7 +29,7 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
   const handleDownload = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
-      toast("Downloading document", {
+      showToast("Downloading document", {
         description: "Opening document in a new tab"
       });
     }

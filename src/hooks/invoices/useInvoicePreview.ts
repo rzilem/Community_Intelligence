@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
-import { toast } from 'sonner';
+import { showToast } from '@/utils/toast-utils';
 
 interface UseInvoicePreviewProps {
   pdfUrl?: string;
@@ -51,15 +51,24 @@ export const useInvoicePreview = ({
             }
           });
           
+          const contentType = response.headers.get('content-type');
+          const isValidPdf = response.ok && contentType?.includes('application/pdf');
+          
           console.log("PDF accessibility test result:", {
             status: response.status,
             ok: response.ok,
-            contentType: response.headers.get('content-type')
+            contentType,
+            isValidPdf
           });
           
-          setPdfAccessible(response.ok);
+          setPdfAccessible(isValidPdf);
+          
+          if (!isValidPdf && response.ok) {
+            console.warn("Resource is available but not a PDF");
+          }
         } catch (error) {
           // If HEAD fails, try a simple GET
+          console.warn("HEAD request failed, trying GET", error);
           const getResponse = await fetch(normalizedPdfUrl, { 
             method: 'GET', 
             cache: 'no-cache',
@@ -69,17 +78,28 @@ export const useInvoicePreview = ({
             }
           });
           
-          setPdfAccessible(getResponse.ok);
+          const contentType = getResponse.headers.get('content-type');
+          const isValidPdf = getResponse.ok && contentType?.includes('application/pdf');
+          setPdfAccessible(isValidPdf);
         }
       } catch (error) {
         console.warn("PDF accessibility checks failed:", error);
         
-        // Assume it might be accessible
-        setPdfAccessible(!!normalizedPdfUrl);
-        
-        if (hasHtmlContent) {
-          console.log("Falling back to HTML content");
-          setContentType('html');
+        // After multiple retries, assume inaccessible
+        if (retryCount >= 2) {
+          console.error("PDF accessibility check failed after retries");
+          setPdfAccessible(false);
+          
+          if (hasHtmlContent) {
+            console.log("Falling back to HTML content");
+            setContentType('html');
+          }
+        } else {
+          // Schedule a retry
+          console.log("Scheduling retry for PDF accessibility check");
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+          }, 1000);
         }
       }
     };
@@ -97,7 +117,8 @@ export const useInvoicePreview = ({
       hasEmailContent,
       emailContentLength: emailContent?.length || 0,
       isPdfFile,
-      contentType
+      contentType,
+      isPdfAccessible: pdfAccessible
     });
 
     if (pdfAccessible && isPdfFile) {
@@ -118,21 +139,32 @@ export const useInvoicePreview = ({
 
   // Handle PDF load error
   const handlePreviewError = useCallback(() => {
+    console.error("Preview error:", {
+      pdfUrl: normalizedPdfUrl,
+      retryCount,
+      hasHtmlContent,
+      timestamp: new Date().toISOString()
+    });
     setPreviewError("We couldn't display the document preview. Please try using the buttons below instead.");
     setIsPdfLoaded(false);
-  }, []);
+  }, [normalizedPdfUrl, retryCount, hasHtmlContent]);
 
   // Handle PDF load success
   const handlePreviewLoad = useCallback(() => {
+    console.log("Preview loaded:", {
+      pdfUrl: normalizedPdfUrl,
+      contentType,
+      timestamp: new Date().toISOString()
+    });
     setIsPdfLoaded(true);
     setPreviewError(null);
-  }, []);
+  }, [normalizedPdfUrl, contentType]);
 
   // Handle external open action
   const handleExternalOpen = useCallback(() => {
     if (normalizedPdfUrl) {
       window.open(normalizedPdfUrl, '_blank');
-      toast("Opening PDF", {
+      showToast("Opening PDF", {
         description: "The PDF is opening in a new tab",
       });
     }
@@ -148,7 +180,7 @@ export const useInvoicePreview = ({
     setPreviewError(null);
     setPdfAccessible(null); // Reset to trigger re-check
     setRetryCount(prev => prev + 1); // Increment retry count to trigger recheck
-    toast("Retrying", {
+    showToast("Retrying", {
       description: "Attempting to reload the document preview"
     });
   }, []);
@@ -159,7 +191,7 @@ export const useInvoicePreview = ({
       // If we have email content and the document fails to load,
       // automatically switch to the email tab
       if (previewError && activeTab === 'document') {
-        toast("Showing email content", {
+        showToast("Showing email content", {
           description: "Document preview failed. Showing original email instead."
         });
         setActiveTab('email');
