@@ -1,16 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { UserWithProfile } from '@/types/user-types';
 import { Table, TableBody } from '@/components/ui/table';
-import { toast } from 'sonner';
 import { useUserRoles } from './hooks/useUserRoles';
 import UserTableHeader from './table/UserTableHeader';
 import UserTableRow from './table/UserTableRow';
 import EmptyUserTable from './table/EmptyUserTable';
+import { UserRole } from '@/types/profile-types';
 
 interface UserTableProps {
   users: UserWithProfile[];
-  roles: { id: string; name: string }[];
+  roles: { id: UserRole; name: string }[];
   onRoleUpdate: () => void;
 }
 

@@ -1,10 +1,12 @@
 
+export type UserRole = 'admin' | 'manager' | 'resident' | 'maintenance' | 'accountant' | 'user';
+
 export interface Profile {
   id: string;
   email?: string;
   first_name?: string;
   last_name?: string;
-  role: string;
+  role: UserRole;
   profile_image_url?: string | null;
   phone?: string | null;
   created_at: string;

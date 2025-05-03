@@ -1,12 +1,13 @@
 
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserRole } from '@/types/profile-types';
 
 interface UserRoleSelectorProps {
   userId: string;
-  currentRole: string;
-  roles: { id: string; name: string }[];
-  onRoleChange: (userId: string, role: string) => void;
+  currentRole: UserRole;
+  roles: { id: UserRole; name: string }[];
+  onRoleChange: (userId: string, role: UserRole) => void;
   isDisabled?: boolean;
 }
 
@@ -20,7 +21,7 @@ const UserRoleSelector: React.FC<UserRoleSelectorProps> = ({
   return (
     <Select
       value={currentRole}
-      onValueChange={(value) => onRoleChange(userId, value)}
+      onValueChange={(value) => onRoleChange(userId, value as UserRole)}
       disabled={isDisabled}
     >
       <SelectTrigger className="w-full">

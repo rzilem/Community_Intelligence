@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import UserTable from './UserTable';
 import CreateUserDialog from './CreateUserDialog';
+import { UserRole } from '@/types/profile-types';
 
 interface UserManagementProps {
   users: UserWithProfile[];
   isLoading: boolean;
   error: any;
-  roles: { id: string; name: string }[];
+  roles: { id: UserRole; name: string }[];
   onRefresh: () => void;
 }
 

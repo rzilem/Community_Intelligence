@@ -3,24 +3,25 @@ import { useState, useEffect } from 'react';
 import { UserWithProfile } from '@/types/user-types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { UserRole } from '@/types/profile-types';
 
 export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void) => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [userRoles, setUserRoles] = useState<Record<string, string>>({});
+  const [userRoles, setUserRoles] = useState<Record<string, UserRole>>({});
   const [refreshingProfile, setRefreshingProfile] = useState<Record<string, boolean>>({});
 
   // Initialize user roles
   useEffect(() => {
-    const rolesMap: Record<string, string> = {};
+    const rolesMap: Record<string, UserRole> = {};
     users.forEach(user => {
       if (user.profile?.role) {
-        rolesMap[user.id] = user.profile.role;
+        rolesMap[user.id] = user.profile.role as UserRole;
       }
     });
     setUserRoles(rolesMap);
   }, [users]);
 
-  const updateUserRole = async (userId: string, role: string) => {
+  const updateUserRole = async (userId: string, role: UserRole) => {
     try {
       setLoading(prev => ({ ...prev, [userId]: true }));
       
@@ -53,12 +54,15 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
         throw new Error('User not found');
       }
       
+      // Cast the role to UserRole to ensure type safety
+      const userRole = (user.profile?.role || 'user') as UserRole;
+      
       const { error } = await supabase
         .from('profiles')
         .upsert({
           id: userId,
           email: user.email,
-          role: user.profile?.role || 'user',
+          role: userRole,
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()

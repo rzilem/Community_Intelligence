@@ -7,14 +7,15 @@ import { UserWithProfile } from '@/types/user-types';
 import UserRoleSelector from './UserRoleSelector';
 import UserRoleBadge from './UserRoleBadge';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
+import { UserRole } from '@/types/profile-types';
 
 interface UserTableRowProps {
   user: UserWithProfile;
-  roles: { id: string; name: string }[];
-  userRoles: Record<string, string>;
+  roles: { id: UserRole; name: string }[];
+  userRoles: Record<string, UserRole>;
   loading: Record<string, boolean>;
   refreshingProfile: Record<string, boolean>;
-  onRoleUpdate: (userId: string, role: string) => void;
+  onRoleUpdate: (userId: string, role: UserRole) => void;
   onProfileImageUpdated: () => void;
   onRefreshProfile: (userId: string) => void;
 }
@@ -29,7 +30,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
   onProfileImageUpdated,
   onRefreshProfile
 }) => {
-  const userRole = userRoles[user.id] || user.profile?.role || 'user';
+  const userRole = userRoles[user.id] || (user.profile?.role as UserRole) || 'user';
   const isLoading = loading[user.id] || false;
   const isRefreshing = refreshingProfile[user.id] || false;
   

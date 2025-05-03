@@ -10,14 +10,15 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
+import { UserRole } from '@/types/profile-types';
 
 const roles = [
-  { id: 'admin', name: 'Administrator' },
-  { id: 'manager', name: 'Manager' },
-  { id: 'resident', name: 'Resident' },
-  { id: 'maintenance', name: 'Maintenance' },
-  { id: 'accountant', name: 'Accountant' },
-  { id: 'user', name: 'Basic User' },
+  { id: 'admin' as UserRole, name: 'Administrator' },
+  { id: 'manager' as UserRole, name: 'Manager' },
+  { id: 'resident' as UserRole, name: 'Resident' },
+  { id: 'maintenance' as UserRole, name: 'Maintenance' },
+  { id: 'accountant' as UserRole, name: 'Accountant' },
+  { id: 'user' as UserRole, name: 'Basic User' },
 ];
 
 const Permissions = () => {
@@ -43,9 +44,11 @@ const Permissions = () => {
       id: profile.id,
       first_name: profile.first_name,
       last_name: profile.last_name,
-      role: profile.role,
+      role: profile.role as UserRole,
       email: profile.email,
-      profile_image_url: profile.profile_image_url
+      profile_image_url: profile.profile_image_url,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at || profile.created_at
     }
   })) as UserWithProfile[];
 

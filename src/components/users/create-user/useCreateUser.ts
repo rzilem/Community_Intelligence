@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { NewUserFormValues, newUserSchema } from './types';
+import { UserRole } from '@/types/profile-types';
 
 export function useCreateUser(
   onOpenChange: (open: boolean) => void, 
@@ -57,7 +58,7 @@ export function useCreateUser(
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
-              role: formData.role,
+              role: formData.role as UserRole,
               first_name: formData.firstName,
               last_name: formData.lastName,
               email: formData.email

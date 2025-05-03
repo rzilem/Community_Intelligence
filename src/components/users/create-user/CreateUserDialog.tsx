@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { toast } from 'sonner';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { CreateUserForm } from './CreateUserForm';
 import { useCreateUser } from './useCreateUser';
+import { UserRole } from '@/types/profile-types';
 
 interface CreateUserDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onUserCreated: () => void;
-  roles: { id: string; name: string }[];
+  roles: { id: UserRole; name: string }[];
 }
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ 

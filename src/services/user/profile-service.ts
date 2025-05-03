@@ -1,12 +1,20 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Profile, UserSettings } from '@/types/profile-types';
+import { Profile, UserSettings, UserRole } from '@/types/profile-types';
 
 /**
  * Update a user's profile in Supabase
  */
 export const updateProfile = async (userId: string, data: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
   try {
+    // If role is provided, ensure it's a valid UserRole
+    if (data.role) {
+      const validRoles: UserRole[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant', 'user'];
+      if (!validRoles.includes(data.role as UserRole)) {
+        return { success: false, error: 'Invalid role provided' };
+      }
+    }
+    
     const { error } = await supabase
       .from('profiles')
       .update(data)
