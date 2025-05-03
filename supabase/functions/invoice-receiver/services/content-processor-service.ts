@@ -1,25 +1,25 @@
 
-import { Attachment } from "./invoice-types.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { decodePDFContent, validatePDF, verifyUploadedPDF } from "./pdf-processor.ts";
-import { FileUploadService } from "./file-upload-service.ts";
 import { ContentExtractionService } from "./content-extraction-service.ts";
+import { Attachment } from "./invoice-types.ts";
 
 /**
- * Service for processing document content from attachments
+ * Service for processing content from attachments
  */
 export class ContentProcessorService {
-  private fileUploader: FileUploadService;
-  private contentExtractor: ContentExtractionService;
-  
+  private supabase;
+  private contentExtractionService;
+
   constructor(supabaseUrl: string, supabaseKey: string) {
-    this.fileUploader = new FileUploadService(supabaseUrl, supabaseKey);
-    this.contentExtractor = new ContentExtractionService();
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.contentExtractionService = new ContentExtractionService();
   }
-  
+
   /**
-   * Process a document attachment to extract content and upload to storage
-   * @param attachment The email attachment
-   * @returns Object with processed document information
+   * Processes an attachment, extracts content, and uploads to storage
+   * @param attachment The email attachment to process
+   * @returns Processed attachment and extracted content
    */
   async processAttachment(attachment: Attachment): Promise<{
     documentContent: string;
@@ -28,203 +28,235 @@ export class ContentProcessorService {
   }> {
     const filename = attachment.filename || "unnamed_attachment";
     const contentType = attachment.contentType || "application/octet-stream";
+    
     console.log(`Processing attachment: ${filename} (${contentType})`);
     
     if (!attachment.content) {
-      console.warn(`No content for attachment: ${filename}`);
-      return { 
-        documentContent: "", 
+      return {
+        documentContent: "",
         processedAttachment: null,
-        error: "No content in attachment"
+        error: `No content for attachment: ${filename}`
       };
     }
     
-    let contentBuffer: Uint8Array;
-    let originalChecksum = '';
-    const contentToProcess = attachment.content;
-    let stringContent: string | null = null;
-    
     try {
-      // Convert content to Uint8Array based on its type
+      let contentBuffer: Uint8Array;
+      let originalChecksum = "";
+      let contentToProcess = attachment.content;
+      
+      // Convert content to Uint8Array for processing
       if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
-        console.log(`Converting Blob/File to ArrayBuffer: ${filename}`);
         const arrayBuffer = await contentToProcess.arrayBuffer();
         contentBuffer = new Uint8Array(arrayBuffer);
-        console.log(`Converted to Uint8Array: ${filename}`, {
-          length: contentBuffer.byteLength,
-          firstBytes: Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('')
-        });
       } else if (typeof contentToProcess === 'string') {
-        stringContent = contentToProcess;
-        
         if (contentType === 'application/pdf') {
           const decodedBuffer = decodePDFContent(contentToProcess, filename);
-          if (decodedBuffer) {
-            contentBuffer = decodedBuffer;
-          } else {
-            console.warn(`Non-base64 string content for PDF: ${filename}, treating as text`);
-            contentBuffer = new TextEncoder().encode(contentToProcess);
+          if (!decodedBuffer) {
+            return {
+              documentContent: "",
+              processedAttachment: null,
+              error: `Failed to decode PDF content for ${filename}`
+            };
           }
+          contentBuffer = decodedBuffer;
         } else {
           contentBuffer = new TextEncoder().encode(contentToProcess);
         }
       } else {
-        return { 
-          documentContent: "", 
+        return {
+          documentContent: "",
           processedAttachment: null,
           error: `Unsupported content type for ${filename}: ${typeof contentToProcess}`
         };
       }
       
-      if (!contentBuffer || contentBuffer.byteLength === 0) {
-        return { 
-          documentContent: "", 
-          processedAttachment: null,
-          error: `Empty content buffer after processing: ${filename}`
-        };
-      }
-      
-      // Validate PDF content
+      // Validate PDF if applicable
       if (contentType === 'application/pdf') {
-        const validation = validatePDF(contentBuffer, filename);
-        if (!validation.isValid) {
-          return { 
-            documentContent: "", 
+        const validationResult = validatePDF(contentBuffer, filename);
+        if (!validationResult.isValid) {
+          return {
+            documentContent: "",
             processedAttachment: null,
-            error: validation.errorMessage
+            error: validationResult.errorMessage || `Invalid PDF content for ${filename}`
           };
         }
-        originalChecksum = validation.checksum;
+        originalChecksum = validationResult.checksum;
       }
       
-      // Upload file to storage
-      const uploadResult = await this.fileUploader.uploadFile(
-        filename,
-        contentBuffer,
-        contentType
-      );
+      // Upload to storage
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '');
+      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storageFilename = `invoice_${timestamp}_${safeFilename}`;
+      const normalizedStorageFilename = storageFilename.replace(/\/+/g, '');
       
-      if (uploadResult.error) {
-        return { 
-          documentContent: "", 
+      console.log(`Uploading ${filename} to invoices bucket as ${normalizedStorageFilename}`);
+      const { data: uploadData, error: uploadError } = await this.supabase.storage
+        .from('invoices')
+        .upload(normalizedStorageFilename, contentBuffer, {
+          contentType,
+          upsert: true
+        });
+      
+      if (uploadError) {
+        return {
+          documentContent: "",
           processedAttachment: null,
-          error: `Upload failed: ${uploadResult.error}`
+          error: `Upload failed: ${uploadError.message}`
         };
       }
       
-      // Verify uploaded file if it's a PDF
-      if (contentType === 'application/pdf') {
-        const uploadedBuffer = await this.fileUploader.fetchFile(uploadResult.publicUrl);
-        if (!uploadedBuffer) {
-          await this.fileUploader.deleteFile(uploadResult.normalizedFilename);
-          return { 
-            documentContent: "", 
-            processedAttachment: null,
-            error: `Failed to fetch uploaded file for verification: ${filename}`
-          };
+      // Get public URL
+      const { data: urlData } = this.supabase.storage
+        .from('invoices')
+        .getPublicUrl(normalizedStorageFilename);
+      
+      if (!urlData?.publicUrl) {
+        return {
+          documentContent: "",
+          processedAttachment: null,
+          error: `Failed to get public URL for ${normalizedStorageFilename}`
+        };
+      }
+      
+      let publicUrl = urlData.publicUrl;
+      publicUrl = publicUrl.replace(/([^:])\/\/+/g, '$1/');
+      
+      // Verify uploaded file
+      try {
+        const response = await fetch(publicUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch uploaded file: ${response.status}`);
         }
         
-        const verification = verifyUploadedPDF(
-          uploadedBuffer, 
-          originalChecksum, 
-          contentBuffer.byteLength,
-          filename
+        const uploadedBuffer = new Uint8Array(await response.arrayBuffer());
+        
+        if (contentType === 'application/pdf') {
+          const verificationResult = verifyUploadedPDF(
+            uploadedBuffer, 
+            originalChecksum, 
+            contentBuffer.byteLength, 
+            filename
+          );
+          
+          if (!verificationResult.isValid) {
+            await this.supabase.storage.from('invoices').remove([normalizedStorageFilename]);
+            return {
+              documentContent: "",
+              processedAttachment: null,
+              error: verificationResult.errorMessage || `Verification failed for ${filename}`
+            };
+          }
+        }
+      } catch (verifyError: any) {
+        await this.supabase.storage.from('invoices').remove([normalizedStorageFilename]);
+        return {
+          documentContent: "",
+          processedAttachment: null,
+          error: `Error verifying uploaded file: ${verifyError.message}`
+        };
+      }
+      
+      // Extract text from document
+      let documentContent = "";
+      if (typeof contentToProcess === 'string') {
+        documentContent = await this.contentExtractionService.extractContent(
+          contentToProcess,
+          filename,
+          contentType
         );
-        
-        if (!verification.isValid) {
-          await this.fileUploader.deleteFile(uploadResult.normalizedFilename);
-          return { 
-            documentContent: "", 
-            processedAttachment: null,
-            error: verification.errorMessage
-          };
-        }
       }
       
-      // Extract text content from the document
-      const extractedText = await this.contentExtractor.extractContent(
-        stringContent,
-        filename,
-        contentType
-      );
-      
-      // Create processed attachment with upload info
-      const sourceDocument = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const processedAttachment = {
+      // Return processed attachment
+      const processedAttachment: Attachment = {
         ...attachment,
-        url: uploadResult.publicUrl,
-        filename: uploadResult.normalizedFilename,
-        source_document: sourceDocument
+        url: publicUrl,
+        filename: normalizedStorageFilename,
+        source_document: safeFilename
       };
       
-      return { 
-        documentContent: extractedText, 
-        processedAttachment
-      };
+      return { documentContent, processedAttachment };
+      
     } catch (error: any) {
-      console.error(`Error processing document ${filename}:`, error);
-      return { 
-        documentContent: "", 
+      return {
+        documentContent: "",
         processedAttachment: null,
-        error: `Processing error: ${error.message}`
+        error: `Error processing attachment: ${error.message}`
       };
     }
   }
   
   /**
-   * Process a fallback attachment when no valid document is found
-   * @param attachment The fallback attachment
-   * @returns Object with processed attachment information
+   * Process a fallback attachment when no valid documents were found
+   * @param attachment The fallback attachment to process
+   * @returns Processed attachment
    */
   async processFallbackAttachment(attachment: Attachment): Promise<{
     processedAttachment: Attachment | null;
     error?: string;
   }> {
     const filename = attachment.filename || "unnamed_attachment";
-    console.log(`Processing fallback attachment: ${filename}`);
+    const contentType = attachment.contentType || "application/octet-stream";
+    
+    console.log(`Processing fallback attachment: ${filename} (${contentType})`);
     
     try {
+      // Convert content to Uint8Array
       let contentBuffer: Uint8Array;
       const contentToProcess = attachment.content;
       
-      if (typeof contentToProcess === 'string') {
-        contentBuffer = new TextEncoder().encode(contentToProcess);
-      } else if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
+      if (contentToProcess instanceof Blob || contentToProcess instanceof File) {
         const arrayBuffer = await contentToProcess.arrayBuffer();
         contentBuffer = new Uint8Array(arrayBuffer);
+      } else if (typeof contentToProcess === 'string') {
+        contentBuffer = new TextEncoder().encode(contentToProcess);
       } else {
-        return { 
+        return {
           processedAttachment: null,
-          error: `Unsupported content type for fallback attachment: ${filename}`
+          error: `Unsupported content type for fallback attachment: ${typeof contentToProcess}`
         };
       }
       
-      const uploadResult = await this.fileUploader.uploadFile(
-        filename,
-        contentBuffer,
-        attachment.contentType || 'application/octet-stream'
-      );
+      // Upload file
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '');
+      const safeFilename = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const storageFilename = `fallback_invoice_${timestamp}_${safeFilename}`;
+      const normalizedStorageFilename = storageFilename.replace(/\/+/g, '');
       
-      if (uploadResult.error) {
-        return { 
+      const { error: uploadError } = await this.supabase.storage
+        .from('invoices')
+        .upload(normalizedStorageFilename, contentBuffer, {
+          contentType,
+          upsert: true
+        });
+      
+      if (uploadError) {
+        return {
           processedAttachment: null,
-          error: `Failed to upload fallback attachment: ${uploadResult.error}`
+          error: `Failed to upload fallback attachment: ${uploadError.message}`
         };
       }
       
-      const processedAttachment = {
+      const { data: urlData } = this.supabase.storage
+        .from('invoices')
+        .getPublicUrl(normalizedStorageFilename);
+      
+      let publicUrl = urlData.publicUrl;
+      publicUrl = publicUrl.replace(/([^:])\/\/+/g, '$1/');
+      
+      console.log(`Fallback attachment uploaded: ${filename}`, { url: publicUrl });
+      
+      const processedAttachment: Attachment = {
         ...attachment,
-        url: uploadResult.publicUrl,
-        filename: uploadResult.normalizedFilename
+        url: publicUrl,
+        filename: normalizedStorageFilename
       };
       
-      console.log(`Fallback attachment uploaded: ${filename}`, { url: uploadResult.publicUrl });
       return { processedAttachment };
+      
     } catch (error: any) {
-      console.error(`Error processing fallback attachment: ${error.message}`);
-      return { 
+      return {
         processedAttachment: null,
-        error: `Fallback processing error: ${error.message}`
+        error: `Error processing fallback attachment: ${error.message}`
       };
     }
   }

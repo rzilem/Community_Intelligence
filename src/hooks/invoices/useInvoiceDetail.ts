@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
