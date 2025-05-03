@@ -19,7 +19,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 }) => {
   const [pdfLoadFailed, setPdfLoadFailed] = useState(false);
   const [pdfLoadAttempts, setPdfLoadAttempts] = useState(0);
-  const embedRef = useRef<HTMLEmbedElement>(null);
+  const objectRef = useRef<HTMLObjectElement>(null);
   
   // Log the URL we're trying to load
   useEffect(() => {
@@ -47,36 +47,36 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }, [pdfLoadFailed, pdfLoadAttempts, onError]);
 
-  // Try to detect if the PDF loads successfully through the embed element
+  // Try to detect if the PDF loads successfully through the object element
   useEffect(() => {
-    const embed = embedRef.current;
-    if (!embed) return;
+    const obj = objectRef.current;
+    if (!obj) return;
 
     // Create a MutationObserver to watch for changes
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-loaded') {
-          console.log('PDF embed successfully loaded');
+          console.log('PDF object successfully loaded');
           onLoad();
         }
       }
     });
 
-    observer.observe(embed, { attributes: true });
+    observer.observe(obj, { attributes: true });
     
     return () => observer.disconnect();
   }, [onLoad]);
 
   const handleLoadError = () => {
-    console.error('PDF embed error occurred');
+    console.error('PDF object error occurred');
     setPdfLoadFailed(true);
     onError();
   };
   
   const handleLoadSuccess = () => {
-    console.log('PDF embed loaded successfully');
-    if (embedRef.current) {
-      embedRef.current.setAttribute('data-loaded', 'true');
+    console.log('PDF object loaded successfully');
+    if (objectRef.current) {
+      objectRef.current.setAttribute('data-loaded', 'true');
     }
     onLoad();
   };
@@ -127,7 +127,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     <div className="w-full h-full flex flex-col">
       {/* Use object for better browser compatibility */}
       <object
-        ref={embedRef}
+        ref={objectRef}
         data={pdfUrl}
         type="application/pdf"
         width="100%"

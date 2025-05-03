@@ -2,7 +2,7 @@
 import { toast as sonnerToast, type ToastT } from "sonner";
 
 // Define our extended toast type 
-type ToastProps = {
+export type ToastProps = {
   id?: string;
   title?: string;
   description?: string;
@@ -22,9 +22,16 @@ const createToast = () => {
     }
   };
 
-  // Get the toast methods
-  const toast = {
-    // Standard toast method
+  // Create the base toast function that can be directly called
+  const toastFunction = (message: string, options?: Omit<ToastProps, "title">) => {
+    const id = sonnerToast(message, options);
+    toasts.push({ title: message, ...options, id: id.toString() });
+    return id;
+  };
+
+  // Add methods to the toast function
+  const toast = Object.assign(toastFunction, {
+    // Standard toast method (for objects)
     toast: (props: ToastProps) => {
       const id = sonnerToast(props.title as string, {
         description: props.description,
@@ -75,7 +82,7 @@ const createToast = () => {
     
     // Dismiss a specific toast
     dismiss,
-  };
+  });
 
   return {
     toast,

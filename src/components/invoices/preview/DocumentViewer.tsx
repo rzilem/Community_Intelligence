@@ -19,7 +19,7 @@ interface DocumentViewerProps {
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   pdfUrl,
   htmlContent,
-  isPdf,
+  isPdf: isPdfProp,
   isWordDocument,
   onIframeError,
   onIframeLoad,
@@ -31,11 +31,11 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     console.log('pdfUrl:', pdfUrl || 'none');
     console.log('normalized pdfUrl:', pdfUrl ? new URL(pdfUrl, window.location.origin).href : 'none');
     console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
-    console.log('isPdf flag:', isPdf);
+    console.log('isPdf flag:', isPdfProp);
     console.log('isWordDocument flag:', isWordDocument);
     console.log('file extension:', getFileExtension(pdfUrl || ''));
     console.groupEnd();
-  }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
+  }, [pdfUrl, htmlContent, isPdfProp, isWordDocument]);
 
   // Create a consistent URL format for the PDF if it's a relative URL
   const getNormalizedUrl = (url?: string): string => {
@@ -56,9 +56,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   const normalizedPdfUrl = getNormalizedUrl(pdfUrl);
+  const isPdfFile = pdfUrl ? isPdf(normalizedPdfUrl) : false;
 
   // Prioritize PDF viewing when available
-  if (normalizedPdfUrl && (isPdf || isPdf(normalizedPdfUrl))) {
+  if (normalizedPdfUrl && (isPdfProp || isPdfFile)) {
     console.log('Displaying PDF content from URL:', normalizedPdfUrl);
     return (
       <PdfViewer
@@ -77,7 +78,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }
 
   // Handle other document types with URL but not PDF or Word
-  if (normalizedPdfUrl && !isPdf && !isWordDocument) {
+  if (normalizedPdfUrl && !isPdfProp && !isWordDocument) {
     console.log('Displaying unknown document type placeholder');
     return <UnknownFileViewer onExternalOpen={onExternalOpen} />;
   }
