@@ -50,3 +50,31 @@ export async function log(entry: LogEntry): Promise<void> {
     console.warn(`Could not store log in database: ${err.message}`);
   }
 }
+
+/**
+ * Log info level message
+ */
+export function logInfo(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
+  return log({ request_id: requestId, level: 'info', message, metadata });
+}
+
+/**
+ * Log error level message
+ */
+export function logError(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
+  return log({ request_id: requestId, level: 'error', message, metadata });
+}
+
+/**
+ * Log warning level message
+ */
+export function logWarn(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
+  return log({ request_id: requestId, level: 'warn', message, metadata });
+}
+
+/**
+ * Log debug level message
+ */
+export function logDebug(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
+  return log({ request_id: requestId, level: 'debug', message, metadata });
+}

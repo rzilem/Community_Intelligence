@@ -91,6 +91,9 @@ const HomeownerDetailPage: React.FC = () => {
   };
 
   const lastContactValue = getLastContactString();
+  
+  // Extract propertyId if available or use homeowner ID as fallback
+  const propertyId = homeowner?.propertyId || id || '';
 
   return (
     <AppLayout>
@@ -131,7 +134,8 @@ const HomeownerDetailPage: React.FC = () => {
           <div className="ml-6">
             <HomePropertyImage 
               address={`${homeowner?.property || ''} ${homeowner?.unit || ''}, Austin, TX`}
-              propertyId={homeowner?.id || ''}
+              propertyId={propertyId}
+              customImage={homeowner?.propertyImage}
             />
           </div>
         </div>

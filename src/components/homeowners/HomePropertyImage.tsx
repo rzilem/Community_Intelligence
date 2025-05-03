@@ -3,6 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Image, Upload, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePropertyImage } from '@/hooks/homeowners/usePropertyImage';
+import { FileUploader } from '@/components/ui/file-uploader';
+import { toast } from 'sonner';
 
 interface HomePropertyImageProps {
   address: string;
@@ -15,6 +18,7 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
   const [streetViewUrl, setStreetViewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { imageUrl, isLoading: isImageLoading, uploadPropertyImage } = usePropertyImage(propertyId);
 
   const placeholderImage = "https://images.unsplash.com/photo-1518005020951-eccb494ad742?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=250&q=80";
   
@@ -28,14 +32,29 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
     setIsLoading(true);
     setError(null);
     
+    // In production, this would call a geocoding API + Google Street View API
+    // For now, we'll use a placeholder
     setTimeout(() => {
       setStreetViewUrl(placeholderImage);
       setIsLoading(false);
     }, 800);
   };
 
-  const handleUploadImage = () => {
-    alert('In a real application, this would open a file upload dialog');
+  const handleFileSelected = (file: File) => {
+    if (!file) return;
+    
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+      toast.error('Image must be less than 5MB');
+      return;
+    }
+    
+    uploadPropertyImage(file);
   };
 
   const refreshStreetView = () => {
@@ -92,9 +111,13 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
         
         <TabsContent value="uploaded" className="space-y-2">
           <div className="h-[250px] w-[250px] bg-muted overflow-hidden rounded-md flex flex-col items-center justify-center">
-            {customImage ? (
+            {isImageLoading ? (
+              <div className="flex items-center justify-center h-full w-full">
+                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+              </div>
+            ) : imageUrl || customImage ? (
               <img 
-                src={customImage} 
+                src={imageUrl || customImage} 
                 alt={`${propertyId} property`} 
                 className="w-full h-full object-cover"
               />
@@ -102,13 +125,23 @@ export const HomePropertyImage = ({ address, propertyId, customImage }: HomeProp
               <div className="flex flex-col items-center justify-center p-4 text-center">
                 <Image className="h-10 w-10 text-muted-foreground/50 mb-2" />
                 <p className="text-xs text-muted-foreground mb-2">No custom image uploaded</p>
-                <Button size="sm" onClick={handleUploadImage}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
-                </Button>
+                <FileUploader 
+                  onFileSelect={handleFileSelected}
+                  accept="image/*"
+                  label="Upload Property Image"
+                />
               </div>
             )}
           </div>
+          {(imageUrl || customImage) && (
+            <div className="mt-2">
+              <FileUploader 
+                onFileSelect={handleFileSelected}
+                accept="image/*"
+                label="Replace Image"
+              />
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
