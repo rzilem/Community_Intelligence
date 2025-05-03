@@ -6,10 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { DocumentCategory } from '@/types/document-types';
+import { formatBytes } from '@/lib/utils';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
@@ -90,7 +90,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
             </div>
             {selectedFile && (
               <p className="text-sm text-muted-foreground">
-                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                Selected: {selectedFile.name} ({formatBytes(selectedFile.size)})
               </p>
             )}
           </div>

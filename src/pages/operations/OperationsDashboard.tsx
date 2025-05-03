@@ -12,6 +12,7 @@ import RequestTypesChart from '@/components/operations/RequestTypesChart';
 import { OperationsDashboardFilters } from '@/types/operations-types';
 import { useOperationsData } from '@/hooks/operations/useOperationsData';
 import { toast } from 'sonner';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const OperationsDashboard = () => {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -26,6 +27,7 @@ const OperationsDashboard = () => {
   
   const handleFilterChange = (name: keyof OperationsDashboardFilters, value: string) => {
     setFilters(prev => ({ ...prev, [name]: value }));
+    toast.info(`Filter updated: ${name} set to ${value}`);
   };
   
   const { 
@@ -143,45 +145,51 @@ const OperationsDashboard = () => {
           onTabChange={setActiveTab} 
         />
         
-        {activeTab === 'Overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <OpenItemsChart data={timeSeriesData} />
-            <RequestDistributionChart data={distributionData} />
-            <OfficeMetricsChart data={officeMetricsData} />
-            <RequestTypesChart data={requestTypesData} />
-          </div>
-        )}
-        
-        {activeTab === 'Requests' && (
-          <div className="p-6 bg-card rounded-lg border">
-            <h2 className="text-xl font-bold mb-4">Requests Dashboard</h2>
-            <p>Detailed view of all requests across associations and portfolios.</p>
-            <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
-          </div>
-        )}
-        
-        {activeTab === 'Invoices' && (
-          <div className="p-6 bg-card rounded-lg border">
-            <h2 className="text-xl font-bold mb-4">Invoices Dashboard</h2>
-            <p>Detailed view of all invoices across associations and portfolios.</p>
-            <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
-          </div>
-        )}
-        
-        {activeTab === 'Team Performance' && (
-          <div className="p-6 bg-card rounded-lg border">
-            <h2 className="text-xl font-bold mb-4">Team Performance Dashboard</h2>
-            <p>Detailed view of team performance metrics and KPIs.</p>
-            <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
-          </div>
-        )}
-        
-        {activeTab === 'CI Insights' && (
-          <div className="p-6 bg-card rounded-lg border">
-            <h2 className="text-xl font-bold mb-4">CI Insights Dashboard</h2>
-            <p>AI-powered insights and recommendations for operations improvement.</p>
-            <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
-          </div>
+        {loading ? (
+          <LoadingState variant="spinner" text="Loading dashboard data..." />
+        ) : (
+          <>
+            {activeTab === 'Overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <OpenItemsChart data={timeSeriesData} />
+                <RequestDistributionChart data={distributionData} />
+                <OfficeMetricsChart data={officeMetricsData} />
+                <RequestTypesChart data={requestTypesData} />
+              </div>
+            )}
+            
+            {activeTab === 'Requests' && (
+              <div className="p-6 bg-card rounded-lg border">
+                <h2 className="text-xl font-bold mb-4">Requests Dashboard</h2>
+                <p>Detailed view of all requests across associations and portfolios.</p>
+                <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
+              </div>
+            )}
+            
+            {activeTab === 'Invoices' && (
+              <div className="p-6 bg-card rounded-lg border">
+                <h2 className="text-xl font-bold mb-4">Invoices Dashboard</h2>
+                <p>Detailed view of all invoices across associations and portfolios.</p>
+                <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
+              </div>
+            )}
+            
+            {activeTab === 'Team Performance' && (
+              <div className="p-6 bg-card rounded-lg border">
+                <h2 className="text-xl font-bold mb-4">Team Performance Dashboard</h2>
+                <p>Detailed view of team performance metrics and KPIs.</p>
+                <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
+              </div>
+            )}
+            
+            {activeTab === 'CI Insights' && (
+              <div className="p-6 bg-card rounded-lg border">
+                <h2 className="text-xl font-bold mb-4">CI Insights Dashboard</h2>
+                <p>AI-powered insights and recommendations for operations improvement.</p>
+                <p className="text-muted-foreground mt-4">This tab is currently under development.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </PageTemplate>

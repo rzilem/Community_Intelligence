@@ -82,4 +82,3 @@ export function cleanHtmlContent(text: string): string {
   
   return plainText;
 }
-
