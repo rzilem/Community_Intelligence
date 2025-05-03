@@ -27,9 +27,10 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
       
       console.log(`Updating role for user ${userId} to ${role}`);
       
+      // Type assertion to handle the role as 'any' for database update
       const { error } = await supabase
         .from('profiles')
-        .update({ role })
+        .update({ role: role as any })
         .eq('id', userId);
         
       if (error) throw error;
@@ -57,12 +58,13 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
       // Use the role from user profile or default to 'user'
       const userRole = (user.profile?.role || 'user');
       
+      // Type assertion for database update
       const { error } = await supabase
         .from('profiles')
         .upsert({
           id: userId,
           email: user.email,
-          role: userRole,
+          role: userRole as any,
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()

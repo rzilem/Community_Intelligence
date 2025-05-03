@@ -15,9 +15,10 @@ export const updateProfile = async (userId: string, data: Partial<Profile>): Pro
       }
     }
     
+    // Type assertion for database update
     const { error } = await supabase
       .from('profiles')
-      .update(data)
+      .update(data as any)
       .eq('id', userId);
 
     if (error) throw error;

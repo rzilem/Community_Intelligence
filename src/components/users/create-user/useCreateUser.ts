@@ -55,10 +55,14 @@ export function useCreateUser(
         
         if (formData.role !== 'user') {
           console.log('Setting user role to:', formData.role);
+          
+          // Use type assertion to tell TypeScript this is a valid role
+          const roleValue = formData.role as any;
+          
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
-              role: formData.role,
+              role: roleValue,
               first_name: formData.firstName,
               last_name: formData.lastName,
               email: formData.email
