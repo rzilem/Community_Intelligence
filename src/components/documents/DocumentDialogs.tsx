@@ -3,7 +3,7 @@ import React from 'react';
 import DocumentUploadDialog from '@/components/documents/DocumentUploadDialog';
 import CategoryDialog from '@/components/documents/CategoryDialog';
 import { DocumentCategory } from '@/types/document-types';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface DocumentDialogsProps {
   isUploadDialogOpen: boolean;
@@ -30,6 +30,8 @@ const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
   isCreatingCategory = false,
   uploadError = null
 }) => {
+  const { toast } = useToast();
+  
   // Enhanced upload handler with error notifications
   const handleUpload = (file: File, category: string, description: string) => {
     if (file.size > 20 * 1024 * 1024) { // 20MB limit

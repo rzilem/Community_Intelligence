@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 import TemplateSearch from './TemplateSearch';
 import TemplatesGrid from './TemplatesGrid';
 import AITemplateCreator from '../ai-templates/AITemplateCreator';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface TemplatesSectionProps {
   templates: any[];
@@ -28,7 +28,7 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
     console.log('Saving template:', { title, content, type });
     // In a real implementation, you would save this to the database
     // For now, just show a toast notification
-    toast({
+    toast.custom({
       title: 'Template Created',
       description: `"${title}" has been saved as a ${type} template.`,
     });

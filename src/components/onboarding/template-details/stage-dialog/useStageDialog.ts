@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { OnboardingStage } from '@/types/onboarding-types';
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface StageFormData {
   name: string;
@@ -18,6 +18,7 @@ export function useStageDialog(stage: OnboardingStage, onSubmit: () => void, onO
   });
 
   const { updateStage, isUpdating } = useOnboardingTemplates();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (stage) {

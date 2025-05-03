@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { OnboardingTask } from '@/types/onboarding-types';
 import { useOnboardingTemplates } from '@/hooks/onboarding/useOnboardingTemplates';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 
 interface TaskFormData {
   name: string;
@@ -22,6 +22,7 @@ export function useTaskDialog(task: OnboardingTask, onSubmit: () => void, onOpen
   });
 
   const { updateTask, isUpdating } = useOnboardingTemplates();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (task) {
