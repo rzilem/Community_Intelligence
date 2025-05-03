@@ -28,7 +28,7 @@ const TemplatesSection: React.FC<TemplatesSectionProps> = ({
     console.log('Saving template:', { title, content, type });
     // In a real implementation, you would save this to the database
     // For now, just show a toast notification
-    toast.custom({
+    toast({
       title: 'Template Created',
       description: `"${title}" has been saved as a ${type} template.`,
     });
