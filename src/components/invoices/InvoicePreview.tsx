@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -91,7 +90,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // If no content and no email, show no preview state
   if ((!pdfUrl && !htmlContent && !hasEmailContent) || 
       (contentType === 'none' && pdfAccessChecked && !previewError && !hasEmailContent)) {
-    return <NoPreviewState pdfMentioned={pdfMentioned} />;
+    return <NoPreviewState 
+      pdfMentioned={pdfMentioned} 
+      onExternalOpen={normalizedPdfUrl ? handleExternalOpen : undefined}
+      pdfUrl={normalizedPdfUrl}
+    />;
   }
 
   // If there's an error, show error state

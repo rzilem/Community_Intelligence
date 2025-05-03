@@ -112,7 +112,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   // Improved PDF embed function with better fallback
   const createPdfEmbed = () => {
-    if (!pdfUrl || pdfLoadFailed && pdfLoadAttempts >= 2) {
+    if (!pdfUrl || (pdfLoadFailed && pdfLoadAttempts >= 2)) {
       // Show error if we've failed multiple times
       return (
         <div className="flex flex-col items-center justify-center h-full p-6">
@@ -131,6 +131,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       );
     }
     
+    // Render both the PDF embed and fallback content
     return (
       <div className="w-full h-full flex flex-col">
         {/* Use embed for better browser compatibility */}
@@ -150,8 +151,8 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             onIframeLoad();
           }}
         />
-        {/* Fallback content only shown if embed fails */}
-        <noembed>
+        {/* Fallback content only visible if embed fails (modern approach instead of noembed) */}
+        {pdfLoadFailed && (
           <div className="flex flex-col items-center justify-center h-full p-6">
             <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
             <Button 
@@ -161,7 +162,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               Open PDF <ExternalLink className="h-4 w-4 ml-2" />
             </Button>
           </div>
-        </noembed>
+        )}
       </div>
     );
   };

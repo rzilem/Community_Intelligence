@@ -3,18 +3,20 @@ import React from 'react';
 import { AlertTriangle, ExternalLink, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface NoPreviewStateProps {
+export interface NoPreviewStateProps {
   pdfUrl?: string;
   onExternalOpen?: () => void;
   onManualUpload?: () => void;
   message?: string;
+  pdfMentioned?: boolean;
 }
 
 export const NoPreviewState: React.FC<NoPreviewStateProps> = ({ 
   pdfUrl,
   onExternalOpen,
   onManualUpload,
-  message
+  message,
+  pdfMentioned
 }) => {
   return (
     <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
@@ -23,7 +25,9 @@ export const NoPreviewState: React.FC<NoPreviewStateProps> = ({
         {message || "PDF Not Found in Email"}
       </p>
       <p className="text-center text-sm mb-4">
-        The system detected a mention of an attached PDF but couldn't find or process the actual attachment.
+        {pdfMentioned 
+          ? "The system detected a mention of an attached PDF but couldn't find or process the actual attachment."
+          : "No preview content is available for this invoice."}
       </p>
       {pdfUrl && (
         <Button 
@@ -44,7 +48,9 @@ export const NoPreviewState: React.FC<NoPreviewStateProps> = ({
         </Button>
       )}
       <p className="text-center text-xs text-muted-foreground max-w-md">
-        The email body text was found but any PDF attachment mentioned in the email was not properly processed.
+        {pdfMentioned 
+          ? "The email body text was found but any PDF attachment mentioned in the email was not properly processed."
+          : "You can still process this invoice manually by entering details in the form."}
         You can still process this manually by entering invoice details in the form.
       </p>
     </div>
