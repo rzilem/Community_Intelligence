@@ -19,7 +19,10 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
 }) => {
   const handleRetry = () => {
     if (onRetry) {
-      toast.info("Retrying PDF load...");
+      toast({
+        title: "Info",
+        description: "Retrying PDF load..."
+      });
       onRetry();
     }
   };
@@ -27,7 +30,10 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
   const handleDownload = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
-      toast.info("Downloading PDF...");
+      toast({
+        title: "Info",
+        description: "Downloading PDF..."
+      });
     }
   };
 

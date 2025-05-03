@@ -43,7 +43,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     } else if (pdfLoadFailed && pdfLoadAttempts >= 2) {
       console.error('PDF load attempts exhausted');
       onError();
-      toast.error("Failed to load PDF document");
+      toast({
+        title: "Error",
+        description: "Failed to load PDF document",
+        variant: "destructive"
+      });
     }
   }, [pdfLoadFailed, pdfLoadAttempts, onError]);
 

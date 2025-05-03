@@ -4,7 +4,7 @@ import { PdfViewer } from './viewers/PdfViewer';
 import { WordDocViewer } from './viewers/WordDocViewer';
 import { HtmlContentViewer } from './viewers/HtmlContentViewer';
 import { UnknownFileViewer } from './viewers/UnknownFileViewer';
-import { isPdf, getFileExtension } from './utils/fileTypeUtils';
+import { isPdf, getFileExtension } from './utils';
 
 interface DocumentViewerProps {
   pdfUrl?: string;

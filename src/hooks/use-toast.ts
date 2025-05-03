@@ -1,7 +1,7 @@
 
 import { toast as sonnerToast, type ToastT } from "sonner";
 
-// Define our extended toast type 
+// Define our extended toast type - renamed to avoid conflicts
 export type ToastProps = {
   id?: string;
   title?: string;
