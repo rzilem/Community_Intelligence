@@ -22,7 +22,7 @@ export class LoggingService {
         metadata
       });
       if (error) {
-        console.error(`Failed to store log: ${error.message}`);
+        console.error(`Failed to store log: ${JSON.stringify(error)}`);
       }
     } catch (logError) {
       console.error(`Error logging to Supabase: ${(logError as Error).message}`);
