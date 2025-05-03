@@ -4,7 +4,7 @@ import { extractAssociationInformation } from "./extractors/association-extracto
 import { cleanupInvoiceData } from "./utils/invoice-cleanup.ts";
 import { processDocument } from "./document-processor.ts";
 import { processHtmlContent } from "./html-processor.ts";
-import { Invoice } from "./invoice-types.ts";
+import { Invoice } from "../types/invoice-types.ts"; // Updated import path
 
 export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoice>> {
   const requestId = emailData.tracking_number || `email_${Date.now()}`;

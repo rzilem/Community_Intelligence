@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { getNextTrackingNumber, registerCommunication } from "./tracking-service.ts";
-import { Invoice } from "./invoice-types.ts";
+import { Invoice } from "../types/invoice-types.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";

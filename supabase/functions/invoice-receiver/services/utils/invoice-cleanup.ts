@@ -1,5 +1,5 @@
 
-import { Invoice } from "../../types/invoice-types.ts";
+import { Invoice } from "../../types/invoice-types.ts"; // Updated import path
 
 export function cleanupInvoiceData(
   invoice: Record<string, any>,
