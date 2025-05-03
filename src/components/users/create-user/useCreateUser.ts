@@ -58,7 +58,7 @@ export function useCreateUser(
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
-              role: formData.role as UserRole,
+              role: formData.role,
               first_name: formData.firstName,
               last_name: formData.lastName,
               email: formData.email

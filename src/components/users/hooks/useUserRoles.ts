@@ -15,7 +15,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
     const rolesMap: Record<string, UserRole> = {};
     users.forEach(user => {
       if (user.profile?.role) {
-        rolesMap[user.id] = user.profile.role as UserRole;
+        rolesMap[user.id] = user.profile.role;
       }
     });
     setUserRoles(rolesMap);
@@ -54,8 +54,8 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
         throw new Error('User not found');
       }
       
-      // Cast the role to UserRole to ensure type safety
-      const userRole = (user.profile?.role || 'user') as UserRole;
+      // Use the role from user profile or default to 'user'
+      const userRole = (user.profile?.role || 'user');
       
       const { error } = await supabase
         .from('profiles')
