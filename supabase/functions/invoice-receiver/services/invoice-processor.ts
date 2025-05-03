@@ -163,7 +163,7 @@ export async function processInvoiceEmail(emailData: any, requestId: string) {
     dueDate.setDate(dueDate.getDate() + 30);
     const dueDateStr = dueDate.toISOString().split('T')[0];
     
-    // Build the invoice data object
+    // Build the invoice data object - REMOVE email_content field
     const invoiceData = {
       invoice_number: invoiceNumber,
       vendor: vendorName,
@@ -173,7 +173,7 @@ export async function processInvoiceEmail(emailData: any, requestId: string) {
       description: subject,
       pdf_url: processedAttachment?.public_url || null,
       html_content: htmlContent || null,
-      email_content: textContent,
+      // Removed the 'email_content' field that's causing the error
       status: 'pending',
     };
     

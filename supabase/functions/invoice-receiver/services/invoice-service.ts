@@ -1,129 +1,67 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { getNextTrackingNumber, registerCommunication } from "./tracking-service.ts";
+import { log } from "../utils/logging.ts";
 
-// Initialize Supabase client
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-}
-
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-export async function createInvoice(invoiceData: any) {
-  if (!invoiceData) {
-    const error = new Error("No invoice data provided");
-    console.error("Error in createInvoice:", error);
-    throw error;
-  }
-  
+// Generate a tracking number for the invoice
+async function generateTrackingNumber(): Promise<string> {
   try {
-    // Generate a tracking number for this invoice
-    const trackingNumber = await getNextTrackingNumber();
-    
-    // Add tracking number to invoice data
-    const invoiceWithTracking = {
-      ...invoiceData,
-      tracking_number: trackingNumber
-    };
-    
-    // Log the invoice data being saved
-    console.log("Creating invoice with data:", {
+    const { data } = await supabase.rpc('get_next_tracking_number');
+    const trackingNumber = `INV-${String(data).padStart(6, '0')}`;
+    console.log("Generated new tracking number:", trackingNumber);
+    return trackingNumber;
+  } catch (error) {
+    console.log("Error generating tracking number, using fallback:", error);
+    // Fallback to timestamp-based tracking number
+    return `INV-${Date.now().toString().slice(-6)}`;
+  }
+}
+
+export async function createInvoice(invoiceData: any) {
+  try {
+    const trackingNumber = await generateTrackingNumber();
+
+    // Check if we have required fields
+    if (!invoiceData.invoice_number) {
+      invoiceData.invoice_number = `INV-${Date.now().toString().slice(-8)}`;
+    }
+
+    // Create the invoice object with safe defaults
+    const invoiceToCreate = {
       tracking_number: trackingNumber,
       invoice_number: invoiceData.invoice_number,
-      vendor: invoiceData.vendor,
-      amount: invoiceData.amount,
-      due_date: invoiceData.due_date,
-      status: invoiceData.status,
-      source_document: invoiceData.source_document || 'None'
-    });
-    
-    // Insert the invoice into the database
+      vendor: invoiceData.vendor || "Unknown Vendor",
+      amount: invoiceData.amount || 0,
+      invoice_date: invoiceData.invoice_date || new Date().toISOString().split('T')[0],
+      due_date: invoiceData.due_date || null,
+      description: invoiceData.description || null,
+      association_id: invoiceData.association_id || null,
+      status: invoiceData.status || 'pending',
+      pdf_url: invoiceData.pdf_url || null,
+      html_content: invoiceData.html_content || null,
+      source_document: invoiceData.source_document || "None"
+      // Remove email_content field that's causing issues
+    };
+
+    console.log("Creating invoice with data:", invoiceToCreate);
+
     const { data, error } = await supabase
-      .from("invoices")
-      .insert(invoiceWithTracking)
+      .from('invoices')
+      .insert(invoiceToCreate)
       .select()
       .single();
-    
+
     if (error) {
       console.error("Error creating invoice in database:", error);
       throw new Error(`Database error: ${error.message}`);
     }
-    
-    // Register this communication in the log
-    await registerCommunication(trackingNumber, 'invoice', {
-      invoice_id: data.id,
-      vendor: data.vendor,
-      amount: data.amount,
-      invoice_number: data.invoice_number
-    });
-    
-    console.log(`Invoice created successfully with ID: ${data.id} and tracking number: ${trackingNumber}`);
+
     return data;
   } catch (error) {
     console.error("Error in createInvoice:", error);
-    throw error;
-  }
-}
-
-export async function getInvoiceById(id: string) {
-  if (!id) {
-    const error = new Error("No invoice ID provided");
-    console.error("Error in getInvoiceById:", error);
-    throw error;
-  }
-
-  console.log(`Fetching invoice by ID: ${id}`);
-  
-  try {
-    const { data, error } = await supabase
-      .from("invoices")
-      .select("*")
-      .eq("id", id)
-      .single();
-    
-    if (error) {
-      console.error("Error fetching invoice:", error);
-      throw new Error(`Database error: ${error.message}`);
-    }
-    
-    console.log("Invoice fetched successfully:", data?.invoice_number);
-    return data;
-  } catch (error) {
-    console.error("Error in getInvoiceById:", error);
-    throw error;
-  }
-}
-
-export async function updateInvoiceStatus(id: string, status: string) {
-  if (!id) {
-    const error = new Error("No invoice ID provided");
-    console.error("Error in updateInvoiceStatus:", error);
-    throw error;
-  }
-
-  console.log(`Updating invoice ${id} status to: ${status}`);
-  
-  try {
-    const { data, error } = await supabase
-      .from("invoices")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error("Error updating invoice status:", error);
-      throw new Error(`Database error: ${error.message}`);
-    }
-    
-    console.log("Invoice status updated successfully");
-    return data;
-  } catch (error) {
-    console.error("Error in updateInvoiceStatus:", error);
     throw error;
   }
 }

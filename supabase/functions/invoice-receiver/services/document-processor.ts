@@ -1,362 +1,322 @@
 
-// FILE: ./services/document-processor.ts
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { log } from "../utils/logging.ts";
+import { getDocumentType } from "../utils/document-parser.ts";
 
-// Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// --- Helper function (inline or import if needed) ---
-function normalizeUrl(url: string | null | undefined): string | null {
-     if (!url) return null;
-     try {
-         if (typeof url !== 'string' || url.length < 5 || !url.includes(':')) return url;
-        const urlObj = new URL(url);
-        // Fix double slash issue - ensure path starts with single slash
-        if (urlObj.pathname.includes('//')) {
-          urlObj.pathname = urlObj.pathname.replace(/\/+/g, '/');
-        }
-         return urlObj.toString();
-     } catch (error) { return url; }
-}
+// Processed document result type
+type ProcessedDocument = {
+  file_name?: string;
+  file_path?: string;
+  file_size?: number;
+  content_type?: string;
+  public_url?: string;
+  text_content?: string;
+};
 
-// --- Helper function (inline or import if needed) ---
-function normalizeFilename(filename: string | null | undefined, ensurePdfExt = false): string {
-    if (!filename) return ensurePdfExt ? "unnamed_attachment.pdf" : "unnamed_attachment";
-    let norm = String(filename).trim().toLowerCase().replace(/[^a-z0-9.\-_]/g, '_');
-    norm = norm.substring(0, 200);
-    if (ensurePdfExt && !norm.endsWith('.pdf')) {
-        norm = norm.replace(/\.[^.]+$/, '') + '.pdf';
-    }
-    return (norm === '.' || norm === '') ? (ensurePdfExt ? "unnamed_attachment.pdf" : "unnamed_attachment") : norm;
-}
-
-/**
- * Checks if a buffer contains a valid PDF header
- */
-function isPdfBuffer(buffer: ArrayBuffer): boolean {
-  // PDF files start with %PDF- header
-  const firstBytes = new Uint8Array(buffer, 0, 5);
-  const header = new TextDecoder().decode(firstBytes);
-  return header === '%PDF-';
-}
-
-/**
- * Processes email attachments: finds primary doc (PDF preferred), uploads to Storage.
- *
- * @param attachments Array of attachment objects from normalizeEmailData
- * @param requestId Request ID for logging
- * @returns Object with { documentContent, processedAttachment }
- */
-export async function processDocument(attachments: any[] = [], requestId: string) {
-    const documentContent = ""; // Text extraction disabled for this test
-    let processedAttachment = null;
-
+export async function processDocument(attachments: any[], requestId: string): Promise<{
+  processedAttachment: ProcessedDocument | null;
+  error?: string;
+}> {
+  try {
+    // Check if we have attachments
     if (!attachments || attachments.length === 0) {
-        await log({
-          request_id: requestId,
-          level: 'info',
-          message: 'No attachments found'
-        });
-        return { documentContent: "", processedAttachment: null };
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'No attachments found'
+      });
+      return { processedAttachment: null };
     }
-
+    
     await log({
       request_id: requestId,
       level: 'info',
       message: 'Processing attachments',
-      metadata: { count: attachments.length }
+      metadata: {
+        count: attachments.length
+      }
     });
-
-    // Sort attachments: prefer PDFs, then based on content presence
-    const sortedAttachments = [...attachments].sort((a, b) => {
-        const aIsPdf = (a.contentType === 'application/pdf' || (a.filename && a.filename.toLowerCase().endsWith('.pdf')));
-        const bIsPdf = (b.contentType === 'application/pdf' || (b.filename && b.filename.toLowerCase().endsWith('.pdf')));
-        if (aIsPdf && !bIsPdf) return -1;
-        if (!aIsPdf && bIsPdf) return 1;
-        const aHasContent = !!a.content;
-        const bHasContent = !!b.content;
-        if (aHasContent && !bHasContent) return -1;
-        if (!aHasContent && bHasContent) return 1;
-        return 0;
+    
+    // Find the first PDF or Word document attachment
+    const pdfAttachment = attachments.find(att => 
+      (att.contentType || '').toLowerCase().includes('pdf') || 
+      (att.contentType || '').toLowerCase().includes('word') || 
+      (att.contentType || '').toLowerCase().includes('doc') ||
+      (att.filename || '').toLowerCase().endsWith('.pdf') ||
+      (att.filename || '').toLowerCase().endsWith('.docx') ||
+      (att.filename || '').toLowerCase().endsWith('.doc')
+    );
+    
+    if (!pdfAttachment) {
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'No PDF or Word documents found in attachments'
+      });
+      return { processedAttachment: null };
+    }
+    
+    // Get the content type and filename
+    const contentType = pdfAttachment.contentType || 'application/octet-stream';
+    const filename = pdfAttachment.filename || 'document.pdf';
+    
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Processing attachment',
+      metadata: {
+        filename,
+        contentType,
+        contentFormat: typeof pdfAttachment.content
+      }
     });
-
-    for (const attachment of sortedAttachments) {
-        const originalFilename = attachment.filename || "unnamed_attachment";
-        let contentType = attachment.contentType || 'application/octet-stream';
-        const safeOriginalFilename = normalizeFilename(originalFilename, contentType === 'application/pdf');
-
-        // Correct content type if filename indicates PDF
-        if ((!contentType || contentType === 'application/octet-stream') && safeOriginalFilename.toLowerCase().endsWith('.pdf')) {
-            contentType = 'application/pdf';
-            await log({
-              request_id: requestId,
-              level: 'info',
-              message: 'Corrected content type to application/pdf',
-              metadata: { filename: safeOriginalFilename }
-            });
+    
+    // Handle different content formats
+    let buffer;
+    
+    // If attachment content is a File/Blob object (from CloudMailin)
+    if (typeof pdfAttachment.content === 'object' && 
+        (pdfAttachment.content instanceof File || pdfAttachment.content instanceof Blob)) {
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Attachment content is File',
+        metadata: {
+          size: pdfAttachment.content.size
         }
-
+      });
+      
+      // Convert File/Blob to ArrayBuffer
+      const arrayBuffer = await pdfAttachment.content.arrayBuffer();
+      buffer = arrayBuffer;
+      
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Converted to ArrayBuffer',
+        metadata: {
+          size: buffer.byteLength
+        }
+      });
+    }
+    // Handle base64 encoded content
+    else if (typeof pdfAttachment.content === 'string' && pdfAttachment.content.length > 0) {
+      try {
+        // Check if it's base64 encoded
+        const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(
+          pdfAttachment.content.replace(/\s/g, '')
+        );
+        
+        if (isBase64) {
+          // Decode base64 content
+          buffer = Uint8Array.from(atob(pdfAttachment.content.replace(/\s/g, '')), c => c.charCodeAt(0)).buffer;
+          
+          await log({
+            request_id: requestId,
+            level: 'info',
+            message: 'Decoded base64 content',
+            metadata: {
+              size: buffer.byteLength
+            }
+          });
+        } else {
+          // If not base64, try to convert string to buffer directly
+          buffer = new TextEncoder().encode(pdfAttachment.content).buffer;
+          
+          await log({
+            request_id: requestId,
+            level: 'info',
+            message: 'Converted string content to buffer',
+            metadata: {
+              size: buffer.byteLength
+            }
+          });
+        }
+      } catch (error) {
+        await log({
+          request_id: requestId,
+          level: 'error',
+          message: 'Error processing content string',
+          metadata: {
+            error: error.message
+          }
+        });
+        return { 
+          processedAttachment: null, 
+          error: `Failed to process attachment content: ${error.message}` 
+        };
+      }
+    } else {
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Unsupported attachment content type',
+        metadata: {
+          contentType: typeof pdfAttachment.content
+        }
+      });
+      return { 
+        processedAttachment: null, 
+        error: 'Unsupported attachment content format' 
+      };
+    }
+    
+    // Validate PDF header if it's supposed to be a PDF
+    if (contentType.includes('pdf')) {
+      const view = new Uint8Array(buffer);
+      if (view.length >= 4) {
+        // Check for %PDF header (25 50 44 46 in hex)
+        const isPDF = view[0] === 0x25 && view[1] === 0x50 && view[2] === 0x44 && view[3] === 0x46;
+        
         await log({
           request_id: requestId,
           level: 'info',
-          message: 'Processing attachment',
-          metadata: { 
-            filename: safeOriginalFilename,
-            contentType,
-            contentFormat: typeof attachment.content
+          message: 'PDF header validation',
+          metadata: {
+            isPDF,
+            firstBytes: Array.from(view.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join('')
           }
         });
-
-        if (!attachment.content) {
-            await log({
-              request_id: requestId,
-              level: 'warn',
-              message: 'Skipping attachment due to missing content',
-              metadata: { filename: safeOriginalFilename }
-            });
-            continue;
-        }
-
-        let fileData: ArrayBuffer | null = null; // Use ArrayBuffer for upload
-
-        // --- Content Processing Logic ---
-        try {
-            const contentToProcess = attachment.content;
-
-            if (contentToProcess instanceof File || contentToProcess instanceof Blob) {
-                const format = contentToProcess instanceof File ? 'File' : 'Blob';
-                await log({
-                  request_id: requestId,
-                  level: 'info',
-                  message: `Attachment content is ${format}`,
-                  metadata: { size: contentToProcess.size }
-                });
-                fileData = await contentToProcess.arrayBuffer();
-                await log({
-                  request_id: requestId,
-                  level: 'info',
-                  message: 'Converted to ArrayBuffer',
-                  metadata: { size: fileData?.byteLength }
-                });
-            } else if (typeof contentToProcess === 'string') {
-                // Handle base64 content
-                try {
-                    // Check if it's base64 by looking for base64 indicators
-                    const isBase64 = contentToProcess.match(/^data:[^;]+;base64,/) || 
-                                  !contentToProcess.match(/[^\w+/=]/) && contentToProcess.length % 4 <= 2;
-                    
-                    if (isBase64) {
-                        // Clean the base64 string if it has a data URL prefix
-                        const base64Data = contentToProcess.replace(/^data:[^;]+;base64,/, '');
-                        
-                        // Use standard base64 decoding
-                        const binaryString = atob(base64Data);
-                        const bytes = new Uint8Array(binaryString.length);
-                        for (let i = 0; i < binaryString.length; i++) {
-                            bytes[i] = binaryString.charCodeAt(i);
-                        }
-                        
-                        fileData = bytes.buffer;
-                        await log({
-                          request_id: requestId,
-                          level: 'info',
-                          message: 'Converted base64 string to ArrayBuffer',
-                          metadata: { 
-                            inputLength: contentToProcess.length,
-                            outputSize: fileData?.byteLength
-                          }
-                        });
-                        
-                        // Validate PDF header if it's supposed to be a PDF
-                        if (contentType === 'application/pdf') {
-                            const isPdfValid = isPdfBuffer(fileData);
-                            await log({
-                              request_id: requestId,
-                              level: 'info',
-                              message: 'PDF validation check',
-                              metadata: { isValid: isPdfValid }
-                            });
-                            
-                            if (!isPdfValid) {
-                                await log({
-                                  request_id: requestId,
-                                  level: 'error',
-                                  message: 'Invalid PDF header',
-                                  metadata: { filename: safeOriginalFilename }
-                                });
-                                continue; // Skip invalid PDFs
-                            }
-                        }
-                    } else {
-                        // Plain text, treat as non-binary content
-                        const textEncoder = new TextEncoder();
-                        fileData = textEncoder.encode(contentToProcess).buffer;
-                        await log({
-                          request_id: requestId,
-                          level: 'info',
-                          message: 'Encoded text content to ArrayBuffer',
-                          metadata: { 
-                            inputLength: contentToProcess.length,
-                            outputSize: fileData?.byteLength 
-                          }
-                        });
-                    }
-                } catch (base64Error) {
-                    await log({
-                      request_id: requestId,
-                      level: 'error',
-                      message: 'Error processing string content',
-                      metadata: { 
-                        error: base64Error.message,
-                        contentLength: contentToProcess.length
-                      }
-                    });
-                    continue;
-                }
-            } else {
-                // If not File, Blob or string, log it and skip this attachment
-                await log({
-                  request_id: requestId,
-                  level: 'warn',
-                  message: 'Skipping attachment with unsupported content type',
-                  metadata: {
-                    filename: safeOriginalFilename,
-                    contentType: typeof contentToProcess
-                  }
-                });
-                continue;
+        
+        if (!isPDF) {
+          await log({
+            request_id: requestId,
+            level: 'error',
+            message: 'Invalid PDF header',
+            metadata: {
+              firstBytes: Array.from(view.slice(0, 10)).map(b => b.toString(16).padStart(2, '0')).join('')
             }
-
-            if (!fileData || fileData.byteLength === 0) {
-                await log({
-                  request_id: requestId,
-                  level: 'error',
-                  message: 'Empty file data after conversion',
-                  metadata: { filename: safeOriginalFilename }
-                });
-                continue;
-            }
-
-        } catch (processError) {
-            await log({
-              request_id: requestId,
-              level: 'error',
-              message: 'Error converting content to ArrayBuffer',
-              metadata: { 
-                filename: safeOriginalFilename,
-                error: processError.message
-              }
-            });
-            continue; // Skip to next attachment on error
+          });
+          return { 
+            processedAttachment: null, 
+            error: 'Invalid PDF header' 
+          };
         }
-
-
-        // --- Supabase Upload ---
-        const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
-        const storageFilename = `invoice_${timestamp}_${safeOriginalFilename}`;
-
-        try {
-            await log({
-              request_id: requestId,
-              level: 'info',
-              message: 'Preparing to upload file',
-              metadata: {
-                filename: storageFilename,
-                contentType,
-                size: fileData.byteLength
-              }
-            });
-
-            // *** Upload using the ArrayBuffer directly ***
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('invoices')
-                .upload(storageFilename, fileData, { // <-- Use ArrayBuffer (fileData)
-                    contentType: contentType,
-                    upsert: true
-                });
-
-            if (uploadError) {
-                await log({
-                  request_id: requestId,
-                  level: 'error',
-                  message: 'Failed to upload document',
-                  metadata: {
-                    filename: storageFilename,
-                    error: uploadError.message
-                  }
-                });
-                continue; // Continue to next attachment
-            }
-
-            await log({
-              request_id: requestId,
-              level: 'info',
-              message: 'Successfully uploaded file',
-              metadata: { 
-                filename: storageFilename,
-                path: uploadData?.path
-              }
-            });
-
-            // --- URL Generation (Public Only in this simplified version for clarity) ---
-            const { data: publicUrlData } = supabase.storage
-                .from('invoices')
-                .getPublicUrl(storageFilename);
-
-             const finalPublicUrl = normalizeUrl(publicUrlData?.publicUrl);
-             await log({
-               request_id: requestId,
-               level: 'info',
-               message: 'Generated public URL',
-               metadata: { url: finalPublicUrl }
-             });
-
-            // --- Prepare Result (Text Extraction Removed) ---
-            processedAttachment = {
-                storage_path: uploadData?.path,
-                filename: storageFilename,
-                original_filename: originalFilename,
-                url: finalPublicUrl,
-                public_url: finalPublicUrl,
-                contentType: contentType
-            };
-
-            await log({
-              request_id: requestId,
-              level: 'info',
-              message: 'Document processing complete',
-              metadata: { filename: storageFilename }
-            });
-            break; // Stop after processing the first valid attachment
-
-        } catch (error) {
-            await log({
-              request_id: requestId,
-              level: 'error',
-              message: 'Unhandled error during upload',
-              metadata: {
-                filename: storageFilename,
-                error: error.message
-              }
-            });
-            // Continue to the next attachment
-        }
-    } // End loop
-
-    if (!processedAttachment) {
-         await log({
-           request_id: requestId,
-           level: 'warn',
-           message: 'No attachments were successfully processed',
-           metadata: { 
-             originalCount: attachments.length 
-           }
-         });
+      }
     }
-
-    // Return documentContent as empty string since extraction is disabled
-    return { documentContent: "", processedAttachment };
+    
+    // Generate timestamp-based filename to avoid collisions
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '');
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase();
+    const uniqueFilename = `invoice_${timestamp}_${safeName}`;
+    
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Preparing to upload file',
+      metadata: {
+        filename: uniqueFilename,
+        contentType,
+        size: buffer.byteLength
+      }
+    });
+    
+    try {
+      // Upload to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('invoices')
+        .upload(uniqueFilename, buffer, {
+          contentType,
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (uploadError) {
+        await log({
+          request_id: requestId,
+          level: 'error',
+          message: 'Error uploading file',
+          metadata: {
+            error: uploadError
+          }
+        });
+        return { 
+          processedAttachment: null, 
+          error: `Storage upload failed: ${uploadError.message}` 
+        };
+      }
+      
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Successfully uploaded file',
+        metadata: {
+          filename: uniqueFilename,
+          path: uploadData.path
+        }
+      });
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(uniqueFilename);
+        
+      let publicUrl = urlData.publicUrl;
+      
+      // Fix double slashes in URL if present (known Supabase issue)
+      if (publicUrl.includes('/object/public//')) {
+        publicUrl = publicUrl.replace('/object/public//', '/object/public/');
+      }
+      
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Generated public URL',
+        metadata: {
+          url: publicUrl
+        }
+      });
+      
+      const result: ProcessedDocument = {
+        file_name: uniqueFilename,
+        file_path: uploadData.path,
+        file_size: buffer.byteLength,
+        content_type: contentType,
+        public_url: publicUrl
+      };
+      
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Document processing complete',
+        metadata: {
+          filename: uniqueFilename
+        }
+      });
+      
+      return { processedAttachment: result };
+    } catch (error) {
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Unexpected error processing document',
+        metadata: {
+          error: error.message,
+          stack: error.stack
+        }
+      });
+      return { 
+        processedAttachment: null, 
+        error: `Document processing error: ${error.message}` 
+      };
+    }
+  } catch (error) {
+    await log({
+      request_id: requestId,
+      level: 'error',
+      message: 'Processing document failed',
+      metadata: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+    return { 
+      processedAttachment: null, 
+      error: `Document processing error: ${error.message}` 
+    };
+  }
 }

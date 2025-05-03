@@ -1,3 +1,4 @@
+
 export interface Invoice {
   id: string;
   tracking_number?: string;
@@ -12,7 +13,7 @@ export interface Invoice {
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
   pdf_url?: string;
-  email_content?: string;
+  email_content?: string; // Make this optional since we're removing it from edge function
   source_document?: string;
   created_at: string;
   updated_at: string;
