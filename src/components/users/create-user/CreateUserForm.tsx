@@ -9,11 +9,12 @@ import { EmailField } from './form-fields/EmailField';
 import { NameFields } from './form-fields/NameFields';
 import { PasswordField } from './form-fields/PasswordField';
 import { RoleField } from './form-fields/RoleField';
+import { UserRole } from '@/types/profile-types';
 
 interface CreateUserFormProps {
   form: UseFormReturn<NewUserFormValues>;
   loading: boolean;
-  roles: { id: string; name: string }[];
+  roles: { id: UserRole; name: string }[];
   onSubmit: (data: NewUserFormValues) => Promise<void>;
 }
 

@@ -10,6 +10,7 @@ import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleConte
 import { useResponsive } from '@/hooks/use-responsive';
 import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
 import { useNavigate } from 'react-router-dom';
+import { UserRole } from '@/types/profile-types';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';

@@ -18,6 +18,7 @@ const roles = [
   { id: 'resident' as UserRole, name: 'Resident' },
   { id: 'maintenance' as UserRole, name: 'Maintenance' },
   { id: 'accountant' as UserRole, name: 'Accountant' },
+  { id: 'treasurer' as UserRole, name: 'Treasurer' },
   { id: 'user' as UserRole, name: 'Basic User' },
 ];
 

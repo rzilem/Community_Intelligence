@@ -9,7 +9,7 @@ export const updateProfile = async (userId: string, data: Partial<Profile>): Pro
   try {
     // If role is provided, ensure it's a valid UserRole
     if (data.role) {
-      const validRoles: UserRole[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant', 'user'];
+      const validRoles: UserRole[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant', 'user', 'treasurer'];
       if (!validRoles.includes(data.role as UserRole)) {
         return { success: false, error: 'Invalid role provided' };
       }

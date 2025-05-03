@@ -66,7 +66,7 @@ export const useUserRoles = (users: UserWithProfile[], onRoleUpdate: () => void)
           first_name: user.profile?.first_name || '',
           last_name: user.profile?.last_name || '',
           updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
+        });
       
       if (error) throw error;
       
