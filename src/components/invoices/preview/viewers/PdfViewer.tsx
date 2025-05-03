@@ -105,8 +105,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     }
     
-    toast({
-      title: "Reloading PDF",
+    toast("Reloading PDF", {
       description: "Attempting to reload the document..."
     });
   };

@@ -132,8 +132,7 @@ export const useInvoicePreview = ({
   const handleExternalOpen = useCallback(() => {
     if (normalizedPdfUrl) {
       window.open(normalizedPdfUrl, '_blank');
-      toast({
-        title: "Opening PDF",
+      toast("Opening PDF", {
         description: "The PDF is opening in a new tab",
       });
     }
@@ -149,8 +148,7 @@ export const useInvoicePreview = ({
     setPreviewError(null);
     setPdfAccessible(null); // Reset to trigger re-check
     setRetryCount(prev => prev + 1); // Increment retry count to trigger recheck
-    toast({
-      title: "Retrying",
+    toast("Retrying", {
       description: "Attempting to reload the document preview"
     });
   }, []);
@@ -161,8 +159,7 @@ export const useInvoicePreview = ({
       // If we have email content and the document fails to load,
       // automatically switch to the email tab
       if (previewError && activeTab === 'document') {
-        toast({
-          title: "Showing email content",
+        toast("Showing email content", {
           description: "Document preview failed. Showing original email instead."
         });
         setActiveTab('email');
