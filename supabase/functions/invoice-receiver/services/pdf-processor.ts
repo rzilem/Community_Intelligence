@@ -1,27 +1,45 @@
 
 import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
-import { createHash } from "https://deno.land/std@0.190.0/crypto/mod.ts";
+import { createHash } from "https://deno.land/std@0.190.0/crypto/mod.ts"; // Updated import path
 
 /**
- * Validates and processes PDF content
- * @param contentBuffer The binary content of the PDF
- * @param filename The name of the file for logging purposes
- * @returns Object containing validation results and checksum
+ * Decodes a base64 PDF content string
+ */
+export function decodePDFContent(content: string, filename: string): Uint8Array | null {
+  try {
+    const base64Content = content
+      .replace(/^data:application\/pdf;base64,/, '')
+      .replace(/\s/g, '');
+    
+    const contentBuffer = decode(base64Content);
+    console.log(`Base64 decoded: ${filename}`, {
+      length: contentBuffer.byteLength,
+      firstBytes: Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('')
+    });
+    
+    return contentBuffer;
+  } catch (base64Error) {
+    console.error(`Base64 decode error for ${filename}: ${base64Error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Validates if the content is a valid PDF
  */
 export function validatePDF(contentBuffer: Uint8Array, filename: string): { 
   isValid: boolean; 
+  errorMessage?: string; 
   checksum: string;
-  errorMessage?: string;
 } {
   try {
-    // Check PDF header
     const pdfHeader = Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('');
     if (pdfHeader !== '25504446') { // %PDF in hex
       console.error(`Invalid PDF header for ${filename}: ${pdfHeader}`);
       return { 
         isValid: false, 
-        checksum: '',
-        errorMessage: `Invalid PDF content: File does not start with %PDF`
+        errorMessage: `Invalid PDF content: File does not start with %PDF`, 
+        checksum: '' 
       };
     }
     
@@ -36,77 +54,29 @@ export function validatePDF(contentBuffer: Uint8Array, filename: string): {
       checksum 
     };
   } catch (error) {
-    console.error(`PDF validation error for ${filename}: ${error.message}`);
+    console.error(`Error validating PDF ${filename}: ${error.message}`);
     return { 
       isValid: false, 
-      checksum: '',
-      errorMessage: `PDF validation failed: ${error.message}`
+      errorMessage: `Error validating PDF: ${error.message}`, 
+      checksum: '' 
     };
   }
 }
 
 /**
- * Decodes base64 encoded PDF content
- * @param content The base64 encoded content string
- * @param filename The name of the file for logging purposes
- * @returns Decoded Uint8Array or null if decoding failed
- */
-export function decodePDFContent(content: string, filename: string): Uint8Array | null {
-  try {
-    const isBase64 = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(
-      content.trim().replace(/\s/g, '')
-    );
-    
-    if (!isBase64) {
-      console.warn(`Content for ${filename} is not base64 encoded`);
-      return null;
-    }
-    
-    // Remove data URI prefix if present and normalize
-    const base64Content = content
-      .replace(/^data:application\/pdf;base64,/, '')
-      .replace(/\s/g, '');
-    
-    const contentBuffer = decode(base64Content);
-    
-    console.log(`Base64 decoded: ${filename}`, {
-      length: contentBuffer.byteLength,
-      firstBytes: Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('')
-    });
-    
-    return contentBuffer;
-  } catch (error) {
-    console.error(`Base64 decode error for ${filename}: ${error.message}`);
-    return null;
-  }
-}
-
-/**
- * Verifies that an uploaded PDF file matches the original content
- * @param uploadedBuffer The binary content of the uploaded file
- * @param originalChecksum The checksum of the original file for comparison
- * @param originalSize The size of the original file for comparison
- * @param filename The name of the file for logging purposes
- * @returns Object indicating if the file is valid and any error message
+ * Verifies that an uploaded PDF matches the original
  */
 export function verifyUploadedPDF(
   uploadedBuffer: Uint8Array, 
   originalChecksum: string, 
-  originalSize: number,
+  originalSize: number, 
   filename: string
-): { isValid: boolean; errorMessage?: string } {
+): { 
+  isValid: boolean; 
+  errorMessage?: string; 
+} {
   try {
-    // Check PDF header
-    const uploadedHeader = Array.from(uploadedBuffer.slice(0, 4)).map(b => b.toString(16)).join('');
-    if (uploadedHeader !== '25504446') {
-      console.error(`Uploaded file corrupted for ${filename}:`, { uploadedHeader });
-      return { 
-        isValid: false, 
-        errorMessage: 'Uploaded file is not a valid PDF'
-      };
-    }
-    
-    // Check file size
+    // Check size match
     if (uploadedBuffer.byteLength !== originalSize) {
       console.error(`Uploaded file size mismatch for ${filename}:`, {
         originalSize,
@@ -114,11 +84,23 @@ export function verifyUploadedPDF(
       });
       return { 
         isValid: false, 
-        errorMessage: 'Uploaded file size does not match original'
+        errorMessage: `Uploaded file size does not match original` 
       };
     }
     
-    // Check checksum if provided
+    // Check PDF header
+    const uploadedHeader = Array.from(uploadedBuffer.slice(0, 4)).map(b => b.toString(16)).join('');
+    if (uploadedHeader !== '25504446') { // %PDF in hex
+      console.error(`Uploaded file corrupted for ${filename}:`, {
+        uploadedHeader
+      });
+      return { 
+        isValid: false, 
+        errorMessage: `Uploaded file is not a valid PDF` 
+      };
+    }
+    
+    // If there's an original checksum, verify it
     if (originalChecksum) {
       const hasher = createHash("sha256");
       hasher.update(uploadedBuffer);
@@ -132,7 +114,7 @@ export function verifyUploadedPDF(
         });
         return { 
           isValid: false, 
-          errorMessage: 'Uploaded file content does not match original'
+          errorMessage: `Uploaded file content does not match original` 
         };
       }
     }
@@ -142,7 +124,7 @@ export function verifyUploadedPDF(
     console.error(`Error verifying uploaded PDF ${filename}: ${error.message}`);
     return { 
       isValid: false, 
-      errorMessage: `Verification failed: ${error.message}`
+      errorMessage: `Error verifying uploaded PDF: ${error.message}` 
     };
   }
 }

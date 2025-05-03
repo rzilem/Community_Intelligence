@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { decodePDFContent, validatePDF, verifyUploadedPDF } from "./pdf-processor.ts";
 import { ContentExtractionService } from "./content-extraction-service.ts";
