@@ -1,205 +1,108 @@
-
-import { log } from "../utils/logging.ts";
+import { extractVendorInformation } from "./extractors/vendor-extractor.ts";
+import { extractInvoiceDetails } from "./extractors/invoice-details-extractor.ts";
+import { extractAssociationInformation } from "./extractors/association-extractor.ts";
+import { cleanupInvoiceData } from "./utils/invoice-cleanup.ts";
 import { processDocument } from "./document-processor.ts";
+import { processHtmlContent } from "./html-processor.ts";
+import { Invoice } from "./invoice-types.ts";
 
-// Update this import to include the request ID
-export async function processInvoiceEmail(emailData: any, requestId: string) {
+export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoice>> {
+  const requestId = emailData.tracking_number || `email_${Date.now()}`;
+  console.log(`[${requestId}] Processing invoice email data`);
+
+  const invoice: Partial<Invoice> = {
+    status: 'pending',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
   try {
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Beginning invoice email processing'
+    const from = emailData.from || emailData.From || emailData.sender || emailData.Sender || "";
+    const subject = emailData.subject || emailData.Subject || "";
+    const rawHtmlContent = emailData.html || emailData.Html || emailData.body || emailData.Body || "";
+    const rawTextContent = emailData.text || emailData.Text || emailData.plain || emailData.Plain || "";
+
+    console.log(`[${requestId}] Processing email`, {
+      from,
+      subject,
+      hasHtml: !!rawHtmlContent,
+      hasText: !!rawTextContent,
+      attachments: emailData.attachments?.length || 0
     });
-    
-    // Extract basic fields
-    const from = typeof emailData.from === 'object' ? emailData.from.address : emailData.from;
-    const subject = emailData.subject || '';
-    const textContent = emailData.text || '';
-    const htmlContent = emailData.html || '';
-    
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Extracted basic email fields',
-      metadata: {
-        from,
-        subject: subject.substring(0, 100),
-        hasText: !!textContent,
-        hasHtml: !!htmlContent
+
+    // Capture email_content
+    if (rawTextContent) {
+      invoice.email_content = rawTextContent;
+    } else if (rawHtmlContent) {
+      invoice.email_content = rawHtmlContent;
+    }
+
+    if (subject) {
+      console.log(`[${requestId}] Using email subject for invoice data: ${subject}`);
+      invoice.description = subject;
+      const invoiceNumMatch = subject.match(/inv[-\s#:]*(\d+)/i) || subject.match(/invoice[-\s#:]*(\d+)/i);
+      if (invoiceNumMatch && invoiceNumMatch[1]) {
+        invoice.invoice_number = invoiceNumMatch[1];
+        console.log(`[${requestId}] Extracted invoice number from subject: ${invoice.invoice_number}`);
       }
-    });
-    
-    // Process attachments
-    const { processedAttachment } = await processDocument(emailData.attachments, requestId);
-    
-    // Extract vendorName from email or subject
-    let vendorName = "Unknown Vendor";
+    }
+
     if (from) {
-      // Extract domain from email
-      const emailDomain = from.split('@')[1];
-      if (emailDomain) {
-        // Convert domain to vendor name (e.g., xyz.com -> XYZ)
-        vendorName = emailDomain.split('.')[0].toUpperCase();
+      const vendorMatch = from.match(/([^<@]+)(?:\s+<|\s+\(|@)/);
+      if (vendorMatch && vendorMatch[1]) {
+        invoice.vendor = vendorMatch[1].trim();
+        console.log(`[${requestId}] Extracted vendor from email sender: ${invoice.vendor}`);
       }
     }
-    
-    // Try to extract from subject if available
-    if (subject && subject.length > 3) {
-      // Look for company name patterns in subject
-      const companyPatterns = [
-        /from ([\w\s&]+?)(?::|$)/i,
-        /([\w\s&]+?) invoice/i,
-        /invoice from ([\w\s&]+)/i
-      ];
-      
-      for (const pattern of companyPatterns) {
-        const match = subject.match(pattern);
-        if (match && match[1] && match[1].length > 2) {
-          vendorName = match[1].trim();
-          break;
+
+    const { documentContent, processedAttachment } = await processDocument(emailData.attachments);
+    if (processedAttachment) {
+      console.log(`[${requestId}] Attachment processed`, {
+        filename: processedAttachment.filename,
+        url: processedAttachment.url
+      });
+      invoice.source_document = processedAttachment.filename;
+      invoice.pdf_url = processedAttachment.url;
+    } else {
+      console.log(`[${requestId}] No valid attachments processed`);
+    }
+
+    const content = await processHtmlContent(documentContent, rawHtmlContent, rawTextContent, subject);
+    const vendorInfo = extractVendorInformation(content, from);
+    const invoiceDetails = extractInvoiceDetails(content, subject);
+    const associationInfo = extractAssociationInformation(content);
+
+    Object.assign(invoice, vendorInfo, invoiceDetails, associationInfo);
+
+    if (rawHtmlContent && !rawHtmlContent.includes('See what happens')) {
+      invoice.html_content = rawHtmlContent;
+    }
+
+    if (!invoice.vendor) {
+      if (from) {
+        const emailMatch = from.match(/([^@<\s]+)@/);
+        if (emailMatch && emailMatch[1]) {
+          const possibleVendor = emailMatch[1].charAt(0).toUpperCase() + emailMatch[1].slice(1);
+          invoice.vendor = possibleVendor;
+          console.log(`[${requestId}] Using email domain as vendor: ${invoice.vendor}`);
+        } else {
+          invoice.vendor = "Unknown Vendor";
         }
+      } else {
+        invoice.vendor = "Unknown Vendor";
       }
     }
-    
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Extracted vendor information',
-      metadata: {
-        vendorName,
-        from
-      }
-    });
-    
-    // Extract invoice number from subject or content
-    let invoiceNumber = '';
-    const invoiceNumberPatterns = [
-      /invoice\s*#?\s*([A-Z0-9\-]+)/i,
-      /invoice\s*number\s*[:|\s]\s*([A-Z0-9\-]+)/i,
-      /order\s*#?\s*([A-Z0-9\-]+)/i,
-      /#\s*([A-Z0-9\-]+)/i
-    ];
-    
-    // First check subject
-    for (const pattern of invoiceNumberPatterns) {
-      const match = subject.match(pattern);
-      if (match && match[1]) {
-        invoiceNumber = match[1].trim();
-        break;
-      }
+
+    const cleanedInvoice = cleanupInvoiceData(invoice, processedAttachment, subject, content);
+    if (!cleanedInvoice.invoice_number) {
+      cleanedInvoice.invoice_number = `INV-${Date.now().toString().slice(-6)}`;
+      console.log(`[${requestId}] Generated invoice number: ${cleanedInvoice.invoice_number}`);
     }
-    
-    // If not found, check text content
-    if (!invoiceNumber && textContent) {
-      for (const pattern of invoiceNumberPatterns) {
-        const match = textContent.match(pattern);
-        if (match && match[1]) {
-          invoiceNumber = match[1].trim();
-          break;
-        }
-      }
-    }
-    
-    // Generate a random invoice number if extraction failed
-    if (!invoiceNumber) {
-      invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-    }
-    
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Extracted invoice number',
-      metadata: {
-        invoiceNumber,
-        wasExtracted: !!invoiceNumber
-      }
-    });
-    
-    // Extract amount from subject or text
-    let amount = 0;
-    const amountPatterns = [
-      /\$\s*([\d,]+\.?\d*)/,
-      /amount\s*:?\s*\$\s*([\d,]+\.?\d*)/i,
-      /total\s*:?\s*\$\s*([\d,]+\.?\d*)/i,
-      /usd\s*([\d,]+\.?\d*)/i
-    ];
-    
-    // Check subject first
-    for (const pattern of amountPatterns) {
-      const match = subject.match(pattern);
-      if (match && match[1]) {
-        amount = parseFloat(match[1].replace(/,/g, ''));
-        break;
-      }
-    }
-    
-    // If not found, check text content
-    if (amount === 0 && textContent) {
-      for (const pattern of amountPatterns) {
-        const match = textContent.match(pattern);
-        if (match && match[1]) {
-          amount = parseFloat(match[1].replace(/,/g, ''));
-          break;
-        }
-      }
-    }
-    
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Extracted invoice amount',
-      metadata: {
-        amount,
-        wasExtracted: amount > 0
-      }
-    });
-    
-    // Extract dates - this could be improved with more advanced parsing
-    const today = new Date();
-    const invoiceDate = today.toISOString().split('T')[0];
-    
-    // Due date estimation (typically 30 days from invoice date)
-    const dueDate = new Date(today);
-    dueDate.setDate(dueDate.getDate() + 30);
-    const dueDateStr = dueDate.toISOString().split('T')[0];
-    
-    // Build the invoice data object - REMOVE email_content field
-    const invoiceData = {
-      invoice_number: invoiceNumber,
-      vendor: vendorName,
-      amount: amount,
-      invoice_date: invoiceDate,
-      due_date: dueDateStr,
-      description: subject,
-      pdf_url: processedAttachment?.public_url || null,
-      html_content: htmlContent || null,
-      // Removed the 'email_content' field that's causing the error
-      status: 'pending',
-    };
-    
-    await log({
-      request_id: requestId,
-      level: 'info',
-      message: 'Invoice data extraction complete',
-      metadata: {
-        invoiceNumber,
-        vendor: vendorName,
-        amount,
-        hasPdf: !!processedAttachment?.public_url
-      }
-    });
-    
-    return invoiceData;
+
+    console.log(`[${requestId}] Extracted invoice data`, cleanedInvoice);
+    return cleanedInvoice;
   } catch (error) {
-    await log({
-      request_id: requestId,
-      level: 'error',
-      message: 'Error processing invoice email',
-      metadata: {
-        error: error.message,
-        stack: error.stack
-      }
-    });
-    throw error;
+    console.error(`[${requestId}] Error processing invoice email: ${error.message}`);
+    throw new Error(`Failed to process invoice email: ${error.message}`);
   }
 }
