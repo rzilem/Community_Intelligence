@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card } from "@/components/ui/card";
 import { Mail } from "lucide-react";
-import { sanitizeHtml } from './previewUtils';
+import { sanitizeHtml } from './utils/htmlUtils';
 
 interface EmailPreviewProps {
   emailContent?: string;

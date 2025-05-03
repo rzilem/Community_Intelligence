@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -7,7 +8,15 @@ import { DocumentViewer } from './preview/DocumentViewer';
 import { EmailPreview } from './preview/EmailPreview';
 import { PreviewErrorState } from './preview/PreviewErrorState';
 import { PreviewHeader } from './preview/PreviewHeader';
-import { isValidUrl, normalizeUrl, isValidHtml, sanitizeHtml, isPdf, isImage, getFileExtension } from './preview/previewUtils';
+import { 
+  isValidUrl, 
+  normalizeUrl, 
+  isValidHtml, 
+  sanitizeHtml, 
+  isPdf, 
+  isImage, 
+  getFileExtension 
+} from './preview/utils';
 import { useInvoicePreview } from '@/hooks/invoices/useInvoicePreview';
 
 interface InvoicePreviewProps {

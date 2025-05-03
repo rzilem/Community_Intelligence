@@ -1,5 +1,7 @@
 
 import { useState, useEffect } from 'react';
+import { checkUrlAccessibility } from '@/components/invoices/preview/utils/urlUtils';
+import { isPdf } from '@/components/invoices/preview/utils/fileTypeUtils';
 
 interface UseInvoicePreviewProps {
   htmlContent?: string;
