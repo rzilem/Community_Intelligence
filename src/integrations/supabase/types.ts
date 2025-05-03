@@ -3796,6 +3796,7 @@ export type Database = {
           city: string | null
           created_at: string
           id: string
+          image_url: string | null
           lot_size: number | null
           notes: string | null
           property_type: string
@@ -3815,6 +3816,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           lot_size?: number | null
           notes?: string | null
           property_type: string
@@ -3834,6 +3836,7 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           lot_size?: number | null
           notes?: string | null
           property_type?: string
