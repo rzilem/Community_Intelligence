@@ -1,7 +1,3 @@
-/**
- * Helper functions for extracting invoice details from email content
- */
-
 export function extractInvoiceDetails(content: string, subject: string): {
   invoice_number?: string;
   amount?: number;
@@ -17,7 +13,6 @@ export function extractInvoiceDetails(content: string, subject: string): {
     description?: string;
   } = {};
 
-  // Improved invoice number patterns
   const invoiceNumberPatterns = [
     /Invoice(?:\s*Number|\s*#|\s*No)?[:.\s]*(\d{3,4})\b/i,
     /Invoice[:\s]*#?\s*(\d{3,4})\b/i,
@@ -32,11 +27,10 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /invoice[:\s]+([a-zA-Z0-9\-_]+)/i,
     /#\s*([a-zA-Z0-9\-_]+)/i,
     /bill\s*(?:#|number|num|no)[:\s]*([a-zA-Z0-9\-_]+)/i,
-    /inv[:\s]*([a-zA-Z0-9\-_]+)/i,  // Added shorter version
+    /inv[:\s]*([a-zA-Z0-9\-_]+)/i,
     /Invoice\s*:\s*(\d+)/i
   ];
 
-  // First try to find invoice number in subject and content
   let foundInvoiceNumber = false;
   for (const pattern of invoiceNumberPatterns) {
     const subjectMatch = subject.match(pattern);
@@ -50,17 +44,15 @@ export function extractInvoiceDetails(content: string, subject: string): {
     }
   }
 
-  // If no invoice number found, don't set a default
   if (!foundInvoiceNumber) {
     result.invoice_number = '';
   }
 
-  // Amount patterns - prioritize exact amount matches with decimals
   const amountPatterns = [
     /Total\s+Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Total[:\s]*\$?\s*([\d,]+\.?\d*)/i,
-    /\$\s*([\d,]+\.\d{2})/,  // Match exact dollar amounts with cents
+    /\$\s*([\d,]+\.\d{2})/,
     /Total Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /TOTAL\s+AMOUNT\s+DUE\s*[\$]?\s*([\d,]+\.?\d*)/i,
     /Amount Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
@@ -79,20 +71,18 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /amount[:\s]*(?:USD|EUR|GBP)?\s*([\d,]+\.?\d*)/i
   ];
 
-  // Extract amount using the patterns
   for (const pattern of amountPatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
       const amountStr = match[1].replace(/,/g, '');
       const amount = parseFloat(amountStr);
       if (!isNaN(amount)) {
-        result.amount = parseFloat(amount.toFixed(2)); // Ensure 2 decimal places
+        result.amount = parseFloat(amount.toFixed(2));
         break;
       }
     }
   }
 
-  // Due date patterns - improved to handle more formats
   const dueDatePatterns = [
     /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due\s+Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
@@ -106,8 +96,8 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /Due By[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Pay By[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
-    /Due\s+Date[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i, // April 30, 2025
-    /Due\s+By[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,   // April 30, 2025
+    /Due\s+Date[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+    /Due\s+By[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
     /due\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /payment\s+due[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
     /due\s+by[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
@@ -115,7 +105,6 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /payment\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i
   ];
 
-  // Extract due date using the patterns
   for (const pattern of dueDatePatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
@@ -126,9 +115,7 @@ export function extractInvoiceDetails(content: string, subject: string): {
           result.due_date = date.toISOString().split('T')[0];
           break;
         }
-      } catch (e) {
-        // Ignore parsing errors
-      }
+      } catch (e) {}
     }
   }
 
