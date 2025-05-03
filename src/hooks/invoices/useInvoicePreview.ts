@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
 import { showToast, showErrorToast } from '@/utils/toast-utils';

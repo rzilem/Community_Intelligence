@@ -19,13 +19,13 @@ export function showToast(
 /**
  * Show success toast with standardized styling
  */
-export function showSuccessToast(message: string, description?: string) {
-  return toast.success(message, { description });
+export function showSuccessToast(message: string, options?: { description?: string; }) {
+  return toast.success(message, options);
 }
 
 /**
  * Show error toast with standardized styling
  */
-export function showErrorToast(message: string, description?: string) {
-  return toast.error(message, { description });
+export function showErrorToast(message: string, options?: { description?: string; }) {
+  return toast.error(message, options);
 }
