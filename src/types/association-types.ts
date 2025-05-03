@@ -9,7 +9,7 @@ export interface Association {
   zip?: string;
   created_at: string;
   updated_at: string;
-  status?: 'active' | 'inactive' | 'pending';
+  status?: string;
   logo_url?: string | null;
   primary_color?: string | null;
   secondary_color?: string | null;
