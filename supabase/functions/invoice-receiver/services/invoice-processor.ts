@@ -1,3 +1,4 @@
+
 import { extractVendorInformation } from "./extractors/vendor-extractor.ts";
 import { extractInvoiceDetails } from "./extractors/invoice-details-extractor.ts";
 import { extractAssociationInformation } from "./extractors/association-extractor.ts";

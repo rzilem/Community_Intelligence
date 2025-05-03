@@ -2898,6 +2898,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          email_content: string | null
           gl_account_id: string | null
           html_content: string | null
           id: string
@@ -2924,6 +2925,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          email_content?: string | null
           gl_account_id?: string | null
           html_content?: string | null
           id?: string
@@ -2950,6 +2952,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          email_content?: string | null
           gl_account_id?: string | null
           html_content?: string | null
           id?: string
