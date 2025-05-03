@@ -93,12 +93,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     `;
   };
 
-  // Function to create a direct PDF embed that works in most browsers
+  // Improved PDF embed function with better fallback
   const createPdfEmbed = () => {
     if (!pdfUrl) return null;
     
     return (
       <div className="w-full h-full flex flex-col">
+        {/* Use both object and embed for better browser compatibility */}
         <object
           data={pdfUrl}
           type="application/pdf"
@@ -106,13 +107,21 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           onError={onIframeError}
           onLoad={onIframeLoad}
         >
+          <embed 
+            src={pdfUrl} 
+            type="application/pdf" 
+            width="100%" 
+            height="100%"
+            onError={onIframeError}
+            onLoad={onIframeLoad}
+          />
           <div className="flex flex-col items-center justify-center h-full p-6">
             <p className="text-center mb-4">Your browser cannot display the PDF directly.</p>
             <Button 
               onClick={onExternalOpen}
               className="flex items-center"
             >
-              Download PDF <ExternalLink className="h-4 w-4 ml-2" />
+              Open PDF <ExternalLink className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </object>

@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           association_id: string
           author_id: string | null
+          category: Database["public"]["Enums"]["message_category"]
           content: string
           created_at: string
           expiry_date: string | null
@@ -103,6 +104,7 @@ export type Database = {
         Insert: {
           association_id: string
           author_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"]
           content: string
           created_at?: string
           expiry_date?: string | null
@@ -116,6 +118,7 @@ export type Database = {
         Update: {
           association_id?: string
           author_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"]
           content?: string
           created_at?: string
           expiry_date?: string | null
@@ -276,6 +279,47 @@ export type Database = {
           },
         ]
       }
+      association_portal_widgets: {
+        Row: {
+          association_id: string
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          position: number | null
+          settings: Json | null
+          updated_at: string
+          widget_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          widget_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "association_portal_widgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       association_users: {
         Row: {
           association_id: string
@@ -320,65 +364,194 @@ export type Database = {
       }
       associations: {
         Row: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          auto_reminders: boolean | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
+          logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
+          primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
+          secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
+          statement_format: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }
         Insert: {
+          ach_auto_draft_day?: string | null
+          ach_draft_amount?: string | null
+          ach_generate_in_advance?: number | null
+          ach_include_charges?: string | null
+          additional_arc_models?: Json | null
+          additional_collections_models?: Json | null
           address?: string | null
+          age_of_balance?: string | null
+          approval_threshold?: number | null
+          arc_model?: string | null
+          arc_name?: string | null
+          association_address_setting?: string | null
+          association_time_zone?: string | null
+          auto_reminders?: boolean | null
+          balance_threshold?: string | null
+          balance_threshold_type?: string | null
+          board_approval_required?: boolean | null
           city?: string | null
+          collections_active?: string | null
+          collections_model?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          decline_threshold?: number | null
           description?: string | null
+          email_notifications?: boolean | null
           fire_inspection_due?: string | null
           founded_date?: string | null
+          grace_period_days?: string | null
           id?: string
+          include_ach_default?: boolean | null
+          include_all_properties_default?: boolean | null
+          include_block_ledger_accounts?: boolean | null
+          include_credit_balances_default?: boolean | null
+          include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          late_fee_percentage?: string | null
+          lien_threshold?: string | null
+          lien_threshold_type?: string | null
+          logo_url?: string | null
+          minimum_balance?: number | null
           name: string
+          new_association_grace_period?: string | null
+          new_owner_grace_period?: string | null
+          payment_due_day?: string | null
           phone?: string | null
+          primary_color?: string | null
+          processing_days?: string | null
           property_type?: string | null
+          remittance_coupon_message?: string | null
+          require_arc_voting?: boolean | null
+          secondary_color?: string | null
+          sms_notifications?: boolean | null
           state?: string | null
+          statement_format?: string | null
+          status?: string | null
           total_units?: number | null
           updated_at?: string
+          utilities_billing_message?: string | null
           website?: string | null
           zip?: string | null
         }
         Update: {
+          ach_auto_draft_day?: string | null
+          ach_draft_amount?: string | null
+          ach_generate_in_advance?: number | null
+          ach_include_charges?: string | null
+          additional_arc_models?: Json | null
+          additional_collections_models?: Json | null
           address?: string | null
+          age_of_balance?: string | null
+          approval_threshold?: number | null
+          arc_model?: string | null
+          arc_name?: string | null
+          association_address_setting?: string | null
+          association_time_zone?: string | null
+          auto_reminders?: boolean | null
+          balance_threshold?: string | null
+          balance_threshold_type?: string | null
+          board_approval_required?: boolean | null
           city?: string | null
+          collections_active?: string | null
+          collections_model?: string | null
           contact_email?: string | null
           country?: string | null
           created_at?: string
+          decline_threshold?: number | null
           description?: string | null
+          email_notifications?: boolean | null
           fire_inspection_due?: string | null
           founded_date?: string | null
+          grace_period_days?: string | null
           id?: string
+          include_ach_default?: boolean | null
+          include_all_properties_default?: boolean | null
+          include_block_ledger_accounts?: boolean | null
+          include_credit_balances_default?: boolean | null
+          include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          late_fee_percentage?: string | null
+          lien_threshold?: string | null
+          lien_threshold_type?: string | null
+          logo_url?: string | null
+          minimum_balance?: number | null
           name?: string
+          new_association_grace_period?: string | null
+          new_owner_grace_period?: string | null
+          payment_due_day?: string | null
           phone?: string | null
+          primary_color?: string | null
+          processing_days?: string | null
           property_type?: string | null
+          remittance_coupon_message?: string | null
+          require_arc_voting?: boolean | null
+          secondary_color?: string | null
+          sms_notifications?: boolean | null
           state?: string | null
+          statement_format?: string | null
+          status?: string | null
           total_units?: number | null
           updated_at?: string
+          utilities_billing_message?: string | null
           website?: string | null
           zip?: string | null
         }
@@ -392,6 +565,8 @@ export type Database = {
           bank_name: string
           created_at: string
           id: string
+          last_reconciled_date: string | null
+          last_statement_date: string | null
           name: string
           routing_number: string | null
           updated_at: string
@@ -403,6 +578,8 @@ export type Database = {
           bank_name: string
           created_at?: string
           id?: string
+          last_reconciled_date?: string | null
+          last_statement_date?: string | null
           name: string
           routing_number?: string | null
           updated_at?: string
@@ -414,6 +591,8 @@ export type Database = {
           bank_name?: string
           created_at?: string
           id?: string
+          last_reconciled_date?: string | null
+          last_statement_date?: string | null
           name?: string
           routing_number?: string | null
           updated_at?: string
@@ -424,6 +603,131 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_statements: {
+        Row: {
+          balance_ending: number | null
+          bank_account_id: string
+          created_at: string
+          file_size: number | null
+          file_url: string | null
+          filename: string | null
+          id: string
+          import_status: string
+          imported_at: string | null
+          processed_at: string | null
+          statement_date: string
+          updated_at: string
+          upload_method: string
+        }
+        Insert: {
+          balance_ending?: number | null
+          bank_account_id: string
+          created_at?: string
+          file_size?: number | null
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          import_status?: string
+          imported_at?: string | null
+          processed_at?: string | null
+          statement_date: string
+          updated_at?: string
+          upload_method?: string
+        }
+        Update: {
+          balance_ending?: number | null
+          bank_account_id?: string
+          created_at?: string
+          file_size?: number | null
+          file_url?: string | null
+          filename?: string | null
+          id?: string
+          import_status?: string
+          imported_at?: string | null
+          processed_at?: string | null
+          statement_date?: string
+          updated_at?: string
+          upload_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_statements_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          batch_id: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          gl_account_id: string | null
+          id: string
+          is_categorized: boolean | null
+          is_reconciled: boolean | null
+          notes: string | null
+          reconciled_at: string | null
+          reference_number: string | null
+          statement_id: string
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          batch_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id?: string | null
+          id?: string
+          is_categorized?: boolean | null
+          is_reconciled?: boolean | null
+          notes?: string | null
+          reconciled_at?: string | null
+          reference_number?: string | null
+          statement_id: string
+          transaction_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          batch_id?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          gl_account_id?: string | null
+          id?: string
+          is_categorized?: boolean | null
+          is_reconciled?: boolean | null
+          notes?: string | null
+          reconciled_at?: string | null
+          reference_number?: string | null
+          statement_id?: string
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "bank_statements"
             referencedColumns: ["id"]
           },
         ]
@@ -640,6 +944,400 @@ export type Database = {
           },
         ]
       }
+      collections_account_documents: {
+        Row: {
+          collections_account_id: string
+          created_at: string
+          document_name: string
+          document_url: string
+          id: string
+          opened_date: string | null
+          sent_date: string | null
+          status: string
+          step_id: string
+          updated_at: string
+        }
+        Insert: {
+          collections_account_id: string
+          created_at?: string
+          document_name: string
+          document_url: string
+          id?: string
+          opened_date?: string | null
+          sent_date?: string | null
+          status?: string
+          step_id: string
+          updated_at?: string
+        }
+        Update: {
+          collections_account_id?: string
+          created_at?: string
+          document_name?: string
+          document_url?: string
+          id?: string
+          opened_date?: string | null
+          sent_date?: string | null
+          status?: string
+          step_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_account_documents_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_account_documents_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_account_history: {
+        Row: {
+          action_date: string
+          action_details: Json | null
+          action_type: string
+          amount: number | null
+          collections_account_id: string
+          created_at: string
+          document_url: string | null
+          id: string
+          notes: string | null
+          performed_by: string | null
+          step_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_date?: string
+          action_details?: Json | null
+          action_type: string
+          amount?: number | null
+          collections_account_id: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          step_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_date?: string
+          action_details?: Json | null
+          action_type?: string
+          amount?: number | null
+          collections_account_id?: string
+          created_at?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          performed_by?: string | null
+          step_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_account_history_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_account_history_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_accounts: {
+        Row: {
+          account_number: string | null
+          association_id: string
+          balance_amount: number
+          created_at: string
+          delinquent_since: string
+          id: string
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          property_id: string
+          resident_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          association_id: string
+          balance_amount?: number
+          created_at?: string
+          delinquent_since: string
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          property_id: string
+          resident_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          association_id?: string
+          balance_amount?: number
+          created_at?: string
+          delinquent_since?: string
+          id?: string
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          property_id?: string
+          resident_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_accounts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_accounts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_accounts_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_payment_plans: {
+        Row: {
+          collections_account_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: string
+          monthly_amount: number
+          notes: string | null
+          plan_type: string
+          start_date: string
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          collections_account_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: string
+          monthly_amount: number
+          notes?: string | null
+          plan_type: string
+          start_date: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          collections_account_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          plan_type?: string
+          start_date?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_payment_plans_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_payments: {
+        Row: {
+          amount: number
+          collections_account_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          payment_plan_id: string | null
+          reference_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          collections_account_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date: string
+          payment_method: string
+          payment_plan_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          collections_account_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_plan_id?: string | null
+          reference_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_payments_collections_account_id_fkey"
+            columns: ["collections_account_id"]
+            isOneToOne: false
+            referencedRelation: "collections_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collections_payments_payment_plan_id_fkey"
+            columns: ["payment_plan_id"]
+            isOneToOne: false
+            referencedRelation: "collections_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_step_templates: {
+        Row: {
+          created_at: string
+          document_type: string
+          id: string
+          step_id: string
+          template_content: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          step_id: string
+          template_content: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          step_id?: string
+          template_content?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_step_templates_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "collections_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collections_steps: {
+        Row: {
+          association_id: string
+          created_at: string
+          days_after_delinquent: number | null
+          description: string | null
+          id: string
+          is_automated: boolean | null
+          is_closing_step: boolean | null
+          name: string
+          order_no: number | null
+          portal_reply: string | null
+          reply_to: string | null
+          send_to: string | null
+          step_order: number
+          step_type: string
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          days_after_delinquent?: number | null
+          description?: string | null
+          id?: string
+          is_automated?: boolean | null
+          is_closing_step?: boolean | null
+          name: string
+          order_no?: number | null
+          portal_reply?: string | null
+          reply_to?: string | null
+          send_to?: string | null
+          step_order: number
+          step_type?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          days_after_delinquent?: number | null
+          description?: string | null
+          id?: string
+          is_automated?: boolean | null
+          is_closing_step?: boolean | null
+          name?: string
+          order_no?: number | null
+          portal_reply?: string | null
+          reply_to?: string | null
+          send_to?: string | null
+          step_order?: number
+          step_type?: string
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collections_steps_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           content: string
@@ -680,6 +1378,7 @@ export type Database = {
       }
       communications_log: {
         Row: {
+          category: Database["public"]["Enums"]["message_category"]
           communication_type: string
           created_at: string
           homeowner_request_id: string | null
@@ -692,6 +1391,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["message_category"]
           communication_type: string
           created_at?: string
           homeowner_request_id?: string | null
@@ -704,6 +1404,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["message_category"]
           communication_type?: string
           created_at?: string
           homeowner_request_id?: string | null
@@ -721,6 +1422,50 @@ export type Database = {
             columns: ["homeowner_request_id"]
             isOneToOne: false
             referencedRelation: "homeowner_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_polls: {
+        Row: {
+          association_id: string
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_closed: boolean | null
+          options: Json
+          title: string
+        }
+        Insert: {
+          association_id: string
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          title: string
+        }
+        Update: {
+          association_id?: string
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_closed?: boolean | null
+          options?: Json
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_polls_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
             referencedColumns: ["id"]
           },
         ]
@@ -788,6 +1533,115 @@ export type Database = {
             columns: ["resident_id"]
             isOneToOne: false
             referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_messages: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_analyses: {
+        Row: {
+          analysis_results: Json
+          created_at: string
+          document_name: string | null
+          document_type: string | null
+          document_url: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_results: Json
+          created_at?: string
+          document_name?: string | null
+          document_type?: string | null
+          document_url: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_results?: Json
+          created_at?: string
+          document_name?: string | null
+          document_type?: string | null
+          document_url?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      document_templates: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          form_template_id: string | null
+          id: string
+          name: string
+          template_content: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          form_template_id?: string | null
+          id?: string
+          name: string
+          template_content: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          form_template_id?: string | null
+          id?: string
+          name?: string
+          template_content?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_templates_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1017,32 +1871,584 @@ export type Database = {
           },
         ]
       }
-      gl_accounts: {
+      financial_audit_logs: {
         Row: {
-          account_number: string
+          action_type: string
           association_id: string | null
-          created_at: string
-          description: string | null
+          created_at: string | null
           id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          transaction_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          association_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          association_id?: string | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          transaction_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_audit_logs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      financial_statements: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          created_by: string | null
+          data: Json
+          id: string
+          metadata: Json | null
+          period_end: string
+          period_start: string
+          statement_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          created_by?: string | null
+          data: Json
+          id?: string
+          metadata?: Json | null
+          period_end: string
+          period_start: string
+          statement_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          data?: Json
+          id?: string
+          metadata?: Json | null
+          period_end?: string
+          period_start?: string
+          statement_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_statements_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_conversion_jobs: {
+        Row: {
+          association_id: string | null
+          converted_form_id: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          original_pdf_url: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          converted_form_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_pdf_url: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          converted_form_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          original_pdf_url?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_conversion_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_submissions: {
+        Row: {
+          association_id: string
+          created_at: string
+          form_data: Json
+          form_template_id: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          processed_by: string | null
+          property_id: string | null
+          status: string
+          submitted_at: string
+          tracking_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          form_data?: Json
+          form_template_id: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          property_id?: string | null
+          status?: string
+          submitted_at?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          form_data?: Json
+          form_template_id?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          property_id?: string | null
+          status?: string
+          submitted_at?: string
+          tracking_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_submissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_template_associations: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          form_template_id: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          form_template_id: string
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          form_template_id?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_template_associations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_template_associations_form_template_id_fkey"
+            columns: ["form_template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          association_id: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          fields: Json
+          form_type: string | null
+          id: string
+          is_global: boolean | null
+          is_public: boolean | null
+          metadata: Json | null
           name: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fields?: Json
+          form_type?: string | null
+          id?: string
+          is_global?: boolean | null
+          is_public?: boolean | null
+          metadata?: Json | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fields?: Json
+          form_type?: string | null
+          id?: string
+          is_global?: boolean | null
+          is_public?: boolean | null
+          metadata?: Json | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_workflow_execution_logs: {
+        Row: {
+          actionid: string
+          createdat: string
+          details: Json | null
+          id: string
+          status: string
+          stepid: string
+          submissionid: string
+          workflowid: string
+        }
+        Insert: {
+          actionid: string
+          createdat?: string
+          details?: Json | null
+          id?: string
+          status: string
+          stepid: string
+          submissionid: string
+          workflowid: string
+        }
+        Update: {
+          actionid?: string
+          createdat?: string
+          details?: Json | null
+          id?: string
+          status?: string
+          stepid?: string
+          submissionid?: string
+          workflowid?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_workflow_execution_logs_submissionid_fkey"
+            columns: ["submissionid"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "form_workflow_execution_logs_workflowid_fkey"
+            columns: ["workflowid"]
+            isOneToOne: false
+            referencedRelation: "form_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_workflows: {
+        Row: {
+          createdat: string
+          description: string | null
+          formtemplateid: string
+          id: string
+          isenabled: boolean
+          logging: boolean | null
+          maxretries: number | null
+          name: string
+          retryfailed: boolean | null
+          steps: Json
+          updatedat: string
+        }
+        Insert: {
+          createdat?: string
+          description?: string | null
+          formtemplateid: string
+          id?: string
+          isenabled?: boolean
+          logging?: boolean | null
+          maxretries?: number | null
+          name: string
+          retryfailed?: boolean | null
+          steps?: Json
+          updatedat?: string
+        }
+        Update: {
+          createdat?: string
+          description?: string | null
+          formtemplateid?: string
+          id?: string
+          isenabled?: boolean
+          logging?: boolean | null
+          maxretries?: number | null
+          name?: string
+          retryfailed?: boolean | null
+          steps?: Json
+          updatedat?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_workflows_formtemplateid_fkey"
+            columns: ["formtemplateid"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_discussions: {
+        Row: {
+          association_id: string
+          category: string
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_locked: boolean | null
+          is_pinned: boolean | null
+          title: string
           updated_at: string
         }
         Insert: {
-          account_number: string
-          association_id?: string | null
+          association_id: string
+          category: string
+          content: string
           created_at?: string
-          description?: string | null
+          created_by: string
           id?: string
-          name: string
+          is_locked?: boolean | null
+          is_pinned?: boolean | null
+          title: string
           updated_at?: string
         }
         Update: {
-          account_number?: string
+          association_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_locked?: boolean | null
+          is_pinned?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_discussions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_replies: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string
+          discussion_id: string
+          id: string
+          is_solution: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by: string
+          discussion_id: string
+          id?: string
+          is_solution?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string
+          discussion_id?: string
+          id?: string
+          is_solution?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_discussion_id_fkey"
+            columns: ["discussion_id"]
+            isOneToOne: false
+            referencedRelation: "forum_discussions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_documents: {
+        Row: {
+          document_template_id: string | null
+          file_size: number | null
+          file_url: string
+          form_submission_id: string | null
+          generated_at: string | null
+          id: string
+          metadata: Json | null
+          status: string
+        }
+        Insert: {
+          document_template_id?: string | null
+          file_size?: number | null
+          file_url: string
+          form_submission_id?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Update: {
+          document_template_id?: string | null
+          file_size?: number | null
+          file_url?: string
+          form_submission_id?: string | null
+          generated_at?: string | null
+          id?: string
+          metadata?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_document_template_id_fkey"
+            columns: ["document_template_id"]
+            isOneToOne: false
+            referencedRelation: "document_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_documents_form_submission_id_fkey"
+            columns: ["form_submission_id"]
+            isOneToOne: false
+            referencedRelation: "form_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_accounts: {
+        Row: {
+          account_number: string | null
+          association_id: string | null
+          balance: number | null
+          category: string | null
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
           association_id?: string | null
+          balance?: number | null
+          category?: string | null
+          code: string
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean
+          name: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          association_id?: string | null
+          balance?: number | null
+          category?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
           name?: string
+          type?: string
           updated_at?: string
         }
         Relationships: [
@@ -1055,10 +2461,159 @@ export type Database = {
           },
         ]
       }
+      gl_budget_entries: {
+        Row: {
+          annual_total: number
+          budget_id: string
+          created_at: string | null
+          gl_account_id: string
+          id: string
+          monthly_amounts: Json | null
+          notes: string | null
+          previous_year_actual: number | null
+          previous_year_budget: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          annual_total?: number
+          budget_id: string
+          created_at?: string | null
+          gl_account_id: string
+          id?: string
+          monthly_amounts?: Json | null
+          notes?: string | null
+          previous_year_actual?: number | null
+          previous_year_budget?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          annual_total?: number
+          budget_id?: string
+          created_at?: string | null
+          gl_account_id?: string
+          id?: string
+          monthly_amounts?: Json | null
+          notes?: string | null
+          previous_year_actual?: number | null
+          previous_year_budget?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_budget_entries_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "gl_budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gl_budget_entries_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gl_budgets: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          fund_type: string
+          id: string
+          name: string
+          status: string
+          total_expenses: number | null
+          total_revenue: number | null
+          updated_at: string | null
+          year: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fund_type?: string
+          id?: string
+          name: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          year: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          fund_type?: string
+          id?: string
+          name?: string
+          status?: string
+          total_expenses?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_budgets_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      history: {
+        Row: {
+          action: string
+          association_id: string | null
+          category: string
+          count: number
+          created_at: string | null
+          details: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          association_id?: string | null
+          category: string
+          count: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          association_id?: string | null
+          category?: string
+          count?: number
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "history_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
           association_id: string | null
+          attachments: Json | null
           created_at: string
           description: string
           html_content: string | null
@@ -1076,6 +2631,7 @@ export type Database = {
         Insert: {
           assigned_to?: string | null
           association_id?: string | null
+          attachments?: Json | null
           created_at?: string
           description: string
           html_content?: string | null
@@ -1093,6 +2649,7 @@ export type Database = {
         Update: {
           assigned_to?: string | null
           association_id?: string | null
+          attachments?: Json | null
           created_at?: string
           description?: string
           html_content?: string | null
@@ -1108,6 +2665,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      import_export_jobs: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          data_type: string
+          error_details: string | null
+          file_name: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          job_type: string
+          metadata: Json | null
+          row_count: number | null
+          status: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          data_type: string
+          error_details?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          job_type: string
+          metadata?: Json | null
+          row_count?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          data_type?: string
+          error_details?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          job_type?: string
+          metadata?: Json | null
+          row_count?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_export_jobs_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       import_jobs: {
         Row: {
@@ -1277,6 +2893,7 @@ export type Database = {
           amount: number
           association_id: string | null
           association_name: string | null
+          association_type: string | null
           bank_account_id: string | null
           created_at: string
           description: string | null
@@ -1287,8 +2904,11 @@ export type Database = {
           invoice_date: string | null
           invoice_number: string
           payment_date: string | null
+          payment_id: string | null
           payment_method: string | null
+          payment_status: string | null
           pdf_url: string | null
+          scheduled_payment_date: string | null
           source_document: string | null
           status: string
           tracking_number: string | null
@@ -1299,6 +2919,7 @@ export type Database = {
           amount: number
           association_id?: string | null
           association_name?: string | null
+          association_type?: string | null
           bank_account_id?: string | null
           created_at?: string
           description?: string | null
@@ -1309,8 +2930,11 @@ export type Database = {
           invoice_date?: string | null
           invoice_number: string
           payment_date?: string | null
+          payment_id?: string | null
           payment_method?: string | null
+          payment_status?: string | null
           pdf_url?: string | null
+          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null
@@ -1321,6 +2945,7 @@ export type Database = {
           amount?: number
           association_id?: string | null
           association_name?: string | null
+          association_type?: string | null
           bank_account_id?: string | null
           created_at?: string
           description?: string | null
@@ -1331,8 +2956,11 @@ export type Database = {
           invoice_date?: string | null
           invoice_number?: string
           payment_date?: string | null
+          payment_id?: string | null
           payment_method?: string | null
+          payment_status?: string | null
           pdf_url?: string | null
+          scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
           tracking_number?: string | null
@@ -1388,6 +3016,50 @@ export type Database = {
           },
         ]
       }
+      lead_follow_ups: {
+        Row: {
+          completed_date: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          scheduled_date: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          scheduled_date?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_date?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          scheduled_date?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_follow_ups_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           additional_requirements: string | null
@@ -1400,13 +3072,18 @@ export type Database = {
           current_management: string | null
           email: string
           first_name: string | null
+          follow_up_sequence: number | null
           html_content: string | null
           id: string
+          last_follow_up: string | null
           last_name: string | null
+          lead_score: number | null
           name: string
+          next_follow_up: string | null
           notes: string | null
           number_of_units: number | null
           phone: string | null
+          proposal_count: number | null
           source: string
           state: string | null
           status: string
@@ -1427,13 +3104,18 @@ export type Database = {
           current_management?: string | null
           email: string
           first_name?: string | null
+          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
+          last_follow_up?: string | null
           last_name?: string | null
+          lead_score?: number | null
           name: string
+          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
+          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
@@ -1454,13 +3136,18 @@ export type Database = {
           current_management?: string | null
           email?: string
           first_name?: string | null
+          follow_up_sequence?: number | null
           html_content?: string | null
           id?: string
+          last_follow_up?: string | null
           last_name?: string | null
+          lead_score?: number | null
           name?: string
+          next_follow_up?: string | null
           notes?: string | null
           number_of_units?: number | null
           phone?: string | null
+          proposal_count?: number | null
           source?: string
           state?: string | null
           status?: string
@@ -1525,6 +3212,183 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      meeting_minutes: {
+        Row: {
+          association_id: string | null
+          attendees: Json | null
+          audio_url: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          key_action_items: Json | null
+          meeting_date: string
+          minutes_content: string | null
+          status: string
+          title: string
+          transcript: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          attendees?: Json | null
+          audio_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          key_action_items?: Json | null
+          meeting_date?: string
+          minutes_content?: string | null
+          status?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_minutes_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_history: {
+        Row: {
+          association_id: string | null
+          content: string
+          created_at: string | null
+          id: string
+          recipient_groups: string[] | null
+          sent_at: string | null
+          subject: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          recipient_groups?: string[] | null
+          sent_at?: string | null
+          subject: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          recipient_groups?: string[] | null
+          sent_at?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_history_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          association_id: string | null
+          category: Database["public"]["Enums"]["message_category"] | null
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_ai_generated: boolean | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"] | null
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string | null
+          category?: Database["public"]["Enums"]["message_category"] | null
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_ai_generated?: boolean | null
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_translations: {
+        Row: {
+          created_at: string | null
+          id: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          language_code: string
+          message_id: string
+          original_text: string
+          translated_text: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          language_code?: string
+          message_id?: string
+          original_text?: string
+          translated_text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       onboarding_documents: {
         Row: {
@@ -1805,6 +3669,85 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_responses: {
+        Row: {
+          created_at: string
+          id: string
+          poll_id: string
+          selected_option: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          poll_id: string
+          selected_option: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          poll_id?: string
+          selected_option?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_responses_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "community_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_notifications: {
+        Row: {
+          association_id: string
+          content: string
+          created_at: string
+          id: string
+          link: string | null
+          metadata: Json | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          association_id: string
+          content: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          association_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_notifications_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1813,8 +3756,9 @@ export type Database = {
           id: string
           last_name: string | null
           phone_number: string | null
+          preferred_language: string | null
           profile_image_url: string | null
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
@@ -1824,8 +3768,9 @@ export type Database = {
           id: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
@@ -1835,8 +3780,9 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone_number?: string | null
+          preferred_language?: string | null
           profile_image_url?: string | null
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Relationships: []
@@ -1850,11 +3796,15 @@ export type Database = {
           city: string | null
           created_at: string
           id: string
+          lot_size: number | null
+          notes: string | null
           property_type: string
           square_feet: number | null
           state: string | null
+          status: string | null
           unit_number: string | null
           updated_at: string
+          year_built: number | null
           zip: string | null
         }
         Insert: {
@@ -1865,11 +3815,15 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          lot_size?: number | null
+          notes?: string | null
           property_type: string
           square_feet?: number | null
           state?: string | null
+          status?: string | null
           unit_number?: string | null
           updated_at?: string
+          year_built?: number | null
           zip?: string | null
         }
         Update: {
@@ -1880,11 +3834,15 @@ export type Database = {
           city?: string | null
           created_at?: string
           id?: string
+          lot_size?: number | null
+          notes?: string | null
           property_type?: string
           square_feet?: number | null
           state?: string | null
+          status?: string | null
           unit_number?: string | null
           updated_at?: string
+          year_built?: number | null
           zip?: string | null
         }
         Relationships: [
@@ -2147,6 +4105,75 @@ export type Database = {
           },
         ]
       }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          association_id: string | null
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string
+          end_date: string | null
+          frequency: string
+          gl_account_id: string | null
+          id: string
+          is_active: boolean | null
+          last_generated_date: string | null
+          next_generation_date: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          association_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          end_date?: string | null
+          frequency: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          association_id?: string | null
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_date?: string | null
+          frequency?: string
+          gl_account_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_generated_date?: string | null
+          next_generation_date?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_transactions_gl_account_id_fkey"
+            columns: ["gl_account_id"]
+            isOneToOne: false
+            referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resale_events: {
         Row: {
           color: string | null
@@ -2195,8 +4222,104 @@ export type Database = {
         }
         Relationships: []
       }
+      resale_orders: {
+        Row: {
+          amount: number
+          association_id: string | null
+          contact_info: Json
+          created_at: string
+          id: string
+          order_details: Json
+          order_number: string
+          payment_info: Json | null
+          payment_status: string
+          property_id: string | null
+          property_info: Json
+          rush_option: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          association_id?: string | null
+          contact_info: Json
+          created_at?: string
+          id?: string
+          order_details: Json
+          order_number: string
+          payment_info?: Json | null
+          payment_status?: string
+          property_id?: string | null
+          property_info: Json
+          rush_option?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          association_id?: string | null
+          contact_info?: Json
+          created_at?: string
+          id?: string
+          order_details?: Json
+          order_number?: string
+          payment_info?: Json | null
+          payment_status?: string
+          property_id?: string | null
+          property_info?: Json
+          rush_option?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      resident_portal_settings: {
+        Row: {
+          created_at: string | null
+          dashboard_layout: Json | null
+          id: string
+          notification_preferences: Json | null
+          resident_id: string | null
+          theme_preference: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          notification_preferences?: Json | null
+          resident_id?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          notification_preferences?: Json | null
+          resident_id?: string | null
+          theme_preference?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_portal_settings_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       residents: {
         Row: {
+          client_portal_link: string | null
           created_at: string
           email: string | null
           emergency_contact: string | null
@@ -2206,12 +4329,14 @@ export type Database = {
           move_out_date: string | null
           name: string | null
           phone: string | null
+          preferences: Json | null
           property_id: string | null
           resident_type: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          client_portal_link?: string | null
           created_at?: string
           email?: string | null
           emergency_contact?: string | null
@@ -2221,12 +4346,14 @@ export type Database = {
           move_out_date?: string | null
           name?: string | null
           phone?: string | null
+          preferences?: Json | null
           property_id?: string | null
           resident_type: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          client_portal_link?: string | null
           created_at?: string
           email?: string | null
           emergency_contact?: string | null
@@ -2236,6 +4363,7 @@ export type Database = {
           move_out_date?: string | null
           name?: string | null
           phone?: string | null
+          preferences?: Json | null
           property_id?: string | null
           resident_type?: string
           updated_at?: string
@@ -2250,6 +4378,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      scheduled_messages: {
+        Row: {
+          association_id: string
+          category: Database["public"]["Enums"]["message_category"]
+          content: string
+          created_at: string
+          id: string
+          recipient_groups: string[]
+          scheduled_date: string
+          sent: boolean
+          sent_at: string | null
+          subject: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          association_id: string
+          category?: Database["public"]["Enums"]["message_category"]
+          content: string
+          created_at?: string
+          id?: string
+          recipient_groups: string[]
+          scheduled_date: string
+          sent?: boolean
+          sent_at?: string | null
+          subject: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          association_id?: string
+          category?: Database["public"]["Enums"]["message_category"]
+          content?: string
+          created_at?: string
+          id?: string
+          recipient_groups?: string[]
+          scheduled_date?: string
+          sent?: boolean
+          sent_at?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       system_settings: {
         Row: {
@@ -2272,6 +4445,75 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: Json
+        }
+        Relationships: []
+      }
+      transaction_batches: {
+        Row: {
+          created_at: string
+          details: Json | null
+          id: string
+          operation_type: string
+          processed_by: string | null
+          processed_transactions: number | null
+          status: string
+          total_transactions: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation_type: string
+          processed_by?: string | null
+          processed_transactions?: number | null
+          status?: string
+          total_transactions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          id?: string
+          operation_type?: string
+          processed_by?: string | null
+          processed_transactions?: number | null
+          status?: string
+          total_transactions?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_portal_widgets: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          position: number | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+          widget_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+          widget_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          position?: number | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+          widget_type?: string
         }
         Relationships: []
       }
@@ -2302,6 +4544,284 @@ export type Database = {
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_totp: {
+        Row: {
+          created_at: string
+          totp_secret: string
+          updated_at: string
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          totp_secret: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          totp_secret?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      vendor_profiles: {
+        Row: {
+          company_description: string | null
+          company_name: string
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          is_preferred: boolean | null
+          services_offered: string[] | null
+          settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_description?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_preferred?: boolean | null
+          services_offered?: string[] | null
+          settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_description?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          is_preferred?: boolean | null
+          services_offered?: string[] | null
+          settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          has_insurance: boolean
+          id: string
+          name: string
+          phone: string | null
+          rating: number | null
+          service_type: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          has_insurance?: boolean
+          id?: string
+          name: string
+          phone?: string | null
+          rating?: number | null
+          service_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          has_insurance?: boolean
+          id?: string
+          name?: string
+          phone?: string | null
+          rating?: number | null
+          service_type?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      violations: {
+        Row: {
+          association_id: string
+          created_at: string
+          description: string | null
+          due_date: string | null
+          fine_amount: number | null
+          id: string
+          issued_date: string
+          property_id: string
+          resident_id: string | null
+          resolved_date: string | null
+          status: string
+          updated_at: string
+          violation_type: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          issued_date?: string
+          property_id: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          fine_amount?: number | null
+          id?: string
+          issued_date?: string
+          property_id?: string
+          resident_id?: string | null
+          resolved_date?: string | null
+          status?: string
+          updated_at?: string
+          violation_type?: string
+        }
+        Relationships: []
+      }
+      work_order_updates: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          update_details: Json | null
+          update_type: string
+          work_order_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          update_details?: Json | null
+          update_type: string
+          work_order_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          update_details?: Json | null
+          update_type?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_updates_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          actual_cost: number | null
+          assigned_to: string | null
+          association_id: string
+          attachments: Json | null
+          budget_estimate: number | null
+          category: string | null
+          completed_date: string | null
+          completion_target_date: string | null
+          cost_tracking: Json | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          id: string
+          priority: string
+          progress_status: number | null
+          property_id: string | null
+          requested_by: string | null
+          scheduled_date: string | null
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          vendor_id: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          association_id: string
+          attachments?: Json | null
+          budget_estimate?: number | null
+          category?: string | null
+          completed_date?: string | null
+          completion_target_date?: string | null
+          cost_tracking?: Json | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string
+          progress_status?: number | null
+          property_id?: string | null
+          requested_by?: string | null
+          scheduled_date?: string | null
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          association_id?: string
+          attachments?: Json | null
+          budget_estimate?: number | null
+          category?: string | null
+          completed_date?: string | null
+          completion_target_date?: string | null
+          cost_tracking?: Json | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          priority?: string
+          progress_status?: number | null
+          property_id?: string | null
+          requested_by?: string | null
+          scheduled_date?: string | null
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string | null
         }
         Relationships: []
       }
@@ -2398,6 +4918,10 @@ export type Database = {
         Args: { p_association_id: string; p_user_id: string; p_role?: string }
         Returns: undefined
       }
+      check_totp_status: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       check_user_association: {
         Args: { association_uuid: string }
         Returns: boolean
@@ -2416,26 +4940,77 @@ export type Database = {
         }
         Returns: string
       }
+      delete_totp_secret: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          auto_reminders: boolean | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
+          logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
+          primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
+          secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
+          statement_format: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }[]
@@ -2455,23 +5030,66 @@ export type Database = {
       get_user_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          ach_auto_draft_day: string | null
+          ach_draft_amount: string | null
+          ach_generate_in_advance: number | null
+          ach_include_charges: string | null
+          additional_arc_models: Json | null
+          additional_collections_models: Json | null
           address: string | null
+          age_of_balance: string | null
+          approval_threshold: number | null
+          arc_model: string | null
+          arc_name: string | null
+          association_address_setting: string | null
+          association_time_zone: string | null
+          auto_reminders: boolean | null
+          balance_threshold: string | null
+          balance_threshold_type: string | null
+          board_approval_required: boolean | null
           city: string | null
+          collections_active: string | null
+          collections_model: string | null
           contact_email: string | null
           country: string | null
           created_at: string
+          decline_threshold: number | null
           description: string | null
+          email_notifications: boolean | null
           fire_inspection_due: string | null
           founded_date: string | null
+          grace_period_days: string | null
           id: string
+          include_ach_default: boolean | null
+          include_all_properties_default: boolean | null
+          include_block_ledger_accounts: boolean | null
+          include_credit_balances_default: boolean | null
+          include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          late_fee_percentage: string | null
+          lien_threshold: string | null
+          lien_threshold_type: string | null
+          logo_url: string | null
+          minimum_balance: number | null
           name: string
+          new_association_grace_period: string | null
+          new_owner_grace_period: string | null
+          payment_due_day: string | null
           phone: string | null
+          primary_color: string | null
+          processing_days: string | null
           property_type: string | null
+          remittance_coupon_message: string | null
+          require_arc_voting: boolean | null
+          secondary_color: string | null
+          sms_notifications: boolean | null
           state: string | null
+          statement_format: string | null
+          status: string | null
           total_units: number | null
           updated_at: string
+          utilities_billing_message: string | null
           website: string | null
           zip: string | null
         }[]
@@ -2487,6 +5105,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
         }[]
+      }
+      set_totp_verified: {
+        Args: { p_user_id: string; p_verified?: boolean }
+        Returns: undefined
       }
       sync_missing_profiles: {
         Args: Record<PropertyKey, never>
@@ -2514,6 +5136,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      upsert_totp_secret: {
+        Args: { p_user_id: string; p_totp_secret: string; p_verified?: boolean }
+        Returns: undefined
+      }
       user_has_association_access: {
         Args: { association_uuid: string; min_role?: string }
         Returns: boolean
@@ -2526,9 +5152,32 @@ export type Database = {
         Args: { association_uuid: string }
         Returns: boolean
       }
+      validate_resident_preferences: {
+        Args: { preferences: Json }
+        Returns: boolean
+      }
+      verify_totp: {
+        Args: { p_user_id: string; p_token: string }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      message_category:
+        | "general"
+        | "maintenance"
+        | "compliance"
+        | "events"
+        | "financial"
+        | "emergency"
+        | "announcement"
+        | "community"
+      user_role:
+        | "admin"
+        | "manager"
+        | "resident"
+        | "maintenance"
+        | "accountant"
+        | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2643,6 +5292,25 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      message_category: [
+        "general",
+        "maintenance",
+        "compliance",
+        "events",
+        "financial",
+        "emergency",
+        "announcement",
+        "community",
+      ],
+      user_role: [
+        "admin",
+        "manager",
+        "resident",
+        "maintenance",
+        "accountant",
+        "user",
+      ],
+    },
   },
 } as const

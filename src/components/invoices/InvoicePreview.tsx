@@ -21,7 +21,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   pdfUrl,
   emailContent
 }) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [normalizedPdfUrl, setNormalizedPdfUrl] = useState<string>('');
   const [hasContent, setHasContent] = useState(false);
@@ -38,7 +38,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   // Handle opening the document in a new tab
   const handleExternalOpen = () => {
     if (normalizedPdfUrl) {
-      window.open(normalizedPdfUrl, '_blank');
+      console.log("Opening external URL:", normalizedPdfUrl);
+      window.open(normalizedPdfUrl, '_blank', 'noopener,noreferrer');
     }
   };
   
@@ -49,22 +50,27 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   
   useEffect(() => {
     // Reset states
-    setLoading(false);
+    setLoading(true);
     setError(null);
     
     // Validate PDF URL
     if (pdfUrl) {
       try {
-        // Normalize URL by ensuring it has a protocol
+        // Ensure URL has a protocol
         const normalizedUrl = normalizeUrl(pdfUrl);
         setNormalizedPdfUrl(normalizedUrl);
         setHasContent(true);
+        
+        // Log normalized URL for debugging
+        console.log("Normalized PDF URL:", normalizedUrl);
       } catch (e) {
         console.error("Invalid PDF URL:", pdfUrl, e);
         setError("Invalid PDF URL format");
+        setLoading(false);
       }
     } else {
       setNormalizedPdfUrl('');
+      setLoading(false);
     }
     
     // Check if we have HTML content
@@ -119,8 +125,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
                 htmlContent={undefined}
                 isPdf={isPdf(normalizedPdfUrl)}
                 isWordDocument={isWordDocument}
-                onIframeError={() => setError("Failed to load document")}
-                onIframeLoad={() => setLoading(false)}
+                onIframeError={() => {
+                  console.error("Failed to load document");
+                  setError("Failed to load document. Try opening externally.");
+                  setLoading(false);
+                }}
+                onIframeLoad={() => {
+                  console.log("Document loaded successfully");
+                  setLoading(false);
+                }}
                 onExternalOpen={handleExternalOpen}
               />
             ) : htmlContent && isValidHtml(htmlContent) ? (

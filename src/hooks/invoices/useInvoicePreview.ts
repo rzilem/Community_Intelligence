@@ -12,7 +12,7 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
   const [isLoading, setIsLoading] = useState(true);
   const [contentType, setContentType] = useState<'html' | 'pdf' | 'doc' | 'none'>('none');
   const [pdfMentioned, setPdfMentioned] = useState(false);
-
+  
   useEffect(() => {
     console.group('InvoicePreview Component');
     console.log('Props received:', {
@@ -47,8 +47,18 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
       console.log('Checking PDF URL accessibility:', pdfUrl);
       setContentType('pdf');
       
+      // Handle different URL formats (including relative URLs)
+      let urlToCheck = pdfUrl;
+      if (pdfUrl.startsWith('/')) {
+        urlToCheck = `${window.location.origin}${pdfUrl}`;
+      } else if (!pdfUrl.startsWith('http://') && !pdfUrl.startsWith('https://')) {
+        urlToCheck = `https://${pdfUrl}`;
+      }
+      
+      console.log('Normalized URL for checking:', urlToCheck);
+      
       // Check if the URL is accessible
-      fetch(pdfUrl, { method: 'HEAD' })
+      fetch(urlToCheck, { method: 'HEAD', cache: 'no-store' })
         .then((response) => {
           setIsLoading(false);
           if (!response.ok) {
@@ -58,14 +68,23 @@ export const useInvoicePreview = ({ htmlContent, pdfUrl }: UseInvoicePreviewProp
               url: pdfUrl
             });
             
-            // Fallback to HTML content if available
-            if (htmlContent) {
-              console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
-              setContentType('html');
-            } else {
-              setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
-              setContentType('none');
-            }
+            // Try a direct fetch instead of HEAD request as some servers might not support HEAD
+            return fetch(urlToCheck, { cache: 'no-store' }).then(directResponse => {
+              if (directResponse.ok) {
+                console.log('PDF URL is accessible via direct GET:', pdfUrl);
+                setContentType('pdf');
+                return;
+              }
+              
+              // Fallback to HTML content if available
+              if (htmlContent) {
+                console.log('PDF URL inaccessible but HTML content available, will use HTML instead');
+                setContentType('html');
+              } else {
+                setPreviewError(`Failed to access PDF: ${response.statusText} (${response.status})`);
+                setContentType('none');
+              }
+            });
           } else {
             console.log('PDF URL is accessible:', pdfUrl);
             setContentType('pdf');
