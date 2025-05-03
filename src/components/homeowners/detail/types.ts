@@ -35,4 +35,5 @@ export interface Homeowner {
   aclStartDate?: string;
   unitNumber?: string;
   closingDate?: string; // Added the missing closingDate property
+  propertyImage?: string; // Add propertyImage field
 }

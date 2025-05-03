@@ -23,6 +23,7 @@ export const convertDbResidentToHomeowner = (data: any): Homeowner => {
     },
     status: data.status,
     avatarUrl: data.avatarUrl || '',
+    propertyImage: data.propertyImage || data.image_url || '',
     notes: (data.notes || []).map((note: any) => ({
       type: (note.type === 'system' ? 'system' : 'manual') as NoteType['type'],
       author: note.author || '',

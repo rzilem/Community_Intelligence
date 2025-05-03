@@ -25,7 +25,8 @@ export const useResidentData = (residentId: string) => {
     },
     status: '',
     avatarUrl: '',
-    notes: []
+    notes: [],
+    propertyImage: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,8 @@ export const useResidentData = (residentId: string) => {
               unit_number, 
               city, 
               state, 
-              zip
+              zip,
+              image_url
             )
           `)
           .eq('id', residentId)
@@ -93,6 +95,7 @@ export const useResidentData = (residentId: string) => {
           const email = residentData.email || (profileData?.email || '');
           const phone = residentData.phone || (profileData?.phone_number || '');
           const avatarUrl = profileData?.profile_image_url || '';
+          const propertyImage = residentData.property?.image_url || '';
           
           const convertedHomeowner: Homeowner = {
             id: residentData.id,
@@ -114,6 +117,7 @@ export const useResidentData = (residentId: string) => {
             },
             status: residentData.move_out_date ? 'inactive' : 'active',
             avatarUrl: avatarUrl,
+            propertyImage: propertyImage,
             notes: [],
             type: residentData.resident_type as any, // Use 'any' to avoid type error
             propertyAddress: propertyAddress,

@@ -34,4 +34,5 @@ export interface Property {
   unit_number?: string;
   created_at: string; // Making this required to match app-types.ts
   updated_at: string; // Making this required to match app-types.ts
+  image_url?: string; // Add image_url field
 }
