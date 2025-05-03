@@ -1,13 +1,24 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
+import { log } from "./utils/logging.ts";
 
 serve(async (req) => {
+  // Generate a unique request ID for tracing
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'CORS preflight request',
+      metadata: { method: req.method }
+    });
     return new Response(null, {
       status: 204,
       headers: corsHeaders,
@@ -15,22 +26,37 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Received invoice email with content-type:", req.headers.get("content-type"));
-    console.log("Headers:", JSON.stringify(Object.fromEntries([...req.headers.entries()]), null, 2));
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Invoice email processing started',
+      metadata: {
+        contentType: req.headers.get("content-type"),
+        method: req.method
+      }
+    });
     
     // Make a copy of the request to inspect the raw body if needed
     const reqCopy = req.clone();
     try {
       // Try to get the raw body as text for debugging 
       const rawText = await reqCopy.text();
-      console.log(`Raw request body length: ${rawText.length} characters`);
-      if (rawText.length < 10000) { // Only log if not too large
-        console.log("Raw request body:", rawText);
-      } else {
-        console.log("Raw request body (truncated):", rawText.substring(0, 1000) + "...");
-      }
+      await log({
+        request_id: requestId,
+        level: 'debug',
+        message: 'Raw request body received',
+        metadata: {
+          length: rawText.length,
+          snippet: rawText.length < 1000 ? rawText : rawText.substring(0, 1000) + "..."
+        }
+      });
     } catch (e) {
-      console.log("Could not read raw request body:", e);
+      await log({
+        request_id: requestId,
+        level: 'warn',
+        message: 'Could not read raw request body',
+        metadata: { error: e.message }
+      });
     }
     
     // Get email data from request - handle both JSON and multipart form data
@@ -38,17 +64,47 @@ serve(async (req) => {
     
     try {
       emailData = await processMultipartFormData(req);
-      console.log("Successfully processed form data");
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Successfully processed form data',
+        metadata: {
+          keys: Object.keys(emailData)
+        }
+      });
     } catch (parseError) {
-      console.error("Error parsing request body:", parseError);
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Error parsing request body as form data',
+        metadata: { error: parseError.message }
+      });
+      
       try {
         // Clone the request before trying to parse as JSON
         const jsonReqCopy = req.clone();
         // Fallback to regular JSON parsing
         emailData = await jsonReqCopy.json();
-        console.log("Successfully parsed as JSON fallback");
+        await log({
+          request_id: requestId,
+          level: 'info',
+          message: 'Successfully parsed as JSON fallback',
+          metadata: {
+            keys: Object.keys(emailData)
+          }
+        });
       } catch (jsonError) {
-        console.error("Error parsing request as JSON:", jsonError);
+        await log({
+          request_id: requestId,
+          level: 'error',
+          message: 'Error parsing request as JSON',
+          metadata: {
+            formError: parseError.message,
+            jsonError: jsonError.message,
+            headers: Object.fromEntries([...req.headers.entries()])
+          }
+        });
+        
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -66,7 +122,15 @@ serve(async (req) => {
     
     // Validate we have at least some data to work with
     if (!emailData || (typeof emailData === 'object' && Object.keys(emailData).length === 0)) {
-      console.error("Empty email data received");
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Empty email data received',
+        metadata: {
+          headers: Object.fromEntries([...req.headers.entries()])
+        }
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -83,25 +147,33 @@ serve(async (req) => {
     
     // Normalize the email data to handle different formats
     const normalizedEmailData = normalizeEmailData(emailData);
-    console.log("Normalized invoice email data:", JSON.stringify({
-      from: normalizedEmailData.from,
-      to: normalizedEmailData.to,
-      subject: normalizedEmailData.subject,
-      hasHtml: !!normalizedEmailData.html,
-      hasText: !!normalizedEmailData.text,
-      attachmentsCount: normalizedEmailData.attachments?.length,
-      attachmentSummary: normalizedEmailData.attachments?.map(a => ({
-        name: a.filename,
-        type: a.contentType,
-        hasContent: !!a.content,
-        contentLength: typeof a.content === 'string' ? a.content.length : (a.content instanceof Blob ? a.content.size : 'unknown'),
-        contentType: typeof a.content
-      }))
-    }, null, 2));
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Normalized invoice email data',
+      metadata: {
+        from: normalizedEmailData.from,
+        to: normalizedEmailData.to,
+        subject: normalizedEmailData.subject,
+        hasHtml: !!normalizedEmailData.html,
+        hasText: !!normalizedEmailData.text,
+        attachmentsCount: normalizedEmailData.attachments?.length
+      }
+    });
 
     // Check if we have either HTML content, text content, or subject (minimum required to process)
     if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
-      console.error("Email missing required content");
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Email missing required content',
+        metadata: {
+          hasHtml: !!normalizedEmailData.html,
+          hasText: !!normalizedEmailData.text,
+          hasSubject: !!normalizedEmailData.subject
+        }
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -116,21 +188,41 @@ serve(async (req) => {
     }
 
     // Process the email to extract invoice information
-    console.log("Processing invoice email to extract data");
-    const invoiceData = await processInvoiceEmail(normalizedEmailData);
-    console.log("Extracted invoice data:", JSON.stringify(invoiceData, null, 2));
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Processing invoice email to extract data'
+    });
+    
+    const invoiceData = await processInvoiceEmail(normalizedEmailData, requestId);
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Extracted invoice data',
+      metadata: {
+        vendor: invoiceData.vendor,
+        amount: invoiceData.amount,
+        invoiceNumber: invoiceData.invoice_number,
+        hasPdfUrl: !!invoiceData.pdf_url
+      }
+    });
 
     // Always attempt to create the invoice, even with partial data
     try {
       const invoice = await createInvoice(invoiceData);
 
-      console.log("Invoice created successfully:", JSON.stringify({
-        id: invoice.id,
-        vendor: invoice.vendor,
-        amount: invoice.amount,
-        pdf_url: invoice.pdf_url || 'none',
-        html_content: invoice.html_content ? 'present' : 'none'
-      }, null, 2));
+      await log({
+        request_id: requestId,
+        level: 'info',
+        message: 'Invoice created successfully',
+        metadata: {
+          id: invoice.id,
+          vendor: invoice.vendor,
+          amount: invoice.amount,
+          pdf_url: invoice.pdf_url || 'none',
+          hasHtmlContent: !!invoice.html_content
+        }
+      });
 
       // If we have partial data but created the invoice anyway
       if (!invoiceData.vendor || invoiceData.vendor === "Unknown Vendor" || !invoiceData.amount || invoiceData.amount === 0) {
@@ -157,7 +249,16 @@ serve(async (req) => {
         }
       );
     } catch (dbError: any) {
-      console.error("Database error creating invoice:", dbError);
+      await log({
+        request_id: requestId,
+        level: 'error',
+        message: 'Database error creating invoice',
+        metadata: {
+          error: dbError.message,
+          extracted_data: invoiceData
+        }
+      });
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -172,7 +273,16 @@ serve(async (req) => {
       );
     }
   } catch (error: any) {
-    console.error("Error handling invoice email:", error);
+    await log({
+      request_id: requestId,
+      level: 'error',
+      message: 'Error handling invoice email',
+      metadata: {
+        error: error.message,
+        stack: error.stack
+      }
+    });
+    
     return new Response(
       JSON.stringify({ 
         success: false, 

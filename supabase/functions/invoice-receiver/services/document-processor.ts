@@ -1,14 +1,11 @@
-// FILE: ./services/document-processor.ts (Simplified for Debugging)
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-// Import necessary utils IF THEY ARE USED HERE (e.g., normalizeUrl, normalizeFilename)
-// We removed text extraction imports for this test.
-// import { normalizeUrl } from "../utils/url-normalizer.ts";
-// import { normalizeFilename } from "../utils/filename-helper.ts"; // Example path
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+// FILE: ./services/document-processor.ts
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { log } from "../utils/logging.ts";
 
 // Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // --- Helper function (inline or import if needed) ---
@@ -17,6 +14,10 @@ function normalizeUrl(url: string | null | undefined): string | null {
      try {
          if (typeof url !== 'string' || url.length < 5 || !url.includes(':')) return url;
         const urlObj = new URL(url);
+        // Fix double slash issue - ensure path starts with single slash
+        if (urlObj.pathname.includes('//')) {
+          urlObj.pathname = urlObj.pathname.replace(/\/+/g, '/');
+        }
          return urlObj.toString();
      } catch (error) { return url; }
 }
@@ -32,25 +33,42 @@ function normalizeFilename(filename: string | null | undefined, ensurePdfExt = f
     return (norm === '.' || norm === '') ? (ensurePdfExt ? "unnamed_attachment.pdf" : "unnamed_attachment") : norm;
 }
 
+/**
+ * Checks if a buffer contains a valid PDF header
+ */
+function isPdfBuffer(buffer: ArrayBuffer): boolean {
+  // PDF files start with %PDF- header
+  const firstBytes = new Uint8Array(buffer, 0, 5);
+  const header = new TextDecoder().decode(firstBytes);
+  return header === '%PDF-';
+}
 
 /**
- * [SIMPLIFIED FOR DEBUGGING]
  * Processes email attachments: finds primary doc (PDF preferred), uploads to Storage.
- * ONLY handles Blob/File content. Skips text extraction and string processing.
  *
  * @param attachments Array of attachment objects from normalizeEmailData
- * @returns Object with { documentContent (always ""), processedAttachment }
+ * @param requestId Request ID for logging
+ * @returns Object with { documentContent, processedAttachment }
  */
-export async function processDocument(attachments: any[] = []) {
+export async function processDocument(attachments: any[] = [], requestId: string) {
     const documentContent = ""; // Text extraction disabled for this test
     let processedAttachment = null;
 
     if (!attachments || attachments.length === 0) {
-        console.log("Simplified_processDocument: No attachments found.");
+        await log({
+          request_id: requestId,
+          level: 'info',
+          message: 'No attachments found'
+        });
         return { documentContent: "", processedAttachment: null };
     }
 
-    console.log(`Simplified_processDocument: Received ${attachments.length} attachments.`);
+    await log({
+      request_id: requestId,
+      level: 'info',
+      message: 'Processing attachments',
+      metadata: { count: attachments.length }
+    });
 
     // Sort attachments: prefer PDFs, then based on content presence
     const sortedAttachments = [...attachments].sort((a, b) => {
@@ -71,42 +89,167 @@ export async function processDocument(attachments: any[] = []) {
         const safeOriginalFilename = normalizeFilename(originalFilename, contentType === 'application/pdf');
 
         // Correct content type if filename indicates PDF
-         if ((!contentType || contentType === 'application/octet-stream') && safeOriginalFilename.toLowerCase().endsWith('.pdf')) {
-             contentType = 'application/pdf';
-             console.log(`Simplified_processDocument: Corrected content type to application/pdf for "${safeOriginalFilename}"`);
-         }
+        if ((!contentType || contentType === 'application/octet-stream') && safeOriginalFilename.toLowerCase().endsWith('.pdf')) {
+            contentType = 'application/pdf';
+            await log({
+              request_id: requestId,
+              level: 'info',
+              message: 'Corrected content type to application/pdf',
+              metadata: { filename: safeOriginalFilename }
+            });
+        }
 
-        console.log(`Simplified_processDocument: Attempting to process attachment: "${safeOriginalFilename}" (Type: ${contentType})`);
+        await log({
+          request_id: requestId,
+          level: 'info',
+          message: 'Processing attachment',
+          metadata: { 
+            filename: safeOriginalFilename,
+            contentType,
+            contentFormat: typeof attachment.content
+          }
+        });
 
         if (!attachment.content) {
-            console.warn(`Simplified_processDocument: Skipping attachment "${safeOriginalFilename}" due to missing content.`);
+            await log({
+              request_id: requestId,
+              level: 'warn',
+              message: 'Skipping attachment due to missing content',
+              metadata: { filename: safeOriginalFilename }
+            });
             continue;
         }
 
         let fileData: ArrayBuffer | null = null; // Use ArrayBuffer for upload
 
-        // --- Simplified Content Handling: ONLY Blob/File ---
+        // --- Content Processing Logic ---
         try {
             const contentToProcess = attachment.content;
 
             if (contentToProcess instanceof File || contentToProcess instanceof Blob) {
                 const format = contentToProcess instanceof File ? 'File' : 'Blob';
-                console.log(`Simplified_processDocument: Attachment content is ${format} (Size: ${contentToProcess.size} bytes). Converting to ArrayBuffer.`);
+                await log({
+                  request_id: requestId,
+                  level: 'info',
+                  message: `Attachment content is ${format}`,
+                  metadata: { size: contentToProcess.size }
+                });
                 fileData = await contentToProcess.arrayBuffer();
-                 console.log(`Simplified_processDocument: Conversion to ArrayBuffer successful. Size: ${fileData?.byteLength ?? 0} bytes.`);
+                await log({
+                  request_id: requestId,
+                  level: 'info',
+                  message: 'Converted to ArrayBuffer',
+                  metadata: { size: fileData?.byteLength }
+                });
+            } else if (typeof contentToProcess === 'string') {
+                // Handle base64 content
+                try {
+                    // Check if it's base64 by looking for base64 indicators
+                    const isBase64 = contentToProcess.match(/^data:[^;]+;base64,/) || 
+                                  !contentToProcess.match(/[^\w+/=]/) && contentToProcess.length % 4 <= 2;
+                    
+                    if (isBase64) {
+                        // Clean the base64 string if it has a data URL prefix
+                        const base64Data = contentToProcess.replace(/^data:[^;]+;base64,/, '');
+                        
+                        // Use standard base64 decoding
+                        const binaryString = atob(base64Data);
+                        const bytes = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        
+                        fileData = bytes.buffer;
+                        await log({
+                          request_id: requestId,
+                          level: 'info',
+                          message: 'Converted base64 string to ArrayBuffer',
+                          metadata: { 
+                            inputLength: contentToProcess.length,
+                            outputSize: fileData?.byteLength
+                          }
+                        });
+                        
+                        // Validate PDF header if it's supposed to be a PDF
+                        if (contentType === 'application/pdf') {
+                            const isPdfValid = isPdfBuffer(fileData);
+                            await log({
+                              request_id: requestId,
+                              level: 'info',
+                              message: 'PDF validation check',
+                              metadata: { isValid: isPdfValid }
+                            });
+                            
+                            if (!isPdfValid) {
+                                await log({
+                                  request_id: requestId,
+                                  level: 'error',
+                                  message: 'Invalid PDF header',
+                                  metadata: { filename: safeOriginalFilename }
+                                });
+                                continue; // Skip invalid PDFs
+                            }
+                        }
+                    } else {
+                        // Plain text, treat as non-binary content
+                        const textEncoder = new TextEncoder();
+                        fileData = textEncoder.encode(contentToProcess).buffer;
+                        await log({
+                          request_id: requestId,
+                          level: 'info',
+                          message: 'Encoded text content to ArrayBuffer',
+                          metadata: { 
+                            inputLength: contentToProcess.length,
+                            outputSize: fileData?.byteLength 
+                          }
+                        });
+                    }
+                } catch (base64Error) {
+                    await log({
+                      request_id: requestId,
+                      level: 'error',
+                      message: 'Error processing string content',
+                      metadata: { 
+                        error: base64Error.message,
+                        contentLength: contentToProcess.length
+                      }
+                    });
+                    continue;
+                }
             } else {
-                 // If not File or Blob, log it and skip this attachment
-                console.warn(`Simplified_processDocument: Skipping attachment "${safeOriginalFilename}" because content is NOT a File or Blob. Type detected: ${typeof contentToProcess}`);
+                // If not File, Blob or string, log it and skip this attachment
+                await log({
+                  request_id: requestId,
+                  level: 'warn',
+                  message: 'Skipping attachment with unsupported content type',
+                  metadata: {
+                    filename: safeOriginalFilename,
+                    contentType: typeof contentToProcess
+                  }
+                });
                 continue;
             }
 
             if (!fileData || fileData.byteLength === 0) {
-                console.error(`Simplified_processDocument: Skipping attachment "${safeOriginalFilename}" - resulted in empty file data after ArrayBuffer conversion.`);
+                await log({
+                  request_id: requestId,
+                  level: 'error',
+                  message: 'Empty file data after conversion',
+                  metadata: { filename: safeOriginalFilename }
+                });
                 continue;
             }
 
         } catch (processError) {
-            console.error(`Simplified_processDocument: Error converting Blob/File to ArrayBuffer for "${safeOriginalFilename}": ${processError.message}`);
+            await log({
+              request_id: requestId,
+              level: 'error',
+              message: 'Error converting content to ArrayBuffer',
+              metadata: { 
+                filename: safeOriginalFilename,
+                error: processError.message
+              }
+            });
             continue; // Skip to next attachment on error
         }
 
@@ -116,7 +259,16 @@ export async function processDocument(attachments: any[] = []) {
         const storageFilename = `invoice_${timestamp}_${safeOriginalFilename}`;
 
         try {
-            console.log(`Simplified_processDocument: Preparing to upload "${storageFilename}". ContentType: "${contentType}", ArrayBuffer Size: ${fileData.byteLength}`);
+            await log({
+              request_id: requestId,
+              level: 'info',
+              message: 'Preparing to upload file',
+              metadata: {
+                filename: storageFilename,
+                contentType,
+                size: fileData.byteLength
+              }
+            });
 
             // *** Upload using the ArrayBuffer directly ***
             const { data: uploadData, error: uploadError } = await supabase.storage
@@ -124,17 +276,30 @@ export async function processDocument(attachments: any[] = []) {
                 .upload(storageFilename, fileData, { // <-- Use ArrayBuffer (fileData)
                     contentType: contentType,
                     upsert: true
-                    // duplex: 'full' // Removed
                 });
 
             if (uploadError) {
-                console.error(`Simplified_processDocument: Failed to upload document "${storageFilename}" to Supabase Storage:`, uploadError);
-                // Log specific Supabase error details if available
-                if (uploadError instanceof Error) console.error(`Supabase Error Details: ${uploadError.message}`);
+                await log({
+                  request_id: requestId,
+                  level: 'error',
+                  message: 'Failed to upload document',
+                  metadata: {
+                    filename: storageFilename,
+                    error: uploadError.message
+                  }
+                });
                 continue; // Continue to next attachment
             }
 
-            console.log(`Simplified_processDocument: Successfully uploaded "${storageFilename}". Path: ${uploadData?.path}`);
+            await log({
+              request_id: requestId,
+              level: 'info',
+              message: 'Successfully uploaded file',
+              metadata: { 
+                filename: storageFilename,
+                path: uploadData?.path
+              }
+            });
 
             // --- URL Generation (Public Only in this simplified version for clarity) ---
             const { data: publicUrlData } = supabase.storage
@@ -142,35 +307,54 @@ export async function processDocument(attachments: any[] = []) {
                 .getPublicUrl(storageFilename);
 
              const finalPublicUrl = normalizeUrl(publicUrlData?.publicUrl);
-             console.log(`Simplified_processDocument: Public URL: ${finalPublicUrl || 'N/A'}`);
-
+             await log({
+               request_id: requestId,
+               level: 'info',
+               message: 'Generated public URL',
+               metadata: { url: finalPublicUrl }
+             });
 
             // --- Prepare Result (Text Extraction Removed) ---
             processedAttachment = {
-                // Include necessary fields needed by processInvoiceEmail/createInvoice
                 storage_path: uploadData?.path,
                 filename: storageFilename,
                 original_filename: originalFilename,
-                url: finalPublicUrl, // Using public URL in this simplified version
+                url: finalPublicUrl,
                 public_url: finalPublicUrl,
-                contentType: contentType // Pass contentType along if needed downstream
-                // Add other fields from the original 'attachment' object if needed by createInvoice
-                // e.g., size: fileData.byteLength
+                contentType: contentType
             };
 
-            console.log(`Simplified_processDocument: Successfully processed and uploaded "${storageFilename}". Stopping attachment loop.`);
-            break; // Stop after processing the first valid Blob/File attachment
+            await log({
+              request_id: requestId,
+              level: 'info',
+              message: 'Document processing complete',
+              metadata: { filename: storageFilename }
+            });
+            break; // Stop after processing the first valid attachment
 
         } catch (error) {
-            console.error(`Simplified_processDocument: Unhandled error during upload/URL generation for "${storageFilename}":`, error);
+            await log({
+              request_id: requestId,
+              level: 'error',
+              message: 'Unhandled error during upload',
+              metadata: {
+                filename: storageFilename,
+                error: error.message
+              }
+            });
             // Continue to the next attachment
         }
     } // End loop
 
     if (!processedAttachment) {
-         console.log("Simplified_processDocument: No Blob/File attachments were successfully processed and uploaded.");
-    } else {
-         console.log(`Simplified_processDocument: Finished. Returning processed attachment: ${processedAttachment.filename}`);
+         await log({
+           request_id: requestId,
+           level: 'warn',
+           message: 'No attachments were successfully processed',
+           metadata: { 
+             originalCount: attachments.length 
+           }
+         });
     }
 
     // Return documentContent as empty string since extraction is disabled
