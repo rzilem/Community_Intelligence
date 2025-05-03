@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Upload, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 import { DocumentCategory } from '@/types/document-types';
 
 interface DocumentUploadDialogProps {
@@ -15,6 +17,7 @@ interface DocumentUploadDialogProps {
   onUpload: (file: File, category: string, description: string) => void;
   categories: DocumentCategory[];
   isUploading?: boolean;
+  error?: string | null;
 }
 
 const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
@@ -22,7 +25,8 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   onClose,
   onUpload,
   categories,
-  isUploading = false
+  isUploading = false,
+  error = null
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [category, setCategory] = useState<string>('');
@@ -63,6 +67,13 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
         </DialogHeader>
+        
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export function useDocumentOperations() {
-  const { user } = useAuth();
+  const { user, currentAssociation } = useAuth();
   const queryClient = useQueryClient();
 
   const uploadDocument = useMutation({
@@ -24,7 +24,9 @@ export function useDocumentOperations() {
       if (!user) throw new Error('User not authenticated');
       
       // Create path for the file in the bucket
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const filePath = `${associationId}/${user.id}/${Date.now()}_${file.name}`;
+      
+      console.log("Starting upload to storage path:", filePath);
       
       // Upload file to storage
       const { data: storageData, error: storageError } = await supabase.storage
@@ -32,6 +34,7 @@ export function useDocumentOperations() {
         .upload(filePath, file);
       
       if (storageError) {
+        console.error("Storage upload error:", storageError);
         throw new Error(`Error uploading file: ${storageError.message}`);
       }
       
@@ -40,36 +43,61 @@ export function useDocumentOperations() {
         .from('documents')
         .getPublicUrl(filePath);
       
+      console.log("File uploaded successfully, getting public URL:", urlData.publicUrl);
+      
       // Create document record in database
-      const { data: docData, error: docError } = await supabase
-        .from('documents')
-        .insert({
-          name: file.name,
-          file_type: file.name.split('.').pop() || 'unknown',
-          file_size: file.size,
-          url: urlData.publicUrl,
-          description,
-          category: category || null,
-          association_id: associationId,
-          uploaded_by: user.id,
-          is_public: false,
-          is_archived: false,
-          uploaded_date: new Date().toISOString()
-        })
+      const documentData = {
+        name: file.name,
+        file_type: file.name.split('.').pop() || 'unknown',
+        file_size: file.size,
+        url: urlData.publicUrl,
+        description,
+        category: category || null,
+        association_id: associationId,
+        uploaded_by: user.id,
+        is_public: false,
+        is_archived: false,
+        uploaded_date: new Date().toISOString()
+      };
+      
+      console.log("Creating database record with data:", {
+        name: documentData.name,
+        association_id: documentData.association_id,
+        uploaded_by: documentData.uploaded_by
+      });
+      
+      // Insert the document into the database
+      const { data, error: docError } = await supabase
+        .from("documents")
+        .insert(documentData)
         .select()
         .single();
       
       if (docError) {
+        console.error("Database insert error:", docError);
+        
         // If database insert fails, try to clean up the uploaded file
-        await supabase.storage.from('documents').remove([filePath]);
-        throw new Error(`Error creating document record: ${docError.message}`);
+        try {
+          await supabase.storage.from('documents').remove([filePath]);
+          console.log("Cleaned up storage file after failed database insert");
+        } catch (cleanupError) {
+          console.error("Failed to clean up storage file:", cleanupError);
+        }
+        
+        if (docError.message.includes('violates row level security policy')) {
+          throw new Error(`Security policy error: You don't have permission to upload documents to this association. Please check your role and association access.`);
+        }
+        
+        throw new Error(`Database error: ${docError.message}`);
       }
+      
+      console.log("Document record created successfully:", data.id);
       
       // Map the database fields to match our Document type
       const document: Document = {
-        ...docData,
+        ...data,
         // Map uploaded_date to uploaded_at to satisfy the Document interface
-        uploaded_at: docData.uploaded_date
+        uploaded_at: data.uploaded_date
       } as Document;
       
       return document;
@@ -102,11 +130,14 @@ export function useDocumentOperations() {
       
       // Delete document record from database
       const { error: docError } = await supabase
-        .from('documents')
+        .from("documents")
         .delete()
-        .eq('id', document.id);
+        .eq("id", document.id);
         
       if (docError) {
+        if (docError.message.includes('violates row level security policy')) {
+          throw new Error(`Security error: You don't have permission to delete this document.`);
+        }
         throw new Error(`Error deleting document record: ${docError.message}`);
       }
       
@@ -156,6 +187,9 @@ export function useDocumentOperations() {
         .single());
         
       if (error) {
+        if (error.message.includes('violates row level security policy')) {
+          throw new Error(`Security error: You don't have permission to create categories in this association.`);
+        }
         throw new Error(`Error creating category: ${error.message}`);
       }
       

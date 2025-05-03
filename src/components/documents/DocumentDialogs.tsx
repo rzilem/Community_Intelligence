@@ -14,6 +14,7 @@ interface DocumentDialogsProps {
   categories: DocumentCategory[];
   isUploading: boolean;
   isCreatingCategory?: boolean;
+  uploadError?: string | null;
 }
 
 const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
@@ -25,7 +26,8 @@ const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
   onCreateCategory,
   categories,
   isUploading,
-  isCreatingCategory = false
+  isCreatingCategory = false,
+  uploadError = null
 }) => {
   return (
     <>
@@ -36,6 +38,7 @@ const DocumentDialogs: React.FC<DocumentDialogsProps> = ({
         onUpload={onUpload}
         categories={categories}
         isUploading={isUploading}
+        error={uploadError}
       />
 
       {/* Category dialog */}

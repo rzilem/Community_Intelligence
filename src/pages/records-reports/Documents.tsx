@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { FileText, Plus } from 'lucide-react';
@@ -14,6 +15,8 @@ import DocumentDialogs from '@/components/documents/DocumentDialogs';
 import DocumentHeader from '@/components/documents/DocumentHeader';
 import DocumentColumnSelector from '@/components/documents/DocumentColumnSelector';
 import { DocumentTab } from '@/types/document-types';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Documents = () => {
   const { isMobile } = useResponsive();
@@ -23,6 +26,7 @@ const Documents = () => {
   const [activeTab, setActiveTab] = useState<DocumentTab>('documents');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   
   const { documents, isLoading } = useDocuments({
     associationId: currentAssociation?.id,
@@ -69,6 +73,8 @@ const Documents = () => {
       return;
     }
     
+    setUploadError(null);
+    
     uploadDocument.mutate({
       file,
       category: category === 'none' ? undefined : category,
@@ -78,8 +84,10 @@ const Documents = () => {
       onSuccess: () => {
         setIsUploadDialogOpen(false);
       },
-      onError: (error) => {
-        toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      onError: (error: any) => {
+        console.error("Upload error:", error);
+        setUploadError(error.message);
+        toast.error(`Upload failed: ${error.message}`);
       }
     });
   };
@@ -144,6 +152,13 @@ const Documents = () => {
             />
           </div>
 
+          {!currentAssociation && (
+            <Alert variant="warning" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Please select an association to view and manage documents</AlertDescription>
+            </Alert>
+          )}
+
           <DocumentContent 
             isLoading={isLoading}
             documents={filteredDocuments}
@@ -156,13 +171,17 @@ const Documents = () => {
           <DocumentDialogs 
             isUploadDialogOpen={isUploadDialogOpen}
             isCategoryDialogOpen={isCategoryDialogOpen}
-            onCloseUploadDialog={() => setIsUploadDialogOpen(false)}
+            onCloseUploadDialog={() => {
+              setIsUploadDialogOpen(false);
+              setUploadError(null);
+            }}
             onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
             onUpload={handleUploadDocument}
             onCreateCategory={handleCreateCategory}
             categories={categories || []}
             isUploading={uploadDocument.isPending}
             isCreatingCategory={createCategory.isPending}
+            uploadError={uploadError}
           />
         </div>
       </div>
