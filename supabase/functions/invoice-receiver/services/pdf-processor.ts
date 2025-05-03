@@ -1,6 +1,6 @@
 
 import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
-import { createHash } from "https://deno.land/std@0.190.0/crypto/mod.ts"; // Updated import path
+import { createHash } from "https://deno.land/x/crypto@v0.10.1/mod.ts";
 
 /**
  * Decodes a base64 PDF content string
@@ -46,7 +46,7 @@ export function validatePDF(contentBuffer: Uint8Array, filename: string): {
     // Compute checksum
     const hasher = createHash("sha256");
     hasher.update(contentBuffer);
-    const checksum = hasher.toString();
+    const checksum = hasher.toString("hex");
     console.log(`Original checksum for ${filename}: ${checksum}`);
     
     return { 
@@ -104,7 +104,7 @@ export function verifyUploadedPDF(
     if (originalChecksum) {
       const hasher = createHash("sha256");
       hasher.update(uploadedBuffer);
-      const uploadedChecksum = hasher.toString();
+      const uploadedChecksum = hasher.toString("hex");
       console.log(`Uploaded checksum for ${filename}: ${uploadedChecksum}`);
       
       if (originalChecksum !== uploadedChecksum) {
