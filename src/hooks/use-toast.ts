@@ -1,110 +1,100 @@
 
-import { toast as sonnerToast, type Toast as SonnerToast } from "sonner";
-import * as React from "react";
+import { toast as sonnerToast, type ToastT } from "sonner";
 
-export interface ToastProps extends SonnerToast {
+// Define our extended toast type 
+type ToastProps = {
+  id?: string;
   title?: string;
-  description?: React.ReactNode;
+  description?: string;
   action?: React.ReactNode;
-}
-
-export interface ToastActionElement {
-  altText: string;
-  onClick: () => void;
-  children: React.ReactNode;
-}
-
-export type ToasterToast = ToastProps;
-
-const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
-
-type ToasterToastState = {
-  toasts: ToasterToast[];
+  variant?: "default" | "destructive";
 };
 
-const toastState = {
-  toasts: [] as ToasterToast[]
-};
-
-export function createToast(props: ToasterToast) {
-  const id = props.id || String(Date.now());
-  const newToast = { id, ...props };
-
-  // Update internal state for the UI toast component
-  toastState.toasts = [
-    ...toastState.toasts.filter(t => t.id !== id).slice(0, TOAST_LIMIT - 1),
-    newToast,
-  ];
-
-  // Return the sonner toast id
-  return sonnerToast[props.variant === "destructive" ? "error" : props.variant || "default"](
-    props.description,
-    {
-      id,
-      ...props,
-    }
-  );
-}
-
-export function dismissToast(toastId?: string) {
-  // Update internal state
-  if (toastId) {
-    toastState.toasts = toastState.toasts.filter(t => t.id !== toastId);
-  } else {
-    toastState.toasts = [];
-  }
+// Create a toast interface that works with our UI components
+const createToast = () => {
+  // Array to track active toasts
+  const toasts: ToastProps[] = [];
   
-  // Call the sonner dismiss
-  sonnerToast.dismiss(toastId);
-}
+  // Function to dismiss a toast by id
+  const dismiss = (toastId?: string) => {
+    if (toastId) {
+      sonnerToast.dismiss(toastId);
+    }
+  };
 
-export const toast = {
-  info: (message: string, options?: Omit<ToastProps, "description">) => {
-    return createToast({ description: message, ...options, variant: "default" });
-  },
-  success: (message: string, options?: Omit<ToastProps, "description">) => {
-    return createToast({ description: message, ...options, variant: "success" });
-  },
-  warning: (message: string, options?: Omit<ToastProps, "description">) => {
-    return createToast({ description: message, ...options, variant: "warning" });
-  },
-  error: (message: string, options?: Omit<ToastProps, "description">) => {
-    return createToast({ description: message, ...options, variant: "destructive" });
-  },
-  // Enhanced toast with title and description
-  custom: ({ title, description, ...props }: ToastProps) => {
-    return createToast({ title, description, ...props });
-  },
-  // Dismiss specific or all toasts
-  dismiss: dismissToast,
-  // Promise toast for async operations
-  promise: <T>(
-    promise: Promise<T>,
-    {
-      loading,
-      success,
-      error,
-    }: {
-      loading: string;
-      success: string | ((data: T) => string);
-      error: string | ((error: unknown) => string);
+  // Get the toast methods
+  const toast = {
+    // Standard toast method
+    toast: (props: ToastProps) => {
+      const id = sonnerToast(props.title as string, {
+        description: props.description,
+      });
+      toasts.push({ ...props, id: id.toString() });
+      return id;
     },
-    options?: ToastProps
-  ) => {
-    return sonnerToast.promise(promise, {
-      loading,
-      success,
-      error,
-    }, options);
-  }
+    
+    // Success toast
+    success: (message: string, options?: Omit<ToastProps, "description">) => {
+      const id = sonnerToast.success(message);
+      toasts.push({ title: message, ...options, id: id.toString() });
+      return id;
+    },
+    
+    // Error toast
+    error: (message: string, options?: Omit<ToastProps, "description">) => {
+      const id = sonnerToast.error(message);
+      toasts.push({ title: message, ...options, id: id.toString() });
+      return id;
+    },
+    
+    // Info toast
+    info: (message: string, options?: Omit<ToastProps, "description">) => {
+      const id = sonnerToast.info(message);
+      toasts.push({ title: message, ...options, id: id.toString() });
+      return id;
+    },
+    
+    // Warning toast
+    warning: (message: string, options?: Omit<ToastProps, "description">) => {
+      const id = sonnerToast.warning(message);
+      toasts.push({ title: message, ...options, id: id.toString() });
+      return id;
+    },
+    
+    // Custom toast
+    custom: (props: ToastProps) => {
+      const id = sonnerToast(props.title as string, {
+        description: props.description,
+      });
+      toasts.push({ ...props, id: id.toString() });
+      return id;
+    },
+    
+    // Handle promises
+    promise: sonnerToast.promise,
+    
+    // Dismiss a specific toast
+    dismiss,
+  };
+
+  return {
+    toast,
+    dismiss,
+    toasts,
+  };
 };
+
+// Create a single instance of our toast system
+const { toast, dismiss, toasts } = createToast();
+
+// Export for easy usage
+export { toast, dismiss, toasts };
+export type { ToastProps };
 
 export function useToast() {
   return {
     toast,
-    dismiss: toast.dismiss,
-    // Add toasts property for UI components
-    toasts: toastState.toasts
+    dismiss,
+    toasts,
   };
 }

@@ -4,7 +4,7 @@ import { PdfViewer } from './viewers/PdfViewer';
 import { WordDocViewer } from './viewers/WordDocViewer';
 import { HtmlContentViewer } from './viewers/HtmlContentViewer';
 import { UnknownFileViewer } from './viewers/UnknownFileViewer';
-import { isPdf } from './utils/fileTypeUtils';
+import { isPdf, getFileExtension } from './utils/fileTypeUtils';
 
 interface DocumentViewerProps {
   pdfUrl?: string;
@@ -29,18 +29,40 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   useEffect(() => {
     console.group('DocumentViewer Props');
     console.log('pdfUrl:', pdfUrl || 'none');
+    console.log('normalized pdfUrl:', pdfUrl ? new URL(pdfUrl, window.location.origin).href : 'none');
     console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
-    console.log('isPdf:', isPdf);
-    console.log('isWordDocument:', isWordDocument);
+    console.log('isPdf flag:', isPdf);
+    console.log('isWordDocument flag:', isWordDocument);
+    console.log('file extension:', getFileExtension(pdfUrl || ''));
     console.groupEnd();
   }, [pdfUrl, htmlContent, isPdf, isWordDocument]);
 
+  // Create a consistent URL format for the PDF if it's a relative URL
+  const getNormalizedUrl = (url?: string): string => {
+    if (!url) return '';
+    
+    try {
+      // If it's already an absolute URL, return it
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      
+      // Handle relative URLs
+      return new URL(url, window.location.origin).href;
+    } catch (e) {
+      console.error('Error normalizing URL:', e);
+      return url;
+    }
+  };
+
+  const normalizedPdfUrl = getNormalizedUrl(pdfUrl);
+
   // Prioritize PDF viewing when available
-  if (pdfUrl && isPdf) {
-    console.log('Displaying PDF content from URL:', pdfUrl);
+  if (normalizedPdfUrl && (isPdf || isPdf(normalizedPdfUrl))) {
+    console.log('Displaying PDF content from URL:', normalizedPdfUrl);
     return (
       <PdfViewer
-        pdfUrl={pdfUrl}
+        pdfUrl={normalizedPdfUrl}
         onError={onIframeError}
         onLoad={onIframeLoad}
         onExternalOpen={onExternalOpen}
@@ -49,13 +71,13 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   }
 
   // Handle Word documents
-  if (pdfUrl && isWordDocument) {
+  if (normalizedPdfUrl && isWordDocument) {
     console.log('Displaying Word document placeholder');
     return <WordDocViewer onExternalOpen={onExternalOpen} />;
   }
 
   // Handle other document types with URL but not PDF or Word
-  if (pdfUrl && !isPdf && !isWordDocument) {
+  if (normalizedPdfUrl && !isPdf && !isWordDocument) {
     console.log('Displaying unknown document type placeholder');
     return <UnknownFileViewer onExternalOpen={onExternalOpen} />;
   }

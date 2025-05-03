@@ -18,6 +18,7 @@ import {
   getFileExtension 
 } from './preview/utils';
 import { useInvoicePreview } from '@/hooks/invoices/useInvoicePreview';
+import { toast } from '@/hooks/use-toast';
 
 interface InvoicePreviewProps {
   htmlContent?: string;
@@ -57,6 +58,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     if (normalizedPdfUrl) {
       console.log("Opening external URL:", normalizedPdfUrl);
       window.open(normalizedPdfUrl, '_blank', 'noopener,noreferrer');
+      toast.info("Opening PDF in new tab");
     }
   }, [normalizedPdfUrl]);
   
@@ -64,17 +66,51 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
   const handleToggleFullscreen = useCallback(() => {
     setFullscreenPreview(!fullscreenPreview);
   }, [fullscreenPreview, setFullscreenPreview]);
+
+  // Test the PDF URL accessibility 
+  const testPdfAccessibility = useCallback(async (url: string) => {
+    if (!url) return false;
+
+    try {
+      console.log('Testing PDF accessibility for:', url);
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        cache: 'no-store'
+      });
+      
+      const ok = response.ok;
+      console.log('PDF accessibility test result:', { 
+        status: response.status, 
+        ok, 
+        contentType: response.headers.get('content-type') 
+      });
+      
+      return ok;
+    } catch (err) {
+      console.error('Error testing PDF accessibility:', err);
+      return false;
+    }
+  }, []);
   
   useEffect(() => {
     // Validate and normalize PDF URL
     if (pdfUrl) {
       try {
         // Ensure URL has a protocol
-        const normalizedUrl = normalizeUrl(pdfUrl);
-        setNormalizedPdfUrl(normalizedUrl);
+        const normalized = normalizeUrl(pdfUrl);
+        setNormalizedPdfUrl(normalized);
         
         // Log normalized URL for debugging
-        console.log("Normalized PDF URL:", normalizedUrl);
+        console.log("Normalized PDF URL:", normalized);
+        
+        // Test if the PDF is actually accessible
+        testPdfAccessibility(normalized)
+          .then(accessible => {
+            console.log('PDF accessibility result:', accessible);
+            if (!accessible) {
+              console.warn('PDF may not be accessible:', normalized);
+            }
+          });
       } catch (e) {
         console.error("Invalid PDF URL:", pdfUrl, e);
         setPreviewError("Invalid PDF URL format");
@@ -94,7 +130,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
       isPdfFile: isPdf(pdfUrl || ''),
       contentType
     });
-  }, [pdfUrl, htmlContent, emailContent, contentType, setPreviewError]);
+  }, [pdfUrl, htmlContent, emailContent, contentType, setPreviewError, testPdfAccessibility]);
 
   // If no content and no email, show no preview state
   if ((!pdfUrl && !htmlContent && !hasEmailContent) || 
@@ -108,7 +144,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
 
   // If there's an error, show error state
   if (previewError && !hasEmailContent) {
-    return <PreviewErrorState error={previewError} />;
+    return <PreviewErrorState 
+      error={previewError} 
+      pdfUrl={normalizedPdfUrl} 
+      onExternalOpen={handleExternalOpen}
+    />;
   }
 
   return (

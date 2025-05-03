@@ -1,10 +1,8 @@
 
-// Export all utility functions from their respective files
-export * from './urlUtils';
-export * from './htmlUtils';
+// Import and export all utility functions
 export * from './fileTypeUtils';
-// Export everything from fileInfoUtils except getFileExtension to avoid conflicts
-export {
-  // We're not re-exporting any specific functions at the moment
-  // as getFileExtension is already exported from fileTypeUtils
-} from './fileInfoUtils';
+export * from './htmlUtils';
+export * from './urlUtils';
+
+// Import and re-export any named exports that don't conflict
+export { default as fileInfoUtils } from './fileInfoUtils';

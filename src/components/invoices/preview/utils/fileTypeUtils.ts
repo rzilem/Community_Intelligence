@@ -1,99 +1,64 @@
+
 /**
- * Checks if a URL or filename refers to a PDF file
+ * Checks if the provided URL or file name is a PDF
+ * @param url The URL or filename to check
+ * @returns Whether the URL or filename is a PDF
  */
-export const isPdf = (urlOrFilename: string): boolean => {
-  if (!urlOrFilename) return false;
-  const lowerUrl = urlOrFilename.toLowerCase();
-  
-  // Check file extension
-  if (lowerUrl.endsWith('.pdf')) return true;
-  
-  // Check content type
-  if (lowerUrl.includes('application/pdf')) return true;
-  
-  // Check URL parameters that might indicate PDF
-  if (lowerUrl.includes('pdf=true') || lowerUrl.includes('type=pdf')) return true;
-  
-  // Check for PDF viewer URLs
-  if (lowerUrl.includes('viewer') && lowerUrl.includes('pdf')) return true;
-  
-  return false;
+export const isPdf = (url: string): boolean => {
+  if (!url) return false;
+  return url.toLowerCase().endsWith('.pdf') || 
+         url.toLowerCase().includes('/pdf') || 
+         url.toLowerCase().includes('application/pdf');
 };
 
 /**
- * Checks if a URL or filename refers to a Word document
+ * Checks if the provided URL or file name is an image
+ * @param url The URL or filename to check
+ * @returns Whether the URL or filename is an image
  */
-export const isWordDocument = (urlOrFilename: string): boolean => {
-  if (!urlOrFilename) return false;
-  const extension = getFileExtension(urlOrFilename);
+export const isImage = (url: string): boolean => {
+  if (!url) return false;
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'];
+  return imageExtensions.some(ext => url.toLowerCase().endsWith(ext));
+};
+
+/**
+ * Gets the file extension from a URL or file path
+ * @param url The URL or file path
+ * @returns The file extension (without the dot)
+ */
+export const getFileExtension = (url: string): string => {
+  if (!url) return '';
+  const parts = url.split('.');
+  if (parts.length <= 1) return '';
+  
+  // Get the part after the last dot
+  let extension = parts[parts.length - 1];
+  
+  // Remove query parameters or hash fragments
+  extension = extension.split('?')[0].split('#')[0];
+  
+  return extension.toLowerCase();
+};
+
+/**
+ * Checks if the provided URL or file name is a Word document
+ * @param url The URL or filename to check
+ * @returns Whether the URL or filename is a Word document
+ */
+export const isWordDocument = (url: string): boolean => {
+  if (!url) return false;
+  const extension = getFileExtension(url);
   return extension === 'doc' || extension === 'docx';
 };
 
 /**
- * Checks if a URL or filename refers to an image
+ * Checks if the provided URL or file name is an Excel document
+ * @param url The URL or filename to check
+ * @returns Whether the URL or filename is an Excel document
  */
-export const isImage = (urlOrFilename: string): boolean => {
-  if (!urlOrFilename) return false;
-  const lowerUrl = urlOrFilename.toLowerCase();
-  return lowerUrl.endsWith('.jpg') || 
-         lowerUrl.endsWith('.jpeg') || 
-         lowerUrl.endsWith('.png') || 
-         lowerUrl.endsWith('.gif') || 
-         lowerUrl.endsWith('.bmp') || 
-         lowerUrl.endsWith('.webp') ||
-         lowerUrl.includes('image/');
-};
-
-/**
- * Extracts the file extension from a URL or filename
- */
-export const getFileExtension = (urlOrFilename: string): string => {
-  if (!urlOrFilename) return '';
-  
-  try {
-    // Extract the filename from the URL if it's a URL
-    let filename = urlOrFilename;
-    
-    // Parse URL if it looks like a URL
-    if (urlOrFilename.includes('://') || urlOrFilename.startsWith('/')) {
-      try {
-        const url = new URL(urlOrFilename, window.location.origin);
-        
-        // First check if there's a download filename in the Content-Disposition
-        const contentDisposition = url.searchParams.get('filename');
-        if (contentDisposition) {
-          filename = contentDisposition;
-        } else {
-          // Otherwise use the pathname
-          const pathSegments = url.pathname.split('/');
-          filename = pathSegments.pop() || '';
-          
-          // Remove any query parameters
-          filename = filename.split('?')[0];
-        }
-      } catch (e) {
-        // Not a valid URL, use as filename
-      }
-    }
-    
-    // Check for extensions in query strings
-    if (filename.includes('?')) {
-      const queryParams = new URLSearchParams(filename.split('?')[1]);
-      const formatParam = queryParams.get('format') || queryParams.get('type');
-      if (formatParam) {
-        return formatParam.toLowerCase();
-      }
-    }
-    
-    // Extract extension from filename
-    const parts = filename.split('.');
-    if (parts.length > 1) {
-      return parts.pop()?.toLowerCase() || '';
-    }
-    
-    return '';
-  } catch (e) {
-    console.error("Error getting file extension:", e);
-    return '';
-  }
+export const isExcelDocument = (url: string): boolean => {
+  if (!url) return false;
+  const extension = getFileExtension(url);
+  return extension === 'xls' || extension === 'xlsx';
 };
