@@ -27,14 +27,14 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 }) => {
   // Log component props on mount and when they change
   useEffect(() => {
-    console.group('DocumentViewer Props');
-    console.log('pdfUrl:', pdfUrl || 'none');
-    console.log('normalized pdfUrl:', pdfUrl ? new URL(pdfUrl, window.location.origin).href : 'none');
-    console.log('htmlContent:', htmlContent ? `${htmlContent.length} chars` : 'none');
-    console.log('isPdf flag:', isPdfProp);
-    console.log('isWordDocument flag:', isWordDocument);
-    console.log('file extension:', getFileExtension(pdfUrl || ''));
-    console.groupEnd();
+    console.log('DocumentViewer Props:', {
+      pdfUrl: pdfUrl || 'none',
+      normalizedUrl: pdfUrl ? new URL(pdfUrl, window.location.origin).href : 'none',
+      htmlContentLength: htmlContent ? htmlContent.length : 0,
+      isPdf: isPdfProp,
+      isWordDocument: isWordDocument,
+      fileExtension: getFileExtension(pdfUrl || '')
+    });
   }, [pdfUrl, htmlContent, isPdfProp, isWordDocument]);
 
   // Create a consistent URL format for the PDF if it's a relative URL

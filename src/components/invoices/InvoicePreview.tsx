@@ -41,7 +41,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
     : 'h-[600px]';
 
   return (
-    <div className={`flex flex-col border rounded-lg overflow-hidden ${fullscreenClass}`}>
+    <div className={`flex flex-col border rounded-lg overflow-hidden ${fullscreenClass}`} style={{ position: 'relative' }}>
       <PreviewHeader
         isPdf={isPdf}
         isWordDocument={isWordDocument}

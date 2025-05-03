@@ -2,7 +2,7 @@
 import React from 'react';
 import { AlertCircle, ExternalLink, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface PreviewErrorStateProps {
   error: string;
@@ -20,8 +20,8 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
   const handleRetry = () => {
     if (onRetry) {
       toast({
-        title: "Info",
-        description: "Retrying PDF load..."
+        title: "Reloading document",
+        description: "Attempting to reload the preview..."
       });
       onRetry();
     }
@@ -31,16 +31,16 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
       toast({
-        title: "Info",
-        description: "Downloading PDF..."
+        title: "Downloading document",
+        description: "Opening document in a new tab"
       });
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+    <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6" style={{ pointerEvents: 'auto' }}>
       <AlertCircle className="h-12 w-12 mb-4 text-red-400" />
-      <h3 className="text-lg font-medium mb-2 text-center">PDF Preview Failed</h3>
+      <h3 className="text-lg font-medium mb-2 text-center">Preview Failed</h3>
       <p className="text-center mb-6">{error}</p>
       
       <div className="flex flex-wrap gap-3 justify-center">
@@ -77,7 +77,7 @@ export const PreviewErrorState: React.FC<PreviewErrorStateProps> = ({
 
       <div className="mt-6 max-w-md text-sm opacity-70">
         <p className="text-center">
-          The PDF may be protected, unavailable, or there might be CORS restrictions preventing it from loading in the browser.
+          The document may be protected, unavailable, or there might be network issues preventing it from loading in the browser.
         </p>
       </div>
     </div>

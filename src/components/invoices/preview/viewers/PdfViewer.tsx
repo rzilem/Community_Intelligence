@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ExternalLink, AlertTriangle, Download } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface PdfViewerProps {
   pdfUrl: string;
@@ -19,6 +19,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
 }) => {
   const [pdfLoadFailed, setPdfLoadFailed] = useState(false);
   const [pdfLoadAttempts, setPdfLoadAttempts] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const objectRef = useRef<HTMLObjectElement | null>(null);
   
   // Log the URL we're trying to load
@@ -28,6 +29,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     // Reset error state when URL changes
     setPdfLoadFailed(false);
     setPdfLoadAttempts(0);
+    setIsLoading(true);
   }, [pdfUrl]);
 
   // Handle PDF load failure and retry
@@ -42,12 +44,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       return () => clearTimeout(retryTimer);
     } else if (pdfLoadFailed && pdfLoadAttempts >= 2) {
       console.error('PDF load attempts exhausted');
+      setIsLoading(false);
       onError();
-      toast({
-        title: "Error",
-        description: "Failed to load PDF document",
-        variant: "destructive"
-      });
     }
   }, [pdfLoadFailed, pdfLoadAttempts, onError]);
 
@@ -61,6 +59,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       for (const mutation of mutations) {
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-loaded') {
           console.log('PDF object successfully loaded');
+          setIsLoading(false);
           onLoad();
         }
       }
@@ -82,7 +81,34 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     if (objectRef.current) {
       objectRef.current.setAttribute('data-loaded', 'true');
     }
+    setIsLoading(false);
     onLoad();
+  };
+
+  const handleReload = () => {
+    setPdfLoadFailed(false);
+    setPdfLoadAttempts(0);
+    setIsLoading(true);
+    
+    // Force reload by creating a cache-busting URL
+    const cacheBustUrl = `${pdfUrl}${pdfUrl.includes('?') ? '&' : '?'}cacheBust=${Date.now()}`;
+    
+    // Re-create the object element
+    if (objectRef.current) {
+      const parent = objectRef.current.parentNode;
+      if (parent) {
+        const oldObject = objectRef.current;
+        const newObject = oldObject.cloneNode(true) as HTMLObjectElement;
+        newObject.data = cacheBustUrl;
+        parent.replaceChild(newObject, oldObject);
+        objectRef.current = newObject;
+      }
+    }
+    
+    toast({
+      title: "Reloading PDF",
+      description: "Attempting to reload the document..."
+    });
   };
 
   if (!pdfUrl) {
@@ -106,7 +132,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         <p className="text-center mb-4 text-muted-foreground">
           The PDF could not be loaded directly in the browser.
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-center">
           <Button 
             onClick={onExternalOpen}
             className="flex items-center"
@@ -122,13 +148,20 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           >
             Download PDF <Download className="h-4 w-4 ml-2" />
           </Button>
+          <Button 
+            variant="secondary" 
+            onClick={handleReload}
+            className="flex items-center"
+          >
+            Reload <RefreshCw className="h-4 w-4 ml-2" />
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col relative">
       {/* Use object for better browser compatibility */}
       <object
         ref={objectRef}
@@ -153,8 +186,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       </object>
       
       {/* Loading state shown while PDF is being loaded */}
-      {!pdfLoadFailed && pdfLoadAttempts < 2 && (
-        <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+      {isLoading && (
+        <div className="absolute inset-0 bg-background/50 flex items-center justify-center" style={{ pointerEvents: 'none' }}>
           <div className="animate-pulse flex flex-col items-center">
             <div className="h-8 w-8 rounded-full bg-primary/20 mb-4"></div>
             <div className="h-4 w-32 rounded bg-primary/20"></div>

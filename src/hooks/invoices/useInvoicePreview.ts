@@ -1,7 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { isPdf, normalizeUrl } from '@/components/invoices/preview/utils';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface UseInvoicePreviewProps {
   pdfUrl?: string;
@@ -20,6 +20,7 @@ export const useInvoicePreview = ({
   const [isPdfLoaded, setIsPdfLoaded] = useState(false);
   const [contentType, setContentType] = useState<'pdf' | 'html' | 'none'>('none');
   const [pdfAccessible, setPdfAccessible] = useState<boolean | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Normalize the PDF URL if it exists
   const normalizedPdfUrl = pdfUrl ? normalizeUrl(pdfUrl) : '';
@@ -36,28 +37,44 @@ export const useInvoicePreview = ({
         return;
       }
       
-      console.log("Checking PDF URL accessibility:", normalizedPdfUrl);
-      console.log("Normalized URL for checking:", normalizedPdfUrl);
-      
       try {
         console.log("Testing PDF accessibility for:", normalizedPdfUrl);
-        const response = await fetch(normalizedPdfUrl, { 
-          method: 'HEAD',
-          mode: 'no-cors' 
-        });
         
-        console.log("PDF accessibility test result:", {
-          status: response.status,
-          ok: response.ok,
-          contentType: response.headers.get('content-type')
-        });
-        
-        setPdfAccessible(response.ok);
+        // Try a HEAD request first
+        try {
+          const response = await fetch(normalizedPdfUrl, { 
+            method: 'HEAD',
+            cache: 'no-cache',
+            headers: {
+              'Pragma': 'no-cache',
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          console.log("PDF accessibility test result:", {
+            status: response.status,
+            ok: response.ok,
+            contentType: response.headers.get('content-type')
+          });
+          
+          setPdfAccessible(response.ok);
+        } catch (error) {
+          // If HEAD fails, try a simple GET
+          const getResponse = await fetch(normalizedPdfUrl, { 
+            method: 'GET', 
+            cache: 'no-cache',
+            headers: {
+              'Pragma': 'no-cache',
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          setPdfAccessible(getResponse.ok);
+        }
       } catch (error) {
-        console.warn("GET request failed, trying alternative approach");
+        console.warn("PDF accessibility checks failed:", error);
         
-        // If fetch fails, try a different approach or fallback
-        // For now, just assume it might be accessible if we have the URL
+        // Assume it might be accessible
         setPdfAccessible(!!normalizedPdfUrl);
         
         if (hasHtmlContent) {
@@ -68,7 +85,7 @@ export const useInvoicePreview = ({
     };
 
     checkPdfUrl();
-  }, [normalizedPdfUrl, hasHtmlContent]);
+  }, [normalizedPdfUrl, hasHtmlContent, retryCount]);
 
   // Determine the content type to show
   useEffect(() => {
@@ -85,12 +102,14 @@ export const useInvoicePreview = ({
 
     if (pdfAccessible && isPdfFile) {
       setContentType('pdf');
+      setPreviewError(null);
     } else if (hasHtmlContent) {
       setContentType('html');
+      setPreviewError(null);
     } else {
       setContentType('none');
     }
-  }, [normalizedPdfUrl, hasHtmlContent, pdfAccessible, isPdfFile, htmlContent, emailContent]);
+  }, [normalizedPdfUrl, hasHtmlContent, pdfAccessible, isPdfFile, htmlContent, emailContent, retryCount]);
 
   // Handle tab switching
   const handleTabChange = (value: string) => {
@@ -98,19 +117,19 @@ export const useInvoicePreview = ({
   };
 
   // Handle PDF load error
-  const handlePreviewError = () => {
-    setPreviewError("We couldn't display the invoice preview. Please try downloading the file instead.");
+  const handlePreviewError = useCallback(() => {
+    setPreviewError("We couldn't display the document preview. Please try using the buttons below instead.");
     setIsPdfLoaded(false);
-  };
+  }, []);
 
   // Handle PDF load success
-  const handlePreviewLoad = () => {
+  const handlePreviewLoad = useCallback(() => {
     setIsPdfLoaded(true);
     setPreviewError(null);
-  };
+  }, []);
 
   // Handle external open action
-  const handleExternalOpen = () => {
+  const handleExternalOpen = useCallback(() => {
     if (normalizedPdfUrl) {
       window.open(normalizedPdfUrl, '_blank');
       toast({
@@ -118,18 +137,38 @@ export const useInvoicePreview = ({
         description: "The PDF is opening in a new tab",
       });
     }
-  };
+  }, [normalizedPdfUrl]);
 
   // Toggle fullscreen view
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => !prev);
-  };
+  }, []);
 
   // Retry loading the PDF
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setPreviewError(null);
     setPdfAccessible(null); // Reset to trigger re-check
-  };
+    setRetryCount(prev => prev + 1); // Increment retry count to trigger recheck
+    toast({
+      title: "Retrying",
+      description: "Attempting to reload the document preview"
+    });
+  }, []);
+
+  useEffect(() => {
+    // Default to document tab on load
+    if (hasEmailContent) {
+      // If we have email content and the document fails to load,
+      // automatically switch to the email tab
+      if (previewError && activeTab === 'document') {
+        toast({
+          title: "Showing email content",
+          description: "Document preview failed. Showing original email instead."
+        });
+        setActiveTab('email');
+      }
+    }
+  }, [previewError, hasEmailContent, activeTab]);
 
   return {
     activeTab,
