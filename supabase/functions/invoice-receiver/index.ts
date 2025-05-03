@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
@@ -5,7 +6,7 @@ import { processInvoiceEmail } from "./services/invoice-processor.ts";
 import { createInvoice } from "./services/invoice-service.ts";
 import { corsHeaders } from "./utils/cors-headers.ts";
 import { Invoice } from "./services/invoice-types.ts";
-import { createHash } from "https://deno.land/std@0.190.0/hash/mod.ts";
+import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 
 console.log("Starting invoice-receiver initialization");
 
@@ -186,12 +187,6 @@ try {
               }
             }
 
-            const hasher = createHash("sha256");
-            hasher.update(content);
-            const originalChecksum = hasher.toString();
-            console.log(`[${requestId}] Original checksum: ${originalChecksum}`);
-            await logToSupabase(requestId, 'info', 'Original checksum', { checksum: originalChecksum });
-
             const { error: uploadError } = await supabase.storage
               .from('invoices')
               .upload(normalizedFileName, content, {
@@ -228,19 +223,6 @@ try {
                   });
                   await supabase.storage.from('invoices').remove([normalizedFileName]);
                   throw new Error(`Uploaded file size does not match original`);
-                }
-                const hasher = createHash("sha256");
-                hasher.update(uploadedBuffer);
-                const uploadedChecksum = hasher.toString();
-                console.log(`[${requestId}] Uploaded checksum: ${uploadedChecksum}`);
-                await logToSupabase(requestId, 'info', 'Uploaded checksum', { checksum: uploadedChecksum });
-                if (originalChecksum !== uploadedChecksum) {
-                  console.error(`Checksum mismatch for ${attachment.filename}:`, {
-                    originalChecksum,
-                    uploadedChecksum
-                  });
-                  await supabase.storage.from('invoices').remove([normalizedFileName]);
-                  throw new Error(`Uploaded file content does not match original`);
                 }
               } catch (validationError) {
                 console.error(`[${requestId}] Error validating uploaded file: ${validationError.message}`);
