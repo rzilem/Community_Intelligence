@@ -1,8 +1,10 @@
+
 import { decode } from "https://deno.land/std@0.190.0/encoding/base64.ts";
 import { extractTextFromPdf, extractTextFromDocx, extractTextFromDoc, getDocumentType } from "../utils/document-parser.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { Attachment } from "../services/invoice-types.ts";
-import { createHash } from "https://deno.land/std@0.190.0/hash/mod.ts";
+// Fix the hash import - using the correct path in the crypto module instead
+import { createHash } from "https://deno.land/std@0.190.0/crypto/mod.ts";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
