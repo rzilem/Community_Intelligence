@@ -13,7 +13,7 @@ export interface Invoice {
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
   pdf_url?: string;
-  email_content?: string; // Make this optional since we're removing it from edge function
+  email_content?: string; // Optional email content field
   source_document?: string;
   created_at: string;
   updated_at: string;
@@ -51,4 +51,13 @@ export interface CommunicationLog {
   status: 'received' | 'processing' | 'completed' | 'failed';
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Attachment {
+  filename: string;
+  contentType: string;
+  content: string | Blob | File | Uint8Array;
+  size: number;
+  url?: string;
+  source_document?: string;
 }

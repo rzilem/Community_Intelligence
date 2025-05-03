@@ -1,3 +1,4 @@
+
 export function extractInvoiceDetails(content: string, subject: string): {
   invoice_number?: string;
   amount?: number;
@@ -13,6 +14,12 @@ export function extractInvoiceDetails(content: string, subject: string): {
     description?: string;
   } = {};
 
+  console.log("Extracting invoice details from content and subject:", { 
+    contentLength: content?.length || 0,
+    subject: subject || 'none'
+  });
+
+  // First try to extract invoice number
   const invoiceNumberPatterns = [
     /Invoice(?:\s*Number|\s*#|\s*No)?[:.\s]*(\d{3,4})\b/i,
     /Invoice[:\s]*#?\s*(\d{3,4})\b/i,
@@ -28,26 +35,44 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /#\s*([a-zA-Z0-9\-_]+)/i,
     /bill\s*(?:#|number|num|no)[:\s]*([a-zA-Z0-9\-_]+)/i,
     /inv[:\s]*([a-zA-Z0-9\-_]+)/i,
-    /Invoice\s*:\s*(\d+)/i
+    /Invoice\s*:\s*(\d+)/i,
+    /Reference[:\s]*#?\s*([a-zA-Z0-9\-_]+)/i,
+    /Order\s*(?:#|No|Number)?[:\s]*([a-zA-Z0-9\-_]+)/i
   ];
 
   let foundInvoiceNumber = false;
-  for (const pattern of invoiceNumberPatterns) {
-    const subjectMatch = subject.match(pattern);
-    const contentMatch = content.match(pattern);
-    const match = subjectMatch || contentMatch;
-    
-    if (match && match[1] && match[1].trim()) {
-      result.invoice_number = match[1].trim();
-      foundInvoiceNumber = true;
-      break;
+  // Try subject first as it often contains the invoice number
+  if (subject) {
+    for (const pattern of invoiceNumberPatterns) {
+      const match = subject.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.invoice_number = match[1].trim();
+        console.log(`Extracted invoice number from subject: ${result.invoice_number}`);
+        foundInvoiceNumber = true;
+        break;
+      }
+    }
+  }
+
+  // If not found in subject, try content
+  if (!foundInvoiceNumber) {
+    for (const pattern of invoiceNumberPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.invoice_number = match[1].trim();
+        console.log(`Extracted invoice number from content: ${result.invoice_number}`);
+        foundInvoiceNumber = true;
+        break;
+      }
     }
   }
 
   if (!foundInvoiceNumber) {
-    result.invoice_number = '';
+    console.log("No invoice number found, generating one");
+    result.invoice_number = `INV-${Date.now().toString().slice(-6)}`;
   }
 
+  // Extract amount
   const amountPatterns = [
     /Total\s+Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
     /Amount\s+Due[:\s]*\$?\s*([\d,]+\.?\d*)/i,
@@ -68,9 +93,12 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /\$\s*([\d,]+\.?\d*)/i,
     /(?:USD|EUR|GBP)[:\s]*\s*([\d,]+\.?\d*)/i,
     /(?:[\d,]+\.?\d*)\s*(?:USD|EUR|GBP|dollars)/i,
-    /amount[:\s]*(?:USD|EUR|GBP)?\s*([\d,]+\.?\d*)/i
+    /amount[:\s]*(?:USD|EUR|GBP)?\s*([\d,]+\.?\d*)/i,
+    /grand total[:\s]*\$?\s*([\d,]+\.?\d*)/i,
+    /subtotal[:\s]*\$?\s*([\d,]+\.?\d*)/i
   ];
 
+  let foundAmount = false;
   for (const pattern of amountPatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
@@ -78,11 +106,18 @@ export function extractInvoiceDetails(content: string, subject: string): {
       const amount = parseFloat(amountStr);
       if (!isNaN(amount)) {
         result.amount = parseFloat(amount.toFixed(2));
+        console.log(`Extracted amount: $${result.amount}`);
+        foundAmount = true;
         break;
       }
     }
   }
 
+  if (!foundAmount) {
+    console.log("No amount found");
+  }
+
+  // Extract due date
   const dueDatePatterns = [
     /Due\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
     /Due\s+Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
@@ -105,6 +140,7 @@ export function extractInvoiceDetails(content: string, subject: string): {
     /payment\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i
   ];
 
+  let foundDueDate = false;
   for (const pattern of dueDatePatterns) {
     const match = content.match(pattern);
     if (match && match[1]) {
@@ -113,9 +149,76 @@ export function extractInvoiceDetails(content: string, subject: string): {
         const date = new Date(dateStr);
         if (!isNaN(date.getTime())) {
           result.due_date = date.toISOString().split('T')[0];
+          console.log(`Extracted due date: ${result.due_date}`);
+          foundDueDate = true;
           break;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn(`Error parsing date: ${e.message}`);
+      }
+    }
+  }
+
+  if (!foundDueDate) {
+    console.log("No due date found");
+  }
+
+  // Extract invoice date
+  const invoiceDatePatterns = [
+    /Invoice\s+Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Invoice\s+Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
+    /Date[:\s]*(\d{1,2}\/\d{1,2}\/\d{2,4})/i,
+    /Date[:\s]*(\d{1,2}-\d{1,2}-\d{2,4})/i,
+    /Date[:\s]*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i,
+    /invoice\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i,
+    /bill\s+date[:\s]*((?:\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})|(?:\w+\s+\d{1,2},?\s+\d{4}))/i
+  ];
+
+  let foundInvoiceDate = false;
+  for (const pattern of invoiceDatePatterns) {
+    const match = content.match(pattern);
+    if (match && match[1]) {
+      try {
+        const dateStr = match[1].trim();
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          result.invoice_date = date.toISOString().split('T')[0];
+          console.log(`Extracted invoice date: ${result.invoice_date}`);
+          foundInvoiceDate = true;
+          break;
+        }
+      } catch (e) {
+        console.warn(`Error parsing invoice date: ${e.message}`);
+      }
+    }
+  }
+
+  if (!foundInvoiceDate) {
+    console.log("No invoice date found, using current date");
+    result.invoice_date = new Date().toISOString().split('T')[0];
+  }
+
+  // Extract description (use subject or look for description patterns)
+  if (subject) {
+    result.description = subject;
+  } else {
+    // Try to extract description from content
+    const descriptionPatterns = [
+      /Description[:\s]*([^\n\r]+)/i,
+      /Re:[:\s]*([^\n\r]+)/i,
+      /Regarding[:\s]*([^\n\r]+)/i,
+      /Subject[:\s]*([^\n\r]+)/i,
+      /Service[:\s]*([^\n\r]+)/i,
+      /Item[:\s]*([^\n\r]+)/i
+    ];
+
+    for (const pattern of descriptionPatterns) {
+      const match = content.match(pattern);
+      if (match && match[1] && match[1].trim()) {
+        result.description = match[1].trim();
+        console.log(`Extracted description: ${result.description}`);
+        break;
+      }
     }
   }
 
