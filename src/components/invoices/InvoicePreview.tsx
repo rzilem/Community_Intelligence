@@ -79,7 +79,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({
         </TabsContent>
         
         <TabsContent value="email" className="h-full">
-          <EmailPreview emailContent={emailContent} />
+          <EmailPreview 
+            emailContent={emailContent} 
+            htmlContent={htmlContent} 
+          />
         </TabsContent>
       </Tabs>
     </div>

@@ -20,6 +20,14 @@ export async function handleEmailData(emailData: any, requestId: string, logging
     // Process attachments if present
     const attachmentResult = await processAttachments(normalizedEmailData, requestId, loggingService, supabase);
     
+    // Log the HTML content length for debugging
+    if (normalizedEmailData.html) {
+      await loggingService.logInfo(requestId, "HTML content details", {
+        htmlContentLength: normalizedEmailData.html.length,
+        htmlContentExcerpt: normalizedEmailData.html.substring(0, 100) + '...'
+      });
+    }
+    
     // Extract invoice information from email content
     const invoiceData = {
       invoice_number: normalizedEmailData.subject || "Unknown",

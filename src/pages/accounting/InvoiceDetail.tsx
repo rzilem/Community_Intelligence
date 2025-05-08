@@ -44,10 +44,12 @@ const InvoiceDetail = () => {
       invoiceNumber: invoice.invoiceNumber,
       hasHtmlContent: !!invoice.htmlContent,
       htmlContentLength: invoice.htmlContent?.length || 0,
+      htmlContentExcerpt: invoice.htmlContent ? invoice.htmlContent.substring(0, 100) + '...' : 'none',
       hasPdfUrl: !!invoice.pdfUrl,
       pdfUrl: invoice.pdfUrl || 'none',
       hasEmailContent: !!invoice.emailContent,
-      emailContentLength: invoice.emailContent?.length || 0
+      emailContentLength: invoice.emailContent?.length || 0,
+      emailContentExcerpt: invoice.emailContent ? invoice.emailContent.substring(0, 100) + '...' : 'none'
     });
     console.groupEnd();
   }, [invoice, id]);

@@ -87,6 +87,19 @@ export const useInvoiceDetail = (id: string | undefined) => {
         ? parseFloat(invoiceData.amount.toFixed(2)) 
         : 0;
       
+      // Log HTML and email content details
+      console.log("HTML Content:", {
+        available: !!invoiceData.html_content,
+        length: invoiceData.html_content?.length || 0,
+        excerpt: invoiceData.html_content ? invoiceData.html_content.substring(0, 100) + '...' : 'none'
+      });
+      
+      console.log("Email Content:", {
+        available: !!invoiceData.email_content,
+        length: invoiceData.email_content?.length || 0,
+        excerpt: invoiceData.email_content ? invoiceData.email_content.substring(0, 100) + '...' : 'none'
+      });
+      
       setInvoice({
         id: invoiceData.id,
         vendor: invoiceData.vendor || '',
