@@ -1,4 +1,6 @@
 
+import { createAuthorizedFetch } from "../../shared/authorized-fetch.ts";
+
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -36,6 +38,9 @@ export async function analyzeRequestWithAI(
       return null;
     }
     
+    // Create an authorized fetch function
+    const fetchWithAuth = createAuthorizedFetch(SUPABASE_SERVICE_ROLE_KEY);
+    
     // Log details about the request we're about to make
     console.log("OpenAI extractor request details:", {
       url: `${SUPABASE_URL}/functions/v1/openai-extractor`,
@@ -43,16 +48,13 @@ export async function analyzeRequestWithAI(
       contentLength: content.length,
       hasSubject: !!subject,
       hasFrom: !!from,
-      serviceRoleKeyProvided: !!SUPABASE_SERVICE_ROLE_KEY
+      serviceRoleKeyProvided: !!SUPABASE_SERVICE_ROLE_KEY,
+      serviceRoleKeyLength: SUPABASE_SERVICE_ROLE_KEY?.length || 0
     });
     
-    // Call the unified OpenAI extractor function with the correct authorization header
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
+    // Call the unified OpenAI extractor function with the authorized fetch
+    const response = await fetchWithAuth(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
-      },
       body: JSON.stringify({
         content: content,
         contentType: "homeowner-request",
@@ -70,12 +72,6 @@ export async function analyzeRequestWithAI(
         errorData = await response.text();
       } catch (e) {
         errorData = "Could not parse response body";
-      }
-      
-      // Specifically handle 401 errors with more detailed logging
-      if (response.status === 401) {
-        console.error(`AUTHENTICATION ERROR (401): Failed to authenticate with the OpenAI extractor function`);
-        console.error(`Auth Header Format: Bearer ${SUPABASE_SERVICE_ROLE_KEY ? "[key exists]" : "[key missing]"}`);
       }
       
       throw new Error(`OpenAI extractor API error (${response.status}): ${errorData}`);

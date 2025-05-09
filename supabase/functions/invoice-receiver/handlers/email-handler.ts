@@ -22,7 +22,36 @@ export async function handleInvoiceEmail(req: Request, supabase: any): Promise<R
   }
 
   try {
-    await loggingService.logInfo(requestId, "Received invoice email webhook", { method: req.method });
+    // Log the request headers for debugging (redact any sensitive information)
+    const headersLog: Record<string, string> = {};
+    req.headers.forEach((value, key) => {
+      if (key.toLowerCase() === 'authorization') {
+        headersLog[key] = value.startsWith('Bearer ') ? 'Bearer [redacted]' : '[redacted]';
+      } else {
+        headersLog[key] = value;
+      }
+    });
+    
+    await loggingService.logInfo(requestId, "Received invoice email webhook", { 
+      method: req.method,
+      headers: headersLog,
+      contentType: req.headers.get('content-type')
+    });
+    
+    // Special handling for webhook requests from email providers
+    // Check for webhook signatures or other verification methods
+    const webhookKey = req.headers.get('x-webhook-key') || req.headers.get('webhook-signature');
+    if (webhookKey) {
+      await loggingService.logInfo(requestId, "Processing webhook request with custom authentication", {
+        hasWebhookKey: true
+      });
+      // Future enhancement: Implement webhook signature validation here
+    } else {
+      await loggingService.logInfo(requestId, "Processing standard request", {
+        hasWebhookKey: false,
+        hasAuthorization: !!req.headers.get('authorization')
+      });
+    }
     
     // Log environment configuration (without exposing secrets)
     await loggingService.logInfo(requestId, "Environment configuration check", { 

@@ -1,7 +1,39 @@
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+// Create a utility function for authorized fetch
+function createAuthorizedFetch(serviceRoleKey: string) {
+  return async function authorizedFetch(url: string | URL, options: RequestInit = {}): Promise<Response> {
+    // Ensure headers exists
+    const headers = new Headers(options.headers || {});
+    
+    // Add authorization header if not present
+    if (!headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${serviceRoleKey}`);
+    }
+    
+    // Set content type if not present and we have a JSON body
+    if (!headers.has('Content-Type') && options.body && 
+        (typeof options.body === 'object' || options.body.toString().startsWith('{'))) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    // Create the final options with our headers
+    const finalOptions: RequestInit = {
+      ...options,
+      headers
+    };
+
+    console.log(`Making authorized request to: ${url.toString()}`);
+    console.log(`Request headers: Authorization (${headers.has('Authorization') ? 'present' : 'missing'})`);
+    
+    return fetch(url, finalOptions);
+  };
+}
 
 /**
  * Analyzes lead email content using OpenAI to extract structured information
@@ -36,6 +68,9 @@ export async function analyzeLeadWithAI(
       return null;
     }
     
+    // Create an authorized fetch function
+    const fetchWithAuth = createAuthorizedFetch(SUPABASE_SERVICE_ROLE_KEY);
+    
     // Log details about the request we're about to make
     console.log("OpenAI extractor request details:", {
       url: `${SUPABASE_URL}/functions/v1/openai-extractor`,
@@ -43,16 +78,13 @@ export async function analyzeLeadWithAI(
       contentLength: content.length,
       hasSubject: !!subject,
       hasFrom: !!from,
-      serviceRoleKeyProvided: !!SUPABASE_SERVICE_ROLE_KEY
+      serviceRoleKeyProvided: !!SUPABASE_SERVICE_ROLE_KEY,
+      serviceRoleKeyLength: SUPABASE_SERVICE_ROLE_KEY?.length || 0
     });
     
-    // Call the unified OpenAI extractor function with the correct authorization header
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
+    // Call the unified OpenAI extractor function with the authorized fetch
+    const response = await fetchWithAuth(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
-      },
       body: JSON.stringify({
         content: content,
         contentType: "lead",
@@ -70,12 +102,6 @@ export async function analyzeLeadWithAI(
         errorData = await response.text();
       } catch (e) {
         errorData = "Could not parse response body";
-      }
-      
-      // Specifically handle 401 errors with more detailed logging
-      if (response.status === 401) {
-        console.error(`AUTHENTICATION ERROR (401): Failed to authenticate with the OpenAI extractor function`);
-        console.error(`Auth Header Format: Bearer ${SUPABASE_SERVICE_ROLE_KEY ? "[key exists]" : "[key missing]"}`);
       }
       
       throw new Error(`OpenAI extractor API error (${response.status}): ${errorData}`);

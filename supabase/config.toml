@@ -1,4 +1,5 @@
 
+# A string used to distinguish different Supabase projects on the same host. Defaults to the project ID.
 project_id = "cahergndkwfqltxyikyr"
 
 [api]
@@ -9,38 +10,33 @@ schemas = ["public", "storage", "graphql_public"]
 [db]
 port = 54322
 
-[studio]
-port = 54323
-
-[inbucket]
-port = 54324
-
-[auth]
-enabled = true
-port = 54325
-
-[storage]
-enabled = true
+[db.pooler]
+enabled = false
+port = 54329
 
 [realtime]
 enabled = true
+port = 54323
 
-[functions]
-[functions.email-receiver]
-verify_jwt = true
-[functions.email-transformer]
-verify_jwt = true
-[functions.generate-response]
-verify_jwt = true
-[functions.homeowner-request-email]
-verify_jwt = true
-[functions.invoice-receiver]
-verify_jwt = true
-[functions.openai-extractor]
-verify_jwt = true
-[functions.settings]
-verify_jwt = true
-[functions.update-openai-config]
+[studio]
+enabled = true
+port = 54324
+
+[inbucket]
+enabled = true
+port = 54325
+
+[auth]
+enabled = true
+port = 54326
+
+[storage]
+enabled = true
+port = 54327
+
+[experimental.functions]
+enabled = true
+port = 54328
+
+[experimental.functions.test-auth]
 verify_jwt = false
-[functions.view-logs]
-verify_jwt = true
