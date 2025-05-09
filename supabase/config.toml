@@ -6,3 +6,6 @@ project_id = "cahergndkwfqltxyikyr"
 
 [functions.openai-extractor]
 verify_jwt = true
+
+[functions.settings]
+verify_jwt = true
