@@ -26,8 +26,10 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Parse query parameters
+    // Parse query parameters - handle both URL params and function invoke params
     const url = new URL(req.url)
+    
+    // Support both query parameters from URL and params from invoke
     const functionName = url.searchParams.get('function') || undefined
     const level = url.searchParams.get('level') || undefined
     const limit = parseInt(url.searchParams.get('limit') || '100')

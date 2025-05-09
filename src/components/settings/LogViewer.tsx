@@ -43,9 +43,14 @@ const LogViewer: React.FC<LogViewerProps> = ({ initialFunction }) => {
       if (selectedLevel) queryParams.append('level', selectedLevel);
       queryParams.append('limit', '100');
       
+      // Use params property instead of query for FunctionInvokeOptions
       const { data, error } = await supabase.functions.invoke('view-logs', {
         method: 'GET',
-        query: queryParams
+        params: {
+          function: selectedFunction,
+          level: selectedLevel,
+          limit: '100'
+        }
       });
       
       if (error) {
@@ -237,3 +242,4 @@ const LogViewer: React.FC<LogViewerProps> = ({ initialFunction }) => {
 };
 
 export default LogViewer;
+
