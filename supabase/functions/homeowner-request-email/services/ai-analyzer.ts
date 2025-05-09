@@ -24,7 +24,27 @@ export async function analyzeRequestWithAI(
 
   try {
     console.log("Sending homeowner request content to OpenAI extractor function");
-    console.log("Authorization header will use SUPABASE_SERVICE_ROLE_KEY");
+    
+    // Verify environment variables are set
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("SUPABASE_SERVICE_ROLE_KEY is not set");
+      return null;
+    }
+    
+    if (!SUPABASE_URL) {
+      console.error("SUPABASE_URL is not set");
+      return null;
+    }
+    
+    // Log details about the request we're about to make
+    console.log("OpenAI extractor request details:", {
+      url: `${SUPABASE_URL}/functions/v1/openai-extractor`,
+      contentType: "homeowner-request",
+      contentLength: content.length,
+      hasSubject: !!subject,
+      hasFrom: !!from,
+      serviceRoleKeyProvided: !!SUPABASE_SERVICE_ROLE_KEY
+    });
     
     // Call the unified OpenAI extractor function with the correct authorization header
     const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
@@ -41,8 +61,23 @@ export async function analyzeRequestWithAI(
       })
     });
 
+    // Log the response status
+    console.log(`OpenAI extractor response status: ${response.status}`);
+    
     if (!response.ok) {
-      const errorData = await response.text();
+      let errorData;
+      try {
+        errorData = await response.text();
+      } catch (e) {
+        errorData = "Could not parse response body";
+      }
+      
+      // Specifically handle 401 errors with more detailed logging
+      if (response.status === 401) {
+        console.error(`AUTHENTICATION ERROR (401): Failed to authenticate with the OpenAI extractor function`);
+        console.error(`Auth Header Format: Bearer ${SUPABASE_SERVICE_ROLE_KEY ? "[key exists]" : "[key missing]"}`);
+      }
+      
       throw new Error(`OpenAI extractor API error (${response.status}): ${errorData}`);
     }
 

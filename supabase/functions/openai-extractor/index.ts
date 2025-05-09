@@ -56,6 +56,18 @@ serve(async (req) => {
       });
     }
     
+    // Validate the Authorization header format (should be "Bearer {token}")
+    if (!authHeader.startsWith('Bearer ')) {
+      console.error("Invalid Authorization header format. Expected 'Bearer {token}'");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Invalid Authorization header format. Expected 'Bearer {token}'"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
     // Parse the request payload
     const requestData = await req.json().catch(error => {
       console.error("Error parsing request JSON:", error);

@@ -21,6 +21,7 @@ export const useLogViewer = (initialFunction?: string) => {
   const [functionNames, setFunctionNames] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<{ status: string; message: string } | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setIsLoading(true);
@@ -75,6 +76,52 @@ export const useLogViewer = (initialFunction?: string) => {
     }
   }, [selectedFunction, selectedLevel, searchQuery]);
 
+  // New function to test OpenAI extractor authentication
+  const testExtractorAuth = async () => {
+    try {
+      setTestStatus({ status: 'running', message: 'Testing OpenAI extractor authentication...' });
+      
+      const { data, error } = await supabase.functions.invoke('openai-extractor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: 'This is a test message to verify authentication',
+          contentType: 'invoice',
+          metadata: { subject: 'Test Subject', from: 'test@example.com' }
+        })
+      });
+      
+      if (error) {
+        console.error('Authentication test failed:', error);
+        setTestStatus({ 
+          status: 'failed', 
+          message: `Authentication test failed: ${error.message}` 
+        });
+        return;
+      }
+      
+      console.log('Authentication test result:', data);
+      
+      if (data?.success) {
+        setTestStatus({ 
+          status: 'success', 
+          message: 'Authentication test successful! OpenAI extractor is accessible.' 
+        });
+      } else {
+        setTestStatus({ 
+          status: 'failed', 
+          message: `Authentication test failed: ${data?.error || 'Unknown error'}` 
+        });
+      }
+    } catch (error) {
+      console.error('Error running authentication test:', error);
+      setTestStatus({ 
+        status: 'failed', 
+        message: `Error running authentication test: ${error.message}` 
+      });
+    }
+  };
+
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
@@ -105,6 +152,8 @@ export const useLogViewer = (initialFunction?: string) => {
     setSearchQuery,
     expandedLogId,
     setExpandedLogId,
-    fetchLogs
+    fetchLogs,
+    testExtractorAuth,
+    testStatus
   };
 };
