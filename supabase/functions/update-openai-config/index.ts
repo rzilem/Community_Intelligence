@@ -43,16 +43,47 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // 1. Update the OPENAI_API_KEY secret using supabase.rpc instead of direct REST API call
+    // 1. Update the OPENAI_API_KEY secret using REST API directly
     try {
-      await logger.info(requestId, "Updating OPENAI_API_KEY secret");
+      await logger.info(requestId, "Updating OPENAI_API_KEY secret via REST API");
       
-      // Use Supabase client to set the secret
-      const { error } = await supabase.functions.setSecret('OPENAI_API_KEY', apiKey);
+      // Create appropriate headers for the REST API
+      const secretsHeaders = {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
+        'Content-Type': 'application/json'
+      };
       
-      if (error) {
-        await logger.error(requestId, "Failed to update API key secret", { error });
-        throw new Error(`Failed to update API key: ${error.message}`);
+      // Call the correct Supabase REST API endpoint to update secrets
+      const secretsResponse = await fetch(`${supabaseUrl}/rest/v1/functions/secrets`, {
+        method: 'POST',
+        headers: secretsHeaders,
+        body: JSON.stringify({ 
+          name: 'OPENAI_API_KEY',
+          value: apiKey
+        }),
+      });
+      
+      await logger.debug(requestId, "Secrets API response received", {
+        status: secretsResponse.status,
+        statusText: secretsResponse.statusText
+      });
+      
+      if (!secretsResponse.ok) {
+        let secretsError = null;
+        try {
+          secretsError = await secretsResponse.json();
+        } catch (e) {
+          secretsError = { parseError: (e as Error).message };
+        }
+        
+        await logger.error(requestId, "Failed to update API key secret via REST API", { 
+          status: secretsResponse.status, 
+          statusText: secretsResponse.statusText,
+          error: secretsError 
+        });
+        
+        throw new Error(`Failed to update API key: ${secretsResponse.statusText}`);
       }
       
       await logger.info(requestId, "Successfully updated OPENAI_API_KEY secret");
