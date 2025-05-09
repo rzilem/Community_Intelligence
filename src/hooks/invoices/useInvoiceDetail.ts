@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -29,7 +28,7 @@ export const useInvoiceDetail = (id: string | undefined) => {
     fund: 'Operating',
     bankAccount: 'Operating',
     description: '',
-    amount: 0,
+    amount: '0',  // Changed to string for consistent input handling
   }]);
 
   const { data: allInvoices, isLoading: isLoadingAllInvoices } = useSupabaseQuery(
@@ -182,7 +181,12 @@ export const useInvoiceDetail = (id: string | undefined) => {
     }
   };
 
-  const lineTotal = lines.reduce((sum, line) => sum + (Number(line.amount) || 0), 0);
+  // Calculate lineTotal by safely converting string amounts to numbers
+  const lineTotal = lines.reduce((sum, line) => {
+    const amount = typeof line.amount === 'string' ? parseFloat(line.amount) || 0 : line.amount || 0;
+    return sum + amount;
+  }, 0);
+  
   const isBalanced = Math.abs(lineTotal - invoice.totalAmount) < 0.01;
 
   return {

@@ -1,3 +1,4 @@
+
 import React, { useCallback, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ interface LineItem {
   fund: string;
   bankAccount: string;
   description: string;
-  amount: number;
+  amount: string | number; // Updated to allow string values
 }
 
 interface InvoiceLineItemsProps {
@@ -30,8 +31,14 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
   showPreview = true,
   invoiceTotal = 0
 }) => {
+  // Convert string amounts to numbers for calculations
   const lineTotal = useMemo(() => 
-    lines.slice(1).reduce((sum, line) => sum + (Number(line.amount) || 0), 0), 
+    lines.slice(1).reduce((sum, line) => {
+      const amount = typeof line.amount === 'string' ? 
+        parseFloat(line.amount) || 0 : 
+        line.amount || 0;
+      return sum + amount;
+    }, 0),
     [lines]
   );
 
@@ -47,16 +54,28 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       fund, 
       bankAccount,
       description: '',
-      amount: 0
+      amount: '0'
     }]);
   }, [lines, onLinesChange]);
 
   const handleLineChange = useCallback((index: number, field: string, value: string | number) => {
     const newLines = [...lines];
-    newLines[index] = { ...newLines[index], [field]: value };
-
-    if (field === 'amount' && index > 0) {
-      newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
+    
+    // Handle amount field specially
+    if (field === 'amount') {
+      // For first line, we calculate this automatically
+      if (index === 0) {
+        newLines[index] = { ...newLines[index], [field]: adjustedFirstLineAmount };
+      } else {
+        // Allow direct string input for other lines
+        newLines[index] = { ...newLines[index], [field]: value };
+        
+        // Update the first line's amount to maintain balance
+        newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
+      }
+    } else {
+      // For other fields, just update the value
+      newLines[index] = { ...newLines[index], [field]: value };
     }
 
     onLinesChange(newLines);
@@ -193,9 +212,9 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
                 </Label>
                 <Input 
                   id={`amount-${index}`} 
-                  type="number" 
+                  type="text" 
                   value={line.amount} 
-                  onChange={e => handleLineChange(index, 'amount', parseFloat(e.target.value) || 0)} 
+                  onChange={e => handleLineChange(index, 'amount', e.target.value)} 
                   placeholder="0.00" 
                   className="mt-2 text-right" 
                   step="0.01" 
@@ -207,7 +226,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
         </div>
       ))}
 
-      {Math.abs(lineTotal + (lines[0]?.amount || 0) - invoiceTotal) > 0.01 && (
+      {Math.abs(lineTotal + (typeof lines[0]?.amount === 'string' ? parseFloat(lines[0].amount) || 0 : lines[0]?.amount || 0) - invoiceTotal) > 0.01 && (
         <div className="bg-red-50 border border-red-200 p-3 rounded-lg flex items-center gap-2 text-red-600">
           <AlertCircle className="h-5 w-5" />
           <span>Line items do not match the total invoice amount</span>
