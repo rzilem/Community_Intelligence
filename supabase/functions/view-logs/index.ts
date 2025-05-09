@@ -26,16 +26,34 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Parse query parameters - handle both URL params and function invoke params
+    // Parse parameters from both URL and request body
     const url = new URL(req.url)
     
-    // Support both query parameters from URL and params from invoke
-    const functionName = url.searchParams.get('function') || undefined
-    const level = url.searchParams.get('level') || undefined
-    const limit = parseInt(url.searchParams.get('limit') || '100')
-    const offset = parseInt(url.searchParams.get('offset') || '0')
-    const startDate = url.searchParams.get('startDate') || undefined
-    const endDate = url.searchParams.get('endDate') || undefined
+    // Get parameters from URL query string
+    let functionName = url.searchParams.get('function') || undefined
+    let level = url.searchParams.get('level') || undefined
+    let limit = parseInt(url.searchParams.get('limit') || '100')
+    let offset = parseInt(url.searchParams.get('offset') || '0')
+    let startDate = url.searchParams.get('startDate') || undefined
+    let endDate = url.searchParams.get('endDate') || undefined
+    
+    // If the request has a body, check for parameters there too (takes precedence)
+    if (req.headers.get('content-type')?.includes('application/json')) {
+      try {
+        const body = await req.json()
+        
+        // Override URL parameters with body parameters if present
+        functionName = body.function !== undefined ? body.function : functionName
+        level = body.level !== undefined ? body.level : level
+        limit = body.limit !== undefined ? parseInt(body.limit) : limit
+        offset = body.offset !== undefined ? parseInt(body.offset) : offset
+        startDate = body.startDate !== undefined ? body.startDate : startDate
+        endDate = body.endDate !== undefined ? body.endDate : endDate
+      } catch (e) {
+        console.error('Error parsing JSON body:', e)
+        // Continue with URL parameters if body parsing fails
+      }
+    }
     
     // Build query
     let query = supabase
