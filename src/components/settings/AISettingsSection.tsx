@@ -11,10 +11,14 @@ import { Sparkles, AlertCircle, FileText } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import LogViewer from './LogViewer';
+import OpenAISetup from './OpenAISetup';
+import { supabase } from '@/integrations/supabase/client';
 
 const AISettingsSection = () => {
   const [showConfigDialog, setShowConfigDialog] = React.useState(false);
   const [activeTab, setActiveTab] = useState('settings');
+  const [isConfiguring, setIsConfiguring] = useState(true);
+  const [hasApiKey, setHasApiKey] = useState(false);
   
   const {
     openAIModel,
@@ -29,9 +33,47 @@ const AISettingsSection = () => {
   } = useIntegrationConfig();
   
   useEffect(() => {
-    fetchOpenAIConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const checkConfiguration = async () => {
+      setIsConfiguring(true);
+      try {
+        // Check if the OpenAI API key exists in Supabase Secrets
+        const { data: secretsData, error: secretsError } = await supabase.functions.invoke('settings', {
+          method: 'GET',
+          body: { action: 'integrations' }
+        });
+        
+        if (secretsError) {
+          console.error("Error checking OpenAI configuration:", secretsError);
+          setHasApiKey(false);
+        } else {
+          setHasApiKey(!!secretsData?.integrationSettings?.OpenAI?.apiKey);
+        }
+      } catch (error) {
+        console.error("Error checking OpenAI configuration:", error);
+        setHasApiKey(false);
+      } finally {
+        setIsConfiguring(false);
+      }
+      
+      // Also fetch the regular config
+      fetchOpenAIConfig();
+    };
+    
+    checkConfiguration();
   }, []);
+  
+  if (isConfiguring) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  // If API key is not set, show the OpenAI setup component
+  if (!hasApiKey && !hasOpenAIKey) {
+    return <OpenAISetup />;
+  }
   
   return (
     <div className="space-y-6">
@@ -106,7 +148,7 @@ const AISettingsSection = () => {
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <div className="h-10 flex items-center">
-                    {hasOpenAIKey ? (
+                    {hasOpenAIKey || hasApiKey ? (
                       <span className="text-green-600 flex items-center gap-1">
                         <span className="relative flex h-3 w-3">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>

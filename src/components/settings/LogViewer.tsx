@@ -1,11 +1,12 @@
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { LogFilters } from './log-viewer/LogFilters';
-import { LogsList } from './log-viewer/LogsList';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLogViewer } from './log-viewer/useLogViewer';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { RefreshCw, Search } from 'lucide-react';
+import { LogsList } from './log-viewer/LogsList';
 
 interface LogViewerProps {
   initialFunction?: string;
@@ -26,56 +27,78 @@ const LogViewer: React.FC<LogViewerProps> = ({ initialFunction }) => {
     setExpandedLogId,
     fetchLogs
   } = useLogViewer(initialFunction);
-  
+
+  const handleRefresh = () => {
+    fetchLogs();
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle>Function Logs</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={fetchLogs}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </>
-            )}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>System Logs</span>
+          <Button variant="outline" size="sm" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
           </Button>
+        </CardTitle>
+        <div className="flex flex-col md:flex-row gap-4 mt-2">
+          <div className="flex-1">
+            <Select
+              value={selectedFunction}
+              onValueChange={setSelectedFunction}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select function" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={undefined}>All Functions</SelectItem>
+                {functionNames.map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-1">
+            <Select
+              value={selectedLevel}
+              onValueChange={setSelectedLevel}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select log level" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={undefined}>All Levels</SelectItem>
+                <SelectItem value="info">Info</SelectItem>
+                <SelectItem value="warn">Warning</SelectItem>
+                <SelectItem value="error">Error</SelectItem>
+                <SelectItem value="debug">Debug</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex-grow">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search logs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+          </div>
         </div>
-        <CardDescription>
-          View logs from Supabase Edge Functions
-        </CardDescription>
       </CardHeader>
-      
       <CardContent>
-        <div className="space-y-4">
-          <LogFilters
-            selectedFunction={selectedFunction}
-            setSelectedFunction={setSelectedFunction}
-            selectedLevel={selectedLevel}
-            setSelectedLevel={setSelectedLevel}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            functionNames={functionNames}
-          />
-          
-          <LogsList
-            logs={logs}
-            isLoading={isLoading}
-            searchQuery={searchQuery}
-            expandedLogId={expandedLogId}
-            setExpandedLogId={setExpandedLogId}
-          />
-        </div>
+        <LogsList
+          logs={logs}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          expandedLogId={expandedLogId}
+          setExpandedLogId={setExpandedLogId}
+        />
       </CardContent>
     </Card>
   );

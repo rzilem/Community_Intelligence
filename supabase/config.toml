@@ -1,20 +1,46 @@
 
-# This file controls the behavior of the Supabase CLI.
-# Syntax: https://github.com/toml-lang/toml
-
 project_id = "cahergndkwfqltxyikyr"
 
-[functions.openai-extractor]
-verify_jwt = true
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
 
-[functions.settings]
-verify_jwt = true
+[db]
+port = 54322
 
-[functions.test-openai]
-verify_jwt = true
+[studio]
+port = 54323
 
+[inbucket]
+port = 54324
+
+[auth]
+enabled = true
+port = 54325
+
+[storage]
+enabled = true
+
+[realtime]
+enabled = true
+
+[functions]
+[functions.email-receiver]
+verify_jwt = true
+[functions.email-transformer]
+verify_jwt = true
 [functions.generate-response]
 verify_jwt = true
-
+[functions.homeowner-request-email]
+verify_jwt = true
+[functions.invoice-receiver]
+verify_jwt = true
+[functions.openai-extractor]
+verify_jwt = true
+[functions.settings]
+verify_jwt = true
+[functions.update-openai-config]
+verify_jwt = false
 [functions.view-logs]
 verify_jwt = true
