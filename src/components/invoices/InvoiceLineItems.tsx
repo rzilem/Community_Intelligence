@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LineItem, LineItemData } from './line-items/LineItem';
+import LineItem, { LineItemData } from './line-items/LineItem';
 import { LineItemsWarning } from './line-items/LineItemsWarning';
 import { AddLineButton } from './line-items/AddLineButton';
 import { useLineItemsLogic } from './line-items/useLineItemsLogic';

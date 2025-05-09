@@ -1,27 +1,32 @@
 
 import React from 'react';
-import { Save } from 'lucide-react';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 interface SystemSettingsSaveButtonProps {
   isSaving: boolean;
   onClick: () => void;
+  disabled: boolean;
 }
 
 const SystemSettingsSaveButton: React.FC<SystemSettingsSaveButtonProps> = ({ 
-  isSaving, 
-  onClick 
+  isSaving,
+  onClick,
+  disabled
 }) => {
   return (
-    <TooltipButton 
+    <Button 
       onClick={onClick} 
-      disabled={isSaving} 
-      className="flex items-center gap-2"
-      tooltip="Save system settings"
+      disabled={disabled || isSaving} 
+      className="min-w-[120px]"
     >
-      <Save className="h-4 w-4" /> 
-      {isSaving ? 'Saving...' : 'Save Settings'}
-    </TooltipButton>
+      {isSaving ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Saving
+        </>
+      ) : "Save Changes"}
+    </Button>
   );
 };
 

@@ -16,33 +16,31 @@ export interface LineItemData {
 }
 
 interface LineItemProps {
-  item: LineItemData;
+  line: LineItemData;
   index: number;
+  isFirst?: boolean;
+  showPreview?: boolean;
+  onLineChange: (index: number, field: string, value: string | number) => void;
   onRemove: (index: number) => void;
-  onChange: (index: number, field: string, value: string | number) => void;
-  glAccounts?: { id: string; name: string }[];
-  funds?: { id: string; name: string }[];
-  bankAccounts?: { id: string; name: string }[];
-  disableRemove?: boolean;
+  linesCount: number;
 }
 
 const LineItem: React.FC<LineItemProps> = ({
-  item,
+  line,
   index,
+  isFirst = false,
+  showPreview = true,
+  onLineChange,
   onRemove,
-  onChange,
-  glAccounts = [],
-  funds = [],
-  bankAccounts = [],
-  disableRemove = false
+  linesCount
 }) => {
   // Default options if none provided
-  const fundOptions = funds.length > 0 ? funds : [
+  const fundOptions = [
     { id: 'Operating', name: 'Operating' },
     { id: 'Reserve', name: 'Reserve' }
   ];
   
-  const bankAccountOptions = bankAccounts.length > 0 ? bankAccounts : [
+  const bankAccountOptions = [
     { id: 'Operating', name: 'Operating Account' },
     { id: 'Reserve', name: 'Reserve Account' }
   ];
@@ -50,35 +48,17 @@ const LineItem: React.FC<LineItemProps> = ({
   return (
     <div className="grid grid-cols-12 gap-2 items-center mb-2">
       <div className="col-span-3">
-        {glAccounts && glAccounts.length > 0 ? (
-          <Select 
-            value={item.glAccount} 
-            onValueChange={(value) => onChange(index, 'glAccount', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select GL Account" />
-            </SelectTrigger>
-            <SelectContent>
-              {glAccounts.map(account => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Input 
-            placeholder="GL Account" 
-            value={item.glAccount} 
-            onChange={(e) => onChange(index, 'glAccount', e.target.value)} 
-          />
-        )}
+        <Input 
+          placeholder="GL Account" 
+          value={line.glAccount} 
+          onChange={(e) => onLineChange(index, 'glAccount', e.target.value)} 
+        />
       </div>
       
       <div className="col-span-2">
         <Select 
-          value={item.fund} 
-          onValueChange={(value) => onChange(index, 'fund', value)}
+          value={line.fund} 
+          onValueChange={(value) => onLineChange(index, 'fund', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Fund" />
@@ -95,8 +75,8 @@ const LineItem: React.FC<LineItemProps> = ({
       
       <div className="col-span-2">
         <Select 
-          value={item.bankAccount} 
-          onValueChange={(value) => onChange(index, 'bankAccount', value)}
+          value={line.bankAccount} 
+          onValueChange={(value) => onLineChange(index, 'bankAccount', value)}
         >
           <SelectTrigger>
             <SelectValue placeholder="Bank Account" />
@@ -114,11 +94,11 @@ const LineItem: React.FC<LineItemProps> = ({
       <div className="col-span-3 relative">
         <Input 
           placeholder="Description" 
-          value={item.description} 
-          onChange={(e) => onChange(index, 'description', e.target.value)} 
-          className={item.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
+          value={line.description} 
+          onChange={(e) => onLineChange(index, 'description', e.target.value)} 
+          className={line.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
         />
-        {item.isAiGenerated && (
+        {line.isAiGenerated && (
           <Sparkles size={16} className="absolute top-2.5 right-2 text-blue-500" />
         )}
       </div>
@@ -126,13 +106,13 @@ const LineItem: React.FC<LineItemProps> = ({
       <div className="col-span-1.5 relative">
         <Input 
           placeholder="Amount" 
-          value={item.amount} 
-          onChange={(e) => onChange(index, 'amount', e.target.value)}
+          value={line.amount} 
+          onChange={(e) => onLineChange(index, 'amount', e.target.value)}
           type="number"
           step="0.01" 
-          className={item.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
+          className={line.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
         />
-        {item.isAiGenerated && (
+        {line.isAiGenerated && (
           <Sparkles size={16} className="absolute top-2.5 right-2 text-blue-500" />
         )}
       </div>
@@ -143,7 +123,7 @@ const LineItem: React.FC<LineItemProps> = ({
           size="icon" 
           type="button" 
           onClick={() => onRemove(index)}
-          disabled={disableRemove}
+          disabled={linesCount <= 1 || (isFirst && linesCount > 1)}
           className="hover:bg-red-100 hover:text-red-500"
         >
           <Trash2 className="h-4 w-4" />

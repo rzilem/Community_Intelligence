@@ -87,7 +87,7 @@ const SystemSettings = () => {
       actions={
         <SystemSettingsSaveButton 
           isSaving={isSaving} 
-          onSave={handleSaveSettings} 
+          onClick={handleSaveSettings} 
           disabled={JSON.stringify(settings) === JSON.stringify(unsavedSettings)}
         />
       }

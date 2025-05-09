@@ -49,7 +49,7 @@ export const useInvoiceData = (id: string | undefined) => {
 
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, _aiConfidence')
+        .select('*')
         .eq('id', id)
         .single();
       
@@ -62,9 +62,13 @@ export const useInvoiceData = (id: string | undefined) => {
   // Update local state when invoice data is fetched
   useEffect(() => {
     if (!isLoadingInvoice && invoiceData) {
+      const aiConfidence = invoiceData._aiConfidence || null;
+      const aiLineItems = invoiceData._aiLineItems || [];
+      
       setInvoice({
-        id: invoiceData.id,
+        id: invoiceData.id || '',
         vendor: invoiceData.vendor || '',
+        amount: invoiceData.amount || 0,
         invoiceNumber: invoiceData.invoice_number || '',
         description: invoiceData.description || '',
         association: invoiceData.association_id || '',
@@ -76,9 +80,9 @@ export const useInvoiceData = (id: string | undefined) => {
         emailContent: invoiceData.email_content || '',
         pdfUrl: invoiceData.pdf_url || '',
         paymentType: invoiceData.payment_method || 'Check',
-        aiExtractedData: invoiceData._aiConfidence ? {
-          confidence: invoiceData._aiConfidence,
-          lineItems: invoiceData._aiLineItems || []
+        aiExtractedData: aiConfidence ? {
+          confidence: aiConfidence,
+          lineItems: aiLineItems
         } : null
       });
     }
