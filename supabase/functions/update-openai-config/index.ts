@@ -33,21 +33,36 @@ serve(async (req) => {
       });
     }
     
-    // Create a Supabase client with service role key
+    // Create a Supabase client with service role key for admin access
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // 1. Update the OPENAI_API_KEY secret
-    const apiKeyRes = await supabase.functions.updateSecrets({
-      secrets: {
-        OPENAI_API_KEY: apiKey
-      }
+    // 1. Update the OPENAI_API_KEY secret using REST API directly
+    await logger.info(requestId, "Updating OPENAI_API_KEY secret via REST API");
+    
+    // Create appropriate headers for the function service API
+    const functionApiHeaders = {
+      'Authorization': `Bearer ${supabaseServiceKey}`,
+      'Content-Type': 'application/json'
+    };
+    
+    // Call the Supabase function secrets API to update the secret
+    const secretsResponse = await fetch(`${supabaseUrl}/functions/v1/secrets`, {
+      method: 'POST',
+      headers: functionApiHeaders,
+      body: JSON.stringify({ 
+        secrets: { OPENAI_API_KEY: apiKey } 
+      }),
     });
     
-    if (apiKeyRes.error) {
-      await logger.error(requestId, "Error updating API key secret", { error: apiKeyRes.error });
-      throw new Error(`Failed to update API key: ${apiKeyRes.error.message}`);
+    if (!secretsResponse.ok) {
+      const secretsError = await secretsResponse.json();
+      await logger.error(requestId, "Failed to update API key secret via REST API", { 
+        status: secretsResponse.status, 
+        error: secretsError 
+      });
+      throw new Error(`Failed to update API key: ${secretsResponse.statusText}`);
     }
     
     await logger.info(requestId, "Successfully updated OPENAI_API_KEY secret");
