@@ -5,14 +5,33 @@ import { LineItemData } from '@/components/invoices/line-items/LineItem';
 /**
  * Hook to manage invoice line items
  */
-export const useInvoiceLineItems = (invoiceTotal: number) => {
+export const useInvoiceLineItems = (invoiceTotal: number, aiExtractedItems?: any[]) => {
   const [lines, setLines] = useState<LineItemData[]>([{
     glAccount: '',
     fund: 'Operating',
     bankAccount: 'Operating',
     description: '',
     amount: '0',
+    isAiGenerated: false
   }]);
+
+  // Initialize line items from AI data if available
+  useEffect(() => {
+    if (aiExtractedItems && aiExtractedItems.length > 0 && lines.length === 1 && lines[0].description === '') {
+      console.log('Initializing line items from AI extracted data', aiExtractedItems);
+      
+      const aiLines = aiExtractedItems.map(item => ({
+        glAccount: '',
+        fund: 'Operating',
+        bankAccount: 'Operating',
+        description: item.description || '',
+        amount: typeof item.amount === 'number' ? item.amount.toFixed(2) : String(item.amount) || '0',
+        isAiGenerated: true
+      }));
+      
+      setLines(aiLines);
+    }
+  }, [aiExtractedItems]);
 
   // Update the first line item whenever the total amount changes
   useEffect(() => {

@@ -7,6 +7,7 @@ import { processDocument } from "./document-processor.ts";
 import { ContentExtractionService } from "./content-extraction-service.ts";
 import { Invoice } from "../types/invoice-types.ts"; // Updated import path
 import { Attachment } from "./invoice-types.ts";
+import { analyzeInvoiceWithAI } from "./ai-analyzer.ts";
 
 export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoice>> {
   const requestId = emailData.tracking_number || `email_${Date.now()}`;
@@ -39,6 +40,7 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       invoice.email_content = rawHtmlContent;
     }
 
+    // Process with traditional extractors first to get basic data
     if (subject) {
       console.log(`[${requestId}] Using email subject for invoice data: ${subject}`);
       invoice.description = subject;
@@ -78,7 +80,7 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       subject
     );
     
-    // Extract information from content
+    // Extract information using traditional extractors
     const vendorInfo = extractVendorInformation(content, from);
     const invoiceDetails = extractInvoiceDetails(content, subject);
     const associationInfo = extractAssociationInformation(content);
@@ -89,6 +91,65 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       invoice.html_content = rawHtmlContent;
     }
 
+    // Now enhance with AI analysis if content is available
+    if (content) {
+      try {
+        console.log(`[${requestId}] Starting AI analysis of invoice content`);
+        const aiExtractedData = await analyzeInvoiceWithAI(content, subject, from);
+        
+        if (aiExtractedData) {
+          console.log(`[${requestId}] AI analysis successful, enhancing invoice data`);
+          
+          // Only use AI data for fields that are missing or have low confidence from traditional extractors
+          if (!invoice.invoice_number && aiExtractedData.invoice_number) {
+            invoice.invoice_number = aiExtractedData.invoice_number;
+            console.log(`[${requestId}] AI provided invoice number: ${invoice.invoice_number}`);
+          }
+          
+          if (!invoice.vendor && aiExtractedData.vendor) {
+            invoice.vendor = aiExtractedData.vendor;
+            console.log(`[${requestId}] AI provided vendor: ${invoice.vendor}`);
+          }
+          
+          if (!invoice.association_id && aiExtractedData.association_id) {
+            invoice.association_id = aiExtractedData.association_id;
+            console.log(`[${requestId}] AI provided association_id: ${invoice.association_id}`);
+          }
+          
+          if (aiExtractedData.amount && 
+              (!invoice.amount || 
+               (typeof aiExtractedData.amount === 'number' && !isNaN(aiExtractedData.amount)))) {
+            invoice.amount = aiExtractedData.amount;
+            console.log(`[${requestId}] AI provided amount: ${invoice.amount}`);
+          }
+          
+          if (aiExtractedData.due_date && !invoice.due_date) {
+            invoice.due_date = aiExtractedData.due_date;
+            console.log(`[${requestId}] AI provided due_date: ${invoice.due_date}`);
+          }
+          
+          if (aiExtractedData.invoice_date && !invoice.invoice_date) {
+            invoice.invoice_date = aiExtractedData.invoice_date;
+            console.log(`[${requestId}] AI provided invoice_date: ${invoice.invoice_date}`);
+          }
+
+          if (aiExtractedData.description && (!invoice.description || invoice.description === subject)) {
+            invoice.description = aiExtractedData.description;
+            console.log(`[${requestId}] AI provided description: ${invoice.description}`);
+          }
+          
+          // Store AI confidence data for future reference
+          if (aiExtractedData._aiConfidence) {
+            invoice._aiConfidence = aiExtractedData._aiConfidence;
+          }
+        }
+      } catch (aiError) {
+        console.error(`[${requestId}] AI analysis error: ${aiError.message}`);
+        // Continue with traditional extraction only, don't fail the process
+      }
+    }
+
+    // Fallback for vendor if still not determined
     if (!invoice.vendor) {
       if (from) {
         const emailMatch = from.match(/([^@<\s]+)@/);
@@ -110,7 +171,7 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       console.log(`[${requestId}] Generated invoice number: ${cleanedInvoice.invoice_number}`);
     }
 
-    console.log(`[${requestId}] Extracted invoice data`, cleanedInvoice);
+    console.log(`[${requestId}] Final extracted invoice data:`, cleanedInvoice);
     return cleanedInvoice;
   } catch (error: any) {
     console.error(`[${requestId}] Error processing invoice email: ${error.message}`);

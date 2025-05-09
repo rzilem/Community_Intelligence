@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { SlidersHorizontal } from 'lucide-react';
-import { Tabs } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import type { 
   AppearanceSettings, 
@@ -16,6 +17,7 @@ import SystemSettingsSkeleton from '@/components/settings/SystemSettingsSkeleton
 import SystemSettingsSaveButton from '@/components/settings/SystemSettingsSaveButton';
 import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
 import { saveSystemSettings } from '@/hooks/settings/use-system-settings-helpers';
+import AISettingsSection from '@/components/settings/AISettingsSection';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
@@ -60,61 +62,85 @@ const SystemSettings = () => {
     }));
   };
 
-  const handleSave = async () => {
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
     try {
-      setIsSaving(true);
       await saveSystemSettings(unsavedSettings);
-      toast.success("System settings saved successfully!");
+      toast.success('System settings saved successfully');
     } catch (error) {
-      console.error("Error saving settings:", error);
-      toast.error(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Error saving settings:', error);
+      toast.error('Error saving settings');
     } finally {
       setIsSaving(false);
     }
   };
 
   if (isLoading) {
-    return (
-      <PageTemplate 
-        title="System Settings" 
-        icon={<SlidersHorizontal className="h-8 w-8" />}
-        description="Configure system-wide settings and preferences."
-      >
-        <SystemSettingsSkeleton />
-      </PageTemplate>
-    );
+    return <SystemSettingsSkeleton />;
   }
 
   return (
     <PageTemplate 
       title="System Settings" 
       icon={<SlidersHorizontal className="h-8 w-8" />}
-      description="Configure system-wide settings and preferences."
+      description="Configure the system settings and preferences"
       actions={
-        <SystemSettingsSaveButton isSaving={isSaving} onClick={handleSave} />
+        <SystemSettingsSaveButton 
+          isSaving={isSaving} 
+          onSave={handleSaveSettings} 
+          disabled={JSON.stringify(settings) === JSON.stringify(unsavedSettings)}
+        />
       }
     >
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab}
-        className="mt-6"
-      >
-        <SystemSettingsTabs 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        />
-        
-        <SystemSettingsContent 
-          activeTab={activeTab}
-          settings={unsavedSettings}
-          onChange={{
-            handleAppearanceChange,
-            handleNotificationsChange,
-            handleSecurityChange,
-            handlePreferencesChange
-          }}
-        />
-      </Tabs>
+      <div className="mt-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-5 w-full">
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="preferences">Preferences</TabsTrigger>
+            <TabsTrigger value="ai">AI & Integrations</TabsTrigger>
+          </TabsList>
+          
+          <div className="mt-6">
+            <TabsContent value="appearance">
+              <SystemSettingsContent 
+                settings={unsavedSettings.appearance} 
+                onUpdate={handleAppearanceChange}
+                section="appearance"
+              />
+            </TabsContent>
+            
+            <TabsContent value="notifications">
+              <SystemSettingsContent 
+                settings={unsavedSettings.notifications} 
+                onUpdate={handleNotificationsChange}
+                section="notifications"
+              />
+            </TabsContent>
+            
+            <TabsContent value="security">
+              <SystemSettingsContent 
+                settings={unsavedSettings.security} 
+                onUpdate={handleSecurityChange}
+                section="security"
+              />
+            </TabsContent>
+            
+            <TabsContent value="preferences">
+              <SystemSettingsContent 
+                settings={unsavedSettings.preferences} 
+                onUpdate={handlePreferencesChange}
+                section="preferences"
+              />
+            </TabsContent>
+            
+            <TabsContent value="ai">
+              <AISettingsSection />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </PageTemplate>
   );
 };

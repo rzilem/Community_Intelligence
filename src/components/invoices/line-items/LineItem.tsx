@@ -1,12 +1,10 @@
 
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 
 export interface LineItemData {
   glAccount: string;
@@ -14,134 +12,145 @@ export interface LineItemData {
   bankAccount: string;
   description: string;
   amount: string | number;
+  isAiGenerated?: boolean;
 }
 
 interface LineItemProps {
-  line: LineItemData;
+  item: LineItemData;
   index: number;
-  isFirst: boolean;
-  showPreview: boolean;
-  onLineChange: (index: number, field: string, value: string | number) => void;
   onRemove: (index: number) => void;
-  linesCount: number;
+  onChange: (index: number, field: string, value: string | number) => void;
+  glAccounts?: { id: string; name: string }[];
+  funds?: { id: string; name: string }[];
+  bankAccounts?: { id: string; name: string }[];
+  disableRemove?: boolean;
 }
 
-export const LineItem: React.FC<LineItemProps> = ({
-  line,
+const LineItem: React.FC<LineItemProps> = ({
+  item,
   index,
-  isFirst,
-  showPreview,
-  onLineChange,
   onRemove,
-  linesCount
+  onChange,
+  glAccounts = [],
+  funds = [],
+  bankAccounts = [],
+  disableRemove = false
 }) => {
+  // Default options if none provided
+  const fundOptions = funds.length > 0 ? funds : [
+    { id: 'Operating', name: 'Operating' },
+    { id: 'Reserve', name: 'Reserve' }
+  ];
+  
+  const bankAccountOptions = bankAccounts.length > 0 ? bankAccounts : [
+    { id: 'Operating', name: 'Operating Account' },
+    { id: 'Reserve', name: 'Reserve Account' }
+  ];
+
   return (
-    <div 
-      className={cn(
-        "relative space-y-4 p-4 rounded-lg border grid grid-cols-12 gap-4",
-        isFirst ? "bg-gray-50 border-gray-200" : "bg-white border-blue-100"
-      )}
-    >
-      <div className="col-span-1 flex items-center">
-        {linesCount > 1 && index > 0 && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="icon" 
-                  onClick={() => onRemove(index)} 
-                  className="h-5 w-5 px-0.5 mx-1"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Remove this line item</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+    <div className="grid grid-cols-12 gap-2 items-center mb-2">
+      <div className="col-span-3">
+        {glAccounts && glAccounts.length > 0 ? (
+          <Select 
+            value={item.glAccount} 
+            onValueChange={(value) => onChange(index, 'glAccount', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select GL Account" />
+            </SelectTrigger>
+            <SelectContent>
+              {glAccounts.map(account => (
+                <SelectItem key={account.id} value={account.id}>
+                  {account.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input 
+            placeholder="GL Account" 
+            value={item.glAccount} 
+            onChange={(e) => onChange(index, 'glAccount', e.target.value)} 
+          />
         )}
       </div>
       
-      <div className="col-span-11 space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">GL Account</Label>
-            <Select 
-              value={line.glAccount || "none"} 
-              onValueChange={value => onLineChange(index, 'glAccount', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select GL Account" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Select GL Account</SelectItem>
-                <SelectItem value="Account1">Account 1</SelectItem>
-                <SelectItem value="Account2">Account 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">Fund</Label>
-            <Select 
-              value={line.fund} 
-              onValueChange={value => onLineChange(index, 'fund', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Fund" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Operating">Operating</SelectItem>
-                <SelectItem value="Reserve">Reserve</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-600">Bank Account</Label>
-            <Select 
-              value={line.bankAccount} 
-              onValueChange={value => onLineChange(index, 'bankAccount', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Bank Account" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Operating">Operating</SelectItem>
-                <SelectItem value="Reserve">Reserve</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className={showPreview ? 'space-y-4' : 'grid grid-cols-5 gap-4'}>
-          <div className={showPreview ? 'w-full' : 'col-span-4'}>
-            <Label htmlFor={`description-${index}`} className="text-sm font-medium text-gray-600">
-              Description
-            </Label>
-            <Input 
-              id={`description-${index}`} 
-              value={line.description} 
-              onChange={e => onLineChange(index, 'description', e.target.value)} 
-              placeholder="Enter description" 
-              className="mt-2" 
-            />
-          </div>
-          <div>
-            <Label htmlFor={`amount-${index}`} className="text-sm font-medium text-gray-600">
-              Amount
-            </Label>
-            <Input 
-              id={`amount-${index}`} 
-              type="text" 
-              value={line.amount} 
-              onChange={e => onLineChange(index, 'amount', e.target.value)} 
-              placeholder="0.00" 
-              className="mt-2 text-right" 
-              step="0.01" 
-              disabled={index === 0} 
-            />
-          </div>
-        </div>
+      <div className="col-span-2">
+        <Select 
+          value={item.fund} 
+          onValueChange={(value) => onChange(index, 'fund', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Fund" />
+          </SelectTrigger>
+          <SelectContent>
+            {fundOptions.map(fund => (
+              <SelectItem key={fund.id} value={fund.id}>
+                {fund.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="col-span-2">
+        <Select 
+          value={item.bankAccount} 
+          onValueChange={(value) => onChange(index, 'bankAccount', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Bank Account" />
+          </SelectTrigger>
+          <SelectContent>
+            {bankAccountOptions.map(account => (
+              <SelectItem key={account.id} value={account.id}>
+                {account.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="col-span-3 relative">
+        <Input 
+          placeholder="Description" 
+          value={item.description} 
+          onChange={(e) => onChange(index, 'description', e.target.value)} 
+          className={item.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
+        />
+        {item.isAiGenerated && (
+          <Sparkles size={16} className="absolute top-2.5 right-2 text-blue-500" />
+        )}
+      </div>
+      
+      <div className="col-span-1.5 relative">
+        <Input 
+          placeholder="Amount" 
+          value={item.amount} 
+          onChange={(e) => onChange(index, 'amount', e.target.value)}
+          type="number"
+          step="0.01" 
+          className={item.isAiGenerated ? "bg-blue-50 border-blue-300" : ""}
+        />
+        {item.isAiGenerated && (
+          <Sparkles size={16} className="absolute top-2.5 right-2 text-blue-500" />
+        )}
+      </div>
+      
+      <div className="col-span-0.5 flex justify-center">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          type="button" 
+          onClick={() => onRemove(index)}
+          disabled={disableRemove}
+          className="hover:bg-red-100 hover:text-red-500"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
 };
+
+export default LineItem;

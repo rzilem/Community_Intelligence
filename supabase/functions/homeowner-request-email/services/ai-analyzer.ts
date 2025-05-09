@@ -3,14 +3,14 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 
 /**
- * Analyzes invoice content using OpenAI to extract structured information
+ * Analyzes homeowner request content using OpenAI to extract structured information
  * 
- * @param content The text content of the invoice
+ * @param content The text content of the request
  * @param subject The email subject (if available)
  * @param from The sender email address (if available)
- * @returns Structured invoice data
+ * @returns Structured request data
  */
-export async function analyzeInvoiceWithAI(
+export async function analyzeRequestWithAI(
   content: string,
   subject: string = "",
   from: string = ""
@@ -22,7 +22,7 @@ export async function analyzeInvoiceWithAI(
   }
 
   try {
-    console.log("Sending invoice content to OpenAI extractor function");
+    console.log("Sending homeowner request content to OpenAI extractor function");
     
     // Call the unified OpenAI extractor function
     const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
@@ -33,7 +33,7 @@ export async function analyzeInvoiceWithAI(
       },
       body: JSON.stringify({
         content: content,
-        contentType: "invoice",
+        contentType: "homeowner-request",
         metadata: { subject, from }
       })
     });
@@ -51,12 +51,7 @@ export async function analyzeInvoiceWithAI(
     }
     
     const extractedData = data.extractedData;
-    console.log("AI extracted invoice data:", extractedData);
-    
-    // Convert amount to number if it's a string
-    if (extractedData.amount && typeof extractedData.amount === 'string') {
-      extractedData.amount = parseFloat(extractedData.amount.replace(/[^0-9.-]+/g, ''));
-    }
+    console.log("AI extracted homeowner request data:", extractedData);
     
     // Add confidence information to the extracted data
     extractedData._aiConfidence = data.confidence || {};
