@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { TooltipButton } from '@/components/ui/tooltip-button';
+import TooltipButton from '@/components/ui/tooltip-button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
