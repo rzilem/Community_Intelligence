@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import "https://deno.land/x/xhr@0.1.0/mod.ts"
+import { createLogger } from "../shared/logging.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,14 +9,32 @@ const corsHeaders = {
 }
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY')
+const logger = createLogger('generate-response')
 
 serve(async (req) => {
+  const requestId = crypto.randomUUID()
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    await logger.info(requestId, 'Processing request')
+    
+    if (!OPENAI_API_KEY) {
+      await logger.error(requestId, 'OpenAI API key not configured')
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const { requestData } = await req.json()
+    
+    await logger.info(requestId, 'Request parsed successfully', {
+      requestType: requestData?.type,
+      requestId: requestData?.id
+    })
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -33,10 +52,10 @@ serve(async (req) => {
           {
             role: 'user',
             content: `Please generate a response to this homeowner request:
-              Title: ${requestData.title}
-              Description: ${requestData.description}
-              Type: ${requestData.type}
-              Status: ${requestData.status}
+              Title: ${requestData.title || 'N/A'}
+              Description: ${requestData.description || 'N/A'}
+              Type: ${requestData.type || 'N/A'}
+              Status: ${requestData.status || 'N/A'}
               Make sure the response is professional, helpful, and addresses all points in the request.`
           }
         ],
@@ -44,16 +63,45 @@ serve(async (req) => {
     })
 
     const data = await response.json()
+    
+    if (!response.ok) {
+      const errorMessage = data.error?.message || 'Unknown OpenAI API error'
+      await logger.error(requestId, 'OpenAI API error', { 
+        status: response.status,
+        error: errorMessage
+      })
+      
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
     const generatedText = data.choices[0].message.content
 
+    await logger.info(requestId, 'Response generated successfully', { 
+      model: data.model,
+      charCount: generatedText.length
+    })
+
     return new Response(
-      JSON.stringify({ generatedText }),
+      JSON.stringify({ 
+        generatedText,
+        model: data.model,
+        usage: data.usage 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    await logger.error(requestId, 'Error processing request', {
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
+    })
+
     console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

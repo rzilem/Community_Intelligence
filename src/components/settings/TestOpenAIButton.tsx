@@ -1,13 +1,12 @@
 
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import TooltipButton from '@/components/ui/tooltip-button';
 
 const TestOpenAIButton = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
 
   const handleTestConnection = async () => {
     try {
@@ -32,7 +31,19 @@ const TestOpenAIButton = () => {
         toast.success(`Connection successful! Response: "${data.response}" using model ${data.model}`);
       } else {
         console.error("OpenAI connection failed:", data.error, data);
-        toast.error(`Connection failed: ${data.error || 'Unknown error'}`);
+        
+        // Provide more detailed error messages for common issues
+        let errorMessage = data.error || 'Unknown error';
+        
+        if (errorMessage.includes('API key')) {
+          errorMessage = `API key error: ${errorMessage}. Please check your OpenAI API key configuration.`;
+        } else if (errorMessage.includes('rate limit') || errorMessage.includes('quota')) {
+          errorMessage = `Rate limit exceeded: ${errorMessage}. Please check your OpenAI API usage and limits.`;
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
+          errorMessage = `Network error: ${errorMessage}. Please check your internet connection and try again.`;
+        }
+        
+        toast.error(`Connection failed: ${errorMessage}`);
       }
       
     } catch (err: any) {

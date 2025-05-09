@@ -2360,6 +2360,39 @@ export type Database = {
           },
         ]
       }
+      function_logs: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          level: string
+          message: string
+          metadata: Json | null
+          request_id: string
+          timestamp: string
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          level: string
+          message: string
+          metadata?: Json | null
+          request_id: string
+          timestamp?: string
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          level?: string
+          message?: string
+          metadata?: Json | null
+          request_id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       generated_documents: {
         Row: {
           document_template_id: string | null

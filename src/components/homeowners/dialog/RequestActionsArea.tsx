@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { PauseCircle, ArrowUpCircle, MailX, Send, Edit, RefreshCw } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RequestActionsAreaProps {
   request: HomeownerRequest;
@@ -26,20 +27,25 @@ const RequestActionsArea: React.FC<RequestActionsAreaProps> = ({
   const generateAIResponse = async () => {
     setIsGenerating(true);
     try {
-      const response = await fetch('https://your-project-id.supabase.co/functions/v1/generate-response', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ requestData: request }),
+      console.log('Generating AI response for request:', request.id);
+      
+      // Use supabase client to invoke the edge function
+      const { data, error } = await supabase.functions.invoke('generate-response', {
+        body: { requestData: request },
       });
       
-      const data = await response.json();
+      if (error) {
+        console.error('Error invoking generate-response function:', error);
+        throw new Error(error.message || 'Failed to generate AI response');
+      }
+      
+      console.log('AI response received:', data);
+      
       setAiResponse(data.generatedText);
       toast.success('AI response generated successfully');
     } catch (error) {
       console.error('Error generating AI response:', error);
-      toast.error('Failed to generate AI response');
+      toast.error(`Failed to generate AI response: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }

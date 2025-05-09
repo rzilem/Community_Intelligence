@@ -12,3 +12,9 @@ verify_jwt = true
 
 [functions.test-openai]
 verify_jwt = true
+
+[functions.generate-response]
+verify_jwt = true
+
+[functions.view-logs]
+verify_jwt = true
