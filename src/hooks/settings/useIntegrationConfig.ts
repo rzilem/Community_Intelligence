@@ -9,10 +9,13 @@ export const useIntegrationConfig = () => {
   const { toast } = useToast();
   const [isPending, setIsPending] = useState(false);
   const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const fetchOpenAIConfig = async () => {
     try {
       console.log("Fetching OpenAI configuration...");
+      setLastError(null);
+      
       const { data, error } = await supabase.functions.invoke('settings', {
         method: 'GET',
         body: { action: 'integrations' }
@@ -20,6 +23,7 @@ export const useIntegrationConfig = () => {
 
       if (error) {
         console.error('Error fetching OpenAI config:', error);
+        setLastError(`Failed to fetch OpenAI configuration: ${error.message}`);
         return;
       }
 
@@ -39,13 +43,16 @@ export const useIntegrationConfig = () => {
       const apiKeyExists = !!(openAIConfig.apiKey && openAIConfig.apiKey.trim() !== '');
       console.log("API Key exists:", apiKeyExists);
       setHasOpenAIKey(apiKeyExists);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in fetchOpenAIConfig:', error);
+      setLastError(`Error fetching configuration: ${error.message}`);
     }
   };
 
   const saveOpenAIConfig = async () => {
     setIsPending(true);
+    setLastError(null);
+    
     try {
       // Check that we have a non-empty API key
       if (!configFields.apiKey || configFields.apiKey.trim() === '') {
@@ -56,10 +63,9 @@ export const useIntegrationConfig = () => {
       
       console.log("Saving OpenAI configuration with model:", openAIModel);
       
-      const { error } = await supabase.functions.invoke('settings', {
+      const { data, error } = await supabase.functions.invoke('settings', {
         method: 'PUT',
         body: { 
-          action: 'integrations',
           integrationSettings: {
             OpenAI: {
               apiKey: configFields.apiKey,
@@ -72,13 +78,20 @@ export const useIntegrationConfig = () => {
 
       if (error) {
         console.error("Error saving OpenAI configuration:", error);
+        setLastError(`Error from Supabase: ${error.message}`);
         toast.error(`Failed to save OpenAI configuration: ${error.message}`);
+      } else if (data && !data.success) {
+        console.error("API returned error response:", data);
+        setLastError(`API error: ${data.error || 'Unknown error'}`);
+        toast.error(`Failed to save configuration: ${data.error || 'Unknown error'}`);
       } else {
+        console.log("OpenAI configuration saved successfully:", data);
         toast.success('OpenAI configuration saved successfully');
         setHasOpenAIKey(!!configFields.apiKey);
       }
     } catch (error: any) {
       console.error("Exception in saveOpenAIConfig:", error);
+      setLastError(`Exception: ${error.message}`);
       toast.error(`Error saving OpenAI configuration: ${error.message}`);
     } finally {
       setIsPending(false);
@@ -100,6 +113,7 @@ export const useIntegrationConfig = () => {
     saveOpenAIConfig,
     fetchOpenAIConfig,
     isPending,
-    hasOpenAIKey
+    hasOpenAIKey,
+    lastError
   };
 };

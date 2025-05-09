@@ -7,7 +7,8 @@ import { useIntegrationConfig } from '@/hooks/settings/useIntegrationConfig';
 import IntegrationConfigDialog from './integration/IntegrationConfigDialog';
 import { Button } from '@/components/ui/button';
 import TestOpenAIButton from './TestOpenAIButton';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AISettingsSection = () => {
   const [showConfigDialog, setShowConfigDialog] = React.useState(false);
@@ -20,7 +21,8 @@ const AISettingsSection = () => {
     saveOpenAIConfig,
     fetchOpenAIConfig,
     isPending,
-    hasOpenAIKey
+    hasOpenAIKey,
+    lastError
   } = useIntegrationConfig();
   
   useEffect(() => {
@@ -57,6 +59,16 @@ const AISettingsSection = () => {
         </CardHeader>
         
         <CardContent className="space-y-4">
+          {lastError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Integration Error</AlertTitle>
+              <AlertDescription>
+                {lastError}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="ai-model">Default AI Model</Label>

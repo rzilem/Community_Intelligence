@@ -35,7 +35,7 @@ const TestOpenAIButton = () => {
         toast.error(`Connection failed: ${data.error || 'Unknown error'}`);
       }
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error testing OpenAI connection:", err);
       toast.error(`Error: ${err.message || 'Unknown error'}`);
     } finally {

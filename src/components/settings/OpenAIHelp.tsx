@@ -1,43 +1,38 @@
 
 import React from 'react';
+import { HelpCircle } from 'lucide-react';
 import {
-  HelpCircle,
-  ExternalLink
-} from 'lucide-react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const OpenAIHelp: React.FC = () => {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button className="text-muted-foreground hover:text-foreground">
-          <HelpCircle className="h-5 w-5" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-4">
-        <div className="space-y-2">
-          <h4 className="font-medium">OpenAI API Keys</h4>
-          <p className="text-sm text-muted-foreground">
-            This integration requires an OpenAI API key to enable AI features throughout the application.
-          </p>
-          <div className="mt-2">
-            <a 
-              href="https://platform.openai.com/api-keys" 
-              target="_blank" 
-              rel="noreferrer"
-              className="text-sm flex items-center text-blue-600 hover:text-blue-800"
-            >
-              <ExternalLink className="h-3 w-3 mr-1" />
-              Get your OpenAI API key
-            </a>
+    <TooltipProvider>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-sm" side="left">
+          <div className="space-y-2">
+            <p>
+              OpenAI integration powers AI features throughout the application, including:
+            </p>
+            <ul className="list-disc pl-4 text-sm">
+              <li>Homeowner request analysis</li>
+              <li>Invoice data extraction</li>
+              <li>Lead information analysis</li>
+              <li>AI-powered document analysis</li>
+            </ul>
+            <p className="text-xs mt-2 text-muted-foreground">
+              Requires an OpenAI API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="underline hover:text-primary">platform.openai.com/api-keys</a>
+            </p>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
