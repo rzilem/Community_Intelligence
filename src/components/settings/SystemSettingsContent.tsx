@@ -62,7 +62,10 @@ const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
   
   if (section === 'integrations') {
     return (
-      <IntegrationsTab />
+      <IntegrationsTab 
+        settings={settings as IntegrationSettings} 
+        onChange={onUpdate}
+      />
     );
   }
   

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { SlidersHorizontal } from 'lucide-react';
-import { TabsContent } from '@/components/ui/tabs';
+import { SlidersHorizontal, Zap } from 'lucide-react';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import type { 
   AppearanceSettings, 
@@ -19,7 +19,6 @@ import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
 import SystemSettingsTabs from '@/components/settings/SystemSettingsTabs';
 import { saveSystemSettings } from '@/hooks/settings/use-system-settings-helpers';
 import AISettingsSection from '@/components/settings/AISettingsSection';
-import IntegrationsTab from '@/components/settings/IntegrationsTab';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
@@ -105,52 +104,59 @@ const SystemSettings = () => {
       }
     >
       <div className="mt-6">
-        <SystemSettingsTabs 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-        
-        <div className="mt-6">
-          <TabsContent value="appearance">
-            <SystemSettingsContent 
-              settings={unsavedSettings.appearance} 
-              onUpdate={handleAppearanceChange}
-              section="appearance"
-            />
-          </TabsContent>
+        {/* Properly wrapping all tabs content inside a Tabs component */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <SystemSettingsTabs 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
           
-          <TabsContent value="notifications">
-            <SystemSettingsContent 
-              settings={unsavedSettings.notifications} 
-              onUpdate={handleNotificationsChange}
-              section="notifications"
-            />
-          </TabsContent>
-          
-          <TabsContent value="security">
-            <SystemSettingsContent 
-              settings={unsavedSettings.security} 
-              onUpdate={handleSecurityChange}
-              section="security"
-            />
-          </TabsContent>
-          
-          <TabsContent value="system">
-            <SystemSettingsContent 
-              settings={unsavedSettings.preferences} 
-              onUpdate={handlePreferencesChange}
-              section="preferences"
-            />
-          </TabsContent>
-          
-          <TabsContent value="integrations">
-            <IntegrationsTab />
-          </TabsContent>
-          
-          <TabsContent value="ai">
-            <AISettingsSection />
-          </TabsContent>
-        </div>
+          <div className="mt-6">
+            <TabsContent value="appearance">
+              <SystemSettingsContent 
+                settings={unsavedSettings.appearance} 
+                onUpdate={handleAppearanceChange}
+                section="appearance"
+              />
+            </TabsContent>
+            
+            <TabsContent value="notifications">
+              <SystemSettingsContent 
+                settings={unsavedSettings.notifications} 
+                onUpdate={handleNotificationsChange}
+                section="notifications"
+              />
+            </TabsContent>
+            
+            <TabsContent value="security">
+              <SystemSettingsContent 
+                settings={unsavedSettings.security} 
+                onUpdate={handleSecurityChange}
+                section="security"
+              />
+            </TabsContent>
+            
+            <TabsContent value="system">
+              <SystemSettingsContent 
+                settings={unsavedSettings.preferences} 
+                onUpdate={handlePreferencesChange}
+                section="preferences"
+              />
+            </TabsContent>
+            
+            <TabsContent value="integrations">
+              <SystemSettingsContent 
+                settings={unsavedSettings.integrations} 
+                onUpdate={handleIntegrationsChange}
+                section="integrations"
+              />
+            </TabsContent>
+            
+            <TabsContent value="ai">
+              <AISettingsSection />
+            </TabsContent>
+          </div>
+        </Tabs>
       </div>
     </PageTemplate>
   );
