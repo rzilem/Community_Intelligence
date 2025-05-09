@@ -63,20 +63,28 @@ serve(async (req: Request) => {
     
     await logger.info(requestId, "Logs retrieved successfully", { count: data?.length || 0 });
     
-    // Get list of unique function names for filtering
-    const { data: functionNames, error: fnError } = await supabase
+    // Get list of unique function names for filtering - use a separate query instead of .distinct()
+    const { data: functionNamesData, error: fnError } = await supabase
       .from('function_logs')
-      .select('function_name')
-      .distinct();
+      .select('function_name');
       
+    let uniqueFunctionNames: string[] = [];
+    
     if (fnError) {
       await logger.warn(requestId, "Failed to retrieve function names", { error: fnError });
+    } else if (functionNamesData) {
+      // Extract unique function names manually since .distinct() is not available
+      uniqueFunctionNames = [...new Set(functionNamesData.map(fn => fn.function_name))]
+        .filter(Boolean) // Remove null/undefined values
+        .sort(); // Sort alphabetically
+      
+      await logger.debug(requestId, "Function names retrieved", { count: uniqueFunctionNames.length });
     }
     
     // Return the logs
     return new Response(JSON.stringify({
       logs: data || [],
-      function_names: functionNames?.map(fn => fn.function_name) || []
+      function_names: uniqueFunctionNames
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

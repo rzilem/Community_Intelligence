@@ -47,18 +47,21 @@ serve(async (req) => {
     await logger.info(requestId, "Updating OPENAI_API_KEY secret via REST API");
     
     try {
-      // Create appropriate headers for the function service API
-      const functionApiHeaders = {
+      // Create appropriate headers for the REST API
+      const secretsHeaders = {
         'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
         'Content-Type': 'application/json'
       };
       
-      // Call the Supabase function secrets API to update the secret
-      const secretsResponse = await fetch(`${supabaseUrl}/functions/v1/secrets`, {
+      // Call the correct Supabase REST API endpoint to update secrets
+      // The correct endpoint should be /rest/v1/functions/secrets
+      const secretsResponse = await fetch(`${supabaseUrl}/rest/v1/secrets`, {
         method: 'POST',
-        headers: functionApiHeaders,
+        headers: secretsHeaders,
         body: JSON.stringify({ 
-          secrets: { OPENAI_API_KEY: apiKey } 
+          name: 'OPENAI_API_KEY',
+          value: apiKey
         }),
       });
       
