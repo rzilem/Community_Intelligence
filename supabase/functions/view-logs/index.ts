@@ -27,7 +27,7 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Parse request params
+    // Parse request params (properly handling both URL search params and query object from invoke)
     const url = new URL(req.url);
     const functionName = url.searchParams.get('function_name');
     const level = url.searchParams.get('level');
