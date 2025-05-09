@@ -26,7 +26,12 @@ export const useIntegrationsState = () => {
   const handleConfigureIntegration = (name: string) => {
     setSelectedIntegration(name);
     const integrationConfig = connectedIntegrations[name] || {};
-    setConfigFields({...integrationConfig});
+    
+    console.log(`Configuring ${name}, current config:`, integrationConfig);
+    
+    // Make a copy of the integration config to avoid mutation issues
+    const configFieldsCopy = {...integrationConfig};
+    setConfigFields(configFieldsCopy);
     
     if (name === 'OpenAI' && integrationConfig.model) {
       setOpenAIModel(integrationConfig.model);
@@ -41,15 +46,27 @@ export const useIntegrationsState = () => {
     setSelectedIntegration(name);
     let defaultFields: {[key: string]: string} = {};
     
-    if (name === 'Stripe') {
-      defaultFields = { apiKey: '', webhookSecret: '' };
-    } else if (name === 'Google Maps') {
-      defaultFields = { apiKey: '' };
-    } else if (name === 'OpenAI') {
-      defaultFields = { apiKey: '' };
-    } else if (name === 'Plaid') {
-      defaultFields = { clientId: '', secret: '' };
+    // Get the integration definition to determine required fields
+    const integrationDef = getIntegrationsData().find(i => i.name === name);
+    if (integrationDef) {
+      // Initialize all fields from the definition
+      integrationDef.configFields.forEach(field => {
+        defaultFields[field] = '';
+      });
+    } else {
+      // Fallback initialization for specific integrations
+      if (name === 'Stripe') {
+        defaultFields = { apiKey: '', webhookSecret: '' };
+      } else if (name === 'Google Maps') {
+        defaultFields = { apiKey: '' };
+      } else if (name === 'OpenAI') {
+        defaultFields = { apiKey: '' };
+      } else if (name === 'Plaid') {
+        defaultFields = { clientId: '', secret: '' };
+      }
     }
+    
+    console.log(`Connecting ${name}, initialized fields:`, Object.keys(defaultFields));
     
     setConfigFields(defaultFields);
     setConfigDialogOpen(true);
@@ -77,6 +94,7 @@ export const useIntegrationsState = () => {
   };
 
   const handleConfigFieldChange = (field: string, value: string) => {
+    console.log(`Updating field ${field} to: ${value ? '[value set]' : '[empty]'}`);
     setConfigFields(prev => ({
       ...prev,
       [field]: value
@@ -131,13 +149,19 @@ export const useIntegrationsState = () => {
 
   // Transform the raw integration data into the format we need for rendering
   const getProcessedIntegrations = () => {
-    const integrationsData = getIntegrationsData().map(integration => ({
-      ...integration,
-      status: (connectedIntegrations[integration.name] && 
-              connectedIntegrations[integration.name].apiKey) 
-              ? 'connected' : 'available',
-      configDate: connectedIntegrations[integration.name]?.configDate
-    })) as Array<{
+    const integrationsData = getIntegrationsData().map(integration => {
+      // Check if the integration is connected by looking for an apiKey or any other required field
+      const isConnected = connectedIntegrations[integration.name] && 
+                         Object.keys(connectedIntegrations[integration.name]).some(key => 
+                           key !== 'configDate' && key !== 'model' && 
+                           connectedIntegrations[integration.name][key]);
+      
+      return {
+        ...integration,
+        status: isConnected ? 'connected' : 'available',
+        configDate: connectedIntegrations[integration.name]?.configDate
+      };
+    }) as Array<{
       name: string;
       status: 'connected' | 'available' | 'coming-soon';
       description: string;
@@ -158,6 +182,11 @@ export const useIntegrationsState = () => {
     ];
   };
 
+  // Determine if we have a valid OpenAI API key for the selected integration
+  const hasOpenAIKey = selectedIntegration === 'OpenAI' && 
+                      !!configFields.apiKey && 
+                      configFields.apiKey.trim() !== '';
+
   return {
     isLoading,
     isPending,
@@ -173,6 +202,6 @@ export const useIntegrationsState = () => {
     handleConfigFieldChange,
     handleSaveConfig,
     integrations: getProcessedIntegrations(),
-    hasOpenAIKey: !!connectedIntegrations[selectedIntegration as string]?.apiKey
+    hasOpenAIKey: hasOpenAIKey
   };
 };

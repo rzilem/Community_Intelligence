@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,13 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
 }) => {
   if (!selectedIntegration) return null;
   
+  // Log available configuration fields when dialog opens
+  useEffect(() => {
+    if (open && selectedIntegration) {
+      console.log(`Dialog opened for ${selectedIntegration}. Config fields:`, configFields);
+    }
+  }, [open, selectedIntegration, configFields]);
+  
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isPending) {
       e.preventDefault();
@@ -45,14 +52,19 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
 
   const isValidConfig = () => {
     if (selectedIntegration === 'OpenAI') {
-      return !!configFields.apiKey && !!openAIModel;
+      return configFields.apiKey && configFields.apiKey.trim() !== '' && !!openAIModel;
     }
     
     // For other integrations, check that all fields have values
     return Object.keys(configFields)
       .filter(field => field !== 'configDate' && field !== 'model')
-      .every(field => !!configFields[field]);
+      .every(field => configFields[field] && configFields[field].trim() !== '');
   };
+  
+  // Extract all config field keys, excluding metadata fields
+  const configFieldKeys = Object.keys(configFields).filter(
+    field => field !== 'configDate' && field !== 'model'
+  );
   
   return (
     <Dialog open={open} onOpenChange={(newOpen) => !isPending && onOpenChange(newOpen)}>
@@ -73,23 +85,44 @@ const IntegrationConfigDialog: React.FC<IntegrationConfigDialogProps> = ({
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          {Object.keys(configFields).filter(field => field !== 'configDate' && field !== 'model').map((field) => (
-            <div key={field} className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={field} className="text-right">
-                {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
-              </Label>
-              <Input
-                id={field}
-                type={field.toLowerCase().includes('key') || field.toLowerCase().includes('secret') ? 'password' : 'text'}
-                value={configFields[field] || ''}
-                onChange={(e) => onConfigFieldChange(field, e.target.value)}
-                className="col-span-3"
-                disabled={isPending}
-                autoComplete="off"
-                placeholder={`Enter ${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}`}
-              />
-            </div>
-          ))}
+          {configFieldKeys.length > 0 ? (
+            configFieldKeys.map((field) => (
+              <div key={field} className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor={field} className="text-right">
+                  {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                </Label>
+                <Input
+                  id={field}
+                  type={field.toLowerCase().includes('key') || field.toLowerCase().includes('secret') ? 'password' : 'text'}
+                  value={configFields[field] || ''}
+                  onChange={(e) => onConfigFieldChange(field, e.target.value)}
+                  className="col-span-3"
+                  disabled={isPending}
+                  autoComplete="off"
+                  placeholder={`Enter ${field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}`}
+                />
+              </div>
+            ))
+          ) : (
+            // Fallback for OpenAI if no apiKey field is found
+            selectedIntegration === 'OpenAI' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="apiKey" className="text-right">
+                  API Key
+                </Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={configFields.apiKey || ''}
+                  onChange={(e) => onConfigFieldChange('apiKey', e.target.value)}
+                  className="col-span-3"
+                  disabled={isPending}
+                  autoComplete="off"
+                  placeholder="Enter OpenAI API Key"
+                />
+              </div>
+            )
+          )}
           
           {/* Special field for OpenAI model selection */}
           {selectedIntegration === 'OpenAI' && (

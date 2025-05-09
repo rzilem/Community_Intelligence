@@ -1,29 +1,29 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
-interface IntegrationCardProps { 
-  name: string; 
-  status: 'connected' | 'available' | 'coming-soon'; 
+interface IntegrationCardProps {
+  name: string;
+  status: 'connected' | 'available' | 'coming-soon';
   description: string;
   icon: React.ReactNode;
-  onConfigure?: () => void;
-  onDisconnect?: () => void;
-  onConnect?: () => void;
   configDate?: string;
+  onConfigure: () => void;
+  onDisconnect: () => void;
+  onConnect: () => void;
 }
 
-const IntegrationCard: React.FC<IntegrationCardProps> = ({ 
-  name, 
-  status, 
-  description, 
+const IntegrationCard: React.FC<IntegrationCardProps> = ({
+  name,
+  status,
+  description,
   icon,
+  configDate,
   onConfigure,
   onDisconnect,
-  onConnect,
-  configDate
+  onConnect
 }) => {
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -37,31 +37,33 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
             {status === 'connected' ? 'Connected' : status === 'available' ? 'Available' : 'Coming Soon'}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground mt-2">{description}</p>
         
-        {status === 'connected' && configDate && (
-          <p className="text-xs text-muted-foreground mt-1">Last configured: {configDate}</p>
-        )}
+        <CardDescription className="pt-2 pb-4">{description}</CardDescription>
         
-        {status !== 'coming-soon' && (
-          <div className="mt-4 flex justify-end space-x-2">
+        <div className="flex justify-between items-end">
+          {status === 'connected' && configDate && (
+            <div className="text-xs text-muted-foreground">
+              Last configured: {configDate}
+            </div>
+          )}
+          
+          <div className="ml-auto space-x-2">
             {status === 'connected' && (
               <>
-                <Button variant="outline" size="sm" onClick={onConfigure}>
-                  Configure
-                </Button>
-                <Button variant="ghost" size="sm" onClick={onDisconnect}>
+                <Button variant="outline" size="sm" onClick={onConfigure}>Configure</Button>
+                <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700" onClick={onDisconnect}>
                   Disconnect
                 </Button>
               </>
             )}
             {status === 'available' && (
-              <Button variant="outline" size="sm" onClick={onConnect}>
-                Connect
-              </Button>
+              <Button variant="default" size="sm" onClick={onConnect}>Connect</Button>
+            )}
+            {status === 'coming-soon' && (
+              <Button variant="outline" size="sm" disabled>Coming Soon</Button>
             )}
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
