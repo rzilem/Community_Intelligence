@@ -5,47 +5,39 @@ import {
   ExternalLink
 } from 'lucide-react';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
-const OpenAIHelp = () => {
+const OpenAIHelp: React.FC = () => {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button className="inline-flex items-center text-muted-foreground hover:text-primary">
-            <HelpCircle className="h-4 w-4" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="w-80 p-4">
-          <div className="space-y-2">
-            <h4 className="font-medium">OpenAI API Key</h4>
-            <p className="text-sm">
-              You can find your API key in the OpenAI dashboard under API keys.
-            </p>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-muted-foreground hover:text-foreground">
+          <HelpCircle className="h-5 w-5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-4">
+        <div className="space-y-2">
+          <h4 className="font-medium">OpenAI API Keys</h4>
+          <p className="text-sm text-muted-foreground">
+            This integration requires an OpenAI API key to enable AI features throughout the application.
+          </p>
+          <div className="mt-2">
             <a 
               href="https://platform.openai.com/api-keys" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-blue-500 hover:underline"
+              target="_blank" 
+              rel="noreferrer"
+              className="text-sm flex items-center text-blue-600 hover:text-blue-800"
             >
-              Go to OpenAI Dashboard
-              <ExternalLink className="ml-1 h-3 w-3" />
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Get your OpenAI API key
             </a>
-            <div className="pt-2">
-              <h4 className="font-medium">Model Selection</h4>
-              <p className="text-sm mt-1">
-                • GPT-4o Mini - Less expensive, faster responses<br />
-                • GPT-4o - More powerful, better reasoning
-              </p>
-            </div>
           </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

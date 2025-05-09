@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { useSystemSetting, useUpdateSystemSetting } from '@/hooks/settings/use-system-settings';
@@ -17,7 +17,15 @@ const IntegrationsTab = () => {
   const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
   const [openAIModel, setOpenAIModel] = useState<string>('gpt-4o-mini');
 
+  // Initialize connectedIntegrations with an empty object if it's undefined
   const connectedIntegrations = integrationSettings?.integrationSettings || {};
+  
+  // Debug: Log the integration settings at load time
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('Integration Settings:', integrationSettings);
+    }
+  }, [isLoading, integrationSettings]);
 
   const handleConfigureIntegration = (name: string) => {
     setSelectedIntegration(name);
@@ -52,7 +60,11 @@ const IntegrationsTab = () => {
   };
 
   const handleDisconnectIntegration = (name: string) => {
-    const updatedSettings = { ...integrationSettings };
+    const updatedSettings = { 
+      integrationSettings: {
+        ...connectedIntegrations
+      }
+    };
     
     if (updatedSettings.integrationSettings && updatedSettings.integrationSettings[name]) {
       delete updatedSettings.integrationSettings[name];
@@ -77,13 +89,12 @@ const IntegrationsTab = () => {
 
   const handleSaveConfig = () => {
     if (selectedIntegration) {
+      // Ensure we have a proper integrationSettings structure
       const updatedSettings = { 
-        ...integrationSettings || { integrationSettings: {} }
+        integrationSettings: {
+          ...connectedIntegrations
+        }
       };
-      
-      if (!updatedSettings.integrationSettings) {
-        updatedSettings.integrationSettings = {};
-      }
       
       if (selectedIntegration === 'OpenAI') {
         updatedSettings.integrationSettings[selectedIntegration] = {
@@ -124,9 +135,17 @@ const IntegrationsTab = () => {
 
   const integrationsData = getIntegrationsData().map(integration => ({
     ...integration,
-    status: (connectedIntegrations[integration.name] ? 'connected' : 'available') as 'connected' | 'available' | 'coming-soon',
+    status: (connectedIntegrations[integration.name] && 
+             connectedIntegrations[integration.name].apiKey) 
+            ? 'connected' : 'available',
     configDate: connectedIntegrations[integration.name]?.configDate
-  }));
+  })) as Array<{
+    name: string;
+    status: 'connected' | 'available' | 'coming-soon';
+    description: string;
+    icon: React.ReactNode;
+    configDate?: string;
+  }>;
 
   const integrations = [
     ...integrationsData.filter(i => i.name !== 'Eleven Labs' && i.name !== 'X.AI'),

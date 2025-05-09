@@ -4,17 +4,19 @@ import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
 import SystemPreferencesTab from '@/components/settings/SystemPreferencesTab';
+import IntegrationsTab from '@/components/settings/IntegrationsTab';
 import { 
   AppearanceSettings, 
   NotificationSettings, 
   SecuritySettings, 
-  SystemPreferences
+  SystemPreferences,
+  IntegrationSettings
 } from '@/types/settings-types';
 
 interface SystemSettingsContentProps {
-  settings: AppearanceSettings | NotificationSettings | SecuritySettings | SystemPreferences;
+  settings: AppearanceSettings | NotificationSettings | SecuritySettings | SystemPreferences | IntegrationSettings;
   onUpdate: (settings: Partial<any>) => void;
-  section: 'appearance' | 'notifications' | 'security' | 'preferences';
+  section: 'appearance' | 'notifications' | 'security' | 'preferences' | 'integrations';
 }
 
 const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({ 
@@ -55,6 +57,12 @@ const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
         settings={settings as SystemPreferences} 
         onChange={onUpdate} 
       />
+    );
+  }
+  
+  if (section === 'integrations') {
+    return (
+      <IntegrationsTab />
     );
   }
   

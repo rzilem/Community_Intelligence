@@ -2,21 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { SlidersHorizontal } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import type { 
   AppearanceSettings, 
   NotificationSettings, 
   SecuritySettings, 
   SystemPreferences, 
-  SystemSettings as SystemSettingsType 
+  SystemSettings as SystemSettingsType,
+  IntegrationSettings 
 } from '@/types/settings-types';
 import { useAllSystemSettings } from '@/hooks/settings/use-system-settings';
 import SystemSettingsSkeleton from '@/components/settings/SystemSettingsSkeleton';
 import SystemSettingsSaveButton from '@/components/settings/SystemSettingsSaveButton';
 import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
+import SystemSettingsTabs from '@/components/settings/SystemSettingsTabs';
 import { saveSystemSettings } from '@/hooks/settings/use-system-settings-helpers';
 import AISettingsSection from '@/components/settings/AISettingsSection';
+import IntegrationsTab from '@/components/settings/IntegrationsTab';
 
 const SystemSettings = () => {
   const [activeTab, setActiveTab] = useState('appearance');
@@ -30,6 +33,7 @@ const SystemSettings = () => {
   useEffect(() => {
     if (!isLoading) {
       setUnsavedSettings(settings);
+      console.log("Loaded settings:", settings);
     }
   }, [isLoading, settings]);
 
@@ -61,6 +65,13 @@ const SystemSettings = () => {
     }));
   };
 
+  const handleIntegrationsChange = (integrationsSettings: Partial<IntegrationSettings>) => {
+    setUnsavedSettings(prev => ({
+      ...prev,
+      integrations: { ...prev.integrations, ...integrationsSettings }
+    }));
+  };
+
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
@@ -78,6 +89,8 @@ const SystemSettings = () => {
     return <SystemSettingsSkeleton />;
   }
 
+  const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(unsavedSettings);
+  
   return (
     <PageTemplate 
       title="System Settings" 
@@ -87,58 +100,57 @@ const SystemSettings = () => {
         <SystemSettingsSaveButton 
           isSaving={isSaving} 
           onClick={handleSaveSettings} 
-          disabled={JSON.stringify(settings) === JSON.stringify(unsavedSettings)}
+          disabled={!hasUnsavedChanges}
         />
       }
     >
       <div className="mt-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-5 w-full">
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="ai">AI & Integrations</TabsTrigger>
-          </TabsList>
+        <SystemSettingsTabs 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        
+        <div className="mt-6">
+          <TabsContent value="appearance">
+            <SystemSettingsContent 
+              settings={unsavedSettings.appearance} 
+              onUpdate={handleAppearanceChange}
+              section="appearance"
+            />
+          </TabsContent>
           
-          <div className="mt-6">
-            <TabsContent value="appearance">
-              <SystemSettingsContent 
-                settings={unsavedSettings.appearance} 
-                onUpdate={handleAppearanceChange}
-                section="appearance"
-              />
-            </TabsContent>
-            
-            <TabsContent value="notifications">
-              <SystemSettingsContent 
-                settings={unsavedSettings.notifications} 
-                onUpdate={handleNotificationsChange}
-                section="notifications"
-              />
-            </TabsContent>
-            
-            <TabsContent value="security">
-              <SystemSettingsContent 
-                settings={unsavedSettings.security} 
-                onUpdate={handleSecurityChange}
-                section="security"
-              />
-            </TabsContent>
-            
-            <TabsContent value="preferences">
-              <SystemSettingsContent 
-                settings={unsavedSettings.preferences} 
-                onUpdate={handlePreferencesChange}
-                section="preferences"
-              />
-            </TabsContent>
-            
-            <TabsContent value="ai">
-              <AISettingsSection />
-            </TabsContent>
-          </div>
-        </Tabs>
+          <TabsContent value="notifications">
+            <SystemSettingsContent 
+              settings={unsavedSettings.notifications} 
+              onUpdate={handleNotificationsChange}
+              section="notifications"
+            />
+          </TabsContent>
+          
+          <TabsContent value="security">
+            <SystemSettingsContent 
+              settings={unsavedSettings.security} 
+              onUpdate={handleSecurityChange}
+              section="security"
+            />
+          </TabsContent>
+          
+          <TabsContent value="system">
+            <SystemSettingsContent 
+              settings={unsavedSettings.preferences} 
+              onUpdate={handlePreferencesChange}
+              section="preferences"
+            />
+          </TabsContent>
+          
+          <TabsContent value="integrations">
+            <IntegrationsTab />
+          </TabsContent>
+          
+          <TabsContent value="ai">
+            <AISettingsSection />
+          </TabsContent>
+        </div>
       </div>
     </PageTemplate>
   );

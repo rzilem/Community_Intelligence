@@ -25,6 +25,7 @@ const AISettingsSection = () => {
   
   useEffect(() => {
     fetchOpenAIConfig();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   return (
