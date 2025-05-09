@@ -1,50 +1,91 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { LogEntry } from './log-utils';
+
+export interface LogEntry {
+  id: string;
+  request_id: string;
+  function_name: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  metadata?: Record<string, any>;
+  created_at: string;
+}
 
 export const useLogViewer = (initialFunction?: string) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [functionNames, setFunctionNames] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedFunction, setSelectedFunction] = useState<string | undefined>(initialFunction);
   const [selectedLevel, setSelectedLevel] = useState<string | undefined>(undefined);
+  const [functionNames, setFunctionNames] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
+    
     try {
+      console.log('Fetching logs with filters:', {
+        function: selectedFunction,
+        level: selectedLevel,
+        search: searchQuery
+      });
+      
+      // Build URL with query parameters
+      const params = new URLSearchParams();
+      if (selectedFunction) {
+        params.append('function_name', selectedFunction);
+      }
+      if (selectedLevel) {
+        params.append('level', selectedLevel);
+      }
+      params.append('limit', '100'); // Default limit
+      
       const { data, error } = await supabase.functions.invoke('view-logs', {
         method: 'GET',
-        body: {
-          function: selectedFunction,
-          level: selectedLevel,
-          limit: '100'
-        }
+        queryParams: Object.fromEntries(params)
       });
       
       if (error) {
-        throw new Error(error.message || 'Failed to fetch logs');
+        console.error('Error fetching logs:', error);
+        throw error;
       }
       
-      setLogs(data.logs);
-      setFunctionNames(data.filters.availableFunctions);
+      console.log('Logs fetched:', data);
+      
+      // Set logs and function names from the response
+      setLogs(data?.logs || []);
+      setFunctionNames(data?.function_names || []);
+      
     } catch (error) {
-      console.error('Error fetching logs:', error);
-      toast.error(`Failed to load logs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to fetch logs:', error);
+      setLogs([]);
     } finally {
       setIsLoading(false);
     }
-  };
-  
+  }, [selectedFunction, selectedLevel, searchQuery]);
+
   useEffect(() => {
     fetchLogs();
-  }, [selectedFunction, selectedLevel]);
+  }, [fetchLogs]);
+
+  // Filter logs based on search query (client-side filtering)
+  const filteredLogs = logs.filter(log => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      log.message.toLowerCase().includes(query) ||
+      log.function_name.toLowerCase().includes(query) ||
+      log.level.toLowerCase().includes(query) ||
+      log.request_id.toLowerCase().includes(query) ||
+      JSON.stringify(log.metadata).toLowerCase().includes(query)
+    );
+  });
 
   return {
-    logs,
+    logs: filteredLogs,
     isLoading,
     functionNames,
     selectedFunction,

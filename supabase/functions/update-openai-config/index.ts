@@ -25,6 +25,11 @@ serve(async (req) => {
     // Get API key from request
     const { apiKey, model } = await req.json();
     
+    await logger.debug(requestId, "Request payload received", { 
+      hasApiKey: !!apiKey,
+      model: model || 'not provided'
+    });
+    
     if (!apiKey) {
       await logger.error(requestId, "No API key provided");
       return new Response(JSON.stringify({ success: false, error: "API key is required" }), {
@@ -41,74 +46,114 @@ serve(async (req) => {
     // 1. Update the OPENAI_API_KEY secret using REST API directly
     await logger.info(requestId, "Updating OPENAI_API_KEY secret via REST API");
     
-    // Create appropriate headers for the function service API
-    const functionApiHeaders = {
-      'Authorization': `Bearer ${supabaseServiceKey}`,
-      'Content-Type': 'application/json'
-    };
-    
-    // Call the Supabase function secrets API to update the secret
-    const secretsResponse = await fetch(`${supabaseUrl}/functions/v1/secrets`, {
-      method: 'POST',
-      headers: functionApiHeaders,
-      body: JSON.stringify({ 
-        secrets: { OPENAI_API_KEY: apiKey } 
-      }),
-    });
-    
-    if (!secretsResponse.ok) {
-      const secretsError = await secretsResponse.json();
-      await logger.error(requestId, "Failed to update API key secret via REST API", { 
-        status: secretsResponse.status, 
-        error: secretsError 
+    try {
+      // Create appropriate headers for the function service API
+      const functionApiHeaders = {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'Content-Type': 'application/json'
+      };
+      
+      // Call the Supabase function secrets API to update the secret
+      const secretsResponse = await fetch(`${supabaseUrl}/functions/v1/secrets`, {
+        method: 'POST',
+        headers: functionApiHeaders,
+        body: JSON.stringify({ 
+          secrets: { OPENAI_API_KEY: apiKey } 
+        }),
       });
-      throw new Error(`Failed to update API key: ${secretsResponse.statusText}`);
+      
+      await logger.debug(requestId, "Secrets API response received", {
+        status: secretsResponse.status,
+        statusText: secretsResponse.statusText
+      });
+      
+      if (!secretsResponse.ok) {
+        let secretsError = null;
+        try {
+          secretsError = await secretsResponse.json();
+        } catch (e) {
+          secretsError = { parseError: (e as Error).message };
+        }
+        
+        await logger.error(requestId, "Failed to update API key secret via REST API", { 
+          status: secretsResponse.status, 
+          statusText: secretsResponse.statusText,
+          error: secretsError 
+        });
+        
+        throw new Error(`Failed to update API key: ${secretsResponse.statusText}`);
+      }
+      
+      await logger.info(requestId, "Successfully updated OPENAI_API_KEY secret");
+    } catch (secretError) {
+      await logger.error(requestId, "Error in secrets update step", {
+        error: (secretError as Error).message,
+        stack: (secretError as Error).stack
+      });
+      throw secretError;
     }
-    
-    await logger.info(requestId, "Successfully updated OPENAI_API_KEY secret");
     
     // 2. Update the system_settings table with OpenAI configuration
-    const selectedModel = model || "gpt-4o-mini";
-    
-    const { error } = await supabase
-      .from('system_settings')
-      .upsert({ 
-        key: 'integrations', 
-        value: {
-          integrationSettings: {
-            OpenAI: {
-              apiKey: apiKey,
-              model: selectedModel,
-              configDate: new Date().toISOString()
-            }
-          }
-        },
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'key'
+    try {
+      const selectedModel = model || "gpt-4o-mini";
+      
+      await logger.info(requestId, "Updating system_settings with OpenAI configuration", {
+        model: selectedModel
       });
       
-    if (error) {
-      await logger.error(requestId, "Error updating system settings", { error });
-      throw new Error(`Failed to update system settings: ${error.message}`);
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({ 
+          key: 'integrations', 
+          value: {
+            integrationSettings: {
+              OpenAI: {
+                apiKey: apiKey,
+                model: selectedModel,
+                configDate: new Date().toISOString()
+              }
+            }
+          },
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'key'
+        });
+        
+      if (error) {
+        await logger.error(requestId, "Error updating system settings", { error });
+        throw new Error(`Failed to update system settings: ${error.message}`);
+      }
+      
+      await logger.info(requestId, "Successfully updated OpenAI integration settings");
+    } catch (dbError) {
+      await logger.error(requestId, "Error in database update step", {
+        error: (dbError as Error).message,
+        stack: (dbError as Error).stack
+      });
+      throw dbError;
     }
     
-    await logger.info(requestId, "Successfully updated OpenAI integration settings");
-    
     // 3. Verify the setup by querying the data
-    const { data: verifyData, error: verifyError } = await supabase
-      .from('system_settings')
-      .select('value')
-      .eq('key', 'integrations')
-      .single();
-      
-    if (verifyError) {
-      await logger.warn(requestId, "Verification query failed", { error: verifyError });
-      // Continue despite verification failure
-    } else {
-      await logger.info(requestId, "Verification successful", { 
-        hasOpenAIConfig: verifyData?.value?.integrationSettings?.OpenAI ? true : false 
+    try {
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'integrations')
+        .single();
+        
+      if (verifyError) {
+        await logger.warn(requestId, "Verification query failed", { error: verifyError });
+        // Continue despite verification failure
+      } else {
+        await logger.info(requestId, "Verification successful", { 
+          hasOpenAIConfig: verifyData?.value?.integrationSettings?.OpenAI ? true : false 
+        });
+      }
+    } catch (verifyError) {
+      await logger.warn(requestId, "Error in verification step", {
+        error: (verifyError as Error).message
       });
+      // Continue despite verification failure
     }
     
     // Return success response

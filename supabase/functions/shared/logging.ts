@@ -18,42 +18,58 @@ export function createLogger(functionName: string) {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   
+  const logToConsole = (entry: Omit<LogEntry, 'function_name'>, additionalData?: Record<string, any>) => {
+    const { request_id, level, message } = entry;
+    const timestamp = new Date().toISOString();
+    
+    console.log(JSON.stringify({
+      request_id,
+      function_name: functionName,
+      timestamp,
+      level,
+      message,
+      ...entry.metadata,
+      ...additionalData
+    }));
+  };
+  
   return {
     /**
-     * Log to both console and Supabase function_logs table
+     * Log to both console and Supabase function_logs table with extended details
      */
     async log(entry: Omit<LogEntry, 'function_name'>): Promise<void> {
       const { request_id, level, message, metadata } = entry;
       const timestamp = new Date().toISOString();
       
       // Log to console with structured format
-      console.log(JSON.stringify({
-        request_id,
-        function_name: functionName,
-        timestamp,
-        level,
-        message,
-        ...metadata
-      }));
+      logToConsole(entry);
       
       try {
         // Store in function_logs table
-        const { error } = await supabase.from('function_logs').insert({
+        const { error, data } = await supabase.from('function_logs').insert({
           request_id,
           function_name: functionName,
           timestamp,
           level,
           message,
           metadata
-        });
+        }).select();
         
         if (error) {
           // Don't throw, just log to console
-          console.error(`Failed to store log in database: ${error.message}`);
+          logToConsole({
+            request_id,
+            level: 'error',
+            message: `Failed to store log in database: ${error.message}`
+          }, { error: error });
         }
       } catch (err) {
         // If table doesn't exist yet or other error, just continue
-        console.warn(`Could not store log in database: ${(err as Error).message}`);
+        logToConsole({
+          request_id,
+          level: 'warn',
+          message: `Could not store log in database: ${(err as Error).message}`
+        }, { error: err });
       }
     },
     
@@ -65,7 +81,7 @@ export function createLogger(functionName: string) {
     },
     
     /**
-     * Log error level message
+     * Log error level message with full error details including stack trace
      */
     async error(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
       return this.log({ request_id: requestId, level: 'error', message, metadata });
@@ -79,7 +95,7 @@ export function createLogger(functionName: string) {
     },
     
     /**
-     * Log debug level message
+     * Log debug level message with detailed context
      */
     async debug(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
       return this.log({ request_id: requestId, level: 'debug', message, metadata });

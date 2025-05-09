@@ -5,13 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const OpenAISetup = () => {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('gpt-4o-mini');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,20 +24,27 @@ const OpenAISetup = () => {
     }
 
     setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase.functions.invoke('update-openai-config', {
+      console.log("Submitting OpenAI config:", { model, hasApiKey: !!apiKey });
+      
+      const { data, error: invokeError } = await supabase.functions.invoke('update-openai-config', {
         method: 'POST',
         body: { apiKey, model }
       });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to update OpenAI configuration');
+      if (invokeError) {
+        console.error('Error invoking function:', invokeError);
+        throw new Error(invokeError.message || 'Failed to update OpenAI configuration');
       }
 
       if (!data.success) {
+        console.error('Function returned error:', data);
         throw new Error(data.error || 'Failed to update OpenAI configuration');
       }
 
+      console.log("Configuration updated successfully:", data);
       toast.success('OpenAI API key and configuration updated successfully');
       
       // Try to reload the page after a brief delay to reflect the changes
@@ -43,8 +52,10 @@ const OpenAISetup = () => {
         window.location.reload();
       }, 1500);
     } catch (error) {
+      const errorMessage = (error as Error).message || 'Unknown error';
       console.error('Error updating OpenAI configuration:', error);
-      toast.error(`Failed to update OpenAI configuration: ${(error as Error).message || 'Unknown error'}`);
+      setError(errorMessage);
+      toast.error(`Failed to update OpenAI configuration: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +74,14 @@ const OpenAISetup = () => {
       </CardHeader>
       
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Configuration Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
