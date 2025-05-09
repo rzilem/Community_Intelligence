@@ -32,20 +32,20 @@ export const useLogViewer = (initialFunction?: string) => {
         search: searchQuery
       });
       
-      // Build query parameters
-      const params = new URLSearchParams();
+      // Build query string for URL instead of using params object
+      let queryString = '';
       if (selectedFunction) {
-        params.append('function_name', selectedFunction);
+        queryString += `function_name=${encodeURIComponent(selectedFunction)}&`;
       }
       if (selectedLevel) {
-        params.append('level', selectedLevel);
+        queryString += `level=${encodeURIComponent(selectedLevel)}&`;
       }
-      params.append('limit', '100'); // Default limit
+      queryString += 'limit=100'; // Default limit
       
-      // Use the correct parameter for invoking functions in Supabase
+      // Use the correct parameter format for invoking functions in Supabase
       const { data, error } = await supabase.functions.invoke('view-logs', {
         method: 'GET',
-        params: Object.fromEntries(params)
+        query: queryString // Use query instead of params
       });
       
       if (error) {
