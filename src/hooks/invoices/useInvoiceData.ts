@@ -62,8 +62,9 @@ export const useInvoiceData = (id: string | undefined) => {
   // Update local state when invoice data is fetched
   useEffect(() => {
     if (!isLoadingInvoice && invoiceData) {
-      const aiConfidence = invoiceData._aiConfidence || null;
-      const aiLineItems = invoiceData._aiLineItems || [];
+      // Check for AI extraction data in the invoiceData
+      const aiConfidence = invoiceData.ai_confidence || null;
+      const aiLineItems = invoiceData.ai_line_items || [];
       
       setInvoice({
         id: invoiceData.id || '',

@@ -12,7 +12,6 @@ import type {
   SystemSettings as SystemSettingsType 
 } from '@/types/settings-types';
 import { useAllSystemSettings } from '@/hooks/settings/use-system-settings';
-import SystemSettingsTabs from '@/components/settings/SystemSettingsTabs';
 import SystemSettingsSkeleton from '@/components/settings/SystemSettingsSkeleton';
 import SystemSettingsSaveButton from '@/components/settings/SystemSettingsSaveButton';
 import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
