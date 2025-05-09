@@ -65,8 +65,7 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       // For first line, we calculate this automatically
       if (index === 0) {
         // We'll set it to the adjusted amount, but keep it as a string
-        const formattedAmount = typeof adjustedFirstLineAmount === 'number' ? 
-          adjustedFirstLineAmount.toFixed(2) : adjustedFirstLineAmount.toString();
+        const formattedAmount = adjustedFirstLineAmount.toFixed(2);
         newLines[index] = { ...newLines[index], [field]: formattedAmount };
       } else {
         // Allow direct string input for other lines
