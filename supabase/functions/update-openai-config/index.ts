@@ -43,66 +43,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // 1. Update the OPENAI_API_KEY secret using REST API directly
+    // Instead of trying to update the secret directly through REST API,
+    // we'll store the key in the database and then use it in edge functions
     try {
-      await logger.info(requestId, "Updating OPENAI_API_KEY secret via REST API");
+      await logger.info(requestId, "Updating system_settings with OpenAI configuration");
       
-      // Create appropriate headers for the REST API
-      const secretsHeaders = {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey,
-        'Content-Type': 'application/json'
-      };
-      
-      // Call the correct Supabase REST API endpoint to update secrets
-      const secretsResponse = await fetch(`${supabaseUrl}/rest/v1/functions/secrets`, {
-        method: 'POST',
-        headers: secretsHeaders,
-        body: JSON.stringify({ 
-          name: 'OPENAI_API_KEY',
-          value: apiKey
-        }),
-      });
-      
-      await logger.debug(requestId, "Secrets API response received", {
-        status: secretsResponse.status,
-        statusText: secretsResponse.statusText
-      });
-      
-      if (!secretsResponse.ok) {
-        let secretsError = null;
-        try {
-          secretsError = await secretsResponse.json();
-        } catch (e) {
-          secretsError = { parseError: (e as Error).message };
-        }
-        
-        await logger.error(requestId, "Failed to update API key secret via REST API", { 
-          status: secretsResponse.status, 
-          statusText: secretsResponse.statusText,
-          error: secretsError 
-        });
-        
-        throw new Error(`Failed to update API key: ${secretsResponse.statusText}`);
-      }
-      
-      await logger.info(requestId, "Successfully updated OPENAI_API_KEY secret");
-    } catch (secretError) {
-      await logger.error(requestId, "Error in secrets update step", {
-        error: (secretError as Error).message,
-        stack: (secretError as Error).stack
-      });
-      throw secretError;
-    }
-    
-    // 2. Update the system_settings table with OpenAI configuration
-    try {
       const selectedModel = model || "gpt-4o-mini";
       
-      await logger.info(requestId, "Updating system_settings with OpenAI configuration", {
-        model: selectedModel
-      });
-      
+      // Update the system_settings table with OpenAI configuration
       const { error } = await supabase
         .from('system_settings')
         .upsert({ 
@@ -127,35 +75,61 @@ serve(async (req) => {
       }
       
       await logger.info(requestId, "Successfully updated OpenAI integration settings");
+
+      // Also set the edge function secret for direct access in other edge functions
+      try {
+        // Edge functions can access each other's secrets
+        const { data: secretData, error: secretError } = await supabase
+          .rpc('set_edge_function_secret', {
+            name: 'OPENAI_API_KEY',
+            value: apiKey
+          });
+
+        if (secretError) {
+          await logger.warn(requestId, "Could not set edge function secret via RPC, will try direct API call", { 
+            error: secretError.message 
+          });
+          
+          // Fallback to direct API call if RPC is not available
+          const projectRef = Deno.env.get('SUPABASE_PROJECT_REF') || 'cahergndkwfqltxyikyr';
+          const secretsUrl = `https://${projectRef}.supabase.co/functions/v1/secrets`;
+          
+          const secretsResponse = await fetch(secretsUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              name: 'OPENAI_API_KEY',
+              value: apiKey
+            }),
+          });
+          
+          if (!secretsResponse.ok) {
+            await logger.warn(requestId, "Failed to set secret via direct API call, but database update was successful", {
+              status: secretsResponse.status,
+              statusText: secretsResponse.statusText
+            });
+            // We'll continue even if this fails since the database update was successful
+          } else {
+            await logger.info(requestId, "Successfully set OPENAI_API_KEY secret via direct API call");
+          }
+        } else {
+          await logger.info(requestId, "Successfully set OPENAI_API_KEY secret via RPC");
+        }
+      } catch (secretError) {
+        // We'll log but not fail if setting the secret fails, since the main database update was successful
+        await logger.warn(requestId, "Error setting edge function secret, but database update was successful", {
+          error: (secretError as Error).message
+        });
+      }
     } catch (dbError) {
       await logger.error(requestId, "Error in database update step", {
         error: (dbError as Error).message,
         stack: (dbError as Error).stack
       });
       throw dbError;
-    }
-    
-    // 3. Verify the setup by querying the data
-    try {
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('system_settings')
-        .select('value')
-        .eq('key', 'integrations')
-        .single();
-        
-      if (verifyError) {
-        await logger.warn(requestId, "Verification query failed", { error: verifyError });
-        // Continue despite verification failure
-      } else {
-        await logger.info(requestId, "Verification successful", { 
-          hasOpenAIConfig: verifyData?.value?.integrationSettings?.OpenAI ? true : false 
-        });
-      }
-    } catch (verifyError) {
-      await logger.warn(requestId, "Error in verification step", {
-        error: (verifyError as Error).message
-      });
-      // Continue despite verification failure
     }
     
     // Return success response

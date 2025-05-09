@@ -9,8 +9,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req: Request) => {
-  // Create request ID and logger
+serve(async (req) => {
+  // Create request ID for tracing
   const requestId = crypto.randomUUID();
   const logger = createLogger('view-logs');
   
@@ -22,83 +22,81 @@ serve(async (req: Request) => {
   try {
     await logger.info(requestId, "View logs function called");
     
-    // Create a Supabase client with auth context from the request
+    // Parse URL search params from the request URL
+    const url = new URL(req.url);
+    const functionName = url.searchParams.get('function_name');
+    const level = url.searchParams.get('level');
+    const limit = parseInt(url.searchParams.get('limit') || '100');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
+    
+    // Log the query parameters received
+    console.log(JSON.stringify({
+      request_id: requestId,
+      function_name: 'view-logs',
+      timestamp: new Date().toISOString(),
+      level: null,
+      message: "Query parameters",
+      functionName,
+      limit,
+      offset
+    }));
+    
+    // Create a Supabase client with service role key for admin access
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Parse request params (properly handling both URL search params and query object from invoke)
-    const url = new URL(req.url);
-    const functionName = url.searchParams.get('function_name');
-    const level = url.searchParams.get('level');
-    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
-    
-    await logger.debug(requestId, "Query parameters", { functionName, level, limit, offset });
-    
-    // Build the query
+    // Build the query to get logs
     let query = supabase
       .from('function_logs')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(limit)
-      .range(offset, offset + limit - 1);
-      
-    // Add filters if provided
+      .select('*');
+    
+    // Apply filters if provided
     if (functionName) {
       query = query.eq('function_name', functionName);
     }
-    
     if (level) {
       query = query.eq('level', level);
     }
     
-    // Execute the query
-    const { data, error } = await query;
+    // Get logs with filters applied
+    const { data: logs, error } = await query
+      .order('timestamp', { ascending: false })
+      .limit(limit)
+      .offset(offset);
     
     if (error) {
-      await logger.error(requestId, "Error fetching logs", { error });
-      throw new Error(`Failed to fetch logs: ${error.message}`);
+      await logger.error(requestId, "Error retrieving logs", { error });
+      throw error;
     }
     
-    await logger.info(requestId, "Logs retrieved successfully", { count: data?.length || 0 });
+    await logger.info(requestId, "Logs retrieved successfully", { count: logs?.length ?? 0 });
     
-    // Get list of unique function names for filtering - use a separate query instead of .distinct()
-    const { data: functionNamesData, error: fnError } = await supabase
+    // Get all unique function names for the dropdown filter
+    const { data: functionNames, error: functionNamesError } = await supabase
       .from('function_logs')
-      .select('function_name');
-      
-    let uniqueFunctionNames: string[] = [];
+      .select('function_name')
+      .limit(1000)
+      .order('function_name')
+      .distinctOn('function_name');
     
-    if (fnError) {
-      await logger.warn(requestId, "Failed to retrieve function names", { error: fnError });
-    } else if (functionNamesData) {
-      // Extract unique function names manually since .distinct() is not available
-      uniqueFunctionNames = [...new Set(functionNamesData.map(fn => fn.function_name))]
-        .filter(Boolean) // Remove null/undefined values
-        .sort(); // Sort alphabetically
-      
-      await logger.debug(requestId, "Function names retrieved", { count: uniqueFunctionNames.length });
+    if (functionNamesError) {
+      await logger.error(requestId, "Error retrieving function names", { error: functionNamesError });
+    } else {
+      await logger.debug(requestId, "Function names retrieved", { count: functionNames?.length ?? 0 });
     }
     
-    // Return the logs
-    return new Response(JSON.stringify({
-      logs: data || [],
-      function_names: uniqueFunctionNames
+    // Return logs and function names
+    return new Response(JSON.stringify({ 
+      logs: logs || [], 
+      function_names: functionNames?.map(f => f.function_name) || []
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
-    
   } catch (error) {
-    await logger.error(requestId, "Error processing logs request", {
-      error: (error as Error).message,
-      stack: (error as Error).stack
-    });
-    
-    return new Response(JSON.stringify({
-      error: (error as Error).message || 'An unexpected error occurred'
-    }), {
+    console.error("Error in view-logs function:", error);
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });

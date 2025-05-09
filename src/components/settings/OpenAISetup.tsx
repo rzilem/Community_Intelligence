@@ -57,6 +57,7 @@ const OpenAISetup = () => {
       const errorMessage = (error as Error).message || 'Unknown error';
       console.error('Error updating OpenAI configuration:', error);
       setError(errorMessage);
+      toast.error(`Failed to update OpenAI configuration: ${errorMessage}`);
       setShowLogs(true); // Show logs automatically when there's an error
     } finally {
       setIsLoading(false);
