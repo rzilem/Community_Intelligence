@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useEffect } from 'react';
+
+import { useCallback, useMemo } from 'react';
 import { LineItemData } from './LineItem';
 
 interface UseLineItemsLogicProps {
@@ -12,9 +13,9 @@ export const useLineItemsLogic = ({
   onLinesChange, 
   invoiceTotal = 0 
 }: UseLineItemsLogicProps) => {
-  // Calculate the total of all lines except the first one
+  // Calculate the sum of all line amounts
   const lineTotal = useMemo(() => 
-    lines.slice(1).reduce((sum, line) => {
+    lines.reduce((sum, line) => {
       const amount = typeof line.amount === 'string' ? 
         parseFloat(line.amount) || 0 : 
         line.amount || 0;
@@ -23,13 +24,14 @@ export const useLineItemsLogic = ({
     [lines]
   );
 
-  // Calculate the amount for the first line to keep the total balanced
-  const adjustedFirstLineAmount = useMemo(() => {
-    return invoiceTotal - lineTotal;
-  }, [invoiceTotal, lineTotal]);
+  // Check if invoice total matches line items total
+  const isBalanced = useMemo(() => {
+    return Math.abs(lineTotal - invoiceTotal) <= 0.01;
+  }, [lineTotal, invoiceTotal]);
 
   // Handle adding a new line item
   const handleAddLine = useCallback(() => {
+    // Copy fund and bankAccount from the first line item as defaults
     const { fund, bankAccount } = lines[0];
     
     onLinesChange([...lines, {
@@ -44,31 +46,9 @@ export const useLineItemsLogic = ({
   // Handle line item changes
   const handleLineChange = useCallback((index: number, field: string, value: string | number) => {
     const newLines = [...lines];
-    
-    // Handle amount field specially
-    if (field === 'amount') {
-      // For first line, we calculate this automatically
-      if (index === 0) {
-        // We'll set it to the adjusted amount, but keep it as a string
-        const formattedAmount = adjustedFirstLineAmount.toFixed(2);
-        newLines[index] = { ...newLines[index], [field]: formattedAmount };
-      } else {
-        // Allow direct string input for other lines
-        newLines[index] = { ...newLines[index], [field]: value };
-        
-        // Update the first line's amount to maintain balance - as a string
-        newLines[0] = { 
-          ...newLines[0], 
-          amount: adjustedFirstLineAmount.toFixed(2)
-        };
-      }
-    } else {
-      // For other fields, just update the value
-      newLines[index] = { ...newLines[index], [field]: value };
-    }
-
+    newLines[index] = { ...newLines[index], [field]: value };
     onLinesChange(newLines);
-  }, [lines, onLinesChange, adjustedFirstLineAmount]);
+  }, [lines, onLinesChange]);
 
   // Handle removing a line item
   const handleRemoveLine = useCallback((index: number) => {
@@ -78,36 +58,8 @@ export const useLineItemsLogic = ({
     }
   }, [lines, onLinesChange]);
 
-  // Update first line amount when the invoice total changes
-  useEffect(() => {
-    if (lines[0] && invoiceTotal > 0) {
-      // Only update if the first line amount doesn't match the adjusted value
-      const currentFirstLineAmount = typeof lines[0].amount === 'string' ? 
-        parseFloat(lines[0].amount) || 0 : lines[0].amount || 0;
-      
-      if (Math.abs(currentFirstLineAmount - adjustedFirstLineAmount) > 0.01) {
-        const newLines = [...lines];
-        newLines[0] = { 
-          ...newLines[0], 
-          amount: adjustedFirstLineAmount.toFixed(2)
-        };
-        onLinesChange(newLines);
-      }
-    }
-  }, [invoiceTotal, adjustedFirstLineAmount, lines, onLinesChange]);
-
-  // Calculate whether the totals are balanced
-  const isBalanced = useMemo(() => {
-    const firstLineAmount = typeof lines[0]?.amount === 'string' ? 
-      parseFloat(lines[0]?.amount) || 0 : 
-      lines[0]?.amount || 0;
-    
-    return Math.abs(lineTotal + firstLineAmount - invoiceTotal) <= 0.01;
-  }, [lines, lineTotal, invoiceTotal]);
-
   return {
     lineTotal,
-    adjustedFirstLineAmount,
     handleAddLine,
     handleLineChange,
     handleRemoveLine,

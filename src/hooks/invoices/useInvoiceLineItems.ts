@@ -16,13 +16,15 @@ export const useInvoiceLineItems = (invoiceTotal: number) => {
 
   // Update the first line item whenever the total amount changes
   useEffect(() => {
-    if (invoiceTotal > 0) {
+    if (invoiceTotal > 0 && lines.length > 0) {
       setLines(prevLines => {
+        // Calculate the total of all lines except the first one
         const otherLinesTotal = prevLines.slice(1).reduce((sum, line) => {
           const lineAmount = typeof line.amount === 'string' ? parseFloat(line.amount) || 0 : line.amount || 0;
           return sum + lineAmount;
         }, 0);
         
+        // Calculate what the first line should be to balance the invoice
         const firstLineAmount = Math.max(0, invoiceTotal - otherLinesTotal);
         
         // Update first line with the calculated amount
@@ -32,7 +34,7 @@ export const useInvoiceLineItems = (invoiceTotal: number) => {
         return updatedLines;
       });
     }
-  }, [invoiceTotal]);
+  }, [invoiceTotal, lines.length]);
 
   // Calculate lineTotal by safely converting string amounts to numbers
   const lineTotal = lines.reduce((sum, line) => {
@@ -40,6 +42,7 @@ export const useInvoiceLineItems = (invoiceTotal: number) => {
     return sum + amount;
   }, 0);
   
+  // Determine if the invoice is balanced
   const isBalanced = Math.abs(lineTotal - invoiceTotal) < 0.01;
 
   return {
