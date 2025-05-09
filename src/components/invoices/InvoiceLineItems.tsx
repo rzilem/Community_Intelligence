@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -65,13 +64,19 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
     if (field === 'amount') {
       // For first line, we calculate this automatically
       if (index === 0) {
-        newLines[index] = { ...newLines[index], [field]: adjustedFirstLineAmount };
+        // We'll set it to the adjusted amount, but keep it as a string
+        const formattedAmount = typeof adjustedFirstLineAmount === 'number' ? 
+          adjustedFirstLineAmount.toFixed(2) : adjustedFirstLineAmount.toString();
+        newLines[index] = { ...newLines[index], [field]: formattedAmount };
       } else {
         // Allow direct string input for other lines
         newLines[index] = { ...newLines[index], [field]: value };
         
-        // Update the first line's amount to maintain balance
-        newLines[0] = { ...newLines[0], amount: adjustedFirstLineAmount };
+        // Update the first line's amount to maintain balance - as a string
+        newLines[0] = { 
+          ...newLines[0], 
+          amount: adjustedFirstLineAmount.toFixed(2)
+        };
       }
     } else {
       // For other fields, just update the value
@@ -87,6 +92,24 @@ export const InvoiceLineItems: React.FC<InvoiceLineItemsProps> = ({
       onLinesChange(newLines);
     }
   }, [lines, onLinesChange]);
+
+  // Format first line amount for display
+  React.useEffect(() => {
+    if (lines[0] && invoiceTotal > 0) {
+      // Only update if the first line amount doesn't match the adjusted value
+      const currentFirstLineAmount = typeof lines[0].amount === 'string' ? 
+        parseFloat(lines[0].amount) || 0 : lines[0].amount || 0;
+      
+      if (Math.abs(currentFirstLineAmount - adjustedFirstLineAmount) > 0.01) {
+        const newLines = [...lines];
+        newLines[0] = { 
+          ...newLines[0], 
+          amount: adjustedFirstLineAmount.toFixed(2)
+        };
+        onLinesChange(newLines);
+      }
+    }
+  }, [invoiceTotal, adjustedFirstLineAmount, lines, onLinesChange]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">

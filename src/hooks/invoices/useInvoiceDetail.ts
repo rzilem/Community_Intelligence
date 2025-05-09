@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useSupabaseQuery, useSupabaseUpdate } from '@/hooks/supabase';
 import { Invoice } from '@/types/invoice-types';
@@ -52,6 +53,27 @@ export const useInvoiceDetail = (id: string | undefined) => {
 
   const { mutate: updateInvoice } = useSupabaseUpdate('invoices');
 
+  // Update the first line item whenever the total amount changes
+  useEffect(() => {
+    if (invoice.totalAmount > 0) {
+      setLines(prevLines => {
+        const otherLinesTotal = prevLines.slice(1).reduce((sum, line) => {
+          const lineAmount = typeof line.amount === 'string' ? parseFloat(line.amount) || 0 : line.amount || 0;
+          return sum + lineAmount;
+        }, 0);
+        
+        const firstLineAmount = Math.max(0, invoice.totalAmount - otherLinesTotal);
+        
+        // Update first line with the calculated amount
+        const updatedLines = [...prevLines];
+        updatedLines[0] = { ...updatedLines[0], amount: firstLineAmount.toFixed(2) };
+        
+        return updatedLines;
+      });
+    }
+  }, [invoice.totalAmount]);
+
+  // Load invoice data when available
   useEffect(() => {
     if (invoiceData) {
       console.group('Invoice Data Processing');
