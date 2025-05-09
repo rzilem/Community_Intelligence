@@ -1,19 +1,12 @@
 
 import { useState, useEffect } from 'react';
-
-interface LineItem {
-  glAccount: string;
-  fund: string;
-  bankAccount: string;
-  description: string;
-  amount: string;  // Using string for consistent input handling
-}
+import { LineItemData } from '@/components/invoices/line-items/LineItem';
 
 /**
  * Hook to manage invoice line items
  */
 export const useInvoiceLineItems = (invoiceTotal: number) => {
-  const [lines, setLines] = useState<LineItem[]>([{
+  const [lines, setLines] = useState<LineItemData[]>([{
     glAccount: '',
     fund: 'Operating',
     bankAccount: 'Operating',
