@@ -32,7 +32,7 @@ export const useLogViewer = (initialFunction?: string) => {
         search: searchQuery
       });
       
-      // Build URL with query parameters
+      // Build query parameters
       const params = new URLSearchParams();
       if (selectedFunction) {
         params.append('function_name', selectedFunction);
@@ -42,9 +42,10 @@ export const useLogViewer = (initialFunction?: string) => {
       }
       params.append('limit', '100'); // Default limit
       
+      // Use the correct parameter for invoking functions in Supabase
       const { data, error } = await supabase.functions.invoke('view-logs', {
         method: 'GET',
-        queryParams: Object.fromEntries(params)
+        params: Object.fromEntries(params)
       });
       
       if (error) {

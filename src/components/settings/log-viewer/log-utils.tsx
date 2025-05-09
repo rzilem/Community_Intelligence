@@ -39,3 +39,16 @@ export const filterLogs = (logs: LogEntry[], searchQuery: string) => {
     JSON.stringify(log.metadata).toLowerCase().includes(searchLower)
   ));
 };
+
+/**
+ * Highlight search terms in the text
+ * @param text The text to search within
+ * @param query The query to highlight
+ * @returns String with HTML highlighting for the matched terms
+ */
+export const highlight = (text: string, query: string): string => {
+  if (!query) return text;
+  
+  const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  return text.replace(regex, match => `<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">${match}</mark>`);
+};
