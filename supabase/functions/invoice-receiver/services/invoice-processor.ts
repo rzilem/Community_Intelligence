@@ -59,16 +59,28 @@ export async function processInvoiceEmail(emailData: any): Promise<Partial<Invoi
       }
     }
 
-    const { documentContent, processedAttachment } = await processDocument(emailData.attachments);
-    if (processedAttachment) {
-      console.log(`[${requestId}] Attachment processed`, {
-        filename: processedAttachment.filename,
-        url: processedAttachment.url
-      });
-      invoice.source_document = processedAttachment.filename;
-      invoice.pdf_url = processedAttachment.url;
-    } else {
-      console.log(`[${requestId}] No valid attachments processed`);
+    let documentContent = "";
+    let processedAttachment = null;
+    
+    if (emailData.attachments && emailData.attachments.length > 0) {
+      try {
+        const documentResult = await processDocument(emailData.attachments);
+        documentContent = documentResult.documentContent;
+        processedAttachment = documentResult.processedAttachment;
+        
+        if (processedAttachment) {
+          console.log(`[${requestId}] Attachment processed`, {
+            filename: processedAttachment.filename,
+            url: processedAttachment.url
+          });
+          invoice.source_document = processedAttachment.filename;
+          invoice.pdf_url = processedAttachment.url;
+        } else {
+          console.log(`[${requestId}] No valid attachments processed`);
+        }
+      } catch (attachmentError) {
+        console.error(`[${requestId}] Error processing attachments: ${attachmentError.message}`);
+      }
     }
 
     // Use content extraction service to get the best content

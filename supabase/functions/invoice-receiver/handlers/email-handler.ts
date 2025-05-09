@@ -6,6 +6,7 @@ import { corsHeaders } from "../utils/cors-headers.ts";
 import { handleEmailData } from "../services/email-processor.ts";
 import { processAttachments } from "../services/attachment-processor.ts";
 import { storeInvoice } from "../services/invoice-service.ts";
+import { log } from "../utils/logging.ts";
 
 export async function handleInvoiceEmail(req: Request, supabase: any): Promise<Response> {
   // Generate a unique request ID for tracking
@@ -22,6 +23,13 @@ export async function handleInvoiceEmail(req: Request, supabase: any): Promise<R
 
   try {
     await loggingService.logInfo(requestId, "Received invoice email webhook", { method: req.method });
+    
+    // Log environment configuration (without exposing secrets)
+    await loggingService.logInfo(requestId, "Environment configuration check", { 
+      hasSupabaseUrl: !!Deno.env.get("SUPABASE_URL"),
+      hasSupabaseServiceKey: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+      hasOpenAIKey: !!Deno.env.get("OPENAI_API_KEY")
+    });
     
     // Get email data from request - handle both JSON and multipart form data
     const emailData = await parseRequestData(req, requestId, loggingService);

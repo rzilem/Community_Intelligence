@@ -18,9 +18,31 @@ export function createLogger(functionName: string) {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   
+  // Helper to sanitize objects before logging (remove sensitive data)
+  const sanitizeForLogging = (obj: any): any => {
+    if (!obj || typeof obj !== 'object') return obj;
+    
+    const sanitized = { ...obj };
+    // Remove any properties that might contain sensitive information
+    const sensitiveKeys = ['apiKey', 'key', 'password', 'secret', 'token', 'authorization'];
+    
+    for (const key of Object.keys(sanitized)) {
+      if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+        sanitized[key] = '[REDACTED]';
+      } else if (typeof sanitized[key] === 'object') {
+        sanitized[key] = sanitizeForLogging(sanitized[key]);
+      }
+    }
+    return sanitized;
+  };
+  
   const logToConsole = (entry: Omit<LogEntry, 'function_name'>, additionalData?: Record<string, any>) => {
     const { request_id, level, message } = entry;
     const timestamp = new Date().toISOString();
+    
+    // Sanitize metadata before logging
+    const sanitizedMetadata = sanitizeForLogging(entry.metadata);
+    const sanitizedAdditional = sanitizeForLogging(additionalData);
     
     console.log(JSON.stringify({
       request_id,
@@ -28,8 +50,8 @@ export function createLogger(functionName: string) {
       timestamp,
       level,
       message,
-      ...entry.metadata,
-      ...additionalData
+      ...sanitizedMetadata,
+      ...sanitizedAdditional
     }));
   };
   
@@ -45,6 +67,9 @@ export function createLogger(functionName: string) {
       logToConsole(entry);
       
       try {
+        // Sanitize metadata before storing in database
+        const sanitizedMetadata = sanitizeForLogging(metadata);
+        
         // Store in function_logs table
         const { error, data } = await supabase.from('function_logs').insert({
           request_id,
@@ -52,7 +77,7 @@ export function createLogger(functionName: string) {
           timestamp,
           level,
           message,
-          metadata
+          metadata: sanitizedMetadata
         }).select();
         
         if (error) {

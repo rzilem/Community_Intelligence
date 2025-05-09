@@ -35,20 +35,73 @@ serve(async (req) => {
   }
 
   try {
+    // Log request headers for debugging (excluding sensitive data)
+    console.log("Request headers:", Object.fromEntries(
+      [...req.headers.entries()]
+        .filter(([key]) => !key.toLowerCase().includes('authorization'))
+        .map(([key, value]) => [key, value])
+    ));
+    
+    // Check authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error("Missing Authorization header");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Missing Authorization header"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
     // Parse the request payload
-    const { content, contentType, metadata = {}, apiKey } = await req.json() as ExtractRequest;
+    const requestData = await req.json().catch(error => {
+      console.error("Error parsing request JSON:", error);
+      throw new Error("Invalid JSON in request body");
+    });
+    
+    const { content, contentType, metadata = {}, apiKey } = requestData as ExtractRequest;
     
     // Use API key from request body if provided, otherwise use environment variable
     if (apiKey) {
       openAiApiKey = apiKey;
+      console.log("Using API key from request body");
+    } else {
+      console.log("Using API key from environment variable");
     }
     
     if (!openAiApiKey) {
-      throw new Error("OpenAI API key not configured");
+      console.error("OpenAI API key not configured");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "OpenAI API key not configured"
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
     
-    if (!content || !contentType) {
-      throw new Error("Missing required parameters: content and contentType");
+    if (!content) {
+      console.error("Missing content parameter");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Missing required parameter: content"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
+    if (!contentType) {
+      console.error("Missing contentType parameter");
+      return new Response(JSON.stringify({
+        success: false,
+        error: "Missing required parameter: contentType"
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
     
     console.log(`Extracting data from ${contentType} content, length: ${content.length}`);

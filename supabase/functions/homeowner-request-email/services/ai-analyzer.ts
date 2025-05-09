@@ -24,6 +24,7 @@ export async function analyzeRequestWithAI(
 
   try {
     console.log("Sending homeowner request content to OpenAI extractor function");
+    console.log("Authorization header will use SUPABASE_SERVICE_ROLE_KEY");
     
     // Call the unified OpenAI extractor function with the correct authorization header
     const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
