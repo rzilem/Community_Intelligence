@@ -59,11 +59,12 @@ serve(async (req) => {
       query = query.eq('level', level);
     }
     
-    // Get logs with filters applied
+    // Apply ordering and pagination
+    // Fix: First apply the order, then chain limit and offset as separate operations
     const { data: logs, error } = await query
       .order('timestamp', { ascending: false })
       .limit(limit)
-      .offset(offset);
+      .range(offset, offset + limit - 1);  // Using range instead of offset
     
     if (error) {
       await logger.error(requestId, "Error retrieving logs", { error });

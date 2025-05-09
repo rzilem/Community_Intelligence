@@ -1,6 +1,7 @@
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 /**
  * Analyzes homeowner request content using OpenAI to extract structured information
@@ -24,23 +25,24 @@ export async function analyzeRequestWithAI(
   try {
     console.log("Sending homeowner request content to OpenAI extractor function");
     
-    // Call the unified OpenAI extractor function
+    // Call the unified OpenAI extractor function with the correct authorization header
     const response = await fetch(`${SUPABASE_URL}/functions/v1/openai-extractor`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`
+        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
       },
       body: JSON.stringify({
         content: content,
         contentType: "homeowner-request",
-        metadata: { subject, from }
+        metadata: { subject, from },
+        apiKey: OPENAI_API_KEY // Pass the OpenAI API key in the request body
       })
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      throw new Error(`OpenAI extractor API error: ${errorData}`);
+      throw new Error(`OpenAI extractor API error (${response.status}): ${errorData}`);
     }
 
     const data = await response.json();
