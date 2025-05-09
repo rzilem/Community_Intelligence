@@ -104,58 +104,55 @@ const SystemSettings = () => {
       }
     >
       <div className="mt-6">
-        {/* Properly wrapping all tabs content inside a Tabs component */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <SystemSettingsTabs 
             activeTab={activeTab}
             onTabChange={setActiveTab}
           />
           
-          <div className="mt-6">
-            <TabsContent value="appearance">
-              <SystemSettingsContent 
-                settings={unsavedSettings.appearance} 
-                onUpdate={handleAppearanceChange}
-                section="appearance"
-              />
-            </TabsContent>
+          <TabsContent value="appearance">
+            <SystemSettingsContent 
+              settings={unsavedSettings.appearance} 
+              onUpdate={handleAppearanceChange}
+              section="appearance"
+            />
+          </TabsContent>
             
-            <TabsContent value="notifications">
-              <SystemSettingsContent 
-                settings={unsavedSettings.notifications} 
-                onUpdate={handleNotificationsChange}
-                section="notifications"
-              />
-            </TabsContent>
+          <TabsContent value="notifications">
+            <SystemSettingsContent 
+              settings={unsavedSettings.notifications} 
+              onUpdate={handleNotificationsChange}
+              section="notifications"
+            />
+          </TabsContent>
             
-            <TabsContent value="security">
-              <SystemSettingsContent 
-                settings={unsavedSettings.security} 
-                onUpdate={handleSecurityChange}
-                section="security"
-              />
-            </TabsContent>
+          <TabsContent value="security">
+            <SystemSettingsContent 
+              settings={unsavedSettings.security} 
+              onUpdate={handleSecurityChange}
+              section="security"
+            />
+          </TabsContent>
             
-            <TabsContent value="system">
-              <SystemSettingsContent 
-                settings={unsavedSettings.preferences} 
-                onUpdate={handlePreferencesChange}
-                section="preferences"
-              />
-            </TabsContent>
+          <TabsContent value="system">
+            <SystemSettingsContent 
+              settings={unsavedSettings.preferences} 
+              onUpdate={handlePreferencesChange}
+              section="preferences"
+            />
+          </TabsContent>
             
-            <TabsContent value="integrations">
-              <SystemSettingsContent 
-                settings={unsavedSettings.integrations} 
-                onUpdate={handleIntegrationsChange}
-                section="integrations"
-              />
-            </TabsContent>
+          <TabsContent value="integrations">
+            <SystemSettingsContent 
+              settings={unsavedSettings.integrations} 
+              onUpdate={handleIntegrationsChange}
+              section="integrations"
+            />
+          </TabsContent>
             
-            <TabsContent value="ai">
-              <AISettingsSection />
-            </TabsContent>
-          </div>
+          <TabsContent value="ai">
+            <AISettingsSection />
+          </TabsContent>
         </Tabs>
       </div>
     </PageTemplate>

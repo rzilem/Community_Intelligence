@@ -61,12 +61,8 @@ const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
   }
   
   if (section === 'integrations') {
-    return (
-      <IntegrationsTab 
-        settings={settings as IntegrationSettings} 
-        onChange={onUpdate}
-      />
-    );
+    // IntegrationsTab manages its own state, so we don't pass settings or onChange
+    return <IntegrationsTab />;
   }
   
   return null;
