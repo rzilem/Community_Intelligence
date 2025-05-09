@@ -2890,6 +2890,8 @@ export type Database = {
       }
       invoices: {
         Row: {
+          ai_confidence: Json | null
+          ai_line_items: Json | null
           amount: number
           association_id: string | null
           association_name: string | null
@@ -2917,6 +2919,8 @@ export type Database = {
           vendor: string
         }
         Insert: {
+          ai_confidence?: Json | null
+          ai_line_items?: Json | null
           amount: number
           association_id?: string | null
           association_name?: string | null
@@ -2944,6 +2948,8 @@ export type Database = {
           vendor: string
         }
         Update: {
+          ai_confidence?: Json | null
+          ai_line_items?: Json | null
           amount?: number
           association_id?: string | null
           association_name?: string | null
