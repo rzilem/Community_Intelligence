@@ -32,8 +32,10 @@ export const useLogViewer = (initialFunction?: string) => {
         search: searchQuery
       });
       
-      // Build URL parameters properly
+      // Build URL for the function invocation
+      let url = 'view-logs';
       const urlParams = new URLSearchParams();
+      
       if (selectedFunction) {
         urlParams.append('function_name', selectedFunction);
       }
@@ -42,10 +44,15 @@ export const useLogViewer = (initialFunction?: string) => {
       }
       urlParams.append('limit', '100'); // Default limit
       
-      // Use the correct parameter format for invoking functions in Supabase
-      const { data, error } = await supabase.functions.invoke('view-logs', {
+      // If we have any params, append them to the URL
+      const queryString = urlParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+      
+      // Invoke the view-logs function
+      const { data, error } = await supabase.functions.invoke(url, {
         method: 'GET',
-        // Pass the query string directly in the URL with a properly formatted search params object
         headers: { 'Content-Type': 'application/json' }
       });
       

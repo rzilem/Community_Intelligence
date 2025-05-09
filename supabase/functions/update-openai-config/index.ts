@@ -56,7 +56,7 @@ serve(async (req) => {
       
       // Call the correct Supabase REST API endpoint to update secrets
       // The correct endpoint should be /rest/v1/functions/secrets
-      const secretsResponse = await fetch(`${supabaseUrl}/rest/v1/secrets`, {
+      const secretsResponse = await fetch(`${supabaseUrl}/rest/v1/functions/secrets`, {
         method: 'POST',
         headers: secretsHeaders,
         body: JSON.stringify({ 
