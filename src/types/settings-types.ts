@@ -56,10 +56,19 @@ export interface IntegrationSettings {
   };
 }
 
+export interface WebhookSettings {
+  cloudmailin_webhook_url?: string;
+  cloudmailin_secret?: string;
+  webhook_secret?: string;
+}
+
 export interface SystemSettings {
   appearance: AppearanceSettings;
   notifications: NotificationSettings;
   security: SecuritySettings;
   preferences: SystemPreferences;
   integrations: IntegrationSettings;
+  webhook_settings: WebhookSettings;
 }
+
+export type SettingKey = 'appearance' | 'notifications' | 'security' | 'preferences' | 'integrations' | 'webhook_settings';

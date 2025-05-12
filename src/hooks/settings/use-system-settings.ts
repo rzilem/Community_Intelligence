@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,11 +7,12 @@ import {
   NotificationSettings, 
   SecuritySettings, 
   SystemPreferences,
-  SystemSettings
+  IntegrationSettings,
+  WebhookSettings,
+  SystemSettings,
+  SettingKey
 } from '@/types/settings-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-
-type SettingKey = 'appearance' | 'notifications' | 'security' | 'preferences' | 'integrations';
 
 // Default settings to use if we can't fetch from the database
 const defaultSettings: SystemSettings = {
@@ -46,6 +48,11 @@ const defaultSettings: SystemSettings = {
   },
   integrations: {
     integrationSettings: {}
+  },
+  webhook_settings: {
+    cloudmailin_webhook_url: '',
+    cloudmailin_secret: '',
+    webhook_secret: ''
   }
 };
 
