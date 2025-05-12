@@ -1,259 +1,179 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-
-interface TestResult {
-  success: boolean;
-  message: string;
-  requestId: string;
-  authStatus: {
-    hasWebhookSecret: boolean;
-    isValidWebhook: boolean;
-    authMethod: string;
-  };
-  requestInfo: {
-    method: string;
-    url: string;
-    headers: Record<string, string>;
-  };
-  bodyData: any;
-  timestamp: string;
-}
+import { Badge } from '@/components/ui/badge';
+import { useSystemSetting } from '@/hooks/settings/use-system-settings';
 
 const WebhookTester = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [webhookKey, setWebhookKey] = useState('');
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [selectedEndpoint, setSelectedEndpoint] = useState('email-receiver');
-  const [jsonPayload, setJsonPayload] = useState('{\n  "from": "test@example.com",\n  "subject": "Test Email",\n  "text": "This is a test email"\n}');
+  const { data: webhookSettings } = useSystemSetting<{
+    webhook_secret?: string;
+    cloudmailin_secret?: string;
+  }>('webhook_settings');
   
-  const endpointOptions = [
-    { value: 'email-receiver', label: 'Email Receiver' },
-    { value: 'invoice-receiver', label: 'Invoice Receiver' },
-    { value: 'homeowner-request-email', label: 'Homeowner Request' },
-    { value: 'test-webhook', label: 'Test Webhook' }
-  ];
-
-  const handleTest = async () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [testResult, setTestResult] = useState<{
+    success?: boolean;
+    message?: string;
+    requestId?: string;
+    authStatus?: {
+      hasWebhookSecret: boolean;
+      isValidWebhook: boolean;
+      authMethod: string;
+    };
+    requestInfo?: {
+      method: string;
+      headers: Record<string, string>;
+    };
+  } | null>(null);
+  
+  const handleTestWebhook = async () => {
     setIsLoading(true);
     setTestResult(null);
     
     try {
-      // Get the root URL from supabase
-      const { data: { publicUrl } } = await supabase.storage.from('public').getPublicUrl('dummy');
-      // Extract the base URL
-      const baseUrl = publicUrl.split('/storage/')[0];
-      
-      // Determine target URL
-      let targetUrl = webhookUrl;
-      if (!targetUrl) {
-        targetUrl = `${baseUrl}/functions/v1/${selectedEndpoint}`;
-      }
-      
-      // Prepare headers
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       
-      if (webhookKey) {
-        headers['x-webhook-key'] = webhookKey;
+      // Add webhook key header if it exists
+      if (webhookSettings?.webhook_secret) {
+        headers['x-webhook-key'] = webhookSettings.webhook_secret;
       }
       
-      // Parse JSON payload
-      let payload = {};
-      try {
-        payload = JSON.parse(jsonPayload);
-      } catch (error) {
-        toast.error('Invalid JSON payload. Using empty object instead.');
-      }
-      
-      // Make the request
-      const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(payload)
+      // Call the test webhook function
+      const { data, error } = await supabase.functions.invoke('test-webhook', {
+        body: { testData: 'This is a webhook test', timestamp: new Date().toISOString() },
+        headers
       });
       
-      const result = await response.json();
-      
-      setTestResult(result);
-      
-      if (response.ok) {
-        toast.success('Webhook test completed successfully!');
-      } else {
-        toast.error(`Webhook test failed: ${result.error || 'Unknown error'}`);
+      if (error) {
+        throw new Error(`Failed to test webhook: ${error.message}`);
       }
       
-    } catch (error) {
+      setTestResult(data);
+    } catch (error: any) {
       console.error('Error testing webhook:', error);
-      toast.error('Error testing webhook. Check console for details.');
+      setTestResult({
+        success: false,
+        message: error.message || 'An unknown error occurred'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getAuthStatusLabel = () => {
+    if (!testResult?.authStatus) return null;
+    
+    const { isValidWebhook, authMethod } = testResult.authStatus;
+    
+    if (!isValidWebhook) {
+      return (
+        <Badge variant="destructive" className="ml-2">
+          Authentication Failed
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="success" className="ml-2">
+        Auth: {authMethod}
+      </Badge>
+    );
+  };
+  
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <CardTitle>Webhook Tester</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          <span>Test Webhook Configuration</span>
+          {testResult?.success && <CheckCircle className="h-5 w-5 text-green-500" />}
+        </CardTitle>
         <CardDescription>
-          Test your webhook endpoints with different authentication methods
+          Verify your webhook configuration is working correctly
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="endpoint" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="endpoint">Endpoint</TabsTrigger>
-            <TabsTrigger value="auth">Authentication</TabsTrigger>
-            <TabsTrigger value="payload">Payload</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="endpoint" className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <Label htmlFor="endpoint-selector">Select Endpoint</Label>
-                <select 
-                  className="mt-1 w-full p-2 border rounded-md" 
-                  value={selectedEndpoint}
-                  onChange={(e) => setSelectedEndpoint(e.target.value)}
-                >
-                  {endpointOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="grid gap-2">
-                <Label htmlFor="custom-url">Custom URL (Optional)</Label>
-                <Input 
-                  id="custom-url" 
-                  placeholder="https://your-project.supabase.co/functions/v1/endpoint" 
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Leave blank to use the selected endpoint above
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="auth" className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="webhook-key">Webhook Secret / Key</Label>
-              <Input 
-                id="webhook-key" 
-                placeholder="Enter the webhook secret key" 
-                value={webhookKey}
-                onChange={(e) => setWebhookKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                This will be sent as the x-webhook-key header with your request
-              </p>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="payload" className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="json-payload">JSON Payload</Label>
-              <Textarea 
-                id="json-payload" 
-                rows={10} 
-                className="font-mono text-sm"
-                value={jsonPayload}
-                onChange={(e) => setJsonPayload(e.target.value)}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6">
-          <Button 
-            onClick={handleTest}
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Testing...
-              </>
-            ) : 'Test Webhook'}
-          </Button>
-        </div>
+        {!webhookSettings?.webhook_secret && (
+          <Alert variant="warning" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>No webhook secret configured</AlertTitle>
+            <AlertDescription>
+              Configure a webhook secret key in the settings above first for secure webhook authentication.
+            </AlertDescription>
+          </Alert>
+        )}
         
         {testResult && (
-          <div className="mt-6">
-            <div className="mb-2 flex items-center">
-              <h3 className="text-lg font-semibold">Test Result</h3>
+          <div className="mb-4 space-y-3 border rounded-md p-3">
+            <div className="flex items-center">
+              <strong className="mr-2">Status:</strong>
               {testResult.success ? (
-                <CheckCircle2 className="ml-2 h-5 w-5 text-green-500" />
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  Success
+                </Badge>
               ) : (
-                <AlertCircle className="ml-2 h-5 w-5 text-red-500" />
+                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                  Failed
+                </Badge>
               )}
+              {getAuthStatusLabel()}
             </div>
             
-            <Card className="mb-4">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div>
-                    <span className="font-semibold">Status:</span> 
-                    <span className={testResult.success ? "text-green-500 ml-1" : "text-red-500 ml-1"}>
-                      {testResult.success ? 'Success' : 'Failed'}
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold">Message:</span>
-                    <span className="ml-1">{testResult.message}</span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold">Request ID:</span>
-                    <span className="ml-1">{testResult.requestId}</span>
-                  </div>
-                  
-                  <div>
-                    <span className="font-semibold">Timestamp:</span>
-                    <span className="ml-1">{new Date(testResult.timestamp).toLocaleString()}</span>
-                  </div>
-                  
-                  {testResult.authStatus && (
-                    <div className="mt-2">
-                      <div className="font-semibold mb-1">Authentication:</div>
-                      <div className="bg-muted p-2 rounded-md text-sm">
-                        <div>Has Webhook Secret: {testResult.authStatus.hasWebhookSecret ? 'Yes' : 'No'}</div>
-                        <div>Valid Authentication: {testResult.authStatus.isValidWebhook ? 'Yes' : 'No'}</div>
-                        <div>Auth Method: {testResult.authStatus.authMethod}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {testResult.requestId && (
+              <div className="text-sm">
+                <strong>Request ID:</strong> {testResult.requestId}
+              </div>
+            )}
             
-            <details className="mt-2">
-              <summary className="cursor-pointer font-medium text-sm text-muted-foreground">
-                View Full Response
-              </summary>
-              <pre className="mt-2 bg-muted p-4 rounded-md overflow-auto text-xs max-h-96">
-                {JSON.stringify(testResult, null, 2)}
-              </pre>
-            </details>
+            {testResult.message && (
+              <div className="text-sm">
+                <strong>Message:</strong> {testResult.message}
+              </div>
+            )}
+            
+            {testResult.authStatus && (
+              <div className="text-sm">
+                <strong>Webhook Secret:</strong>{' '}
+                {testResult.authStatus.hasWebhookSecret ? 'Configured' : 'Not configured'}
+              </div>
+            )}
+            
+            {testResult.requestInfo && (
+              <div className="text-sm">
+                <strong>Request Method:</strong> {testResult.requestInfo.method}
+              </div>
+            )}
           </div>
         )}
+        
+        <p className="text-sm text-muted-foreground mb-4">
+          This test sends a request to your webhook endpoint with your configured webhook secret 
+          to verify the authentication is working properly.
+        </p>
       </CardContent>
+      <CardFooter>
+        <Button 
+          onClick={handleTestWebhook} 
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Testing...
+            </>
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" />
+              Test Webhook Configuration
+            </>
+          )}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

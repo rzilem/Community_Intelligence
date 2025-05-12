@@ -48,5 +48,8 @@ verify_jwt = false
 [experimental.functions.homeowner-request-email]
 verify_jwt = false
 
+[experimental.functions.test-webhook]
+verify_jwt = false
+
 [experimental.functions.test-auth]
 verify_jwt = false
