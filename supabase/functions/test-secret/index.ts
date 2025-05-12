@@ -13,7 +13,7 @@ const corsHeaders = {
 serve(async (req) => {
   // Generate unique request ID
   const requestId = generateRequestId();
-  const logger = createLogger("update-secret");
+  const logger = createLogger("test-secret");
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -58,19 +58,19 @@ serve(async (req) => {
       );
     }
     
-    const { name, value } = body;
+    const { name } = body;
     
     // Validate inputs
-    if (!name || !value) {
+    if (!name) {
       await logger.error(requestId, "Missing required fields", 
-        new Error("Name and value are required"),
+        new Error("Secret name is required"),
         { name: !!name }
       );
       
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Missing required fields. Name and value are required.",
+          error: "Missing required fields. Secret name is required.",
           requestId
         }),
         {
@@ -80,10 +80,9 @@ serve(async (req) => {
       );
     }
     
-    // Log the update attempt (redact the value)
-    await logger.info(requestId, "Updating secret", {
-      name,
-      valueProvided: value ? "Yes" : "No"
+    // Log the check attempt
+    await logger.info(requestId, "Checking secret existence", {
+      name
     });
     
     // Initialize Supabase admin client
@@ -103,20 +102,43 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     try {
-      // Update the secret - in a try/catch to handle errors properly
-      const result = await supabaseAdmin.functions.setSecret(name, value);
+      // Try to retrieve the secret value - if there's no error, the secret exists
+      // We don't need to return the actual value, just check if it exists
+      const secretResult = await supabaseAdmin.functions.invokeFunction('secrets', {
+        name
+      });
       
-      await logger.info(requestId, "Secret updated successfully", { 
+      if (secretResult.error) {
+        await logger.warn(requestId, "Secret does not exist", {
+          name,
+          error: secretResult.error
+        });
+        
+        return new Response(
+          JSON.stringify({
+            success: false,
+            exists: false,
+            message: `Secret "${name}" does not exist`,
+            requestId
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200
+          }
+        );
+      }
+      
+      await logger.info(requestId, "Secret existence check completed", {
         name,
-        result: JSON.stringify(result)
+        exists: true
       });
       
       // Return success response
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Secret updated successfully",
-          name,
+          exists: true,
+          message: `Secret "${name}" exists`,
           requestId
         }),
         {
@@ -125,9 +147,7 @@ serve(async (req) => {
         }
       );
     } catch (supabaseError) {
-      await logger.error(requestId, "Supabase error while updating secret", supabaseError, {
-        errorMessage: supabaseError instanceof Error ? supabaseError.message : "Unknown error"
-      });
+      await logger.error(requestId, "Error checking secret", supabaseError);
       
       return new Response(
         JSON.stringify({
@@ -142,7 +162,7 @@ serve(async (req) => {
       );
     }
   } catch (error) {
-    await logger.error(requestId, "Error updating secret", error);
+    await logger.error(requestId, "Error in test-secret function", error);
     
     return new Response(
       JSON.stringify({

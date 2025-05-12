@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useSystemSetting, useUpdateSystemSetting } from '@/hooks/settings/use-system-settings';
-import { Copy, Info, Save } from 'lucide-react';
+import { Copy, Info, Save, Shield, Loader2 } from 'lucide-react';
 import WebhookTester from './WebhookTester';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -31,6 +31,8 @@ const WebhookSettings = () => {
   
   const [isSavingSecret, setIsSavingSecret] = useState(false);
   const [secretSaveError, setSecretSaveError] = useState<string | null>(null);
+  const [secretSaveSuccess, setSecretSaveSuccess] = useState(false);
+  const [isSettingsSaved, setIsSettingsSaved] = useState(false);
 
   // Generate the webhook URLs
   const [webhookUrls, setWebhookUrls] = useState<{[key: string]: string}>({});
@@ -68,16 +70,15 @@ const WebhookSettings = () => {
     fetchUrls();
   }, []);
 
-  const handleSave = async () => {
-    setSecretSaveError(null);
+  // This function only saves to the database
+  const handleSaveDatabaseSettings = async () => {
+    setIsSettingsSaved(false);
     
-    // First save settings to the database
+    // Save settings to the database
     updateWebhookSettings(settings, {
-      onSuccess: async () => {
+      onSuccess: () => {
         toast.success('Webhook settings saved to database');
-        
-        // Then try to save secrets to Supabase
-        await saveSecretsToSupabase();
+        setIsSettingsSaved(true);
       },
       onError: (error) => {
         toast.error(`Failed to save webhook settings to database: ${error.message}`);
@@ -85,27 +86,38 @@ const WebhookSettings = () => {
     });
   };
   
+  // This function only saves secrets to Supabase
   const saveSecretsToSupabase = async () => {
     setIsSavingSecret(true);
     setSecretSaveError(null);
+    setSecretSaveSuccess(false);
     
     try {
       const promises = [];
+      let hasSuccessfulSave = false;
       
       // Save the webhook secret if it exists
       if (settings.webhook_secret) {
-        promises.push(saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret));
+        const webhookResult = await saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret);
+        if (webhookResult.success) {
+          hasSuccessfulSave = true;
+        }
       }
       
       // Save the CloudMailin secret if it exists
       if (settings.cloudmailin_secret) {
-        promises.push(saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret));
+        const cloudMailinResult = await saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret);
+        if (cloudMailinResult.success) {
+          hasSuccessfulSave = true;
+        }
       }
       
-      // Wait for all promises to resolve
-      await Promise.all(promises);
-      
-      toast.success('All secrets saved successfully');
+      if (hasSuccessfulSave) {
+        setSecretSaveSuccess(true);
+        toast.success('Secrets saved successfully to Supabase');
+      } else {
+        toast.warning('No secrets were saved');
+      }
     } catch (error: any) {
       setSecretSaveError(error.message);
       console.error('Error saving secrets to Supabase:', error);
@@ -132,11 +144,13 @@ const WebhookSettings = () => {
       
       // Get the data from the response
       if (!data) {
+        console.error('No response received from update-secret function');
         throw new Error('No response received from update-secret function');
       }
       
       // Check if the data indicates success
       if (!data.success) {
+        console.error('Secret save failed:', data);
         throw new Error(data.error || 'Unknown error saving secret');
       }
       
@@ -146,6 +160,14 @@ const WebhookSettings = () => {
       console.error(`Error saving ${name} to Supabase:`, error);
       throw error;
     }
+  };
+
+  const handleSaveAll = async () => {
+    // First save the database settings
+    await handleSaveDatabaseSettings();
+    
+    // Then save the secrets
+    await saveSecretsToSupabase();
   };
 
   const handleCopyUrl = (url: string) => {
@@ -205,6 +227,16 @@ const WebhookSettings = () => {
             />
           </div>
 
+          {secretSaveSuccess && (
+            <Alert className="bg-green-50 border-green-200 text-green-800">
+              <Shield className="h-4 w-4 text-green-600" />
+              <AlertTitle>Secrets saved successfully</AlertTitle>
+              <AlertDescription>
+                Your webhook secrets have been securely stored in Supabase.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {secretSaveError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4 mr-2" />
@@ -249,18 +281,42 @@ const WebhookSettings = () => {
             </div>
           </div>
           
-          <Button 
-            onClick={handleSave} 
-            disabled={isPending || isSavingSecret}
-            className="mt-4"
-          >
-            {(isPending || isSavingSecret) ? 'Saving...' : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Webhook Settings
-              </>
-            )}
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button 
+              onClick={handleSaveAll} 
+              disabled={isPending || isSavingSecret}
+            >
+              {(isPending || isSavingSecret) ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Webhook Settings
+                </>
+              )}
+            </Button>
+            
+            <Button 
+              onClick={saveSecretsToSupabase} 
+              disabled={isSavingSecret || !settings.webhook_secret && !settings.cloudmailin_secret}
+              variant="outline"
+            >
+              {isSavingSecret ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving Secrets...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-4 w-4 mr-2" />
+                  Save Secrets Only
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
       

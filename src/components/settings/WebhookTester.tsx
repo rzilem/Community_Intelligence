@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle, Send, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Send, Loader2, Shield } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
@@ -53,7 +53,11 @@ const WebhookTester = () => {
       
       // Call the test webhook function with proper error handling
       const { data, error } = await supabase.functions.invoke('test-webhook', {
-        body: { testData: 'This is a webhook test', timestamp: new Date().toISOString() },
+        body: { 
+          testData: 'This is a webhook test', 
+          timestamp: new Date().toISOString(),
+          secretTest: true
+        },
         headers
       });
       
@@ -123,7 +127,7 @@ const WebhookTester = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>No webhook secret configured</AlertTitle>
             <AlertDescription>
-              Configure a webhook secret key in the settings above first for secure webhook authentication.
+              Configure a webhook secret key in the settings above and make sure to click "Save Webhook Settings" button.
             </AlertDescription>
           </Alert>
         )}

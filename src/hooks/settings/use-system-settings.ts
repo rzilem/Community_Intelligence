@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,7 +102,8 @@ export const useSystemSetting = <T>(key: SettingKey) => {
         console.error(`Error in useSystemSetting for ${key}:`, err);
         return (defaultSettings[key] as unknown) as T;
       }
-    }
+    },
+    staleTime: 60000, // 1 minute
   });
 
   return {
@@ -124,7 +124,7 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
         throw new Error('Only administrators can update system settings');
       }
       
-      console.log(`Updating system setting ${key} with value:`, newValue);
+      console.log(`Updating system setting ${key} with value:`, JSON.stringify(newValue, null, 2));
       
       // Use the edge function to update settings
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/settings/${key}`, {
@@ -145,7 +145,7 @@ export const useUpdateSystemSetting = <T>(key: SettingKey) => {
       console.log(`Successfully updated system setting: ${key}`);
     },
     onSuccess: () => {
-      toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} settings updated successfully`);
+      toast.success(`${key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')} settings updated successfully`);
       queryClient.invalidateQueries({ queryKey: ['systemSettings', key] });
     },
     onError: (error) => {
