@@ -69,16 +69,18 @@ const WebhookSettings = () => {
   }, []);
 
   const handleSave = async () => {
+    setSecretSaveError(null);
+    
     // First save settings to the database
     updateWebhookSettings(settings, {
       onSuccess: async () => {
-        toast.success('Webhook settings saved successfully');
+        toast.success('Webhook settings saved to database');
         
         // Then try to save secrets to Supabase
         await saveSecretsToSupabase();
       },
       onError: (error) => {
-        toast.error(`Failed to save webhook settings: ${error.message}`);
+        toast.error(`Failed to save webhook settings to database: ${error.message}`);
       }
     });
   };
@@ -88,18 +90,26 @@ const WebhookSettings = () => {
     setSecretSaveError(null);
     
     try {
+      const promises = [];
+      
       // Save the webhook secret if it exists
       if (settings.webhook_secret) {
-        await saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret);
+        promises.push(saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret));
       }
       
       // Save the CloudMailin secret if it exists
       if (settings.cloudmailin_secret) {
-        await saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret);
+        promises.push(saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret));
       }
+      
+      // Wait for all promises to resolve
+      await Promise.all(promises);
+      
+      toast.success('All secrets saved successfully');
     } catch (error: any) {
       setSecretSaveError(error.message);
       console.error('Error saving secrets to Supabase:', error);
+      toast.error(`Error saving secrets: ${error.message}`);
     } finally {
       setIsSavingSecret(false);
     }
@@ -107,28 +117,33 @@ const WebhookSettings = () => {
   
   const saveAsSupabaseSecret = async (name: string, value: string) => {
     try {
+      console.log(`Saving ${name} to Supabase secrets...`);
+      
       // Call the update-secret function with proper error handling
-      const response = await supabase.functions.invoke('update-secret', {
+      const { data, error } = await supabase.functions.invoke('update-secret', {
         body: { name, value }
       });
       
       // Check for errors from the edge function
-      if (response.error) {
-        throw new Error(`Failed to save secret: ${response.error.message}`);
+      if (error) {
+        console.error(`Error from Edge Function:`, error);
+        throw new Error(`Failed to save secret: ${error.message}`);
       }
       
       // Get the data from the response
-      const data = response.data;
-      
-      // Check if the data indicates success
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Unknown error saving secret');
+      if (!data) {
+        throw new Error('No response received from update-secret function');
       }
       
-      toast.success(`Secret ${name} saved to Supabase`);
+      // Check if the data indicates success
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error saving secret');
+      }
+      
+      console.log(`Secret ${name} saved successfully:`, data);
+      return data;
     } catch (error: any) {
       console.error(`Error saving ${name} to Supabase:`, error);
-      toast.error(`Error saving ${name} to Supabase: ${error.message || 'Unknown error'}`);
       throw error;
     }
   };

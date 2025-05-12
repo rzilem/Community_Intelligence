@@ -46,25 +46,32 @@ const WebhookTester = () => {
         headers['x-webhook-key'] = webhookSettings.webhook_secret;
       }
       
+      console.log('Testing webhook with headers:', JSON.stringify({
+        contentType: headers['Content-Type'],
+        hasWebhookKey: !!headers['x-webhook-key']
+      }));
+      
       // Call the test webhook function with proper error handling
-      const response = await supabase.functions.invoke('test-webhook', {
+      const { data, error } = await supabase.functions.invoke('test-webhook', {
         body: { testData: 'This is a webhook test', timestamp: new Date().toISOString() },
         headers
       });
       
-      if (response.error) {
-        throw new Error(`Failed to test webhook: ${response.error.message}`);
+      console.log('Webhook test response:', { data, error });
+      
+      if (error) {
+        throw new Error(`Failed to test webhook: ${error.message}`);
       }
       
-      setTestResult(response.data || { 
+      setTestResult(data || { 
         success: false, 
         message: 'No data returned from webhook test' 
       });
       
-      if (response.data?.success) {
+      if (data?.success) {
         toast.success('Webhook test completed successfully');
-      } else if (response.data) {
-        toast.error(`Webhook test failed: ${response.data.message || 'Unknown error'}`);
+      } else if (data) {
+        toast.error(`Webhook test failed: ${data.message || 'Unknown error'}`);
       }
     } catch (error: any) {
       console.error('Error testing webhook:', error);

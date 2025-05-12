@@ -115,13 +115,13 @@ serve(async (req) => {
           status: 200
         }
       );
-    } catch (supabaseError: any) {
+    } catch (supabaseError) {
       await logger.error(requestId, "Supabase error while updating secret", supabaseError);
       
       return new Response(
         JSON.stringify({
           success: false,
-          error: `Supabase error: ${supabaseError.message || "Unknown Supabase error"}`,
+          error: supabaseError instanceof Error ? supabaseError.message : "Unknown Supabase error",
           requestId
         }),
         {
@@ -130,13 +130,13 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     await logger.error(requestId, "Error updating secret", error);
     
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || "Unknown error",
+        error: error instanceof Error ? error.message : "Unknown error",
         requestId
       }),
       {
