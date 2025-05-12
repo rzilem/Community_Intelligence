@@ -29,6 +29,7 @@ const WebhookTester = () => {
       method: string;
       headers: Record<string, string>;
     };
+    error?: string;
   } | null>(null);
   
   const handleTestWebhook = async () => {
@@ -45,26 +46,32 @@ const WebhookTester = () => {
         headers['x-webhook-key'] = webhookSettings.webhook_secret;
       }
       
-      // Call the test webhook function
-      const { data, error } = await supabase.functions.invoke('test-webhook', {
+      // Call the test webhook function with proper error handling
+      const response = await supabase.functions.invoke('test-webhook', {
         body: { testData: 'This is a webhook test', timestamp: new Date().toISOString() },
         headers
       });
       
-      if (error) {
-        throw new Error(`Failed to test webhook: ${error.message}`);
+      if (response.error) {
+        throw new Error(`Failed to test webhook: ${response.error.message}`);
       }
       
-      setTestResult(data);
+      setTestResult(response.data || { 
+        success: false, 
+        message: 'No data returned from webhook test' 
+      });
       
-      if (data.success) {
+      if (response.data?.success) {
         toast.success('Webhook test completed successfully');
+      } else if (response.data) {
+        toast.error(`Webhook test failed: ${response.data.message || 'Unknown error'}`);
       }
     } catch (error: any) {
       console.error('Error testing webhook:', error);
       setTestResult({
         success: false,
-        message: error.message || 'An unknown error occurred'
+        message: error.message || 'An unknown error occurred',
+        error: error.toString()
       });
       toast.error(`Webhook test failed: ${error.message || 'Unknown error'}`);
     } finally {
@@ -139,6 +146,12 @@ const WebhookTester = () => {
             {testResult.message && (
               <div className="text-sm">
                 <strong>Message:</strong> {testResult.message}
+              </div>
+            )}
+            
+            {testResult.error && (
+              <div className="text-sm text-red-600">
+                <strong>Error:</strong> {testResult.error}
               </div>
             )}
             

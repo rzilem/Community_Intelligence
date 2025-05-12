@@ -97,12 +97,8 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     try {
-      // Update the secret
-      const { error } = await supabaseAdmin.functions.setSecret(name, value);
-      
-      if (error) {
-        throw error;
-      }
+      // Update the secret - in a try/catch to handle errors properly
+      await supabaseAdmin.functions.setSecret(name, value);
       
       await logger.info(requestId, "Secret updated successfully", { name });
       

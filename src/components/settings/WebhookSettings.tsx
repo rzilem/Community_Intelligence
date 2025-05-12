@@ -10,6 +10,8 @@ import { useSystemSetting, useUpdateSystemSetting } from '@/hooks/settings/use-s
 import { Copy, Info, Save } from 'lucide-react';
 import WebhookTester from './WebhookTester';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface WebhookSettings {
   cloudmailin_webhook_url?: string;
@@ -105,15 +107,21 @@ const WebhookSettings = () => {
   
   const saveAsSupabaseSecret = async (name: string, value: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('update-secret', {
+      // Call the update-secret function with proper error handling
+      const response = await supabase.functions.invoke('update-secret', {
         body: { name, value }
       });
       
-      if (error) {
-        throw error;
+      // Check for errors from the edge function
+      if (response.error) {
+        throw new Error(`Failed to save secret: ${response.error.message}`);
       }
       
-      if (!data?.success) {
+      // Get the data from the response
+      const data = response.data;
+      
+      // Check if the data indicates success
+      if (!data || !data.success) {
         throw new Error(data?.error || 'Unknown error saving secret');
       }
       
@@ -183,11 +191,14 @@ const WebhookSettings = () => {
           </div>
 
           {secretSaveError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
-              <p className="font-medium">Error saving secrets to Supabase:</p>
-              <p>{secretSaveError}</p>
-              <p className="mt-2">Your settings are saved locally but edge functions may not have access to them.</p>
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <AlertTitle>Error saving secrets to Supabase</AlertTitle>
+              <AlertDescription>
+                <p>{secretSaveError}</p>
+                <p className="mt-2">Your settings are saved locally but edge functions may not have access to them.</p>
+              </AlertDescription>
+            </Alert>
           )}
 
           <div className="pt-4 border-t">
