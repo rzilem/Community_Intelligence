@@ -7,6 +7,7 @@ import { AlertCircle, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { useSystemSetting } from '@/hooks/settings/use-system-settings';
+import { toast } from 'sonner';
 
 const WebhookTester = () => {
   const { data: webhookSettings } = useSystemSetting<{
@@ -55,12 +56,17 @@ const WebhookTester = () => {
       }
       
       setTestResult(data);
+      
+      if (data.success) {
+        toast.success('Webhook test completed successfully');
+      }
     } catch (error: any) {
       console.error('Error testing webhook:', error);
       setTestResult({
         success: false,
         message: error.message || 'An unknown error occurred'
       });
+      toast.error(`Webhook test failed: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

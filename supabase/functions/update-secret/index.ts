@@ -40,7 +40,25 @@ serve(async (req) => {
   
   try {
     // Parse request body
-    const { name, value } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      await logger.error(requestId, "Invalid JSON in request body", parseError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid JSON in request body",
+          requestId
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400
+        }
+      );
+    }
+    
+    const { name, value } = body;
     
     // Validate inputs
     if (!name || !value) {
@@ -69,33 +87,53 @@ serve(async (req) => {
     });
     
     // Initialize Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    // Update the secret
-    const { error } = await supabaseAdmin.functions.setSecret(name, value);
-    
-    if (error) {
-      throw error;
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase environment variables");
     }
     
-    await logger.info(requestId, "Secret updated successfully", { name });
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
-    // Return success response
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Secret updated successfully",
-        name,
-        requestId
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200
+    try {
+      // Update the secret
+      const { error } = await supabaseAdmin.functions.setSecret(name, value);
+      
+      if (error) {
+        throw error;
       }
-    );
+      
+      await logger.info(requestId, "Secret updated successfully", { name });
+      
+      // Return success response
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Secret updated successfully",
+          name,
+          requestId
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200
+        }
+      );
+    } catch (supabaseError: any) {
+      await logger.error(requestId, "Supabase error while updating secret", supabaseError);
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Supabase error: ${supabaseError.message || "Unknown Supabase error"}`,
+          requestId
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500
+        }
+      );
+    }
   } catch (error: any) {
     await logger.error(requestId, "Error updating secret", error);
     

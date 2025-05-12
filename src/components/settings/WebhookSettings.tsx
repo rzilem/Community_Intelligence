@@ -26,6 +26,9 @@ const WebhookSettings = () => {
     cloudmailin_secret: '',
     webhook_secret: ''
   });
+  
+  const [isSavingSecret, setIsSavingSecret] = useState(false);
+  const [secretSaveError, setSecretSaveError] = useState<string | null>(null);
 
   // Generate the webhook URLs
   const [webhookUrls, setWebhookUrls] = useState<{[key: string]: string}>({});
@@ -63,18 +66,14 @@ const WebhookSettings = () => {
     fetchUrls();
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    // First save settings to the database
     updateWebhookSettings(settings, {
-      onSuccess: () => {
+      onSuccess: async () => {
         toast.success('Webhook settings saved successfully');
         
-        // Also set the webhook secret as a Supabase secret
-        if (settings.webhook_secret) {
-          saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret);
-        }
-        if (settings.cloudmailin_secret) {
-          saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret);
-        }
+        // Then try to save secrets to Supabase
+        await saveSecretsToSupabase();
       },
       onError: (error) => {
         toast.error(`Failed to save webhook settings: ${error.message}`);
@@ -82,9 +81,31 @@ const WebhookSettings = () => {
     });
   };
   
+  const saveSecretsToSupabase = async () => {
+    setIsSavingSecret(true);
+    setSecretSaveError(null);
+    
+    try {
+      // Save the webhook secret if it exists
+      if (settings.webhook_secret) {
+        await saveAsSupabaseSecret('WEBHOOK_SECRET', settings.webhook_secret);
+      }
+      
+      // Save the CloudMailin secret if it exists
+      if (settings.cloudmailin_secret) {
+        await saveAsSupabaseSecret('CLOUDMAILIN_SECRET', settings.cloudmailin_secret);
+      }
+    } catch (error: any) {
+      setSecretSaveError(error.message);
+      console.error('Error saving secrets to Supabase:', error);
+    } finally {
+      setIsSavingSecret(false);
+    }
+  };
+  
   const saveAsSupabaseSecret = async (name: string, value: string) => {
     try {
-      const { error } = await supabase.functions.invoke('update-secret', {
+      const { data, error } = await supabase.functions.invoke('update-secret', {
         body: { name, value }
       });
       
@@ -92,10 +113,15 @@ const WebhookSettings = () => {
         throw error;
       }
       
+      if (!data?.success) {
+        throw new Error(data?.error || 'Unknown error saving secret');
+      }
+      
       toast.success(`Secret ${name} saved to Supabase`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving ${name} to Supabase:`, error);
-      toast.error(`Error saving ${name} to Supabase. Your settings are saved locally but edge functions may not have access to them.`);
+      toast.error(`Error saving ${name} to Supabase: ${error.message || 'Unknown error'}`);
+      throw error;
     }
   };
 
@@ -156,6 +182,14 @@ const WebhookSettings = () => {
             />
           </div>
 
+          {secretSaveError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
+              <p className="font-medium">Error saving secrets to Supabase:</p>
+              <p>{secretSaveError}</p>
+              <p className="mt-2">Your settings are saved locally but edge functions may not have access to them.</p>
+            </div>
+          )}
+
           <div className="pt-4 border-t">
             <h3 className="text-md font-semibold mb-2">Your Webhook Endpoints</h3>
             <div className="space-y-3">
@@ -191,10 +225,10 @@ const WebhookSettings = () => {
           
           <Button 
             onClick={handleSave} 
-            disabled={isPending}
+            disabled={isPending || isSavingSecret}
             className="mt-4"
           >
-            {isPending ? 'Saving...' : (
+            {(isPending || isSavingSecret) ? 'Saving...' : (
               <>
                 <Save className="h-4 w-4 mr-2" />
                 Save Webhook Settings
