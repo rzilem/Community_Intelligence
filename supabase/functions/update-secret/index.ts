@@ -103,12 +103,19 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     try {
-      // Update the secret - in a try/catch to handle errors properly
-      const result = await supabaseAdmin.functions.setSecret(name, value);
+      // Use the correct way to update secrets in Supabase
+      const { data, error } = await supabaseAdmin.rpc('set_secret', {
+        name: name,
+        secret: value
+      });
+      
+      if (error) {
+        throw error;
+      }
       
       await logger.info(requestId, "Secret updated successfully", { 
         name,
-        result: JSON.stringify(result)
+        success: true
       });
       
       // Return success response

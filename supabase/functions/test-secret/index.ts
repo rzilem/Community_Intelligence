@@ -102,16 +102,16 @@ serve(async (req) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     try {
-      // Try to retrieve the secret value - if there's no error, the secret exists
-      // We don't need to return the actual value, just check if it exists
-      const secretResult = await supabaseAdmin.functions.invokeFunction('secrets', {
-        name
+      // Use the correct way to retrieve secrets in Supabase
+      const { data, error } = await supabaseAdmin.rpc('get_secret', {
+        name: name
       });
       
-      if (secretResult.error) {
+      // If there's an error or no data, the secret doesn't exist
+      if (error || !data) {
         await logger.warn(requestId, "Secret does not exist", {
           name,
-          error: secretResult.error
+          error: error ? error.message : "No data returned"
         });
         
         return new Response(
