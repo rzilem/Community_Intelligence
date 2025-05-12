@@ -6,58 +6,56 @@ import { corsHeaders } from "../utils/cors-headers.ts";
 import { handleEmailData } from "../services/email-processor.ts";
 import { processAttachments } from "../services/attachment-processor.ts";
 import { storeInvoice } from "../services/invoice-service.ts";
-import { log } from "../utils/logging.ts";
+import { validateWebhookSecret, getRequestLogInfo } from "../../shared/webhook-auth.ts";
+import { generateRequestId } from "../../shared/logging.ts";
 
 export async function handleInvoiceEmail(req: Request, supabase: any): Promise<Response> {
   // Generate a unique request ID for tracking
-  const requestId = crypto.randomUUID();
+  const requestId = generateRequestId();
   const loggingService = new LoggingService(supabase);
   
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
-  }
-
   try {
-    // Log the request headers for debugging (redact any sensitive information)
-    const headersLog: Record<string, string> = {};
-    req.headers.forEach((value, key) => {
-      if (key.toLowerCase() === 'authorization') {
-        headersLog[key] = value.startsWith('Bearer ') ? 'Bearer [redacted]' : '[redacted]';
-      } else {
-        headersLog[key] = value;
-      }
-    });
-    
-    await loggingService.logInfo(requestId, "Received invoice email webhook", { 
-      method: req.method,
-      headers: headersLog,
-      contentType: req.headers.get('content-type')
-    });
-    
-    // Special handling for webhook requests from email providers
-    // Check for webhook signatures or other verification methods
-    const webhookKey = req.headers.get('x-webhook-key') || req.headers.get('webhook-signature');
-    if (webhookKey) {
-      await loggingService.logInfo(requestId, "Processing webhook request with custom authentication", {
-        hasWebhookKey: true
+    // Handle CORS preflight requests
+    if (req.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders,
       });
-      // Future enhancement: Implement webhook signature validation here
-    } else {
-      await loggingService.logInfo(requestId, "Processing standard request", {
-        hasWebhookKey: false,
-        hasAuthorization: !!req.headers.get('authorization')
-      });
+    }
+    
+    // Log the request information for debugging
+    const requestInfo = getRequestLogInfo(req);
+    await loggingService.logInfo(requestId, "Received invoice email webhook", requestInfo);
+    
+    // Check webhook authentication
+    const webhookSecret = Deno.env.get("WEBHOOK_SECRET") || Deno.env.get("CLOUDMAILIN_SECRET");
+    const isValidWebhook = validateWebhookSecret(req, webhookSecret);
+    
+    if (!isValidWebhook && !req.headers.has("authorization")) {
+      await loggingService.logError(requestId, "Webhook authentication failed", 
+        new Error("Missing or invalid webhook signature"),
+        { hasWebhookKey: !!req.headers.get('x-webhook-key') || !!req.headers.get('webhook-signature') }
+      );
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Unauthorized webhook request",
+          requestId
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 401 
+        }
+      );
     }
     
     // Log environment configuration (without exposing secrets)
     await loggingService.logInfo(requestId, "Environment configuration check", { 
       hasSupabaseUrl: !!Deno.env.get("SUPABASE_URL"),
       hasSupabaseServiceKey: !!Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
-      hasOpenAIKey: !!Deno.env.get("OPENAI_API_KEY")
+      hasOpenAIKey: !!Deno.env.get("OPENAI_API_KEY"),
+      hasWebhookSecret: !!webhookSecret
     });
     
     // Get email data from request - handle both JSON and multipart form data
@@ -76,7 +74,10 @@ export async function handleInvoiceEmail(req: Request, supabase: any): Promise<R
     const invoiceResult = await storeInvoice(processedEmailData.invoiceData, requestId, loggingService, supabase);
     
     return new Response(
-      JSON.stringify(invoiceResult),
+      JSON.stringify({
+        ...invoiceResult,
+        requestId
+      }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: invoiceResult.success ? 201 : 500
@@ -87,7 +88,8 @@ export async function handleInvoiceEmail(req: Request, supabase: any): Promise<R
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "Unknown error" 
+        error: error.message || "Unknown error",
+        requestId
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -114,7 +116,8 @@ async function parseRequestData(req: Request, requestId: string, loggingService:
           JSON.stringify({ 
             success: false, 
             error: "Empty email data", 
-            details: "The email webhook payload was empty or invalid" 
+            details: "The email webhook payload was empty or invalid",
+            requestId
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -144,7 +147,8 @@ async function parseRequestData(req: Request, requestId: string, loggingService:
           JSON.stringify({ 
             success: false, 
             error: "Invalid request format",
-            message: "Could not parse request body as multipart form data or JSON"
+            message: "Could not parse request body as multipart form data or JSON",
+            requestId
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },

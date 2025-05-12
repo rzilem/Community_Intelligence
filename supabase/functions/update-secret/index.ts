@@ -1,0 +1,114 @@
+
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createLogger, generateRequestId } from "../shared/logging.ts";
+
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS'
+};
+
+serve(async (req) => {
+  // Generate unique request ID
+  const requestId = generateRequestId();
+  const logger = createLogger("update-secret");
+  
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
+  }
+  
+  // Only allow POST requests
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Method not allowed",
+        requestId
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 405
+      }
+    );
+  }
+  
+  try {
+    // Parse request body
+    const { name, value } = await req.json();
+    
+    // Validate inputs
+    if (!name || !value) {
+      await logger.error(requestId, "Missing required fields", 
+        new Error("Name and value are required"),
+        { name: !!name }
+      );
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Missing required fields. Name and value are required.",
+          requestId
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400
+        }
+      );
+    }
+    
+    // Log the update attempt (redact the value)
+    await logger.info(requestId, "Updating secret", {
+      name,
+      valueProvided: value ? "Yes" : "No"
+    });
+    
+    // Initialize Supabase admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") || "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+    );
+    
+    // Update the secret
+    const { error } = await supabaseAdmin.functions.setSecret(name, value);
+    
+    if (error) {
+      throw error;
+    }
+    
+    await logger.info(requestId, "Secret updated successfully", { name });
+    
+    // Return success response
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Secret updated successfully",
+        name,
+        requestId
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200
+      }
+    );
+  } catch (error: any) {
+    await logger.error(requestId, "Error updating secret", error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message || "Unknown error",
+        requestId
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500
+      }
+    );
+  }
+});

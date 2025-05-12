@@ -108,8 +108,17 @@ export function createLogger(functionName: string) {
     /**
      * Log error level message with full error details including stack trace
      */
-    async error(requestId: string, message: string, metadata?: Record<string, any>): Promise<void> {
-      return this.log({ request_id: requestId, level: 'error', message, metadata });
+    async error(requestId: string, message: string, error?: Error, metadata?: Record<string, any>): Promise<void> {
+      let errorMetadata = { ...metadata };
+      if (error) {
+        errorMetadata = {
+          ...errorMetadata,
+          error_message: error.message,
+          error_name: error.name,
+          error_stack: error.stack
+        };
+      }
+      return this.log({ request_id: requestId, level: 'error', message, metadata: errorMetadata });
     },
     
     /**
@@ -126,4 +135,11 @@ export function createLogger(functionName: string) {
       return this.log({ request_id: requestId, level: 'debug', message, metadata });
     }
   };
+}
+
+/**
+ * Helper to create a unique request ID
+ */
+export function generateRequestId(): string {
+  return crypto.randomUUID();
 }

@@ -38,5 +38,15 @@ port = 54327
 enabled = true
 port = 54328
 
+# Disable JWT verification for webhook functions
+[experimental.functions.email-receiver]
+verify_jwt = false
+
+[experimental.functions.invoice-receiver]
+verify_jwt = false
+
+[experimental.functions.homeowner-request-email]
+verify_jwt = false
+
 [experimental.functions.test-auth]
 verify_jwt = false

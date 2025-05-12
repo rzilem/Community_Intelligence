@@ -1,55 +1,46 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
-import { createLogger } from "../shared/logging.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Set up CORS headers
+// Define CORS headers for browser access
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 };
 
 serve(async (req) => {
-  // Create request ID for tracing
-  const requestId = crypto.randomUUID();
-  const logger = createLogger('view-logs');
-  
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
   }
-
+  
   try {
-    await logger.info(requestId, "View logs function called");
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    // Parse URL search params from the request URL
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Parse query parameters
     const url = new URL(req.url);
     const functionName = url.searchParams.get('function_name');
     const level = url.searchParams.get('level');
+    const requestId = url.searchParams.get('request_id');
     const limit = parseInt(url.searchParams.get('limit') || '100');
     const offset = parseInt(url.searchParams.get('offset') || '0');
     
-    // Log the query parameters received
-    console.log(JSON.stringify({
-      request_id: requestId,
-      function_name: 'view-logs',
-      timestamp: new Date().toISOString(),
-      level: null,
-      message: "Query parameters",
-      functionName,
-      limit,
-      offset
-    }));
+    console.log("Query parameters:", { functionName, level, requestId, limit, offset });
     
-    // Create a Supabase client with service role key for admin access
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Build the query to get logs
-    let query = supabase
-      .from('function_logs')
-      .select('*');
+    // Build query to fetch logs
+    let query = supabase.from('function_logs').select('*');
     
     // Apply filters if provided
     if (functionName) {
@@ -58,48 +49,64 @@ serve(async (req) => {
     if (level) {
       query = query.eq('level', level);
     }
+    if (requestId) {
+      query = query.eq('request_id', requestId);
+    }
     
-    // Apply ordering and pagination
-    // Fix: First apply the order, then chain limit and offset as separate operations
-    const { data: logs, error } = await query
-      .order('timestamp', { ascending: false })
+    // Apply sorting and pagination
+    query = query.order('timestamp', { ascending: false })
       .limit(limit)
-      .range(offset, offset + limit - 1);  // Using range instead of offset
+      .range(offset, offset + limit - 1);
+    
+    // Execute the query
+    const { data: logs, error } = await query;
     
     if (error) {
-      await logger.error(requestId, "Error retrieving logs", { error });
       throw error;
     }
     
-    await logger.info(requestId, "Logs retrieved successfully", { count: logs?.length ?? 0 });
-    
-    // Get all unique function names for the dropdown filter
-    const { data: functionNames, error: functionNamesError } = await supabase
+    // Get unique function names for the filter dropdown
+    const { data: functionNames } = await supabase
       .from('function_logs')
       .select('function_name')
-      .limit(1000)
-      .order('function_name')
-      .distinctOn('function_name');
+      .limit(100);
     
-    if (functionNamesError) {
-      await logger.error(requestId, "Error retrieving function names", { error: functionNamesError });
-    } else {
-      await logger.debug(requestId, "Function names retrieved", { count: functionNames?.length ?? 0 });
-    }
+    const uniqueFunctionNames = [...new Set(functionNames?.map(item => item.function_name))];
     
-    // Return logs and function names
-    return new Response(JSON.stringify({ 
-      logs: logs || [], 
-      function_names: functionNames?.map(f => f.function_name) || []
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    // Return the logs
+    return new Response(
+      JSON.stringify({
+        success: true,
+        logs,
+        function_names: uniqueFunctionNames,
+        meta: {
+          total: logs.length,
+          limit,
+          offset,
+          filters: {
+            function_name: functionName,
+            level,
+            request_id: requestId
+          }
+        }
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
+    );
   } catch (error) {
-    console.error("Error in view-logs function:", error);
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error('Error fetching logs:', error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    );
   }
 });
