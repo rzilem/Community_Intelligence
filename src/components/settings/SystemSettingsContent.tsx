@@ -4,7 +4,7 @@ import AppearanceTab from '@/components/settings/AppearanceTab';
 import NotificationsTab from '@/components/settings/NotificationsTab';
 import SecurityTab from '@/components/settings/SecurityTab';
 import SystemPreferencesTab from '@/components/settings/SystemPreferencesTab';
-import IntegrationsTab from '@/components/settings/IntegrationsTab';
+import IntegrationsSettings from '@/components/settings/IntegrationsSettings';
 import { 
   AppearanceSettings, 
   NotificationSettings, 
@@ -61,8 +61,7 @@ const SystemSettingsContent: React.FC<SystemSettingsContentProps> = ({
   }
   
   if (section === 'integrations') {
-    // IntegrationsTab manages its own state, so we don't pass settings or onChange
-    return <IntegrationsTab />;
+    return <IntegrationsSettings />;
   }
   
   return null;
