@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
@@ -22,12 +22,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     currentPath: location.pathname
   });
 
+  // Handle mobile sidebar closure on route change
   useEffect(() => {
     if (isMobile) {
       setIsSidebarOpen(false);
     }
   }, [location.pathname, isMobile]);
 
+  // Update sidebar state when mobile status changes
   useEffect(() => {
     setIsSidebarOpen(!isMobile);
   }, [isMobile]);
@@ -40,7 +42,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   };
 
-  const mainNavItems = getFilteredNavItems(userRole);
+  // Memoize nav items to prevent unnecessary re-renders
+  const mainNavItems = useMemo(() => {
+    return getFilteredNavItems(userRole);
+  }, [userRole]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);

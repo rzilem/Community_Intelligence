@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { memo } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,9 +15,13 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
+      refetchOnWindowFocus: false, // Prevent refetches on window focus
     },
   },
 });
+
+// Use memo to prevent unnecessary re-renders
+const MemoizedAppRouter = memo(AppRouter);
 
 const App = () => {
   return (
@@ -28,7 +32,7 @@ const App = () => {
             <NotificationProvider>
               <Toaster />
               <Sonner />
-              <AppRouter />
+              <MemoizedAppRouter />
             </NotificationProvider>
           </AuthProvider>
         </TooltipProvider>

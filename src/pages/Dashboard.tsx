@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
@@ -10,15 +10,12 @@ import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleConte
 import { useResponsive } from '@/hooks/use-responsive';
 import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
 import { useNavigate } from 'react-router-dom';
-import { UserRole } from '@/types/profile-types';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
-import ActivityFeed from '@/components/dashboard/ActivityFeed';
-import MessagesFeed from '@/components/dashboard/MessagesFeed';
-import CalendarTab from '@/components/dashboard/CalendarTab';
-import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
 import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
+import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
+import CalendarTab from '@/components/dashboard/CalendarTab';
 
 const Dashboard = () => {
   const { currentAssociation, user, profile, loading, isAuthenticated } = useAuth();
@@ -70,8 +67,9 @@ const Dashboard = () => {
     error
   );
 
-  return (
-    <AppLayout>
+  // Memoize the main content structure to prevent unnecessary re-renders
+  const dashboardContent = useMemo(() => {
+    return (
       <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
         <DashboardHeader 
           associationName={currentAssociation?.name} 
@@ -117,6 +115,22 @@ const Dashboard = () => {
           </Tabs>
         )}
       </div>
+    );
+  }, [
+    isMobile, 
+    currentAssociation?.name, 
+    stats, 
+    dataLoading, 
+    issues, 
+    profile?.role, 
+    getContentForRole, 
+    getActivityContent, 
+    getMessagesContent
+  ]);
+
+  return (
+    <AppLayout>
+      {dashboardContent}
     </AppLayout>
   );
 };
