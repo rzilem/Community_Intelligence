@@ -33,3 +33,40 @@ export const formatCurrency = (
     maximumFractionDigits: 2
   }).format(value);
 };
+
+/**
+ * Clean HTML content by removing potentially harmful tags and scripts
+ * @param htmlContent The HTML content to clean
+ * @returns Cleaned HTML content
+ */
+export const cleanHtmlContent = (htmlContent: string): string => {
+  if (!htmlContent) return '';
+  
+  // Create a temporary div element to parse the HTML
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = htmlContent;
+  
+  // Remove script tags
+  const scriptTags = tempDiv.querySelectorAll('script');
+  scriptTags.forEach(script => script.remove());
+  
+  // Remove style tags
+  const styleTags = tempDiv.querySelectorAll('style');
+  styleTags.forEach(style => style.remove());
+  
+  // Remove iframe tags
+  const iframeTags = tempDiv.querySelectorAll('iframe');
+  iframeTags.forEach(iframe => iframe.remove());
+  
+  // Remove on* attributes from all elements
+  const allElements = tempDiv.querySelectorAll('*');
+  allElements.forEach(element => {
+    Array.from(element.attributes).forEach(attr => {
+      if (attr.name.startsWith('on')) {
+        element.removeAttribute(attr.name);
+      }
+    });
+  });
+  
+  return tempDiv.innerHTML;
+};
