@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Loader2 } from 'lucide-react';
 
 export const AuthSection: React.FC = () => {
@@ -94,7 +94,7 @@ export const AuthSection: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="login-password">Password</Label>
-                        <Button variant="link" className="h-auto p-0" size="sm">
+                        <Button variant="link" className="h-auto p-0" size="sm" type="button">
                           Forgot Password?
                         </Button>
                       </div>
