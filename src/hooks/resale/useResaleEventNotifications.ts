@@ -31,10 +31,8 @@ export const useResaleEventNotifications = () => {
         { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
       ]
     },
-    {
-      enabled: !!lastCheckedTimestamp, // Only run query if we have a timestamp
-      staleTime: 60000, // 1 minute stale time
-    }
+    // Fix: Change from object with 'enabled' property to a boolean value
+    !!lastCheckedTimestamp
   );
 
   // Update unread count whenever we get new data
