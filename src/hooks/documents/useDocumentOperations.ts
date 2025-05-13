@@ -92,9 +92,8 @@ export function useDocumentOperations() {
       
       console.log("Document record created successfully:", data.id);
       
-      // Ensure we have the correct type structure
-      // The database operation returns the record with the correct column names
-      // but we need to make sure it matches our Document type
+      // Ensure we have the correct type structure by explicitly mapping the fields
+      // from the database response to the Document type
       const document: Document = {
         id: data.id,
         association_id: data.association_id,
@@ -108,9 +107,10 @@ export function useDocumentOperations() {
         is_public: data.is_public,
         is_archived: data.is_archived,
         uploaded_by: data.uploaded_by,
-        uploaded_at: data.uploaded_at,
-        last_accessed: data.last_accessed,
-        current_version: data.current_version
+        // Map the database field to the Document type field
+        uploaded_at: data.uploaded_at || data.created_at, // Use created_at as fallback
+        last_accessed: data.last_accessed || null, // Default to null if not present
+        current_version: data.current_version || 1
       };
       
       return document;
