@@ -30,32 +30,34 @@ export const useResaleEventNotifications = () => {
       filter: [
         { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
       ]
-    },
-    // Fix: Change from object with 'enabled' property to a boolean value
-    !!lastCheckedTimestamp
+    }
   );
 
   // Update unread count whenever we get new data
   useEffect(() => {
-    if (!recentEvents.length || hasShownToast.current) return;
+    // Skip processing if no timestamp or no events
+    if (!lastCheckedTimestamp || !recentEvents || !recentEvents.length) return;
     
-    setUnreadEventsCount(recentEvents.length);
-    
-    // Only show toast for new events and only once
-    if (recentEvents.length > 0) {
-      hasShownToast.current = true;
-      toast(`${recentEvents.length} new resale event${recentEvents.length > 1 ? 's' : ''} received`, {
-        description: "Check the resale calendar for details",
-        action: {
-          label: "View",
-          onClick: () => {
-            window.location.href = '/resale-management/calendar';
-            markAllAsRead();
+    // Only update if we haven't shown a toast yet
+    if (!hasShownToast.current) {
+      setUnreadEventsCount(recentEvents.length);
+      
+      // Only show toast for new events and only once
+      if (recentEvents.length > 0) {
+        hasShownToast.current = true;
+        toast(`${recentEvents.length} new resale event${recentEvents.length > 1 ? 's' : ''} received`, {
+          description: "Check the resale calendar for details",
+          action: {
+            label: "View",
+            onClick: () => {
+              window.location.href = '/resale-management/calendar';
+              markAllAsRead();
+            },
           },
-        },
-      });
+        });
+      }
     }
-  }, [recentEvents]);
+  }, [recentEvents, lastCheckedTimestamp]);
 
   // Reset the toast flag when navigating away
   useEffect(() => {
