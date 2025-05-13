@@ -15,6 +15,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   allowedRoles = ['admin', 'manager', 'resident', 'maintenance', 'accountant'],
   requireAssociation = false
 }) => {
+  // Ensure all hooks are called unconditionally, regardless of the authentication state
   const { user, loading, userRole, currentAssociation, userAssociations, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,6 +63,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     console.log('[RequireAuth] User authenticated and authorized to access page');
   }, [user, loading, userRole, navigate, location, allowedRoles, requireAssociation, userAssociations, currentAssociation]);
 
+  // Render loading state conditionally, but don't use hooks conditionally
   if (loading) {
     console.log('[RequireAuth] Rendering loading state in RequireAuth');
     return (
@@ -74,15 +76,10 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
     );
   }
 
-  // If no authentication check is in progress and we have a user, render the children
-  if (!loading && user) {
-    console.log('[RequireAuth] Rendering protected content for authenticated user');
-    return <>{children}</>;
-  }
-
-  // Return null while redirecting
-  console.log('[RequireAuth] Returning null while redirecting');
-  return null;
+  // Always render the children if we reached here (not loading and all checks passed)
+  // This ensures consistent hook calls between renders
+  console.log('[RequireAuth] Rendering protected content for authenticated user');
+  return <>{children}</>;
 };
 
 export default RequireAuth;

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,8 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export const AuthSection: React.FC = () => {
+  // Initialize all hooks at the top of the component
   const navigate = useNavigate();
   const { signIn, signUp, isLoading } = useAuth();
+  
+  // Initialize all state variables unconditionally
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [signupData, setSignupData] = useState({ 
     firstName: '', 

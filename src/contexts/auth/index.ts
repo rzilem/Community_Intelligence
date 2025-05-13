@@ -1,5 +1,7 @@
 
-export { AuthProvider } from './AuthProvider';
-export { useAuth } from './useAuth';
-export type { AuthContextType, UserAssociation } from './types';
-export type { Association } from '@/types/association-types';
+// Re-export everything from the auth directory
+export * from './AuthContext';
+export * from './AuthProvider';
+export * from './useAuth';
+export * from './types';
+export * from './authUtils';

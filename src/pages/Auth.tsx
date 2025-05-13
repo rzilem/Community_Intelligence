@@ -37,6 +37,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Auth = () => {
+  // Always initialize all hooks at the top level of the component, regardless of conditions
   const [searchParams] = useSearchParams();
   const { signIn, signUp, isLoading, session } = useAuth();
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const Auth = () => {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
-  // Setup forms
+  // Setup forms - always initialize hooks unconditionally
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
