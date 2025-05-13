@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Document } from '@/types/document-types';
 import { useAuth } from '@/contexts/auth';
@@ -93,7 +92,28 @@ export function useDocumentOperations() {
       
       console.log("Document record created successfully:", data.id);
       
-      return data as Document;
+      // Ensure we have the correct type structure
+      // The database operation returns the record with the correct column names
+      // but we need to make sure it matches our Document type
+      const document: Document = {
+        id: data.id,
+        association_id: data.association_id,
+        name: data.name,
+        url: data.url,
+        file_type: data.file_type,
+        file_size: data.file_size,
+        description: data.description,
+        category: data.category,
+        tags: data.tags,
+        is_public: data.is_public,
+        is_archived: data.is_archived,
+        uploaded_by: data.uploaded_by,
+        uploaded_at: data.uploaded_at,
+        last_accessed: data.last_accessed,
+        current_version: data.current_version
+      };
+      
+      return document;
     },
     
     onSuccess: () => {
