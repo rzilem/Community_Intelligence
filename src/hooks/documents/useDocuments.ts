@@ -16,19 +16,38 @@ export function useDocuments({ associationId, category, enabled = true }: UseDoc
   }
 
   const {
-    data: documents,
+    data: documentsRaw,
     isLoading,
     error,
     refetch
-  } = useSupabaseQuery<Document[]>(
+  } = useSupabaseQuery<any[]>(
     'documents',
     {
       select: '*',
       filter: filters,
-      order: { column: 'uploaded_at', ascending: false }
+      order: { column: 'created_at', ascending: false } // Use created_at for ordering
     },
     enabled && !!associationId
   );
+
+  // Transform the raw documents to match our Document type
+  const documents: Document[] = documentsRaw?.map(doc => ({
+    id: doc.id,
+    association_id: doc.association_id,
+    name: doc.name,
+    url: doc.url,
+    file_type: doc.file_type,
+    file_size: doc.file_size,
+    description: doc.description,
+    category: doc.category,
+    tags: doc.tags,
+    is_public: doc.is_public,
+    is_archived: doc.is_archived,
+    uploaded_by: doc.uploaded_by,
+    uploaded_at: doc.created_at, // Map created_at to uploaded_at
+    last_accessed: null, // Default to null
+    current_version: doc.current_version || 1
+  })) || [];
 
   useEffect(() => {
     if (error) {
@@ -38,7 +57,7 @@ export function useDocuments({ associationId, category, enabled = true }: UseDoc
   }, [error]);
 
   return {
-    documents: documents || [],
+    documents,
     isLoading,
     error,
     refetch

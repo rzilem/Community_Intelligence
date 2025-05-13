@@ -56,7 +56,7 @@ export function useDocumentOperations() {
         uploaded_by: user.id,
         is_public: false,
         is_archived: false,
-        uploaded_at: new Date().toISOString()
+        created_at: new Date().toISOString(), // Use created_at instead of uploaded_at to match the database
       };
       
       console.log("Creating database record with data:", {
@@ -92,8 +92,8 @@ export function useDocumentOperations() {
       
       console.log("Document record created successfully:", data.id);
       
-      // Ensure we have the correct type structure by explicitly mapping the fields
-      // from the database response to the Document type
+      // Map the database response to our Document type
+      // This ensures we're using the correct property names and providing fallbacks
       const document: Document = {
         id: data.id,
         association_id: data.association_id,
@@ -107,9 +107,10 @@ export function useDocumentOperations() {
         is_public: data.is_public,
         is_archived: data.is_archived,
         uploaded_by: data.uploaded_by,
-        // Map the database field to the Document type field
-        uploaded_at: data.uploaded_at || data.created_at, // Use created_at as fallback
-        last_accessed: data.last_accessed || null, // Default to null if not present
+        // Use created_at field from the database as uploaded_at in our Document type
+        uploaded_at: data.created_at,
+        // Add default values for fields that might not be present in the database
+        last_accessed: null,
         current_version: data.current_version || 1
       };
       
