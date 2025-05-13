@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, X, CheckCheck, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,11 +22,11 @@ const NotificationCenter: React.FC = () => {
     markAsRead 
   } = useNotificationContext();
   
-  const handleMarkAllAsRead = () => {
+  const handleMarkAllAsRead = useCallback(() => {
     markAllAsRead();
-  };
+  }, [markAllAsRead]);
   
-  const handleNotificationClick = (notification: NotificationItem) => {
+  const handleNotificationClick = useCallback((notification: NotificationItem) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
@@ -35,7 +35,7 @@ const NotificationCenter: React.FC = () => {
       navigate(notification.route);
       setOpen(false);
     }
-  };
+  }, [markAsRead, navigate]);
   
   // Filter notifications based on active tab
   const filteredNotifications = notifications.filter(notification => {
@@ -60,6 +60,70 @@ const NotificationCenter: React.FC = () => {
   const sortedDateKeys = Object.keys(groupedNotifications).sort(
     (a, b) => new Date(b).getTime() - new Date(a).getTime()
   );
+  
+  // Content for each notification group
+  const renderNotificationGroups = useCallback(() => {
+    if (notifications.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full py-8 text-gray-500">
+          <Bell className="h-10 w-10 mb-2 text-gray-300" />
+          <p>No notifications</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="divide-y">
+        {sortedDateKeys.map(dateKey => (
+          <div key={dateKey} className="py-1">
+            <div className="px-4 py-2 text-xs font-medium text-gray-500">
+              {new Date().toDateString() === dateKey ? 'Today' : dateKey}
+            </div>
+            {groupedNotifications[dateKey].map(notification => (
+              <div 
+                key={notification.id}
+                className={cn(
+                  "px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-start gap-2",
+                  !notification.read && "bg-blue-50/40"
+                )}
+                onClick={() => handleNotificationClick(notification)}
+              >
+                <div className={cn(
+                  "h-2 w-2 mt-1.5 rounded-full flex-shrink-0",
+                  !notification.read ? "bg-blue-500" : "bg-gray-200"
+                )} />
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-medium">{notification.title}</p>
+                  {notification.description && (
+                    <p className="text-xs text-gray-500">{notification.description}</p>
+                  )}
+                  <p className="text-xs text-gray-400">
+                    {new Date(notification.timestamp).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+                {!notification.read && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAsRead(notification.id);
+                    }}
+                  >
+                    <Check className="h-3.5 w-3.5 text-blue-500" />
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }, [groupedNotifications, handleNotificationClick, markAsRead, notifications.length, sortedDateKeys]);
   
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -162,62 +226,7 @@ const NotificationCenter: React.FC = () => {
           
           <div className="w-3/4">
             <ScrollArea className="h-[350px]">
-              {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full py-8 text-gray-500">
-                  <Bell className="h-10 w-10 mb-2 text-gray-300" />
-                  <p>No notifications</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {sortedDateKeys.map(dateKey => (
-                    <div key={dateKey} className="py-1">
-                      <div className="px-4 py-2 text-xs font-medium text-gray-500">
-                        {new Date().toDateString() === dateKey ? 'Today' : dateKey}
-                      </div>
-                      {groupedNotifications[dateKey].map(notification => (
-                        <div 
-                          key={notification.id}
-                          className={cn(
-                            "px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-start gap-2",
-                            !notification.read && "bg-blue-50/40"
-                          )}
-                          onClick={() => handleNotificationClick(notification)}
-                        >
-                          <div className={cn(
-                            "h-2 w-2 mt-1.5 rounded-full flex-shrink-0",
-                            !notification.read ? "bg-blue-500" : "bg-gray-200"
-                          )} />
-                          <div className="flex-1 space-y-1">
-                            <p className="text-sm font-medium">{notification.title}</p>
-                            {notification.description && (
-                              <p className="text-xs text-gray-500">{notification.description}</p>
-                            )}
-                            <p className="text-xs text-gray-400">
-                              {new Date(notification.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                          {!notification.read && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-7 w-7 opacity-0 group-hover:opacity-100"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                markAsRead(notification.id);
-                              }}
-                            >
-                              <Check className="h-3.5 w-3.5 text-blue-500" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {renderNotificationGroups()}
             </ScrollArea>
           </div>
         </div>

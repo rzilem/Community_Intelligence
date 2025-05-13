@@ -1,49 +1,50 @@
 
-export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(date);
+/**
+ * Utility functions for date formatting and manipulation
+ */
+
+/**
+ * Format a date string or Date object into a localized string
+ * @param dateString Date string or Date object to format
+ * @param options Intl.DateTimeFormatOptions to customize the format
+ * @returns Formatted date string
+ */
+export const formatDate = (
+  dateString?: string | null | Date,
+  options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: 'short', 
+    day: '2-digit' 
+  }
+): string => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Error';
+  }
 };
 
-export const formatRelativeDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+/**
+ * Format a file size in bytes to a human-readable string
+ * @param bytes File size in bytes
+ * @returns Formatted file size string (e.g., "1.5 MB")
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
   
-  if (diffInSeconds < 60) {
-    return 'just now';
-  }
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
-  }
-  
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
-  }
-  
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
-  }
-  
-  const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 4) {
-    return `${diffInWeeks} ${diffInWeeks === 1 ? 'week' : 'weeks'} ago`;
-  }
-  
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths} ${diffInMonths === 1 ? 'month' : 'months'} ago`;
-  }
-  
-  const diffInYears = Math.floor(diffInDays / 365);
-  return `${diffInYears} ${diffInYears === 1 ? 'year' : 'years'} ago`;
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };

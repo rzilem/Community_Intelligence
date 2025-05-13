@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState, useCallback } from 'react';
 import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
@@ -22,11 +22,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
 
-  // Aggregate notifications when user or notification counts change
-  useEffect(() => {
+  // Memoize the aggregation function to prevent it from being recreated on every render
+  const aggregateNotifications = useCallback(() => {
     if (!user) {
-      setNotifications([]);
-      return;
+      return [];
     }
 
     const aggregatedNotifications: NotificationItem[] = [];
@@ -47,7 +46,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       });
     }
     
-    // Add mock notifications for other types (these would be replaced with real data in a full implementation)
+    // Add mock notifications for other types
     if (unreadInvoicesCount > 0) {
       for (let i = 0; i < unreadInvoicesCount; i++) {
         aggregatedNotifications.push({
@@ -94,30 +93,33 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
     
     // Sort by timestamp (newest first)
-    aggregatedNotifications.sort((a, b) => 
+    return aggregatedNotifications.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-    
-    setNotifications(aggregatedNotifications);
   }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
 
-  const markAsRead = (notificationId: string) => {
+  // Update notifications only when dependencies change
+  useEffect(() => {
+    setNotifications(aggregateNotifications());
+  }, [aggregateNotifications]);
+
+  const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
     );
-  };
+  }, []);
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     markLeadsAsRead();
     markInvoicesAsRead();
     markRequestsAsRead();
     markEventsAsRead();
-  };
+  }, [markLeadsAsRead, markInvoicesAsRead, markRequestsAsRead, markEventsAsRead]);
 
-  const deleteNotification = (notificationId: string) => {
+  const deleteNotification = useCallback((notificationId: string) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
-  };
+  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

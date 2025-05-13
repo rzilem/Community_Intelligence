@@ -5,7 +5,9 @@ import { FileText, Plus } from 'lucide-react';
 import { useResponsive } from '@/hooks/use-responsive';
 import DocumentContent from '@/components/documents/DocumentContent';
 import { useAuth } from '@/contexts/auth';
-import { useDocuments, useDocumentOperations, useDocumentCategories } from '@/hooks/documents';
+import { useDocuments } from '@/hooks/documents';
+import { useDocumentOperations } from '@/hooks/documents/useDocumentOperations';
+import { useDocumentCategories } from '@/hooks/documents/useDocumentCategories';
 import { useDocumentColumns } from '@/hooks/documents/useDocumentColumns';
 import { toast } from 'sonner';
 import { Document } from '@/types/document-types';
@@ -28,13 +30,15 @@ const Documents = () => {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   
-  const { documents, isLoading } = useDocuments({
+  const { documents, isLoading, refetch } = useDocuments({
     associationId: currentAssociation?.id,
-    category: category
+    category: category,
+    enabled: !!currentAssociation?.id
   });
   
   const { categories } = useDocumentCategories({
-    associationId: currentAssociation?.id
+    associationId: currentAssociation?.id,
+    enabled: !!currentAssociation?.id
   });
   
   const { 
@@ -52,19 +56,27 @@ const Documents = () => {
   };
   
   const onDownloadDocument = (doc: Document) => {
-    saveAs(doc.url, doc.name);
-    toast.success('Document downloaded successfully');
+    try {
+      saveAs(doc.url, doc.name);
+      toast.success('Document downloaded successfully');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download document');
+    }
   };
   
   const onDeleteDocument = (doc: Document) => {
-    deleteDocument.mutate(doc, {
-      onSuccess: () => {
-        toast.success('Document deleted successfully');
-      },
-      onError: (error) => {
-        toast.error(`Failed to delete document: ${error.message}`);
-      }
-    });
+    if (confirm(`Are you sure you want to delete "${doc.name}"?`)) {
+      deleteDocument.mutate(doc, {
+        onSuccess: () => {
+          toast.success('Document deleted successfully');
+          refetch();
+        },
+        onError: (error) => {
+          toast.error(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      });
+    }
   };
 
   const handleUploadDocument = (file: File, category: string, description: string) => {
@@ -83,11 +95,12 @@ const Documents = () => {
     }, {
       onSuccess: () => {
         setIsUploadDialogOpen(false);
+        refetch();
       },
       onError: (error: any) => {
         console.error("Upload error:", error);
-        setUploadError(error.message);
-        toast.error(`Upload failed: ${error.message}`);
+        setUploadError(error.message || "Upload failed");
+        toast.error(`Upload failed: ${error.message || 'Unknown error'}`);
       }
     });
   };
@@ -109,10 +122,13 @@ const Documents = () => {
     });
   };
 
-  const filteredDocuments = documents.filter(doc => 
-    doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Filter documents based on search term
+  const filteredDocuments = searchTerm 
+    ? documents?.filter(doc => 
+        doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (doc.description && doc.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : documents || [];
   
   return (
     <PageTemplate 
