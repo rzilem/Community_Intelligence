@@ -57,7 +57,7 @@ export function useDocumentOperations() {
         uploaded_by: user.id,
         is_public: false,
         is_archived: false,
-        uploaded_date: new Date().toISOString()
+        uploaded_at: new Date().toISOString()
       };
       
       console.log("Creating database record with data:", {
@@ -93,14 +93,7 @@ export function useDocumentOperations() {
       
       console.log("Document record created successfully:", data.id);
       
-      // Map the database fields to match our Document type
-      const document: Document = {
-        ...data,
-        // Map uploaded_date to uploaded_at to satisfy the Document interface
-        uploaded_at: data.uploaded_date
-      } as Document;
-      
-      return document;
+      return data as Document;
     },
     
     onSuccess: () => {
