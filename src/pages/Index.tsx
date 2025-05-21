@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
@@ -8,15 +8,20 @@ import HeroSection from '@/components/marketing/HeroSection';
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    if (!loading && user) {
-      // If user is logged in, redirect to dashboard
-      navigate('/dashboard');
+  useEffect(() => {
+    // Only redirect after auth is checked
+    if (!loading) {
+      setIsLoading(false);
+      if (user) {
+        navigate('/dashboard');
+      }
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Render loading state until auth check is complete
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
