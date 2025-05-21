@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 
@@ -14,12 +13,12 @@ export interface ResaleEvent {
 
 export const useResaleEventNotifications = () => {
   const [unreadEventsCount, setUnreadEventsCount] = useState<number>(0);
-  const [lastCheckedTimestamp, setLastCheckedTimestamp] = useState<string>(
+  const hasShownToast = useRef(false);
+  
+  // Use localStorage for persistence but keep a ref to the value to avoid re-renders
+  const lastCheckedRef = useRef<string>(
     localStorage.getItem('lastResaleEventCheckTimestamp') || new Date().toISOString()
   );
-  
-  // Use a ref to prevent unnecessary re-renders
-  const hasShownToast = useRef<boolean>(false);
 
   // Get recent resale events to check for unread ones
   const { data: recentEvents = [] } = useSupabaseQuery<ResaleEvent[]>(
@@ -28,51 +27,43 @@ export const useResaleEventNotifications = () => {
       select: '*',
       order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
+        { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
       ]
     }
   );
 
+  // Use a stable effect dependency
+  const recentEventsLength = recentEvents.length;
+
   // Update unread count whenever we get new data
   useEffect(() => {
-    // Skip processing if no timestamp or no events
-    if (!lastCheckedTimestamp || !recentEvents || !recentEvents.length) return;
+    if (!recentEvents) return;
     
-    // Only update if we haven't shown a toast yet
-    if (!hasShownToast.current) {
-      setUnreadEventsCount(recentEvents.length);
-      
-      // Only show toast for new events and only once
-      if (recentEvents.length > 0) {
-        hasShownToast.current = true;
-        toast(`${recentEvents.length} new resale event${recentEvents.length > 1 ? 's' : ''} received`, {
-          description: "Check the resale calendar for details",
-          action: {
-            label: "View",
-            onClick: () => {
-              window.location.href = '/resale-management/calendar';
-              markAllAsRead();
-            },
+    setUnreadEventsCount(recentEventsLength);
+    
+    // Show toast only once per session for new events
+    if (recentEventsLength > 0 && !hasShownToast.current) {
+      hasShownToast.current = true;
+      toast(`${recentEventsLength} new resale event${recentEventsLength > 1 ? 's' : ''} received`, {
+        description: "Check the resale calendar for details",
+        action: {
+          label: "View",
+          onClick: () => {
+            window.location.href = '/resale-management/calendar';
+            markAllAsRead();
           },
-        });
-      }
+        },
+      });
     }
-  }, [recentEvents, lastCheckedTimestamp]);
+  }, [recentEventsLength]);
 
-  // Reset the toast flag when navigating away
-  useEffect(() => {
-    return () => {
-      hasShownToast.current = false;
-    };
-  }, []);
-
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     const now = new Date().toISOString();
     localStorage.setItem('lastResaleEventCheckTimestamp', now);
-    setLastCheckedTimestamp(now);
+    lastCheckedRef.current = now;
     setUnreadEventsCount(0);
     hasShownToast.current = false;
-  };
+  }, []);
 
   return {
     unreadEventsCount,

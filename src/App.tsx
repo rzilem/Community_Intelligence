@@ -28,30 +28,51 @@ const MemoizedAppRouter = memo(AppRouter);
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <ErrorBoundary>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
             <AuthProvider>
               <ErrorBoundary
                 fallback={
                   <div className="p-8">
-                    <h2 className="text-xl font-bold mb-4">Notification Error</h2>
-                    <p>There was a problem loading notifications. The app will continue to function without them.</p>
+                    <h2 className="text-xl font-bold mb-4">Notification System Error</h2>
+                    <p>There was a problem with the notification system. The app will continue to function without notifications.</p>
+                    <button
+                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                      onClick={() => window.location.reload()}
+                    >
+                      Refresh Application
+                    </button>
                   </div>
                 }
               >
                 <NotificationProvider>
                   <Toaster />
                   <Sonner />
-                  <MemoizedAppRouter />
+                  <ErrorBoundary
+                    fallback={
+                      <div className="p-8 text-center">
+                        <h2 className="text-2xl font-bold text-red-600 mb-4">Route Error</h2>
+                        <p className="mb-4">There was a problem loading this page. Other parts of the application should still work.</p>
+                        <button
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                          onClick={() => window.location.href = '/'}
+                        >
+                          Go to Dashboard
+                        </button>
+                      </div>
+                    }
+                  >
+                    <MemoizedAppRouter />
+                  </ErrorBoundary>
                 </NotificationProvider>
               </ErrorBoundary>
             </AuthProvider>
-          </ErrorBoundary>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

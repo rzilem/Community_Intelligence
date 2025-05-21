@@ -22,17 +22,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
 
-  // Memoize all the data dependencies that the aggregateNotifications function uses
-  const notificationDeps = useMemo(() => ({
-    user,
-    unreadLeadsCount,
-    unreadInvoicesCount,
-    unreadRequestsCount,
-    unreadEventsCount,
-    recentLeads
-  }), [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
+  // Extract counts into a stable reference to avoid excess re-renders
+  const notificationCounts = useMemo(() => ({
+    leads: unreadLeadsCount,
+    invoices: unreadInvoicesCount,
+    requests: unreadRequestsCount,
+    events: unreadEventsCount
+  }), [unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount]);
   
-  // Create a memoized aggregateNotifications function to prevent recreation on every render
+  // Create a memoized aggregateNotifications function
   const aggregatedNotifications = useMemo(() => {
     if (!user) {
       return [];
@@ -57,8 +55,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
     
     // Add mock notifications for other types
-    if (unreadInvoicesCount > 0) {
-      for (let i = 0; i < unreadInvoicesCount; i++) {
+    if (notificationCounts.invoices > 0) {
+      for (let i = 0; i < notificationCounts.invoices; i++) {
         aggregatedNotifications.push({
           id: `invoice-${i}`,
           title: `New Invoice Received`,
@@ -72,8 +70,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       }
     }
     
-    if (unreadRequestsCount > 0) {
-      for (let i = 0; i < unreadRequestsCount; i++) {
+    if (notificationCounts.requests > 0) {
+      for (let i = 0; i < notificationCounts.requests; i++) {
         aggregatedNotifications.push({
           id: `request-${i}`,
           title: 'New Homeowner Request',
@@ -87,8 +85,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       }
     }
     
-    if (unreadEventsCount > 0) {
-      for (let i = 0; i < unreadEventsCount; i++) {
+    if (notificationCounts.events > 0) {
+      for (let i = 0; i < notificationCounts.events; i++) {
         aggregatedNotifications.push({
           id: `event-${i}`,
           title: 'Resale Calendar Update',
@@ -106,14 +104,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return aggregatedNotifications.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-  }, [notificationDeps]);
+  }, [user, recentLeads, notificationCounts]);
 
-  // Update notifications only when dependencies change - this prevents the infinite loop
+  // Update notifications only when the memoized function output changes
   useEffect(() => {
     setNotifications(aggregatedNotifications);
   }, [aggregatedNotifications]);
 
-  // Memoize these callback functions so they don't change on every render
+  // Memoize callback functions to maintain stable references
   const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)

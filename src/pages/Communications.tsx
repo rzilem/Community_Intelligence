@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -14,12 +14,18 @@ const Communications = () => {
 
   // Set the correct active tab based on the current route - only run when location.pathname changes
   useEffect(() => {
+    // Prevent multiple updates for the same path
+    let newTab;
     if (location.pathname.includes('/communications/announcements')) {
-      setActiveTab('announcements');
+      newTab = 'announcements';
     } else {
-      setActiveTab('messaging');
+      newTab = 'messaging';
     }
-  }, [location.pathname]);
+    
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [location.pathname, activeTab]);
 
   // Memoize the tab change handler to prevent recreation on every render
   const handleTabChange = useCallback((value: string) => {
@@ -29,6 +35,10 @@ const Communications = () => {
     navigate(`/communications/${value}`);
   }, [activeTab, navigate]);
 
+  // Memoize tab content components to prevent unnecessary re-renders
+  const messagingContent = useMemo(() => activeTab === 'messaging' ? <MessagingPage /> : null, [activeTab]);
+  const announcementsContent = useMemo(() => activeTab === 'announcements' ? <Announcements /> : null, [activeTab]);
+
   return (
     <PageTemplate title="Communications" icon={<MessageSquare className="h-8 w-8" />}>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -37,14 +47,14 @@ const Communications = () => {
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
         </TabsList>
         <TabsContent value="messaging">
-          {activeTab === 'messaging' && <MessagingPage />}
+          {messagingContent}
         </TabsContent>
         <TabsContent value="announcements">
-          {activeTab === 'announcements' && <Announcements />}
+          {announcementsContent}
         </TabsContent>
       </Tabs>
     </PageTemplate>
   );
 };
 
-export default Communications;
+export default React.memo(Communications);

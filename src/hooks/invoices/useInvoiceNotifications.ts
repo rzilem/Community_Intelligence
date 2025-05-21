@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
@@ -39,14 +40,19 @@ export const useInvoiceNotifications = () => {
     }
   );
 
+  // Use a stable effect dependency
+  const recentInvoicesLength = recentInvoices.length;
+
   // Update unread count whenever we get new data
   useEffect(() => {
-    setUnreadInvoicesCount(recentInvoices.length);
+    if (!recentInvoices) return;
+    
+    setUnreadInvoicesCount(recentInvoicesLength);
     
     // Show toast only once per session for new invoices
-    if (recentInvoices.length > 0 && !hasShownToast.current) {
+    if (recentInvoicesLength > 0 && !hasShownToast.current) {
       hasShownToast.current = true;
-      toast(`${recentInvoices.length} new invoice${recentInvoices.length > 1 ? 's' : ''} received`, {
+      toast(`${recentInvoicesLength} new invoice${recentInvoicesLength > 1 ? 's' : ''} received`, {
         description: "Check the invoice queue for details",
         action: {
           label: "View",
@@ -57,7 +63,7 @@ export const useInvoiceNotifications = () => {
         },
       });
     }
-  }, [recentInvoices]);
+  }, [recentInvoicesLength]);
 
   const markAllAsRead = useCallback(() => {
     const now = new Date().toISOString();

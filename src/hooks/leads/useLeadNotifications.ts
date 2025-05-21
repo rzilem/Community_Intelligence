@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lead } from '@/types/lead-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
@@ -24,14 +25,19 @@ export const useLeadNotifications = () => {
     }
   );
 
+  // Use a stable effect dependency
+  const recentLeadsLength = recentLeads.length;
+  
   // Update unread count whenever we get new data
   useEffect(() => {
-    setUnreadLeadsCount(recentLeads.length);
+    if (!recentLeads) return;
+    
+    setUnreadLeadsCount(recentLeadsLength);
     
     // Show toast only once per session for new leads
-    if (recentLeads.length > 0 && !hasShownToast.current) {
+    if (recentLeadsLength > 0 && !hasShownToast.current) {
       hasShownToast.current = true;
-      toast(`${recentLeads.length} new lead${recentLeads.length > 1 ? 's' : ''} received`, {
+      toast(`${recentLeadsLength} new lead${recentLeadsLength > 1 ? 's' : ''} received`, {
         description: "Check the leads dashboard for details",
         action: {
           label: "View",
@@ -42,7 +48,7 @@ export const useLeadNotifications = () => {
         },
       });
     }
-  }, [recentLeads]);
+  }, [recentLeadsLength]);
 
   const markAllAsRead = useCallback(() => {
     const now = new Date().toISOString();

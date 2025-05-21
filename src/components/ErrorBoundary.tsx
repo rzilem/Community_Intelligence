@@ -1,4 +1,3 @@
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
 interface Props {
@@ -27,7 +26,32 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by ErrorBoundary:', error, errorInfo);
+    // Log error details to help with debugging
+    console.error('ErrorBoundary caught an error:', {
+      error: error.toString(),
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
+    
+    // Track in localStorage for debugging purposes
+    try {
+      const errorLog = JSON.parse(localStorage.getItem('error_log') || '[]');
+      errorLog.push({
+        timestamp: new Date().toISOString(),
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack
+      });
+      
+      // Keep only last 10 errors to prevent localStorage from filling up
+      if (errorLog.length > 10) {
+        errorLog.shift();
+      }
+      
+      localStorage.setItem('error_log', JSON.stringify(errorLog));
+    } catch (e) {
+      console.error('Failed to log error to localStorage', e);
+    }
   }
 
   render() {
