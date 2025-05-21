@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 
@@ -21,7 +20,10 @@ export interface Invoice {
 
 export const useInvoiceNotifications = () => {
   const [unreadInvoicesCount, setUnreadInvoicesCount] = useState<number>(0);
-  const [lastCheckedTimestamp, setLastCheckedTimestamp] = useState<string>(
+  const hasShownToast = useRef(false);
+  
+  // Use localStorage for persistence but keep a ref to the value to avoid re-renders
+  const lastCheckedRef = useRef<string>(
     localStorage.getItem('lastInvoiceCheckTimestamp') || new Date().toISOString()
   );
 
@@ -32,7 +34,7 @@ export const useInvoiceNotifications = () => {
       select: '*',
       order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
+        { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
       ]
     }
   );
@@ -41,8 +43,9 @@ export const useInvoiceNotifications = () => {
   useEffect(() => {
     setUnreadInvoicesCount(recentInvoices.length);
     
-    // If we have new invoices, show a toast
-    if (recentInvoices.length > 0) {
+    // Show toast only once per session for new invoices
+    if (recentInvoices.length > 0 && !hasShownToast.current) {
+      hasShownToast.current = true;
       toast(`${recentInvoices.length} new invoice${recentInvoices.length > 1 ? 's' : ''} received`, {
         description: "Check the invoice queue for details",
         action: {
@@ -56,12 +59,13 @@ export const useInvoiceNotifications = () => {
     }
   }, [recentInvoices]);
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     const now = new Date().toISOString();
     localStorage.setItem('lastInvoiceCheckTimestamp', now);
-    setLastCheckedTimestamp(now);
+    lastCheckedRef.current = now;
     setUnreadInvoicesCount(0);
-  };
+    hasShownToast.current = false;
+  }, []);
 
   return {
     unreadInvoicesCount,

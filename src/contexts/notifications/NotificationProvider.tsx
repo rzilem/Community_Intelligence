@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useEffect, useState, useCallback } from 'react';
+import React, { ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
 import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
@@ -16,14 +16,24 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
   
-  // Get notifications from different sources
+  // Get notifications from different sources - these hooks should be stable
   const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
   const { unreadInvoicesCount, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
   const { unreadRequestsCount, markAllAsRead: markRequestsAsRead } = useHomeownerRequestNotifications();
   const { unreadEventsCount, markAllAsRead: markEventsAsRead } = useResaleEventNotifications();
 
-  // Memoize the aggregation function to prevent it from being recreated on every render
-  const aggregateNotifications = useCallback(() => {
+  // Memoize all the data dependencies that the aggregateNotifications function uses
+  const notificationDeps = useMemo(() => ({
+    user,
+    unreadLeadsCount,
+    unreadInvoicesCount,
+    unreadRequestsCount,
+    unreadEventsCount,
+    recentLeads
+  }), [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
+  
+  // Create a memoized aggregateNotifications function to prevent recreation on every render
+  const aggregatedNotifications = useMemo(() => {
     if (!user) {
       return [];
     }
@@ -96,13 +106,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return aggregatedNotifications.sort((a, b) => 
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
-  }, [user, unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, recentLeads]);
+  }, [notificationDeps]);
 
-  // Update notifications only when dependencies change
+  // Update notifications only when dependencies change - this prevents the infinite loop
   useEffect(() => {
-    setNotifications(aggregateNotifications());
-  }, [aggregateNotifications]);
+    setNotifications(aggregatedNotifications);
+  }, [aggregatedNotifications]);
 
+  // Memoize these callback functions so they don't change on every render
   const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
@@ -111,6 +122,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    // Execute these stable functions
     markLeadsAsRead();
     markInvoicesAsRead();
     markRequestsAsRead();
@@ -121,18 +133,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Memoize the unread count so it doesn't recalculate on every render
+  const unreadCount = useMemo(() => 
+    notifications.filter(n => !n.read).length
+  , [notifications]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification 
+  }), [notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification]);
 
   return (
-    <NotificationContext.Provider 
-      value={{ 
-        notifications, 
-        unreadCount, 
-        markAsRead, 
-        markAllAsRead, 
-        deleteNotification 
-      }}
-    >
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   );

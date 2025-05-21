@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -12,7 +12,7 @@ const Communications = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Set the correct active tab based on the current route
+  // Set the correct active tab based on the current route - only run when location.pathname changes
   useEffect(() => {
     if (location.pathname.includes('/communications/announcements')) {
       setActiveTab('announcements');
@@ -21,11 +21,13 @@ const Communications = () => {
     }
   }, [location.pathname]);
 
-  // Update the URL when tab changes
-  const handleTabChange = (value: string) => {
+  // Memoize the tab change handler to prevent recreation on every render
+  const handleTabChange = useCallback((value: string) => {
+    if (value === activeTab) return; // Prevent unnecessary navigation if tab hasn't changed
+    
     setActiveTab(value);
     navigate(`/communications/${value}`);
-  };
+  }, [activeTab, navigate]);
 
   return (
     <PageTemplate title="Communications" icon={<MessageSquare className="h-8 w-8" />}>
@@ -35,10 +37,10 @@ const Communications = () => {
           <TabsTrigger value="announcements">Announcements</TabsTrigger>
         </TabsList>
         <TabsContent value="messaging">
-          <MessagingPage />
+          {activeTab === 'messaging' && <MessagingPage />}
         </TabsContent>
         <TabsContent value="announcements">
-          <Announcements />
+          {activeTab === 'announcements' && <Announcements />}
         </TabsContent>
       </Tabs>
     </PageTemplate>

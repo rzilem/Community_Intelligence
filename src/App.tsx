@@ -8,14 +8,17 @@ import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/auth";
 import { NotificationProvider } from "./contexts/notifications";
 import { AppRouter } from "./routes";
+import ErrorBoundary from "./components/ErrorBoundary";
 
-// Create the query client outside of the component
+// Create the query client outside of the component with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
       refetchOnWindowFocus: false, // Prevent refetches on window focus
+      refetchOnMount: false, // Prevent refetches when components mount
+      refetchOnReconnect: false, // Prevent refetches on reconnect
     },
   },
 });
@@ -28,13 +31,24 @@ const App = () => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <Toaster />
-              <Sonner />
-              <MemoizedAppRouter />
-            </NotificationProvider>
-          </AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <ErrorBoundary
+                fallback={
+                  <div className="p-8">
+                    <h2 className="text-xl font-bold mb-4">Notification Error</h2>
+                    <p>There was a problem loading notifications. The app will continue to function without them.</p>
+                  </div>
+                }
+              >
+                <NotificationProvider>
+                  <Toaster />
+                  <Sonner />
+                  <MemoizedAppRouter />
+                </NotificationProvider>
+              </ErrorBoundary>
+            </AuthProvider>
+          </ErrorBoundary>
         </TooltipProvider>
       </QueryClientProvider>
     </BrowserRouter>

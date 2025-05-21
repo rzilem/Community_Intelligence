@@ -1,12 +1,14 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Lead } from '@/types/lead-types';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 
 export const useLeadNotifications = () => {
   const [unreadLeadsCount, setUnreadLeadsCount] = useState<number>(0);
-  const [lastCheckedTimestamp, setLastCheckedTimestamp] = useState<string>(
+  const hasShownToast = useRef(false);
+  
+  // Use localStorage for persistence but keep a ref to the value to avoid re-renders
+  const lastCheckedRef = useRef<string>(
     localStorage.getItem('lastLeadCheckTimestamp') || new Date().toISOString()
   );
 
@@ -17,7 +19,7 @@ export const useLeadNotifications = () => {
       select: '*',
       order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'created_at', operator: 'gt', value: lastCheckedTimestamp }
+        { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
       ]
     }
   );
@@ -26,8 +28,9 @@ export const useLeadNotifications = () => {
   useEffect(() => {
     setUnreadLeadsCount(recentLeads.length);
     
-    // If we have new leads, show a toast
-    if (recentLeads.length > 0) {
+    // Show toast only once per session for new leads
+    if (recentLeads.length > 0 && !hasShownToast.current) {
+      hasShownToast.current = true;
       toast(`${recentLeads.length} new lead${recentLeads.length > 1 ? 's' : ''} received`, {
         description: "Check the leads dashboard for details",
         action: {
@@ -41,16 +44,17 @@ export const useLeadNotifications = () => {
     }
   }, [recentLeads]);
 
-  const markAllAsRead = () => {
+  const markAllAsRead = useCallback(() => {
     const now = new Date().toISOString();
     localStorage.setItem('lastLeadCheckTimestamp', now);
-    setLastCheckedTimestamp(now);
+    lastCheckedRef.current = now;
     setUnreadLeadsCount(0);
-  };
+    hasShownToast.current = false;
+  }, []);
 
   return {
     unreadLeadsCount,
-    recentLeads,  // Make sure to include recentLeads in the return object
+    recentLeads,
     markAllAsRead
   };
 };
