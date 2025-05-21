@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
@@ -9,14 +9,17 @@ export const AuthContext = createContext<AuthContextType>({
   session: null,
   profile: null,
   loading: true,
+  isLoading: true,
+  isAdmin: false,
   isAuthenticated: false,
   currentAssociation: null,
   userAssociations: [],
   userRole: null,
-  signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
+  signIn: async () => {},
+  signUp: async () => {},
   signOut: async () => {},
   setCurrentAssociation: () => {},
+  refreshProfile: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -34,6 +37,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const userRole = useMemo(() => {
     return profile?.role || null;
   }, [profile?.role]);
+
+  // Determine if user is an admin
+  const isAdmin = useMemo(() => {
+    return profile?.role === 'admin';
+  }, [profile?.role]);
+
+  // Function to refresh the user profile data
+  const refreshProfile = useCallback(async () => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+      
+      if (profileData) {
+        setProfile(profileData);
+        console.log('Profile data reloaded:', profileData);
+      }
+    } catch (error) {
+      console.error('Unexpected error fetching profile:', error);
+    }
+  }, [user]);
 
   // Fetch user profile when user changes
   useEffect(() => {
@@ -155,13 +191,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Sign in error:', error);
-        return { error };
+        throw error;
       }
-      
-      return { data, error: null };
     } catch (error: any) {
       console.error('Unexpected sign in error:', error);
-      return { error };
+      throw error;
     }
   };
 
@@ -185,13 +219,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error('Sign up error:', error);
-        return { error };
+        throw error;
       }
-      
-      return { data, error: null };
     } catch (error: any) {
       console.error('Unexpected sign up error:', error);
-      return { error };
+      throw error;
     }
   };
 
@@ -215,14 +247,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     profile,
     loading,
+    isLoading: loading, // Alias loading as isLoading to match the type
     isAuthenticated,
     userAssociations,
     currentAssociation,
     userRole,
+    isAdmin,
     signIn,
     signUp,
     signOut,
     setCurrentAssociation: handleSetCurrentAssociation,
+    refreshProfile,
   };
 
   return (
