@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -182,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Authentication methods
-  const signIn = async ({ email, password }: { email: string; password: string }) => {
+  const signIn = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -199,20 +198,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async ({ email, password, firstName, lastName }: { 
-    email: string; 
-    password: string;
-    firstName: string;
-    lastName: string;
-  }) => {
+  const signUp = async (email: string, password: string, userData: { first_name: string; last_name: string }) => {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
           },
         },
       });

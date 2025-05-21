@@ -29,6 +29,7 @@ export const AuthSection: React.FC = () => {
     e.preventDefault();
     
     try {
+      // Update to match new signIn signature
       await signIn(loginData.email, loginData.password);
       navigate('/dashboard');
     } catch (error) {
@@ -46,6 +47,7 @@ export const AuthSection: React.FC = () => {
     }
     
     try {
+      // Update to match new signUp signature
       await signUp(
         signupData.email, 
         signupData.password, 
