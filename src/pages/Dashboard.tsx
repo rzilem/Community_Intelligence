@@ -32,6 +32,7 @@ const Dashboard = () => {
     currentPath: window.location.pathname
   });
   
+  // Call the useAdminAccess hook here - ensure it's not causing rerenders
   useAdminAccess(user?.id);
   
   useEffect(() => {

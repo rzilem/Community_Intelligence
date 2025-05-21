@@ -1,222 +1,228 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { Profile } from '@/types/profile-types';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import AuthContext from './AuthContext';
-import { Association } from '@/types/association-types';
-import { UserAssociation } from './types';
-import { 
-  signInWithEmail, 
-  signUpWithEmail, 
-  signOutUser,
-  loadUserProfile,
-  loadUserAssociations
-} from './authUtils';
-import { fetchUserProfile } from '@/services/user-service';
-import { toast } from 'sonner';
+import { User, Session } from '@supabase/supabase-js';
+import { AuthContextType } from './types';
+
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  profile: null,
+  loading: true,
+  isAuthenticated: false,
+  currentAssociation: null,
+  userAssociations: [],
+  userRole: null,
+  signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
+  signOut: async () => {},
+  setCurrentAssociation: () => {},
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [userAssociations, setUserAssociations] = useState<UserAssociation[]>([]);
-  const [currentAssociation, setCurrentAssociation] = useState<Association | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [userAssociations, setUserAssociations] = useState<any[]>([]);
+  const [currentAssociation, setCurrentAssociation] = useState<any | null>(null);
 
-  // Initialize authentication only once on component mount
+  // Determine authentication state
+  const isAuthenticated = !!user;
+  
+  // Determine user role
+  const userRole = useMemo(() => {
+    return profile?.role || null;
+  }, [profile?.role]);
+
+  // Fetch user profile when user changes
   useEffect(() => {
-    console.log('[AuthProvider] Initializing authentication...');
-    let authSubscription: { unsubscribe: () => void } | null = null;
-    
-    const initAuth = async () => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setProfile(null);
+        return;
+      }
+      
       try {
-        // First set up the auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-          console.log('[AuthProvider] Auth state changed:', event, currentSession?.user?.email);
+        const { data: profileData, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
           
-          if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
-            setSession(currentSession);
-            setUser(currentSession?.user || null);
-          } else if (event === 'SIGNED_OUT') {
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            setIsAdmin(false);
-            setUserRole(null);
-            setUserAssociations([]);
-            setCurrentAssociation(null);
-          }
-        });
-        
-        authSubscription = subscription;
-
-        // Then check for an existing session
-        const { data } = await supabase.auth.getSession();
-        console.log('[AuthProvider] Initial session check:', data.session ? 'Session found' : 'No session');
-        setSession(data.session);
-        setUser(data.session?.user || null);
-      } catch (error) {
-        console.error('[AuthProvider] Error fetching initial session:', error);
-        setAuthError('Failed to fetch initial session');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    return () => {
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
-    };
-  }, []);
-
-  // Load user data when the user changes - using setTimeout to prevent blocking the auth callback
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    
-    const loadUserData = async () => {
-      setLoading(true);
-      try {
-        console.log('[AuthProvider] Loading user data for:', user.id);
-        const profileData = await loadUserProfile(user.id);
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
         
         if (profileData) {
-          console.log('[AuthProvider] Profile data loaded:', profileData);
           setProfile(profileData);
-          setIsAdmin(profileData.role === 'admin');
-          setUserRole(profileData.role);
-          
-          const associations = await loadUserAssociations(user.id);
-          console.log('[AuthProvider] User associations loaded:', associations);
-          setUserAssociations(associations || []);
-          
-          if (associations?.length > 0 && !currentAssociation) {
-            setCurrentAssociation(associations[0].associations);
-          }
-        } else {
-          console.warn('[AuthProvider] No profile data found for user:', user.id);
-          // Create a default profile in memory to prevent errors
-          setProfile({
-            id: user.id,
-            role: 'user',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            // Add other required Profile fields with defaults
-            email: user.email || '',
-            first_name: user.user_metadata?.first_name || '',
-            last_name: user.user_metadata?.last_name || '',
-            profile_image_url: null
-          } as Profile);
+          console.log('Profile data loaded:', profileData);
         }
       } catch (error) {
-        console.error('[AuthProvider] Error loading user data:', error);
-        toast.error('Failed to load user profile data');
+        console.error('Unexpected error fetching profile:', error);
+      }
+    };
+    
+    fetchProfile();
+  }, [user]);
+  
+  // Fetch user associations when user changes
+  useEffect(() => {
+    const fetchAssociations = async () => {
+      if (!user) {
+        setUserAssociations([]);
+        setCurrentAssociation(null);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('association_users')
+          .select(`
+            *,
+            associations:association_id (*)
+          `)
+          .eq('user_id', user.id);
+          
+        if (error) {
+          console.error('Error fetching user associations:', error);
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          console.info('[AuthProvider] User associations loaded:', data);
+          setUserAssociations(data);
+          
+          // Set first association as current if not already set
+          if (!currentAssociation) {
+            setCurrentAssociation(data[0].associations);
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching associations:', error);
+      }
+    };
+    
+    fetchAssociations();
+  }, [user, currentAssociation]);
+
+  // Initialize auth state
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, newSession) => {
+        console.log('Auth state changed:', event, newSession?.user?.id);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        // If user logs out, reset states
+        if (event === 'SIGNED_OUT') {
+          setProfile(null);
+          setCurrentAssociation(null);
+          setUserAssociations([]);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    const initializeAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+      } catch (error) {
+        console.error('Error getting session:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    // Small timeout to prevent blocking the auth state change callback
-    const timeoutId = setTimeout(() => {
-      loadUserData();
-    }, 0);
+    initializeAuth();
 
-    return () => clearTimeout(timeoutId);
-  }, [user, currentAssociation]);
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      await signInWithEmail(email, password);
-    } catch (error) {
-      console.error('[AuthProvider] Sign in error:', error);
-      toast.error(`Login failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signUp = useCallback(async (
-    email: string, 
-    password: string, 
-    userData: { first_name: string, last_name: string }
-  ) => {
+  // Authentication methods
+  const signIn = async ({ email, password }: { email: string; password: string }) => {
     try {
-      setLoading(true);
-      await signUpWithEmail(email, password, userData);
-    } catch (error) {
-      console.error('[AuthProvider] Sign up error:', error);
-      toast.error(`Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const signOut = useCallback(async () => {
-    try {
-      setLoading(true);
-      await signOutUser();
-    } catch (error) {
-      console.error('[AuthProvider] Sign out error:', error);
-      toast.error(`Sign out failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refreshProfile = useCallback(async () => {
-    if (user?.id) {
-      try {
-        console.log('[AuthProvider] Refreshing profile for user:', user.id);
-        const { profile: updatedProfile } = await fetchUserProfile(user.id);
-        if (updatedProfile) {
-          console.log('[AuthProvider] Updated profile:', updatedProfile);
-          setProfile(updatedProfile);
-        }
-      } catch (error) {
-        console.error('[AuthProvider] Error refreshing profile:', error);
-        toast.error('Failed to refresh profile');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        return { error };
       }
+      
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Unexpected sign in error:', error);
+      return { error };
     }
-  }, [user]);
+  };
 
-  const isAuthenticated = !!user;
+  const signUp = async ({ email, password, firstName, lastName }: { 
+    email: string; 
+    password: string;
+    firstName: string;
+    lastName: string;
+  }) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
+        },
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        return { error };
+      }
+      
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Unexpected sign up error:', error);
+      return { error };
+    }
+  };
 
-  console.log('[AuthProvider] Current state:', { 
-    isAuthenticated, 
-    userEmail: user?.email,
-    profileLoaded: !!profile,
-    loading
-  });
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+      }
+    } catch (error) {
+      console.error('Unexpected sign out error:', error);
+    }
+  };
+
+  const handleSetCurrentAssociation = (association: any) => {
+    setCurrentAssociation(association);
+  };
 
   const contextValue = {
     user,
-    profile,
     session,
+    profile,
+    loading,
+    isAuthenticated,
+    userAssociations,
+    currentAssociation,
+    userRole,
     signIn,
     signUp,
     signOut,
-    loading,
-    isLoading: loading,
-    userRole,
-    userAssociations,
-    currentAssociation,
-    isAdmin,
-    isAuthenticated,
-    setCurrentAssociation,
-    refreshProfile,
+    setCurrentAssociation: handleSetCurrentAssociation,
   };
 
   return (
