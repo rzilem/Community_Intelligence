@@ -1,5 +1,5 @@
 
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import { NotificationItem } from '@/hooks/useNotifications';
 
 export interface NotificationContextType {
@@ -17,5 +17,3 @@ export const NotificationContext = createContext<NotificationContextType>({
   markAllAsRead: () => {},
   deleteNotification: () => {}
 });
-
-export const useNotificationContext = () => useContext(NotificationContext);

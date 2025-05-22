@@ -13,18 +13,12 @@ interface NotificationProviderProps {
   children: ReactNode;
 }
 
+// Initialize logger only once outside the component
+logger.init();
+
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
-  
-  // Initialize the logger
-  useEffect(() => {
-    // Initialize the logger but only in development
-    if (process.env.NODE_ENV !== 'production') {
-      logger.init();
-      console.info('Client logger initialized in NotificationProvider');
-    }
-  }, []);
   
   // Get notifications from different sources - these hooks should be stable
   const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
@@ -66,48 +60,42 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     
     // Add mock notifications for other types
     if (notificationCounts.invoices > 0) {
-      for (let i = 0; i < notificationCounts.invoices; i++) {
-        aggregatedNotifications.push({
-          id: `invoice-${i}`,
-          title: `New Invoice Received`,
-          description: 'Review pending invoice',
-          type: 'invoice',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/accounting/invoice-queue'
-        });
-      }
+      aggregatedNotifications.push({
+        id: `invoice-batch-${Date.now()}`,
+        title: `${notificationCounts.invoices} New Invoice(s) Received`,
+        description: 'Review pending invoices',
+        type: 'invoice',
+        severity: 'info',
+        read: false,
+        timestamp: new Date().toISOString(),
+        route: '/accounting/invoice-queue'
+      });
     }
     
     if (notificationCounts.requests > 0) {
-      for (let i = 0; i < notificationCounts.requests; i++) {
-        aggregatedNotifications.push({
-          id: `request-${i}`,
-          title: 'New Homeowner Request',
-          description: 'Homeowner request needs attention',
-          type: 'request',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/community-management/homeowner-requests'
-        });
-      }
+      aggregatedNotifications.push({
+        id: `request-batch-${Date.now()}`,
+        title: `${notificationCounts.requests} New Homeowner Request(s)`,
+        description: 'Homeowner requests need attention',
+        type: 'request',
+        severity: 'info',
+        read: false,
+        timestamp: new Date().toISOString(),
+        route: '/community-management/homeowner-requests'
+      });
     }
     
     if (notificationCounts.events > 0) {
-      for (let i = 0; i < notificationCounts.events; i++) {
-        aggregatedNotifications.push({
-          id: `event-${i}`,
-          title: 'Resale Calendar Update',
-          description: 'New event on the resale calendar',
-          type: 'event',
-          severity: 'info',
-          read: false,
-          timestamp: new Date().toISOString(),
-          route: '/resale-management/calendar'
-        });
-      }
+      aggregatedNotifications.push({
+        id: `event-batch-${Date.now()}`,
+        title: `${notificationCounts.events} Resale Calendar Update(s)`,
+        description: 'New events on the resale calendar',
+        type: 'event',
+        severity: 'info',
+        read: false,
+        timestamp: new Date().toISOString(),
+        route: '/resale-management/calendar'
+      });
     }
     
     // Sort by timestamp (newest first)
@@ -118,17 +106,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Update notifications only when the memoized function output changes
   useEffect(() => {
-    try {
-      setNotifications(aggregatedNotifications);
-      logger.init(); // Ensure logger is initialized
-      console.log('NotificationProvider: updated notifications', {
-        count: aggregatedNotifications.length,
-        user: user?.id
-      });
-    } catch (err) {
-      console.error('Error updating notifications:', err);
-    }
-  }, [aggregatedNotifications, user]);
+    setNotifications(aggregatedNotifications);
+  }, [aggregatedNotifications]);
 
   // Memoize callback functions to maintain stable references
   const markAsRead = useCallback((notificationId: string) => {
@@ -139,6 +118,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    
     // Execute these stable functions
     markLeadsAsRead();
     markInvoicesAsRead();

@@ -1,5 +1,5 @@
 
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,9 +11,6 @@ import { AppRouter } from "./routes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { logger } from "./utils/client-logger";
 
-// Initialize the client logger
-logger.init();
-
 // Create the query client outside of the component with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,8 +18,8 @@ const queryClient = new QueryClient({
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
       refetchOnWindowFocus: false, // Prevent refetches on window focus
-      refetchOnMount: false, // Prevent refetches when components mount
-      refetchOnReconnect: false, // Prevent refetches on reconnect
+      refetchOnMount: true, // Enable refetches when components mount
+      refetchOnReconnect: true, // Enable refetches on reconnect
     },
   },
 });
@@ -31,6 +28,12 @@ const queryClient = new QueryClient({
 const MemoizedAppRouter = memo(AppRouter);
 
 const App = () => {
+  // Initialize the logger once when the app starts
+  useEffect(() => {
+    logger.init();
+    console.log('App initialized - client logger initialized');
+  }, []);
+
   return (
     <ErrorBoundary>
       <BrowserRouter>

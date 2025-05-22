@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { HomeownerRequest } from '@/types/homeowner-request-types';
@@ -13,7 +14,6 @@ export const useHomeownerRequestNotifications = () => {
   );
 
   // Get recent homeowner requests to check for unread ones
-  // Fix column name to match database (created_at instead of createdAt)
   const { data: recentRequests = [] } = useSupabaseQuery<HomeownerRequest[]>(
     'homeowner_requests',
     {
@@ -37,7 +37,9 @@ export const useHomeownerRequestNotifications = () => {
     // Show toast only once per session for new requests
     if (recentRequestsLength > 0 && !hasShownToast.current) {
       hasShownToast.current = true;
-      toast(`${recentRequestsLength} new homeowner request${recentRequestsLength > 1 ? 's' : ''} received`, {
+      const message = `${recentRequestsLength} new homeowner request${recentRequestsLength > 1 ? 's' : ''} received`;
+      
+      toast(message, {
         description: "Check the homeowner requests queue for details",
         action: {
           label: "View",

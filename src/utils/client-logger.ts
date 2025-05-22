@@ -170,9 +170,8 @@ export class ClientLogger {
 // Create singleton instance
 export const logger = new ClientLogger();
 
-// Auto-initialize in non-production environments
-if (process.env.NODE_ENV !== 'production') {
-  logger.init();
-}
+// Only initialize in non-production environments by default
+// We'll let the App component handle initialization explicitly
+// to avoid multiple initializations
 
 export default logger;
