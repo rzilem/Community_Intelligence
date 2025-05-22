@@ -7,6 +7,7 @@ import { useInvoiceNotifications } from '@/hooks/invoices/useInvoiceNotification
 import { useHomeownerRequestNotifications } from '@/hooks/homeowners/useHomeownerRequestNotifications';
 import { useResaleEventNotifications } from '@/hooks/resale/useResaleEventNotifications';
 import { useAuth } from '@/contexts/auth';
+import { logger } from '@/utils/client-logger';
 
 interface NotificationProviderProps {
   children: ReactNode;
@@ -16,6 +17,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
   
+  // Initialize the logger
+  useEffect(() => {
+    // Initialize the logger but only in development
+    if (process.env.NODE_ENV !== 'production') {
+      logger.init();
+      console.info('Client logger initialized in NotificationProvider');
+    }
+  }, []);
+  
   // Get notifications from different sources - these hooks should be stable
   const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
   const { unreadInvoicesCount, markAllAsRead: markInvoicesAsRead } = useInvoiceNotifications();
@@ -24,10 +34,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Extract counts into a stable reference to avoid excess re-renders
   const notificationCounts = useMemo(() => ({
-    leads: unreadLeadsCount,
-    invoices: unreadInvoicesCount,
-    requests: unreadRequestsCount,
-    events: unreadEventsCount
+    leads: unreadLeadsCount || 0,
+    invoices: unreadInvoicesCount || 0,
+    requests: unreadRequestsCount || 0,
+    events: unreadEventsCount || 0
   }), [unreadLeadsCount, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount]);
   
   // Create a memoized aggregateNotifications function
@@ -108,8 +118,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Update notifications only when the memoized function output changes
   useEffect(() => {
-    setNotifications(aggregatedNotifications);
-  }, [aggregatedNotifications]);
+    try {
+      setNotifications(aggregatedNotifications);
+      logger.init(); // Ensure logger is initialized
+      console.log('NotificationProvider: updated notifications', {
+        count: aggregatedNotifications.length,
+        user: user?.id
+      });
+    } catch (err) {
+      console.error('Error updating notifications:', err);
+    }
+  }, [aggregatedNotifications, user]);
 
   // Memoize callback functions to maintain stable references
   const markAsRead = useCallback((notificationId: string) => {

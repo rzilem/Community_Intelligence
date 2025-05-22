@@ -4,18 +4,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth';
 import HeroSection from '@/components/marketing/HeroSection';
+import { logger } from '@/utils/client-logger';
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize logger
+  useEffect(() => {
+    logger.init();
+    console.log('Index page loaded');
+  }, []);
+
   useEffect(() => {
     // Only redirect after auth is checked
     if (!loading) {
       setIsLoading(false);
       if (user) {
+        console.log('User authenticated, redirecting to dashboard');
         navigate('/dashboard');
+      } else {
+        console.log('No authenticated user found');
       }
     }
   }, [user, loading, navigate]);

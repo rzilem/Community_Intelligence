@@ -15,10 +15,20 @@ export class ClientLogger {
   private readonly storageKey: string;
   private readonly maxEntries: number;
   private isInitialized: boolean = false;
+  private originalLog: typeof console.log;
+  private originalInfo: typeof console.info;
+  private originalWarn: typeof console.warn;
+  private originalError: typeof console.error;
 
   constructor(storageKey = 'app_logs', maxEntries = 100) {
     this.storageKey = storageKey;
     this.maxEntries = maxEntries;
+    
+    // Save references to original console methods
+    this.originalLog = console.log;
+    this.originalInfo = console.info;
+    this.originalWarn = console.warn;
+    this.originalError = console.error;
   }
 
   /**
@@ -27,38 +37,37 @@ export class ClientLogger {
   init(): void {
     if (this.isInitialized) return;
     
-    // Save original console methods
-    const originalLog = console.log;
-    const originalInfo = console.info;
-    const originalWarn = console.warn;
-    const originalError = console.error;
+    try {
+      // Override console.log
+      console.log = (...args: any[]) => {
+        this.captureLog('log', args);
+        this.originalLog.apply(console, args);
+      };
 
-    // Override console.log
-    console.log = (...args: any[]) => {
-      this.captureLog('log', args);
-      originalLog.apply(console, args);
-    };
+      // Override console.info
+      console.info = (...args: any[]) => {
+        this.captureLog('info', args);
+        this.originalInfo.apply(console, args);
+      };
 
-    // Override console.info
-    console.info = (...args: any[]) => {
-      this.captureLog('info', args);
-      originalInfo.apply(console, args);
-    };
+      // Override console.warn
+      console.warn = (...args: any[]) => {
+        this.captureLog('warn', args);
+        this.originalWarn.apply(console, args);
+      };
 
-    // Override console.warn
-    console.warn = (...args: any[]) => {
-      this.captureLog('warn', args);
-      originalWarn.apply(console, args);
-    };
+      // Override console.error
+      console.error = (...args: any[]) => {
+        this.captureLog('error', args);
+        this.originalError.apply(console, args);
+      };
 
-    // Override console.error
-    console.error = (...args: any[]) => {
-      this.captureLog('error', args);
-      originalError.apply(console, args);
-    };
-
-    this.isInitialized = true;
-    console.info('Client logger initialized');
+      this.isInitialized = true;
+      this.originalInfo.call(console, 'Client logger initialized');
+    } catch (error) {
+      // Use the original console methods to log any initialization errors
+      this.originalError.call(console, 'Failed to initialize logger:', error);
+    }
   }
 
   /**
@@ -99,7 +108,8 @@ export class ClientLogger {
       // Save logs
       localStorage.setItem(this.storageKey, JSON.stringify(logs));
     } catch (error) {
-      // Do nothing - we don't want to cause an infinite loop
+      // Use original console to avoid infinite recursion
+      this.originalError.call(console, 'Error capturing log:', error);
     }
   }
 
@@ -111,6 +121,7 @@ export class ClientLogger {
       const logsJson = localStorage.getItem(this.storageKey);
       return logsJson ? JSON.parse(logsJson) : [];
     } catch (error) {
+      this.originalError.call(console, 'Error getting logs:', error);
       return [];
     }
   }
@@ -138,6 +149,21 @@ export class ClientLogger {
     } catch (error) {
       return '[Object cannot be stringified]';
     }
+  }
+  
+  /**
+   * Restore the original console methods
+   */
+  restore(): void {
+    if (!this.isInitialized) return;
+    
+    console.log = this.originalLog;
+    console.info = this.originalInfo;
+    console.warn = this.originalWarn;
+    console.error = this.originalError;
+    
+    this.isInitialized = false;
+    console.info('Client logger restored');
   }
 }
 

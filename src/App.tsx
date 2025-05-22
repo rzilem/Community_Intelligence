@@ -9,6 +9,10 @@ import { AuthProvider } from "./contexts/auth";
 import { NotificationProvider } from "./contexts/notifications";
 import { AppRouter } from "./routes";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { logger } from "./utils/client-logger";
+
+// Initialize the client logger
+logger.init();
 
 // Create the query client outside of the component with optimized settings
 const queryClient = new QueryClient({
