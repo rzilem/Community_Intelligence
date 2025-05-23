@@ -10,6 +10,7 @@ import { NotificationProvider } from "./contexts/notifications";
 import { AppRouter } from "./routes";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { logger } from "./utils/client-logger";
+import PromoteUserToAdmin from "./components/users/PromoteUserToAdmin";
 
 // Create the query client outside of the component with optimized settings
 const queryClient = new QueryClient({
@@ -57,6 +58,10 @@ const App = () => {
                 <NotificationProvider>
                   <Toaster />
                   <Sonner />
+                  {/* Temporary component to grant admin rights */}
+                  <div className="fixed top-0 left-0 right-0 z-50 bg-blue-50 p-2">
+                    <PromoteUserToAdmin email="code2grow@gmail.com" />
+                  </div>
                   <ErrorBoundary
                     fallback={
                       <div className="p-8 text-center">
