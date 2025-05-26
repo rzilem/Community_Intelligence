@@ -1,3 +1,4 @@
+
 // File: src/components/settings/SystemSettingsContent.tsx
 // Fixed TypeScript errors for System Settings
 
@@ -74,9 +75,9 @@ interface AllSettings {
 
 const defaultSettings: AllSettings = {
   appearance: {
-    theme: 'system',
-    colorScheme: 'blue',
-    density: 'comfortable',
+    theme: 'system' as ThemeOption,
+    colorScheme: 'blue' as ColorScheme,
+    density: 'comfortable' as DensityOption,
     fontScale: 1,
     animationsEnabled: true,
   },
@@ -138,7 +139,7 @@ export function SystemSettingsContent() {
         const parsedSettings = typeof data === 'object' ? data : JSON.parse(data as string);
         setSettings({
           ...defaultSettings,
-          ...parsedSettings
+          ...parsedSettings as Partial<AllSettings>
         });
         toast.success('Settings loaded successfully');
       }
