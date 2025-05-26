@@ -90,3 +90,11 @@
     "vite": "^5.4.1"
   }
 }
+{
+  "dependencies": {
+    ...your existing dependencies,
+    "openai": "^4.20.1",
+    "formidable": "^3.5.1",
+    "@types/formidable": "^3.4.5"
+  }
+}
