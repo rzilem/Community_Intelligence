@@ -1,119 +1,134 @@
-
+// src/hooks/useAIConfig.ts
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/lib/supabase';
 
-export const useIntegrationConfig = () => {
-  const [openAIModel, setOpenAIModel] = useState<string>('gpt-4o-mini');
-  const [configFields, setConfigFields] = useState<{[key: string]: string}>({});
-  const { toast } = useToast();
-  const [isPending, setIsPending] = useState(false);
-  const [hasOpenAIKey, setHasOpenAIKey] = useState(false);
-  const [lastError, setLastError] = useState<string | null>(null);
+interface AIConfig {
+  model: string;
+  max_tokens: number;
+  temperature: number;
+  enabled: boolean;
+  api_key?: string;
+}
 
-  const fetchOpenAIConfig = async () => {
+export function useAIConfig() {
+  const [config, setConfig] = useState<AIConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchConfig = async () => {
     try {
-      console.log("Fetching OpenAI configuration...");
-      setLastError(null);
+      setLoading(true);
       
-      const { data, error } = await supabase.functions.invoke('settings', {
-        method: 'GET',
-        body: { action: 'integrations' }
+      const { data, error } = await supabase
+        .from('secrets')
+        .select('key, value')
+        .in('key', [
+          'openai_api_key',
+          'ai_model',
+          'ai_max_tokens',
+          'ai_temperature',
+          'ai_enabled'
+        ]);
+
+      if (error) throw error;
+
+      // Convert array to object
+      const configObj = data.reduce((acc: any, item: any) => {
+        acc[item.key] = item.value;
+        return acc;
+      }, {});
+
+      setConfig({
+        model: configObj.ai_model || 'gpt-4',
+        max_tokens: parseInt(configObj.ai_max_tokens) || 1000,
+        temperature: parseFloat(configObj.ai_temperature) || 0.7,
+        enabled: configObj.ai_enabled === 'true',
+        api_key: configObj.openai_api_key
       });
 
-      if (error) {
-        console.error('Error fetching OpenAI config:', error);
-        setLastError(`Failed to fetch OpenAI configuration: ${error.message}`);
-        return;
-      }
-
-      console.log("Received integration settings:", data ? "Data present" : "No data");
-      
-      // Initialize with safe defaults if data is missing
-      const openAIConfig = data?.integrationSettings?.OpenAI || {};
-      
-      setConfigFields({
-        apiKey: openAIConfig.apiKey || '',
-        configDate: openAIConfig.configDate || ''
-      });
-      
-      setOpenAIModel(openAIConfig.model || 'gpt-4o-mini');
-      
-      // Check specifically if apiKey exists and is not empty
-      const apiKeyExists = !!(openAIConfig.apiKey && openAIConfig.apiKey.trim() !== '');
-      console.log("API Key exists:", apiKeyExists);
-      setHasOpenAIKey(apiKeyExists);
-    } catch (error: any) {
-      console.error('Error in fetchOpenAIConfig:', error);
-      setLastError(`Error fetching configuration: ${error.message}`);
-    }
-  };
-
-  const saveOpenAIConfig = async () => {
-    setIsPending(true);
-    setLastError(null);
-    
-    try {
-      // Check that we have a non-empty API key
-      if (!configFields.apiKey || configFields.apiKey.trim() === '') {
-        toast.error("OpenAI API key cannot be empty");
-        setIsPending(false);
-        return;
-      }
-      
-      console.log("Saving OpenAI configuration with model:", openAIModel);
-      
-      const { data, error } = await supabase.functions.invoke('settings', {
-        method: 'PUT',
-        body: { 
-          integrationSettings: {
-            OpenAI: {
-              apiKey: configFields.apiKey,
-              model: openAIModel,
-              configDate: new Date().toISOString()
-            }
-          }
-        }
-      });
-
-      if (error) {
-        console.error("Error saving OpenAI configuration:", error);
-        setLastError(`Error from Supabase: ${error.message}`);
-        toast.error(`Failed to save OpenAI configuration: ${error.message}`);
-      } else if (data && !data.success) {
-        console.error("API returned error response:", data);
-        setLastError(`API error: ${data.error || 'Unknown error'}`);
-        toast.error(`Failed to save configuration: ${data.error || 'Unknown error'}`);
-      } else {
-        console.log("OpenAI configuration saved successfully:", data);
-        toast.success('OpenAI configuration saved successfully');
-        setHasOpenAIKey(!!configFields.apiKey);
-      }
-    } catch (error: any) {
-      console.error("Exception in saveOpenAIConfig:", error);
-      setLastError(`Exception: ${error.message}`);
-      toast.error(`Error saving OpenAI configuration: ${error.message}`);
+    } catch (err) {
+      setError(err.message);
+      console.error('Failed to fetch AI config:', err);
     } finally {
-      setIsPending(false);
+      setLoading(false);
     }
   };
 
-  const handleConfigFieldChange = (field: string, value: string) => {
-    setConfigFields(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const updateConfig = async (updates: Partial<AIConfig>) => {
+    try {
+      const configUpdates = [];
+      const timestamp = new Date().toISOString();
+
+      if (updates.model) {
+        configUpdates.push({
+          key: 'ai_model',
+          value: updates.model,
+          updated_at: timestamp
+        });
+      }
+
+      if (updates.max_tokens !== undefined) {
+        configUpdates.push({
+          key: 'ai_max_tokens',
+          value: updates.max_tokens.toString(),
+          updated_at: timestamp
+        });
+      }
+
+      if (updates.temperature !== undefined) {
+        configUpdates.push({
+          key: 'ai_temperature',
+          value: updates.temperature.toString(),
+          updated_at: timestamp
+        });
+      }
+
+      if (updates.enabled !== undefined) {
+        configUpdates.push({
+          key: 'ai_enabled',
+          value: updates.enabled.toString(),
+          updated_at: timestamp
+        });
+      }
+
+      if (updates.api_key) {
+        configUpdates.push({
+          key: 'openai_api_key',
+          value: updates.api_key,
+          updated_at: timestamp
+        });
+      }
+
+      // Update each config item
+      for (const update of configUpdates) {
+        const { error } = await supabase
+          .from('secrets')
+          .upsert(update, { onConflict: 'key' });
+
+        if (error) throw error;
+      }
+
+      // Refresh config
+      await fetchConfig();
+      
+      return { success: true };
+
+    } catch (err) {
+      setError(err.message);
+      console.error('Failed to update AI config:', err);
+      return { success: false, error: err.message };
+    }
   };
+
+  useEffect(() => {
+    fetchConfig();
+  }, []);
 
   return {
-    openAIModel,
-    setOpenAIModel,
-    configFields,
-    handleConfigFieldChange,
-    saveOpenAIConfig,
-    fetchOpenAIConfig,
-    isPending,
-    hasOpenAIKey,
-    lastError
+    config,
+    loading,
+    error,
+    updateConfig,
+    refetch: fetchConfig
   };
-};
+}
