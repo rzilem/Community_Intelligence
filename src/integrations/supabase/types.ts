@@ -9,6 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_learning_corrections: {
+        Row: {
+          confidence_after: number | null
+          confidence_before: number | null
+          corrected_value: Json
+          correction_type: string
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          line_item_id: string | null
+          original_suggestion: Json
+          user_id: string | null
+        }
+        Insert: {
+          confidence_after?: number | null
+          confidence_before?: number | null
+          corrected_value: Json
+          correction_type: string
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          line_item_id?: string | null
+          original_suggestion: Json
+          user_id?: string | null
+        }
+        Update: {
+          confidence_after?: number | null
+          confidence_before?: number | null
+          corrected_value?: Json
+          correction_type?: string
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          line_item_id?: string | null
+          original_suggestion?: Json
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_learning_corrections_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_learning_corrections_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_learning_corrections_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_processing_queue: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          image_url: string
+          invoice_id: string | null
+          max_retries: number | null
+          priority: number | null
+          processing_completed_at: string | null
+          processing_started_at: string | null
+          retry_count: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          image_url: string
+          invoice_id?: string | null
+          max_retries?: number | null
+          priority?: number | null
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          image_url?: string
+          invoice_id?: string | null
+          max_retries?: number | null
+          priority?: number | null
+          processing_completed_at?: string | null
+          processing_started_at?: string | null
+          retry_count?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_processing_queue_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_processing_queue_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_processing_results: {
+        Row: {
+          confidence_scores: Json | null
+          created_at: string | null
+          id: string
+          invoice_id: string | null
+          model_version: string | null
+          processing_time_ms: number | null
+          raw_text_extracted: string | null
+          structured_data: Json | null
+        }
+        Insert: {
+          confidence_scores?: Json | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          model_version?: string | null
+          processing_time_ms?: number | null
+          raw_text_extracted?: string | null
+          structured_data?: Json | null
+        }
+        Update: {
+          confidence_scores?: Json | null
+          created_at?: string | null
+          id?: string
+          invoice_id?: string | null
+          model_version?: string | null
+          processing_time_ms?: number | null
+          raw_text_extracted?: string | null
+          structured_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_processing_results_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_settings: {
         Row: {
           created_at: string | null
@@ -41,6 +206,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ai_vendor_patterns: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          frequency_count: number | null
+          id: string
+          last_updated: string | null
+          pattern_data: Json
+          vendor_name: string
+          vendor_normalized: string
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          frequency_count?: number | null
+          id?: string
+          last_updated?: string | null
+          pattern_data: Json
+          vendor_name: string
+          vendor_normalized: string
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          frequency_count?: number | null
+          id?: string
+          last_updated?: string | null
+          pattern_data?: Json
+          vendor_name?: string
+          vendor_normalized?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_vendor_patterns_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       amenities: {
         Row: {
@@ -2441,6 +2647,47 @@ export type Database = {
           },
         ]
       }
+      gl_account_usage_stats: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          description_keywords: Json | null
+          gl_account_code: string
+          id: string
+          last_used: string | null
+          usage_count: number | null
+          vendor_name: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          created_at?: string | null
+          description_keywords?: Json | null
+          gl_account_code: string
+          id?: string
+          last_used?: string | null
+          usage_count?: number | null
+          vendor_name?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          created_at?: string | null
+          description_keywords?: Json | null
+          gl_account_code?: string
+          id?: string
+          last_used?: string | null
+          usage_count?: number | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gl_account_usage_stats_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gl_accounts: {
         Row: {
           account_number: string | null
@@ -2868,6 +3115,8 @@ export type Database = {
       }
       invoice_line_items: {
         Row: {
+          ai_confidence: number | null
+          ai_description_original: string | null
           amount: number
           bank_account_id: string | null
           created_at: string
@@ -2875,9 +3124,16 @@ export type Database = {
           gl_account_id: string | null
           id: string
           invoice_id: string | null
+          is_ai_suggested: boolean | null
+          is_user_edited: boolean | null
+          property_assignment: string | null
+          suggested_category: string | null
+          suggested_gl_account: string | null
           updated_at: string
         }
         Insert: {
+          ai_confidence?: number | null
+          ai_description_original?: string | null
           amount: number
           bank_account_id?: string | null
           created_at?: string
@@ -2885,9 +3141,16 @@ export type Database = {
           gl_account_id?: string | null
           id?: string
           invoice_id?: string | null
+          is_ai_suggested?: boolean | null
+          is_user_edited?: boolean | null
+          property_assignment?: string | null
+          suggested_category?: string | null
+          suggested_gl_account?: string | null
           updated_at?: string
         }
         Update: {
+          ai_confidence?: number | null
+          ai_description_original?: string | null
           amount?: number
           bank_account_id?: string | null
           created_at?: string
@@ -2895,6 +3158,11 @@ export type Database = {
           gl_account_id?: string | null
           id?: string
           invoice_id?: string | null
+          is_ai_suggested?: boolean | null
+          is_user_edited?: boolean | null
+          property_assignment?: string | null
+          suggested_category?: string | null
+          suggested_gl_account?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -2919,12 +3187,22 @@ export type Database = {
             referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "invoice_line_items_property_assignment_fkey"
+            columns: ["property_assignment"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
         ]
       }
       invoices: {
         Row: {
           ai_confidence: Json | null
+          ai_confidence_score: number | null
           ai_line_items: Json | null
+          ai_processed_at: string | null
+          ai_processing_status: string | null
           amount: number
           association_id: string | null
           association_name: string | null
@@ -2937,13 +3215,16 @@ export type Database = {
           gl_account_id: string | null
           html_content: string | null
           id: string
+          image_url: string | null
           invoice_date: string | null
           invoice_number: string
+          needs_review: boolean | null
           payment_date: string | null
           payment_id: string | null
           payment_method: string | null
           payment_status: string | null
           pdf_url: string | null
+          raw_extracted_text: string | null
           scheduled_payment_date: string | null
           source_document: string | null
           status: string
@@ -2953,7 +3234,10 @@ export type Database = {
         }
         Insert: {
           ai_confidence?: Json | null
+          ai_confidence_score?: number | null
           ai_line_items?: Json | null
+          ai_processed_at?: string | null
+          ai_processing_status?: string | null
           amount: number
           association_id?: string | null
           association_name?: string | null
@@ -2966,13 +3250,16 @@ export type Database = {
           gl_account_id?: string | null
           html_content?: string | null
           id?: string
+          image_url?: string | null
           invoice_date?: string | null
           invoice_number: string
+          needs_review?: boolean | null
           payment_date?: string | null
           payment_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pdf_url?: string | null
+          raw_extracted_text?: string | null
           scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
@@ -2982,7 +3269,10 @@ export type Database = {
         }
         Update: {
           ai_confidence?: Json | null
+          ai_confidence_score?: number | null
           ai_line_items?: Json | null
+          ai_processed_at?: string | null
+          ai_processing_status?: string | null
           amount?: number
           association_id?: string | null
           association_name?: string | null
@@ -2995,13 +3285,16 @@ export type Database = {
           gl_account_id?: string | null
           html_content?: string | null
           id?: string
+          image_url?: string | null
           invoice_date?: string | null
           invoice_number?: string
+          needs_review?: boolean | null
           payment_date?: string | null
           payment_id?: string | null
           payment_method?: string | null
           payment_status?: string | null
           pdf_url?: string | null
+          raw_extracted_text?: string | null
           scheduled_payment_date?: string | null
           source_document?: string | null
           status?: string
@@ -4956,7 +5249,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ai_processing_stats: {
+        Row: {
+          ai_processed: number | null
+          association_id: string | null
+          avg_confidence: number | null
+          high_confidence: number | null
+          low_confidence: number | null
+          needs_review: number | null
+          total_invoices: number | null
+        }
+        Relationships: []
+      }
+      vendor_learning_progress: {
+        Row: {
+          association_id: string | null
+          avg_confidence_after_correction: number | null
+          correction_count: number | null
+          frequency_count: number | null
+          last_updated: string | null
+          vendor_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_vendor_patterns_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       assign_user_to_association: {
@@ -4970,6 +5293,14 @@ export type Database = {
       check_user_association: {
         Args: { association_uuid: string }
         Returns: boolean
+      }
+      cleanup_processing_queue: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_processing_results: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       create_association_with_admin: {
         Args: {
@@ -4992,6 +5323,14 @@ export type Database = {
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_ai_suggestions: {
+        Args: {
+          p_association_id: string
+          p_vendor_name?: string
+          p_description?: string
+        }
+        Returns: Json
       }
       get_associations: {
         Args: Record<PropertyKey, never>
@@ -5178,6 +5517,16 @@ export type Database = {
           theme_param?: string
           notifications_param?: boolean
           column_preferences_param?: Json
+        }
+        Returns: undefined
+      }
+      update_vendor_pattern: {
+        Args: {
+          p_vendor_name: string
+          p_association_id: string
+          p_gl_account: string
+          p_category: string
+          p_description: string
         }
         Returns: undefined
       }
