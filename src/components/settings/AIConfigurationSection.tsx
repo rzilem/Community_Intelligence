@@ -35,20 +35,45 @@ const AIConfigurationSection: React.FC = () => {
   const loadConfiguration = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('settings', {
-        body: { action: 'get_ai_config' }
-      });
+      // Load saved configuration values from system_settings table
+      const configKeys = Object.keys(defaultValues);
+      const { data: settingsData, error } = await supabase
+        .from('system_settings')
+        .select('key, value')
+        .in('key', configKeys);
 
       if (error) {
         console.error('Error loading AI configuration:', error);
+        toast({
+          title: "Load Failed",
+          description: "Failed to load AI configuration from database.",
+          variant: "destructive",
+        });
         return;
       }
 
-      if (data?.config) {
-        setConfigValues(prev => ({ ...prev, ...data.config }));
+      if (settingsData && settingsData.length > 0) {
+        const loadedConfig = { ...defaultValues };
+        settingsData.forEach((setting) => {
+          if (setting.key in loadedConfig) {
+            // Extract the string value from the JSONB field
+            loadedConfig[setting.key as keyof AIConfigValues] = setting.value;
+          }
+        });
+        setConfigValues(loadedConfig);
+        
+        toast({
+          title: "Configuration Loaded",
+          description: `Loaded ${settingsData.length} saved configuration values.`,
+        });
       }
     } catch (error) {
       console.error('Error loading AI configuration:', error);
+      toast({
+        title: "Load Failed",
+        description: `Failed to load AI configuration: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +82,7 @@ const AIConfigurationSection: React.FC = () => {
   const saveConfiguration = async () => {
     setIsSaving(true);
     try {
-      // Save each configuration value as a separate secret
+      // Save each configuration value using the update-secret edge function
       const secretPromises = Object.entries(configValues).map(([key, value]) =>
         supabase.functions.invoke('update-secret', {
           body: { name: key, value }
@@ -70,13 +95,17 @@ const AIConfigurationSection: React.FC = () => {
       const failures = results.filter(result => result.error || !result.data?.success);
       
       if (failures.length > 0) {
+        console.error('Failed results:', failures);
         throw new Error(`Failed to save ${failures.length} configuration values`);
       }
 
       toast({
         title: "Configuration Saved",
-        description: "AI configuration values have been saved successfully as Supabase secrets.",
+        description: "AI configuration values have been saved successfully.",
       });
+
+      // Reload the configuration to show the saved values
+      await loadConfiguration();
     } catch (error) {
       console.error('Error saving AI configuration:', error);
       toast({
@@ -116,7 +145,7 @@ const AIConfigurationSection: React.FC = () => {
           AI Processing Configuration
         </CardTitle>
         <CardDescription>
-          Configure AI processing thresholds and limits. These values are stored securely as Supabase secrets.
+          Configure AI processing thresholds and limits. These values are stored securely in the system settings.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -215,7 +244,22 @@ const AIConfigurationSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-end pt-4">
+        <div className="flex justify-between items-center pt-4">
+          <Button 
+            variant="outline"
+            onClick={loadConfiguration} 
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Loading...
+              </>
+            ) : (
+              'Reload Configuration'
+            )}
+          </Button>
+          
           <Button 
             onClick={saveConfiguration} 
             disabled={isSaving}

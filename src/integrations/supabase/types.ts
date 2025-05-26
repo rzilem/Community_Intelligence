@@ -5403,6 +5403,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      get_secret: {
+        Args: { secret_name: string }
+        Returns: string
+      }
       get_system_setting: {
         Args: { setting_key: string }
         Returns: Json
@@ -5489,6 +5493,10 @@ export type Database = {
           updated_at: string | null
           user_id: string
         }[]
+      }
+      set_secret: {
+        Args: { secret_name: string; secret_value: string }
+        Returns: boolean
       }
       set_totp_verified: {
         Args: { p_user_id: string; p_verified?: boolean }
