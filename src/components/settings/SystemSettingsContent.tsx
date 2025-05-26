@@ -69,29 +69,45 @@ const SystemSettingsContent: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Load user settings from the database
-      const { data: userSettings, error } = await supabase
-        .from('user_settings')
-        .select('setting_key, setting_value')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-
-      if (error) {
-        console.error('Error loading settings:', error);
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No user found');
+        setIsLoading(false);
         return;
       }
 
-      if (userSettings && userSettings.length > 0) {
-        const loadedSettings = { ...settings };
-        
-        userSettings.forEach((setting) => {
-          if (setting.setting_key in loadedSettings) {
-            try {
-              loadedSettings[setting.setting_key as keyof SystemSettings] = JSON.parse(setting.setting_value);
-            } catch (e) {
-              console.error(`Error parsing setting ${setting.setting_key}:`, e);
-            }
+      // Load user settings from the database using the actual table structure
+      const { data: userSettings, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error loading settings:', error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (userSettings) {
+        // Map the database fields to our settings structure
+        const loadedSettings: SystemSettings = {
+          ...settings,
+          appearance: {
+            ...settings.appearance,
+            theme: userSettings.theme || 'system'
+          },
+          notifications: {
+            ...settings.notifications,
+            emailNotifications: userSettings.notifications_enabled ?? true
+          },
+          preferences: {
+            ...settings.preferences,
+            // Map any column_preferences if they exist
+            ...(userSettings.column_preferences ? userSettings.column_preferences : {})
           }
-        });
+        };
         
         setSettings(loadedSettings);
       }
@@ -117,13 +133,29 @@ const SystemSettingsContent: React.FC = () => {
         [category]: updatedCategorySettings
       }));
 
-      // Save to database
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('No user found');
+      }
+
+      // Map settings back to database structure
+      let updateData: any = {};
+      
+      if (category === 'appearance') {
+        updateData.theme = updatedCategorySettings.theme;
+      } else if (category === 'notifications') {
+        updateData.notifications_enabled = updatedCategorySettings.emailNotifications;
+      } else if (category === 'preferences') {
+        updateData.column_preferences = updatedCategorySettings;
+      }
+
+      // Save to database using upsert
       const { error } = await supabase
         .from('user_settings')
         .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          setting_key: category,
-          setting_value: JSON.stringify(updatedCategorySettings)
+          user_id: user.id,
+          ...updateData
         });
 
       if (error) {
