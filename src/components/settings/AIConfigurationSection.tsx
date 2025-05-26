@@ -56,8 +56,21 @@ const AIConfigurationSection: React.FC = () => {
         const loadedConfig = { ...defaultValues };
         settingsData.forEach((setting) => {
           if (setting.key in loadedConfig) {
-            // Extract the string value from the JSONB field
-            loadedConfig[setting.key as keyof AIConfigValues] = setting.value;
+            // Extract the string value from the JSONB field, handling different types
+            const value = setting.value;
+            let stringValue: string;
+            
+            if (typeof value === 'string') {
+              stringValue = value;
+            } else if (typeof value === 'number') {
+              stringValue = value.toString();
+            } else if (typeof value === 'object' && value !== null) {
+              stringValue = JSON.stringify(value);
+            } else {
+              stringValue = String(value);
+            }
+            
+            loadedConfig[setting.key as keyof AIConfigValues] = stringValue;
           }
         });
         setConfigValues(loadedConfig);
