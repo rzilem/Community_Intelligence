@@ -1,10 +1,9 @@
 
-
 // Environment variables helper for Vite frontend environment
 export const env = {
-  // Supabase configuration with fallback values
-  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || 'https://cahergndkwfqltxyikyr.supabase.co',
-  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhaGVyZ25ka3dmcWx0eHlpa3lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwOTUzMTYsImV4cCI6MjA1OTY3MTMxNn0.n_tRSJy3M9IaiyrhG02kpvko-pWd6XyYs4khDauxRGQ',
+  // Supabase configuration
+  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || '',
   
   // OpenAI configuration
   OPENAI_API_KEY: import.meta.env?.VITE_OPENAI_API_KEY || '',
@@ -42,4 +41,3 @@ export const logEnvStatus = () => {
     });
   }
 };
-
