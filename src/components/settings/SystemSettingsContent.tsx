@@ -1,4 +1,3 @@
-
 // File: src/components/settings/SystemSettingsContent.tsx
 // Fixed TypeScript errors for System Settings
 
@@ -11,13 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { AIConfigurationSection } from './AIConfigurationSection';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // Define proper types
 type ThemeOption = 'light' | 'dark' | 'system';
