@@ -205,6 +205,8 @@ export class BidRequestService {
           completed_jobs: 42,
           is_active: true,
           include_in_bids: true,
+          category: 'landscaping',
+          hasInsurance: true,
           created_at: '2024-01-01T00:00:00',
           updated_at: '2024-01-15T10:30:00'
         }

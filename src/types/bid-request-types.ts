@@ -37,6 +37,11 @@ export interface BidRequest {
     budget?: number;
     requirements?: string;
     deliverables?: string;
+    projectGoals?: string;
+    materialRequirements?: string;
+    timelineExpectations?: string;
+    specialNotes?: string;
+    customQuestions?: { id: string; question: string }[];
   };
   attachments?: AttachmentFile[];
   status: 'draft' | 'published' | 'bidding' | 'evaluating' | 'awarded' | 'completed' | 'cancelled';
@@ -100,6 +105,8 @@ export interface Vendor {
   is_active: boolean;
   include_in_bids?: boolean; // For filtering
   notes?: string;
+  category?: string; // Add category for filtering
+  hasInsurance?: boolean; // Add insurance flag
   created_at: string;
   updated_at: string;
 }

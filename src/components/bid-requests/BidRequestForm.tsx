@@ -198,7 +198,10 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
   const handleSubmit = async (isDraft: boolean = false) => {
     setLoading(true);
     try {
-      const dataToSubmit = { ...formData, status: isDraft ? 'draft' : 'published' };
+      const dataToSubmit = { 
+        ...formData, 
+        status: (isDraft ? 'draft' : 'published') as 'draft' | 'published'
+      };
       if (isDraft) {
         await onSaveDraft(dataToSubmit);
       } else {

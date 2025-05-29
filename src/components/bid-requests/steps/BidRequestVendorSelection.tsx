@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { BidRequestWithVendors, BidRequestVendor } from '@/types/bid-request-types';
-import { Vendor } from '@/types/vendor-types';
+import { Vendor } from '@/types/bid-request-types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, XCircle, Search, Users, Info, AlertCircle, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { bidRequestService } from '@/services/bid-request-service';
+import { bidRequestService } from '@/services/bidRequestService';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
@@ -68,10 +68,12 @@ const BidRequestVendorSelection: React.FC<BidRequestVendorSelectionProps> = ({
       
       // Update parent component with vendor selection
       // Create vendor objects with the required properties
-      const vendors = newSelection.map(id => ({
+      const vendors: BidRequestVendor[] = newSelection.map(id => ({
         id: `temp-${id}`, // Temporary ID that will be replaced on server
         bidRequestId: 'pending', // Will be set when the bid request is created
+        bid_request_id: 'pending', // Dual support
         vendorId: id,
+        vendor_id: id, // Dual support
         status: 'invited' as const
       }));
       
