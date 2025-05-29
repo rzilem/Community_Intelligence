@@ -51,6 +51,7 @@ export interface BidRequest {
   awarded_at?: string;
   created_by: string;
   createdBy: string; // Dual support
+  assigned_to?: string; // Add missing property
   created_at: string;
   updated_at: string;
   imageUrl?: string;

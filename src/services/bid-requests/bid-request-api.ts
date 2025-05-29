@@ -14,13 +14,13 @@ export async function createBidRequest(bidRequest: Partial<BidRequest>): Promise
     status: bidRequest.status || 'draft',
     association_id: bidRequest.associationId,
     created_by: bidRequest.createdBy,
-    assigned_to: bidRequest.assignedTo,
+    assigned_to: bidRequest.assigned_to, // Use snake_case property
     due_date: bidRequest.dueDate,
     budget: bidRequest.budget,
     category: bidRequest.category,
     visibility: bidRequest.visibility || 'private',
     image_url: bidRequest.imageUrl,
-    attachments: bidRequest.attachments || []
+    attachments: bidRequest.attachments ? JSON.stringify(bidRequest.attachments) : null
   };
 
   console.log('Creating bid request with data:', dbBidRequest);
@@ -39,20 +39,35 @@ export async function createBidRequest(bidRequest: Partial<BidRequest>): Promise
   // Convert snake_case back to camelCase for frontend
   return {
     id: data.id,
+    hoa_id: data.hoa_id || data.association_id,
+    association_id: data.association_id,
+    associationId: data.association_id,
+    maintenance_request_id: data.maintenance_request_id,
     title: data.title,
     description: data.description,
-    status: data.status as "draft" | "open" | "closed" | "awarded",
-    associationId: data.association_id,
-    createdBy: data.created_by,
-    assignedTo: data.assigned_to,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    dueDate: data.due_date,
-    budget: data.budget,
     category: data.category,
-    visibility: data.visibility as "private" | "association" | "public",
+    priority: data.priority as "low" | "medium" | "high" | "urgent",
+    budget_range_min: data.budget_range_min,
+    budget_range_max: data.budget_range_max,
+    preferred_start_date: data.preferred_start_date,
+    required_completion_date: data.required_completion_date,
+    location: data.location,
+    special_requirements: data.special_requirements,
+    attachments: data.attachments ? JSON.parse(data.attachments) : [],
+    status: data.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
+    bid_deadline: data.bid_deadline,
+    selected_vendor_id: data.selected_vendor_id,
+    awarded_amount: data.awarded_amount,
+    awarded_at: data.awarded_at,
+    created_by: data.created_by,
+    createdBy: data.created_by,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
     imageUrl: data.image_url,
-    attachments: data.attachments as string[]
+    visibility: data.visibility as "private" | "association" | "public",
+    due_date: data.due_date,
+    dueDate: data.due_date,
+    budget: data.budget
   };
 }
 
@@ -66,13 +81,13 @@ export async function updateBidRequest(id: string, bidRequest: Partial<BidReques
     description: bidRequest.description,
     status: bidRequest.status,
     association_id: bidRequest.associationId,
-    assigned_to: bidRequest.assignedTo,
+    assigned_to: bidRequest.assigned_to, // Use snake_case property
     due_date: bidRequest.dueDate,
     budget: bidRequest.budget,
     category: bidRequest.category,
     visibility: bidRequest.visibility,
     image_url: bidRequest.imageUrl,
-    attachments: bidRequest.attachments
+    attachments: bidRequest.attachments ? JSON.stringify(bidRequest.attachments) : null
   };
 
   // Remove undefined fields to not overwrite with nulls
@@ -99,20 +114,35 @@ export async function updateBidRequest(id: string, bidRequest: Partial<BidReques
   // Convert snake_case back to camelCase for frontend
   return {
     id: data.id,
+    hoa_id: data.hoa_id || data.association_id,
+    association_id: data.association_id,
+    associationId: data.association_id,
+    maintenance_request_id: data.maintenance_request_id,
     title: data.title,
     description: data.description,
-    status: data.status as "draft" | "open" | "closed" | "awarded",
-    associationId: data.association_id,
-    createdBy: data.created_by,
-    assignedTo: data.assigned_to,
-    createdAt: data.created_at,
-    updatedAt: data.updated_at,
-    dueDate: data.due_date,
-    budget: data.budget,
     category: data.category,
-    visibility: data.visibility as "private" | "association" | "public",
+    priority: data.priority as "low" | "medium" | "high" | "urgent",
+    budget_range_min: data.budget_range_min,
+    budget_range_max: data.budget_range_max,
+    preferred_start_date: data.preferred_start_date,
+    required_completion_date: data.required_completion_date,
+    location: data.location,
+    special_requirements: data.special_requirements,
+    attachments: data.attachments ? JSON.parse(data.attachments) : [],
+    status: data.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
+    bid_deadline: data.bid_deadline,
+    selected_vendor_id: data.selected_vendor_id,
+    awarded_amount: data.awarded_amount,
+    awarded_at: data.awarded_at,
+    created_by: data.created_by,
+    createdBy: data.created_by,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
     imageUrl: data.image_url,
-    attachments: data.attachments as string[]
+    visibility: data.visibility as "private" | "association" | "public",
+    due_date: data.due_date,
+    dueDate: data.due_date,
+    budget: data.budget
   };
 }
 
@@ -137,20 +167,35 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
   // Convert snake_case to camelCase
   return (data || []).map(item => ({
     id: item.id,
+    hoa_id: item.hoa_id || item.association_id,
+    association_id: item.association_id,
+    associationId: item.association_id,
+    maintenance_request_id: item.maintenance_request_id,
     title: item.title,
     description: item.description,
-    status: item.status as "draft" | "open" | "closed" | "awarded",
-    associationId: item.association_id,
+    category: item.category,
+    priority: item.priority as "low" | "medium" | "high" | "urgent",
+    budget_range_min: item.budget_range_min,
+    budget_range_max: item.budget_range_max,
+    preferred_start_date: item.preferred_start_date,
+    required_completion_date: item.required_completion_date,
+    location: item.location,
+    special_requirements: item.special_requirements,
+    attachments: item.attachments ? JSON.parse(item.attachments) : [],
+    status: item.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
+    bid_deadline: item.bid_deadline,
+    selected_vendor_id: item.selected_vendor_id,
+    awarded_amount: item.awarded_amount,
+    awarded_at: item.awarded_at,
+    created_by: item.created_by,
     createdBy: item.created_by,
-    assignedTo: item.assigned_to,
-    createdAt: item.created_at,
-    updatedAt: item.updated_at,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
+    imageUrl: item.image_url,
+    visibility: item.visibility as "private" | "association" | "public",
+    due_date: item.due_date,
     dueDate: item.due_date,
     budget: item.budget,
-    category: item.category,
-    visibility: item.visibility as "private" | "association" | "public",
-    imageUrl: item.image_url,
-    attachments: item.attachments as string[],
     vendors: []
   }));
 }
@@ -177,20 +222,35 @@ export async function getBidRequestById(id: string): Promise<BidRequestWithVendo
   // Convert snake_case to camelCase and ensure correct types
   return {
     id: requestData.id,
+    hoa_id: requestData.hoa_id || requestData.association_id,
+    association_id: requestData.association_id,
+    associationId: requestData.association_id,
+    maintenance_request_id: requestData.maintenance_request_id,
     title: requestData.title,
     description: requestData.description,
-    status: requestData.status as "draft" | "open" | "closed" | "awarded",
-    associationId: requestData.association_id,
+    category: requestData.category,
+    priority: requestData.priority as "low" | "medium" | "high" | "urgent",
+    budget_range_min: requestData.budget_range_min,
+    budget_range_max: requestData.budget_range_max,
+    preferred_start_date: requestData.preferred_start_date,
+    required_completion_date: requestData.required_completion_date,
+    location: requestData.location,
+    special_requirements: requestData.special_requirements,
+    attachments: requestData.attachments ? JSON.parse(requestData.attachments) : [],
+    status: requestData.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
+    bid_deadline: requestData.bid_deadline,
+    selected_vendor_id: requestData.selected_vendor_id,
+    awarded_amount: requestData.awarded_amount,
+    awarded_at: requestData.awarded_at,
+    created_by: requestData.created_by,
     createdBy: requestData.created_by,
-    assignedTo: requestData.assigned_to,
-    createdAt: requestData.created_at,
-    updatedAt: requestData.updated_at,
+    created_at: requestData.created_at,
+    updated_at: requestData.updated_at,
+    imageUrl: requestData.image_url,
+    visibility: requestData.visibility as "private" | "association" | "public",
+    due_date: requestData.due_date,
     dueDate: requestData.due_date,
     budget: requestData.budget,
-    category: requestData.category,
-    visibility: requestData.visibility as "private" | "association" | "public",
-    imageUrl: requestData.image_url,
-    attachments: requestData.attachments as string[],
     vendors
   };
 }
