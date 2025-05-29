@@ -24,6 +24,7 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<BidRequestFormData>({
     hoa_id: hoaId,
+    association_id: hoaId,
     title: '',
     description: '',
     location: '',

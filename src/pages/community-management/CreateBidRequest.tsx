@@ -6,7 +6,7 @@ import { ArrowLeft, Save, Send } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { bidRequestService } from '@/services/bidRequestService';
-import { BidRequestFormData } from '@/types/bid-request-types';
+import { BidRequestFormData } from '@/types/bid-request-form-types';
 import { useAuth } from '@/contexts/AuthContext';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import BidRequestForm from '@/components/bid-requests/BidRequestForm';
@@ -39,8 +39,8 @@ const CreateBidRequest = () => {
 
       const bidRequest = await bidRequestService.createBidRequest({
         ...data,
-        hoa_id: effectiveAssociationId,
-        association_id: effectiveAssociationId,
+        hoa_id: effectiveAssociationId || '',
+        association_id: effectiveAssociationId || '',
         specifications
       });
       
@@ -57,8 +57,8 @@ const CreateBidRequest = () => {
       setLoading(true);
       const bidRequest = await bidRequestService.createBidRequest({
         ...data,
-        hoa_id: effectiveAssociationId,
-        association_id: effectiveAssociationId,
+        hoa_id: effectiveAssociationId || '',
+        association_id: effectiveAssociationId || '',
         status: 'draft'
       });
       toast.success('Draft saved successfully');
