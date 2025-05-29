@@ -1,9 +1,11 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { logger } from '@/utils/client-logger';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  showDetails?: boolean;
 }
 
 interface State {
@@ -76,7 +78,7 @@ class ErrorBoundary extends Component<Props, State> {
           >
             Refresh Page
           </button>
-          {this.state.error && (
+          {this.props.showDetails && this.state.error && (
             <div className="mt-6 p-4 bg-gray-100 rounded text-left overflow-auto max-h-40">
               <p className="font-mono text-sm">{this.state.error.toString()}</p>
             </div>

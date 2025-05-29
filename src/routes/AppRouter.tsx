@@ -56,7 +56,7 @@ export const AppRouter = () => {
           <RequireAuth allowedRoles={['admin', 'manager']}>
             <SuspenseWrapper>
               <ErrorBoundary>
-                <BidRequests />
+                <BidRequests associationId="default" />
               </ErrorBoundary>
             </SuspenseWrapper>
           </RequireAuth>
