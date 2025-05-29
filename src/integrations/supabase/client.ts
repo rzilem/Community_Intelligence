@@ -1,20 +1,12 @@
 
 import { createClient } from '@supabase/supabase-js';
-import { env, validateEnv } from '@/lib/env';
 
-// Validate environment variables on startup
-try {
-  validateEnv();
-} catch (error) {
-  console.error('Supabase client initialization failed:', error);
-  throw error;
-}
-
-const supabaseUrl = env.SUPABASE_URL;
-const supabaseKey = env.SUPABASE_ANON_KEY;
+// Use the hardcoded Supabase configuration (matching src/lib/supabase.ts)
+const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhaGVyZ25ka3dmcWx0eHlpa3lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwOTUzMTYsImV4cCI6MjA1OTY3MTMxNn0.n_tRSJy3M9IaiyrhG02kpvko-pWd6XyYs4khDauxRGQ';
 
 if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+  throw new Error('Missing Supabase configuration. Please check your Supabase settings.');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -31,9 +23,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 // Development logging
-if (env.DEV) {
-  console.log('Supabase client initialized:', {
-    url: supabaseUrl,
-    hasKey: !!supabaseKey
-  });
-}
+console.log('Supabase client initialized:', {
+  url: supabaseUrl,
+  hasKey: !!supabaseKey
+});
