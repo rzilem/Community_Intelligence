@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import PageTemplate from '@/components/layout/PageTemplate';
 import { Shield, Filter, Search, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { Compliance } from '@/types/compliance-types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { ComplianceTable } from '@/components/compliance/ComplianceTable';
 import { ComplianceDialog } from '@/components/compliance/ComplianceDialog';
 import TooltipButton from '@/components/ui/tooltip-button';
@@ -69,11 +68,14 @@ const CompliancePage = () => {
   };
 
   return (
-    <PageTemplate
-      title="Compliance"
-      icon={<Shield className="h-8 w-8" />}
-      description="Track and manage community compliance issues and violations."
-    >
+    <div className="space-y-6 p-6">
+      <div className="flex items-center gap-3">
+        <Shield className="h-8 w-8" />
+        <h1 className="text-3xl font-bold tracking-tight">Compliance</h1>
+      </div>
+      
+      <p className="text-muted-foreground">Track and manage community compliance issues and violations.</p>
+
       <Card className="mb-6">
         <CardContent className="pt-6">
           <div className="flex flex-col sm:flex-row gap-4 justify-between mb-6">
@@ -178,7 +180,7 @@ const CompliancePage = () => {
         onOpenChange={setIsDialogOpen}
         issue={selectedCompliance}
       />
-    </PageTemplate>
+    </div>
   );
 };
 
