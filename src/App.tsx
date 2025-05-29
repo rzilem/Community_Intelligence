@@ -3,12 +3,13 @@ import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/auth";
 import { NotificationProvider } from "@/contexts/notifications";
-import { RouterProvider } from "react-router-dom";
 import { router } from "@/routes";
+import { RouterProvider } from "react-router-dom";
 import "./App.css";
 
 function App() {
