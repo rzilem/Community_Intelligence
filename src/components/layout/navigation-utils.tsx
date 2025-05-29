@@ -39,7 +39,13 @@ import {
   Shield,
   Grid3X3,
 } from 'lucide-react';
-import { NavItemProps } from './types';
+
+export interface NavItemProps {
+  name: string;
+  path: string;
+  icon: React.ComponentType;
+  submenu?: NavItemProps[];
+}
 
 export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
   const items: NavItemProps[] = [
