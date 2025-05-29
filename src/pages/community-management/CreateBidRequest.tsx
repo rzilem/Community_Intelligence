@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +8,21 @@ import { toast } from 'sonner';
 import { bidRequestService } from '@/services/bidRequestService';
 import { BidRequestFormData } from '@/types/bid-request-types';
 import { useAuth } from '@/contexts/AuthContext';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 const CreateBidRequest = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>(
+    profile?.association_id || ''
+  );
+
+  // Check if user is admin or manager
+  const isAdminOrManager = profile?.role === 'admin' || profile?.role === 'manager';
+  
+  // Determine which association ID to use
+  const effectiveAssociationId = isAdminOrManager ? selectedAssociationId : profile?.association_id;
   
   const handleSubmit = async (data: BidRequestFormData) => {
     try {
@@ -27,6 +38,8 @@ const CreateBidRequest = () => {
 
       const bidRequest = await bidRequestService.createBidRequest({
         ...data,
+        hoa_id: effectiveAssociationId,
+        association_id: effectiveAssociationId,
         specifications
       });
       
@@ -41,7 +54,12 @@ const CreateBidRequest = () => {
   const handleSaveDraft = async (data: BidRequestFormData) => {
     try {
       setLoading(true);
-      const bidRequest = await bidRequestService.createBidRequest(data);
+      const bidRequest = await bidRequestService.createBidRequest({
+        ...data,
+        hoa_id: effectiveAssociationId,
+        association_id: effectiveAssociationId,
+        status: 'draft'
+      });
       toast.success('Draft saved successfully');
       navigate('/community-management/bid-requests');
     } catch (error) {
@@ -50,6 +68,84 @@ const CreateBidRequest = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAssociationChange = (associationId: string) => {
+    setSelectedAssociationId(associationId);
+  };
+
+  // Show association selector for admins/managers, or error for users without association
+  const renderContent = () => {
+    if (isAdminOrManager) {
+      return (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Select Community</CardTitle>
+              <CardDescription>
+                Choose which community this bid request is for
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AssociationSelector
+                onAssociationChange={handleAssociationChange}
+                initialAssociationId={selectedAssociationId}
+                label="Community"
+              />
+            </CardContent>
+          </Card>
+
+          {effectiveAssociationId && (
+            <bidRequestService.BidRequestForm
+              onSubmit={handleSubmit}
+              onSaveDraft={handleSaveDraft}
+              hoaId={effectiveAssociationId}
+              currentUserId={user?.id || ''}
+            />
+          )}
+
+          {!effectiveAssociationId && (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">
+                  Please select a community to create a bid request.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      );
+    }
+
+    // For regular users, check if they have an association
+    if (profile?.association_id) {
+      return (
+        <bidRequestService.BidRequestForm
+          onSubmit={handleSubmit}
+          onSaveDraft={handleSaveDraft}
+          hoaId={profile.association_id}
+          currentUserId={user?.id || ''}
+        />
+      );
+    }
+
+    // Regular users without association
+    return (
+      <Card>
+        <CardContent className="py-10 text-center">
+          <p className="text-muted-foreground">
+            You need to be associated with a community to create bid requests.
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => navigate('/dashboard')}
+          >
+            Return to Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -73,29 +169,7 @@ const CreateBidRequest = () => {
         </div>
       </div>
 
-      {profile?.association_id ? (
-        <bidRequestService.BidRequestForm
-          onSubmit={handleSubmit}
-          onSaveDraft={handleSaveDraft}
-          hoaId={profile.association_id}
-          currentUserId={user?.id || ''}
-        />
-      ) : (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-muted-foreground">
-              You need to be associated with a community to create bid requests.
-            </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => navigate('/dashboard')}
-            >
-              Return to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {renderContent()}
     </div>
   );
 };
