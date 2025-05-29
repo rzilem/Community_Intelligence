@@ -86,7 +86,7 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Create form instance for the enhanced project type selector
-  const form = useForm({
+  const form = useForm<BidRequestFormData>({
     defaultValues: formData
   });
 

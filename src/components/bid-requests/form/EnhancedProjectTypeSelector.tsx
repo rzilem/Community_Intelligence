@@ -5,11 +5,33 @@ import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
 
+interface BidRequestFormData {
+  hoa_id: string;
+  title: string;
+  description: string;
+  location: string;
+  number_of_bids_wanted: number;
+  project_type_id: string;
+  category: string;
+  project_details: Record<string, any>;
+  special_requirements?: string;
+  selected_vendor_ids: string[];
+  allow_public_bidding: boolean;
+  budget_range_min?: number;
+  budget_range_max?: number;
+  preferred_start_date?: string;
+  required_completion_date?: string;
+  bid_deadline: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  attachments: File[];
+  created_by: string;
+  status: 'draft' | 'published';
+}
+
 interface EnhancedProjectTypeSelectorProps {
-  form: UseFormReturn<Partial<BidRequestWithVendors>>;
+  form: UseFormReturn<BidRequestFormData>;
   onChange?: (projectTypeId: string, categorySlug: string) => void;
 }
 
