@@ -1,7 +1,5 @@
-
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
+import React from 'react';
+import AppLayout from '@/components/layout/AppLayout';
 import { 
   User, Building, Mail, Phone, Calendar, CreditCard, 
   FileText, Key, Home, MapPin, History, Camera, 
