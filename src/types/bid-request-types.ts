@@ -18,6 +18,7 @@ export interface BidRequest {
   id: string;
   hoa_id: string;
   association_id: string;
+  associationId: string; // Dual support
   maintenance_request_id?: string;
   title: string;
   description: string;
@@ -28,7 +29,15 @@ export interface BidRequest {
   preferred_start_date?: string;
   required_completion_date?: string;
   location?: string;
+  locationData?: any; // For location mapping
+  locationNotes?: string; // For location notes
   special_requirements?: string;
+  specifications?: {
+    timeline?: number;
+    budget?: number;
+    requirements?: string;
+    deliverables?: string;
+  };
   attachments?: AttachmentFile[];
   status: 'draft' | 'published' | 'bidding' | 'evaluating' | 'awarded' | 'completed' | 'cancelled';
   bid_deadline?: string;
@@ -36,13 +45,15 @@ export interface BidRequest {
   awarded_amount?: number;
   awarded_at?: string;
   created_by: string;
-  createdBy: string; // Dual support for existing code
+  createdBy: string; // Dual support
   created_at: string;
   updated_at: string;
   imageUrl?: string;
   visibility?: string;
   due_date?: string;
+  dueDate?: string; // Dual support
   budget?: number;
+  vendorNotes?: string; // For vendor selection notes
 }
 
 export interface BidRequestWithVendors extends BidRequest {
@@ -87,6 +98,7 @@ export interface Vendor {
   completed_jobs: number;
   average_response_time?: number;
   is_active: boolean;
+  include_in_bids?: boolean; // For filtering
   notes?: string;
   created_at: string;
   updated_at: string;

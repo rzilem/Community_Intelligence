@@ -47,7 +47,7 @@ export class BidRequestService {
         location: data.location,
         special_requirements: data.special_requirements,
         attachments: data.attachments ? JSON.stringify([]) : null,
-        status: data.status,
+        status: data.status as 'draft' | 'published', // Type assertion
         bid_deadline: data.bid_deadline,
         created_by: data.created_by || data.createdBy,
         visibility: data.allow_public_bidding ? 'public' : 'private'
@@ -146,10 +146,22 @@ export class BidRequestService {
    */
   async updateBidRequest(id: string, updates: Partial<BidRequest>): Promise<BidRequest> {
     try {
-      const updateData = {
+      // Map updates to database format
+      const updateData: any = {
         ...updates,
         updated_at: new Date().toISOString()
       };
+
+      // Handle dual property support
+      if (updates.associationId) {
+        updateData.association_id = updates.associationId;
+      }
+      if (updates.createdBy) {
+        updateData.created_by = updates.createdBy;
+      }
+      if (updates.dueDate) {
+        updateData.due_date = updates.dueDate;
+      }
 
       const { data, error } = await supabase
         .from('bid_requests')
@@ -192,6 +204,7 @@ export class BidRequestService {
           total_jobs: 45,
           completed_jobs: 42,
           is_active: true,
+          include_in_bids: true,
           created_at: '2024-01-01T00:00:00',
           updated_at: '2024-01-15T10:30:00'
         }
@@ -199,6 +212,19 @@ export class BidRequestService {
     } catch (error) {
       console.error('Error fetching vendors:', error);
       throw new Error('Failed to fetch vendors');
+    }
+  }
+
+  /**
+   * Filter eligible vendors for bid requests
+   */
+  async filterEligibleVendors(associationId: string): Promise<Vendor[]> {
+    try {
+      const vendors = await this.getVendors(associationId);
+      return vendors.filter(vendor => vendor.include_in_bids && vendor.is_active);
+    } catch (error) {
+      console.error('Error filtering eligible vendors:', error);
+      return [];
     }
   }
 
@@ -254,6 +280,7 @@ export class BidRequestService {
       id: data.id,
       hoa_id: data.hoa_id || data.association_id,
       association_id: data.association_id || data.hoa_id,
+      associationId: data.association_id || data.hoa_id, // Dual support
       maintenance_request_id: data.maintenance_request_id,
       title: data.title,
       description: data.description,
@@ -278,6 +305,7 @@ export class BidRequestService {
       imageUrl: data.image_url,
       visibility: data.visibility,
       due_date: data.due_date,
+      dueDate: data.due_date, // Dual support
       budget: data.budget
     };
   }
@@ -314,6 +342,7 @@ export const {
   getBidRequests,
   updateBidRequest,
   getVendors,
+  filterEligibleVendors,
   addVendorsToBidRequest,
   getBidRequestVendors
 } = bidRequestService;
