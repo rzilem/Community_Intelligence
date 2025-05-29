@@ -2,7 +2,7 @@
 import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { SlidersHorizontal } from 'lucide-react';
-import SystemSettingsContent from '@/components/settings/SystemSettingsContent';
+import { SystemSettingsContent } from '@/components/settings/SystemSettingsContent';
 
 const SystemSettings = () => {
   return (

@@ -938,6 +938,239 @@ export type Database = {
           },
         ]
       }
+      bid_communications: {
+        Row: {
+          bid_request_id: string | null
+          communication_type: string | null
+          created_at: string | null
+          email_status: string | null
+          id: string
+          message: string | null
+          sent_by: string | null
+          subject: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          bid_request_id?: string | null
+          communication_type?: string | null
+          created_at?: string | null
+          email_status?: string | null
+          id?: string
+          message?: string | null
+          sent_by?: string | null
+          subject?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          bid_request_id?: string | null
+          communication_type?: string | null
+          created_at?: string | null
+          email_status?: string | null
+          id?: string
+          message?: string | null
+          sent_by?: string | null
+          subject?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_communications_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_communications_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_communications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_communications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_evaluations: {
+        Row: {
+          bid_request_id: string | null
+          created_at: string | null
+          evaluation_criteria: Json | null
+          evaluator_id: string | null
+          id: string
+          notes: string | null
+          overall_score: number | null
+          recommendation: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          evaluation_criteria?: Json | null
+          evaluator_id?: string | null
+          id?: string
+          notes?: string | null
+          overall_score?: number | null
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          evaluation_criteria?: Json | null
+          evaluator_id?: string | null
+          id?: string
+          notes?: string | null
+          overall_score?: number | null
+          recommendation?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_evaluations_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_evaluations_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_evaluations_evaluator_id_fkey"
+            columns: ["evaluator_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_reminders: {
+        Row: {
+          bid_request_id: string | null
+          created_at: string | null
+          id: string
+          reminder_type: string | null
+          scheduled_date: string
+          sent_date: string | null
+          status: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          id?: string
+          reminder_type?: string | null
+          scheduled_date: string
+          sent_date?: string | null
+          status?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          id?: string
+          reminder_type?: string | null
+          scheduled_date?: string
+          sent_date?: string | null
+          status?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_reminders_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_reminders_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_reminders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_reminders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bid_request_files: {
+        Row: {
+          bid_request_id: string | null
+          created_at: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          bid_request_id?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_request_files_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_request_files_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bid_request_vendors: {
         Row: {
           bid_request_id: string
@@ -977,6 +1210,13 @@ export type Database = {
             foreignKeyName: "bid_request_vendors_bid_request_id_fkey"
             columns: ["bid_request_id"]
             isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_request_vendors_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
             referencedRelation: "bid_requests"
             referencedColumns: ["id"]
           },
@@ -987,14 +1227,27 @@ export type Database = {
           assigned_to: string | null
           association_id: string
           attachments: Json | null
+          awarded_amount: number | null
+          awarded_at: string | null
+          bid_deadline: string | null
           budget: number | null
+          budget_range_max: number | null
+          budget_range_min: number | null
           category: string | null
           created_at: string
           created_by: string | null
           description: string | null
           due_date: string | null
+          hoa_id: string | null
           id: string
           image_url: string | null
+          location: string | null
+          maintenance_request_id: string | null
+          preferred_start_date: string | null
+          priority: string | null
+          required_completion_date: string | null
+          selected_vendor_id: string | null
+          special_requirements: string | null
           status: string
           title: string
           updated_at: string
@@ -1004,14 +1257,27 @@ export type Database = {
           assigned_to?: string | null
           association_id: string
           attachments?: Json | null
+          awarded_amount?: number | null
+          awarded_at?: string | null
+          bid_deadline?: string | null
           budget?: number | null
+          budget_range_max?: number | null
+          budget_range_min?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          hoa_id?: string | null
           id?: string
           image_url?: string | null
+          location?: string | null
+          maintenance_request_id?: string | null
+          preferred_start_date?: string | null
+          priority?: string | null
+          required_completion_date?: string | null
+          selected_vendor_id?: string | null
+          special_requirements?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -1021,14 +1287,27 @@ export type Database = {
           assigned_to?: string | null
           association_id?: string
           attachments?: Json | null
+          awarded_amount?: number | null
+          awarded_at?: string | null
+          bid_deadline?: string | null
           budget?: number | null
+          budget_range_max?: number | null
+          budget_range_min?: number | null
           category?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           due_date?: string | null
+          hoa_id?: string | null
           id?: string
           image_url?: string | null
+          location?: string | null
+          maintenance_request_id?: string | null
+          preferred_start_date?: string | null
+          priority?: string | null
+          required_completion_date?: string | null
+          selected_vendor_id?: string | null
+          special_requirements?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -1040,6 +1319,34 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "hoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_maintenance_request_id_fkey"
+            columns: ["maintenance_request_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_selected_vendor_id_fkey"
+            columns: ["selected_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_selected_vendor_id_fkey"
+            columns: ["selected_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -2889,6 +3196,30 @@ export type Database = {
           },
         ]
       }
+      hoas: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
@@ -4122,6 +4453,42 @@ export type Database = {
         }
         Relationships: []
       }
+      project_types: {
+        Row: {
+          conditional_fields: Json | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          conditional_fields?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          conditional_fields?: Json | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string
@@ -4822,6 +5189,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_hoa_access: {
+        Row: {
+          created_at: string | null
+          hoa_id: string | null
+          id: string
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          hoa_id?: string | null
+          id?: string
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          hoa_id?: string | null
+          id?: string
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_hoa_access_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "hoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_hoa_access_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_portal_widgets: {
         Row: {
           created_at: string
@@ -4909,6 +5315,141 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      vendor_bids: {
+        Row: {
+          admin_notes: string | null
+          attachments: Json | null
+          bid_amount: number | null
+          bid_request_id: string | null
+          bid_request_vendor_id: string | null
+          created_at: string | null
+          estimated_completion_date: string | null
+          estimated_start_date: string | null
+          evaluation_notes: string | null
+          evaluation_score: number | null
+          id: string
+          is_selected: boolean | null
+          payment_terms: string | null
+          proposal_details: string | null
+          proposal_text: string | null
+          proposed_timeline: number | null
+          status: string | null
+          submitted_at: string | null
+          terms_and_conditions: string | null
+          timeline_completion_date: string | null
+          timeline_start_date: string | null
+          updated_at: string | null
+          vendor_id: string | null
+          warranty_terms: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          attachments?: Json | null
+          bid_amount?: number | null
+          bid_request_id?: string | null
+          bid_request_vendor_id?: string | null
+          created_at?: string | null
+          estimated_completion_date?: string | null
+          estimated_start_date?: string | null
+          evaluation_notes?: string | null
+          evaluation_score?: number | null
+          id?: string
+          is_selected?: boolean | null
+          payment_terms?: string | null
+          proposal_details?: string | null
+          proposal_text?: string | null
+          proposed_timeline?: number | null
+          status?: string | null
+          submitted_at?: string | null
+          terms_and_conditions?: string | null
+          timeline_completion_date?: string | null
+          timeline_start_date?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          warranty_terms?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          attachments?: Json | null
+          bid_amount?: number | null
+          bid_request_id?: string | null
+          bid_request_vendor_id?: string | null
+          created_at?: string | null
+          estimated_completion_date?: string | null
+          estimated_start_date?: string | null
+          evaluation_notes?: string | null
+          evaluation_score?: number | null
+          id?: string
+          is_selected?: boolean | null
+          payment_terms?: string | null
+          proposal_details?: string | null
+          proposal_text?: string | null
+          proposed_timeline?: number | null
+          status?: string | null
+          submitted_at?: string | null
+          terms_and_conditions?: string | null
+          timeline_completion_date?: string | null
+          timeline_start_date?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          warranty_terms?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bids_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bids_bid_request_id_fkey"
+            columns: ["bid_request_id"]
+            isOneToOne: false
+            referencedRelation: "bid_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bids_bid_request_vendor_id_fkey"
+            columns: ["bid_request_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "bid_request_vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bids_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bids_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_profiles: {
         Row: {
           company_description: string | null
@@ -4951,47 +5492,134 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_project_types: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_preferred: boolean | null
+          project_type_id: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean | null
+          project_type_id?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean | null
+          project_type_id?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_project_types_project_type_id_fkey"
+            columns: ["project_type_id"]
+            isOneToOne: false
+            referencedRelation: "project_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_project_types_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_project_types_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendors: {
         Row: {
           address: string | null
+          average_response_time: number | null
+          completed_jobs: number | null
           created_at: string
+          description: string | null
           email: string | null
           has_insurance: boolean
+          hoa_id: string | null
           id: string
+          insurance_info: Json | null
+          is_active: boolean | null
+          license_number: string | null
+          logo_url: string | null
           name: string
+          notes: string | null
           phone: string | null
           rating: number | null
           service_type: string | null
+          specialties: string[] | null
           status: string
+          total_jobs: number | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          average_response_time?: number | null
+          completed_jobs?: number | null
           created_at?: string
+          description?: string | null
           email?: string | null
           has_insurance?: boolean
+          hoa_id?: string | null
           id?: string
+          insurance_info?: Json | null
+          is_active?: boolean | null
+          license_number?: string | null
+          logo_url?: string | null
           name: string
+          notes?: string | null
           phone?: string | null
           rating?: number | null
           service_type?: string | null
+          specialties?: string[] | null
           status?: string
+          total_jobs?: number | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          average_response_time?: number | null
+          completed_jobs?: number | null
           created_at?: string
+          description?: string | null
           email?: string | null
           has_insurance?: boolean
+          hoa_id?: string | null
           id?: string
+          insurance_info?: Json | null
+          is_active?: boolean | null
+          license_number?: string | null
+          logo_url?: string | null
           name?: string
+          notes?: string | null
           phone?: string | null
           rating?: number | null
           service_type?: string | null
+          specialties?: string[] | null
           status?: string
+          total_jobs?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vendors_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "hoas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       violations: {
         Row: {
@@ -5261,6 +5889,49 @@ export type Database = {
         }
         Relationships: []
       }
+      bid_request_summary: {
+        Row: {
+          average_bid: number | null
+          awarded_amount: number | null
+          bid_deadline: string | null
+          budget_range_max: number | null
+          budget_range_min: number | null
+          created_at: string | null
+          highest_bid: number | null
+          hoa_id: string | null
+          id: string | null
+          lowest_bid: number | null
+          priority: string | null
+          selected_vendor_id: string | null
+          status: string | null
+          title: string | null
+          total_bids: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bid_requests_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "hoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_selected_vendor_id_fkey"
+            columns: ["selected_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bid_requests_selected_vendor_id_fkey"
+            columns: ["selected_vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_learning_progress: {
         Row: {
           association_id: string | null
@@ -5276,6 +5947,32 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_performance: {
+        Row: {
+          average_response_time: number | null
+          avg_evaluation_score: number | null
+          bid_win_rate: number | null
+          completed_jobs: number | null
+          completion_rate: number | null
+          hoa_id: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          rating: number | null
+          selected_bids: number | null
+          total_bids: number | null
+          total_jobs: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_hoa_id_fkey"
+            columns: ["hoa_id"]
+            isOneToOne: false
+            referencedRelation: "hoas"
             referencedColumns: ["id"]
           },
         ]
