@@ -37,6 +37,7 @@ import {
   Clock,
   Network,
   Shield,
+  Grid3X3,
 } from 'lucide-react';
 import { NavItemProps } from './types';
 
@@ -156,6 +157,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
         { name: 'Financial Report Mapping', path: '/system/financial-report-mapping', icon: FileBarChart },
         { name: 'Workflow Schedule', path: '/system/workflow-schedule', icon: Clock },
         { name: 'Permissions', path: '/system/permissions', icon: Shield },
+        { name: 'Project Types', path: '/admin/project-types', icon: Grid3X3 },
       ]
     });
   }
