@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
 import {
   FormField,
@@ -17,32 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Define the form data interface to match what BidRequestForm uses
-interface BidRequestFormData {
-  hoa_id: string;
-  title: string;
-  description: string;
-  location: string;
-  number_of_bids_wanted: number;
-  project_type_id: string;
-  category: string;
-  project_details: Record<string, any>;
-  special_requirements?: string;
-  selected_vendor_ids: string[];
-  allow_public_bidding: boolean;
-  budget_range_min?: number;
-  budget_range_max?: number;
-  preferred_start_date?: string;
-  required_completion_date?: string;
-  bid_deadline: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  attachments: File[];
-  created_by: string;
-  status: 'draft' | 'published';
-}
-
 interface EnhancedProjectTypeSelectorProps {
-  form: UseFormReturn<BidRequestFormData>;
+  form: UseFormReturn<Partial<BidRequestWithVendors>>;
   onChange?: (projectTypeId: string, categorySlug: string) => void;
 }
 
