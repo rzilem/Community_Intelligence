@@ -1,6 +1,5 @@
 
 import React, { useEffect, useMemo } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AiQueryInput } from '@/components/ai/AiQueryInput';
 import { useAuth } from '@/contexts/auth';
@@ -149,11 +148,7 @@ const Dashboard = () => {
     getMessagesContent
   ]);
 
-  return (
-    <AppLayout>
-      {dashboardContent}
-    </AppLayout>
-  );
+  return dashboardContent;
 };
 
 export default Dashboard;

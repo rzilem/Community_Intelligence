@@ -62,7 +62,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           />
         </ErrorBoundary>
         
-        <main className="flex-1 ml-64">
+        <main className="flex-1 ml-64 min-h-screen bg-background">
           <ErrorBoundary>
             {children}
           </ErrorBoundary>
