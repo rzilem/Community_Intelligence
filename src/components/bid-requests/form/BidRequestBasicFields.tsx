@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
+import { BidRequestFormData } from '@/types/bid-request-form-types';
 import FormFieldInput from '@/components/homeowners/form/FormFieldInput';
 import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
-import { BidRequestWithVendors } from '@/types/bid-request-types';
 import EnhancedProjectTypeSelector from './EnhancedProjectTypeSelector';
 
 interface BidRequestBasicFieldsProps {
-  form: UseFormReturn<Partial<BidRequestWithVendors>>;
+  form: UseFormReturn<BidRequestFormData>;
 }
 
 const BidRequestBasicFields: React.FC<BidRequestBasicFieldsProps> = ({ form }) => {

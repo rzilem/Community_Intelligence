@@ -1,49 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Upload, X, AlertCircle, CheckCircle, Calendar, DollarSign, Users, FileText, Settings, Eye } from 'lucide-react';
 import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
 import EnhancedProjectTypeSelector from './form/EnhancedProjectTypeSelector';
 import { useForm } from 'react-hook-form';
-
-// Types defined inline
-interface BidRequestFormData {
-  hoa_id: string;
-  title: string;
-  description: string;
-  location: string;
-  number_of_bids_wanted: number;
-  project_type_id: string;
-  category: string;
-  project_details: Record<string, any>;
-  special_requirements?: string;
-  selected_vendor_ids: string[];
-  allow_public_bidding: boolean;
-  budget_range_min?: number;
-  budget_range_max?: number;
-  preferred_start_date?: string;
-  required_completion_date?: string;
-  bid_deadline: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  attachments: File[];
-  created_by: string;
-  status: 'draft' | 'published';
-}
-
-interface Vendor {
-  id: string;
-  hoa_id: string;
-  name: string;
-  contact_person?: string;
-  email?: string;
-  phone?: string;
-  specialties: string[];
-  rating?: number;
-  total_jobs: number;
-  completed_jobs: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { BidRequestFormData } from '@/types/bid-request-form-types';
+import { Vendor } from '@/types/bid-request-types';
 
 interface BidRequestFormProps {
   onSubmit: (data: BidRequestFormData) => Promise<void>;

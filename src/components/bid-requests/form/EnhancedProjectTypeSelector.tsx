@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { BidRequestWithVendors } from '@/types/bid-request-types';
+import { BidRequestFormData } from '@/types/bid-request-form-types';
 import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
 import {
   FormField,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select';
 
 interface EnhancedProjectTypeSelectorProps {
-  form: UseFormReturn<Partial<BidRequestWithVendors>>;
+  form: UseFormReturn<BidRequestFormData>;
   onChange?: (projectTypeId: string, categorySlug: string) => void;
 }
 
