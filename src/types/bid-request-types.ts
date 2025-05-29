@@ -1,5 +1,6 @@
+
 // Community Intelligence Bid Request System - TypeScript Interfaces
-// File: frontend/src/types/bidRequest.ts
+// File: src/types/bid-request-types.ts
 
 export interface ProjectType {
   id: string;
@@ -16,6 +17,7 @@ export interface ProjectType {
 export interface BidRequest {
   id: string;
   hoa_id: string;
+  association_id: string;
   maintenance_request_id?: string;
   title: string;
   description: string;
@@ -34,13 +36,44 @@ export interface BidRequest {
   awarded_amount?: number;
   awarded_at?: string;
   created_by: string;
+  createdBy: string; // Dual support for existing code
   created_at: string;
   updated_at: string;
+  imageUrl?: string;
+  visibility?: string;
+  due_date?: string;
+  budget?: number;
+}
+
+export interface BidRequestWithVendors extends BidRequest {
+  vendors?: BidRequestVendor[];
+  selectedVendors?: Vendor[];
+  totalBids?: number;
+  lowestBid?: number;
+  highestBid?: number;
+  averageBid?: number;
+}
+
+export interface BidRequestVendor {
+  id: string;
+  bidRequestId: string;
+  bid_request_id: string; // Dual support
+  vendorId: string;
+  vendor_id: string; // Dual support
+  status: "invited" | "accepted" | "declined" | "submitted";
+  quoteAmount?: number;
+  quote_amount?: number; // Dual support
+  quoteDetails?: Record<string, any>;
+  quote_details?: Record<string, any>; // Dual support
+  submittedAt?: string;
+  submitted_at?: string; // Dual support
+  vendor?: Vendor;
 }
 
 export interface Vendor {
   id: string;
   hoa_id: string;
+  association_id?: string;
   name: string;
   contact_person?: string;
   email?: string;
@@ -156,38 +189,27 @@ export interface BidRequestSummary {
 
 // Form interfaces
 export interface BidRequestFormData {
-  // Step 1: Basic Information
   hoa_id: string;
+  association_id?: string;
   title: string;
   description: string;
   location: string;
   number_of_bids_wanted: number;
-  
-  // Step 2: Project Type
   project_type_id: string;
   category: string;
-  
-  // Step 3: Project Details (dynamic based on project type)
   project_details: Record<string, any>;
   special_requirements?: string;
-  
-  // Step 4: Vendor Selection
   selected_vendor_ids: string[];
   allow_public_bidding: boolean;
-  
-  // Step 5: Budget & Timeline
   budget_range_min?: number;
   budget_range_max?: number;
   preferred_start_date?: string;
   required_completion_date?: string;
   bid_deadline: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  
-  // Step 6: Files & Review
   attachments: File[];
-  
-  // Internal
   created_by: string;
+  createdBy?: string; // Dual support
   status: 'draft' | 'published';
 }
 
@@ -206,65 +228,21 @@ export interface VendorResponseData {
   contact_phone: string;
 }
 
-// Email template types
-export interface EmailTemplate {
+// Integration types
+export interface IntegrationConfig {
   id: string;
   name: string;
-  subject: string;
-  html_content: string;
-  text_content: string;
-  template_type: 'bid_request' | 'reminder' | 'follow_up' | 'award_notification' | 'rejection_notice';
-  variables: string[];
-  is_active: boolean;
-}
-
-// Import/Export types
-export interface ImportResult {
-  success: boolean;
-  imported_count: number;
-  failed_count: number;
-  errors: ImportError[];
-  warnings: ImportWarning[];
-}
-
-export interface ImportError {
-  row: number;
-  field: string;
-  message: string;
-  value: any;
-}
-
-export interface ImportWarning {
-  row: number;
-  field: string;
-  message: string;
-  value: any;
-}
-
-// Gravity Forms mapping types
-export interface GravityFormField {
-  id: string;
   type: string;
-  label: string;
-  value: any;
-  choices?: GravityFormChoice[];
+  enabled: boolean;
+  settings: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface GravityFormChoice {
-  text: string;
-  value: string;
-}
-
-export interface GravityFormEntry {
-  id: string;
-  form_id: string;
-  date_created: string;
-  fields: Record<string, GravityFormField>;
-}
-
-export interface FieldMapping {
-  gravity_form_field: string;
-  community_intelligence_field: string;
-  transformation?: (value: any) => any;
-  required: boolean;
+export interface AIConfig {
+  model: string;
+  max_tokens: number;
+  temperature: number;
+  enabled: boolean;
+  api_key?: string;
 }

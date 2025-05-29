@@ -1,16 +1,15 @@
 
 import React from 'react';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
-import FormFieldInput from '@/components/homeowners/form/FormFieldInput';
-import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
 import { useForm } from 'react-hook-form';
-import { Form } from '@/components/ui/form';
-import BidRequestCategorySelector from '@/components/bid-requests/form/BidRequestCategorySelector';
-import BidRequestImageUpload from '@/components/bid-requests/form/BidRequestImageUpload';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Save } from 'lucide-react';
 
 // Create a schema for form validation
@@ -25,8 +24,22 @@ type BasicInfoValues = z.infer<typeof basicInfoSchema>;
 interface BidRequestBasicInfoProps {
   formData: Partial<BidRequestWithVendors>;
   onUpdate: (data: Partial<BidRequestWithVendors>) => void;
-  onImageSelect: (file: File | null) => void;
+  onImageSelect?: (file: File | null) => void;
 }
+
+const categories = [
+  { value: 'landscaping', label: 'Landscaping & Grounds' },
+  { value: 'maintenance', label: 'Building Maintenance' },
+  { value: 'hvac', label: 'HVAC Services' },
+  { value: 'plumbing', label: 'Plumbing' },
+  { value: 'electrical', label: 'Electrical' },
+  { value: 'roofing', label: 'Roofing' },
+  { value: 'painting', label: 'Painting' },
+  { value: 'cleaning', label: 'Cleaning Services' },
+  { value: 'security', label: 'Security' },
+  { value: 'pool', label: 'Pool Service' },
+  { value: 'other', label: 'Other' }
+];
 
 const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({ 
   formData, 
@@ -58,7 +71,7 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
     });
     
     return () => subscription.unsubscribe();
-  }, [form.watch, formState.isValid]);
+  }, [form.watch, formState.isValid, onUpdate]);
 
   return (
     <Form {...form}>
@@ -71,31 +84,84 @@ const BidRequestBasicInfo: React.FC<BidRequestBasicInfoProps> = ({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormFieldInput
-              form={form}
+            <FormField
+              control={form.control}
               name="title"
-              label="Project Title"
-              placeholder="Enter a clear, descriptive title for the project"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Title</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter a clear, descriptive title for the project" 
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             
-            <FormFieldTextarea
-              form={form}
+            <FormField
+              control={form.control}
               name="description"
-              label="Project Description"
-              placeholder="Provide a detailed description of the project requirements"
-              rows={5}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Project Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Provide a detailed description of the project requirements"
+                      rows={5}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             
-            <div className="w-full">
-              <BidRequestCategorySelector form={form} />
-            </div>
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>
+                          {category.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
-            <div className="space-y-2">
-              <BidRequestImageUpload 
-                onFileSelect={(file) => onImageSelect(file)} 
-                currentImageUrl={formData.imageUrl}
-              />
-            </div>
+            {onImageSelect && (
+              <div className="space-y-2">
+                <FormLabel>Project Images (Optional)</FormLabel>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      onImageSelect(file);
+                    }}
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    Upload an image to help vendors understand the project scope
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end">
               <Button
