@@ -1,20 +1,20 @@
 
-// Environment variables helper to handle both Vite and Node.js environments
+// Environment variables helper for Vite frontend environment
 export const env = {
   // Supabase configuration
-  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
-  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || '',
+  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || '',
+  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || '',
   
   // OpenAI configuration
-  OPENAI_API_KEY: import.meta.env?.VITE_OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY || '',
+  OPENAI_API_KEY: import.meta.env?.VITE_OPENAI_API_KEY || '',
   
   // App configuration
-  NODE_ENV: import.meta.env?.MODE || process.env.NODE_ENV || 'development',
-  PROD: import.meta.env?.PROD || process.env.NODE_ENV === 'production',
-  DEV: import.meta.env?.DEV || process.env.NODE_ENV === 'development',
+  NODE_ENV: import.meta.env?.MODE || 'development',
+  PROD: import.meta.env?.PROD || false,
+  DEV: import.meta.env?.DEV || true,
   
   // API endpoints
-  API_URL: import.meta.env?.VITE_API_URL || process.env.VITE_API_URL || '/api',
+  API_URL: import.meta.env?.VITE_API_URL || '/api',
 };
 
 // Validation helper
