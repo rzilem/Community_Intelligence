@@ -9,6 +9,7 @@ import { bidRequestService } from '@/services/bidRequestService';
 import { BidRequestFormData } from '@/types/bid-request-types';
 import { useAuth } from '@/contexts/AuthContext';
 import AssociationSelector from '@/components/associations/AssociationSelector';
+import BidRequestForm from '@/components/bid-requests/BidRequestForm';
 
 const CreateBidRequest = () => {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ const CreateBidRequest = () => {
           </Card>
 
           {effectiveAssociationId && (
-            <bidRequestService.BidRequestForm
+            <BidRequestForm
               onSubmit={handleSubmit}
               onSaveDraft={handleSaveDraft}
               hoaId={effectiveAssociationId}
@@ -120,7 +121,7 @@ const CreateBidRequest = () => {
     // For regular users, check if they have an association
     if (profile?.association_id) {
       return (
-        <bidRequestService.BidRequestForm
+        <BidRequestForm
           onSubmit={handleSubmit}
           onSaveDraft={handleSaveDraft}
           hoaId={profile.association_id}
