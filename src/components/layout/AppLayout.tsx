@@ -8,7 +8,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import ErrorBoundary from '../ErrorBoundary';
 import { ErrorFallback } from '../ui/error-fallback';
-import { getMainNavItems } from './navigation-utils';
+import { getFilteredNavItems } from './navigation-utils';
 
 interface AppLayoutProps {
   children?: ReactNode;
@@ -37,7 +37,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     }
   };
 
-  const mainNavItems = getMainNavItems(profile?.role);
+  const mainNavItems = getFilteredNavItems(profile?.role);
 
   return (
     <div className="min-h-screen bg-background">
