@@ -10,15 +10,22 @@ import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
 
 interface EnhancedProjectTypeSelectorProps {
   form: UseFormReturn<Partial<BidRequestWithVendors>>;
+  onChange?: (projectTypeId: string, categorySlug: string) => void;
 }
 
-const EnhancedProjectTypeSelector: React.FC<EnhancedProjectTypeSelectorProps> = ({ form }) => {
+const EnhancedProjectTypeSelector: React.FC<EnhancedProjectTypeSelectorProps> = ({ form, onChange }) => {
   const { data: projectTypes, isLoading, error } = useProjectTypes();
   const { setValue, watch } = form;
   const selectedCategory = watch('category');
 
-  const handleCategorySelect = (categorySlug: string) => {
-    setValue('category', categorySlug, { shouldValidate: true });
+  const handleCategorySelect = (projectType: any) => {
+    setValue('category', projectType.slug, { shouldValidate: true });
+    setValue('project_type_id', projectType.id, { shouldValidate: true });
+    
+    // Call onChange callback if provided
+    if (onChange) {
+      onChange(projectType.id, projectType.slug);
+    }
   };
 
   if (isLoading) {
@@ -61,7 +68,7 @@ const EnhancedProjectTypeSelector: React.FC<EnhancedProjectTypeSelectorProps> = 
                 ? 'border-primary bg-primary/5 shadow-md' 
                 : 'border-transparent hover:border-primary/20'
             }`}
-            onClick={() => handleCategorySelect(projectType.slug)}
+            onClick={() => handleCategorySelect(projectType)}
           >
             <div className="p-4 flex flex-col h-full">
               <div className="relative bg-muted rounded-md aspect-video mb-3 overflow-hidden">
