@@ -6,6 +6,7 @@ import Homeowners from "@/pages/Homeowners";
 import HomeownerRequestsQueue from "@/pages/community-management/HomeownerRequestsQueue";
 import Compliance from "@/pages/Compliance";
 import BidRequests from "@/pages/community-management/BidRequests";
+import CreateBidRequest from "@/pages/community-management/CreateBidRequest";
 import HomeownerDetailPage from "@/pages/HomeownerDetailPage";
 
 // Community Management Routes
@@ -31,7 +32,11 @@ export const communityManagementRoutes: RouteObject[] = [
     element: <RequireAuth><Compliance /></RequireAuth>
   },
   {
-    path: "/bid-requests",
-    element: <RequireAuth><BidRequests /></RequireAuth>
+    path: "/community-management/bid-requests",
+    element: <RequireAuth><BidRequests associationId="default" /></RequireAuth>
+  },
+  {
+    path: "/community-management/create-bid-request",
+    element: <RequireAuth><CreateBidRequest /></RequireAuth>
   }
 ];

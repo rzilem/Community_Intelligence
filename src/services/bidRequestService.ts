@@ -1,4 +1,3 @@
-
 // Community Intelligence Bid Request Service
 // File: src/services/bidRequestService.ts
 
@@ -332,6 +331,18 @@ export class BidRequestService {
       updated_at: data.updated_at
     };
   }
+
+  /**
+   * BidRequestForm component placeholder
+   */
+  BidRequestForm = ({ onSubmit, onSaveDraft, hoaId, currentUserId }: {
+    onSubmit: (data: any) => void;
+    onSaveDraft: (data: any) => void;
+    hoaId: string;
+    currentUserId: string;
+  }) => {
+    return null; // Placeholder - this should be imported from components
+  };
 }
 
 // Export singleton instance

@@ -1,12 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AIConfigValues {
   aiConfidenceThreshold: string;

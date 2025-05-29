@@ -218,6 +218,17 @@ export interface BidRequestFormData {
   project_type_id: string;
   category: string;
   project_details: Record<string, any>;
+  specifications?: {
+    timeline?: number;
+    budget?: number;
+    requirements?: string;
+    deliverables?: string;
+    projectGoals?: string;
+    materialRequirements?: string;
+    timelineExpectations?: string;
+    specialNotes?: string;
+    customQuestions?: { id: string; question: string }[];
+  };
   special_requirements?: string;
   selected_vendor_ids: string[];
   allow_public_bidding: boolean;

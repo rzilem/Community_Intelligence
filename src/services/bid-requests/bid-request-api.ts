@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { BidRequest, BidRequestWithVendors } from '@/types/bid-request-types';
 import { getBidRequestVendors } from './bid-request-vendor-api';
@@ -53,7 +52,7 @@ export async function createBidRequest(bidRequest: Partial<BidRequest>): Promise
     required_completion_date: data.required_completion_date,
     location: data.location,
     special_requirements: data.special_requirements,
-    attachments: data.attachments ? JSON.parse(data.attachments) : [],
+    attachments: data.attachments ? JSON.parse(String(data.attachments)) : [],
     status: data.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
     bid_deadline: data.bid_deadline,
     selected_vendor_id: data.selected_vendor_id,
@@ -128,7 +127,7 @@ export async function updateBidRequest(id: string, bidRequest: Partial<BidReques
     required_completion_date: data.required_completion_date,
     location: data.location,
     special_requirements: data.special_requirements,
-    attachments: data.attachments ? JSON.parse(data.attachments) : [],
+    attachments: data.attachments ? JSON.parse(String(data.attachments)) : [],
     status: data.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
     bid_deadline: data.bid_deadline,
     selected_vendor_id: data.selected_vendor_id,
@@ -181,7 +180,7 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
     required_completion_date: item.required_completion_date,
     location: item.location,
     special_requirements: item.special_requirements,
-    attachments: item.attachments ? JSON.parse(item.attachments) : [],
+    attachments: item.attachments ? JSON.parse(String(item.attachments)) : [],
     status: item.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
     bid_deadline: item.bid_deadline,
     selected_vendor_id: item.selected_vendor_id,
@@ -236,7 +235,7 @@ export async function getBidRequestById(id: string): Promise<BidRequestWithVendo
     required_completion_date: requestData.required_completion_date,
     location: requestData.location,
     special_requirements: requestData.special_requirements,
-    attachments: requestData.attachments ? JSON.parse(requestData.attachments) : [],
+    attachments: requestData.attachments ? JSON.parse(String(requestData.attachments)) : [],
     status: requestData.status as "draft" | "published" | "bidding" | "evaluating" | "awarded" | "completed" | "cancelled",
     bid_deadline: requestData.bid_deadline,
     selected_vendor_id: requestData.selected_vendor_id,
