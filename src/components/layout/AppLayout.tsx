@@ -1,7 +1,7 @@
 
 import { ReactNode } from 'react';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
+import Sidebar from './Sidebar';
+import Header from './Header';
 import ErrorBoundary from '../ErrorBoundary';
 import { ErrorFallback } from '../ui/error-fallback';
 
