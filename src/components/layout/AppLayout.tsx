@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Outlet, useLocation, Navigate } from 'react-router-dom';
+import { Outlet, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -226,9 +225,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {isOpen && (
             <div className="pl-8 space-y-1">
               {item.submenu.map((subItem: any) => (
-                <a
+                <Link
                   key={subItem.path}
-                  href={subItem.path}
+                  to={subItem.path}
                   className={cn(
                     "flex items-center gap-2 py-2 px-3 text-sm rounded-md transition-colors",
                     location.pathname === subItem.path
@@ -239,7 +238,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 >
                   <subItem.icon size={18} />
                   <span>{subItem.name}</span>
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -248,8 +247,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
     
     return (
-      <a
-        href={item.path}
+      <Link
+        to={item.path}
         className={cn(
           "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
           isActive 
@@ -261,7 +260,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       >
         <item.icon className="w-5 h-5 mr-3" />
         {item.name}
-      </a>
+      </Link>
     );
   };
 
