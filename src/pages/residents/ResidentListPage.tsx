@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import AppLayout from '@/components/layout/AppLayout';
 import { Users2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ResidentActions from './components/ResidentActions';

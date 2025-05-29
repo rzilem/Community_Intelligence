@@ -30,7 +30,11 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { cn } from '@/lib/utils';
 
-const AppLayout = () => {
+interface AppLayoutProps {
+  children?: React.ReactNode;
+}
+
+const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, profile, loading, signOut, userRole } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -53,7 +57,7 @@ const AppLayout = () => {
 
   // Show auth page for unauthenticated users on public routes
   if (!user && publicRoutes.includes(location.pathname)) {
-    return <Outlet />;
+    return children ? <>{children}</> : <Outlet />;
   }
 
   const navigationItems = [
@@ -391,7 +395,7 @@ const AppLayout = () => {
         <div className="lg:pl-64 flex flex-col flex-1">
           <main className="flex-1">
             <ErrorBoundary>
-              <Outlet />
+              {children || <Outlet />}
             </ErrorBoundary>
           </main>
         </div>
