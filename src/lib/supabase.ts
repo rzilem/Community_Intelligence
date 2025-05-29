@@ -1,19 +1,18 @@
+
 // Community Intelligence - Supabase Configuration
+// This file is kept for backward compatibility but redirects to the main client
 // File: frontend/src/lib/supabase.ts
 
-import { createClient } from '@supabase/supabase-js';
+import { supabase as mainSupabaseClient } from '@/integrations/supabase/client';
 
-// Your Supabase configuration
-const supabaseUrl = 'https://cahergndkwfqltxyikyr.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhaGVyZ25ka3dmcWx0eHlpa3lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwOTUzMTYsImV4cCI6MjA1OTY3MTMxNn0.n_tRSJy3M9IaiyrhG02kpvko-pWd6XyYs4khDauxRGQ';
-
-// Create and export the Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Export the main client for backward compatibility
+export const supabase = mainSupabaseClient;
 
 // Alternative approach for different environments
 export const createSupabaseClient = () => {
-  return createClient(supabaseUrl, supabaseAnonKey);
+  return mainSupabaseClient;
 };
 
 // Export the default client
-export default supabase;
+export default mainSupabaseClient;
+
