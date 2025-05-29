@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import AppLayout from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
 import { HomePropertyImage } from '@/components/homeowners/HomePropertyImage';
 import { HomeownerHeader } from '@/components/homeowners/detail/HomeownerHeader';

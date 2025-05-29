@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import AppLayout from '@/components/layout/AppLayout';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Calendar } from 'lucide-react';
 import { CalendarView } from '@/components/calendar/CalendarView';

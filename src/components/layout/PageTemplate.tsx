@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { AppLayout } from '@/components/layout/AppLayout';
+import AppLayout from '@/components/layout/AppLayout';
 
 interface PageTemplateProps {
   title: string;
   icon: React.ReactNode;
   description?: string;
   children?: React.ReactNode;
-  actions?: React.ReactNode; // Add support for actions prop
+  actions?: React.ReactNode;
 }
 
 const PageTemplate: React.FC<PageTemplateProps> = ({ 
@@ -15,7 +15,7 @@ const PageTemplate: React.FC<PageTemplateProps> = ({
   icon, 
   description = "This page is currently under development.",
   children,
-  actions // Include actions in the destructuring
+  actions
 }) => {
   return (
     <AppLayout>
