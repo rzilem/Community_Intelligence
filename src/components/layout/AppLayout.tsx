@@ -1,30 +1,82 @@
 
-import { ReactNode } from 'react';
-import { Sidebar } from './Sidebar';
-import { Header } from './Header';
-import ErrorBoundary from '../ErrorBoundary';
-import { ErrorFallback } from '../ui/error-fallback';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth';
+import { useIsMobile } from '@/hooks/use-mobile';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import { getFilteredNavItems } from './navigation-utils';
+import { AppLayoutProps } from './types';
 
-interface AppLayoutProps {
-  children?: ReactNode;
-}
+export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
 
-export const AppLayout = ({ children }: AppLayoutProps) => {
+  console.log('AppLayout rendering, auth state:', { 
+    isAuthenticated: isAuthenticated ? 'yes' : 'no',
+    user: user ? 'logged in' : 'not logged in', 
+    profile: profile ? 'profile loaded' : 'no profile',
+    currentPath: location.pathname
+  });
+
+  // Handle mobile sidebar closure on route change
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
+
+  // Update sidebar state when mobile status changes
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Memoize nav items to prevent unnecessary re-renders
+  const mainNavItems = useMemo(() => {
+    return getFilteredNavItems(userRole);
+  }, [userRole]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <ErrorBoundary fallback={<ErrorFallback title="Navigation Error" description="There was an error loading the navigation. Please refresh the page." />}>
-        <Header />
-      </ErrorBoundary>
-      
-      <div className="flex">
-        <ErrorBoundary fallback={<ErrorFallback title="Sidebar Error" description="There was an error loading the sidebar menu." />}>
-          <Sidebar />
-        </ErrorBoundary>
-        
-        <main className="flex-1 ml-64">
-          <ErrorBoundary>
-            {children}
-          </ErrorBoundary>
+    <div className="flex min-h-screen w-full bg-gray-50">
+      <Sidebar 
+        isMobile={isMobile}
+        isSidebarOpen={isSidebarOpen}
+        closeSidebar={() => setIsSidebarOpen(false)}
+        mainNavItems={mainNavItems}
+        handleSignOut={handleSignOut}
+      />
+
+      <div 
+        className={cn(
+          "flex flex-col w-full transition-all duration-300 ease-in-out",
+          !isMobile && isSidebarOpen ? "md:ml-64" : ""
+        )}
+      >
+        <Header 
+          isMobile={isMobile}
+          user={user}
+          profile={profile}
+          toggleSidebar={toggleSidebar}
+          handleSignOut={handleSignOut}
+        />
+
+        <main className="flex-1 overflow-auto">
+          {children}
         </main>
       </div>
     </div>

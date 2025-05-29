@@ -10,8 +10,6 @@ import { useDashboardRoleContent } from '@/hooks/dashboard/useDashboardRoleConte
 import { useResponsive } from '@/hooks/use-responsive';
 import { useAIIssues } from '@/hooks/dashboard/useAIIssues';
 import { useNavigate } from 'react-router-dom';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { ErrorFallback } from '@/components/ui/error-fallback';
 
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardStatsSection from '@/components/dashboard/DashboardStats';
@@ -74,67 +72,49 @@ const Dashboard = () => {
   const dashboardContent = useMemo(() => {
     return (
       <div className={`space-y-6 ${isMobile ? 'p-4' : 'p-6'}`}>
-        <ErrorBoundary fallback={<ErrorFallback title="Header Error" />}>
-          <DashboardHeader 
-            associationName={currentAssociation?.name} 
-          />
-        </ErrorBoundary>
+        <DashboardHeader 
+          associationName={currentAssociation?.name} 
+        />
 
-        <ErrorBoundary fallback={<ErrorFallback title="Stats Error" />}>
-          <DashboardStatsSection 
-            stats={stats} 
-            associationName={currentAssociation?.name} 
-            loading={dataLoading} 
-          />
-        </ErrorBoundary>
+        <DashboardStatsSection 
+          stats={stats} 
+          associationName={currentAssociation?.name} 
+          loading={dataLoading} 
+        />
         
-        <ErrorBoundary fallback={<ErrorFallback title="Quick Actions Error" />}>
-          <QuickActionWidgets />
-        </ErrorBoundary>
+        <QuickActionWidgets />
         
         {/* AI Analysis Section */}
-        <ErrorBoundary fallback={<ErrorFallback title="AI Analysis Error" />}>
-          <div className="bg-blue-50 rounded-lg p-6">
-            <AIAnalysisSection issues={issues} />
-          </div>
-        </ErrorBoundary>
+        <div className="bg-blue-50 rounded-lg p-6">
+          <AIAnalysisSection issues={issues} />
+        </div>
 
         {/* Community Intelligence AI */}
-        <ErrorBoundary fallback={<ErrorFallback title="AI Query Error" />}>
-          <AiQueryInput />
-        </ErrorBoundary>
+        <AiQueryInput />
         
-        <ErrorBoundary fallback={<ErrorFallback title="Dashboard Content Error" />}>
-          {profile?.role === 'treasurer' ? (
-            getContentForRole()
-          ) : (
-            <Tabs defaultValue="calendar" className="space-y-4">
-              <TabsList className={isMobile ? 'w-full' : ''}>
-                <TabsTrigger value="calendar" className={isMobile ? 'flex-1' : ''}>Calendar</TabsTrigger>
-                <TabsTrigger value="activity" className={isMobile ? 'flex-1' : ''}>Recent Activity</TabsTrigger>
-                <TabsTrigger value="messages" className={isMobile ? 'flex-1' : ''}>Messages</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="calendar" className="space-y-4">
-                <ErrorBoundary fallback={<ErrorFallback title="Calendar Error" />}>
-                  <CalendarTab />
-                </ErrorBoundary>
-              </TabsContent>
-              
-              <TabsContent value="activity">
-                <ErrorBoundary fallback={<ErrorFallback title="Activity Feed Error" />}>
-                  {getActivityContent()}
-                </ErrorBoundary>
-              </TabsContent>
-              
-              <TabsContent value="messages">
-                <ErrorBoundary fallback={<ErrorFallback title="Messages Error" />}>
-                  {getMessagesContent()}
-                </ErrorBoundary>
-              </TabsContent>
-            </Tabs>
-          )}
-        </ErrorBoundary>
+        {profile?.role === 'treasurer' ? (
+          getContentForRole()
+        ) : (
+          <Tabs defaultValue="calendar" className="space-y-4">
+            <TabsList className={isMobile ? 'w-full' : ''}>
+              <TabsTrigger value="calendar" className={isMobile ? 'flex-1' : ''}>Calendar</TabsTrigger>
+              <TabsTrigger value="activity" className={isMobile ? 'flex-1' : ''}>Recent Activity</TabsTrigger>
+              <TabsTrigger value="messages" className={isMobile ? 'flex-1' : ''}>Messages</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="calendar" className="space-y-4">
+              <CalendarTab />
+            </TabsContent>
+            
+            <TabsContent value="activity">
+              {getActivityContent()}
+            </TabsContent>
+            
+            <TabsContent value="messages">
+              {getMessagesContent()}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     );
   }, [
