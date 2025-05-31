@@ -1,63 +1,64 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Auth } from '@/pages/Auth';
-import { Index } from '@/pages/Index';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
 import AppLayout from '@/components/layout/AppLayout';
 import { AuthProvider } from '@/contexts/auth';
-import { NotificationProvider } from '@/contexts/NotificationContext';
+import { NotificationProvider } from '@/contexts/notifications';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { Dashboard } from '@/pages/Dashboard';
-import { Associations } from '@/pages/Associations';
-import { Homeowners } from '@/pages/Homeowners';
-import { Compliance } from '@/pages/Compliance';
-import { AccountingDashboard } from '@/pages/accounting/AccountingDashboard';
-import { BankAccounts } from '@/pages/accounting/BankAccounts';
-import { InvoiceQueue } from '@/pages/accounting/InvoiceQueue';
-import { TransactionsPayments } from '@/pages/accounting/TransactionsPayments';
-import { GLAccounts } from '@/pages/accounting/GLAccounts';
-import { BudgetPlanning } from '@/pages/accounting/BudgetPlanning';
-import { Messaging } from '@/pages/communications/Messaging';
-import { Announcements } from '@/pages/communications/Announcements';
-import { LeadsDashboard } from '@/pages/lead-management/LeadsDashboard';
-import { Proposals } from '@/pages/lead-management/Proposals';
-import { EmailCampaigns } from '@/pages/lead-management/EmailCampaigns';
-import { Analytics } from '@/pages/lead-management/Analytics';
-import { OnboardingWizard } from '@/pages/lead-management/OnboardingWizard';
-import { OperationsDashboard } from '@/pages/operations/OperationsDashboard';
-import { CalendarPage } from '@/pages/operations/CalendarPage';
-import { Vendors } from '@/pages/operations/Vendors';
-import { LetterTemplates } from '@/pages/operations/LetterTemplates';
-import { Workflows } from '@/pages/operations/Workflows';
-import { PrintQueue } from '@/pages/operations/PrintQueue';
-import { Documents } from '@/pages/records-reports/Documents';
-import { Reports } from '@/pages/records-reports/Reports';
-import { ResaleCertificate } from '@/pages/resale-management/ResaleCertificate';
-import { DocsCenter } from '@/pages/resale-management/DocsCenter';
-import { ResaleCalendar } from '@/pages/resale-management/ResaleCalendar';
-import { OrderQueue } from '@/pages/resale-management/OrderQueue';
-import { ResaleAnalytics } from '@/pages/resale-management/ResaleAnalytics';
-import { SystemSettings } from '@/pages/system/SystemSettings';
-import { EmailWorkflows } from '@/pages/system/EmailWorkflows';
-import { DataManagement } from '@/pages/system/DataManagement';
-import { FinancialReportMapping } from '@/pages/system/FinancialReportMapping';
-import { WorkflowSchedule } from '@/pages/system/WorkflowSchedule';
-import { Permissions } from '@/pages/system/Permissions';
-import { ProjectTypes } from '@/pages/admin/ProjectTypes';
-import { UserProfile } from '@/pages/user/UserProfile';
-import { MaintenanceRequests } from '@/pages/MaintenanceRequests';
-import { HomeownerRequests } from '@/pages/HomeownerRequests';
-import { ResaleManagement } from '@/pages/resale-management/ResaleManagement';
-import { BidRequests } from '@/pages/BidRequests';
-import { InvoiceDetails } from '@/pages/accounting/InvoiceDetails';
-import { InvoiceCreate } from '@/pages/accounting/InvoiceCreate';
-import { InvoiceEdit } from '@/pages/accounting/InvoiceEdit';
-import { AssessmentTypes } from '@/pages/admin/AssessmentTypes';
-import { InvitationPage } from '@/pages/InvitationPage';
-import { PaymentSuccessPage } from '@/pages/PaymentSuccessPage';
-import { BillingDashboard } from '@/pages/billing/BillingDashboard';
+import Dashboard from '@/pages/Dashboard';
+import Associations from '@/pages/Associations';
+import Homeowners from '@/pages/Homeowners';
+import Compliance from '@/pages/Compliance';
+import AccountingDashboard from '@/pages/accounting/AccountingDashboard';
+import BankAccounts from '@/pages/accounting/BankAccounts';
+import InvoiceQueue from '@/pages/accounting/InvoiceQueue';
+import TransactionsAndPayments from '@/pages/accounting/TransactionsAndPayments';
+import GLAccounts from '@/pages/accounting/GLAccounts';
+import BudgetPlanning from '@/pages/accounting/BudgetPlanning';
+import Messaging from '@/pages/communications/Messaging';
+import Announcements from '@/pages/communications/Announcements';
+import LeadsDashboard from '@/pages/lead-management/LeadsDashboard';
+import Proposals from '@/pages/lead-management/Proposals';
+import EmailCampaigns from '@/pages/lead-management/EmailCampaigns';
+import Analytics from '@/pages/lead-management/Analytics';
+import OnboardingWizard from '@/pages/lead-management/OnboardingWizard';
+import OperationsDashboard from '@/pages/operations/OperationsDashboard';
+import CalendarPage from '@/pages/CalendarPage';
+import Vendors from '@/pages/operations/Vendors';
+import LetterTemplates from '@/pages/operations/LetterTemplates';
+import Workflows from '@/pages/operations/Workflows';
+import PrintQueue from '@/pages/operations/PrintQueue';
+import Documents from '@/pages/records-reports/Documents';
+import Reports from '@/pages/Reports';
+import ResaleCertificate from '@/pages/resale-management/ResaleCertificate';
+import DocsCenter from '@/pages/resale-management/DocsCenter';
+import ResaleCalendar from '@/pages/resale-management/ResaleCalendar';
+import OrderQueue from '@/pages/resale-management/OrderQueue';
+import ResaleAnalytics from '@/pages/resale-management/ResaleAnalytics';
+import SystemSettings from '@/pages/system/SystemSettings';
+import EmailWorkflows from '@/pages/system/EmailWorkflows';
+import DataManagement from '@/pages/system/DataManagement';
+import FinancialReportMapping from '@/pages/system/FinancialReportMapping';
+import WorkflowSchedule from '@/pages/system/WorkflowSchedule';
+import Permissions from '@/pages/system/Permissions';
+import ProjectTypes from '@/pages/admin/ProjectTypes';
+import UserProfile from '@/pages/user/UserProfile';
+import MaintenanceRequests from '@/pages/MaintenanceRequests';
+import HomeownerRequests from '@/pages/HomeownerRequests';
+import ResaleManagement from '@/pages/resale-management/ResaleManagement';
+import BidRequests from '@/pages/BidRequests';
+import InvoiceDetails from '@/pages/accounting/InvoiceDetails';
+import InvoiceCreate from '@/pages/accounting/InvoiceCreate';
+import InvoiceEdit from '@/pages/accounting/InvoiceEdit';
+import AssessmentTypes from '@/pages/admin/AssessmentTypes';
+import InvitationPage from '@/pages/InvitationPage';
+import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
+import BillingDashboard from '@/pages/billing/BillingDashboard';
 
 const queryClient = new QueryClient();
 
@@ -90,7 +91,7 @@ function App() {
                           <Route path="/accounting/invoice/:id" element={<InvoiceDetails />} />
                           <Route path="/accounting/invoice/create" element={<InvoiceCreate />} />
                           <Route path="/accounting/invoice/edit/:id" element={<InvoiceEdit />} />
-                          <Route path="/accounting/transactions-payments" element={<TransactionsPayments />} />
+                          <Route path="/accounting/transactions-payments" element={<TransactionsAndPayments />} />
                           <Route path="/accounting/gl-accounts" element={<GLAccounts />} />
                           <Route path="/accounting/budget-planning" element={<BudgetPlanning />} />
                           <Route path="/communications/messaging" element={<Messaging />} />
