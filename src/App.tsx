@@ -27,6 +27,16 @@ console.log('✅ App.tsx: QueryClient created');
 function App() {
   console.log('🚀 App.tsx: App component rendering...');
 
+  // Ensure CSS is loaded
+  React.useEffect(() => {
+    console.log('🎨 App.tsx: CSS and styles should be loaded');
+    // Force a repaint to ensure styles are applied
+    document.body.style.visibility = 'hidden';
+    setTimeout(() => {
+      document.body.style.visibility = 'visible';
+    }, 0);
+  }, []);
+
   return (
     <GlobalErrorBoundary>
       <BrowserRouter>

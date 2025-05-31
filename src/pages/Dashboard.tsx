@@ -15,6 +15,12 @@ import { Card, CardContent } from '@/components/ui/card';
 const Dashboard = () => {
   const { profile, currentAssociation } = useAuth();
 
+  // Log dashboard load for debugging
+  React.useEffect(() => {
+    console.log('📊 Dashboard: Component loaded with profile:', profile?.role);
+    console.log('📊 Dashboard: Current association:', currentAssociation?.name);
+  }, [profile, currentAssociation]);
+
   // Show treasurer-specific dashboard for treasurers
   if (profile?.role === 'treasurer') {
     return <TreasurerDashboard />;
@@ -25,7 +31,7 @@ const Dashboard = () => {
   const mockAIIssues = [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen">
       <DashboardHeader associationName={currentAssociation?.name} />
       
       <DashboardStats />
@@ -33,7 +39,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="calendar">Calendar</TabsTrigger>
               <TabsTrigger value="messages">Messages</TabsTrigger>

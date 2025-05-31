@@ -27,8 +27,14 @@ export default defineConfig(({ mode }) => ({
         manualChunks: undefined,
       },
     },
+    // Force clean rebuild
+    outDir: 'dist',
+    emptyOutDir: true,
   },
   optimizeDeps: {
     include: ['react', 'react-dom', '@supabase/supabase-js'],
+    force: true, // Force re-optimization
   },
+  // Clear cache on restart
+  cacheDir: '.vite-cache',
 }));
