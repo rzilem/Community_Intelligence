@@ -19,7 +19,7 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      const typedData = data as NotificationTemplate;
+      const typedData = data as unknown as NotificationTemplate;
       setTemplates(prev => [typedData, ...prev]);
       toast.success('Notification template created successfully!');
       return typedData;
@@ -47,7 +47,7 @@ export const useNotifications = () => {
         .single();
 
       if (templateError) throw templateError;
-      const typedTemplate = template as NotificationTemplate;
+      const typedTemplate = template as unknown as NotificationTemplate;
 
       const { data, error } = await supabase
         .from('notification_queue' as any)
@@ -63,7 +63,7 @@ export const useNotifications = () => {
         .single();
 
       if (error) throw error;
-      const typedData = data as NotificationQueue;
+      const typedData = data as unknown as NotificationQueue;
 
       const optimizedDelay = calculateOptimalSendTime(recipientType, typedTemplate.category);
       
@@ -98,7 +98,7 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      const typedData = (data || []) as NotificationTemplate[];
+      const typedData = (data || []) as unknown as NotificationTemplate[];
       setTemplates(typedData);
       return typedData;
     } catch (error: any) {
@@ -124,7 +124,7 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      const typedData = (data || []) as NotificationQueue[];
+      const typedData = (data || []) as unknown as NotificationQueue[];
       setQueue(typedData);
       return typedData;
     } catch (error: any) {
@@ -167,34 +167,23 @@ export const useNotifications = () => {
   };
 };
 
-function calculateOptimalSendTime(
-  recipientType: string,
-  category: string
-): number {
+function calculateOptimalSendTime(recipientType: string, category: string): number {
   const now = new Date();
   const hour = now.getHours();
 
-  if (category === 'system_alert') {
-    return 0;
-  }
-
+  if (category === 'system_alert') return 0;
+  
   if (category === 'payment_reminder') {
-    if (hour < 9 || hour > 17) {
-      return (9 - hour) * 60 * 60 * 1000;
-    }
+    if (hour < 9 || hour > 17) return (9 - hour) * 60 * 60 * 1000;
     return 0;
   }
-
+  
   if (category === 'announcement') {
-    if (hour < 10) {
-      return (10 - hour) * 60 * 60 * 1000;
-    }
-    if (hour > 20) {
-      return (34 - hour) * 60 * 60 * 1000;
-    }
+    if (hour < 10) return (10 - hour) * 60 * 60 * 1000;
+    if (hour > 20) return (34 - hour) * 60 * 60 * 1000;
     return 0;
   }
-
+  
   return 5 * 60 * 1000;
 }
 
@@ -252,10 +241,4 @@ function optimizeMessage(template: string, variables: Record<string, any>): stri
 function processTemplate(template: string, variables: Record<string, any>): string {
   let processed = template;
   
-  Object.entries(variables).forEach(([key, value]) => {
-    const placeholder = `{{${key}}}`;
-    processed = processed.replace(new RegExp(placeholder, 'g'), String(value));
-  });
-  
-  return processed;
-}
+  Object.entries(var
