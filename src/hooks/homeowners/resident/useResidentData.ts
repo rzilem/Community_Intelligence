@@ -38,17 +38,7 @@ export const useResidentData = (residentId: string) => {
         // First, try to fetch resident data from the database
         const { data: residentData, error: residentError } = await supabase
           .from('residents')
-          .select(`
-            *,
-            properties!property_id (
-              id, 
-              address, 
-              unit_number, 
-              city, 
-              state, 
-              zip_code
-            )
-          `)
+          .select('*')
           .eq('id', residentId)
           .single();
 
@@ -68,6 +58,20 @@ export const useResidentData = (residentId: string) => {
             setResident(prevState => ({...prevState, id: residentId}));
           }
         } else if (residentData) {
+          // Fetch property data separately if property_id exists
+          let propertyData = null;
+          if (residentData.property_id) {
+            const { data: propData, error: propError } = await supabase
+              .from('properties')
+              .select('id, address, unit_number, city, state, zip_code, association_id')
+              .eq('id', residentData.property_id)
+              .single();
+              
+            if (!propError && propData) {
+              propertyData = propData;
+            }
+          }
+
           // Get user profile data in a separate query if needed
           let profileData = null;
           if (residentData.user_id) {
@@ -83,9 +87,8 @@ export const useResidentData = (residentId: string) => {
           }
           
           // Build the homeowner object from the database data
-          const property = residentData.properties;
-          const propertyAddress = property ? 
-            `${property.address || ''} ${property.unit_number || ''}`.trim() : '';
+          const propertyAddress = propertyData ? 
+            `${propertyData.address || ''} ${propertyData.unit_number || ''}`.trim() : '';
           
           let fullName = residentData.name || '';
           if (!fullName && profileData) {
@@ -105,7 +108,7 @@ export const useResidentData = (residentId: string) => {
             moveOutDate: residentData.move_out_date || '',
             property: propertyAddress,
             propertyId: residentData.property_id || '',
-            unit: property?.unit_number || '',
+            unit: propertyData?.unit_number || '',
             balance: 0, // Would need to fetch from assessments table
             tags: [],
             violations: [], // Would need to fetch from compliance_issues table

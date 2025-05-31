@@ -30,7 +30,6 @@ interface DatabaseResident {
   move_in_date?: string;
   move_out_date?: string;
   property_id?: string;
-  properties?: DatabaseProperty | null;
 }
 
 /**
@@ -48,18 +47,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
     
     const { data: residentsData, error: residentsError } = await supabase
       .from('residents')
-      .select(`
-        *,
-        properties!property_id(
-          id,
-          address,
-          unit_number,
-          association_id,
-          city,
-          state,
-          zip_code
-        )
-      `)
+      .select('*')
       .in('property_id', batchIds);
     
     if (residentsError) {
@@ -161,10 +149,16 @@ export const useHomeownersData = () => {
           map[assoc.id] = assoc.name;
           return map;
         }, {});
+
+        // Create properties lookup
+        const propertiesMap = properties.reduce((map: any, prop: DatabaseProperty) => {
+          map[prop.id] = prop;
+          return map;
+        }, {});
         
         // Map the results
         const formattedResidents = (allResidents || []).map((resident: any) => {
-          const property = resident.properties;
+          const property = resident.property_id ? propertiesMap[resident.property_id] : null;
           const associationId = property?.association_id;
           
           return {
