@@ -89,18 +89,20 @@ const AppSidebar = () => {
   }
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <Link to="/dashboard" className="flex items-center space-x-2 px-4 py-2">
-          <Building className="h-6 w-6 text-blue-600" />
-          <span className="text-lg font-bold">Community Intelligence</span>
+    <Sidebar className="sidebar-gradient border-r-0">
+      <SidebarHeader className="border-b border-white/10 bg-transparent">
+        <Link to="/dashboard" className="flex items-center space-x-2 px-4 py-3">
+          <Building className="h-7 w-7 text-white" />
+          <span className="text-lg font-bold text-white">Community Intelligence</span>
         </Link>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="bg-transparent">
         {navigation.map((section) => (
-          <SidebarGroup key={section.title}>
-            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+          <SidebarGroup key={section.title} className="px-2">
+            <SidebarGroupLabel className="text-white/70 font-semibold text-xs uppercase tracking-wider mb-2">
+              {section.title}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {section.items.map((item) => (
@@ -108,8 +110,16 @@ const AppSidebar = () => {
                     <SidebarMenuButton 
                       asChild 
                       isActive={location.pathname === item.href}
+                      className={`
+                        text-white/90 hover:text-white hover:bg-white/10 
+                        transition-all duration-200 rounded-lg mb-1
+                        ${location.pathname === item.href 
+                          ? 'bg-white/20 text-white font-medium shadow-sm' 
+                          : ''
+                        }
+                      `}
                     >
-                      <Link to={item.href}>
+                      <Link to={item.href} className="flex items-center space-x-3 px-3 py-2">
                         <item.icon className="h-4 w-4" />
                         <span>{item.name}</span>
                       </Link>

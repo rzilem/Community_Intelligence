@@ -16,9 +16,9 @@ const AppLayout = () => {
   // Enhanced loading state with timeout fallback
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
           <p className="mt-2 text-sm text-gray-600">Loading application...</p>
           <div className="text-xs text-gray-400">
             If this takes too long, try refreshing the page
@@ -44,11 +44,11 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
           <TopNavigation />
-          <div className="flex-1 p-6 overflow-auto">
+          <div className="flex-1 p-6 overflow-auto bg-gradient-to-br from-gray-50 to-blue-50/30">
             <Outlet />
           </div>
         </main>
