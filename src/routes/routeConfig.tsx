@@ -1,326 +1,221 @@
-
 import React from 'react';
-import { RouteObject } from 'react-router-dom';
-import { RequireAuth } from '@/components/auth/RequireAuth';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import { Home, Users, Building2, Settings, FileText, Calendar, Mail, CheckSquare, UserPlus, ShieldAlert, Brain, MessageSquare } from 'lucide-react';
+import {
+  IndexRouteObject,
+  NonIndexRouteObject,
+} from 'react-router-dom';
 
-console.log('🚀 RouteConfig: Loading route configuration...');
+import Dashboard from '@/pages/Dashboard';
+import Homeowners from '@/pages/homeowners/Homeowners';
+import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
+import Associations from '@/pages/Associations';
+import AssociationDetail from '@/pages/AssociationDetail';
+import SettingsPage from '@/pages/SettingsPage';
+import CommunicationTemplates from '@/pages/communication/CommunicationTemplates';
+import CommunicationLogs from '@/pages/communication/CommunicationLogs';
+import EventsCalendar from '@/pages/EventsCalendar';
+import AssessmentManager from '@/pages/billing/AssessmentManager';
+import UserManagementPage from '@/pages/admin/UserManagementPage';
+import RoleManagementPage from '@/pages/admin/RoleManagementPage';
+import OnboardingTemplatesPage from '@/pages/onboarding/OnboardingTemplatesPage';
+import OnboardingTemplateDetailsPage from '@/pages/onboarding/OnboardingTemplateDetailsPage';
+import AIQueryPage from '@/pages/ai/AIQueryPage';
 
-// Lazy load all pages for better performance
-const Dashboard = React.lazy(() => {
-  console.log('🚀 RouteConfig: Loading Dashboard component...');
-  return import('@/pages/Dashboard');
-});
-const Associations = React.lazy(() => import('@/pages/Associations'));
-const Homeowners = React.lazy(() => import('@/pages/Homeowners'));
-const HomeownerDetailPage = React.lazy(() => import('@/pages/HomeownerDetailPage'));
-const Compliance = React.lazy(() => import('@/pages/Compliance'));
-const AccountingDashboard = React.lazy(() => import('@/pages/accounting/AccountingDashboard'));
-const BankAccounts = React.lazy(() => import('@/pages/accounting/BankAccounts'));
-const InvoiceQueue = React.lazy(() => {
-  console.log('🚀 RouteConfig: Loading InvoiceQueue component...');
-  return import('@/pages/accounting/InvoiceQueue');
-});
-const InvoiceDetails = React.lazy(() => import('@/pages/accounting/InvoiceDetails'));
-const InvoiceCreate = React.lazy(() => import('@/pages/accounting/InvoiceCreate'));
-const InvoiceEdit = React.lazy(() => import('@/pages/accounting/InvoiceEdit'));
-const TransactionsAndPayments = React.lazy(() => import('@/pages/accounting/TransactionsAndPayments'));
-const GLAccounts = React.lazy(() => import('@/pages/accounting/GLAccounts'));
-const BudgetPlanning = React.lazy(() => import('@/pages/accounting/BudgetPlanning'));
-const Messaging = React.lazy(() => import('@/pages/communications/Messaging'));
-const Announcements = React.lazy(() => import('@/pages/communications/Announcements'));
-const LeadsDashboard = React.lazy(() => import('@/pages/lead-management/LeadsDashboard'));
-const Proposals = React.lazy(() => import('@/pages/lead-management/Proposals'));
-const EmailCampaigns = React.lazy(() => import('@/pages/lead-management/EmailCampaigns'));
-const Analytics = React.lazy(() => import('@/pages/lead-management/Analytics'));
-const OnboardingWizard = React.lazy(() => import('@/pages/lead-management/OnboardingWizard'));
-const OperationsDashboard = React.lazy(() => import('@/pages/operations/OperationsDashboard'));
-const CalendarPage = React.lazy(() => import('@/pages/CalendarPage'));
-const Vendors = React.lazy(() => import('@/pages/operations/Vendors'));
-const LetterTemplates = React.lazy(() => import('@/pages/operations/LetterTemplates'));
-const Workflows = React.lazy(() => import('@/pages/operations/Workflows'));
-const PrintQueue = React.lazy(() => import('@/pages/operations/PrintQueue'));
-const Documents = React.lazy(() => import('@/pages/records-reports/Documents'));
-const Reports = React.lazy(() => import('@/pages/Reports'));
-const ResaleManagement = React.lazy(() => import('@/pages/resale-management/ResaleManagement'));
-const ResaleCertificate = React.lazy(() => import('@/pages/resale-management/ResaleCertificate'));
-const ResaleCertificateDetail = React.lazy(() => import('@/pages/resale-management/ResaleCertificateDetail'));
-const DocsCenter = React.lazy(() => import('@/pages/resale-management/DocsCenter'));
-const ResaleCalendar = React.lazy(() => import('@/pages/resale-management/ResaleCalendar'));
-const OrderQueue = React.lazy(() => import('@/pages/resale-management/OrderQueue'));
-const ResaleAnalytics = React.lazy(() => import('@/pages/resale-management/ResaleAnalytics'));
-const SystemSettings = React.lazy(() => import('@/pages/system/SystemSettings'));
-const EmailWorkflows = React.lazy(() => import('@/pages/system/EmailWorkflows'));
-const DataManagement = React.lazy(() => import('@/pages/system/DataManagement'));
-const FinancialReportMapping = React.lazy(() => import('@/pages/accounting/FinancialReportMapping'));
-const WorkflowSchedule = React.lazy(() => import('@/pages/system/WorkflowSchedule'));
-const Permissions = React.lazy(() => import('@/pages/system/Permissions'));
-const ProjectTypes = React.lazy(() => import('@/pages/admin/ProjectTypes'));
-const AssessmentTypes = React.lazy(() => import('@/pages/admin/AssessmentTypes'));
-const UserProfile = React.lazy(() => import('@/pages/user/UserProfile'));
-const MaintenanceRequests = React.lazy(() => import('@/pages/MaintenanceRequests'));
-const HomeownerRequests = React.lazy(() => import('@/pages/HomeownerRequests'));
-const BidRequests = React.lazy(() => import('@/pages/BidRequests'));
-const CreateBidRequest = React.lazy(() => import('@/pages/community-management/CreateBidRequest'));
-const BillingDashboard = React.lazy(() => import('@/pages/billing/BillingDashboard'));
-
-// Suspense wrapper component
-const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  console.log('🚀 RouteConfig: SuspenseWrapper rendering...');
-  return (
-    <React.Suspense 
-      fallback={
-        <div className="flex h-64 items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-600">Loading...</p>
-          </div>
-        </div>
-      }
-    >
-      {children}
-    </React.Suspense>
-  );
+export type Route = (IndexRouteObject | NonIndexRouteObject) & {
+  label?: string;
+  icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  category?: string;
+  requiresAuth?: boolean;
+  description?: string;
 };
 
-// Helper function to create protected route elements
-const createProtectedRoute = (element: React.ReactElement, allowedRoles: string[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant']) => {
-  console.log('🚀 RouteConfig: Creating protected route with roles:', allowedRoles);
-  return (
-    <RequireAuth allowedRoles={allowedRoles}>
-      <SuspenseWrapper>
-        <ErrorBoundary>
-          {element}
-        </ErrorBoundary>
-      </SuspenseWrapper>
-    </RequireAuth>
-  );
-};
-
-// Define all routes with proper role-based access control
-export const protectedRoutes: RouteObject[] = [
+export const protectedRoutes: Route[] = [
   {
     path: 'dashboard',
-    element: createProtectedRoute(<Dashboard />)
-  },
-  
-  // Community Management Routes
-  {
-    path: 'associations',
-    element: createProtectedRoute(<Associations />, ['admin', 'manager'])
+    element: <Dashboard />,
+    label: 'Dashboard',
+    icon: Home,
+    category: 'main',
+    requiresAuth: true,
   },
   {
     path: 'homeowners',
-    element: createProtectedRoute(<Homeowners />, ['admin', 'manager'])
+    element: <Homeowners />,
+    label: 'Homeowners',
+    icon: Users,
+    category: 'main',
+    requiresAuth: true,
+    description: 'Manage homeowners and residents'
   },
   {
     path: 'homeowners/:id',
-    element: createProtectedRoute(<HomeownerDetailPage />, ['admin', 'manager'])
+    element: <HomeownerDetailPage />,
+    label: 'Homeowner Detail',
+    category: 'hidden',
+    requiresAuth: true,
   },
   {
-    path: 'community-management/homeowner-requests',
-    element: createProtectedRoute(<HomeownerRequests />, ['admin', 'manager'])
+    path: 'associations',
+    element: <Associations />,
+    label: 'Associations',
+    icon: Building2,
+    category: 'main',
+    requiresAuth: true,
+    description: 'Manage associations and properties'
+  },
+   {
+    path: 'associations/:id',
+    element: <AssociationDetail />,
+    label: 'Association Detail',
+    category: 'hidden',
+    requiresAuth: true,
   },
   {
-    path: 'community-management/bid-requests',
-    element: createProtectedRoute(<BidRequests />, ['admin', 'manager'])
+    path: 'settings',
+    element: <SettingsPage />,
+    label: 'Settings',
+    icon: Settings,
+    category: 'admin',
+    requiresAuth: true,
+    description: 'Manage application settings'
   },
   {
-    path: 'community-management/bid-requests/new',
-    element: createProtectedRoute(<CreateBidRequest />, ['admin', 'manager'])
+    path: 'communication-templates',
+    element: <CommunicationTemplates />,
+    label: 'Communication Templates',
+    icon: FileText,
+    category: 'communication',
+    requiresAuth: true,
+    description: 'Manage communication templates'
   },
   {
-    path: 'compliance',
-    element: createProtectedRoute(<Compliance />, ['admin', 'manager'])
-  },
-  
-  // Accounting Routes
-  {
-    path: 'accounting/dashboard',
-    element: createProtectedRoute(<AccountingDashboard />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/bank-accounts',
-    element: createProtectedRoute(<BankAccounts />, ['admin', 'manager', 'accountant'])
+    path: 'communication-logs',
+    element: <CommunicationLogs />,
+    label: 'Communication Logs',
+    icon: Mail,
+    category: 'communication',
+    requiresAuth: true,
+    description: 'View communication logs'
   },
   {
-    path: 'accounting/invoice-queue',
-    element: createProtectedRoute(<InvoiceQueue />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/invoice/:id',
-    element: createProtectedRoute(<InvoiceDetails />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/invoice/create',
-    element: createProtectedRoute(<InvoiceCreate />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/invoice/edit/:id',
-    element: createProtectedRoute(<InvoiceEdit />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/transactions-payments',
-    element: createProtectedRoute(<TransactionsAndPayments />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/gl-accounts',
-    element: createProtectedRoute(<GLAccounts />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/budget-planning',
-    element: createProtectedRoute(<BudgetPlanning />, ['admin', 'manager', 'accountant'])
-  },
-  {
-    path: 'accounting/financial-report-mapping',
-    element: createProtectedRoute(<FinancialReportMapping />, ['admin', 'manager', 'accountant'])
-  },
-  
-  // Communications Routes
-  {
-    path: 'communications/messaging',
-    element: createProtectedRoute(<Messaging />)
-  },
-  {
-    path: 'communications/announcements',
-    element: createProtectedRoute(<Announcements />)
-  },
-  
-  // Lead Management Routes
-  {
-    path: 'lead-management/dashboard',
-    element: createProtectedRoute(<LeadsDashboard />, ['admin', 'manager'])
-  },
-  {
-    path: 'lead-management/proposals',
-    element: createProtectedRoute(<Proposals />, ['admin', 'manager'])
-  },
-  {
-    path: 'lead-management/email-campaigns',
-    element: createProtectedRoute(<EmailCampaigns />, ['admin', 'manager'])
-  },
-  {
-    path: 'lead-management/analytics',
-    element: createProtectedRoute(<Analytics />, ['admin', 'manager'])
-  },
-  {
-    path: 'lead-management/onboarding',
-    element: createProtectedRoute(<OnboardingWizard />, ['admin', 'manager'])
-  },
-  
-  // Operations Routes
-  {
-    path: 'operations/dashboard',
-    element: createProtectedRoute(<OperationsDashboard />, ['admin', 'manager', 'maintenance'])
-  },
-  {
-    path: 'operations/calendar',
-    element: createProtectedRoute(<CalendarPage />, ['admin', 'manager', 'maintenance'])
-  },
-  {
-    path: 'operations/vendors',
-    element: createProtectedRoute(<Vendors />, ['admin', 'manager', 'maintenance'])
-  },
-  {
-    path: 'operations/letter-templates',
-    element: createProtectedRoute(<LetterTemplates />, ['admin', 'manager', 'maintenance'])
-  },
-  {
-    path: 'operations/workflows',
-    element: createProtectedRoute(<Workflows />, ['admin', 'manager', 'maintenance'])
-  },
-  {
-    path: 'operations/print-queue',
-    element: createProtectedRoute(<PrintQueue />, ['admin', 'manager', 'maintenance'])
-  },
-  
-  // Records & Reports Routes
-  {
-    path: 'records-reports/documents',
-    element: createProtectedRoute(<Documents />)
-  },
-  {
-    path: 'records-reports/reports',
-    element: createProtectedRoute(<Reports />)
-  },
-  
-  // Resale Management Routes
-  {
-    path: 'resale-management',
-    element: createProtectedRoute(<ResaleManagement />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/certificate',
-    element: createProtectedRoute(<ResaleCertificate />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/certificate/:id',
-    element: createProtectedRoute(<ResaleCertificateDetail />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/docs-center',
-    element: createProtectedRoute(<DocsCenter />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/calendar',
-    element: createProtectedRoute(<ResaleCalendar />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/order-queue',
-    element: createProtectedRoute(<OrderQueue />, ['admin', 'manager'])
-  },
-  {
-    path: 'resale-management/analytics',
-    element: createProtectedRoute(<ResaleAnalytics />, ['admin', 'manager'])
-  },
-  
-  // System Routes
-  {
-    path: 'system/settings',
-    element: createProtectedRoute(<SystemSettings />, ['admin'])
-  },
-  {
-    path: 'system/email-workflows',
-    element: createProtectedRoute(<EmailWorkflows />, ['admin'])
-  },
-  {
-    path: 'system/data-management',
-    element: createProtectedRoute(<DataManagement />, ['admin'])
-  },
-  {
-    path: 'system/workflow-schedule',
-    element: createProtectedRoute(<WorkflowSchedule />, ['admin'])
-  },
-  {
-    path: 'system/permissions',
-    element: createProtectedRoute(<Permissions />, ['admin'])
-  },
-  
-  // Admin Routes
-  {
-    path: 'admin/project-types',
-    element: createProtectedRoute(<ProjectTypes />, ['admin'])
-  },
-  {
-    path: 'admin/assessment-types',
-    element: createProtectedRoute(<AssessmentTypes />, ['admin'])
-  },
-  
-  // User Routes
-  {
-    path: 'user/profile',
-    element: createProtectedRoute(<UserProfile />)
-  },
-  
-  // Other Routes
-  {
-    path: 'maintenance-requests',
-    element: createProtectedRoute(<MaintenanceRequests />)
+    path: 'events',
+    element: <EventsCalendar />,
+    label: 'Events',
+    icon: Calendar,
+    category: 'main',
+    requiresAuth: true,
+    description: 'Manage events calendar'
   },
   {
     path: 'billing',
-    element: createProtectedRoute(<BillingDashboard />, ['admin', 'manager', 'accountant'])
-  }
+    element: <AssessmentManager />,
+    label: 'Billing',
+    icon: CheckSquare,
+    category: 'billing',
+    requiresAuth: true,
+    description: 'Manage billing and assessments'
+  },
+  {
+    path: 'admin/users',
+    element: <UserManagementPage />,
+    label: 'User Management',
+    icon: UserPlus,
+    category: 'admin',
+    requiresAuth: true,
+    description: 'Manage users and roles'
+  },
+  {
+    path: 'admin/roles',
+    element: <RoleManagementPage />,
+    label: 'Role Management',
+    icon: ShieldAlert,
+    category: 'admin',
+    requiresAuth: true,
+    description: 'Manage roles and permissions'
+  },
+  {
+    path: 'onboarding',
+    element: <OnboardingTemplatesPage />,
+    label: 'Onboarding',
+    icon: UserPlus,
+    category: 'onboarding',
+    requiresAuth: true,
+    description: 'Manage onboarding templates'
+  },
+  {
+    path: 'onboarding/:id',
+    element: <OnboardingTemplateDetailsPage />,
+    label: 'Onboarding Template Details',
+    category: 'hidden',
+    requiresAuth: true,
+  },
+  
+  // AI Features - MILESTONE 4
+  {
+    path: 'ai-query',
+    element: <AIQueryPage />,
+    label: 'AI Query',
+    icon: Brain,
+    category: 'ai',
+    requiresAuth: true,
+    description: 'Ask questions about your data using natural language'
+  },
 ];
 
-console.log('✅ RouteConfig: Route configuration loaded, total routes:', protectedRoutes.length);
+export const navigationItems = [
+  {
+    category: 'main',
+    label: 'Main',
+    icon: Home,
+    items: [
+      { path: '/dashboard', label: 'Dashboard', icon: Home },
+      { path: '/homeowners', label: 'Homeowners', icon: Users },
+      { path: '/associations', label: 'Associations', icon: Building2 },
+      { path: '/events', label: 'Events', icon: Calendar },
+    ]
+  },
+  {
+    category: 'communication',
+    label: 'Communication',
+    icon: Mail,
+    items: [
+      { path: '/communication-templates', label: 'Templates', icon: FileText },
+      { path: '/communication-logs', label: 'Logs', icon: Mail },
+    ]
+  },
+  {
+    category: 'billing',
+    label: 'Billing',
+    icon: CheckSquare,
+    items: [
+      { path: '/billing', label: 'Assessments', icon: CheckSquare },
+    ]
+  },
+  {
+    category: 'onboarding',
+    label: 'Onboarding',
+    icon: UserPlus,
+    items: [
+      { path: '/onboarding', label: 'Templates', icon: FileText },
+    ]
+  },
+  {
+    category: 'admin',
+    label: 'Administration',
+    icon: Settings,
+    items: [
+      { path: '/admin/users', label: 'User Management', icon: UserPlus },
+      { path: '/admin/roles', label: 'Role Management', icon: ShieldAlert },
+      { path: '/settings', label: 'Settings', icon: Settings },
+    ]
+  },
+  {
+    category: 'ai',
+    label: 'AI Features',
+    icon: Brain,
+    items: [
+      { path: '/ai-query', label: 'AI Query', icon: MessageSquare },
+      // Future AI features will be added here
+    ]
+  },
+];
