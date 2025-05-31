@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ResidentWithProfile, Property, ResidentType } from '@/types/app-types';
+import { ResidentWithProfile, ResidentType } from '@/types/app-types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 
@@ -21,6 +22,23 @@ interface ResidentFormProps {
   onCancel: () => void;
 }
 
+interface DatabaseProperty {
+  id: string;
+  address: string;
+  address_line_2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  property_type?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  square_footage?: number;
+  association_id?: string;
+  unit_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const ResidentForm: React.FC<ResidentFormProps> = ({ 
   defaultValues, 
   onSubmit,
@@ -28,7 +46,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   onCancel
 }) => {
   const { currentAssociation } = useAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<DatabaseProperty[]>([]);
   const [loading, setLoading] = useState(false);
   const [associations, setAssociations] = useState<any[]>([]);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string>(currentAssociation?.id || '');
@@ -75,11 +93,11 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           .eq('association_id', selectedAssociationId);
           
         if (error) throw error;
-        setProperties(data as Property[]);
+        setProperties(data || []);
         
         // If the currently selected property doesn't belong to this association, clear it
         if (selectedPropertyId) {
-          const propertyExists = data.some(p => p.id === selectedPropertyId);
+          const propertyExists = data.some((p: DatabaseProperty) => p.id === selectedPropertyId);
           if (!propertyExists) {
             setValue('property_id', '');
           }

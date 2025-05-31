@@ -4,6 +4,35 @@ import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+interface DatabaseProperty {
+  id: string;
+  address: string;
+  address_line_2?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  property_type?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  square_footage?: number;
+  association_id?: string;
+  unit_number?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DatabaseResident {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  resident_type: string;
+  move_in_date?: string;
+  move_out_date?: string;
+  property_id?: string;
+  properties?: DatabaseProperty;
+}
+
 /**
  * Fetches resident data in batches to avoid "URL too long" errors
  * @param propertyIds Array of property IDs to fetch residents for
@@ -11,7 +40,7 @@ import { toast } from 'sonner';
  * @returns Combined array of resident data from all batches
  */
 const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
-  let allResidents: any[] = [];
+  let allResidents: DatabaseResident[] = [];
   
   for (let i = 0; i < propertyIds.length; i += batchSize) {
     const batchIds = propertyIds.slice(i, i + batchSize);
@@ -25,7 +54,10 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
           id,
           address,
           unit_number,
-          association_id
+          association_id,
+          city,
+          state,
+          zip_code
         )
       `)
       .in('property_id', batchIds);
@@ -113,7 +145,7 @@ export const useHomeownersData = () => {
       }
       
       // Get all property IDs
-      const propertyIds = properties.map(p => p.id);
+      const propertyIds = properties.map((p: DatabaseProperty) => p.id);
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
@@ -131,7 +163,7 @@ export const useHomeownersData = () => {
         }, {});
         
         // Map the results
-        const formattedResidents = (allResidents || []).map(resident => {
+        const formattedResidents = (allResidents || []).map((resident: DatabaseResident) => {
           const property = resident.properties;
           const associationId = property?.association_id;
           

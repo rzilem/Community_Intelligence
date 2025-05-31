@@ -28,7 +28,7 @@ export const updatePropertyImage = async (
 
     const imageUrl = urlData.publicUrl;
 
-    // Update property with image URL
+    // Update property with image URL - using the correct field name from database
     const { error: updateError } = await supabase
       .from('properties')
       .update({ image_url: imageUrl })

@@ -46,7 +46,7 @@ export const useResidentData = (residentId: string) => {
               unit_number, 
               city, 
               state, 
-              zip,
+              zip_code,
               image_url
             )
           `)
@@ -84,8 +84,9 @@ export const useResidentData = (residentId: string) => {
           }
           
           // Build the homeowner object from the database data
-          const propertyAddress = residentData.property ? 
-            `${residentData.property.address || ''} ${residentData.property.unit_number || ''}`.trim() : '';
+          const property = residentData.property;
+          const propertyAddress = property ? 
+            `${property.address || ''} ${property.unit_number || ''}`.trim() : '';
           
           let fullName = residentData.name || '';
           if (!fullName && profileData) {
@@ -95,7 +96,7 @@ export const useResidentData = (residentId: string) => {
           const email = residentData.email || (profileData?.email || '');
           const phone = residentData.phone || (profileData?.phone_number || '');
           const avatarUrl = profileData?.profile_image_url || '';
-          const propertyImage = residentData.property?.image_url || '';
+          const propertyImage = property?.image_url || '';
           
           const convertedHomeowner: Homeowner = {
             id: residentData.id,
@@ -106,7 +107,7 @@ export const useResidentData = (residentId: string) => {
             moveOutDate: residentData.move_out_date || '',
             property: propertyAddress,
             propertyId: residentData.property_id || '',
-            unit: residentData.property?.unit_number || '',
+            unit: property?.unit_number || '',
             balance: 0, // Would need to fetch from assessments table
             tags: [],
             violations: [], // Would need to fetch from compliance_issues table
