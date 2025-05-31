@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { BidRequestWithVendors, BidRequest, Vendor } from '@/types/bid-request-types';
+import { BidRequestWithVendors, BidRequest, Vendor, AttachmentFile } from '@/types/bid-request-types';
 
 export const bidRequestService = {
   async createBidRequest(data: Partial<BidRequestWithVendors>): Promise<BidRequest> {
@@ -44,13 +44,34 @@ export const bidRequestService = {
       }
     }
 
+    // Parse attachments safely
+    const parseAttachments = (attachments: any): AttachmentFile[] => {
+      if (!attachments) return [];
+      if (Array.isArray(attachments)) {
+        return attachments.filter(item => 
+          item && typeof item === 'object' && item.id && item.url
+        );
+      }
+      if (typeof attachments === 'string') {
+        try {
+          const parsed = JSON.parse(attachments);
+          return Array.isArray(parsed) ? parsed.filter(item => 
+            item && typeof item === 'object' && item.id && item.url
+          ) : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    };
+
     return {
       ...bidRequest,
       associationId: bidRequest.association_id,
       createdBy: bidRequest.created_by,
       hoa_id: bidRequest.association_id,
       priority: (bidRequest.priority || 'medium') as "low" | "medium" | "high" | "urgent",
-      attachments: Array.isArray(bidRequest.attachments) ? bidRequest.attachments : []
+      attachments: parseAttachments(bidRequest.attachments)
     };
   },
 
@@ -106,13 +127,34 @@ export const bidRequestService = {
       throw new Error(`Failed to fetch bid requests: ${error.message}`);
     }
 
+    // Parse attachments safely
+    const parseAttachments = (attachments: any): AttachmentFile[] => {
+      if (!attachments) return [];
+      if (Array.isArray(attachments)) {
+        return attachments.filter(item => 
+          item && typeof item === 'object' && item.id && item.url
+        );
+      }
+      if (typeof attachments === 'string') {
+        try {
+          const parsed = JSON.parse(attachments);
+          return Array.isArray(parsed) ? parsed.filter(item => 
+            item && typeof item === 'object' && item.id && item.url
+          ) : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    };
+
     return (data || []).map(item => ({
       ...item,
       associationId: item.association_id,
       createdBy: item.created_by,
       hoa_id: item.association_id,
       priority: (item.priority || 'medium') as "low" | "medium" | "high" | "urgent",
-      attachments: Array.isArray(item.attachments) ? item.attachments : []
+      attachments: parseAttachments(item.attachments)
     }));
   }
 };
