@@ -10,6 +10,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [authCheckTimeout, setAuthCheckTimeout] = useState(false);
 
   // Initialize logger
   useEffect(() => {
@@ -17,26 +18,50 @@ const Index = () => {
     console.log('Index page loaded');
   }, []);
 
+  // Add timeout for auth check
   useEffect(() => {
-    // Only redirect after auth is checked
-    if (!loading) {
+    const timeout = setTimeout(() => {
+      console.log('⚠️ Index: Auth check timeout reached');
+      setAuthCheckTimeout(true);
       setIsLoading(false);
-      if (user) {
+    }, 8000); // 8 second timeout
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    // Only redirect after auth is checked or timeout
+    if (!loading || authCheckTimeout) {
+      setIsLoading(false);
+      if (user && !authCheckTimeout) {
         console.log('User authenticated, redirecting to dashboard');
         navigate('/dashboard');
       } else {
-        console.log('No authenticated user found');
+        console.log('No authenticated user found or timeout reached');
       }
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, authCheckTimeout]);
 
-  // Render loading state until auth check is complete
-  if (isLoading) {
+  // Render loading state until auth check is complete or timeout
+  if (isLoading && !authCheckTimeout) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="h-16 w-16 mx-auto border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="mt-4 text-lg">Loading...</p>
+          <div className="text-sm text-gray-500">
+            Checking authentication status...
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setAuthCheckTimeout(true);
+              setIsLoading(false);
+            }}
+          >
+            Continue without waiting
+          </Button>
         </div>
       </div>
     );

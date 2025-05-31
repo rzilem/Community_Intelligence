@@ -22,14 +22,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('🚀 AuthProvider: useEffect - Getting initial session...');
     
+    // Add timeout to prevent infinite loading
+    const authTimeout = setTimeout(() => {
+      console.log('⚠️ AuthProvider: Auth timeout reached, setting loading to false');
+      setLoading(false);
+    }, 10000); // 10 second timeout
+
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('🚀 AuthProvider: Calling getSession...');
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log('🚀 AuthProvider: Initial session result:', { session: !!session, error });
         
         if (error) {
           console.error('❌ AuthProvider: Error getting session:', error);
+          setLoading(false);
+          clearTimeout(authTimeout);
+          return;
         }
         
         if (session?.user) {
@@ -44,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('❌ AuthProvider: Exception getting session:', error);
       } finally {
         setLoading(false);
+        clearTimeout(authTimeout);
         console.log('✅ AuthProvider: Initial auth check complete');
       }
     };
@@ -54,10 +65,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🚀 AuthProvider: Auth state change:', event, !!session?.user);
       
+      clearTimeout(authTimeout);
+      
       if (session?.user) {
         setUser(session.user);
         setSession(session);
-        await loadUserProfile(session.user.id);
+        // Use setTimeout to prevent blocking the auth callback
+        setTimeout(() => {
+          loadUserProfile(session.user.id);
+        }, 0);
       } else {
         setUser(null);
         setSession(null);
@@ -70,6 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🚀 AuthProvider: Cleaning up auth subscription');
+      clearTimeout(authTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -107,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         alert('Check your email for the magic link to sign in.');
       }
     } catch (error: any) {
+      console.error('❌ AuthProvider: Sign in error:', error);
       alert(error.error_description || error.message);
     } finally {
       setLoading(false);
@@ -136,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       alert('Check your email for the magic link to sign in.');
     } catch (error: any) {
+      console.error('❌ AuthProvider: Sign up error:', error);
       alert(error.error_description || error.message);
     } finally {
       setLoading(false);
@@ -148,6 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error: any) {
+      console.error('❌ AuthProvider: Sign out error:', error);
       alert(error.error_description || error.message);
     } finally {
       setUser(null);

@@ -6,7 +6,8 @@ import { NotificationProvider } from '@/contexts/notifications';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
-import ErrorBoundary from '@/components/ErrorBoundary';
+import GlobalErrorBoundary from '@/components/GlobalErrorBoundary';
+import GlobalErrorHandler from '@/components/GlobalErrorHandler';
 import { AppRouter } from '@/routes/AppRouter';
 
 console.log('🚀 App.tsx: Initializing App component...');
@@ -16,6 +17,7 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
@@ -26,20 +28,21 @@ function App() {
   console.log('🚀 App.tsx: App component rendering...');
 
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <ErrorBoundary>
+    <GlobalErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <GlobalErrorHandler />
             <AuthProvider>
               <NotificationProvider>
                 <AppRouter />
               </NotificationProvider>
             </AuthProvider>
-          </ErrorBoundary>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </GlobalErrorBoundary>
   );
 }
 
