@@ -1,8 +1,7 @@
-
-import React, { useState } from 'react';
-import { ProposalRequestFormData } from '@/types/proposal-request-types';
-import { submitProposalRequest } from '@/services/proposal-request-service';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/contexts/auth';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,6 +33,11 @@ const ProposalRequestForm: React.FC = () => {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { register, handleSubmit, formState: { errors: formErrors } } = useForm<ProposalRequestFormData>({
+    resolver: zodResolver(ProposalRequestFormData),
+    defaultValues: formData
+  });
 
   const handleChange = (field: string, value: any) => {
     if (field.includes('.')) {

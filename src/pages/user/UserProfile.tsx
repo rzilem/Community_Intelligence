@@ -79,7 +79,7 @@ const UserProfile = () => {
                   <div className="flex flex-col items-center gap-3">
                     <ProfileImageUpload
                       userId={user.id}
-                      imageUrl={`${profile?.profile_image_url}?v=${imageVersion}`} 
+                      imageUrl={`${profile?.avatar_url}?v=${imageVersion}`} 
                       firstName={profile?.first_name || ''}
                       lastName={profile?.last_name || ''}
                       onImageUpdated={handleProfileImageUpdated}

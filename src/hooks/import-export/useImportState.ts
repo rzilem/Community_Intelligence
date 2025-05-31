@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { ValidationResult, ImportResult } from '@/types/import-types';
 import { dataImportService } from '@/services/import-export';
 import { validationService } from '@/services/import-export/validation-service';

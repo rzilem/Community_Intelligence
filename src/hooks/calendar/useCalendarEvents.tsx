@@ -1,94 +1,45 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { CalendarEvent } from '@/types/calendar-types';
-import { useAuth } from '@/contexts/AuthContext';
-import { CalendarEventUI, NewCalendarEvent } from './types';
-import { mapDbEventsToUiEvents, filterEventsForDate, getDefaultColorForType } from './calendarUtils';
-import { useCalendarEventMutations } from './useCalendarEventMutations';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { useAuth } from '@/contexts/auth';
 
-interface UseCalendarEventsProps {
-  date: Date;
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  resourceId?: string;
+  [key: string]: any;
 }
 
-export const useCalendarEvents = ({ date }: UseCalendarEventsProps) => {
+export const useCalendarEvents = (selectedDate: Date) => {
   const { currentAssociation } = useAuth();
-  const [events, setEvents] = useState<CalendarEventUI[]>([]);
-  const [newEvent, setNewEvent] = useState<NewCalendarEvent>({
-    title: '',
-    date: new Date(),
-    startTime: '09:00',
-    endTime: '10:00',
-    description: '',
-    location: '',
-    type: 'amenity_booking',
-    amenityId: '1',
-    color: '#3b6aff' // Default blue color
-  });
+  const [selectedView, setSelectedView] = useState<'month' | 'week' | 'day'>('month');
 
-  // Query for calendar events
-  const { data: calendarEvents, isLoading: eventsLoading, refetch } = useSupabaseQuery<CalendarEvent[]>(
+  const { data: events, isLoading: eventsLoading } = useSupabaseQuery<CalendarEvent[]>(
     'calendar_events',
     {
       select: '*',
-      filter: currentAssociation ? [{ column: 'hoa_id', value: currentAssociation.id }] : [],
+      filter: currentAssociation ? [{ column: 'association_id', value: currentAssociation.id }] : [],
+      // Add date range filter based on the selected view
+      dateRange: {
+        start: format(startOfMonth(selectedDate), 'yyyy-MM-dd'),
+        end: format(endOfMonth(selectedDate), 'yyyy-MM-dd'),
+      },
     },
     !!currentAssociation
   );
 
-  // Get mutations from the separate hook
-  const { 
-    isCreating, 
-    isDeleting, 
-    handleCreateEvent, 
-    handleDeleteEvent,
-    hasAssociation 
-  } = useCalendarEventMutations();
+  const formattedEvents = useMemo(() => {
+    if (!events) return [];
 
-  // Convert Supabase events to component events when data changes
-  useEffect(() => {
-    const mappedEvents = mapDbEventsToUiEvents(calendarEvents || []);
-    setEvents(mappedEvents);
-  }, [calendarEvents]);
+    return events.map(event => ({
+      ...event,
+      start: new Date(event.start),
+      end: new Date(event.end),
+    }));
+  }, [events]);
 
-  // Reset form helper function
-  const resetForm = () => {
-    setNewEvent({
-      title: '',
-      date: new Date(),
-      startTime: '09:00',
-      endTime: '10:00',
-      description: '',
-      location: '',
-      type: 'amenity_booking',
-      amenityId: '1',
-      color: '#3b6aff' // Reset to default blue color
-    });
-  };
-
-  // Handler to create event, using the mutation hook
-  const createEventHandler = (): boolean => {
-    return handleCreateEvent(newEvent, resetForm, refetch);
-  };
-
-  // Handler to delete event, using the mutation hook
-  const deleteEventHandler = (eventId: string) => {
-    handleDeleteEvent(eventId, refetch);
-  };
-
-  // Filter events for the selected date
-  const eventsForSelectedDate = filterEventsForDate(events, date);
-
-  return {
-    events: eventsForSelectedDate,
-    newEvent,
-    setNewEvent,
-    eventsLoading,
-    isCreating,
-    isDeleting,
-    handleCreateEvent: createEventHandler,
-    handleDeleteEvent: deleteEventHandler,
-    hasAssociation,
-    getDefaultColorForType
-  };
+  return { events: formattedEvents, eventsLoading, selectedView, setSelectedView };
 };

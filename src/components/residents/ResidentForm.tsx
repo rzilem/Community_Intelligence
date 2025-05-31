@@ -4,7 +4,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ResidentWithProfile, Property, ResidentType } from '@/types/app-types';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 
 // Import refactored components
 import { ResidentTypeSelect } from './form/ResidentTypeSelect';

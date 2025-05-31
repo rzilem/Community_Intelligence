@@ -1,127 +1,167 @@
-
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Clock, DollarSign, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { bidRequestService } from '@/services/bidRequestService';
-import { BidRequest } from '@/types/bid-request-types';
-import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PageTemplate from '@/components/layout/PageTemplate';
+import { useAuth } from '@/contexts/auth';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { MoreDropdown } from '@/components/ui/MoreDropdown';
 
-interface BidRequestsProps {
-  associationId: string;
-}
-
-const BidRequests: React.FC<BidRequestsProps> = ({ associationId }) => {
-  const [bidRequests, setBidRequests] = useState<BidRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
+const BidRequests = () => {
   const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
 
-  useEffect(() => {
-    const fetchBidRequests = async () => {
-      setLoading(true);
-      try {
-        const requests = await bidRequestService.getBidRequests(associationId);
-        setBidRequests(requests);
-      } catch (error) {
-        console.error('Error fetching bid requests:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const bidRequests = [
+    {
+      id: '1',
+      title: 'Landscaping Services',
+      association: 'Sunset HOA',
+      dateRequested: '2024-07-15',
+      dueDate: '2024-06-30',
+      status: 'pending',
+      bidsReceived: 3,
+      budget: 5000,
+      residentsInvolved: 5,
+    },
+    {
+      id: '2',
+      title: 'Roof Repair',
+      association: 'Sunrise HOA',
+      dateRequested: '2024-07-10',
+      dueDate: '2024-06-25',
+      status: 'approved',
+      bidsReceived: 5,
+      budget: 10000,
+      residentsInvolved: 10,
+    },
+    {
+      id: '3',
+      title: 'Pool Maintenance',
+      association: 'Oceanview HOA',
+      dateRequested: '2024-07-05',
+      dueDate: '2024-06-20',
+      status: 'completed',
+      bidsReceived: 4,
+      budget: 2000,
+      residentsInvolved: 2,
+    },
+  ];
 
-    fetchBidRequests();
-  }, [associationId, statusFilter, priorityFilter]);
-
-  const filteredBidRequests = bidRequests.filter(request =>
-    request.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBidRequests = bidRequests.filter(request => {
+    const matchesSearch = request.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || request.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div>
+    <PageTemplate
+      title="Bid Requests"
+      icon={<DollarSign className="h-8 w-8" />}
+      description="Manage and track all bid requests for community projects"
+    >
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-xl">Bid Requests</CardTitle>
-            <CardDescription>Manage and view all bid requests for your community.</CardDescription>
-          </div>
-          <Link to="/community-management/create-bid-request">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Bid Request
-            </Button>
-          </Link>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle>Community Bid Requests</CardTitle>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Bid Request
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row items-center gap-4">
-            <div className="flex-1">
+        <CardContent>
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            <div className="col-span-2">
               <Input
                 type="text"
                 placeholder="Search bid requests..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="md:w-full"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div>
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border rounded-md px-3 py-2"
+                value={filterStatus}
+                onChange={e => setFilterStatus(e.target.value)}
+                className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm"
               >
-                <option value="">All Statuses</option>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="bidding">Bidding</option>
-                <option value="evaluating">Evaluating</option>
-                <option value="awarded">Awarded</option>
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
                 <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
               </select>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="border rounded-md px-3 py-2"
-              >
-                <option value="">All Priorities</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
-              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                <Filter className="mr-2 h-4 w-4" />
+                Filter
+              </Button>
             </div>
           </div>
-          {loading ? (
-            <p>Loading bid requests...</p>
-          ) : filteredBidRequests.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredBidRequests.map(request => (
-                <Card key={request.id} className="shadow-md">
-                  <CardHeader>
-                    <CardTitle>{request.title}</CardTitle>
-                    <CardDescription>
-                      <Badge variant="secondary">{request.status}</Badge>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Priority: {request.priority}</p>
-                    <p>Budget: ${request.budget_range_min} - ${request.budget_range_max}</p>
-                    <p>Bid Deadline: {request.bid_deadline}</p>
-                  </CardContent>
-                </Card>
-              ))}
+          <ScrollArea>
+            <div className="relative max-w-[1400px] overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Title</TableHead>
+                    <TableHead>Association</TableHead>
+                    <TableHead>Date Requested</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Budget</TableHead>
+                    <TableHead className="text-center">Bids</TableHead>
+                    <TableHead className="text-center">Residents</TableHead>
+                    <TableHead className="text-right"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBidRequests.map(request => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.title}</TableCell>
+                      <TableCell>{request.association}</TableCell>
+                      <TableCell>{request.dateRequested}</TableCell>
+                      <TableCell>{request.dueDate}</TableCell>
+                      <TableCell>
+                        <Badge variant={request.status === 'pending' ? 'secondary' : request.status === 'approved' ? 'success' : 'default'}>
+                          {request.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">${request.budget}</TableCell>
+                      <TableCell className="text-center">{request.bidsReceived}</TableCell>
+                      <TableCell className="text-center">{request.residentsInvolved}</TableCell>
+                      <TableCell className="text-right">
+                        <MoreDropdown>
+                          <a className="dropdown-item" href="#">
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </a>
+                          <a className="dropdown-item" href="#">
+                            <Edit className="mr-2 h-4 w-4" /> Edit Request
+                          </a>
+                          <a className="dropdown-item" href="#">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </a>
+                        </MoreDropdown>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          ) : (
-            <p>No bid requests found.</p>
-          )}
+          </ScrollArea>
         </CardContent>
       </Card>
-    </div>
+    </PageTemplate>
   );
 };
 

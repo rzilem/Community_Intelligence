@@ -1,8 +1,7 @@
-
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import React, { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/auth';
 import { Property } from '@/types/app-types';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
 import { PropertyForm } from './PropertyForm';
@@ -23,6 +22,11 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
   
   const createProperty = useSupabaseCreate<Property>('properties');
   const updateProperty = useSupabaseUpdate<Property>('properties');
+
+  useEffect(() => {
+    if (!open) return;
+    // Additional logic can be added here if needed when the dialog opens
+  }, [open]);
 
   const handleSubmit = async (data: Partial<Property>) => {
     try {
@@ -56,11 +60,7 @@ export const PropertyDialog: React.FC<PropertyDialogProps> = ({
         </DialogHeader>
         
         <PropertyForm 
-          defaultValues={property || {
-            property_type: 'single_family',
-            address: '',
-            association_id: currentAssociation?.id || ''
-          }}
+          defaultValues={property || {}}
           onSubmit={handleSubmit}
           isSubmitting={createProperty.isPending || updateProperty.isPending}
           onCancel={() => onOpenChange(false)}
