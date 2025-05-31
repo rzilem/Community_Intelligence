@@ -4,25 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { DocumentCategory, UseCategoriesParams } from '@/types/document-types';
 import { toast } from 'sonner';
 
+// Mock data for now since document_categories table doesn't exist yet
+const mockCategories: DocumentCategory[] = [
+  { id: '1', name: 'Legal Documents', association_id: 'demo-association-id' },
+  { id: '2', name: 'Financial Reports', association_id: 'demo-association-id' },
+  { id: '3', name: 'Maintenance Records', association_id: 'demo-association-id' },
+  { id: '4', name: 'Board Minutes', association_id: 'demo-association-id' },
+];
+
 export function useDocumentCategories({ associationId, enabled = true }: UseCategoriesParams = {}) {
   return useQuery({
     queryKey: ['document-categories', associationId],
     queryFn: async () => {
       if (!associationId) return [];
       
-      const { data, error } = await supabase
-        .from('document_categories')
-        .select('*')
-        .eq('association_id', associationId)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching document categories:', error);
-        throw error;
-      }
-
-      return (data || []) as DocumentCategory[];
+      // Return mock data for now
+      return mockCategories.filter(cat => cat.association_id === associationId);
     },
     enabled: enabled && !!associationId,
   });
@@ -37,18 +34,15 @@ export function useCreateDocumentCategory() {
       associationId: string;
       description?: string;
     }) => {
-      const { data, error } = await supabase
-        .from('document_categories')
-        .insert({
-          name,
-          association_id: associationId,
-          description,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as DocumentCategory;
+      // Mock implementation for now
+      const newCategory: DocumentCategory = {
+        id: Date.now().toString(),
+        name,
+        association_id: associationId,
+        created_at: new Date().toISOString(),
+      };
+      
+      return newCategory;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['document-categories'] });
@@ -69,15 +63,15 @@ export function useUpdateDocumentCategory() {
       id: string;
       updates: Partial<DocumentCategory>;
     }) => {
-      const { data, error } = await supabase
-        .from('document_categories')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as DocumentCategory;
+      // Mock implementation for now
+      const updatedCategory: DocumentCategory = {
+        id,
+        name: updates.name || 'Updated Category',
+        association_id: updates.association_id || 'demo-association-id',
+        updated_at: new Date().toISOString(),
+      };
+      
+      return updatedCategory;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['document-categories'] });
@@ -95,12 +89,8 @@ export function useDeleteDocumentCategory() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('document_categories')
-        .update({ is_active: false })
-        .eq('id', id);
-
-      if (error) throw error;
+      // Mock implementation for now
+      console.log('Deleting category:', id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['document-categories'] });

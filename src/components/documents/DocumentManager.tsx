@@ -29,7 +29,7 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
     category: selectedCategory 
   });
   
-  const { categories, isLoading: categoriesLoading } = useDocumentCategories({ 
+  const { data: categories, isLoading: categoriesLoading } = useDocumentCategories({ 
     associationId 
   });
   
@@ -55,12 +55,9 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
     }
   };
 
-  const handleDelete = async (documentId: string) => {
-    const document = documents?.find(d => d.id === documentId);
-    if (document) {
-      await deleteDocument.mutateAsync(document);
-      refetch();
-    }
+  const handleDelete = async (doc: any) => {
+    await deleteDocument.mutateAsync(doc);
+    refetch();
   };
 
   const handleCreateCategory = async (name: string) => {
@@ -160,8 +157,10 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
         <TabsContent value="categories" className="space-y-4">
           <DocumentCategories
             categories={categories || []}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            onCreateCategory={() => setIsCategoryDialogOpen(true)}
             isLoading={categoriesLoading}
-            associationId={associationId}
           />
         </TabsContent>
       </Tabs>

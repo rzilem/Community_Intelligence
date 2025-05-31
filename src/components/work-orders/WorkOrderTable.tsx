@@ -64,10 +64,16 @@ export default function WorkOrderTable({ workOrders, onEdit, onView }: WorkOrder
                 <Badge variant="outline">{workOrder.category}</Badge>
               </td>
               <td className="p-4">
-                <WorkOrderStatusBadge status={workOrder.status} />
+                <WorkOrderStatusBadge 
+                  status={workOrder.status} 
+                  priority={workOrder.priority}
+                />
               </td>
               <td className="p-4">
-                <WorkOrderStatusBadge priority={workOrder.priority} />
+                <WorkOrderStatusBadge 
+                  status={workOrder.status}
+                  priority={workOrder.priority} 
+                />
               </td>
               <td className="p-4">
                 <span className="text-sm">

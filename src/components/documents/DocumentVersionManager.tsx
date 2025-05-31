@@ -41,7 +41,11 @@ export default function DocumentVersionManager({ document, onClose }: DocumentVe
 
     setIsUploadingVersion(true);
     try {
-      await uploadNewVersion(newVersionFile, document.id, versionNotes);
+      await uploadNewVersion({
+        file: newVersionFile,
+        documentId: document.id,
+        notes: versionNotes
+      });
       setNewVersionFile(null);
       setVersionNotes('');
       refetchVersions();
@@ -54,7 +58,11 @@ export default function DocumentVersionManager({ document, onClose }: DocumentVe
 
   const handleRevertToVersion = async (versionId: string, versionNumber: number) => {
     try {
-      await revertToVersion(document.id, versionId, versionNumber);
+      await revertToVersion({
+        documentId: document.id,
+        versionId,
+        versionNumber
+      });
       refetchVersions();
     } catch (error) {
       console.error('Failed to revert to version:', error);
