@@ -84,7 +84,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={{...newEvent, date: format(date, 'yyyy-MM-dd')}}
+                newEvent={{...newEvent, date}}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}

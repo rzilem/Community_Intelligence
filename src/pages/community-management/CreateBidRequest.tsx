@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -272,8 +273,9 @@ const CreateBidRequest = () => {
                           <FormLabel>Deadline (Optional)</FormLabel>
                           <DatePicker
                             date={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
+                            setDate={field.onChange}
+                            disabled={false}
+                            disablePast={true}
                           />
                           <FormDescription>
                             When bids should be submitted by
