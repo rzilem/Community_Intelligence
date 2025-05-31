@@ -7,9 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Plus, Wrench, Filter } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { useWorkOrders } from '@/hooks/useWorkOrders';
+import { useWorkOrders, WorkOrder } from '@/hooks/useWorkOrders';
 import WorkOrderTable from '@/components/work-orders/WorkOrderTable';
 import WorkOrderForm from '@/components/work-orders/WorkOrderForm';
+import WorkOrderViewDialog from '@/components/work-orders/WorkOrderViewDialog';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 const MaintenanceRequests = () => {
@@ -17,6 +18,8 @@ const MaintenanceRequests = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
+  const [showViewDialog, setShowViewDialog] = useState(false);
 
   // For demo purposes, using a default association ID
   const defaultAssociationId = 'demo-association-id';
@@ -40,11 +43,34 @@ const MaintenanceRequests = () => {
       open: workOrders.filter(w => w.status === 'open').length,
       in_progress: workOrders.filter(w => w.status === 'in_progress').length,
       completed: workOrders.filter(w => w.status === 'completed').length,
+      on_hold: workOrders.filter(w => w.status === 'on_hold').length,
     };
     return counts;
   };
 
+  const getPriorityCounts = () => {
+    return {
+      emergency: workOrders.filter(w => w.priority === 'emergency').length,
+      high: workOrders.filter(w => w.priority === 'high').length,
+      medium: workOrders.filter(w => w.priority === 'medium').length,
+      low: workOrders.filter(w => w.priority === 'low').length,
+    };
+  };
+
   const statusCounts = getStatusCounts();
+  const priorityCounts = getPriorityCounts();
+
+  const handleEdit = (workOrder: WorkOrder) => {
+    setSelectedWorkOrder(workOrder);
+    setShowViewDialog(false);
+    // In a real app, you'd open an edit dialog here
+    console.log('Edit work order:', workOrder);
+  };
+
+  const handleView = (workOrder: WorkOrder) => {
+    setSelectedWorkOrder(workOrder);
+    setShowViewDialog(true);
+  };
 
   if (error) {
     console.error('Error loading work orders:', error);
@@ -57,8 +83,8 @@ const MaintenanceRequests = () => {
       description="Manage property maintenance requests and work orders"
     >
       <div className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Enhanced Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="text-2xl font-bold">{statusCounts.total}</div>
@@ -85,7 +111,34 @@ const MaintenanceRequests = () => {
           </Card>
         </div>
 
-        {/* Controls */}
+        {/* Priority Overview */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Priority Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-lg font-bold text-red-600">{priorityCounts.emergency}</div>
+                <Badge className="bg-red-100 text-red-800">Emergency</Badge>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-orange-600">{priorityCounts.high}</div>
+                <Badge className="bg-orange-100 text-orange-800">High</Badge>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-yellow-600">{priorityCounts.medium}</div>
+                <Badge className="bg-yellow-100 text-yellow-800">Medium</Badge>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-green-600">{priorityCounts.low}</div>
+                <Badge className="bg-green-100 text-green-800">Low</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Enhanced Controls */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center space-x-4 flex-1">
             <div className="relative">
@@ -149,14 +202,18 @@ const MaintenanceRequests = () => {
                 }
               </div>
             ) : (
-              <WorkOrderTable workOrders={filteredWorkOrders} />
+              <WorkOrderTable 
+                workOrders={filteredWorkOrders} 
+                onEdit={handleEdit}
+                onView={handleView}
+              />
             )}
           </CardContent>
         </Card>
 
         {/* Create Work Order Dialog */}
         <Dialog open={showCreateForm} onOpenChange={setShowCreateForm}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <WorkOrderForm
               associationId={defaultAssociationId}
               onClose={() => setShowCreateForm(false)}
@@ -164,6 +221,14 @@ const MaintenanceRequests = () => {
             />
           </DialogContent>
         </Dialog>
+
+        {/* View Work Order Dialog */}
+        <WorkOrderViewDialog
+          workOrder={selectedWorkOrder}
+          open={showViewDialog}
+          onOpenChange={setShowViewDialog}
+          onEdit={handleEdit}
+        />
       </div>
     </PageTemplate>
   );
