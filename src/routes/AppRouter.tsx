@@ -38,9 +38,9 @@ export const AppRouter = () => {
         })}
         
         {/* Legacy redirects for backward compatibility */}
-        <Route path="/properties" element={<Navigate to="/associations" replace />} />
-        <Route path="/residents" element={<Navigate to="/homeowners" replace />} />
-        <Route path="/residents/:id" element={<Navigate to="/homeowners/:id" replace />} />
+        <Route path="properties" element={<Navigate to="/associations" replace />} />
+        <Route path="residents" element={<Navigate to="/homeowners" replace />} />
+        <Route path="residents/:id" element={<Navigate to="/homeowners/:id" replace />} />
         
         {/* Catch-all route for 404 */}
         <Route path="*" element={

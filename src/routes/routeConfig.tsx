@@ -98,221 +98,221 @@ const createProtectedRoute = (element: React.ReactElement, allowedRoles: string[
 // Define all routes with proper role-based access control
 export const protectedRoutes: RouteObject[] = [
   {
-    path: '/dashboard',
+    path: 'dashboard',
     element: createProtectedRoute(<Dashboard />)
   },
   
   // Community Management Routes
   {
-    path: '/associations',
+    path: 'associations',
     element: createProtectedRoute(<Associations />, ['admin', 'manager'])
   },
   {
-    path: '/homeowners',
+    path: 'homeowners',
     element: createProtectedRoute(<Homeowners />, ['admin', 'manager'])
   },
   {
-    path: '/homeowners/:id',
+    path: 'homeowners/:id',
     element: createProtectedRoute(<HomeownerDetailPage />, ['admin', 'manager'])
   },
   {
-    path: '/community-management/homeowner-requests',
+    path: 'community-management/homeowner-requests',
     element: createProtectedRoute(<HomeownerRequests />, ['admin', 'manager'])
   },
   {
-    path: '/community-management/bid-requests',
+    path: 'community-management/bid-requests',
     element: createProtectedRoute(<BidRequests />, ['admin', 'manager'])
   },
   {
-    path: '/community-management/bid-requests/new',
+    path: 'community-management/bid-requests/new',
     element: createProtectedRoute(<CreateBidRequest />, ['admin', 'manager'])
   },
   {
-    path: '/compliance',
+    path: 'compliance',
     element: createProtectedRoute(<Compliance />, ['admin', 'manager'])
   },
   
   // Accounting Routes
   {
-    path: '/accounting/dashboard',
+    path: 'accounting/dashboard',
     element: createProtectedRoute(<AccountingDashboard />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/bank-accounts',
+    path: 'accounting/bank-accounts',
     element: createProtectedRoute(<BankAccounts />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/invoice-queue',
+    path: 'accounting/invoice-queue',
     element: createProtectedRoute(<InvoiceQueue />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/invoice/:id',
+    path: 'accounting/invoice/:id',
     element: createProtectedRoute(<InvoiceDetails />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/invoice/create',
+    path: 'accounting/invoice/create',
     element: createProtectedRoute(<InvoiceCreate />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/invoice/edit/:id',
+    path: 'accounting/invoice/edit/:id',
     element: createProtectedRoute(<InvoiceEdit />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/transactions-payments',
+    path: 'accounting/transactions-payments',
     element: createProtectedRoute(<TransactionsAndPayments />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/gl-accounts',
+    path: 'accounting/gl-accounts',
     element: createProtectedRoute(<GLAccounts />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/budget-planning',
+    path: 'accounting/budget-planning',
     element: createProtectedRoute(<BudgetPlanning />, ['admin', 'manager', 'accountant'])
   },
   {
-    path: '/accounting/financial-report-mapping',
+    path: 'accounting/financial-report-mapping',
     element: createProtectedRoute(<FinancialReportMapping />, ['admin', 'manager', 'accountant'])
   },
   
   // Communications Routes
   {
-    path: '/communications/messaging',
+    path: 'communications/messaging',
     element: createProtectedRoute(<Messaging />)
   },
   {
-    path: '/communications/announcements',
+    path: 'communications/announcements',
     element: createProtectedRoute(<Announcements />)
   },
   
   // Lead Management Routes
   {
-    path: '/lead-management/dashboard',
+    path: 'lead-management/dashboard',
     element: createProtectedRoute(<LeadsDashboard />, ['admin', 'manager'])
   },
   {
-    path: '/lead-management/proposals',
+    path: 'lead-management/proposals',
     element: createProtectedRoute(<Proposals />, ['admin', 'manager'])
   },
   {
-    path: '/lead-management/email-campaigns',
+    path: 'lead-management/email-campaigns',
     element: createProtectedRoute(<EmailCampaigns />, ['admin', 'manager'])
   },
   {
-    path: '/lead-management/analytics',
+    path: 'lead-management/analytics',
     element: createProtectedRoute(<Analytics />, ['admin', 'manager'])
   },
   {
-    path: '/lead-management/onboarding',
+    path: 'lead-management/onboarding',
     element: createProtectedRoute(<OnboardingWizard />, ['admin', 'manager'])
   },
   
   // Operations Routes
   {
-    path: '/operations/dashboard',
+    path: 'operations/dashboard',
     element: createProtectedRoute(<OperationsDashboard />, ['admin', 'manager', 'maintenance'])
   },
   {
-    path: '/operations/calendar',
+    path: 'operations/calendar',
     element: createProtectedRoute(<CalendarPage />, ['admin', 'manager', 'maintenance'])
   },
   {
-    path: '/operations/vendors',
+    path: 'operations/vendors',
     element: createProtectedRoute(<Vendors />, ['admin', 'manager', 'maintenance'])
   },
   {
-    path: '/operations/letter-templates',
+    path: 'operations/letter-templates',
     element: createProtectedRoute(<LetterTemplates />, ['admin', 'manager', 'maintenance'])
   },
   {
-    path: '/operations/workflows',
+    path: 'operations/workflows',
     element: createProtectedRoute(<Workflows />, ['admin', 'manager', 'maintenance'])
   },
   {
-    path: '/operations/print-queue',
+    path: 'operations/print-queue',
     element: createProtectedRoute(<PrintQueue />, ['admin', 'manager', 'maintenance'])
   },
   
   // Records & Reports Routes
   {
-    path: '/records-reports/documents',
+    path: 'records-reports/documents',
     element: createProtectedRoute(<Documents />)
   },
   {
-    path: '/records-reports/reports',
+    path: 'records-reports/reports',
     element: createProtectedRoute(<Reports />)
   },
   
   // Resale Management Routes
   {
-    path: '/resale-management',
+    path: 'resale-management',
     element: createProtectedRoute(<ResaleManagement />, ['admin', 'manager'])
   },
   {
-    path: '/resale-management/certificate',
+    path: 'resale-management/certificate',
     element: createProtectedRoute(<ResaleCertificate />, ['admin', 'manager'])
   },
   {
-    path: '/resale-management/docs-center',
+    path: 'resale-management/docs-center',
     element: createProtectedRoute(<DocsCenter />, ['admin', 'manager'])
   },
   {
-    path: '/resale-management/calendar',
+    path: 'resale-management/calendar',
     element: createProtectedRoute(<ResaleCalendar />, ['admin', 'manager'])
   },
   {
-    path: '/resale-management/order-queue',
+    path: 'resale-management/order-queue',
     element: createProtectedRoute(<OrderQueue />, ['admin', 'manager'])
   },
   {
-    path: '/resale-management/analytics',
+    path: 'resale-management/analytics',
     element: createProtectedRoute(<ResaleAnalytics />, ['admin', 'manager'])
   },
   
   // System Routes
   {
-    path: '/system/settings',
+    path: 'system/settings',
     element: createProtectedRoute(<SystemSettings />, ['admin'])
   },
   {
-    path: '/system/email-workflows',
+    path: 'system/email-workflows',
     element: createProtectedRoute(<EmailWorkflows />, ['admin'])
   },
   {
-    path: '/system/data-management',
+    path: 'system/data-management',
     element: createProtectedRoute(<DataManagement />, ['admin'])
   },
   {
-    path: '/system/workflow-schedule',
+    path: 'system/workflow-schedule',
     element: createProtectedRoute(<WorkflowSchedule />, ['admin'])
   },
   {
-    path: '/system/permissions',
+    path: 'system/permissions',
     element: createProtectedRoute(<Permissions />, ['admin'])
   },
   
   // Admin Routes
   {
-    path: '/admin/project-types',
+    path: 'admin/project-types',
     element: createProtectedRoute(<ProjectTypes />, ['admin'])
   },
   {
-    path: '/admin/assessment-types',
+    path: 'admin/assessment-types',
     element: createProtectedRoute(<AssessmentTypes />, ['admin'])
   },
   
   // User Routes
   {
-    path: '/user/profile',
+    path: 'user/profile',
     element: createProtectedRoute(<UserProfile />)
   },
   
   // Other Routes
   {
-    path: '/maintenance-requests',
+    path: 'maintenance-requests',
     element: createProtectedRoute(<MaintenanceRequests />)
   },
   {
-    path: '/billing',
+    path: 'billing',
     element: createProtectedRoute(<BillingDashboard />, ['admin', 'manager', 'accountant'])
   }
 ];
