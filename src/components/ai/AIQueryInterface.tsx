@@ -2,252 +2,216 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Sparkles, 
-  Send, 
-  History, 
-  Lightbulb, 
-  Loader2,
-  Database,
-  Clock,
-  RefreshCw
-} from 'lucide-react';
-import { useAIQuerySystem } from '@/hooks/ai/useAIQuerySystem';
-import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Brain, Send, History, Clock, Database, Lightbulb } from 'lucide-react';
+import { useAIQuery } from '@/hooks/ai/useAIQuery';
+import { DataTable } from '@/components/ui/data-table';
+import { format } from 'date-fns';
 
-interface AIQueryInterfaceProps {
-  context?: string;
-  className?: string;
-}
-
-const AIQueryInterface: React.FC<AIQueryInterfaceProps> = ({ 
-  context, 
-  className = '' 
-}) => {
+const AIQueryInterface: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [showHistory, setShowHistory] = useState(false);
-  const [activeResult, setActiveResult] = useState<any>(null);
-  
-  const {
-    processNaturalLanguageQuery,
-    isLoading,
-    queryHistory,
-    getSuggestedQueries,
-    clearHistory
-  } = useAIQuerySystem();
+  const { isLoading, queryHistory, lastResult, executeQuery, clearHistory } = useAIQuery();
 
-  const handleSubmit = async (queryText: string = query) => {
-    if (!queryText.trim()) {
-      toast.error('Please enter a query');
-      return;
-    }
-
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    
     try {
-      const response = await processNaturalLanguageQuery(queryText, { context });
-      setActiveResult(response);
+      await executeQuery(query);
       setQuery('');
     } catch (error) {
-      console.error('Query submission error:', error);
+      // Error handled in hook
     }
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setQuery(suggestion);
-  };
-
-  const handleHistoryItemClick = (historyItem: any) => {
-    setActiveResult(historyItem.response);
-    setQuery(historyItem.query);
-  };
-
-  const renderResult = (result: any) => {
-    if (!result) return null;
-
-    if (result.error) {
-      return (
-        <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-          <p className="text-red-700">{result.explanation}</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        <div className="p-4 border border-green-200 rounded-lg bg-green-50">
-          <p className="text-green-700 font-medium">{result.explanation}</p>
-        </div>
-        
-        {result.query && (
-          <div className="p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <Database className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-600">Generated Query:</span>
-            </div>
-            <code className="text-sm text-gray-800">{result.query}</code>
-          </div>
-        )}
-
-        {result.result && (
-          <div className="border rounded-lg p-4">
-            <h4 className="font-medium mb-3">Results:</h4>
-            {Array.isArray(result.result) ? (
-              <div className="space-y-2">
-                {result.result.map((item: any, index: number) => (
-                  <div key={index} className="p-3 border rounded bg-gray-50">
-                    <pre className="text-sm">{JSON.stringify(item, null, 2)}</pre>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-3 border rounded bg-gray-50">
-                <pre className="text-sm">{JSON.stringify(result.result, null, 2)}</pre>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const suggestions = getSuggestedQueries(context);
+  const suggestedQueries = [
+    "Show me all residents",
+    "What are the latest payments?",
+    "Show amenity bookings this month",
+    "List all associations",
+    "Find overdue assessments"
+  ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Query Input */}
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-blue-600" />
-            AI Query System
-            <Badge variant="secondary" className="ml-auto">MILESTONE 4</Badge>
+            <Brain className="h-5 w-5" />
+            AI Query Assistant
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Textarea
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask anything about your HOA data... (e.g., 'Show me all active homeowners' or 'What maintenance requests are overdue?')"
-              className="min-h-[80px]"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-            />
-            
-            <div className="flex justify-between items-center">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowHistory(!showHistory)}
-                >
-                  <History className="h-4 w-4 mr-1" />
-                  History ({queryHistory.length})
-                </Button>
-                {queryHistory.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={clearHistory}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-1" />
-                    Clear
-                  </Button>
-                )}
-              </div>
-              
-              <Button 
-                onClick={() => handleSubmit()}
-                disabled={isLoading || !query.trim()}
-              >
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ask me anything about your HOA data... (e.g., 'Show me all residents' or 'What payments are overdue?')"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="flex-1"
+              />
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 ) : (
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send className="h-4 w-4" />
                 )}
-                {isLoading ? 'Processing...' : 'Ask AI'}
               </Button>
             </div>
-          </div>
-
-          {/* Query Suggestions */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm font-medium">Suggested Queries:</span>
+            
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Suggested queries:</p>
+              <div className="flex flex-wrap gap-2">
+                {suggestedQueries.map((suggestion) => (
+                  <Badge
+                    key={suggestion}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => setQuery(suggestion)}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {suggestions.slice(0, 4).map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  className="text-xs h-7"
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
 
-      {/* Query History */}
-      {showHistory && queryHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Query History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-3">
-                {queryHistory.map((item, index) => (
-                  <div key={item.id}>
-                    <div 
-                      className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => handleHistoryItemClick(item)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{item.query}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {item.response.explanation}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <Clock className="h-3 w-3" />
-                          {item.timestamp.toLocaleTimeString()}
-                        </div>
-                      </div>
+      {lastResult && (
+        <Tabs defaultValue="results" className="w-full">
+          <TabsList>
+            <TabsTrigger value="results">Results</TabsTrigger>
+            <TabsTrigger value="sql">SQL Query</TabsTrigger>
+            <TabsTrigger value="explanation">AI Explanation</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="results" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Query Results
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {lastResult.executionTime}ms
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {lastResult.data.length > 0 ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Found {lastResult.data.length} results
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-200">
+                        <thead>
+                          <tr className="bg-gray-50">
+                            {Object.keys(lastResult.data[0]).map((key) => (
+                              <th key={key} className="border border-gray-200 px-4 py-2 text-left">
+                                {key}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lastResult.data.slice(0, 10).map((row, index) => (
+                            <tr key={index}>
+                              {Object.values(row).map((value, i) => (
+                                <td key={i} className="border border-gray-200 px-4 py-2">
+                                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    {index < queryHistory.length - 1 && <Separator className="my-2" />}
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No results found</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="sql">
+            <Card>
+              <CardHeader>
+                <CardTitle>Generated SQL Query</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
+                  <code>{lastResult.sql}</code>
+                </pre>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="explanation">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5" />
+                  AI Explanation
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>{lastResult.explanation}</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
 
-      {/* Query Results */}
-      {activeResult && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Query Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {renderResult(activeResult)}
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Query History
+            </span>
+            {queryHistory.length > 0 && (
+              <Button variant="outline" size="sm" onClick={clearHistory}>
+                Clear History
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {queryHistory.length > 0 ? (
+            <div className="space-y-3">
+              {queryHistory.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setQuery(entry.query)}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <p className="font-medium">{entry.query}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {format(entry.timestamp, 'MMM d, HH:mm')}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {entry.result.data.length} results in {entry.result.executionTime}ms
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p>No query history yet</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

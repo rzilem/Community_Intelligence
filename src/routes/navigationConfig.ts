@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare, MapPin, BarChart3 } from 'lucide-react';
+import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare, MapPin, BarChart3, Bell } from 'lucide-react';
 import { NavigationCategory } from './types';
 
 export const navigationItems: NavigationCategory[] = [
@@ -15,12 +15,37 @@ export const navigationItems: NavigationCategory[] = [
     ]
   },
   {
+    category: 'ai',
+    label: 'AI Features',
+    icon: Brain,
+    items: [
+      { path: '/ai-query', label: 'AI Query', icon: MessageSquare },
+    ]
+  },
+  {
+    category: 'amenities',
+    label: 'Amenities',
+    icon: MapPin,
+    items: [
+      { path: '/amenities', label: 'Smart Booking', icon: MapPin },
+    ]
+  },
+  {
+    category: 'reporting',
+    label: 'Reports',
+    icon: BarChart3,
+    items: [
+      { path: '/reports', label: 'Advanced Reports', icon: BarChart3 },
+    ]
+  },
+  {
     category: 'communication',
     label: 'Communication',
     icon: Mail,
     items: [
       { path: '/communication-templates', label: 'Templates', icon: FileText },
       { path: '/communication-logs', label: 'Logs', icon: Mail },
+      { path: '/notifications', label: 'Notifications', icon: Bell },
     ]
   },
   {
@@ -40,22 +65,6 @@ export const navigationItems: NavigationCategory[] = [
     ]
   },
   {
-    category: 'amenities',
-    label: 'Amenities',
-    icon: MapPin,
-    items: [
-      { path: '/amenities', label: 'Bookings', icon: MapPin },
-    ]
-  },
-  {
-    category: 'reporting',
-    label: 'Reports',
-    icon: BarChart3,
-    items: [
-      { path: '/reports', label: 'Advanced Reports', icon: BarChart3 },
-    ]
-  },
-  {
     category: 'admin',
     label: 'Administration',
     icon: Settings,
@@ -63,14 +72,6 @@ export const navigationItems: NavigationCategory[] = [
       { path: '/admin/users', label: 'User Management', icon: UserPlus },
       { path: '/admin/roles', label: 'Role Management', icon: ShieldAlert },
       { path: '/settings', label: 'Settings', icon: Settings },
-    ]
-  },
-  {
-    category: 'ai',
-    label: 'AI Features',
-    icon: Brain,
-    items: [
-      { path: '/ai-query', label: 'AI Query', icon: MessageSquare },
     ]
   },
 ];

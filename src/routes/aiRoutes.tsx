@@ -12,6 +12,6 @@ export const aiRoutes: Route[] = [
     icon: Brain,
     category: 'ai',
     requiresAuth: true,
-    description: 'Ask questions about your data using natural language'
+    description: 'Ask questions about your HOA data using natural language'
   },
 ];

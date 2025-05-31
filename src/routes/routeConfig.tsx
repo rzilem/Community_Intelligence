@@ -8,6 +8,7 @@ import { onboardingRoutes } from './onboardingRoutes';
 import { aiRoutes } from './aiRoutes';
 import { amenityRoutes } from './amenityRoutes';
 import { reportingRoutes } from './reportingRoutes';
+import { notificationRoutes } from './notificationRoutes';
 
 export type { Route } from './types';
 
@@ -20,6 +21,7 @@ export const protectedRoutes: Route[] = [
   ...aiRoutes,
   ...amenityRoutes,
   ...reportingRoutes,
+  ...notificationRoutes,
 ];
 
 export { navigationItems } from './navigationConfig';
