@@ -1,6 +1,6 @@
 
-// Re-export the unified vendor types from the service
-export type { VendorServiceType as Vendor, VendorFormData, VendorStats } from '@/services/vendor-service';
+// Re-export the vendor types from the refactored service
+export type { VendorServiceType as Vendor, VendorFormData, VendorStats } from '@/services/vendor/vendor-types';
 
 export type VendorCategory =
   | 'Asphalt'
