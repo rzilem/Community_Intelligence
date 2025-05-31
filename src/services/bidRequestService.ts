@@ -1,6 +1,42 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { BidRequestWithVendors, BidRequest, Vendor, AttachmentFile } from '@/types/bid-request-types';
+
+// Type casting helper functions
+const parseStatus = (status: string | null | undefined): BidRequest['status'] => {
+  const validStatuses: BidRequest['status'][] = ['draft', 'published', 'bidding', 'evaluating', 'awarded', 'completed', 'cancelled'];
+  if (status && validStatuses.includes(status as BidRequest['status'])) {
+    return status as BidRequest['status'];
+  }
+  return 'draft'; // fallback to default
+};
+
+const parsePriority = (priority: string | null | undefined): BidRequest['priority'] => {
+  const validPriorities: BidRequest['priority'][] = ['low', 'medium', 'high', 'urgent'];
+  if (priority && validPriorities.includes(priority as BidRequest['priority'])) {
+    return priority as BidRequest['priority'];
+  }
+  return 'medium'; // fallback to default
+};
+
+const parseAttachments = (attachments: any): AttachmentFile[] => {
+  if (!attachments) return [];
+  if (Array.isArray(attachments)) {
+    return attachments.filter(item => 
+      item && typeof item === 'object' && item.id && item.url
+    );
+  }
+  if (typeof attachments === 'string') {
+    try {
+      const parsed = JSON.parse(attachments);
+      return Array.isArray(parsed) ? parsed.filter(item => 
+        item && typeof item === 'object' && item.id && item.url
+      ) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
 
 export const bidRequestService = {
   async createBidRequest(data: Partial<BidRequestWithVendors>): Promise<BidRequest> {
@@ -44,33 +80,13 @@ export const bidRequestService = {
       }
     }
 
-    // Parse attachments safely
-    const parseAttachments = (attachments: any): AttachmentFile[] => {
-      if (!attachments) return [];
-      if (Array.isArray(attachments)) {
-        return attachments.filter(item => 
-          item && typeof item === 'object' && item.id && item.url
-        );
-      }
-      if (typeof attachments === 'string') {
-        try {
-          const parsed = JSON.parse(attachments);
-          return Array.isArray(parsed) ? parsed.filter(item => 
-            item && typeof item === 'object' && item.id && item.url
-          ) : [];
-        } catch {
-          return [];
-        }
-      }
-      return [];
-    };
-
     return {
       ...bidRequest,
       associationId: bidRequest.association_id,
       createdBy: bidRequest.created_by,
       hoa_id: bidRequest.association_id,
-      priority: (bidRequest.priority || 'medium') as "low" | "medium" | "high" | "urgent",
+      status: parseStatus(bidRequest.status),
+      priority: parsePriority(bidRequest.priority),
       attachments: parseAttachments(bidRequest.attachments)
     };
   },
@@ -127,33 +143,13 @@ export const bidRequestService = {
       throw new Error(`Failed to fetch bid requests: ${error.message}`);
     }
 
-    // Parse attachments safely
-    const parseAttachments = (attachments: any): AttachmentFile[] => {
-      if (!attachments) return [];
-      if (Array.isArray(attachments)) {
-        return attachments.filter(item => 
-          item && typeof item === 'object' && item.id && item.url
-        );
-      }
-      if (typeof attachments === 'string') {
-        try {
-          const parsed = JSON.parse(attachments);
-          return Array.isArray(parsed) ? parsed.filter(item => 
-            item && typeof item === 'object' && item.id && item.url
-          ) : [];
-        } catch {
-          return [];
-        }
-      }
-      return [];
-    };
-
     return (data || []).map(item => ({
       ...item,
       associationId: item.association_id,
       createdBy: item.created_by,
       hoa_id: item.association_id,
-      priority: (item.priority || 'medium') as "low" | "medium" | "high" | "urgent",
+      status: parseStatus(item.status),
+      priority: parsePriority(item.priority),
       attachments: parseAttachments(item.attachments)
     }));
   }
