@@ -30,7 +30,7 @@ interface DatabaseResident {
   move_in_date?: string;
   move_out_date?: string;
   property_id?: string;
-  properties?: DatabaseProperty;
+  properties?: DatabaseProperty | null;
 }
 
 /**
@@ -50,7 +50,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
       .from('residents')
       .select(`
         *,
-        properties:property_id (
+        properties(
           id,
           address,
           unit_number,

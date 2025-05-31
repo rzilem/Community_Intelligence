@@ -40,14 +40,13 @@ export const useResidentData = (residentId: string) => {
           .from('residents')
           .select(`
             *,
-            property:properties(
+            properties(
               id, 
               address, 
               unit_number, 
               city, 
               state, 
-              zip_code,
-              image_url
+              zip_code
             )
           `)
           .eq('id', residentId)
@@ -84,7 +83,7 @@ export const useResidentData = (residentId: string) => {
           }
           
           // Build the homeowner object from the database data
-          const property = residentData.property;
+          const property = residentData.properties;
           const propertyAddress = property ? 
             `${property.address || ''} ${property.unit_number || ''}`.trim() : '';
           
@@ -96,7 +95,6 @@ export const useResidentData = (residentId: string) => {
           const email = residentData.email || (profileData?.email || '');
           const phone = residentData.phone || (profileData?.phone_number || '');
           const avatarUrl = profileData?.profile_image_url || '';
-          const propertyImage = property?.image_url || '';
           
           const convertedHomeowner: Homeowner = {
             id: residentData.id,
@@ -118,7 +116,7 @@ export const useResidentData = (residentId: string) => {
             },
             status: residentData.move_out_date ? 'inactive' : 'active',
             avatarUrl: avatarUrl,
-            propertyImage: propertyImage,
+            propertyImage: '', // Property images would need to be handled separately
             notes: [],
             type: residentData.resident_type as any, // Use 'any' to avoid type error
             propertyAddress: propertyAddress,
