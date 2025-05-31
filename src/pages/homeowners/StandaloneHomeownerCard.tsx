@@ -52,7 +52,7 @@ const StandaloneHomeownerCard: React.FC<StandaloneHomeownerCardProps> = ({ homeo
         <div className="space-y-1">
           <p className="text-sm font-medium">Association</p>
           <p className="text-sm text-muted-foreground">
-            {homeowner.associationName || homeowner.association}
+            {homeowner.association}
           </p>
         </div>
         
