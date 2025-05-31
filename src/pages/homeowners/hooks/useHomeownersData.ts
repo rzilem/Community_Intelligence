@@ -32,14 +32,31 @@ interface DatabaseResident {
   property_id?: string;
 }
 
+interface FormattedResident {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  propertyAddress: string;
+  type: string;
+  status: string;
+  moveInDate: string;
+  moveOutDate?: string;
+  association: string;
+  associationName: string;
+  lastPayment: null;
+  closingDate: null;
+  hasValidAssociation: boolean;
+}
+
 /**
  * Fetches resident data in batches to avoid "URL too long" errors
  * @param propertyIds Array of property IDs to fetch residents for
  * @param batchSize Maximum number of property IDs to include in a single query
  * @returns Combined array of resident data from all batches
  */
-const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
-  let allResidents: any[] = [];
+const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500): Promise<DatabaseResident[]> => {
+  let allResidents: DatabaseResident[] = [];
   
   for (let i = 0; i < propertyIds.length; i += batchSize) {
     const batchIds = propertyIds.slice(i, i + batchSize);
@@ -64,7 +81,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
 };
 
 export const useHomeownersData = () => {
-  const [residents, setResidents] = useState<any[]>([]);
+  const [residents, setResidents] = useState<FormattedResident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,19 +162,19 @@ export const useHomeownersData = () => {
         console.log(`Found ${allResidents.length || 0} residents in total`);
         
         // Create association name lookup
-        const associationsMap = associations.reduce((map: any, assoc: any) => {
-          map[assoc.id] = assoc.name;
-          return map;
-        }, {});
+        const associationsMap: Record<string, string> = {};
+        associations.forEach((assoc: any) => {
+          associationsMap[assoc.id] = assoc.name;
+        });
 
         // Create properties lookup
-        const propertiesMap = properties.reduce((map: any, prop: DatabaseProperty) => {
-          map[prop.id] = prop;
-          return map;
-        }, {});
+        const propertiesMap: Record<string, DatabaseProperty> = {};
+        properties.forEach((prop: DatabaseProperty) => {
+          propertiesMap[prop.id] = prop;
+        });
         
-        // Map the results
-        const formattedResidents = (allResidents || []).map((resident: any) => {
+        // Map the results with explicit typing
+        const formattedResidents: FormattedResident[] = allResidents.map((resident: DatabaseResident) => {
           const property = resident.property_id ? propertiesMap[resident.property_id] : null;
           const associationId = property?.association_id;
           
@@ -175,7 +192,7 @@ export const useHomeownersData = () => {
             associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
             lastPayment: null,
             closingDate: null,
-            hasValidAssociation: !!associationsMap[associationId]
+            hasValidAssociation: !!associationsMap[associationId || '']
           };
         });
         
