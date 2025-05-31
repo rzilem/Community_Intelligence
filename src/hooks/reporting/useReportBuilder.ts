@@ -1,31 +1,59 @@
 
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ReportDefinition, ReportFilter, ReportColumn, ChartConfig } from '@/types/reporting-types';
 
+// Mock data for demonstration
+const mockReports: ReportDefinition[] = [
+  {
+    id: '1',
+    association_id: 'demo-association',
+    name: 'Financial Summary Report',
+    description: 'Monthly financial overview',
+    report_type: 'financial',
+    data_sources: ['assessments', 'payments'],
+    filters: [],
+    grouping: [],
+    columns: [
+      { field: 'property', label: 'Property', data_type: 'string', is_visible: true },
+      { field: 'amount', label: 'Amount', data_type: 'currency', is_visible: true }
+    ],
+    is_active: true,
+    created_by: 'demo-user',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
 export const useReportBuilder = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [reports, setReports] = useState<ReportDefinition[]>([]);
+  const [reports, setReports] = useState<ReportDefinition[]>(mockReports);
   const [currentReport, setCurrentReport] = useState<Partial<ReportDefinition> | null>(null);
 
   const createReport = useCallback(async (reportData: Partial<ReportDefinition>) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('report_definitions')
-        .insert([{
-          ...reportData,
-          created_by: (await supabase.auth.getUser()).data.user?.id
-        }])
-        .select('*')
-        .single();
+      const newReport: ReportDefinition = {
+        id: Date.now().toString(),
+        association_id: reportData.association_id || 'demo-association',
+        name: reportData.name || 'New Report',
+        description: reportData.description,
+        report_type: reportData.report_type || 'custom',
+        data_sources: reportData.data_sources || [],
+        filters: reportData.filters || [],
+        grouping: reportData.grouping || [],
+        columns: reportData.columns || [],
+        chart_config: reportData.chart_config,
+        schedule: reportData.schedule,
+        is_active: true,
+        created_by: 'demo-user',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-
-      setReports(prev => [data, ...prev]);
+      setReports(prev => [newReport, ...prev]);
       toast.success('Report created successfully!');
-      return data;
+      return newReport;
     } catch (error: any) {
       console.error('Error creating report:', error);
       toast.error('Failed to create report');
@@ -38,36 +66,21 @@ export const useReportBuilder = () => {
   const executeReport = useCallback(async (reportId: string) => {
     setIsLoading(true);
     try {
-      // Start execution
-      const { data: execution, error: execError } = await supabase
-        .from('report_executions')
-        .insert([{
-          report_definition_id: reportId,
-          status: 'running'
-        }])
-        .select('*')
-        .single();
-
-      if (execError) throw execError;
-
-      // Simulate report execution with AI insights
+      // Simulate report execution
       const reportData = await generateReportData(reportId);
       
-      // Update execution with results
-      const { error: updateError } = await supabase
-        .from('report_executions')
-        .update({
-          status: 'completed',
-          result_data: reportData,
-          execution_time_ms: Math.floor(Math.random() * 2000) + 500,
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', execution.id);
-
-      if (updateError) throw updateError;
+      const executionResult = {
+        id: Date.now().toString(),
+        report_definition_id: reportId,
+        status: 'completed' as const,
+        result_data: reportData,
+        execution_time_ms: Math.floor(Math.random() * 2000) + 500,
+        created_at: new Date().toISOString(),
+        completed_at: new Date().toISOString()
+      };
 
       toast.success('Report executed successfully!');
-      return { ...execution, result_data: reportData };
+      return executionResult;
     } catch (error: any) {
       console.error('Error executing report:', error);
       toast.error('Failed to execute report');
@@ -80,21 +93,14 @@ export const useReportBuilder = () => {
   const fetchReports = useCallback(async (associationId?: string) => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from('report_definitions')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let filteredReports = mockReports;
 
       if (associationId) {
-        query = query.eq('association_id', associationId);
+        filteredReports = mockReports.filter(r => r.association_id === associationId);
       }
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      setReports(data || []);
-      return data || [];
+      setReports(filteredReports);
+      return filteredReports;
     } catch (error: any) {
       console.error('Error fetching reports:', error);
       toast.error('Failed to fetch reports');
