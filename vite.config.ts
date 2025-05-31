@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -19,31 +18,5 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-  },
-  build: {
-    target: 'es2015',
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
-    // Force clean rebuild with better cache handling
-    outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: mode === 'development',
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', '@supabase/supabase-js'],
-    force: true,
-  },
-  // Enhanced cache clearing and CSS processing
-  cacheDir: '.vite-cache',
-  css: {
-    devSourcemap: true,
-    preprocessorOptions: {
-      css: {
-        charset: false
-      }
-    }
   },
 }));

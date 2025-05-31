@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 
 export type Notification = {
@@ -40,7 +41,8 @@ export const useNotifications = () => {
     const fetchNotifications = async () => {
       setLoading(true);
       try {
-        // Mock notifications data
+        // This would be a real query to a notifications table
+        // For now, we'll return mock data
         const mockNotifications: Notification[] = [
           {
             id: '1',
@@ -73,7 +75,7 @@ export const useNotifications = () => {
         
         setNotifications(mockNotifications);
         
-        // Convert to NotificationItems
+        // Convert to NotificationItems for the notification center
         const notificationItems: NotificationItem[] = mockNotifications.map(notification => ({
           id: notification.id,
           title: notification.title,
@@ -94,9 +96,10 @@ export const useNotifications = () => {
     };
 
     fetchNotifications();
-  }, [user?.id]); // Only depend on user.id
+  }, [user]);
 
   const markAsRead = async (notificationId: string) => {
+    // In a real app, this would update the database
     setNotifications(prev => 
       prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
     );
@@ -107,6 +110,7 @@ export const useNotifications = () => {
   };
 
   const markAllAsRead = async () => {
+    // In a real app, this would update the database
     setNotifications(prev => 
       prev.map(n => ({ ...n, is_read: true }))
     );
@@ -117,6 +121,7 @@ export const useNotifications = () => {
   };
 
   const deleteNotification = async (notificationId: string) => {
+    // In a real app, this would update the database
     setNotifications(prev => 
       prev.filter(n => n.id !== notificationId)
     );
@@ -135,7 +140,8 @@ export const useNotifications = () => {
   };
   
   const getCountForSection = (section: string) => {
-    // Filter by section if needed
+    // In a real app, this would filter by section
+    // For now, just return a random number
     return Math.floor(Math.random() * 3);
   };
 

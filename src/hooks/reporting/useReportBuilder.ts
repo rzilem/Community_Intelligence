@@ -1,105 +1,31 @@
 
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-// Define interfaces locally to avoid any potential type import issues
-interface ReportDefinition {
-  id: string;
-  association_id: string;
-  name: string;
-  description?: string;
-  report_type: string;
-  data_sources: string[];
-  filters: any[];
-  grouping: string[];
-  columns: any[];
-  chart_config?: any;
-  schedule?: any;
-  is_active: boolean;
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ReportExecutionResult {
-  id: string;
-  report_definition_id: string;
-  status: 'completed' | 'failed' | 'running';
-  result_data: any[];
-  execution_time_ms: number;
-  created_at: string;
-  completed_at: string;
-}
-
-// Mock data for demonstration
-const mockReports: ReportDefinition[] = [
-  {
-    id: '1',
-    association_id: 'demo-association',
-    name: 'Financial Summary Report',
-    description: 'Monthly financial overview',
-    report_type: 'financial',
-    data_sources: ['assessments', 'payments'],
-    filters: [],
-    grouping: [],
-    columns: [
-      { field: 'property', label: 'Property', data_type: 'string', is_visible: true },
-      { field: 'amount', label: 'Amount', data_type: 'currency', is_visible: true }
-    ],
-    is_active: true,
-    created_by: 'demo-user',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    association_id: 'demo-association',
-    name: 'Maintenance Requests Report',
-    description: 'Monthly maintenance overview',
-    report_type: 'maintenance',
-    data_sources: ['maintenance_requests'],
-    filters: [],
-    grouping: [],
-    columns: [
-      { field: 'property', label: 'Property', data_type: 'string', is_visible: true },
-      { field: 'status', label: 'Status', data_type: 'string', is_visible: true }
-    ],
-    is_active: true,
-    created_by: 'demo-user',
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
+import { ReportDefinition, ReportFilter, ReportColumn, ChartConfig } from '@/types/reporting-types';
 
 export const useReportBuilder = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [reports, setReports] = useState<ReportDefinition[]>(mockReports);
+  const [reports, setReports] = useState<ReportDefinition[]>([]);
   const [currentReport, setCurrentReport] = useState<Partial<ReportDefinition> | null>(null);
 
   const createReport = useCallback(async (reportData: Partial<ReportDefinition>) => {
     setIsLoading(true);
     try {
-      const newReport: ReportDefinition = {
-        id: Date.now().toString(),
-        association_id: reportData.association_id || 'demo-association',
-        name: reportData.name || 'New Report',
-        description: reportData.description,
-        report_type: reportData.report_type || 'custom',
-        data_sources: reportData.data_sources || [],
-        filters: reportData.filters || [],
-        grouping: reportData.grouping || [],
-        columns: reportData.columns || [],
-        chart_config: reportData.chart_config,
-        schedule: reportData.schedule,
-        is_active: true,
-        created_by: 'demo-user',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('report_definitions')
+        .insert([{
+          ...reportData,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }])
+        .select('*')
+        .single();
 
-      setReports(prev => [newReport, ...prev]);
+      if (error) throw error;
+
+      setReports(prev => [data, ...prev]);
       toast.success('Report created successfully!');
-      return newReport;
+      return data;
     } catch (error: any) {
       console.error('Error creating report:', error);
       toast.error('Failed to create report');
@@ -112,40 +38,36 @@ export const useReportBuilder = () => {
   const executeReport = useCallback(async (reportId: string) => {
     setIsLoading(true);
     try {
-      // Simulate report execution with mock data
-      const mockData = [
-        {
-          id: '1',
-          property: '123 Main St',
-          resident: 'John Doe',
-          payment_status: 'Paid',
-          amount: 250.00,
-          due_date: '2024-01-15',
-          category: 'Monthly Assessment'
-        },
-        {
-          id: '2',
-          property: '456 Oak Ave',
-          resident: 'Jane Smith',
-          payment_status: 'Overdue',
-          amount: 275.00,
-          due_date: '2024-01-10',
-          category: 'Monthly Assessment'
-        }
-      ];
+      // Start execution
+      const { data: execution, error: execError } = await supabase
+        .from('report_executions')
+        .insert([{
+          report_definition_id: reportId,
+          status: 'running'
+        }])
+        .select('*')
+        .single();
+
+      if (execError) throw execError;
+
+      // Simulate report execution with AI insights
+      const reportData = await generateReportData(reportId);
       
-      const executionResult: ReportExecutionResult = {
-        id: Date.now().toString(),
-        report_definition_id: reportId,
-        status: 'completed',
-        result_data: mockData,
-        execution_time_ms: Math.floor(Math.random() * 2000) + 500,
-        created_at: new Date().toISOString(),
-        completed_at: new Date().toISOString()
-      };
+      // Update execution with results
+      const { error: updateError } = await supabase
+        .from('report_executions')
+        .update({
+          status: 'completed',
+          result_data: reportData,
+          execution_time_ms: Math.floor(Math.random() * 2000) + 500,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', execution.id);
+
+      if (updateError) throw updateError;
 
       toast.success('Report executed successfully!');
-      return executionResult;
+      return { ...execution, result_data: reportData };
     } catch (error: any) {
       console.error('Error executing report:', error);
       toast.error('Failed to execute report');
@@ -158,14 +80,21 @@ export const useReportBuilder = () => {
   const fetchReports = useCallback(async (associationId?: string) => {
     setIsLoading(true);
     try {
-      let filteredReports = mockReports;
+      let query = supabase
+        .from('report_definitions')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (associationId) {
-        filteredReports = mockReports.filter(r => r.association_id === associationId);
+        query = query.eq('association_id', associationId);
       }
 
-      setReports(filteredReports);
-      return filteredReports;
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      setReports(data || []);
+      return data || [];
     } catch (error: any) {
       console.error('Error fetching reports:', error);
       toast.error('Failed to fetch reports');
@@ -181,13 +110,17 @@ export const useReportBuilder = () => {
       summary: `Analyzed ${reportData.length} records`,
       trends: [
         'Payment compliance has improved by 12% this quarter',
-        'Maintenance requests are 15% higher than last month'
+        'Pool bookings are 35% higher than last year',
+        'Maintenance requests spike on weekends'
       ],
       anomalies: [
-        'Unusual spike in late fees in Building C'
+        'Unusual spike in late fees in Building C',
+        '3 properties have not submitted any requests this year'
       ],
       recommendations: [
-        'Consider implementing automatic payment reminders'
+        'Consider implementing automatic payment reminders',
+        'Add more pool booking slots for peak hours',
+        'Schedule preventive maintenance on weekdays'
       ]
     };
 
@@ -205,3 +138,40 @@ export const useReportBuilder = () => {
     getAIInsights
   };
 };
+
+// Generate mock report data based on report type
+async function generateReportData(reportId: string) {
+  // This would normally execute the actual report query
+  // For demo purposes, we'll return structured mock data
+  const mockData = [
+    {
+      id: '1',
+      property: '123 Main St',
+      resident: 'John Doe',
+      payment_status: 'Paid',
+      amount: 250.00,
+      due_date: '2024-01-15',
+      category: 'Monthly Assessment'
+    },
+    {
+      id: '2',
+      property: '456 Oak Ave',
+      resident: 'Jane Smith',
+      payment_status: 'Overdue',
+      amount: 275.00,
+      due_date: '2024-01-10',
+      category: 'Monthly Assessment'
+    },
+    {
+      id: '3',
+      property: '789 Pine St',
+      resident: 'Bob Wilson',
+      payment_status: 'Paid',
+      amount: 300.00,
+      due_date: '2024-01-20',
+      category: 'Special Assessment'
+    }
+  ];
+
+  return mockData;
+}

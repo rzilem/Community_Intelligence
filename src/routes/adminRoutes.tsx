@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { UserPlus, ShieldAlert, Settings } from 'lucide-react';
+import UserManagement from '@/components/users/UserManagement';
 import SettingsPage from '@/pages/Settings';
-import UserManagement from '@/components/admin/UserManagement';
 import { Route } from './types';
 
 export const adminRoutes: Route[] = [

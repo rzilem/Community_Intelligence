@@ -87,67 +87,22 @@
   }
 }
 
-/* Beautiful Blue Gradient Sidebar for Community Intelligence */
+/* Custom gradient styles for Community Intelligence theme */
 .sidebar-gradient {
-  background: linear-gradient(135deg, 
-    #1e3a8a 0%,     /* Deep blue */
-    #1e40af 20%,    /* Blue-700 */
-    #2563eb 40%,    /* Blue-600 */
-    #3b82f6 60%,    /* Blue-500 */
-    #1d4ed8 80%,    /* Blue-700 */
-    #1e3a8a 100%    /* Deep blue */
+  background: linear-gradient(180deg, 
+    #1e3a8a 0%,     /* blue-800 */
+    #1e40af 25%,    /* blue-700 */
+    #3b82f6 50%,    /* blue-500 */
+    #64748b 75%,    /* slate-500 */
+    #475569 100%    /* slate-600 */
   );
-  box-shadow: 
-    0 10px 25px rgba(30, 58, 138, 0.1),
-    0 4px 10px rgba(30, 58, 138, 0.05);
 }
 
 .sidebar-accent {
-  background: rgba(59, 130, 246, 0.15);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
 }
 
-/* Enhanced navigation hover effects */
-.sidebar-nav-item {
-  @apply transition-all duration-300 ease-in-out;
-  transform: translateX(0);
-}
-
-.sidebar-nav-item:hover {
-  @apply bg-white/10;
-  transform: translateX(2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.sidebar-nav-item.active {
-  @apply bg-white/20 text-white font-medium;
-  box-shadow: 
-    inset 3px 0 0 rgba(255, 255, 255, 0.8),
-    0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Enhanced scrollbar for sidebar */
-.sidebar-gradient::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar-gradient::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
-.sidebar-gradient::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  transition: background 0.3s ease;
-}
-
-.sidebar-gradient::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* Loading spinner animations */
+/* Loading spinner styles */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -161,10 +116,28 @@
   animation: spin 1s linear infinite;
 }
 
-/* Enhanced card styles with subtle gradients */
+/* Custom scrollbar for sidebar */
+.sidebar-gradient::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-gradient::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.sidebar-gradient::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar-gradient::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Card styles */
 .card {
   @apply bg-white rounded-lg shadow-sm border border-gray-200;
-  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
 }
 
 .card-content {
@@ -173,44 +146,18 @@
 
 .card-header {
   @apply px-6 py-4 border-b border-gray-200;
-  background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%);
 }
 
-/* Notification badge with blue theme */
+/* Button hover effects for the sidebar */
+.sidebar-nav-item {
+  @apply transition-all duration-200 ease-in-out;
+}
+
+.sidebar-nav-item:hover {
+  @apply bg-white bg-opacity-10 backdrop-blur-sm;
+}
+
+/* Notification badge styles */
 .notification-badge {
-  @apply bg-blue-600 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
-}
-
-/* Blue accent buttons and interactive elements */
-.btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
-}
-
-/* Tab styling with blue accents */
-.tab-active {
-  @apply bg-blue-600 text-white;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-}
-
-/* Stats cards with subtle blue accents */
-.stat-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-  border-left: 4px solid #3b82f6;
-}
-
-/* Beautiful glass-morphism effects */
-.glass-card {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  @apply bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center;
 }

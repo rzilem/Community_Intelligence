@@ -1,79 +1,28 @@
 
 import { useState, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { NotificationTemplate, NotificationQueue } from '@/types/notification-types';
 
-// Mock data for demonstration
-const mockTemplates: NotificationTemplate[] = [
-  {
-    id: 'template-1',
-    association_id: 'demo-association',
-    name: 'Payment Reminder',
-    type: 'email',
-    category: 'payment_reminder',
-    subject_template: 'Payment Due: {{amount}} for {{property_address}}',
-    body_template: 'Dear {{firstName}}, your payment of {{amount}} is due on {{dueDate}}.',
-    variables: ['firstName', 'amount', 'property_address', 'dueDate'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: 'template-2',
-    association_id: 'demo-association',
-    name: 'Welcome Message',
-    type: 'email',
-    category: 'announcement',
-    subject_template: 'Welcome to {{association_name}}',
-    body_template: 'Welcome {{firstName}}, we\'re excited to have you in our community!',
-    variables: ['firstName', 'association_name'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-const mockQueue: NotificationQueue[] = [
-  {
-    id: 'queue-1',
-    template_id: 'template-1',
-    recipient_type: 'resident',
-    recipient_id: 'resident-1',
-    recipient_email: 'resident@example.com',
-    variables: { firstName: 'John', amount: '$250.00', dueDate: '2024-02-15' },
-    status: 'sent',
-    sent_at: new Date().toISOString(),
-    delivery_attempts: 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
 export const useNotifications = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [templates, setTemplates] = useState<NotificationTemplate[]>(mockTemplates);
-  const [queue, setQueue] = useState<NotificationQueue[]>(mockQueue);
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [queue, setQueue] = useState<NotificationQueue[]>([]);
 
   const createTemplate = useCallback(async (templateData: Partial<NotificationTemplate>) => {
     setIsLoading(true);
     try {
-      const newTemplate: NotificationTemplate = {
-        id: Date.now().toString(),
-        association_id: templateData.association_id || 'demo-association',
-        name: templateData.name || '',
-        type: templateData.type || 'email',
-        category: templateData.category || 'announcement',
-        subject_template: templateData.subject_template || '',
-        body_template: templateData.body_template || '',
-        variables: templateData.variables || [],
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('notification_templates')
+        .insert([templateData])
+        .select('*')
+        .single();
 
-      setTemplates(prev => [newTemplate, ...prev]);
+      if (error) throw error;
+
+      setTemplates(prev => [data, ...prev]);
       toast.success('Notification template created successfully!');
-      return newTemplate;
+      return data;
     } catch (error: any) {
       console.error('Error creating template:', error);
       toast.error('Failed to create notification template');
@@ -91,39 +40,41 @@ export const useNotifications = () => {
   ) => {
     setIsLoading(true);
     try {
-      const template = templates.find(t => t.id === templateId);
-      if (!template) {
-        throw new Error('Template not found');
-      }
+      // Get template
+      const { data: template, error: templateError } = await supabase
+        .from('notification_templates')
+        .select('*')
+        .eq('id', templateId)
+        .single();
 
-      const newQueueItem: NotificationQueue = {
-        id: Date.now().toString(),
-        template_id: templateId,
-        recipient_type: recipientType,
-        recipient_id: recipientId,
-        variables,
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-        delivery_attempts: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+      if (templateError) throw templateError;
 
-      setQueue(prev => [newQueueItem, ...prev]);
+      // Queue notification
+      const { data, error } = await supabase
+        .from('notification_queue')
+        .insert([{
+          template_id: templateId,
+          recipient_type: recipientType,
+          recipient_id: recipientId,
+          variables,
+          status: 'queued',
+          scheduled_at: new Date().toISOString()
+        }])
+        .select('*')
+        .single();
 
-      // Simulate AI-optimized timing
+      if (error) throw error;
+
+      // AI-optimized timing (mock implementation)
       const optimizedDelay = calculateOptimalSendTime(recipientType, template.category);
       
-      setTimeout(() => {
-        console.log('Notification sent with AI optimization:', {
-          template: template.name,
-          recipient: recipientId,
-          delay: optimizedDelay
-        });
+      // Process notification with AI optimization
+      setTimeout(async () => {
+        await processNotification(data.id, template, variables);
       }, optimizedDelay);
 
       toast.success('Notification queued for delivery!');
-      return newQueueItem;
+      return data;
     } catch (error: any) {
       console.error('Error sending notification:', error);
       toast.error('Failed to send notification');
@@ -131,19 +82,26 @@ export const useNotifications = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [templates]);
+  }, []);
 
   const fetchTemplates = useCallback(async (associationId?: string) => {
     setIsLoading(true);
     try {
-      let filteredTemplates = mockTemplates;
-      
+      let query = supabase
+        .from('notification_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       if (associationId) {
-        filteredTemplates = mockTemplates.filter(t => t.association_id === associationId);
+        query = query.eq('association_id', associationId);
       }
 
-      setTemplates(filteredTemplates);
-      return filteredTemplates;
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      setTemplates(data || []);
+      return data || [];
     } catch (error: any) {
       console.error('Error fetching templates:', error);
       toast.error('Failed to fetch notification templates');
@@ -156,8 +114,19 @@ export const useNotifications = () => {
   const fetchQueue = useCallback(async () => {
     setIsLoading(true);
     try {
-      setQueue(mockQueue);
-      return mockQueue;
+      const { data, error } = await supabase
+        .from('notification_queue')
+        .select(`
+          *,
+          notification_templates(name, type, category)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      setQueue(data || []);
+      return data || [];
     } catch (error: any) {
       console.error('Error fetching queue:', error);
       toast.error('Failed to fetch notification queue');
@@ -173,6 +142,8 @@ export const useNotifications = () => {
     templateId: string,
     delayMinutes: number = 0
   ) => {
+    // This would create an automated workflow
+    // For demo purposes, we'll simulate this
     const workflow = {
       id: Math.random().toString(36).substring(7),
       trigger,
@@ -232,4 +203,77 @@ function calculateOptimalSendTime(
 
   // Default: send in 5 minutes
   return 5 * 60 * 1000;
+}
+
+// Process and send notification
+async function processNotification(
+  queueId: string,
+  template: NotificationTemplate,
+  variables: Record<string, any>
+) {
+  try {
+    // Apply AI-driven message optimization
+    const optimizedMessage = optimizeMessage(template.body_template, variables);
+    
+    // Simulate sending notification
+    console.log('Sending optimized notification:', {
+      type: template.type,
+      subject: processTemplate(template.subject_template, variables),
+      body: optimizedMessage
+    });
+
+    // Update queue status
+    await supabase
+      .from('notification_queue')
+      .update({
+        status: 'sent',
+        sent_at: new Date().toISOString()
+      })
+      .eq('id', queueId);
+
+  } catch (error) {
+    console.error('Error processing notification:', error);
+    
+    // Update queue with error
+    await supabase
+      .from('notification_queue')
+      .update({
+        status: 'failed',
+        error_message: error instanceof Error ? error.message : 'Unknown error'
+      })
+      .eq('id', queueId);
+  }
+}
+
+// AI message optimization
+function optimizeMessage(template: string, variables: Record<string, any>): string {
+  let message = processTemplate(template, variables);
+  
+  // AI optimizations:
+  // 1. Personalization
+  if (variables.firstName) {
+    message = message.replace(/Hello,/g, `Hello ${variables.firstName},`);
+  }
+  
+  // 2. Urgency indicators
+  if (template.includes('urgent') || template.includes('deadline')) {
+    message = `⚠️ URGENT: ${message}`;
+  }
+  
+  // 3. Call-to-action optimization
+  message = message.replace(/click here/gi, 'take action now');
+  
+  return message;
+}
+
+// Template variable processing
+function processTemplate(template: string, variables: Record<string, any>): string {
+  let processed = template;
+  
+  Object.entries(variables).forEach(([key, value]) => {
+    const placeholder = `{{${key}}}`;
+    processed = processed.replace(new RegExp(placeholder, 'g'), String(value));
+  });
+  
+  return processed;
 }
