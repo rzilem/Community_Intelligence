@@ -21,6 +21,7 @@ export interface UserAssociation {
   association_id: string;
   role: string;
   association: Association;
+  created_at: string;
 }
 
 export interface AuthContextType {

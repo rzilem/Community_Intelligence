@@ -1,6 +1,7 @@
 
 import { Route } from './types';
 import { mainRoutes } from './mainRoutes';
+import { portfolioRoutes } from './portfolioRoutes';
 import { communicationRoutes } from './communicationRoutes';
 import { adminRoutes } from './adminRoutes';
 import { billingRoutes } from './billingRoutes';
@@ -15,6 +16,7 @@ export type { Route } from './types';
 
 export const protectedRoutes: Route[] = [
   ...mainRoutes,
+  ...portfolioRoutes,
   ...communicationRoutes,
   ...billingRoutes,
   ...onboardingRoutes,

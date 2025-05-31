@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
@@ -124,7 +125,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
       .from('association_users')
       .select(`
         *,
-        associations:association_id (*)
+        association:association_id (*)
       `)
       .eq('user_id', userId);
     
@@ -149,7 +150,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
           user_id: userId,
           association_id: mockAssociations[0].id,
           role: 'member',
-          associations: mockAssociations[0],
+          association: mockAssociations[0],
           created_at: new Date().toISOString()
         }];
       }
@@ -169,16 +170,11 @@ export async function createUserAssociation(
   role: string = 'resident'
 ): Promise<UserAssociation> {
   const { data, error } = await supabase
-    .from('user_associations')
+    .from('association_users')
     .insert({
       user_id: userId,
-      hoa_id: hoaId,
+      association_id: hoaId,
       role,
-      association: {
-        hoa_id: hoaId,
-        role: role,
-        permissions: getDefaultPermissions(role)
-      }
     })
     .select()
     .single();
