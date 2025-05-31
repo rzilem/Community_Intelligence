@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { bidRequestService } from '@/services/bidRequestService';
-import { BidRequestSummary } from '@/types/bid-request-types';
+import { BidRequest } from '@/types/bid-request-types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -14,7 +15,7 @@ interface BidRequestsProps {
 }
 
 const BidRequests: React.FC<BidRequestsProps> = ({ associationId }) => {
-  const [bidRequests, setBidRequests] = useState<BidRequestSummary[]>([]);
+  const [bidRequests, setBidRequests] = useState<BidRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -25,11 +26,7 @@ const BidRequests: React.FC<BidRequestsProps> = ({ associationId }) => {
     const fetchBidRequests = async () => {
       setLoading(true);
       try {
-        const filters = {
-          status: statusFilter,
-          priority: priorityFilter
-        };
-        const requests = await bidRequestService.getBidRequests(associationId, filters);
+        const requests = await bidRequestService.getBidRequests(associationId);
         setBidRequests(requests);
       } catch (error) {
         console.error('Error fetching bid requests:', error);

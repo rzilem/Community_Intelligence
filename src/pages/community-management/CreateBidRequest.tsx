@@ -40,8 +40,10 @@ const CreateBidRequest = () => {
       const bidRequest = await bidRequestService.createBidRequest({
         ...data,
         hoa_id: effectiveAssociationId || '',
-        association_id: effectiveAssociationId || '',
-        specifications
+        associationId: effectiveAssociationId || '',
+        specifications,
+        // Convert File[] to null since we don't have upload handling yet
+        attachments: undefined
       });
       
       toast.success('Bid request created successfully');
@@ -58,8 +60,10 @@ const CreateBidRequest = () => {
       const bidRequest = await bidRequestService.createBidRequest({
         ...data,
         hoa_id: effectiveAssociationId || '',
-        association_id: effectiveAssociationId || '',
-        status: 'draft'
+        associationId: effectiveAssociationId || '',
+        status: 'draft',
+        // Convert File[] to null since we don't have upload handling yet
+        attachments: undefined
       });
       toast.success('Draft saved successfully');
       navigate('/community-management/bid-requests');

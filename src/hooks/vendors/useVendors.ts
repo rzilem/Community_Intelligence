@@ -33,17 +33,14 @@ export function useCreateVendor() {
     mutationFn: (vendorData: VendorFormData) => {
       const newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> = {
         name: vendorData.name,
-        contact_person: vendorData.contactPerson,
+        contactPerson: vendorData.contactPerson,
         email: vendorData.email,
         phone: vendorData.phone,
         category: vendorData.category,
         status: vendorData.status,
-        has_insurance: vendorData.hasInsurance,
-        total_jobs: 0,
-        completed_jobs: 0,
-        is_active: true,
-        last_invoice: null,
-        rating: null
+        hasInsurance: vendorData.hasInsurance,
+        rating: null,
+        lastInvoice: null
       };
       return vendorService.createVendor(newVendor);
     },

@@ -15,7 +15,18 @@ export const vendorService = {
       throw new Error('Failed to fetch vendors');
     }
 
-    return data || [];
+    return (data || []).map(vendor => ({
+      id: vendor.id,
+      name: vendor.name,
+      contactPerson: vendor.contact_person,
+      email: vendor.email,
+      phone: vendor.phone,
+      category: vendor.category,
+      status: (vendor.status || 'active') as 'active' | 'inactive',
+      hasInsurance: vendor.has_insurance,
+      rating: vendor.rating,
+      lastInvoice: vendor.last_invoice
+    }));
   },
 
   getVendorById: async (id: string): Promise<Vendor | undefined> => {
@@ -30,7 +41,18 @@ export const vendorService = {
       return undefined;
     }
 
-    return data;
+    return {
+      id: data.id,
+      name: data.name,
+      contactPerson: data.contact_person,
+      email: data.email,
+      phone: data.phone,
+      category: data.category,
+      status: (data.status || 'active') as 'active' | 'inactive',
+      hasInsurance: data.has_insurance,
+      rating: data.rating,
+      lastInvoice: data.last_invoice
+    };
   },
 
   getVendorStats: async (): Promise<VendorStats> => {
@@ -73,9 +95,24 @@ export const vendorService = {
   },
 
   createVendor: async (vendorData: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>): Promise<Vendor> => {
+    const dbVendor = {
+      name: vendorData.name,
+      contact_person: vendorData.contactPerson,
+      email: vendorData.email,
+      phone: vendorData.phone,
+      category: vendorData.category,
+      status: vendorData.status,
+      has_insurance: vendorData.hasInsurance,
+      rating: vendorData.rating,
+      last_invoice: vendorData.lastInvoice,
+      total_jobs: 0,
+      completed_jobs: 0,
+      is_active: true
+    };
+
     const { data, error } = await supabase
       .from('vendors')
-      .insert([vendorData])
+      .insert([dbVendor])
       .select()
       .single();
 
@@ -84,13 +121,36 @@ export const vendorService = {
       throw new Error('Failed to create vendor');
     }
 
-    return data;
+    return {
+      id: data.id,
+      name: data.name,
+      contactPerson: data.contact_person,
+      email: data.email,
+      phone: data.phone,
+      category: data.category,
+      status: (data.status || 'active') as 'active' | 'inactive',
+      hasInsurance: data.has_insurance,
+      rating: data.rating,
+      lastInvoice: data.last_invoice
+    };
   },
 
   updateVendor: async (id: string, vendorData: Partial<Vendor>): Promise<Vendor> => {
+    const dbUpdates: any = {};
+    
+    if (vendorData.name !== undefined) dbUpdates.name = vendorData.name;
+    if (vendorData.contactPerson !== undefined) dbUpdates.contact_person = vendorData.contactPerson;
+    if (vendorData.email !== undefined) dbUpdates.email = vendorData.email;
+    if (vendorData.phone !== undefined) dbUpdates.phone = vendorData.phone;
+    if (vendorData.category !== undefined) dbUpdates.category = vendorData.category;
+    if (vendorData.status !== undefined) dbUpdates.status = vendorData.status;
+    if (vendorData.hasInsurance !== undefined) dbUpdates.has_insurance = vendorData.hasInsurance;
+    if (vendorData.rating !== undefined) dbUpdates.rating = vendorData.rating;
+    if (vendorData.lastInvoice !== undefined) dbUpdates.last_invoice = vendorData.lastInvoice;
+
     const { data, error } = await supabase
       .from('vendors')
-      .update(vendorData)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .single();
@@ -100,7 +160,18 @@ export const vendorService = {
       throw new Error('Failed to update vendor');
     }
 
-    return data;
+    return {
+      id: data.id,
+      name: data.name,
+      contactPerson: data.contact_person,
+      email: data.email,
+      phone: data.phone,
+      category: data.category,
+      status: (data.status || 'active') as 'active' | 'inactive',
+      hasInsurance: data.has_insurance,
+      rating: data.rating,
+      lastInvoice: data.last_invoice
+    };
   },
 
   deleteVendor: async (id: string): Promise<void> => {

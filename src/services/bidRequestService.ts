@@ -10,12 +10,12 @@ export const bidRequestService = {
         title: data.title,
         description: data.description,
         category: data.category,
-        budget_range_min: data.budgetRangeMin,
-        budget_range_max: data.budgetRangeMax,
+        budget_range_min: data.budget_range_min,
+        budget_range_max: data.budget_range_max,
         location: data.location,
-        preferred_start_date: data.preferredStartDate,
-        required_completion_date: data.requiredCompletionDate,
-        special_requirements: data.specialRequirements,
+        preferred_start_date: data.preferred_start_date,
+        required_completion_date: data.required_completion_date,
+        special_requirements: data.special_requirements,
         association_id: data.associationId,
         status: 'draft',
         priority: data.priority || 'medium'
@@ -44,7 +44,12 @@ export const bidRequestService = {
       }
     }
 
-    return bidRequest;
+    return {
+      ...bidRequest,
+      associationId: bidRequest.association_id,
+      createdBy: bidRequest.created_by,
+      hoa_id: bidRequest.association_id
+    };
   },
 
   async filterEligibleVendors(associationId: string): Promise<Vendor[]> {
@@ -63,15 +68,26 @@ export const bidRequestService = {
     // Transform database vendors to match the expected interface
     return vendors.map(vendor => ({
       id: vendor.id,
+      hoa_id: associationId,
+      association_id: associationId,
       name: vendor.name,
+      contact_person: vendor.contact_person,
       email: vendor.email || '',
       phone: vendor.phone || '',
+      address: vendor.address || '',
+      license_number: vendor.license_number || '',
+      insurance_info: vendor.insurance_info || {},
+      specialties: vendor.specialties || [],
       category: vendor.category || '',
-      status: vendor.status as 'active' | 'inactive',
-      hasInsurance: vendor.has_insurance || false,
       rating: vendor.rating || undefined,
-      lastInvoice: vendor.last_invoice || undefined,
-      contactPerson: vendor.contact_person || undefined
+      total_jobs: vendor.total_jobs || 0,
+      completed_jobs: vendor.completed_jobs || 0,
+      average_response_time: vendor.average_response_time || undefined,
+      is_active: vendor.is_active || true,
+      include_in_bids: true,
+      notes: vendor.notes || '',
+      created_at: vendor.created_at,
+      updated_at: vendor.updated_at
     }));
   },
 
@@ -86,6 +102,11 @@ export const bidRequestService = {
       throw new Error(`Failed to fetch bid requests: ${error.message}`);
     }
 
-    return data || [];
+    return (data || []).map(item => ({
+      ...item,
+      associationId: item.association_id,
+      createdBy: item.created_by,
+      hoa_id: item.association_id
+    }));
   }
 };
