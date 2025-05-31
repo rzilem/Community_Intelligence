@@ -1,7 +1,92 @@
-/* Add this CSS to your src/index.css file */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 94.1%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
 
 /* Beautiful Blue Gradient Sidebar */
-.sidebar-gradient {
+[data-sidebar="sidebar"].sidebar-gradient {
   background: linear-gradient(180deg, 
     #1e3a8a 0%,     /* blue-800 */
     #1e40af 25%,    /* blue-700 */
@@ -12,77 +97,73 @@
   border-right: 1px solid rgba(59, 130, 246, 0.2) !important;
 }
 
-/* Override Shadcn sidebar defaults with blue theme */
-.sidebar-gradient [data-sidebar="sidebar"] {
-  background: transparent !important;
-  --sidebar-background: transparent !important;
-  --sidebar-background-hover: rgba(255, 255, 255, 0.1) !important;
-  --sidebar-border: rgba(59, 130, 246, 0.2) !important;
-  --sidebar-foreground: rgb(255, 255, 255) !important;
-  --sidebar-primary: rgb(59, 130, 246) !important;
-  --sidebar-primary-foreground: rgb(255, 255, 255) !important;
-  --sidebar-accent: rgba(255, 255, 255, 0.1) !important;
-  --sidebar-accent-foreground: rgb(255, 255, 255) !important;
-  --sidebar-muted: rgba(255, 255, 255, 0.1) !important;
-  --sidebar-muted-foreground: rgba(255, 255, 255, 0.7) !important;
-}
-
-/* Sidebar content styling */
-.sidebar-gradient .sidebar-content {
+/* Sidebar content - keep transparent */
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="content"] {
   background: transparent !important;
 }
 
-/* Group labels styling */
-.sidebar-gradient [data-sidebar="group-label"] {
+/* Sidebar header styling */
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="header"] {
+  background: rgba(30, 58, 138, 0.3) !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Group labels in sidebar */
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="group-label"] {
   color: rgb(191, 219, 254) !important; /* blue-200 */
   font-weight: 600 !important;
   font-size: 0.75rem !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
-  margin-bottom: 0.5rem !important;
 }
 
-/* Menu button styling */
-.sidebar-gradient [data-sidebar="menu-button"] {
+/* Menu buttons in sidebar */
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="menu-button"] {
   color: rgba(255, 255, 255, 0.9) !important;
   transition: all 0.2s ease !important;
 }
 
-.sidebar-gradient [data-sidebar="menu-button"]:hover {
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="menu-button"]:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   color: rgb(255, 255, 255) !important;
   transform: scale(1.01) !important;
 }
 
-/* Active menu item styling */
-.sidebar-gradient [data-sidebar="menu-button"][data-active="true"] {
+/* Active menu item in sidebar */
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="menu-button"][data-active="true"],
+[data-sidebar="sidebar"].sidebar-gradient [data-sidebar="menu-button"].bg-white {
   background: rgb(255, 255, 255) !important;
   color: rgb(30, 58, 138) !important; /* blue-900 */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   transform: scale(1.02) !important;
 }
 
-/* Dashboard enhancements */
+/* Ensure main content area stays normal */
+main {
+  background: rgb(248, 250, 252) !important; /* slate-50 */
+}
+
+/* Dashboard cards */
 .dashboard-card {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.05) 0%, 
-    rgba(99, 102, 241, 0.05) 100%
-  ) !important;
+  background: white !important;
   border: 1px solid rgba(59, 130, 246, 0.1) !important;
+  border-radius: 0.75rem !important;
   transition: all 0.2s ease !important;
 }
 
 .dashboard-card:hover {
-  background: linear-gradient(135deg, 
-    rgba(59, 130, 246, 0.08) 0%, 
-    rgba(99, 102, 241, 0.08) 100%
-  ) !important;
   border-color: rgba(59, 130, 246, 0.2) !important;
-  transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Blue accent buttons */
+/* Stats cards */
+.stats-card {
+  background: white !important;
+  padding: 1.5rem !important;
+}
+
+/* Blue buttons */
 .btn-blue {
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
   color: white !important;
@@ -96,48 +177,34 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 
-/* Stats card enhancements */
-.stats-card {
-  background: white !important;
-  border: 1px solid rgba(59, 130, 246, 0.1) !important;
-  border-radius: 0.75rem !important;
-  transition: all 0.2s ease !important;
-}
-
-.stats-card:hover {
-  border-color: rgba(59, 130, 246, 0.2) !important;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
-}
-
-/* Blue text accents */
-.text-blue-primary {
-  color: #3b82f6 !important;
-}
-
-.text-blue-secondary {
-  color: #6366f1 !important;
-}
-
-/* Loading spinner blue theme */
-.loading-spinner {
-  color: #3b82f6 !important;
-}
-
-/* Top navigation blue accents */
-.top-nav {
-  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
-}
-
-/* Quick action buttons blue theme */
+/* Quick action buttons */
 .quick-action-btn {
   background: rgba(59, 130, 246, 0.05) !important;
   border: 1px solid rgba(59, 130, 246, 0.2) !important;
   color: #3b82f6 !important;
   transition: all 0.2s ease !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem !important;
 }
 
 .quick-action-btn:hover {
   background: rgba(59, 130, 246, 0.1) !important;
   border-color: rgba(59, 130, 246, 0.3) !important;
   transform: translateY(-1px) !important;
+}
+
+/* Top navigation */
+.top-nav {
+  background: white !important;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Ensure no blue background leaks to content */
+.sidebar-provider > div:not([data-sidebar="sidebar"]) {
+  background: rgb(248, 250, 252) !important;
+}
+
+/* Fix for any blue background on main content */
+[data-sidebar="content"]:not([data-sidebar="sidebar"] [data-sidebar="content"]) {
+  background: rgb(248, 250, 252) !important;
 }
