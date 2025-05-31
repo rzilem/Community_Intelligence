@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 import { RequireAuth } from '@/components/auth/RequireAuth';
@@ -56,14 +57,16 @@ const BillingDashboard = React.lazy(() => import('@/pages/billing/BillingDashboa
 
 // Suspense wrapper component
 const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <React.Suspense fallback={
-    <div className="flex h-64 items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-sm text-gray-600">Loading...</p>
+  <React.Suspense 
+    fallback={
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-600">Loading...</p>
+        </div>
       </div>
-    </div>
-  }>
+    }
+  >
     {children}
   </React.Suspense>
 );
