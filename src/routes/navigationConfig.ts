@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare } from 'lucide-react';
+import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare, MapPin, BarChart3 } from 'lucide-react';
 import { NavigationCategory } from './types';
 
 export const navigationItems: NavigationCategory[] = [
@@ -40,6 +40,22 @@ export const navigationItems: NavigationCategory[] = [
     ]
   },
   {
+    category: 'amenities',
+    label: 'Amenities',
+    icon: MapPin,
+    items: [
+      { path: '/amenities', label: 'Bookings', icon: MapPin },
+    ]
+  },
+  {
+    category: 'reporting',
+    label: 'Reports',
+    icon: BarChart3,
+    items: [
+      { path: '/reports', label: 'Advanced Reports', icon: BarChart3 },
+    ]
+  },
+  {
     category: 'admin',
     label: 'Administration',
     icon: Settings,
@@ -55,7 +71,6 @@ export const navigationItems: NavigationCategory[] = [
     icon: Brain,
     items: [
       { path: '/ai-query', label: 'AI Query', icon: MessageSquare },
-      // Future AI features will be added here
     ]
   },
 ];

@@ -6,6 +6,8 @@ import { adminRoutes } from './adminRoutes';
 import { billingRoutes } from './billingRoutes';
 import { onboardingRoutes } from './onboardingRoutes';
 import { aiRoutes } from './aiRoutes';
+import { amenityRoutes } from './amenityRoutes';
+import { reportingRoutes } from './reportingRoutes';
 
 export type { Route } from './types';
 
@@ -16,6 +18,8 @@ export const protectedRoutes: Route[] = [
   ...onboardingRoutes,
   ...adminRoutes,
   ...aiRoutes,
+  ...amenityRoutes,
+  ...reportingRoutes,
 ];
 
 export { navigationItems } from './navigationConfig';
