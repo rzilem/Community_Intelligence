@@ -48,7 +48,8 @@ export const bidRequestService = {
       ...bidRequest,
       associationId: bidRequest.association_id,
       createdBy: bidRequest.created_by,
-      hoa_id: bidRequest.association_id
+      hoa_id: bidRequest.association_id,
+      priority: (bidRequest.priority || 'medium') as "low" | "medium" | "high" | "urgent"
     };
   },
 
@@ -76,7 +77,9 @@ export const bidRequestService = {
       phone: vendor.phone || '',
       address: vendor.address || '',
       license_number: vendor.license_number || '',
-      insurance_info: vendor.insurance_info || {},
+      insurance_info: typeof vendor.insurance_info === 'object' && vendor.insurance_info !== null 
+        ? vendor.insurance_info as any 
+        : {},
       specialties: vendor.specialties || [],
       category: vendor.category || '',
       rating: vendor.rating || undefined,
@@ -106,7 +109,8 @@ export const bidRequestService = {
       ...item,
       associationId: item.association_id,
       createdBy: item.created_by,
-      hoa_id: item.association_id
+      hoa_id: item.association_id,
+      priority: (item.priority || 'medium') as "low" | "medium" | "high" | "urgent"
     }));
   }
 };
