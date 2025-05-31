@@ -50,6 +50,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
     return true;
   };
 
+  // Map the newEvent properties to match EventForm expectations
+  const mappedNewEvent = newEvent ? {
+    title: newEvent.title || '',
+    date,
+    startTime: newEvent.startTime || '',
+    endTime: newEvent.endTime || '',
+    description: newEvent.description || '',
+    location: newEvent.location || '',
+    type: newEvent.event_type || 'amenity_booking' as const,
+    amenityId: newEvent.amenity_id || '',
+    color: newEvent.color || '#3b6aff'
+  } : {
+    title: '',
+    date,
+    startTime: '',
+    endTime: '',
+    description: '',
+    location: '',
+    type: 'amenity_booking' as const,
+    amenityId: '',
+    color: '#3b6aff'
+  };
+
   return (
     <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-4", className)}>
       <CalendarSidebar
@@ -84,7 +107,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={{...newEvent, date}}
+                newEvent={mappedNewEvent}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}

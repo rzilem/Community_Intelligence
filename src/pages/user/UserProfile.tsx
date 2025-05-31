@@ -20,7 +20,7 @@ const profileSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email('Invalid email address'),
-  phone: z.string().optional(),
+  phone_number: z.string().optional(),
   role: z.enum(['admin', 'manager', 'resident', 'maintenance', 'accountant', 'user', 'treasurer'] as const),
 });
 
@@ -37,7 +37,7 @@ const UserProfile = () => {
       first_name: profile?.first_name || '',
       last_name: profile?.last_name || '',
       email: profile?.email || '',
-      phone: profile?.phone || '',
+      phone_number: profile?.phone_number || profile?.phone || '',
       role: (profile?.role as UserRole) || 'user',
     },
   });
@@ -46,10 +46,19 @@ const UserProfile = () => {
     try {
       setIsLoading(true);
 
+      // Map the form values to match the database schema
+      const updateData = {
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
+        phone_number: values.phone_number,
+        role: values.role,
+      };
+
       // Update profile
       const { error } = await supabase
         .from('profiles')
-        .update(values)
+        .update(updateData)
         .eq('id', profile?.id);
 
       if (error) throw error;
@@ -186,7 +195,7 @@ const UserProfile = () => {
 
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="phone_number"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Phone Number</FormLabel>
