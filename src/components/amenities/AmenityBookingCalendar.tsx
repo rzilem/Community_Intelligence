@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, MapPin, CheckCircle } from 'lucide-react';
 import { useAmenityBooking } from '@/hooks/amenities/useAmenityBooking';
 import { AmenityBooking } from '@/types/amenity-types';
-import { format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 
 interface AmenityBookingCalendarProps {
   amenityId?: string;
@@ -29,7 +28,9 @@ const AmenityBookingCalendar: React.FC<AmenityBookingCalendarProps> = ({
   useEffect(() => {
     if (selectedDate) {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
-      fetchBookings(amenityId, dateStr).then(setDayBookings);
+      fetchBookings(amenityId, dateStr).then((bookings) => {
+        setDayBookings(bookings);
+      });
     }
   }, [selectedDate, amenityId, fetchBookings]);
 
@@ -106,12 +107,10 @@ const AmenityBookingCalendar: React.FC<AmenityBookingCalendarProps> = ({
                   </div>
                   
                   <div className="space-y-1 text-sm text-gray-600">
-                    {booking.amenity && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{booking.amenity.name}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <span>Amenity ID: {booking.amenity_id}</span>
+                    </div>
                     
                     {booking.guests_count && (
                       <div className="flex items-center gap-1">

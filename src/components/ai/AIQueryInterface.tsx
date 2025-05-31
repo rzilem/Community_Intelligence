@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Brain, Send, History, Clock, Database, Lightbulb } from 'lucide-react';
 import { useAIQuery } from '@/hooks/ai/useAIQuery';
-import { DataTable } from '@/components/ui/data-table';
 import { format } from 'date-fns';
 
 const AIQueryInterface: React.FC = () => {
@@ -27,11 +26,11 @@ const AIQueryInterface: React.FC = () => {
   };
 
   const suggestedQueries = [
-    "Show me all residents",
-    "What are the latest payments?",
-    "Show amenity bookings this month",
-    "List all associations",
-    "Find overdue assessments"
+    "Show me all associations",
+    "List recent announcements",
+    "Show assessment schedules",
+    "Find all residents",
+    "Show system settings"
   ];
 
   return (
@@ -47,7 +46,7 @@ const AIQueryInterface: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Ask me anything about your HOA data... (e.g., 'Show me all residents' or 'What payments are overdue?')"
+                placeholder="Ask me anything about your HOA data... (e.g., 'Show me all associations' or 'List recent announcements')"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1"

@@ -13,18 +13,25 @@ import { useAmenityBooking } from '@/hooks/amenities/useAmenityBooking';
 import { Amenity, BookingConflict } from '@/types/amenity-types';
 import { format } from 'date-fns';
 
-interface SmartBookingFormProps {
-  amenity: Amenity;
-  selectedDate: Date;
-  onBookingSuccess?: () => void;
-}
+// Mock amenity data
+const mockAmenity: Amenity = {
+  id: 'pool-1',
+  association_id: 'assoc-1',
+  name: 'Community Pool',
+  description: 'Main community swimming pool',
+  capacity: 25,
+  booking_fee: 50,
+  requires_approval: false,
+  availability_hours: '6:00 AM - 10:00 PM',
+  amenity_type: 'pool',
+  is_active: true,
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z'
+};
 
-const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
-  amenity,
-  selectedDate,
-  onBookingSuccess
-}) => {
+const SmartBookingForm: React.FC = () => {
   const { isLoading, createBooking, checkBookingConflicts } = useAmenityBooking();
+  const [selectedDate] = useState(new Date());
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [guestsCount, setGuestsCount] = useState('1');
@@ -46,7 +53,7 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
     try {
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
       const conflictResults = await checkBookingConflicts(
-        amenity.id,
+        mockAmenity.id,
         dateStr,
         startTime,
         endTime
@@ -70,12 +77,12 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
 
     // Capacity suggestions
     const guests = parseInt(guestsCount);
-    if (amenity.capacity && guests > amenity.capacity * 0.8) {
+    if (mockAmenity.capacity && guests > mockAmenity.capacity * 0.8) {
       suggestions.push('High guest count - ensure all attendees are registered');
     }
 
     // Weather-based suggestions (mock)
-    if (amenity.amenity_type === 'pool') {
+    if (mockAmenity.amenity_type === 'pool') {
       suggestions.push('Pool temperature is optimal between 2-6 PM');
     }
 
@@ -91,14 +98,14 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
 
     try {
       const bookingData = {
-        amenity_id: amenity.id,
+        amenity_id: mockAmenity.id,
         property_id: 'demo-property-id', // This would come from user context
         booking_date: format(selectedDate, 'yyyy-MM-dd'),
         start_time: startTime,
         end_time: endTime,
         guests_count: parseInt(guestsCount),
         special_requests: specialRequests,
-        total_fee: amenity.booking_fee
+        total_fee: mockAmenity.booking_fee
       };
 
       await createBooking(bookingData);
@@ -110,8 +117,6 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
       setSpecialRequests('');
       setConflicts([]);
       setAiSuggestions([]);
-      
-      onBookingSuccess?.();
     } catch (error) {
       // Error handled in hook
     }
@@ -128,7 +133,7 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
-          Book {amenity.name}
+          Book {mockAmenity.name}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -180,16 +185,16 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: amenity.capacity || 10 }, (_, i) => (
+                  {Array.from({ length: mockAmenity.capacity || 10 }, (_, i) => (
                     <SelectItem key={i + 1} value={String(i + 1)}>
                       {i + 1} {i === 0 ? 'guest' : 'guests'}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {amenity.capacity && (
+              {mockAmenity.capacity && (
                 <p className="text-xs text-muted-foreground">
-                  Maximum capacity: {amenity.capacity} guests
+                  Maximum capacity: {mockAmenity.capacity} guests
                 </p>
               )}
             </div>
@@ -197,7 +202,7 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
             <div className="space-y-2">
               <Label>Booking Fee</Label>
               <div className="flex items-center gap-2 p-2 border rounded">
-                <span className="font-semibold">${amenity.booking_fee?.toFixed(2) || '0.00'}</span>
+                <span className="font-semibold">${mockAmenity.booking_fee?.toFixed(2) || '0.00'}</span>
                 <Badge variant="outline">Per booking</Badge>
               </div>
             </div>
@@ -264,7 +269,7 @@ const SmartBookingForm: React.FC<SmartBookingFormProps> = ({
               disabled={isLoading || !startTime || !endTime || conflicts.length > 0}
               className="flex-1"
             >
-              {isLoading ? 'Booking...' : `Book ${amenity.name}`}
+              {isLoading ? 'Booking...' : `Book ${mockAmenity.name}`}
             </Button>
           </div>
         </form>
