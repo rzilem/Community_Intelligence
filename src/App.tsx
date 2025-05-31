@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/toaster"
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AppRouter } from '@/routes/AppRouter';
 
+console.log('🚀 App.tsx: Initializing App component...');
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -18,7 +20,11 @@ const queryClient = new QueryClient({
   },
 });
 
+console.log('✅ App.tsx: QueryClient created');
+
 function App() {
+  console.log('🚀 App.tsx: App component rendering...');
+
   return (
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
@@ -36,5 +42,7 @@ function App() {
     </BrowserRouter>
   );
 }
+
+console.log('✅ App.tsx: App component defined');
 
 export default App;

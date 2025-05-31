@@ -1,18 +1,25 @@
-
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 import { RequireAuth } from '@/components/auth/RequireAuth';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+console.log('🚀 RouteConfig: Loading route configuration...');
+
 // Lazy load all pages for better performance
-const Dashboard = React.lazy(() => import('@/pages/Dashboard'));
+const Dashboard = React.lazy(() => {
+  console.log('🚀 RouteConfig: Loading Dashboard component...');
+  return import('@/pages/Dashboard');
+});
 const Associations = React.lazy(() => import('@/pages/Associations'));
 const Homeowners = React.lazy(() => import('@/pages/Homeowners'));
 const HomeownerDetailPage = React.lazy(() => import('@/pages/HomeownerDetailPage'));
 const Compliance = React.lazy(() => import('@/pages/Compliance'));
 const AccountingDashboard = React.lazy(() => import('@/pages/accounting/AccountingDashboard'));
 const BankAccounts = React.lazy(() => import('@/pages/accounting/BankAccounts'));
-const InvoiceQueue = React.lazy(() => import('@/pages/accounting/InvoiceQueue'));
+const InvoiceQueue = React.lazy(() => {
+  console.log('🚀 RouteConfig: Loading InvoiceQueue component...');
+  return import('@/pages/accounting/InvoiceQueue');
+});
 const InvoiceDetails = React.lazy(() => import('@/pages/accounting/InvoiceDetails'));
 const InvoiceCreate = React.lazy(() => import('@/pages/accounting/InvoiceCreate'));
 const InvoiceEdit = React.lazy(() => import('@/pages/accounting/InvoiceEdit'));
@@ -56,31 +63,37 @@ const CreateBidRequest = React.lazy(() => import('@/pages/community-management/C
 const BillingDashboard = React.lazy(() => import('@/pages/billing/BillingDashboard'));
 
 // Suspense wrapper component
-const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <React.Suspense 
-    fallback={
-      <div className="flex h-64 items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading...</p>
+const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  console.log('🚀 RouteConfig: SuspenseWrapper rendering...');
+  return (
+    <React.Suspense 
+      fallback={
+        <div className="flex h-64 items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-sm text-gray-600">Loading...</p>
+          </div>
         </div>
-      </div>
-    }
-  >
-    {children}
-  </React.Suspense>
-);
+      }
+    >
+      {children}
+    </React.Suspense>
+  );
+};
 
 // Helper function to create protected route elements
-const createProtectedRoute = (element: React.ReactElement, allowedRoles: string[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant']) => (
-  <RequireAuth allowedRoles={allowedRoles}>
-    <SuspenseWrapper>
-      <ErrorBoundary>
-        {element}
-      </ErrorBoundary>
-    </SuspenseWrapper>
-  </RequireAuth>
-);
+const createProtectedRoute = (element: React.ReactElement, allowedRoles: string[] = ['admin', 'manager', 'resident', 'maintenance', 'accountant']) => {
+  console.log('🚀 RouteConfig: Creating protected route with roles:', allowedRoles);
+  return (
+    <RequireAuth allowedRoles={allowedRoles}>
+      <SuspenseWrapper>
+        <ErrorBoundary>
+          {element}
+        </ErrorBoundary>
+      </SuspenseWrapper>
+    </RequireAuth>
+  );
+};
 
 // Define all routes with proper role-based access control
 export const protectedRoutes: RouteObject[] = [
@@ -303,3 +316,5 @@ export const protectedRoutes: RouteObject[] = [
     element: createProtectedRoute(<BillingDashboard />, ['admin', 'manager', 'accountant'])
   }
 ];
+
+console.log('✅ RouteConfig: Route configuration loaded, total routes:', protectedRoutes.length);

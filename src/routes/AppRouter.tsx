@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
@@ -11,6 +11,11 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { protectedRoutes } from './routeConfig';
 
 export const AppRouter = () => {
+  const location = useLocation();
+  
+  console.log('🚀 AppRouter: Rendering with location:', location.pathname);
+  console.log('🚀 AppRouter: Protected routes count:', protectedRoutes.length);
+
   return (
     <Routes>
       {/* Public routes - no layout wrapper needed */}
@@ -21,13 +26,16 @@ export const AppRouter = () => {
       
       {/* Protected routes - wrapped in AppLayout */}
       <Route path="/*" element={<AppLayout />}>
-        {protectedRoutes.map((route, index) => (
-          <Route 
-            key={`route-${index}-${route.path}`}
-            path={route.path} 
-            element={route.element} 
-          />
-        ))}
+        {protectedRoutes.map((route, index) => {
+          console.log(`🚀 AppRouter: Mapping route ${index}: ${route.path}`);
+          return (
+            <Route 
+              key={`route-${index}-${route.path}`}
+              path={route.path} 
+              element={route.element} 
+            />
+          );
+        })}
         
         {/* Legacy redirects for backward compatibility */}
         <Route path="/properties" element={<Navigate to="/associations" replace />} />

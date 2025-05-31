@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Outlet, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -40,8 +39,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
+  console.log('🚀 AppLayout: Rendering, user:', !!user, 'loading:', loading, 'location:', location.pathname);
+
   // Show loading while checking authentication
   if (loading) {
+    console.log('ℹ️ AppLayout: Showing loading spinner');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" text="Loading..." />
@@ -51,8 +53,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // Redirect to auth if not authenticated
   if (!user) {
+    console.log('ℹ️ AppLayout: No user, redirecting to auth');
     return <Navigate to="/auth" replace />;
   }
+
+  console.log('✅ AppLayout: User authenticated, rendering layout');
 
   const navigationItems = [
     {
