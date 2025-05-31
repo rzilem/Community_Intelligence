@@ -49,7 +49,8 @@ export const bidRequestService = {
       associationId: bidRequest.association_id,
       createdBy: bidRequest.created_by,
       hoa_id: bidRequest.association_id,
-      priority: (bidRequest.priority || 'medium') as "low" | "medium" | "high" | "urgent"
+      priority: (bidRequest.priority || 'medium') as "low" | "medium" | "high" | "urgent",
+      attachments: Array.isArray(bidRequest.attachments) ? bidRequest.attachments : []
     };
   },
 
@@ -110,7 +111,8 @@ export const bidRequestService = {
       associationId: item.association_id,
       createdBy: item.created_by,
       hoa_id: item.association_id,
-      priority: (item.priority || 'medium') as "low" | "medium" | "high" | "urgent"
+      priority: (item.priority || 'medium') as "low" | "medium" | "high" | "urgent",
+      attachments: Array.isArray(item.attachments) ? item.attachments : []
     }));
   }
 };
