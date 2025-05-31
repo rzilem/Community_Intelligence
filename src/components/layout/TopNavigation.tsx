@@ -1,6 +1,8 @@
-
 import React from 'react';
+import { Bell, Plus, Search, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,110 +12,109 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Bell, User, Settings, LogOut } from 'lucide-react';
-import { useAuth } from '@/contexts/auth';
-import { useNotificationContext } from '@/contexts/notifications';
-import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export const TopNavigation = () => {
-  const { profile, currentAssociation } = useAuth();
-  const { unreadCount } = useNotificationContext();
-  const navigate = useNavigate();
+  const { profile, signOut } = useAuth();
 
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      navigate('/');
-      toast.success('Signed out successfully');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast.error('Error signing out');
-    }
-  };
-
-  const getInitials = (name?: string) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
-
-  const getDisplayName = () => {
-    if (profile?.first_name && profile?.last_name) {
-      return `${profile.first_name} ${profile.last_name}`;
-    }
-    return profile?.email || 'User';
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (!firstName && !lastName) return 'DU';
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
   };
 
   return (
-    <header className="border-b bg-white px-6 py-3">
-      <div className="flex items-center justify-between">
-        <div>
-          {currentAssociation && (
-            <div className="text-sm text-gray-600">
-              Current Association: <span className="font-medium">{currentAssociation.name}</span>
-            </div>
-          )}
+    <header className="top-nav bg-white border-b border-blue-100 px-6 py-4 flex items-center justify-between">
+      {/* Left side - Search */}
+      <div className="flex items-center space-x-4 flex-1">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="search"
+            placeholder="Search communities, residents, or documents..."
+            className="pl-10 pr-4 py-2 w-96 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+          />
         </div>
+      </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <Button variant="ghost" size="sm" className="relative">
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </Badge>
-            )}
-          </Button>
+      {/* Right side - Actions and Profile */}
+      <div className="flex items-center space-x-4">
+        {/* New HOA Button */}
+        <Button className="btn-blue">
+          <Plus className="h-4 w-4 mr-2" />
+          New HOA
+        </Button>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.profile_image_url || ''} alt={getDisplayName()} />
-                  <AvatarFallback>{getInitials(getDisplayName())}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{getDisplayName()}</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    {profile?.email}
-                  </p>
-                  <Badge variant="secondary" className="w-fit mt-1">
-                    {profile?.role || 'user'}
-                  </Badge>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/user/profile">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/system/settings">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {/* View All Button */}
+        <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+          View All
+          <span className="ml-2 bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
+            0
+          </span>
+        </Button>
+
+        {/* Notifications */}
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5 text-gray-600" />
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            3
+          </span>
+        </Button>
+
+        {/* Settings */}
+        <Button variant="ghost" size="icon">
+          <Settings className="h-5 w-5 text-gray-600" />
+        </Button>
+
+        {/* Profile Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+              <Avatar className="h-10 w-10">
+                <AvatarImage 
+                  src={profile?.profile_image_url || ''} 
+                  alt={`${profile?.first_name || 'User'} ${profile?.last_name || ''}`} 
+                />
+                <AvatarFallback className="bg-blue-100 text-blue-600">
+                  {getInitials(profile?.first_name, profile?.last_name)}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {profile?.first_name} {profile?.last_name}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {profile?.email}
+                </p>
+                <p className="text-xs leading-none text-blue-600 capitalize">
+                  {profile?.role}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              Profile Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Billing
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Team
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Subscription
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={signOut}
+              className="text-red-600 focus:text-red-600"
+            >
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
