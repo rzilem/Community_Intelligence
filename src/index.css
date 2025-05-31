@@ -1,93 +1,6 @@
+/* Add this CSS to your src/index.css file */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 10% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 224 71.4% 4.1%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 224 71.4% 4.1%;
-    --sidebar-primary-foreground: 210 20% 98%;
-    --sidebar-accent: 216 34% 17%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 216 34% 17%;
-  }
-
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 224 71.4% 4.1%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 224 71.4% 4.1%;
-    --sidebar-primary-foreground: 210 20% 98%;
-    --sidebar-accent: 216 34% 17%;
-    --sidebar-accent-foreground: 210 20% 98%;
-    --sidebar-border: 216 34% 17%;
-    --sidebar-ring: 216 34% 17%;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  }
-}
-
-/* Custom gradient styles for Community Intelligence theme */
+/* Beautiful Blue Gradient Sidebar */
 .sidebar-gradient {
   background: linear-gradient(180deg, 
     #1e3a8a 0%,     /* blue-800 */
@@ -95,69 +8,136 @@
     #3b82f6 50%,    /* blue-500 */
     #64748b 75%,    /* slate-500 */
     #475569 100%    /* slate-600 */
-  );
+  ) !important;
+  border-right: 1px solid rgba(59, 130, 246, 0.2) !important;
 }
 
-.sidebar-accent {
-  background: rgba(59, 130, 246, 0.3); /* blue-500 with opacity */
+/* Override Shadcn sidebar defaults with blue theme */
+.sidebar-gradient [data-sidebar="sidebar"] {
+  background: transparent !important;
+  --sidebar-background: transparent !important;
+  --sidebar-background-hover: rgba(255, 255, 255, 0.1) !important;
+  --sidebar-border: rgba(59, 130, 246, 0.2) !important;
+  --sidebar-foreground: rgb(255, 255, 255) !important;
+  --sidebar-primary: rgb(59, 130, 246) !important;
+  --sidebar-primary-foreground: rgb(255, 255, 255) !important;
+  --sidebar-accent: rgba(255, 255, 255, 0.1) !important;
+  --sidebar-accent-foreground: rgb(255, 255, 255) !important;
+  --sidebar-muted: rgba(255, 255, 255, 0.1) !important;
+  --sidebar-muted-foreground: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Loading spinner styles */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Sidebar content styling */
+.sidebar-gradient .sidebar-content {
+  background: transparent !important;
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
+/* Group labels styling */
+.sidebar-gradient [data-sidebar="group-label"] {
+  color: rgb(191, 219, 254) !important; /* blue-200 */
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 0.5rem !important;
 }
 
-/* Custom scrollbar for sidebar */
-.sidebar-gradient::-webkit-scrollbar {
-  width: 6px;
+/* Menu button styling */
+.sidebar-gradient [data-sidebar="menu-button"] {
+  color: rgba(255, 255, 255, 0.9) !important;
+  transition: all 0.2s ease !important;
 }
 
-.sidebar-gradient::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+.sidebar-gradient [data-sidebar="menu-button"]:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgb(255, 255, 255) !important;
+  transform: scale(1.01) !important;
 }
 
-.sidebar-gradient::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
+/* Active menu item styling */
+.sidebar-gradient [data-sidebar="menu-button"][data-active="true"] {
+  background: rgb(255, 255, 255) !important;
+  color: rgb(30, 58, 138) !important; /* blue-900 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transform: scale(1.02) !important;
 }
 
-.sidebar-gradient::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+/* Dashboard enhancements */
+.dashboard-card {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.05) 0%, 
+    rgba(99, 102, 241, 0.05) 100%
+  ) !important;
+  border: 1px solid rgba(59, 130, 246, 0.1) !important;
+  transition: all 0.2s ease !important;
 }
 
-/* Card styles */
-.card {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200;
+.dashboard-card:hover {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.08) 0%, 
+    rgba(99, 102, 241, 0.08) 100%
+  ) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
 }
 
-.card-content {
-  @apply p-6;
+/* Blue accent buttons */
+.btn-blue {
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+  color: white !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
 }
 
-.card-header {
-  @apply px-6 py-4 border-b border-gray-200;
+.btn-blue:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 
-/* Button hover effects for the sidebar */
-.sidebar-nav-item {
-  @apply transition-all duration-200 ease-in-out;
+/* Stats card enhancements */
+.stats-card {
+  background: white !important;
+  border: 1px solid rgba(59, 130, 246, 0.1) !important;
+  border-radius: 0.75rem !important;
+  transition: all 0.2s ease !important;
 }
 
-.sidebar-nav-item:hover {
-  @apply bg-white bg-opacity-10 backdrop-blur-sm;
+.stats-card:hover {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1) !important;
 }
 
-/* Notification badge styles */
-.notification-badge {
-  @apply bg-red-500 text-white text-xs rounded-full min-w-5 h-5 flex items-center justify-center;
+/* Blue text accents */
+.text-blue-primary {
+  color: #3b82f6 !important;
+}
+
+.text-blue-secondary {
+  color: #6366f1 !important;
+}
+
+/* Loading spinner blue theme */
+.loading-spinner {
+  color: #3b82f6 !important;
+}
+
+/* Top navigation blue accents */
+.top-nav {
+  border-bottom: 1px solid rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Quick action buttons blue theme */
+.quick-action-btn {
+  background: rgba(59, 130, 246, 0.05) !important;
+  border: 1px solid rgba(59, 130, 246, 0.2) !important;
+  color: #3b82f6 !important;
+  transition: all 0.2s ease !important;
+}
+
+.quick-action-btn:hover {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  transform: translateY(-1px) !important;
 }
