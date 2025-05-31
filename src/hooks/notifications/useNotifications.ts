@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -13,16 +12,17 @@ export const useNotifications = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('notification_templates')
+        .from('notification_templates' as any)
         .insert([templateData])
         .select('*')
         .single();
 
       if (error) throw error;
 
-      setTemplates(prev => [data, ...prev]);
+      const typedData = data as NotificationTemplate;
+      setTemplates(prev => [typedData, ...prev]);
       toast.success('Notification template created successfully!');
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Error creating template:', error);
       toast.error('Failed to create notification template');
@@ -40,18 +40,17 @@ export const useNotifications = () => {
   ) => {
     setIsLoading(true);
     try {
-      // Get template
       const { data: template, error: templateError } = await supabase
-        .from('notification_templates')
+        .from('notification_templates' as any)
         .select('*')
         .eq('id', templateId)
         .single();
 
       if (templateError) throw templateError;
+      const typedTemplate = template as NotificationTemplate;
 
-      // Queue notification
       const { data, error } = await supabase
-        .from('notification_queue')
+        .from('notification_queue' as any)
         .insert([{
           template_id: templateId,
           recipient_type: recipientType,
@@ -64,17 +63,16 @@ export const useNotifications = () => {
         .single();
 
       if (error) throw error;
+      const typedData = data as NotificationQueue;
 
-      // AI-optimized timing (mock implementation)
-      const optimizedDelay = calculateOptimalSendTime(recipientType, template.category);
+      const optimizedDelay = calculateOptimalSendTime(recipientType, typedTemplate.category);
       
-      // Process notification with AI optimization
       setTimeout(async () => {
-        await processNotification(data.id, template, variables);
+        await processNotification(typedData.id, typedTemplate, variables);
       }, optimizedDelay);
 
       toast.success('Notification queued for delivery!');
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Error sending notification:', error);
       toast.error('Failed to send notification');
@@ -88,7 +86,7 @@ export const useNotifications = () => {
     setIsLoading(true);
     try {
       let query = supabase
-        .from('notification_templates')
+        .from('notification_templates' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -100,8 +98,9 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setTemplates(data || []);
-      return data || [];
+      const typedData = (data || []) as NotificationTemplate[];
+      setTemplates(typedData);
+      return typedData;
     } catch (error: any) {
       console.error('Error fetching templates:', error);
       toast.error('Failed to fetch notification templates');
@@ -115,7 +114,7 @@ export const useNotifications = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('notification_queue')
+        .from('notification_queue' as any)
         .select(`
           *,
           notification_templates(name, type, category)
@@ -125,8 +124,9 @@ export const useNotifications = () => {
 
       if (error) throw error;
 
-      setQueue(data || []);
-      return data || [];
+      const typedData = (data || []) as NotificationQueue[];
+      setQueue(typedData);
+      return typedData;
     } catch (error: any) {
       console.error('Error fetching queue:', error);
       toast.error('Failed to fetch notification queue');
@@ -142,8 +142,6 @@ export const useNotifications = () => {
     templateId: string,
     delayMinutes: number = 0
   ) => {
-    // This would create an automated workflow
-    // For demo purposes, we'll simulate this
     const workflow = {
       id: Math.random().toString(36).substring(7),
       trigger,
@@ -169,7 +167,6 @@ export const useNotifications = () => {
   };
 };
 
-// AI-optimized timing calculation
 function calculateOptimalSendTime(
   recipientType: string,
   category: string
@@ -177,54 +174,46 @@ function calculateOptimalSendTime(
   const now = new Date();
   const hour = now.getHours();
 
-  // Emergency notifications - send immediately
   if (category === 'system_alert') {
     return 0;
   }
 
-  // Payment reminders - send during business hours
   if (category === 'payment_reminder') {
     if (hour < 9 || hour > 17) {
-      return (9 - hour) * 60 * 60 * 1000; // Wait until 9 AM
+      return (9 - hour) * 60 * 60 * 1000;
     }
     return 0;
   }
 
-  // Announcements - send during peak engagement times
   if (category === 'announcement') {
     if (hour < 10) {
-      return (10 - hour) * 60 * 60 * 1000; // Wait until 10 AM
+      return (10 - hour) * 60 * 60 * 1000;
     }
     if (hour > 20) {
-      return (34 - hour) * 60 * 60 * 1000; // Wait until next day 10 AM
+      return (34 - hour) * 60 * 60 * 1000;
     }
     return 0;
   }
 
-  // Default: send in 5 minutes
   return 5 * 60 * 1000;
 }
 
-// Process and send notification
 async function processNotification(
   queueId: string,
   template: NotificationTemplate,
   variables: Record<string, any>
 ) {
   try {
-    // Apply AI-driven message optimization
     const optimizedMessage = optimizeMessage(template.body_template, variables);
     
-    // Simulate sending notification
     console.log('Sending optimized notification:', {
       type: template.type,
-      subject: processTemplate(template.subject_template, variables),
+      subject: processTemplate(template.subject_template || '', variables),
       body: optimizedMessage
     });
 
-    // Update queue status
     await supabase
-      .from('notification_queue')
+      .from('notification_queue' as any)
       .update({
         status: 'sent',
         sent_at: new Date().toISOString()
@@ -234,9 +223,8 @@ async function processNotification(
   } catch (error) {
     console.error('Error processing notification:', error);
     
-    // Update queue with error
     await supabase
-      .from('notification_queue')
+      .from('notification_queue' as any)
       .update({
         status: 'failed',
         error_message: error instanceof Error ? error.message : 'Unknown error'
@@ -245,28 +233,22 @@ async function processNotification(
   }
 }
 
-// AI message optimization
 function optimizeMessage(template: string, variables: Record<string, any>): string {
   let message = processTemplate(template, variables);
   
-  // AI optimizations:
-  // 1. Personalization
   if (variables.firstName) {
     message = message.replace(/Hello,/g, `Hello ${variables.firstName},`);
   }
   
-  // 2. Urgency indicators
   if (template.includes('urgent') || template.includes('deadline')) {
     message = `⚠️ URGENT: ${message}`;
   }
   
-  // 3. Call-to-action optimization
   message = message.replace(/click here/gi, 'take action now');
   
   return message;
 }
 
-// Template variable processing
 function processTemplate(template: string, variables: Record<string, any>): string {
   let processed = template;
   
