@@ -1,92 +1,173 @@
+// This should go in your main Dashboard component
+// Apply blue styling to your dashboard cards
 
 import React from 'react';
-import { useAuth } from '@/contexts/auth';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import DashboardStats from '@/components/dashboard/DashboardStats';
-import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
-import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
-import CalendarTab from '@/components/dashboard/CalendarTab';
-import { MessagesFeed } from '@/components/dashboard/MessagesFeed';
-import TreasurerDashboard from '@/components/dashboard/TreasurerDashboard';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Plus, TrendingUp, Users, DollarSign, AlertTriangle } from 'lucide-react';
 
-const Dashboard = () => {
-  const { profile, currentAssociation } = useAuth();
-
-  // Show treasurer-specific dashboard for treasurers
-  if (profile?.role === 'treasurer') {
-    return <TreasurerDashboard />;
-  }
-
-  // Mock data for components that require props
-  const mockActivityData = [];
-  const mockAIIssues = [];
-
+export function Dashboard() {
   return (
     <div className="space-y-6">
-      <DashboardHeader associationName={currentAssociation?.name} />
-      
-      <DashboardStats />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="overview" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="calendar">Calendar</TabsTrigger>
-              <TabsTrigger value="messages">Messages</TabsTrigger>
-              <TabsTrigger value="ai-insights">AI Insights</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-4">
-              <QuickActionWidgets />
-              <ActivityFeed 
-                recentActivity={mockActivityData} 
-                loading={false} 
-                error={null} 
-              />
-            </TabsContent>
-            
-            <TabsContent value="calendar">
-              <CalendarTab />
-            </TabsContent>
-            
-            <TabsContent value="messages">
-              <MessagesFeed />
-            </TabsContent>
-            
-            <TabsContent value="ai-insights">
-              <AIAnalysisSection issues={mockAIIssues} />
-            </TabsContent>
-          </Tabs>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's what's happening across your communities today.</p>
         </div>
-        
-        <div className="space-y-4">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-2">Quick Stats</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Active Requests</span>
-                  <span className="font-medium">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Pending Payments</span>
-                  <span className="font-medium">8</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Upcoming Events</span>
-                  <span className="font-medium">3</span>
-                </div>
+        <div className="flex gap-3">
+          <button 
+            className="px-4 py-2 rounded-lg font-semibold transition-all duration-200"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)',
+              border: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 15px -3px rgba(59, 130, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(59, 130, 246, 0.3)';
+            }}
+          >
+            <Plus className="h-4 w-4 mr-2 inline" />
+            New HOA
+          </button>
+          <button className="px-4 py-2 bg-gray-800 text-white rounded-lg font-semibold">
+            View All
+          </button>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          {
+            title: 'Total Properties',
+            value: '0',
+            subtitle: 'Across all communities',
+            icon: TrendingUp,
+            gradient: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+            borderColor: '#3b82f6'
+          },
+          {
+            title: 'Active Residents',
+            value: '0',
+            subtitle: 'Currently registered',
+            icon: Users,
+            gradient: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+            borderColor: '#3b82f6'
+          },
+          {
+            title: 'Assessment Collection',
+            value: '$0',
+            subtitle: 'No data available',
+            icon: DollarSign,
+            gradient: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+            borderColor: '#3b82f6'
+          },
+          {
+            title: 'Open Compliance Issues',
+            value: '0',
+            subtitle: 'No previous data',
+            icon: AlertTriangle,
+            gradient: 'linear-gradient(135deg, white 0%, #f8fafc 100%)',
+            borderColor: '#3b82f6'
+          }
+        ].map((stat, index) => (
+          <div
+            key={index}
+            className="p-6 rounded-xl transition-all duration-200 cursor-pointer"
+            style={{
+              background: stat.gradient,
+              borderLeft: `4px solid ${stat.borderColor}`,
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              border: '1px solid #e2e8f0'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.borderColor = '#3b82f6';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+              e.currentTarget.style.borderColor = '#e2e8f0';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-gray-500">{stat.subtitle}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <stat.icon className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div
+        className="p-6 rounded-xl"
+        style={{
+          background: 'white',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0'
+        }}
+      >
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {[
+            { label: 'Schedule Event', icon: '📅' },
+            { label: 'Send Message', icon: '💬' },
+            { label: 'View Calendar', icon: '📆' },
+            { label: 'Create Report', icon: '📊' },
+            { label: 'New Document', icon: '📄' }
+          ].map((action, index) => (
+            <button
+              key={index}
+              className="p-4 rounded-lg text-center transition-all duration-200"
+              style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: '#2563eb',
+                border: '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#3b82f6';
+                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                e.currentTarget.style.color = '#2563eb';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <div className="text-2xl mb-2">{action.icon}</div>
+              <div className="text-sm font-medium">{action.label}</div>
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div
+        className="p-6 rounded-xl"
+        style={{
+          background: 'white',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0'
+        }}
+      >
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+        <p className="text-gray-500 text-center py-8">No recent activity to display</p>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
