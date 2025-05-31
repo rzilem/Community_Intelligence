@@ -60,6 +60,19 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
     refetch();
   };
 
+  const handleView = (doc: any) => {
+    window.open(doc.url, '_blank');
+  };
+
+  const handleDownload = (doc: any) => {
+    const link = document.createElement('a');
+    link.href = doc.url;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleCreateCategory = async (name: string) => {
     try {
       await createCategory.mutateAsync({ name, associationId });
@@ -158,8 +171,9 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
           <TabsContent value="documents" className="space-y-4">
             <DocumentTable
               documents={filteredDocuments}
+              onView={handleView}
+              onDownload={handleDownload}
               onDelete={handleDelete}
-              onRefresh={refetch}
             />
           </TabsContent>
 
