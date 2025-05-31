@@ -352,6 +352,81 @@ export type Database = {
           },
         ]
       }
+      assessment_schedules: {
+        Row: {
+          amount: number
+          assessment_type_id: string
+          association_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean
+          last_generated_at: string | null
+          name: string
+          next_generation_date: string | null
+          recurrence_day: number | null
+          recurrence_month: number | null
+          schedule_type: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assessment_type_id: string
+          association_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          name: string
+          next_generation_date?: string | null
+          recurrence_day?: number | null
+          recurrence_month?: number | null
+          schedule_type: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assessment_type_id?: string
+          association_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          last_generated_at?: string | null
+          name?: string
+          next_generation_date?: string | null
+          recurrence_day?: number | null
+          recurrence_month?: number | null
+          schedule_type?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_schedules_assessment_type_id_fkey"
+            columns: ["assessment_type_id"]
+            isOneToOne: false
+            referencedRelation: "assessment_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_schedules_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assessment_types: {
         Row: {
           association_id: string
@@ -403,7 +478,12 @@ export type Database = {
           late_fee: number | null
           paid: boolean | null
           payment_date: string | null
+          payment_due_date: string | null
+          payment_status: string | null
+          payment_url: string | null
           property_id: string
+          stripe_session_id: string | null
+          total_amount_paid: number | null
           updated_at: string
         }
         Insert: {
@@ -415,7 +495,12 @@ export type Database = {
           late_fee?: number | null
           paid?: boolean | null
           payment_date?: string | null
+          payment_due_date?: string | null
+          payment_status?: string | null
+          payment_url?: string | null
           property_id: string
+          stripe_session_id?: string | null
+          total_amount_paid?: number | null
           updated_at?: string
         }
         Update: {
@@ -427,7 +512,12 @@ export type Database = {
           late_fee?: number | null
           paid?: boolean | null
           payment_date?: string | null
+          payment_due_date?: string | null
+          payment_status?: string | null
+          payment_url?: string | null
           property_id?: string
+          stripe_session_id?: string | null
+          total_amount_paid?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -4335,6 +4425,142 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_methods: {
+        Row: {
+          brand: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          last_four: string | null
+          metadata: Json | null
+          resident_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          brand?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          last_four?: string | null
+          metadata?: Json | null
+          resident_id: string
+          stripe_customer_id: string
+          stripe_payment_method_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          brand?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          last_four?: string | null
+          metadata?: Json | null
+          resident_id?: string
+          stripe_customer_id?: string
+          stripe_payment_method_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          assessment_id: string
+          association_id: string
+          created_at: string
+          currency: string
+          failure_reason: string | null
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          property_id: string
+          resident_id: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_receipt_url: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assessment_id: string
+          association_id: string
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          property_id: string
+          resident_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_receipt_url?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assessment_id?: string
+          association_id?: string
+          created_at?: string
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          property_id?: string
+          resident_id?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_receipt_url?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_resident_id_fkey"
+            columns: ["resident_id"]
+            isOneToOne: false
+            referencedRelation: "residents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poll_responses: {
         Row: {
           created_at: string
@@ -4984,6 +5210,69 @@ export type Database = {
         }
         Relationships: []
       }
+      resident_invitations: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          association_id: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_token: string
+          invited_by: string | null
+          metadata: Json | null
+          property_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          association_id: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invitation_token: string
+          invited_by?: string | null
+          metadata?: Json | null
+          property_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          association_id?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_token?: string
+          invited_by?: string | null
+          metadata?: Json | null
+          property_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resident_invitations_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resident_invitations_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resident_portal_settings: {
         Row: {
           created_at: string | null
@@ -5538,6 +5827,78 @@ export type Database = {
           },
         ]
       }
+      vendor_staging: {
+        Row: {
+          Address1: string | null
+          Address2: string | null
+          "Check Name": string | null
+          City: string | null
+          "Compliance Status": string | null
+          Contact: string | null
+          DBA: string | null
+          "Default Payment Method": string | null
+          eMail: string | null
+          "Hold Payment": boolean | null
+          "Hold Reason": string | null
+          "Is 1099": boolean | null
+          "Is Compliant": boolean | null
+          Phone: string | null
+          "Provider Name": string | null
+          "Provider Type": string | null
+          "Service Provider ID": number | null
+          State: string | null
+          "Street No": string | null
+          TaxID: string | null
+          Zip: string | null
+        }
+        Insert: {
+          Address1?: string | null
+          Address2?: string | null
+          "Check Name"?: string | null
+          City?: string | null
+          "Compliance Status"?: string | null
+          Contact?: string | null
+          DBA?: string | null
+          "Default Payment Method"?: string | null
+          eMail?: string | null
+          "Hold Payment"?: boolean | null
+          "Hold Reason"?: string | null
+          "Is 1099"?: boolean | null
+          "Is Compliant"?: boolean | null
+          Phone?: string | null
+          "Provider Name"?: string | null
+          "Provider Type"?: string | null
+          "Service Provider ID"?: number | null
+          State?: string | null
+          "Street No"?: string | null
+          TaxID?: string | null
+          Zip?: string | null
+        }
+        Update: {
+          Address1?: string | null
+          Address2?: string | null
+          "Check Name"?: string | null
+          City?: string | null
+          "Compliance Status"?: string | null
+          Contact?: string | null
+          DBA?: string | null
+          "Default Payment Method"?: string | null
+          eMail?: string | null
+          "Hold Payment"?: boolean | null
+          "Hold Reason"?: string | null
+          "Is 1099"?: boolean | null
+          "Is Compliant"?: boolean | null
+          Phone?: string | null
+          "Provider Name"?: string | null
+          "Provider Type"?: string | null
+          "Service Provider ID"?: number | null
+          State?: string | null
+          "Street No"?: string | null
+          TaxID?: string | null
+          Zip?: string | null
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address: string | null
@@ -6020,6 +6381,10 @@ export type Database = {
       generate_order_number: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      generate_scheduled_assessments: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       get_ai_suggestions: {
         Args: {
