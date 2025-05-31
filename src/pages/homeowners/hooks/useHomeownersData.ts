@@ -40,7 +40,7 @@ interface DatabaseResident {
  * @returns Combined array of resident data from all batches
  */
 const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
-  let allResidents: DatabaseResident[] = [];
+  let allResidents: any[] = [];
   
   for (let i = 0; i < propertyIds.length; i += batchSize) {
     const batchIds = propertyIds.slice(i, i + batchSize);
@@ -50,7 +50,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => 
       .from('residents')
       .select(`
         *,
-        properties(
+        properties!property_id(
           id,
           address,
           unit_number,
@@ -163,7 +163,7 @@ export const useHomeownersData = () => {
         }, {});
         
         // Map the results
-        const formattedResidents = (allResidents || []).map((resident: DatabaseResident) => {
+        const formattedResidents = (allResidents || []).map((resident: any) => {
           const property = resident.properties;
           const associationId = property?.association_id;
           

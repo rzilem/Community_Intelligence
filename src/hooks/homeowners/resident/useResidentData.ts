@@ -40,7 +40,7 @@ export const useResidentData = (residentId: string) => {
           .from('residents')
           .select(`
             *,
-            properties(
+            properties!property_id (
               id, 
               address, 
               unit_number, 
