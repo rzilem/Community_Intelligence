@@ -1,61 +1,64 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import LoadingSpinner from '@/components/LoadingSpinner';
-import { UserPlus, CheckCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const InvitationPage = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [invitation, setInvitation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [invitation, setInvitation] = useState<any>(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    emergencyContact: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    firstName: '',
+    lastName: ''
   });
 
   useEffect(() => {
     if (token) {
-      fetchInvitation();
+      validateInvitation();
     }
   }, [token]);
 
-  const fetchInvitation = async () => {
+  const validateInvitation = async () => {
     try {
       const { data, error } = await supabase
         .from('resident_invitations')
-        .select(`
-          *,
-          associations(name),
-          properties(address, unit_number)
-        `)
-        .eq('invitation_token', token)
-        .eq('status', 'sent')
-        .gte('expires_at', new Date().toISOString())
+        .select('*')
+        .eq('token', token)
+        .eq('status', 'pending')
         .single();
 
       if (error || !data) {
         toast.error('Invalid or expired invitation');
-        navigate('/auth');
+        navigate('/');
+        return;
+      }
+
+      if (new Date(data.expires_at) < new Date()) {
+        toast.error('This invitation has expired');
+        navigate('/');
         return;
       }
 
       setInvitation(data);
+      setFormData(prev => ({
+        ...prev,
+        firstName: data.first_name || '',
+        lastName: data.last_name || ''
+      }));
     } catch (error) {
-      console.error('Error fetching invitation:', error);
-      toast.error('Failed to load invitation');
-      navigate('/auth');
+      console.error('Error validating invitation:', error);
+      toast.error('Error validating invitation');
+      navigate('/');
     } finally {
       setLoading(false);
     }
@@ -63,6 +66,7 @@ const InvitationPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!invitation) return;
 
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
@@ -74,32 +78,47 @@ const InvitationPage = () => {
       return;
     }
 
-    setSubmitting(true);
-
+    setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('accept-invitation', {
-        body: {
-          invitationToken: token,
-          userData: formData
+      // Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: invitation.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName
+          }
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
 
-      toast.success(`Welcome to ${data.associationName}! Your account has been created.`);
-      navigate('/auth?message=account-created');
+      if (authData.user) {
+        // Update invitation status
+        await supabase
+          .from('resident_invitations')
+          .update({ 
+            status: 'accepted',
+            accepted_at: new Date().toISOString()
+          })
+          .eq('id', invitation.id);
+
+        toast.success('Account created successfully! Please check your email to verify your account.');
+        navigate('/auth');
+      }
     } catch (error: any) {
-      console.error('Error accepting invitation:', error);
-      toast.error('Failed to create account: ' + error.message);
+      console.error('Error creating account:', error);
+      toast.error(error.message || 'Failed to create account');
     } finally {
-      setSubmitting(false);
+      setProcessing(false);
     }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading invitation..." />
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
   }
@@ -108,11 +127,11 @@ const InvitationPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="w-full max-w-md">
-          <CardContent className="text-center p-6">
-            <p className="text-muted-foreground">Invitation not found or expired</p>
-            <Button onClick={() => navigate('/auth')} className="mt-4">
-              Go to Login
-            </Button>
+          <CardHeader>
+            <CardTitle>Invalid Invitation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>This invitation is invalid or has expired.</p>
           </CardContent>
         </Card>
       </div>
@@ -120,66 +139,46 @@ const InvitationPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <UserPlus className="h-12 w-12 text-blue-600" />
-          </div>
-          <CardTitle className="text-2xl">Complete Your Registration</CardTitle>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <p>You've been invited to join <strong>{invitation.associations?.name}</strong></p>
-            {invitation.properties && (
-              <p>
-                Property: {invitation.properties.address}
-                {invitation.properties.unit_number && ` Unit ${invitation.properties.unit_number}`}
-              </p>
-            )}
-          </div>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">
+            Complete Your Registration
+          </CardTitle>
+          <p className="text-center text-gray-600">
+            You've been invited to join {invitation.association_name}
+          </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                  required
-                />
-              </div>
-            </div>
-
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="(555) 123-4567"
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                required
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName}
+                onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="emergencyContact">Emergency Contact</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="emergencyContact"
-                value={formData.emergencyContact}
-                onChange={(e) => setFormData(prev => ({ ...prev, emergencyContact: e.target.value }))}
-                placeholder="Name and phone number"
-                required
+                id="email"
+                type="email"
+                value={invitation.email}
+                disabled
+                className="bg-gray-100"
               />
             </div>
 
@@ -190,8 +189,8 @@ const InvitationPage = () => {
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Minimum 6 characters"
                 required
+                minLength={6}
               />
             </div>
 
@@ -203,20 +202,22 @@ const InvitationPage = () => {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 required
+                minLength={6}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? (
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={processing}
+            >
+              {processing ? (
                 <>
-                  <LoadingSpinner size="sm" className="mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating Account...
                 </>
               ) : (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Complete Registration
-                </>
+                'Create Account'
               )}
             </Button>
           </form>
