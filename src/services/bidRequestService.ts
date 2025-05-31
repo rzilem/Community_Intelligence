@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
-import { BidRequestWithVendors, BidRequest, Vendor, AttachmentFile } from '@/types/bid-request-types';
+import { BidRequestWithVendors, BidRequest, AttachmentFile } from '@/types/bid-request-types';
+import { VendorServiceType } from './vendor-service';
 
 // Type casting helper functions
 const parseStatus = (status: string | null | undefined): BidRequest['status'] => {
@@ -91,7 +93,7 @@ export const bidRequestService = {
     };
   },
 
-  async filterEligibleVendors(associationId: string): Promise<Vendor[]> {
+  async filterEligibleVendors(associationId: string): Promise<VendorServiceType[]> {
     const { data: vendors, error } = await supabase
       .from('vendors')
       .select('*')
@@ -104,31 +106,18 @@ export const bidRequestService = {
       return [];
     }
 
-    // Transform database vendors to match the expected interface
+    // Transform database vendors to match the VendorServiceType interface
     return vendors.map(vendor => ({
       id: vendor.id,
-      hoa_id: associationId,
-      association_id: associationId,
       name: vendor.name,
-      contact_person: vendor.contact_person,
+      contactPerson: vendor.contact_person,
       email: vendor.email || '',
       phone: vendor.phone || '',
-      address: vendor.address || '',
-      license_number: vendor.license_number || '',
-      insurance_info: typeof vendor.insurance_info === 'object' && vendor.insurance_info !== null 
-        ? vendor.insurance_info as any 
-        : {},
-      specialties: vendor.specialties || [],
       category: vendor.category || '',
+      status: (vendor.status === 'active' || vendor.status === 'inactive') ? vendor.status : 'active',
+      hasInsurance: vendor.has_insurance || false,
       rating: vendor.rating || undefined,
-      total_jobs: vendor.total_jobs || 0,
-      completed_jobs: vendor.completed_jobs || 0,
-      average_response_time: vendor.average_response_time || undefined,
-      is_active: vendor.is_active || true,
-      include_in_bids: true,
-      notes: vendor.notes || '',
-      created_at: vendor.created_at,
-      updated_at: vendor.updated_at
+      lastInvoice: vendor.last_invoice || undefined
     }));
   },
 

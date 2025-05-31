@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Vendor } from '@/types/vendor-types';
+import { VendorServiceType } from '@/services/vendor-service';
 
 interface BidRequestVendorSelectorProps {
-  eligibleVendors: Vendor[];
+  eligibleVendors: VendorServiceType[];
   selectedVendors: string[];
   onVendorsChange: (vendors: string[]) => void;
 }

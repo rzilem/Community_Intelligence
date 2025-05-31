@@ -1,7 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { vendorService } from '@/services/vendor-service';
-import { Vendor, VendorFormData } from '@/types/vendor-types';
+import { vendorService, VendorServiceType, VendorFormData } from '@/services/vendor-service';
 import { toast } from 'sonner';
 
 export function useVendors() {
@@ -31,18 +30,7 @@ export function useCreateVendor() {
 
   return useMutation({
     mutationFn: (vendorData: VendorFormData) => {
-      const newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> = {
-        name: vendorData.name,
-        contactPerson: vendorData.contactPerson,
-        email: vendorData.email,
-        phone: vendorData.phone,
-        category: vendorData.category,
-        status: vendorData.status,
-        hasInsurance: vendorData.hasInsurance,
-        rating: null,
-        lastInvoice: null
-      };
-      return vendorService.createVendor(newVendor);
+      return vendorService.createVendor(vendorData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
@@ -60,7 +48,7 @@ export function useUpdateVendor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Vendor> }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<VendorServiceType> }) =>
       vendorService.updateVendor(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors'] });

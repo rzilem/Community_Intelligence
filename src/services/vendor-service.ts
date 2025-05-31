@@ -1,9 +1,51 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Vendor, VendorStats } from "@/types/vendor-types";
+
+// Define a unified Vendor interface for the vendor service
+export interface VendorServiceType {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  category?: string;
+  status: 'active' | 'inactive';
+  hasInsurance?: boolean;
+  rating?: number;
+  lastInvoice?: string;
+}
+
+// Define vendor stats interface
+export interface VendorStats {
+  totalVendors: number;
+  activeVendors: number;
+  inactiveVendors: number;
+  topCategory: string | null;
+  serviceCategories: number;
+  withInsurance: number;
+}
+
+// Define form data interface
+export interface VendorFormData {
+  name: string;
+  contactPerson?: string;
+  email?: string;
+  phone?: string;
+  category?: string;
+  status: 'active' | 'inactive';
+  hasInsurance?: boolean;
+}
+
+// Type casting helper for status
+const parseVendorStatus = (status: string | null | undefined): 'active' | 'inactive' => {
+  if (status === 'active' || status === 'inactive') {
+    return status;
+  }
+  return 'active'; // default fallback
+};
 
 export const vendorService = {
-  getVendors: async (): Promise<Vendor[]> => {
+  getVendors: async (): Promise<VendorServiceType[]> => {
     const { data, error } = await supabase
       .from('vendors')
       .select('*')
@@ -22,14 +64,14 @@ export const vendorService = {
       email: vendor.email,
       phone: vendor.phone,
       category: vendor.category,
-      status: (vendor.status || 'active') as 'active' | 'inactive',
+      status: parseVendorStatus(vendor.status),
       hasInsurance: vendor.has_insurance,
       rating: vendor.rating,
       lastInvoice: vendor.last_invoice
     }));
   },
 
-  getVendorById: async (id: string): Promise<Vendor | undefined> => {
+  getVendorById: async (id: string): Promise<VendorServiceType | undefined> => {
     const { data, error } = await supabase
       .from('vendors')
       .select('*')
@@ -48,7 +90,7 @@ export const vendorService = {
       email: data.email,
       phone: data.phone,
       category: data.category,
-      status: (data.status || 'active') as 'active' | 'inactive',
+      status: parseVendorStatus(data.status),
       hasInsurance: data.has_insurance,
       rating: data.rating,
       lastInvoice: data.last_invoice
@@ -94,7 +136,7 @@ export const vendorService = {
     };
   },
 
-  createVendor: async (vendorData: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>): Promise<Vendor> => {
+  createVendor: async (vendorData: VendorFormData): Promise<VendorServiceType> => {
     const dbVendor = {
       name: vendorData.name,
       contact_person: vendorData.contactPerson,
@@ -103,8 +145,8 @@ export const vendorService = {
       category: vendorData.category,
       status: vendorData.status,
       has_insurance: vendorData.hasInsurance,
-      rating: vendorData.rating,
-      last_invoice: vendorData.lastInvoice,
+      rating: null,
+      last_invoice: null,
       total_jobs: 0,
       completed_jobs: 0,
       is_active: true
@@ -128,14 +170,14 @@ export const vendorService = {
       email: data.email,
       phone: data.phone,
       category: data.category,
-      status: (data.status || 'active') as 'active' | 'inactive',
+      status: parseVendorStatus(data.status),
       hasInsurance: data.has_insurance,
       rating: data.rating,
       lastInvoice: data.last_invoice
     };
   },
 
-  updateVendor: async (id: string, vendorData: Partial<Vendor>): Promise<Vendor> => {
+  updateVendor: async (id: string, vendorData: Partial<VendorServiceType>): Promise<VendorServiceType> => {
     const dbUpdates: any = {};
     
     if (vendorData.name !== undefined) dbUpdates.name = vendorData.name;
@@ -167,7 +209,7 @@ export const vendorService = {
       email: data.email,
       phone: data.phone,
       category: data.category,
-      status: (data.status || 'active') as 'active' | 'inactive',
+      status: parseVendorStatus(data.status),
       hasInsurance: data.has_insurance,
       rating: data.rating,
       lastInvoice: data.last_invoice
