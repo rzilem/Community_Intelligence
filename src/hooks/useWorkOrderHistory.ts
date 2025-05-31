@@ -12,21 +12,17 @@ export interface WorkOrderHistoryEntry {
   metadata: Record<string, any>;
 }
 
+// Mock data since work_order_history table doesn't exist yet
+const mockHistory: WorkOrderHistoryEntry[] = [];
+
 export function useWorkOrderHistory(workOrderId: string) {
   return useQuery({
     queryKey: ['work-order-history', workOrderId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('work_order_history')
-        .select(`
-          *,
-          performer:profiles!performed_by(first_name, last_name, email)
-        `)
-        .eq('work_order_id', workOrderId)
-        .order('performed_at', { ascending: false });
-
-      if (error) throw error;
-      return data as WorkOrderHistoryEntry[];
+      if (!workOrderId) return [];
+      
+      // Return mock data for now
+      return mockHistory.filter(entry => entry.work_order_id === workOrderId);
     },
     enabled: !!workOrderId,
   });
@@ -42,14 +38,17 @@ export function useAddWorkOrderHistory() {
       description: string;
       metadata?: Record<string, any>;
     }) => {
-      const { data, error } = await supabase
-        .from('work_order_history')
-        .insert(historyEntry)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      // Mock implementation for now
+      const newEntry: WorkOrderHistoryEntry = {
+        id: Date.now().toString(),
+        performed_by: 'current-user',
+        performed_at: new Date().toISOString(),
+        metadata: {},
+        ...historyEntry,
+      };
+      
+      mockHistory.push(newEntry);
+      return newEntry;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['work-order-history', data.work_order_id] });

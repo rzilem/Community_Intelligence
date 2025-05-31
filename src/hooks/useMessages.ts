@@ -6,13 +6,15 @@ import { toast } from 'sonner';
 export interface MessageThread {
   id: string;
   title: string;
+  subject: string; // Add subject property
   description?: string;
   association_id: string;
   created_by: string;
   created_at: string;
   updated_at: string;
   participants: string[];
-  last_message_at?: string;
+  last_message_at: string;
+  unread_count?: number; // Add unread_count property
   is_archived?: boolean;
 }
 
@@ -25,6 +27,11 @@ export interface Message {
   created_at: string;
   updated_at: string;
   attachments?: any[];
+  sender_profile?: { // Add sender_profile property
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  };
 }
 
 // Mock data for now since message_threads table doesn't exist yet
@@ -32,6 +39,7 @@ const mockThreads: MessageThread[] = [
   {
     id: '1',
     title: 'Maintenance Request Discussion',
+    subject: 'Pool Maintenance Schedule', // Add subject
     description: 'Discussion about pool maintenance',
     association_id: 'demo-association-id',
     created_by: 'user-1',
@@ -39,6 +47,7 @@ const mockThreads: MessageThread[] = [
     updated_at: new Date().toISOString(),
     participants: ['user-1', 'user-2'],
     last_message_at: new Date().toISOString(),
+    unread_count: 2, // Add unread count
   },
 ];
 
@@ -51,6 +60,11 @@ const mockMessages: Message[] = [
     message_type: 'text',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    sender_profile: { // Add sender profile
+      first_name: 'John',
+      last_name: 'Doe',
+      email: 'john.doe@example.com'
+    }
   },
 ];
 
@@ -86,9 +100,11 @@ export function useCreateMessageThread() {
   return useMutation({
     mutationFn: async (threadData: {
       title: string;
+      subject: string; // Update to include subject
       description?: string;
       association_id: string;
       participants: string[];
+      initial_message?: string;
     }) => {
       // Mock implementation for now
       const newThread: MessageThread = {
@@ -97,6 +113,8 @@ export function useCreateMessageThread() {
         created_by: 'current-user',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        last_message_at: new Date().toISOString(),
+        unread_count: 0,
       };
       
       return newThread;
@@ -128,6 +146,11 @@ export function useSendMessage() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         message_type: 'text',
+        sender_profile: {
+          first_name: 'Current',
+          last_name: 'User',
+          email: 'current.user@example.com'
+        },
         ...messageData,
       };
       

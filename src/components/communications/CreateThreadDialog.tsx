@@ -45,8 +45,9 @@ export default function CreateThreadDialog({
 
     try {
       await createThread.mutateAsync({
+        title: subject.trim(), // Use subject as title
+        subject: subject.trim(), // Also use as subject
         association_id: associationId,
-        subject: subject.trim(),
         participants,
         initial_message: initialMessage.trim() || undefined,
       });

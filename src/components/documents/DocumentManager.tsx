@@ -29,7 +29,7 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
     category: selectedCategory 
   });
   
-  const { data: categories, isLoading: categoriesLoading } = useDocumentCategories({ 
+  const { data: categories = [], isLoading: categoriesLoading } = useDocumentCategories({ 
     associationId 
   });
   
@@ -124,7 +124,7 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
             >
               All Categories
             </Badge>
-            {categories?.map((category) => (
+            {categories.map((category) => (
               <Badge
                 key={category.id}
                 variant={selectedCategory === category.id ? "default" : "secondary"}
@@ -138,32 +138,42 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
         </CardContent>
       </Card>
 
+      {/* Loading State */}
+      {isLoading && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="text-muted-foreground">Loading documents...</div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-        </TabsList>
+      {!isLoading && (
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="documents" className="space-y-4">
-          <DocumentTable
-            documents={filteredDocuments}
-            isLoading={isLoading}
-            onDelete={handleDelete}
-            onRefresh={refetch}
-          />
-        </TabsContent>
+          <TabsContent value="documents" className="space-y-4">
+            <DocumentTable
+              documents={filteredDocuments}
+              onDelete={handleDelete}
+              onRefresh={refetch}
+            />
+          </TabsContent>
 
-        <TabsContent value="categories" className="space-y-4">
-          <DocumentCategories
-            categories={categories || []}
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
-            onCreateCategory={() => setIsCategoryDialogOpen(true)}
-            isLoading={categoriesLoading}
-          />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="categories" className="space-y-4">
+            <DocumentCategories
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+              onCreateCategory={() => setIsCategoryDialogOpen(true)}
+              isLoading={categoriesLoading}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* Dialogs */}
       <DocumentDialogs
@@ -173,7 +183,7 @@ export default function DocumentManager({ associationId }: DocumentManagerProps)
         onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
         onUpload={handleUpload}
         onCreateCategory={handleCreateCategory}
-        categories={categories || []}
+        categories={categories}
         isUploading={uploadDocument.isPending}
         isCreatingCategory={createCategory.isPending}
       />

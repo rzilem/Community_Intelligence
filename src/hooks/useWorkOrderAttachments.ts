@@ -15,18 +15,17 @@ export interface WorkOrderAttachment {
   updated_at: string;
 }
 
+// Mock data since work_order_attachments table doesn't exist yet
+const mockAttachments: WorkOrderAttachment[] = [];
+
 export function useWorkOrderAttachments(workOrderId: string) {
   return useQuery({
     queryKey: ['work-order-attachments', workOrderId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('work_order_attachments')
-        .select('*')
-        .eq('work_order_id', workOrderId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as WorkOrderAttachment[];
+      if (!workOrderId) return [];
+      
+      // Return mock data for now
+      return mockAttachments.filter(attachment => attachment.work_order_id === workOrderId);
     },
     enabled: !!workOrderId,
   });
@@ -37,24 +36,21 @@ export function useAddWorkOrderAttachment() {
 
   return useMutation({
     mutationFn: async ({ workOrderId, file }: { workOrderId: string; file: File }) => {
-      // Upload file to Supabase storage (when storage is set up)
-      // For now, we'll create a mock URL
-      const mockFilePath = `work-orders/${workOrderId}/${file.name}`;
-
-      const { data, error } = await supabase
-        .from('work_order_attachments')
-        .insert({
-          work_order_id: workOrderId,
-          filename: file.name,
-          file_path: mockFilePath,
-          file_type: file.type,
-          file_size: file.size,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      // Mock implementation for now
+      const mockAttachment: WorkOrderAttachment = {
+        id: Date.now().toString(),
+        work_order_id: workOrderId,
+        filename: file.name,
+        file_path: `work-orders/${workOrderId}/${file.name}`,
+        file_type: file.type,
+        file_size: file.size,
+        uploaded_by: 'current-user',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      mockAttachments.push(mockAttachment);
+      return mockAttachment;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['work-order-attachments', data.work_order_id] });
@@ -72,12 +68,11 @@ export function useDeleteWorkOrderAttachment() {
 
   return useMutation({
     mutationFn: async (attachmentId: string) => {
-      const { error } = await supabase
-        .from('work_order_attachments')
-        .delete()
-        .eq('id', attachmentId);
-
-      if (error) throw error;
+      // Mock implementation for now
+      const index = mockAttachments.findIndex(att => att.id === attachmentId);
+      if (index > -1) {
+        mockAttachments.splice(index, 1);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['work-order-attachments'] });
