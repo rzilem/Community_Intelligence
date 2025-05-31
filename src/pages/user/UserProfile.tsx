@@ -47,12 +47,15 @@ const UserProfile = () => {
       setIsLoading(true);
 
       // Map the form values to match the database schema
+      // Handle 'treasurer' role by mapping it to 'user' for database compatibility
+      const dbRole = values.role === 'treasurer' ? 'user' : values.role;
+      
       const updateData = {
         first_name: values.first_name,
         last_name: values.last_name,
         email: values.email,
         phone_number: values.phone_number,
-        role: values.role,
+        role: dbRole as 'admin' | 'manager' | 'resident' | 'maintenance' | 'accountant' | 'user',
       };
 
       // Update profile
