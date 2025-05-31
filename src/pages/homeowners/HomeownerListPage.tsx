@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { HomeownerTable } from './components/HomeownerTable';
-import { HomeownerGrid } from '../HomeownerGrid';
-import { HomeownerFilters } from './components/HomeownerListFilters';
-import { HomeownerPagination } from './components/HomeownerPagination';
+import HomeownerTable from './components/HomeownerTable';
+import HomeownerGrid from './HomeownerGrid';
+import HomeownerFilters from './components/HomeownerListFilters';
+import HomeownerPagination from './components/HomeownerPagination';
 import { useHomeownersData } from './hooks/useHomeownersData';
 import { useHomeownerFilters } from './hooks/useHomeownerFilters';
 import { useHomeownerColumns } from './hooks/useHomeownerColumns';
@@ -20,25 +20,24 @@ const HomeownerListPage = () => {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   
   const { 
-    homeowners, 
+    residents: homeowners, 
     loading, 
     error, 
     associations, 
-    refreshData, 
-    exportData 
+    fetchResidentsByAssociationId: refreshData
   } = useHomeownersData();
   
   const { 
     searchTerm, 
     setSearchTerm, 
-    statusFilter, 
-    setStatusFilter, 
-    associationFilter, 
-    setAssociationFilter, 
+    filterAssociation: associationFilter, 
+    setFilterAssociation: setAssociationFilter,
+    filterStatus: statusFilter, 
+    setFilterStatus: setStatusFilter,
     filteredHomeowners 
   } = useHomeownerFilters(homeowners);
   
-  const { visibleColumns, toggleColumn, resetColumns } = useHomeownerColumns();
+  const { visibleColumnIds, updateVisibleColumns, resetToDefaults } = useHomeownerColumns();
   
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -47,7 +46,28 @@ const HomeownerListPage = () => {
   
   const handleExport = async (format: 'csv' | 'pdf') => {
     try {
-      await exportData(format, filteredHomeowners);
+      const data = filteredHomeowners.map(homeowner => ({
+        name: homeowner.name,
+        email: homeowner.email,
+        propertyAddress: homeowner.propertyAddress,
+        status: homeowner.status,
+        association: homeowner.associationName
+      }));
+      
+      if (format === 'csv') {
+        const csv = [
+          Object.keys(data[0] || {}).join(','),
+          ...data.map(row => Object.values(row).join(','))
+        ].join('\n');
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'homeowners.csv';
+        a.click();
+      }
+      
       toast.success(`Homeowners exported as ${format.toUpperCase()}`);
     } catch (error) {
       toast.error(`Failed to export homeowners`);
@@ -58,6 +78,19 @@ const HomeownerListPage = () => {
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
+
+  // Create column management functions that match expected interface
+  const toggleColumn = (columnId: string) => {
+    const currentColumns = visibleColumnIds;
+    const newColumns = currentColumns.includes(columnId)
+      ? currentColumns.filter(id => id !== columnId)
+      : [...currentColumns, columnId];
+    updateVisibleColumns(newColumns);
+  };
+
+  const resetColumns = () => {
+    resetToDefaults();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -117,7 +150,7 @@ const HomeownerListPage = () => {
               <HomeownerTable
                 homeowners={paginatedHomeowners}
                 loading={loading}
-                visibleColumns={visibleColumns}
+                visibleColumns={visibleColumnIds}
                 onToggleColumn={toggleColumn}
                 onResetColumns={resetColumns}
               />

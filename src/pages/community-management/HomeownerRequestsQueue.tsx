@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Filter, Download, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { HomeownerRequestsTable } from '@/components/homeowners/HomeownerRequestsTable';
-import { HomeownerRequestFilters } from '@/components/homeowners/HomeownerRequestFilters';
-import { HomeownerRequestPagination } from '@/components/homeowners/HomeownerRequestPagination';
-import { NewRequestDialog } from '@/components/homeowners/dialog/NewRequestDialog';
+import HomeownerRequestsTable from '@/components/homeowners/HomeownerRequestsTable';
+import HomeownerRequestFilters from '@/components/homeowners/HomeownerRequestFilters';
+import HomeownerRequestPagination from '@/components/homeowners/HomeownerRequestPagination';
+import NewRequestDialog from '@/components/homeowners/dialog/NewRequestDialog';
 import { useHomeownerRequests } from '@/hooks/homeowners/useHomeownerRequests';
 import { toast } from 'sonner';
 
@@ -16,33 +16,60 @@ const HomeownerRequestsQueue = () => {
   const [isNewRequestDialogOpen, setIsNewRequestDialogOpen] = useState(false);
   
   const {
-    requests,
-    loading,
+    homeownerRequests,
+    filteredRequests,
+    isLoading: loading,
     error,
-    filters,
-    setFilters,
-    refreshRequests,
-    exportRequests,
-    filteredRequests
+    activeTab,
+    setActiveTab,
+    searchTerm,
+    setSearchTerm,
+    priority,
+    setPriority,
+    type,
+    setType,
+    handleRefresh
   } = useHomeownerRequests();
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters]);
+  }, [searchTerm, activeTab, priority, type]);
 
   const handleExport = async (format: 'csv' | 'pdf') => {
     try {
-      await exportRequests(format, filteredRequests);
+      // Simple export functionality - can be enhanced later
+      const data = filteredRequests.map(request => ({
+        title: request.title,
+        status: request.status,
+        priority: request.priority,
+        type: request.type,
+        created_at: request.created_at
+      }));
+      
+      if (format === 'csv') {
+        const csv = [
+          Object.keys(data[0] || {}).join(','),
+          ...data.map(row => Object.values(row).join(','))
+        ].join('\n');
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'homeowner-requests.csv';
+        a.click();
+      }
+      
       toast.success(`Requests exported as ${format.toUpperCase()}`);
     } catch (error) {
       toast.error('Failed to export requests');
     }
   };
 
-  const handleRefresh = async () => {
+  const handleRefreshClick = async () => {
     try {
-      await refreshRequests();
+      handleRefresh();
       toast.success('Requests refreshed');
     } catch (error) {
       toast.error('Failed to refresh requests');
@@ -54,6 +81,21 @@ const HomeownerRequestsQueue = () => {
     currentPage * pageSize
   );
 
+  // Create filters object for the HomeownerRequestFilters component
+  const filters = {
+    activeTab,
+    searchTerm,
+    priority,
+    type
+  };
+
+  const setFilters = (newFilters: any) => {
+    if (newFilters.activeTab !== undefined) setActiveTab(newFilters.activeTab);
+    if (newFilters.searchTerm !== undefined) setSearchTerm(newFilters.searchTerm);
+    if (newFilters.priority !== undefined) setPriority(newFilters.priority);
+    if (newFilters.type !== undefined) setType(newFilters.type);
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -63,7 +105,7 @@ const HomeownerRequestsQueue = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+          <Button variant="outline" onClick={handleRefreshClick} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -115,7 +157,7 @@ const HomeownerRequestsQueue = () => {
         open={isNewRequestDialogOpen}
         onOpenChange={setIsNewRequestDialogOpen}
         onSuccess={() => {
-          refreshRequests();
+          handleRefresh();
           toast.success('Request created successfully');
         }}
       />

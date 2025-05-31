@@ -1,70 +1,102 @@
 
 import React from 'react';
-import FilterSearchInput from './filters/FilterSearchInput';
-import FilterSelect from './filters/FilterSelect';
-import { HomeownerRequestPriority, HomeownerRequestType, HomeownerRequestStatus } from '@/types/homeowner-request-types';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter } from 'lucide-react';
 
 interface HomeownerRequestFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  priority: HomeownerRequestPriority | 'all';
-  setPriority: (priority: string) => void;
-  type: HomeownerRequestType | 'all';
-  setType: (type: string) => void;
-  status?: HomeownerRequestStatus | 'all' | 'active';
-  setStatus?: (status: string) => void;
+  filters: {
+    activeTab?: string;
+    searchTerm?: string;
+    priority?: string;
+    type?: string;
+  };
+  onFiltersChange: (filters: any) => void;
 }
 
-const priorityOptions = [
-  { value: 'all', label: 'All Priorities' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-  { value: 'urgent', label: 'Urgent' }
-];
-
-const typeOptions = [
-  { value: 'all', label: 'All Types' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'compliance', label: 'Compliance' },
-  { value: 'billing', label: 'Billing' },
-  { value: 'general', label: 'General' },
-  { value: 'amenity', label: 'Amenity' }
-];
-
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
-  searchTerm,
-  setSearchTerm,
-  priority,
-  setPriority,
-  type,
-  setType,
-  status,
-  setStatus
+  filters,
+  onFiltersChange
 }) => {
+  const handleSearchChange = (value: string) => {
+    onFiltersChange({ ...filters, searchTerm: value });
+  };
+
+  const handlePriorityChange = (value: string) => {
+    onFiltersChange({ ...filters, priority: value });
+  };
+
+  const handleTypeChange = (value: string) => {
+    onFiltersChange({ ...filters, type: value });
+  };
+
+  const handleTabChange = (value: string) => {
+    onFiltersChange({ ...filters, activeTab: value });
+  };
+
+  const activeFiltersCount = Object.values(filters).filter(value => 
+    value && value !== 'all' && value !== ''
+  ).length;
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <FilterSearchInput 
-        value={searchTerm} 
-        onChange={setSearchTerm} 
-      />
+    <div className="flex flex-col sm:flex-row gap-4 items-center">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search requests..."
+          value={filters.searchTerm || ''}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="pl-9"
+        />
+      </div>
       
       <div className="flex gap-2">
-        <FilterSelect
-          value={priority}
-          onChange={setPriority}
-          options={priorityOptions}
-          placeholder="Priority"
-          label="Priority"
-        />
+        <Select value={filters.priority || 'all'} onValueChange={handlePriorityChange}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priority</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.type || 'all'} onValueChange={handleTypeChange}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="complaint">Complaint</SelectItem>
+            <SelectItem value="inquiry">Inquiry</SelectItem>
+            <SelectItem value="general">General</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filters.activeTab || 'active'} onValueChange={handleTabChange}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
+            <SelectItem value="in_progress">In Progress</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+          </SelectContent>
+        </Select>
         
-        <FilterSelect
-          value={type}
-          onChange={setType}
-          options={typeOptions}
-          placeholder="Type"
-          label="Type"
-        />
+        {activeFiltersCount > 0 && (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <Filter className="h-3 w-3" />
+            {activeFiltersCount}
+          </Badge>
+        )}
       </div>
     </div>
   );
