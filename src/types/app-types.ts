@@ -7,6 +7,7 @@ export * from './compliance-types';
 export * from './amenity-types';
 export * from './maintenance-types';
 export * from './assessment-types';
+export * from './calendar-types';
 
 // Any other types that might be missing
 export interface Amenity {

@@ -26,7 +26,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
   
   const { amenityOptions } = useAmenities();
   const {
-    events: eventsForSelectedDate,
+    eventsForSelectedDate,
     newEvent,
     setNewEvent,
     eventsLoading,
@@ -84,7 +84,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={{...newEvent, date}}
+                newEvent={{...newEvent, date: format(date, 'yyyy-MM-dd')}}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}

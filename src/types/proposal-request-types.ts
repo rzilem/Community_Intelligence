@@ -42,3 +42,35 @@ export interface FormStepProps {
   onChange: (field: string, value: any) => void;
   errors: Record<string, string>;
 }
+
+// Function to submit proposal request
+export async function submitProposalRequest(
+  formData: ProposalRequestFormData, 
+  userId: string
+): Promise<{ data: ProposalRequest | null; error: Error | null }> {
+  try {
+    // This would typically make an API call to save the proposal request
+    // For now, we'll simulate success
+    const proposalRequest: ProposalRequest = {
+      id: crypto.randomUUID(),
+      community_name: formData.communityName,
+      number_of_bids: parseInt(formData.numberOfBids),
+      address: formData.address,
+      project_type: formData.projectType,
+      bid_request_type: formData.bidRequestType,
+      work_location: formData.workLocation,
+      cpa_service: formData.cpaService,
+      road_work_types: formData.roadWorkTypes,
+      fence_location: formData.fenceLocation,
+      additional_details: formData.additionalDetails,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: userId
+    };
+
+    return { data: proposalRequest, error: null };
+  } catch (error) {
+    return { data: null, error: error as Error };
+  }
+}
