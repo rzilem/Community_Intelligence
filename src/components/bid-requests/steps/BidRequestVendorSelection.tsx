@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BidRequestWithVendors, BidRequestVendor } from '@/types/bid-request-types';
-import { Vendor } from '@/types/bid-request-types';
+import { VendorServiceType } from '@/services/vendor-service';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,7 +25,7 @@ const BidRequestVendorSelection: React.FC<BidRequestVendorSelectionProps> = ({
   formData, 
   onUpdate 
 }) => {
-  const [eligibleVendors, setEligibleVendors] = useState<Vendor[]>([]);
+  const [eligibleVendors, setEligibleVendors] = useState<VendorServiceType[]>([]);
   const [selectedVendors, setSelectedVendors] = useState<string[]>(
     (formData.vendors || []).map(v => v.vendorId)
   );
