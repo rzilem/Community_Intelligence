@@ -28,8 +28,8 @@ export interface VendorServiceType {
   address?: string;
   service_type?: string;
   serviceType?: string; // Dual support for camelCase
-  insurance_info?: Record<string, any>;
-  insuranceInfo?: Record<string, any>; // Dual support for camelCase
+  insurance_info?: Record<string, any> | null;
+  insuranceInfo?: Record<string, any> | null; // Dual support for camelCase
   logo_url?: string;
   logoUrl?: string; // Dual support for camelCase
   license_number?: string;
@@ -79,6 +79,22 @@ const parseVendorStatus = (status: string | null | undefined): 'active' | 'inact
   return 'active'; // default fallback
 };
 
+// Helper function to safely parse insurance info
+const parseInsuranceInfo = (insurance_info: any): Record<string, any> | null => {
+  if (!insurance_info) return null;
+  if (typeof insurance_info === 'object' && insurance_info !== null) {
+    return insurance_info as Record<string, any>;
+  }
+  if (typeof insurance_info === 'string') {
+    try {
+      return JSON.parse(insurance_info);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
+
 export const vendorService = {
   getVendors: async (): Promise<VendorServiceType[]> => {
     const { data, error } = await supabase
@@ -118,8 +134,8 @@ export const vendorService = {
       address: vendor.address,
       service_type: vendor.service_type,
       serviceType: vendor.service_type,
-      insurance_info: vendor.insurance_info,
-      insuranceInfo: vendor.insurance_info,
+      insurance_info: parseInsuranceInfo(vendor.insurance_info),
+      insuranceInfo: parseInsuranceInfo(vendor.insurance_info),
       logo_url: vendor.logo_url,
       logoUrl: vendor.logo_url,
       license_number: vendor.license_number,
@@ -173,8 +189,8 @@ export const vendorService = {
       address: data.address,
       service_type: data.service_type,
       serviceType: data.service_type,
-      insurance_info: data.insurance_info,
-      insuranceInfo: data.insurance_info,
+      insurance_info: parseInsuranceInfo(data.insurance_info),
+      insuranceInfo: parseInsuranceInfo(data.insurance_info),
       logo_url: data.logo_url,
       logoUrl: data.logo_url,
       license_number: data.license_number,
@@ -288,8 +304,8 @@ export const vendorService = {
       address: data.address,
       service_type: data.service_type,
       serviceType: data.service_type,
-      insurance_info: data.insurance_info,
-      insuranceInfo: data.insurance_info,
+      insurance_info: parseInsuranceInfo(data.insurance_info),
+      insuranceInfo: parseInsuranceInfo(data.insurance_info),
       logo_url: data.logo_url,
       logoUrl: data.logo_url,
       license_number: data.license_number,
@@ -367,8 +383,8 @@ export const vendorService = {
       address: data.address,
       service_type: data.service_type,
       serviceType: data.service_type,
-      insurance_info: data.insurance_info,
-      insuranceInfo: data.insurance_info,
+      insurance_info: parseInsuranceInfo(data.insurance_info),
+      insuranceInfo: parseInsuranceInfo(data.insurance_info),
       logo_url: data.logo_url,
       logoUrl: data.logo_url,
       license_number: data.license_number,
