@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Outlet, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth';
@@ -48,15 +49,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     );
   }
 
-  // Redirect to auth if not authenticated (except for public routes)
-  const publicRoutes = ['/auth', '/terms', '/privacy', '/'];
-  if (!user && !publicRoutes.includes(location.pathname)) {
+  // Redirect to auth if not authenticated
+  if (!user) {
     return <Navigate to="/auth" replace />;
-  }
-
-  // Show auth page for unauthenticated users on public routes
-  if (!user && publicRoutes.includes(location.pathname)) {
-    return children ? <>{children}</> : <Outlet />;
   }
 
   const navigationItems = [
@@ -76,8 +71,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         { name: 'Proposals', path: '/lead-management/proposals', icon: FileText },
         { name: 'Email Campaigns', path: '/lead-management/email-campaigns', icon: MessageSquare },
         { name: 'Analytics', path: '/lead-management/analytics', icon: TrendingUp },
-        { name: 'Onboarding', path: '/lead-management/onboarding', icon: UserCheck },
-        { name: 'Templates', path: '/lead-management/templates', icon: BookOpen }
+        { name: 'Onboarding', path: '/lead-management/onboarding', icon: UserCheck }
       ]
     },
     {
@@ -118,8 +112,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         { name: 'Workflows', path: '/operations/workflows', icon: Settings },
         { name: 'Calendar', path: '/operations/calendar', icon: Calendar },
         { name: 'Letter Templates', path: '/operations/letter-templates', icon: FileText },
-        { name: 'Print Queue', path: '/operations/print-queue', icon: FileText },
-        { name: 'Reports', path: '/operations/reports', icon: BarChart }
+        { name: 'Print Queue', path: '/operations/print-queue', icon: FileText }
       ]
     },
     {

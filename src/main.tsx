@@ -5,9 +5,22 @@ import App from './App';
 import './index.css';
 
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Root element not found");
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
 
-createRoot(rootElement).render(
+const root = createRoot(rootElement);
+
+// Add global error handler
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+});
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+});
+
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
