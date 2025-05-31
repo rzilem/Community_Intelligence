@@ -1,4 +1,3 @@
-// AppSidebar.tsx - Restore Beautiful Blue Gradient Sidebar
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -91,7 +90,10 @@ const AppSidebar = () => {
   return (
     <Sidebar className="sidebar-gradient border-r-0">
       <SidebarHeader className="border-b border-blue-600/20 bg-gradient-to-b from-blue-900/50 to-transparent">
-        <Link to="/dashboard" className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+        <Link 
+          to="/dashboard" 
+          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+        >
           <Building className="h-8 w-8 text-blue-200" />
           <div className="flex flex-col">
             <span className="text-lg font-bold text-white">Community</span>
