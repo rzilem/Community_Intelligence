@@ -67,11 +67,15 @@ const CreateBidRequest = () => {
       
       // Format the data for submission
       const bidRequestData = {
-        ...values,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        budget: values.budget ? parseFloat(values.budget) : null,
+        association_id: values.association_id,
         created_by: user?.id,
         status: 'open',
         created_at: new Date().toISOString(),
-        deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
+        bid_deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd HH:mm:ssXXX') : null,
       };
       
       // Insert into database
@@ -108,11 +112,15 @@ const CreateBidRequest = () => {
       
       // Format the data for submission
       const bidRequestData = {
-        ...values,
+        title: values.title,
+        description: values.description,
+        category: values.category,
+        budget: values.budget ? parseFloat(values.budget) : null,
+        association_id: values.association_id,
         created_by: user?.id,
         status: 'draft',
         created_at: new Date().toISOString(),
-        deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd') : null,
+        bid_deadline: values.deadline ? format(values.deadline, 'yyyy-MM-dd HH:mm:ssXXX') : null,
       };
       
       // Insert into database
