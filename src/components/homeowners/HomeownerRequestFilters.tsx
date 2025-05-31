@@ -6,37 +6,71 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
 
 interface HomeownerRequestFiltersProps {
-  filters: {
+  filters?: {
     activeTab?: string;
     searchTerm?: string;
     priority?: string;
     type?: string;
   };
-  onFiltersChange: (filters: any) => void;
+  onFiltersChange?: (filters: any) => void;
+  // Alternative props pattern
+  searchTerm?: string;
+  setSearchTerm?: (term: string) => void;
+  priority?: any;
+  setPriority?: any;
+  type?: any;
+  setType?: any;
 }
 
 const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
   filters,
-  onFiltersChange
+  onFiltersChange,
+  searchTerm: directSearchTerm,
+  setSearchTerm: directSetSearchTerm,
+  priority: directPriority,
+  setPriority: directSetPriority,
+  type: directType,
+  setType: directSetType
 }) => {
+  // Use direct props if available, otherwise use filters object
+  const searchTerm = directSearchTerm ?? filters?.searchTerm ?? '';
+  const priority = directPriority ?? filters?.priority ?? 'all';
+  const type = directType ?? filters?.type ?? 'all';
+  const activeTab = filters?.activeTab ?? 'active';
+
   const handleSearchChange = (value: string) => {
-    onFiltersChange({ ...filters, searchTerm: value });
+    if (directSetSearchTerm) {
+      directSetSearchTerm(value);
+    } else if (onFiltersChange && filters) {
+      onFiltersChange({ ...filters, searchTerm: value });
+    }
   };
 
   const handlePriorityChange = (value: string) => {
-    onFiltersChange({ ...filters, priority: value });
+    if (directSetPriority) {
+      directSetPriority(value);
+    } else if (onFiltersChange && filters) {
+      onFiltersChange({ ...filters, priority: value });
+    }
   };
 
   const handleTypeChange = (value: string) => {
-    onFiltersChange({ ...filters, type: value });
+    if (directSetType) {
+      directSetType(value);
+    } else if (onFiltersChange && filters) {
+      onFiltersChange({ ...filters, type: value });
+    }
   };
 
   const handleTabChange = (value: string) => {
-    onFiltersChange({ ...filters, activeTab: value });
+    if (onFiltersChange && filters) {
+      onFiltersChange({ ...filters, activeTab: value });
+    }
   };
 
-  const activeFiltersCount = Object.values(filters).filter(value => 
-    value && value !== 'all' && value !== ''
+  const filterValues = { searchTerm, priority, type, activeTab };
+  const activeFiltersCount = Object.values(filterValues).filter(value => 
+    value && value !== 'all' && value !== '' && value !== 'active'
   ).length;
 
   return (
@@ -45,14 +79,14 @@ const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search requests..."
-          value={filters.searchTerm || ''}
+          value={searchTerm}
           onChange={(e) => handleSearchChange(e.target.value)}
           className="pl-9"
         />
       </div>
       
       <div className="flex gap-2">
-        <Select value={filters.priority || 'all'} onValueChange={handlePriorityChange}>
+        <Select value={priority} onValueChange={handlePriorityChange}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Priority" />
           </SelectTrigger>
@@ -65,7 +99,7 @@ const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={filters.type || 'all'} onValueChange={handleTypeChange}>
+        <Select value={type} onValueChange={handleTypeChange}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
@@ -78,18 +112,20 @@ const HomeownerRequestFilters: React.FC<HomeownerRequestFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={filters.activeTab || 'active'} onValueChange={handleTabChange}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-          </SelectContent>
-        </Select>
+        {onFiltersChange && (
+          <Select value={activeTab} onValueChange={handleTabChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
         
         {activeFiltersCount > 0 && (
           <Badge variant="secondary" className="flex items-center gap-1">

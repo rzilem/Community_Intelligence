@@ -1,66 +1,44 @@
 
 import React from 'react';
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from '@/components/ui/pagination';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HomeownerPaginationProps {
-  filteredCount: number;
-  totalCount: number;
   currentPage: number;
-  totalPages: number;
+  totalItems: number;
   pageSize: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }
 
-const HomeownerPagination: React.FC<HomeownerPaginationProps> = ({ 
-  filteredCount, 
-  totalCount,
-  currentPage = 1,
-  totalPages = 1,
+const HomeownerPagination: React.FC<HomeownerPaginationProps> = ({
+  currentPage,
+  totalItems,
   pageSize,
   onPageChange,
   onPageSizeChange
 }) => {
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      onPageChange(currentPage - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage + 1);
-    }
-  };
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startItem = (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between px-2">
+      <div className="flex items-center space-x-2">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredCount} of {totalCount} owners
+          Showing {startItem} to {endItem} of {totalItems} results
         </p>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="page-size" className="text-sm">Show:</Label>
-          <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value))}>
-            <SelectTrigger id="page-size" className="h-8 w-[70px]">
-              <SelectValue placeholder={pageSize} />
+      </div>
+      
+      <div className="flex items-center space-x-6 lg:space-x-8">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">Rows per page</p>
+          <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(Number(value))}>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent side="top">
               <SelectItem value="10">10</SelectItem>
               <SelectItem value="25">25</SelectItem>
               <SelectItem value="50">50</SelectItem>
@@ -68,32 +46,35 @@ const HomeownerPagination: React.FC<HomeownerPaginationProps> = ({
             </SelectContent>
           </Select>
         </div>
+        
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Previous
+          </Button>
+          
+          <div className="flex items-center space-x-1">
+            <span className="text-sm font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              onClick={handlePrevious}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
-          
-          {totalPages > 0 && (
-            <PaginationItem>
-              <PaginationLink isActive={true}>
-                {currentPage} of {totalPages}
-              </PaginationLink>
-            </PaginationItem>
-          )}
-          
-          <PaginationItem>
-            <PaginationNext 
-              onClick={handleNext}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
     </div>
   );
 };
