@@ -1,5 +1,5 @@
+
 import React, { useState, useEffect } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import { Users2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ResidentActions from './components/ResidentActions';
@@ -60,44 +60,42 @@ const ResidentListPage = () => {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users2 className="h-8 w-8" />
-            <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
-          </div>
-          
-          <ResidentActions 
-            isAddDialogOpen={isAddDialogOpen}
-            setIsAddDialogOpen={setIsAddDialogOpen}
-            onAddSuccess={handleAddSuccess}
-            onExportCSV={exportResidentsAsCSV}
-            onExportPDF={exportResidentsAsPDF}
-          />
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users2 className="h-8 w-8" />
+          <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
         </div>
-
-        <div id="resident-table-top"></div>
-        <ResidentContent
-          loading={loading}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterAssociation={filterAssociation}
-          setFilterAssociation={setFilterAssociation}
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          filterType={filterType}
-          setFilterType={setFilterType}
-          associations={associations}
-          residents={residents}
-          filteredResidents={filteredResidents}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
+        
+        <ResidentActions 
+          isAddDialogOpen={isAddDialogOpen}
+          setIsAddDialogOpen={setIsAddDialogOpen}
+          onAddSuccess={handleAddSuccess}
+          onExportCSV={exportResidentsAsCSV}
+          onExportPDF={exportResidentsAsPDF}
         />
       </div>
-    </AppLayout>
+
+      <div id="resident-table-top"></div>
+      <ResidentContent
+        loading={loading}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filterAssociation={filterAssociation}
+        setFilterAssociation={setFilterAssociation}
+        filterStatus={filterStatus}
+        setFilterStatus={setFilterStatus}
+        filterType={filterType}
+        setFilterType={setFilterType}
+        associations={associations}
+        residents={residents}
+        filteredResidents={filteredResidents}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
+    </div>
   );
 };
 

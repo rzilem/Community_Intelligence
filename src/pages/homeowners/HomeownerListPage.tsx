@@ -1,163 +1,146 @@
-import React, { useEffect, useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
-import { Users, Plus } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+
+import React, { useState, useEffect } from 'react';
+import { Users, Download, Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useHomeownerColumns } from './hooks/useHomeownerColumns';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { HomeownerTable } from './components/HomeownerTable';
+import { HomeownerGrid } from '../HomeownerGrid';
+import { HomeownerFilters } from './components/HomeownerListFilters';
+import { HomeownerPagination } from './components/HomeownerPagination';
 import { useHomeownersData } from './hooks/useHomeownersData';
 import { useHomeownerFilters } from './hooks/useHomeownerFilters';
-import HomeownerListFilters from './components/HomeownerListFilters';
-import HomeownerTable from './components/HomeownerTable';
+import { useHomeownerColumns } from './hooks/useHomeownerColumns';
+import { toast } from 'sonner';
 
 const HomeownerListPage = () => {
-  const navigate = useNavigate();
-  const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   
-  const {
-    residents,
-    loading,
-    error,
-    associations,
-    isLoadingAssociations,
-    fetchResidentsByAssociationId,
-    setError
+  const { 
+    homeowners, 
+    loading, 
+    error, 
+    associations, 
+    refreshData, 
+    exportData 
   } = useHomeownersData();
-
-  const {
-    searchTerm,
-    setSearchTerm,
-    filterAssociation,
-    setFilterAssociation,
-    filterStatus,
-    setFilterStatus,
-    filterType,
-    setFilterType,
-    filteredHomeowners,
-    extractStreetAddress
-  } = useHomeownerFilters(residents);
-
+  
+  const { 
+    searchTerm, 
+    setSearchTerm, 
+    statusFilter, 
+    setStatusFilter, 
+    associationFilter, 
+    setAssociationFilter, 
+    filteredHomeowners 
+  } = useHomeownerFilters(homeowners);
+  
+  const { visibleColumns, toggleColumn, resetColumns } = useHomeownerColumns();
+  
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterAssociation, filterStatus, filterType]);
-
-  // Count residents with invalid associations
-  const invalidAssociationCount = residents.filter(
-    resident => !resident.hasValidAssociation
-  ).length;
-
-  useEffect(() => {
-    if (!isLoadingAssociations) {
-      fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
+  }, [searchTerm, statusFilter, associationFilter]);
+  
+  const handleExport = async (format: 'csv' | 'pdf') => {
+    try {
+      await exportData(format, filteredHomeowners);
+      toast.success(`Homeowners exported as ${format.toUpperCase()}`);
+    } catch (error) {
+      toast.error(`Failed to export homeowners`);
     }
-  }, [filterAssociation, isLoadingAssociations]);
-
-  const handleRetry = () => {
-    setError(null);
-    fetchResidentsByAssociationId(filterAssociation === 'all' ? null : filterAssociation);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    // Scroll to top of the table when changing pages
-    window.scrollTo({
-      top: document.getElementById('homeowner-table-top')?.offsetTop || 0,
-      behavior: 'smooth'
-    });
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1); // Reset to first page when changing page size
-  };
+  const paginatedHomeowners = filteredHomeowners.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Users className="h-8 w-8" />
-            <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
-          </div>
-          <Button onClick={() => navigate('/homeowners/add')}>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8" />
+          <h1 className="text-3xl font-bold tracking-tight">Homeowners</h1>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => handleExport('csv')}>
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={() => handleExport('pdf')}>
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Owner
+            Add Homeowner
           </Button>
         </div>
-
-        <Card>
-          <CardContent className="p-6">
-            <h2 className="text-2xl font-bold mb-2">Owner Management</h2>
-            <p className="text-muted-foreground mb-6">View and manage all owners across your community associations.</p>
-            
-            {invalidAssociationCount > 0 && (
-              <Alert className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Association Issues Detected</AlertTitle>
-                <AlertDescription>
-                  {invalidAssociationCount} owners have invalid or missing association assignments. 
-                  Please use the import tools to fix these data issues.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {error && (
-              <Alert className="mb-6" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {error}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="ml-4"
-                    onClick={handleRetry}
-                  >
-                    Retry
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <HomeownerListFilters
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              filterAssociation={filterAssociation}
-              setFilterAssociation={setFilterAssociation}
-              filterStatus={filterStatus}
-              setFilterStatus={setFilterStatus}
-              filterType={filterType}
-              setFilterType={setFilterType}
-              associations={associations}
-              columns={columns}
-              visibleColumnIds={visibleColumnIds}
-              updateVisibleColumns={updateVisibleColumns}
-              reorderColumns={reorderColumns}
-            />
-            
-            <div id="homeowner-table-top"></div>
-            <HomeownerTable
-              loading={loading}
-              filteredHomeowners={filteredHomeowners}
-              visibleColumnIds={visibleColumnIds}
-              extractStreetAddress={extractStreetAddress}
-              allResidentsCount={residents.length}
-              error={error}
-              onRetry={handleRetry}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageChange={handlePageChange}
-              onPageSizeChange={handlePageSizeChange}
-            />
-          </CardContent>
-        </Card>
       </div>
-    </AppLayout>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Homeowner Management</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search homeowners..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <HomeownerFilters
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              associationFilter={associationFilter}
+              setAssociationFilter={setAssociationFilter}
+              associations={associations}
+            />
+          </div>
+
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'grid')}>
+            <TabsList>
+              <TabsTrigger value="table">Table View</TabsTrigger>
+              <TabsTrigger value="grid">Grid View</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="table" className="space-y-4">
+              <HomeownerTable
+                homeowners={paginatedHomeowners}
+                loading={loading}
+                visibleColumns={visibleColumns}
+                onToggleColumn={toggleColumn}
+                onResetColumns={resetColumns}
+              />
+            </TabsContent>
+            
+            <TabsContent value="grid" className="space-y-4">
+              <HomeownerGrid homeowners={paginatedHomeowners} />
+            </TabsContent>
+          </Tabs>
+
+          <HomeownerPagination
+            currentPage={currentPage}
+            totalItems={filteredHomeowners.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

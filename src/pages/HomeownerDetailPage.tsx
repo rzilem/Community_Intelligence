@@ -1,5 +1,5 @@
+
 import React, { useState } from 'react';
-import AppLayout from '@/components/layout/AppLayout';
 import { useParams } from 'react-router-dom';
 import { HomePropertyImage } from '@/components/homeowners/HomePropertyImage';
 import { HomeownerHeader } from '@/components/homeowners/detail/HomeownerHeader';
@@ -53,17 +53,13 @@ const HomeownerDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="p-6">Loading homeowner data...</div>
-      </AppLayout>
+      <div className="p-6">Loading homeowner data...</div>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="p-6">Error loading homeowner data: {error}</div>
-      </AppLayout>
+      <div className="p-6">Error loading homeowner data: {error}</div>
     );
   }
 
@@ -95,61 +91,59 @@ const HomeownerDetailPage: React.FC = () => {
   const propertyId = homeowner?.propertyId || id || '';
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-start">
-          <div className="space-y-4">
-            <HomeownerHeader 
-              id={id || homeowner?.id || ''}
-              name={homeowner?.name}
-              status={homeowner?.status}
-              tags={homeowner?.tags}
-              violations={homeowner?.violations}
-              avatarUrl={homeowner?.avatarUrl}
-              onProfileImageUpdated={updateHomeownerImage}
-              onEditClick={isAdmin ? handleEdit : undefined}
-            />
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-start">
+        <div className="space-y-4">
+          <HomeownerHeader 
+            id={id || homeowner?.id || ''}
+            name={homeowner?.name}
+            status={homeowner?.status}
+            tags={homeowner?.tags}
+            violations={homeowner?.violations}
+            avatarUrl={homeowner?.avatarUrl}
+            onProfileImageUpdated={updateHomeownerImage}
+            onEditClick={isAdmin ? handleEdit : undefined}
+          />
 
-            {isEditing && isAdmin ? (
-              <HomeownerEditForm 
-                homeowner={homeowner}
-                onSave={handleSaveEdit}
-                onCancel={handleCancelEdit}
-              />
-            ) : (
-              <HomeownerInfo 
-                id={homeowner?.id}
-                email={homeowner?.email}
-                phone={homeowner?.phone}
-                moveInDate={homeowner?.moveInDate}
-                property={homeowner?.property}
-                unit={homeowner?.unit}
-                balance={homeowner?.balance}
-                lastContact={lastContactValue}
-              />
-            )}
-          </div>
-          
-          <div className="ml-6">
-            <HomePropertyImage 
-              address={`${homeowner?.property || ''} ${homeowner?.unit || ''}, Austin, TX`}
-              propertyId={propertyId}
-              customImage={homeowner?.propertyImage}
+          {isEditing && isAdmin ? (
+            <HomeownerEditForm 
+              homeowner={homeowner}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
             />
-          </div>
+          ) : (
+            <HomeownerInfo 
+              id={homeowner?.id}
+              email={homeowner?.email}
+              phone={homeowner?.phone}
+              moveInDate={homeowner?.moveInDate}
+              property={homeowner?.property}
+              unit={homeowner?.unit}
+              balance={homeowner?.balance}
+              lastContact={lastContactValue}
+            />
+          )}
         </div>
-
-        <HomeownerTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          activeNotesTab={activeNotesTab}
-          setActiveNotesTab={setActiveNotesTab}
-          notes={homeowner?.notes || []}
-          onAddNote={handleAddNote}
-          homeownerId={id || homeowner?.id || ''}
-        />
+        
+        <div className="ml-6">
+          <HomePropertyImage 
+            address={`${homeowner?.property || ''} ${homeowner?.unit || ''}, Austin, TX`}
+            propertyId={propertyId}
+            customImage={homeowner?.propertyImage}
+          />
+        </div>
       </div>
-    </AppLayout>
+
+      <HomeownerTabs 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        activeNotesTab={activeNotesTab}
+        setActiveNotesTab={setActiveNotesTab}
+        notes={homeowner?.notes || []}
+        onAddNote={handleAddNote}
+        homeownerId={id || homeowner?.id || ''}
+      />
+    </div>
   );
 };
 
