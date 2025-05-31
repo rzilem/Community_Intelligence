@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
@@ -163,3 +162,27 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     return [];
   }
 };
+
+export async function createUserAssociation(
+  userId: string,
+  hoaId: string,
+  role: string = 'resident'
+): Promise<UserAssociation> {
+  const { data, error } = await supabase
+    .from('user_associations')
+    .insert({
+      user_id: userId,
+      hoa_id: hoaId,
+      role,
+      association: {
+        hoa_id: hoaId,
+        role: role,
+        permissions: getDefaultPermissions(role)
+      }
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}

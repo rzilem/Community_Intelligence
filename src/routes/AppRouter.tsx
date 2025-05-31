@@ -7,7 +7,7 @@ import Auth from '@/pages/Auth';
 import NotFound from '@/pages/NotFound';
 import InvitationPage from '@/pages/InvitationPage';
 import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
-import Dashboard from '@/pages/Dashboard';
+import { Dashboard } from '@/pages/Dashboard';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { protectedRoutes } from './routeConfig';
 

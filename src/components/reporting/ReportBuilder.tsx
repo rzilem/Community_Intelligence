@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +55,7 @@ const ReportBuilder: React.FC = () => {
     const newColumn: ReportColumn = {
       field: '',
       label: '',
+      type: 'text',
       data_type: 'string',
       is_visible: true
     };

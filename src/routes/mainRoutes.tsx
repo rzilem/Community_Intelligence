@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Home, Users, Building2, Calendar } from 'lucide-react';
-import Dashboard from '@/pages/Dashboard';
+import { Dashboard } from '@/pages/Dashboard';
 import Homeowners from '@/pages/Homeowners';
 import Associations from '@/pages/Associations';
 import CalendarPage from '@/pages/CalendarPage';

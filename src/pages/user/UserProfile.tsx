@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -37,7 +36,7 @@ const UserProfile = () => {
       first_name: profile?.first_name || '',
       last_name: profile?.last_name || '',
       email: profile?.email || '',
-      phone_number: profile?.phone_number || profile?.phone || '',
+      phone_number: profile?.phone_number || '',
       role: (profile?.role as UserRole) || 'user',
     },
   });
