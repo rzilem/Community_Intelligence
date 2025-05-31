@@ -2,13 +2,13 @@
 import React from 'react';
 import { UserPlus, ShieldAlert, Settings } from 'lucide-react';
 import SettingsPage from '@/pages/Settings';
-import UserManagementPage from '@/pages/admin/UserManagementPage';
+import UserManagement from '@/components/admin/UserManagement';
 import { Route } from './types';
 
 export const adminRoutes: Route[] = [
   {
     path: 'admin/users',
-    element: <UserManagementPage />,
+    element: <UserManagement />,
     label: 'User Management',
     icon: UserPlus,
     category: 'admin',
@@ -17,7 +17,7 @@ export const adminRoutes: Route[] = [
   },
   {
     path: 'admin/roles',
-    element: <UserManagementPage />,
+    element: <UserManagement />,
     label: 'Role Management',
     icon: ShieldAlert,
     category: 'admin',

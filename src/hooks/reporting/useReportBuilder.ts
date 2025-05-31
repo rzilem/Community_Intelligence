@@ -1,7 +1,35 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { ReportDefinition, ReportFilter, ReportColumn, ChartConfig } from '@/types/reporting-types';
+
+// Define interfaces locally to avoid any potential type import issues
+interface ReportDefinition {
+  id: string;
+  association_id: string;
+  name: string;
+  description?: string;
+  report_type: string;
+  data_sources: string[];
+  filters: any[];
+  grouping: string[];
+  columns: any[];
+  chart_config?: any;
+  schedule?: any;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ReportExecutionResult {
+  id: string;
+  report_definition_id: string;
+  status: 'completed' | 'failed' | 'running';
+  result_data: any[];
+  execution_time_ms: number;
+  created_at: string;
+  completed_at: string;
+}
 
 // Mock data for demonstration
 const mockReports: ReportDefinition[] = [
@@ -17,6 +45,24 @@ const mockReports: ReportDefinition[] = [
     columns: [
       { field: 'property', label: 'Property', data_type: 'string', is_visible: true },
       { field: 'amount', label: 'Amount', data_type: 'currency', is_visible: true }
+    ],
+    is_active: true,
+    created_by: 'demo-user',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    association_id: 'demo-association',
+    name: 'Maintenance Requests Report',
+    description: 'Monthly maintenance overview',
+    report_type: 'maintenance',
+    data_sources: ['maintenance_requests'],
+    filters: [],
+    grouping: [],
+    columns: [
+      { field: 'property', label: 'Property', data_type: 'string', is_visible: true },
+      { field: 'status', label: 'Status', data_type: 'string', is_visible: true }
     ],
     is_active: true,
     created_by: 'demo-user',
@@ -66,14 +112,33 @@ export const useReportBuilder = () => {
   const executeReport = useCallback(async (reportId: string) => {
     setIsLoading(true);
     try {
-      // Simulate report execution
-      const reportData = await generateReportData(reportId);
+      // Simulate report execution with mock data
+      const mockData = [
+        {
+          id: '1',
+          property: '123 Main St',
+          resident: 'John Doe',
+          payment_status: 'Paid',
+          amount: 250.00,
+          due_date: '2024-01-15',
+          category: 'Monthly Assessment'
+        },
+        {
+          id: '2',
+          property: '456 Oak Ave',
+          resident: 'Jane Smith',
+          payment_status: 'Overdue',
+          amount: 275.00,
+          due_date: '2024-01-10',
+          category: 'Monthly Assessment'
+        }
+      ];
       
-      const executionResult = {
+      const executionResult: ReportExecutionResult = {
         id: Date.now().toString(),
         report_definition_id: reportId,
-        status: 'completed' as const,
-        result_data: reportData,
+        status: 'completed',
+        result_data: mockData,
         execution_time_ms: Math.floor(Math.random() * 2000) + 500,
         created_at: new Date().toISOString(),
         completed_at: new Date().toISOString()
@@ -116,17 +181,13 @@ export const useReportBuilder = () => {
       summary: `Analyzed ${reportData.length} records`,
       trends: [
         'Payment compliance has improved by 12% this quarter',
-        'Pool bookings are 35% higher than last year',
-        'Maintenance requests spike on weekends'
+        'Maintenance requests are 15% higher than last month'
       ],
       anomalies: [
-        'Unusual spike in late fees in Building C',
-        '3 properties have not submitted any requests this year'
+        'Unusual spike in late fees in Building C'
       ],
       recommendations: [
-        'Consider implementing automatic payment reminders',
-        'Add more pool booking slots for peak hours',
-        'Schedule preventive maintenance on weekdays'
+        'Consider implementing automatic payment reminders'
       ]
     };
 
@@ -144,40 +205,3 @@ export const useReportBuilder = () => {
     getAIInsights
   };
 };
-
-// Generate mock report data based on report type
-async function generateReportData(reportId: string) {
-  // This would normally execute the actual report query
-  // For demo purposes, we'll return structured mock data
-  const mockData = [
-    {
-      id: '1',
-      property: '123 Main St',
-      resident: 'John Doe',
-      payment_status: 'Paid',
-      amount: 250.00,
-      due_date: '2024-01-15',
-      category: 'Monthly Assessment'
-    },
-    {
-      id: '2',
-      property: '456 Oak Ave',
-      resident: 'Jane Smith',
-      payment_status: 'Overdue',
-      amount: 275.00,
-      due_date: '2024-01-10',
-      category: 'Monthly Assessment'
-    },
-    {
-      id: '3',
-      property: '789 Pine St',
-      resident: 'Bob Wilson',
-      payment_status: 'Paid',
-      amount: 300.00,
-      due_date: '2024-01-20',
-      category: 'Special Assessment'
-    }
-  ];
-
-  return mockData;
-}
