@@ -62,6 +62,10 @@ const ReportBuilder: React.FC = () => {
     setColumns([...columns, newColumn]);
   };
 
+  const removeColumn = (index: number) => {
+    setColumns(columns.filter((_, i) => i !== index));
+  };
+
   const handlePreviewReport = async () => {
     // Generate preview data
     const mockPreviewData = [

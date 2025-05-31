@@ -528,13 +528,6 @@ export type Database = {
             referencedRelation: "assessment_types"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "assessments_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
         ]
       }
       association_member_roles: {
@@ -660,6 +653,7 @@ export type Database = {
       }
       associations: {
         Row: {
+          accounting_method: string | null
           ach_auto_draft_day: string | null
           ach_draft_amount: string | null
           ach_generate_in_advance: number | null
@@ -677,16 +671,21 @@ export type Database = {
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
+          cash_basis: boolean | null
           city: string | null
+          code: string | null
           collections_active: string | null
           collections_model: string | null
           contact_email: string | null
           country: string | null
+          county: string | null
           created_at: string
           decline_threshold: number | null
           description: string | null
           email_notifications: boolean | null
+          empty_lots: number | null
           fire_inspection_due: string | null
+          fiscal_year_end: string | null
           founded_date: string | null
           grace_period_days: string | null
           id: string
@@ -697,26 +696,39 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          is_master_association: boolean | null
           late_fee_percentage: string | null
+          legal_name: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
+          master_association_code: string | null
           minimum_balance: number | null
+          model: string | null
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          nickname: string | null
+          offsite_addresses: number | null
           payment_due_day: string | null
           phone: string | null
+          portfolios: string | null
           primary_color: string | null
           processing_days: string | null
           property_type: string | null
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          service_type: string | null
           sms_notifications: boolean | null
           state: string | null
+          state_tax_id: string | null
           statement_format: string | null
           status: string | null
+          tax_id: string | null
+          total_leases: number | null
+          total_properties: number | null
+          total_tenants: number | null
           total_units: number | null
           updated_at: string
           utilities_billing_message: string | null
@@ -724,6 +736,7 @@ export type Database = {
           zip: string | null
         }
         Insert: {
+          accounting_method?: string | null
           ach_auto_draft_day?: string | null
           ach_draft_amount?: string | null
           ach_generate_in_advance?: number | null
@@ -741,16 +754,21 @@ export type Database = {
           balance_threshold?: string | null
           balance_threshold_type?: string | null
           board_approval_required?: boolean | null
+          cash_basis?: boolean | null
           city?: string | null
+          code?: string | null
           collections_active?: string | null
           collections_model?: string | null
           contact_email?: string | null
           country?: string | null
+          county?: string | null
           created_at?: string
           decline_threshold?: number | null
           description?: string | null
           email_notifications?: boolean | null
+          empty_lots?: number | null
           fire_inspection_due?: string | null
+          fiscal_year_end?: string | null
           founded_date?: string | null
           grace_period_days?: string | null
           id?: string
@@ -761,26 +779,39 @@ export type Database = {
           include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          is_master_association?: boolean | null
           late_fee_percentage?: string | null
+          legal_name?: string | null
           lien_threshold?: string | null
           lien_threshold_type?: string | null
           logo_url?: string | null
+          master_association_code?: string | null
           minimum_balance?: number | null
+          model?: string | null
           name: string
           new_association_grace_period?: string | null
           new_owner_grace_period?: string | null
+          nickname?: string | null
+          offsite_addresses?: number | null
           payment_due_day?: string | null
           phone?: string | null
+          portfolios?: string | null
           primary_color?: string | null
           processing_days?: string | null
           property_type?: string | null
           remittance_coupon_message?: string | null
           require_arc_voting?: boolean | null
           secondary_color?: string | null
+          service_type?: string | null
           sms_notifications?: boolean | null
           state?: string | null
+          state_tax_id?: string | null
           statement_format?: string | null
           status?: string | null
+          tax_id?: string | null
+          total_leases?: number | null
+          total_properties?: number | null
+          total_tenants?: number | null
           total_units?: number | null
           updated_at?: string
           utilities_billing_message?: string | null
@@ -788,6 +819,7 @@ export type Database = {
           zip?: string | null
         }
         Update: {
+          accounting_method?: string | null
           ach_auto_draft_day?: string | null
           ach_draft_amount?: string | null
           ach_generate_in_advance?: number | null
@@ -805,16 +837,21 @@ export type Database = {
           balance_threshold?: string | null
           balance_threshold_type?: string | null
           board_approval_required?: boolean | null
+          cash_basis?: boolean | null
           city?: string | null
+          code?: string | null
           collections_active?: string | null
           collections_model?: string | null
           contact_email?: string | null
           country?: string | null
+          county?: string | null
           created_at?: string
           decline_threshold?: number | null
           description?: string | null
           email_notifications?: boolean | null
+          empty_lots?: number | null
           fire_inspection_due?: string | null
+          fiscal_year_end?: string | null
           founded_date?: string | null
           grace_period_days?: string | null
           id?: string
@@ -825,26 +862,39 @@ export type Database = {
           include_qr_code?: boolean | null
           insurance_expiration?: string | null
           is_archived?: boolean | null
+          is_master_association?: boolean | null
           late_fee_percentage?: string | null
+          legal_name?: string | null
           lien_threshold?: string | null
           lien_threshold_type?: string | null
           logo_url?: string | null
+          master_association_code?: string | null
           minimum_balance?: number | null
+          model?: string | null
           name?: string
           new_association_grace_period?: string | null
           new_owner_grace_period?: string | null
+          nickname?: string | null
+          offsite_addresses?: number | null
           payment_due_day?: string | null
           phone?: string | null
+          portfolios?: string | null
           primary_color?: string | null
           processing_days?: string | null
           property_type?: string | null
           remittance_coupon_message?: string | null
           require_arc_voting?: boolean | null
           secondary_color?: string | null
+          service_type?: string | null
           sms_notifications?: boolean | null
           state?: string | null
+          state_tax_id?: string | null
           statement_format?: string | null
           status?: string | null
+          tax_id?: string | null
+          total_leases?: number | null
+          total_properties?: number | null
+          total_tenants?: number | null
           total_units?: number | null
           updated_at?: string
           utilities_billing_message?: string | null
@@ -1412,13 +1462,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bid_requests_hoa_id_fkey"
-            columns: ["hoa_id"]
-            isOneToOne: false
-            referencedRelation: "hoas"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bid_requests_maintenance_request_id_fkey"
             columns: ["maintenance_request_id"]
             isOneToOne: false
@@ -1710,13 +1753,6 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "collections_accounts_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -2122,13 +2158,6 @@ export type Database = {
             columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "compliance_issues_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -2677,13 +2706,6 @@ export type Database = {
             columns: ["form_template_id"]
             isOneToOne: false
             referencedRelation: "form_templates"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "form_submissions_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -3286,30 +3308,6 @@ export type Database = {
           },
         ]
       }
-      hoas: {
-        Row: {
-          address: string | null
-          created_at: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          address?: string | null
-          created_at?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          address?: string | null
-          created_at?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       homeowner_requests: {
         Row: {
           assigned_to: string | null
@@ -3364,6 +3362,147 @@ export type Database = {
           tracking_number?: string | null
           type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      homeowners: {
+        Row: {
+          account_number: string | null
+          ach_start_date: string | null
+          all_emails: string | null
+          all_phones: string | null
+          billing_communication_preference: string | null
+          blocked_ledger_view: boolean | null
+          business_name: string | null
+          charge_tags: string | null
+          collection_provider: string | null
+          collection_status: string | null
+          created_at: string | null
+          current_balance: number | null
+          deed_name: string | null
+          email: string | null
+          first_name: string | null
+          full_homeowner_name: string | null
+          general_communication_preference: string | null
+          homeowner_id: number | null
+          id: number
+          is_blocked: boolean | null
+          last_name: string | null
+          last_payment_amount: number | null
+          last_payment_date: string | null
+          lease_status: string | null
+          login_emails: string | null
+          mailing_address: string | null
+          mailing_city: string | null
+          mailing_full_address: string | null
+          mailing_state: string | null
+          mailing_zip: string | null
+          old_account_number: string | null
+          overall_balance: number | null
+          ownership_percentage: number | null
+          phone: string | null
+          portal_key: string | null
+          second_owner_first_name: string | null
+          second_owner_last_name: string | null
+          tags: string | null
+          tenant_emails: string | null
+          tenant_end_date: string | null
+          tenant_names: string | null
+          tenant_phones: string | null
+          tenant_start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          ach_start_date?: string | null
+          all_emails?: string | null
+          all_phones?: string | null
+          billing_communication_preference?: string | null
+          blocked_ledger_view?: boolean | null
+          business_name?: string | null
+          charge_tags?: string | null
+          collection_provider?: string | null
+          collection_status?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          deed_name?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_homeowner_name?: string | null
+          general_communication_preference?: string | null
+          homeowner_id?: number | null
+          id?: number
+          is_blocked?: boolean | null
+          last_name?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          lease_status?: string | null
+          login_emails?: string | null
+          mailing_address?: string | null
+          mailing_city?: string | null
+          mailing_full_address?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          old_account_number?: string | null
+          overall_balance?: number | null
+          ownership_percentage?: number | null
+          phone?: string | null
+          portal_key?: string | null
+          second_owner_first_name?: string | null
+          second_owner_last_name?: string | null
+          tags?: string | null
+          tenant_emails?: string | null
+          tenant_end_date?: string | null
+          tenant_names?: string | null
+          tenant_phones?: string | null
+          tenant_start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          ach_start_date?: string | null
+          all_emails?: string | null
+          all_phones?: string | null
+          billing_communication_preference?: string | null
+          blocked_ledger_view?: boolean | null
+          business_name?: string | null
+          charge_tags?: string | null
+          collection_provider?: string | null
+          collection_status?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          deed_name?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_homeowner_name?: string | null
+          general_communication_preference?: string | null
+          homeowner_id?: number | null
+          id?: number
+          is_blocked?: boolean | null
+          last_name?: string | null
+          last_payment_amount?: number | null
+          last_payment_date?: string | null
+          lease_status?: string | null
+          login_emails?: string | null
+          mailing_address?: string | null
+          mailing_city?: string | null
+          mailing_full_address?: string | null
+          mailing_state?: string | null
+          mailing_zip?: string | null
+          old_account_number?: string | null
+          overall_balance?: number | null
+          ownership_percentage?: number | null
+          phone?: string | null
+          portal_key?: string | null
+          second_owner_first_name?: string | null
+          second_owner_last_name?: string | null
+          tags?: string | null
+          tenant_emails?: string | null
+          tenant_end_date?: string | null
+          tenant_names?: string | null
+          tenant_phones?: string | null
+          tenant_start_date?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -3606,13 +3745,6 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoice_line_items_property_assignment_fkey"
-            columns: ["property_assignment"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -3958,13 +4090,6 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "maintenance_requests_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -4649,13 +4774,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "payment_transactions_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "payment_transactions_resident_id_fkey"
             columns: ["resident_id"]
             isOneToOne: false
@@ -4820,71 +4938,188 @@ export type Database = {
       }
       properties: {
         Row: {
+          account_number: string | null
           address: string
-          association_id: string
+          address_line_2: string | null
+          assessment_amount: number | null
           bathrooms: number | null
           bedrooms: number | null
+          block_number: string | null
           city: string | null
-          created_at: string
+          co_date: string | null
+          created_at: string | null
+          current_balance: number | null
+          full_address: string | null
+          hoa_id: string | null
+          homeowner_id: number | null
           id: string
-          image_url: string | null
+          legal_description: string | null
+          lot_number: string | null
           lot_size: number | null
           notes: string | null
-          property_type: string
-          square_feet: number | null
+          old_account_number: string | null
+          overall_balance: number | null
+          parcel_id: string | null
+          parking_spaces: number | null
+          phase: string | null
+          property_type: string | null
+          settled_date: string | null
+          special_assessment: number | null
+          special_features: string | null
+          square_footage: number | null
           state: string | null
           status: string | null
+          street_name: string | null
+          street_number: number | null
           unit_number: string | null
-          updated_at: string
+          updated_at: string | null
+          village: string | null
           year_built: number | null
-          zip: string | null
+          zip_code: string | null
         }
         Insert: {
+          account_number?: string | null
           address: string
-          association_id: string
+          address_line_2?: string | null
+          assessment_amount?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          block_number?: string | null
           city?: string | null
-          created_at?: string
+          co_date?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          full_address?: string | null
+          hoa_id?: string | null
+          homeowner_id?: number | null
           id?: string
-          image_url?: string | null
+          legal_description?: string | null
+          lot_number?: string | null
           lot_size?: number | null
           notes?: string | null
-          property_type: string
-          square_feet?: number | null
+          old_account_number?: string | null
+          overall_balance?: number | null
+          parcel_id?: string | null
+          parking_spaces?: number | null
+          phase?: string | null
+          property_type?: string | null
+          settled_date?: string | null
+          special_assessment?: number | null
+          special_features?: string | null
+          square_footage?: number | null
           state?: string | null
           status?: string | null
+          street_name?: string | null
+          street_number?: number | null
           unit_number?: string | null
-          updated_at?: string
+          updated_at?: string | null
+          village?: string | null
           year_built?: number | null
-          zip?: string | null
+          zip_code?: string | null
         }
         Update: {
+          account_number?: string | null
           address?: string
-          association_id?: string
+          address_line_2?: string | null
+          assessment_amount?: number | null
           bathrooms?: number | null
           bedrooms?: number | null
+          block_number?: string | null
           city?: string | null
-          created_at?: string
+          co_date?: string | null
+          created_at?: string | null
+          current_balance?: number | null
+          full_address?: string | null
+          hoa_id?: string | null
+          homeowner_id?: number | null
           id?: string
-          image_url?: string | null
+          legal_description?: string | null
+          lot_number?: string | null
           lot_size?: number | null
           notes?: string | null
-          property_type?: string
-          square_feet?: number | null
+          old_account_number?: string | null
+          overall_balance?: number | null
+          parcel_id?: string | null
+          parking_spaces?: number | null
+          phase?: string | null
+          property_type?: string | null
+          settled_date?: string | null
+          special_assessment?: number | null
+          special_features?: string | null
+          square_footage?: number | null
           state?: string | null
           status?: string | null
+          street_name?: string | null
+          street_number?: number | null
           unit_number?: string | null
-          updated_at?: string
+          updated_at?: string | null
+          village?: string | null
           year_built?: number | null
-          zip?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "properties_association_id_fkey"
-            columns: ["association_id"]
+            foreignKeyName: "properties_hoa_id_fkey"
+            columns: ["hoa_id"]
             isOneToOne: false
             referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_homeowners: {
+        Row: {
+          created_at: string | null
+          homeowner_id: number
+          id: string
+          is_primary_owner: boolean | null
+          move_in_date: string | null
+          move_out_date: string | null
+          ownership_percentage: number | null
+          ownership_type: string | null
+          property_id: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          homeowner_id: number
+          id?: string
+          is_primary_owner?: boolean | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          ownership_percentage?: number | null
+          ownership_type?: string | null
+          property_id: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          homeowner_id?: number
+          id?: string
+          is_primary_owner?: boolean | null
+          move_in_date?: string | null
+          move_out_date?: string | null
+          ownership_percentage?: number | null
+          ownership_type?: string | null
+          property_id?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_homeowners_homeowner_id_fkey"
+            columns: ["homeowner_id"]
+            isOneToOne: false
+            referencedRelation: "homeowners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_homeowners_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -5464,13 +5699,6 @@ export type Database = {
             referencedRelation: "associations"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "resident_invitations_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
         ]
       }
       resident_portal_settings: {
@@ -5563,15 +5791,7 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "residents_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       scheduled_messages: {
         Row: {
@@ -5701,13 +5921,6 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "user_hoa_access_hoa_id_fkey"
-            columns: ["hoa_id"]
-            isOneToOne: false
-            referencedRelation: "hoas"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "user_hoa_access_user_id_fkey"
             columns: ["user_id"]
@@ -6181,15 +6394,7 @@ export type Database = {
           total_jobs?: number | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "vendors_hoa_id_fkey"
-            columns: ["hoa_id"]
-            isOneToOne: false
-            referencedRelation: "hoas"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       violations: {
         Row: {
@@ -6480,13 +6685,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bid_requests_hoa_id_fkey"
-            columns: ["hoa_id"]
-            isOneToOne: false
-            referencedRelation: "hoas"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bid_requests_selected_vendor_id_fkey"
             columns: ["selected_vendor_id"]
             isOneToOne: false
@@ -6537,15 +6735,7 @@ export type Database = {
           total_bids: number | null
           total_jobs: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "vendors_hoa_id_fkey"
-            columns: ["hoa_id"]
-            isOneToOne: false
-            referencedRelation: "hoas"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -6606,6 +6796,7 @@ export type Database = {
       get_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          accounting_method: string | null
           ach_auto_draft_day: string | null
           ach_draft_amount: string | null
           ach_generate_in_advance: number | null
@@ -6623,16 +6814,21 @@ export type Database = {
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
+          cash_basis: boolean | null
           city: string | null
+          code: string | null
           collections_active: string | null
           collections_model: string | null
           contact_email: string | null
           country: string | null
+          county: string | null
           created_at: string
           decline_threshold: number | null
           description: string | null
           email_notifications: boolean | null
+          empty_lots: number | null
           fire_inspection_due: string | null
+          fiscal_year_end: string | null
           founded_date: string | null
           grace_period_days: string | null
           id: string
@@ -6643,26 +6839,39 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          is_master_association: boolean | null
           late_fee_percentage: string | null
+          legal_name: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
+          master_association_code: string | null
           minimum_balance: number | null
+          model: string | null
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          nickname: string | null
+          offsite_addresses: number | null
           payment_due_day: string | null
           phone: string | null
+          portfolios: string | null
           primary_color: string | null
           processing_days: string | null
           property_type: string | null
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          service_type: string | null
           sms_notifications: boolean | null
           state: string | null
+          state_tax_id: string | null
           statement_format: string | null
           status: string | null
+          tax_id: string | null
+          total_leases: number | null
+          total_properties: number | null
+          total_tenants: number | null
           total_units: number | null
           updated_at: string
           utilities_billing_message: string | null
@@ -6689,6 +6898,7 @@ export type Database = {
       get_user_associations: {
         Args: Record<PropertyKey, never>
         Returns: {
+          accounting_method: string | null
           ach_auto_draft_day: string | null
           ach_draft_amount: string | null
           ach_generate_in_advance: number | null
@@ -6706,16 +6916,21 @@ export type Database = {
           balance_threshold: string | null
           balance_threshold_type: string | null
           board_approval_required: boolean | null
+          cash_basis: boolean | null
           city: string | null
+          code: string | null
           collections_active: string | null
           collections_model: string | null
           contact_email: string | null
           country: string | null
+          county: string | null
           created_at: string
           decline_threshold: number | null
           description: string | null
           email_notifications: boolean | null
+          empty_lots: number | null
           fire_inspection_due: string | null
+          fiscal_year_end: string | null
           founded_date: string | null
           grace_period_days: string | null
           id: string
@@ -6726,26 +6941,39 @@ export type Database = {
           include_qr_code: boolean | null
           insurance_expiration: string | null
           is_archived: boolean | null
+          is_master_association: boolean | null
           late_fee_percentage: string | null
+          legal_name: string | null
           lien_threshold: string | null
           lien_threshold_type: string | null
           logo_url: string | null
+          master_association_code: string | null
           minimum_balance: number | null
+          model: string | null
           name: string
           new_association_grace_period: string | null
           new_owner_grace_period: string | null
+          nickname: string | null
+          offsite_addresses: number | null
           payment_due_day: string | null
           phone: string | null
+          portfolios: string | null
           primary_color: string | null
           processing_days: string | null
           property_type: string | null
           remittance_coupon_message: string | null
           require_arc_voting: boolean | null
           secondary_color: string | null
+          service_type: string | null
           sms_notifications: boolean | null
           state: string | null
+          state_tax_id: string | null
           statement_format: string | null
           status: string | null
+          tax_id: string | null
+          total_leases: number | null
+          total_properties: number | null
+          total_tenants: number | null
           total_units: number | null
           updated_at: string
           utilities_billing_message: string | null

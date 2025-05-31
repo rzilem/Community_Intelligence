@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
@@ -169,6 +168,18 @@ export async function createUserAssociation(
   hoaId: string,
   role: string = 'resident'
 ): Promise<UserAssociation> {
+  // First, get the association data
+  const { data: associationData, error: associationError } = await supabase
+    .from('associations')
+    .select('*')
+    .eq('id', hoaId)
+    .single();
+
+  if (associationError) {
+    throw associationError;
+  }
+
+  // Create the association_users record
   const { data, error } = await supabase
     .from('association_users')
     .insert({
@@ -180,5 +191,10 @@ export async function createUserAssociation(
     .single();
 
   if (error) throw error;
-  return data;
+
+  // Return the data with the association object included
+  return {
+    ...data,
+    association: associationData
+  } as UserAssociation;
 }
