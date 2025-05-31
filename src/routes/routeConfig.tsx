@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { RouteObject } from 'react-router-dom';
 import { RequireAuth } from '@/components/auth/RequireAuth';
@@ -43,6 +44,7 @@ const Documents = React.lazy(() => import('@/pages/records-reports/Documents'));
 const Reports = React.lazy(() => import('@/pages/Reports'));
 const ResaleManagement = React.lazy(() => import('@/pages/resale-management/ResaleManagement'));
 const ResaleCertificate = React.lazy(() => import('@/pages/resale-management/ResaleCertificate'));
+const ResaleCertificateDetail = React.lazy(() => import('@/pages/resale-management/ResaleCertificateDetail'));
 const DocsCenter = React.lazy(() => import('@/pages/resale-management/DocsCenter'));
 const ResaleCalendar = React.lazy(() => import('@/pages/resale-management/ResaleCalendar'));
 const OrderQueue = React.lazy(() => import('@/pages/resale-management/OrderQueue'));
@@ -250,6 +252,10 @@ export const protectedRoutes: RouteObject[] = [
   {
     path: 'resale-management/certificate',
     element: createProtectedRoute(<ResaleCertificate />, ['admin', 'manager'])
+  },
+  {
+    path: 'resale-management/certificate/:id',
+    element: createProtectedRoute(<ResaleCertificateDetail />, ['admin', 'manager'])
   },
   {
     path: 'resale-management/docs-center',
