@@ -5903,7 +5903,9 @@ export type Database = {
         Row: {
           address: string | null
           average_response_time: number | null
+          category: string | null
           completed_jobs: number | null
+          contact_person: string | null
           created_at: string
           description: string | null
           email: string | null
@@ -5912,6 +5914,7 @@ export type Database = {
           id: string
           insurance_info: Json | null
           is_active: boolean | null
+          last_invoice: string | null
           license_number: string | null
           logo_url: string | null
           name: string
@@ -5927,7 +5930,9 @@ export type Database = {
         Insert: {
           address?: string | null
           average_response_time?: number | null
+          category?: string | null
           completed_jobs?: number | null
+          contact_person?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -5936,6 +5941,7 @@ export type Database = {
           id?: string
           insurance_info?: Json | null
           is_active?: boolean | null
+          last_invoice?: string | null
           license_number?: string | null
           logo_url?: string | null
           name: string
@@ -5951,7 +5957,9 @@ export type Database = {
         Update: {
           address?: string | null
           average_response_time?: number | null
+          category?: string | null
           completed_jobs?: number | null
+          contact_person?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -5960,6 +5968,7 @@ export type Database = {
           id?: string
           insurance_info?: Json | null
           is_active?: boolean | null
+          last_invoice?: string | null
           license_number?: string | null
           logo_url?: string | null
           name?: string

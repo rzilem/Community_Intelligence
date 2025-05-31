@@ -1,0 +1,95 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { vendorService } from '@/services/vendor-service';
+import { Vendor, VendorFormData } from '@/types/vendor-types';
+import { toast } from 'sonner';
+
+export function useVendors() {
+  return useQuery({
+    queryKey: ['vendors'],
+    queryFn: vendorService.getVendors,
+  });
+}
+
+export function useVendor(id: string) {
+  return useQuery({
+    queryKey: ['vendor', id],
+    queryFn: () => vendorService.getVendorById(id),
+    enabled: !!id,
+  });
+}
+
+export function useVendorStats() {
+  return useQuery({
+    queryKey: ['vendor-stats'],
+    queryFn: vendorService.getVendorStats,
+  });
+}
+
+export function useCreateVendor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (vendorData: VendorFormData) => {
+      const newVendor: Omit<Vendor, 'id' | 'created_at' | 'updated_at'> = {
+        name: vendorData.name,
+        contact_person: vendorData.contactPerson,
+        email: vendorData.email,
+        phone: vendorData.phone,
+        category: vendorData.category,
+        status: vendorData.status,
+        has_insurance: vendorData.hasInsurance,
+        total_jobs: 0,
+        completed_jobs: 0,
+        is_active: true,
+        last_invoice: null,
+        rating: null
+      };
+      return vendorService.createVendor(newVendor);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-stats'] });
+      toast.success('Vendor created successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to create vendor:', error);
+      toast.error('Failed to create vendor');
+    },
+  });
+}
+
+export function useUpdateVendor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Vendor> }) =>
+      vendorService.updateVendor(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-stats'] });
+      toast.success('Vendor updated successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to update vendor:', error);
+      toast.error('Failed to update vendor');
+    },
+  });
+}
+
+export function useDeleteVendor() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: vendorService.deleteVendor,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-stats'] });
+      toast.success('Vendor deleted successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to delete vendor:', error);
+      toast.error('Failed to delete vendor');
+    },
+  });
+}

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Building2, Plus, FileDown, SlidersIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,32 +7,23 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VendorList from '@/components/vendors/VendorList';
 import VendorStatsCards from '@/components/vendors/VendorStatsCards';
 import VendorDialog from '@/components/vendors/VendorDialog';
-import { vendorService } from '@/services/vendor-service';
+import { useVendors, useVendorStats, useCreateVendor } from '@/hooks/vendors/useVendors';
 import { VendorFormData } from '@/types/vendor-types';
-import { useToast } from '@/components/ui/use-toast';
 
 const Vendors = () => {
   const [addVendorOpen, setAddVendorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
-  const { toast } = useToast();
 
-  const { data: vendors = [], isLoading: isLoadingVendors } = useQuery({
-    queryKey: ['vendors'],
-    queryFn: vendorService.getVendors,
-  });
-
-  const { data: vendorStats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['vendor-stats'],
-    queryFn: vendorService.getVendorStats,
-  });
+  const { data: vendors = [], isLoading: isLoadingVendors } = useVendors();
+  const { data: vendorStats, isLoading: isLoadingStats } = useVendorStats();
+  const createVendor = useCreateVendor();
 
   const handleAddVendor = (data: VendorFormData) => {
-    console.log('Add vendor:', data);
-    toast({
-      title: "Vendor added",
-      description: `${data.name} has been added successfully.`,
+    createVendor.mutate(data, {
+      onSuccess: () => {
+        setAddVendorOpen(false);
+      }
     });
-    setAddVendorOpen(false);
   };
 
   return (
