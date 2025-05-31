@@ -1,3 +1,4 @@
+
 export interface ReportDefinition {
   id: string;
   association_id: string | null;
@@ -19,6 +20,7 @@ export interface ReportFilter {
   operator: string;
   value: any;
   label?: string;
+  data_type?: string;
 }
 
 export interface ReportColumn {
@@ -27,6 +29,8 @@ export interface ReportColumn {
   type: string;
   format?: string;
   aggregation?: string;
+  data_type?: string;
+  is_visible?: boolean;
 }
 
 export interface ChartConfig {

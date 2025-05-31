@@ -4,17 +4,15 @@ import { Association } from '@/types/association-types';
 
 export interface UserProfile {
   id: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  role?: string;
-  avatar_url?: string;
-  phone?: string;
-  phone_number?: string;
-  job_title?: string;
-  profile_image_url?: string;
-  created_at?: string;
-  updated_at?: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  phone_number: string | null;
+  preferred_language?: string;
+  profile_image_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserAssociation {
@@ -22,8 +20,7 @@ export interface UserAssociation {
   user_id: string;
   association_id: string;
   role: string;
-  created_at: string;
-  associations?: Association;
+  association: Association;
 }
 
 export interface AuthContextType {
@@ -32,14 +29,14 @@ export interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   isLoading: boolean;
+  userRole: string;
   isAdmin: boolean;
   isAuthenticated: boolean;
-  currentAssociation: Association | null;
   userAssociations: UserAssociation[];
-  userRole: string | null;
+  currentAssociation: Association | null;
   signIn: (email: string, password?: string) => Promise<void>;
   signUp: (email: string, password?: string, userData?: { first_name: string; last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
-  setCurrentAssociation: (association: Association) => void;
+  setCurrentAssociation: (association: Association | null) => void;
   refreshProfile: () => Promise<void>;
 }

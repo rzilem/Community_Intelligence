@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import AppLayout from '@/components/layout/AppLayout';
+import { AppLayout } from '@/components/layout/AppLayout';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
 import NotFound from '@/pages/NotFound';
