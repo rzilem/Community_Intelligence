@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Plus, Search, Settings } from 'lucide-react';
+import { Bell, Plus, Search, Settings, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth';
@@ -11,111 +11,101 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
 
-export const TopNavigation = () => {
-  const { profile, signOut } = useAuth();
+export function TopNavigation() {
+  const { user, signOut } = useAuth();
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (!firstName && !lastName) return 'DU';
-    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
-    <header className="top-nav bg-white border-b border-blue-100 px-6 py-4 flex items-center justify-between">
-      {/* Left side - Search */}
-      <div className="flex items-center space-x-4 flex-1">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <header className="top-nav flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center gap-4">
+        <SidebarTrigger className="text-slate-600 hover:text-blue-600" />
+        
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
           <Input
-            type="search"
-            placeholder="Search communities, residents, or documents..."
-            className="pl-10 pr-4 py-2 w-96 border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+            placeholder="Search properties, residents, or documents..."
+            className="search-input pl-10 w-96 bg-slate-50 border-slate-200 focus:bg-white"
           />
         </div>
       </div>
 
-      {/* Right side - Actions and Profile */}
-      <div className="flex items-center space-x-4">
-        {/* New HOA Button */}
-        <Button className="btn-blue">
+      <div className="flex items-center gap-4">
+        {/* Quick Actions */}
+        <Button className="btn-blue px-4 py-2 rounded-lg">
           <Plus className="h-4 w-4 mr-2" />
           New HOA
         </Button>
 
-        {/* View All Button */}
-        <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
-          View All
-          <span className="ml-2 bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">
-            0
-          </span>
-        </Button>
-
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-gray-600" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            3
-          </span>
-        </Button>
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="notification-badge">3</span>
+          </Button>
+        </div>
 
-        {/* Settings */}
-        <Button variant="ghost" size="icon">
-          <Settings className="h-5 w-5 text-gray-600" />
-        </Button>
-
-        {/* Profile Dropdown */}
+        {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
-                <AvatarImage 
-                  src={profile?.profile_image_url || ''} 
-                  alt={`${profile?.first_name || 'User'} ${profile?.last_name || ''}`} 
-                />
-                <AvatarFallback className="bg-blue-100 text-blue-600">
-                  {getInitials(profile?.first_name, profile?.last_name)}
-                </AvatarFallback>
-              </Avatar>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 text-slate-700 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="h-4 w-4 text-blue-600" />
+              </div>
+              <div className="text-left hidden sm:block">
+                <div className="text-sm font-medium">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}
+                </div>
+                <div className="text-xs text-slate-500">Administrator</div>
+              </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
+          <DropdownMenuContent className="user-dropdown w-56" align="end">
+            <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
-                  {profile?.first_name} {profile?.last_name}
+                <p className="text-sm font-medium text-slate-900">
+                  {user?.user_metadata?.full_name || 'User Profile'}
                 </p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {profile?.email}
-                </p>
-                <p className="text-xs leading-none text-blue-600 capitalize">
-                  {profile?.role}
-                </p>
+                <p className="text-xs text-slate-500">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Profile Settings
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile Settings</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              Billing
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              Team
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              Subscription
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Preferences</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={signOut}
-              className="text-red-600 focus:text-red-600"
+              className="cursor-pointer text-red-600 focus:text-red-600"
+              onClick={handleSignOut}
             >
-              Log out
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </header>
   );
-};
+}
