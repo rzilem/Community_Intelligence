@@ -1,4 +1,4 @@
-
+// AppSidebar.tsx - Restore Beautiful Blue Gradient Sidebar
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -89,33 +89,52 @@ const AppSidebar = () => {
   }
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <Link to="/dashboard" className="flex items-center space-x-2 px-4 py-2">
-          <Building className="h-6 w-6 text-blue-600" />
-          <span className="text-lg font-bold">Community Intelligence</span>
+    <Sidebar className="sidebar-gradient border-r-0">
+      <SidebarHeader className="border-b border-blue-600/20 bg-gradient-to-b from-blue-900/50 to-transparent">
+        <Link to="/dashboard" className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+          <Building className="h-8 w-8 text-blue-200" />
+          <div className="flex flex-col">
+            <span className="text-lg font-bold text-white">Community</span>
+            <span className="text-sm font-medium text-blue-200">Intelligence</span>
+          </div>
         </Link>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="bg-transparent">
         {navigation.map((section) => (
-          <SidebarGroup key={section.title}>
-            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+          <SidebarGroup key={section.title} className="px-3 py-2">
+            <SidebarGroupLabel className="text-blue-200 font-semibold text-xs uppercase tracking-wider mb-2">
+              {section.title}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {section.items.map((item) => (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton 
-                      asChild 
-                      isActive={location.pathname === item.href}
-                    >
-                      <Link to={item.href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+              <SidebarMenu className="space-y-1">
+                {section.items.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.name}>
+                      <SidebarMenuButton 
+                        asChild 
+                        className={`
+                          group relative overflow-hidden rounded-lg transition-all duration-200
+                          ${isActive 
+                            ? 'bg-white text-blue-900 shadow-lg transform scale-[1.02]' 
+                            : 'text-white/90 hover:bg-white/10 hover:text-white hover:transform hover:scale-[1.01]'
+                          }
+                        `}
+                      >
+                        <Link to={item.href} className="flex items-center space-x-3 px-3 py-2.5">
+                          <item.icon className={`h-5 w-5 transition-colors ${
+                            isActive ? 'text-blue-600' : 'text-blue-200 group-hover:text-white'
+                          }`} />
+                          <span className="font-medium">{item.name}</span>
+                          {isActive && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-20 rounded-lg" />
+                          )}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
