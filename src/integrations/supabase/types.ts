@@ -4146,6 +4146,109 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_queue: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          recipient_id: string
+          recipient_type: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          recipient_id: string
+          recipient_type: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          recipient_id?: string
+          recipient_type?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_queue_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          association_id: string | null
+          body_template: string
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subject_template: string | null
+          type: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          association_id?: string | null
+          body_template: string
+          category: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject_template?: string | null
+          type: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          association_id?: string | null
+          body_template?: string
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject_template?: string | null
+          type?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_documents: {
         Row: {
           created_at: string
@@ -5101,6 +5204,103 @@ export type Database = {
             columns: ["gl_account_id"]
             isOneToOne: false
             referencedRelation: "gl_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_definitions: {
+        Row: {
+          association_id: string | null
+          chart_config: Json | null
+          columns: Json | null
+          created_at: string | null
+          created_by: string | null
+          data_source: string
+          description: string | null
+          filters: Json | null
+          id: string
+          is_public: boolean | null
+          name: string
+          report_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          chart_config?: Json | null
+          columns?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          data_source: string
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          report_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          chart_config?: Json | null
+          columns?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          data_source?: string
+          description?: string | null
+          filters?: Json | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          report_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_definitions_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          report_definition_id: string | null
+          result_data: Json | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          report_definition_id?: string | null
+          result_data?: Json | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          report_definition_id?: string | null
+          result_data?: Json | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_executions_report_definition_id_fkey"
+            columns: ["report_definition_id"]
+            isOneToOne: false
+            referencedRelation: "report_definitions"
             referencedColumns: ["id"]
           },
         ]
