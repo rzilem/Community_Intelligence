@@ -1,7 +1,18 @@
 
 import { User, Session } from '@supabase/supabase-js';
 import { Association } from '@/types/association-types';
-import { Profile } from '@/types/profile-types';
+
+export interface UserProfile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  role?: string;
+  avatar_url?: string;
+  phone?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export interface UserAssociation {
   id: string;
@@ -15,7 +26,7 @@ export interface UserAssociation {
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: Profile | null;
+  profile: UserProfile | null;
   loading: boolean;
   isLoading: boolean;
   isAdmin: boolean;
@@ -23,8 +34,8 @@ export interface AuthContextType {
   currentAssociation: Association | null;
   userAssociations: UserAssociation[];
   userRole: string | null;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: { first_name: string; last_name: string }) => Promise<void>;
+  signIn: (email: string, password?: string) => Promise<void>;
+  signUp: (email: string, password?: string, userData?: { first_name: string; last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
   setCurrentAssociation: (association: Association) => void;
   refreshProfile: () => Promise<void>;
