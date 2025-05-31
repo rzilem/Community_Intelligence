@@ -12,126 +12,92 @@ import {
   SidebarGroupContent,
 } from '@/components/ui/sidebar';
 import {
+  Building2,
   Home,
   Users,
-  Building,
-  CreditCard,
-  MessageSquare,
-  Calendar,
   FileText,
-  Settings,
-  UserPlus,
-  ClipboardList,
+  Calendar,
   DollarSign,
-  AlertTriangle
+  Settings,
+  Shield,
+  BarChart3,
+  Wrench,
+  MessageSquare,
+  FileCheck,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/auth';
 
-const AppSidebar = () => {
+const menuItems = [
+  {
+    title: 'Overview',
+    items: [
+      { title: 'Dashboard', url: '/dashboard', icon: Home },
+      { title: 'Properties', url: '/properties', icon: Building2 },
+      { title: 'Residents', url: '/residents', icon: Users },
+    ],
+  },
+  {
+    title: 'Management',
+    items: [
+      { title: 'Amenities', url: '/amenities', icon: Calendar },
+      { title: 'Maintenance', url: '/maintenance', icon: Wrench },
+      { title: 'Communications', url: '/communications', icon: MessageSquare },
+      { title: 'Documents', url: '/documents', icon: FileText },
+    ],
+  },
+  {
+    title: 'Financial',
+    items: [
+      { title: 'Assessments', url: '/assessments', icon: DollarSign },
+      { title: 'Reports', url: '/reports', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'Compliance',
+    items: [
+      { title: 'ARC Requests', url: '/arc', icon: FileCheck },
+      { title: 'Violations', url: '/violations', icon: Shield },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { title: 'Settings', url: '/settings', icon: Settings },
+    ],
+  },
+];
+
+export function AppSidebar() {
   const location = useLocation();
-  const { profile } = useAuth();
-
-  const navigation = [
-    {
-      title: 'Main',
-      items: [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'Associations', href: '/associations', icon: Building },
-        { name: 'Homeowners', href: '/homeowners', icon: Users },
-        { name: 'Calendar', href: '/operations/calendar', icon: Calendar },
-      ]
-    },
-    {
-      title: 'Operations',
-      items: [
-        { name: 'Maintenance Requests', href: '/maintenance-requests', icon: ClipboardList },
-        { name: 'Homeowner Requests', href: '/community-management/homeowner-requests', icon: UserPlus },
-        { name: 'Bid Requests', href: '/community-management/bid-requests', icon: FileText },
-        { name: 'Compliance', href: '/compliance', icon: AlertTriangle },
-      ]
-    },
-    {
-      title: 'Financial',
-      items: [
-        { name: 'Accounting', href: '/accounting/dashboard', icon: DollarSign },
-        { name: 'Billing', href: '/billing', icon: CreditCard },
-        { name: 'Bank Accounts', href: '/accounting/bank-accounts', icon: CreditCard },
-        { name: 'Invoice Queue', href: '/accounting/invoice-queue', icon: FileText },
-      ]
-    },
-    {
-      title: 'Communication',
-      items: [
-        { name: 'Messaging', href: '/communications/messaging', icon: MessageSquare },
-        { name: 'Announcements', href: '/communications/announcements', icon: MessageSquare },
-      ]
-    },
-    {
-      title: 'Reports & Documents',
-      items: [
-        { name: 'Documents', href: '/records-reports/documents', icon: FileText },
-        { name: 'Reports', href: '/records-reports/reports', icon: FileText },
-      ]
-    }
-  ];
-
-  // Add admin-only sections
-  if (profile?.role === 'admin') {
-    navigation.push({
-      title: 'Administration',
-      items: [
-        { name: 'System Settings', href: '/system/settings', icon: Settings },
-        { name: 'User Management', href: '/system/permissions', icon: Users },
-        { name: 'Data Management', href: '/system/data-management', icon: FileText },
-      ]
-    });
-  }
 
   return (
-    <Sidebar className="sidebar-gradient border-r-0">
-      <SidebarHeader className="border-b border-blue-600/20 bg-gradient-to-b from-blue-900/50 to-transparent">
-        <Link 
-          to="/dashboard" 
-          className="flex items-center space-x-3 px-4 py-3 text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-        >
-          <Building className="h-8 w-8 text-blue-200" />
-          <div className="flex flex-col">
-            <span className="text-lg font-bold text-white">Community</span>
-            <span className="text-sm font-medium text-blue-200">Intelligence</span>
+    <Sidebar className="sidebar-gradient border-r-0" collapsible="icon">
+      <SidebarHeader className="sidebar-header">
+        <Link to="/dashboard" className="logo-container">
+          <div className="logo-icon">
+            <Building2 className="h-6 w-6 text-white" />
           </div>
+          <span className="font-bold text-xl">Community Intelligence</span>
         </Link>
       </SidebarHeader>
       
-      <SidebarContent className="bg-transparent">
-        {navigation.map((section) => (
-          <SidebarGroup key={section.title} className="px-3 py-2">
-            <SidebarGroupLabel className="text-blue-200 font-semibold text-xs uppercase tracking-wider mb-2">
-              {section.title}
-            </SidebarGroupLabel>
+      <SidebarContent className="px-2">
+        {menuItems.map((group) => (
+          <SidebarGroup key={group.title}>
+            <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                {section.items.map((item) => {
-                  const isActive = location.pathname === item.href;
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.url;
                   return (
-                    <SidebarMenuItem key={item.name}>
-                      <SidebarMenuButton 
-                        asChild 
-                        className={`
-                          group relative overflow-hidden rounded-lg transition-all duration-200
-                          ${isActive 
-                            ? 'bg-white text-blue-900 shadow-lg transform scale-[1.02]' 
-                            : 'text-white/90 hover:bg-white/10 hover:text-white hover:transform hover:scale-[1.01]'
-                          }
-                        `}
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        data-active={isActive}
+                        className="w-full justify-start"
                       >
-                        <Link to={item.href} className="flex items-center space-x-3 px-3 py-2.5">
-                          <item.icon className={`h-5 w-5 transition-colors ${
-                            isActive ? 'text-blue-600' : 'text-blue-200 group-hover:text-white'
-                          }`} />
-                          <span className="font-medium">{item.name}</span>
-                          {isActive && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-white opacity-20 rounded-lg" />
-                          )}
+                        <Link to={item.url} className="flex items-center gap-3">
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -144,6 +110,4 @@ const AppSidebar = () => {
       </SidebarContent>
     </Sidebar>
   );
-};
-
-export { AppSidebar };
+}
