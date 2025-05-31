@@ -43,7 +43,7 @@ import ResaleAnalytics from '@/pages/resale-management/ResaleAnalytics';
 import SystemSettings from '@/pages/system/SystemSettings';
 import EmailWorkflows from '@/pages/system/EmailWorkflows';
 import DataManagement from '@/pages/system/DataManagement';
-import FinancialReportMapping from '@/pages/system/FinancialReportMapping';
+import FinancialReportMapping from '@/pages/accounting/FinancialReportMapping';
 import WorkflowSchedule from '@/pages/system/WorkflowSchedule';
 import Permissions from '@/pages/system/Permissions';
 import ProjectTypes from '@/pages/admin/ProjectTypes';
