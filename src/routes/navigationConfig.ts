@@ -1,5 +1,5 @@
 
-import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare, MapPin, BarChart3, Bell } from 'lucide-react';
+import { Home, Users, Building2, Calendar, Mail, FileText, CheckSquare, UserPlus, Settings, ShieldAlert, Brain, MessageSquare, MapPin, BarChart3, Bell, Layout } from 'lucide-react';
 import { NavigationCategory } from './types';
 
 export const navigationItems: NavigationCategory[] = [
@@ -71,6 +71,7 @@ export const navigationItems: NavigationCategory[] = [
     items: [
       { path: '/admin/users', label: 'User Management', icon: UserPlus },
       { path: '/admin/roles', label: 'Role Management', icon: ShieldAlert },
+      { path: '/portal-builder', label: 'Portal Builder', icon: Layout },
       { path: '/settings', label: 'Settings', icon: Settings },
     ]
   },

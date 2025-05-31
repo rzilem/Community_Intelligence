@@ -1,12 +1,29 @@
 
 import React from 'react';
-import { Settings, UserPlus, ShieldAlert } from 'lucide-react';
-import SettingsPage from '@/pages/Settings';
-import UserManagementPage from '@/pages/admin/UserManagementPage';
-import RoleManagementPage from '@/pages/admin/RoleManagementPage';
+import { UserPlus, ShieldAlert, Settings } from 'lucide-react';
+import UserManagement from '@/components/users/UserManagement';
+import Settings as SettingsPage from '@/pages/Settings';
 import { Route } from './types';
 
 export const adminRoutes: Route[] = [
+  {
+    path: 'admin/users',
+    element: <UserManagement />,
+    label: 'User Management',
+    icon: UserPlus,
+    category: 'admin',
+    requiresAuth: true,
+    description: 'Manage user accounts and permissions'
+  },
+  {
+    path: 'admin/roles',
+    element: <UserManagement />,
+    label: 'Role Management',
+    icon: ShieldAlert,
+    category: 'admin',
+    requiresAuth: true,
+    description: 'Configure user roles and permissions'
+  },
   {
     path: 'settings',
     element: <SettingsPage />,
@@ -14,24 +31,6 @@ export const adminRoutes: Route[] = [
     icon: Settings,
     category: 'admin',
     requiresAuth: true,
-    description: 'Manage application settings'
-  },
-  {
-    path: 'admin/users',
-    element: <UserManagementPage />,
-    label: 'User Management',
-    icon: UserPlus,
-    category: 'admin',
-    requiresAuth: true,
-    description: 'Manage users and roles'
-  },
-  {
-    path: 'admin/roles',
-    element: <RoleManagementPage />,
-    label: 'Role Management',
-    icon: ShieldAlert,
-    category: 'admin',
-    requiresAuth: true,
-    description: 'Manage roles and permissions'
+    description: 'System settings and configuration'
   },
 ];

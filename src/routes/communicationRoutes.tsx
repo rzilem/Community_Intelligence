@@ -1,15 +1,15 @@
 
 import React from 'react';
-import { FileText, Mail } from 'lucide-react';
-import CommunicationTemplates from '@/pages/communications/CommunicationTemplates';
-import CommunicationLogs from '@/pages/communications/CommunicationLogs';
+import { Mail, FileText, Bell } from 'lucide-react';
+import Communications from '@/pages/Communications';
+import NotificationsPage from '@/pages/notifications/NotificationsPage';
 import { Route } from './types';
 
 export const communicationRoutes: Route[] = [
   {
     path: 'communication-templates',
-    element: <CommunicationTemplates />,
-    label: 'Communication Templates',
+    element: <Communications />,
+    label: 'Templates',
     icon: FileText,
     category: 'communication',
     requiresAuth: true,
@@ -17,11 +17,20 @@ export const communicationRoutes: Route[] = [
   },
   {
     path: 'communication-logs',
-    element: <CommunicationLogs />,
-    label: 'Communication Logs',
+    element: <Communications />,
+    label: 'Logs',
     icon: Mail,
     category: 'communication',
     requiresAuth: true,
-    description: 'View communication logs'
+    description: 'View communication history and logs'
+  },
+  {
+    path: 'notifications',
+    element: <NotificationsPage />,
+    label: 'Notifications',
+    icon: Bell,
+    category: 'communication',
+    requiresAuth: true,
+    description: 'Automated notification system with AI optimization'
   },
 ];

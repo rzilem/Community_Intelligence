@@ -2,11 +2,9 @@
 import React from 'react';
 import { Home, Users, Building2, Calendar } from 'lucide-react';
 import Dashboard from '@/pages/Dashboard';
-import HomeownerListPage from '@/pages/homeowners/HomeownerListPage';
-import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
+import Homeowners from '@/pages/Homeowners';
 import Associations from '@/pages/Associations';
-import AssociationDetail from '@/pages/system/AssociationProfile';
-import EventsCalendar from '@/pages/CalendarPage';
+import CalendarPage from '@/pages/CalendarPage';
 import { Route } from './types';
 
 export const mainRoutes: Route[] = [
@@ -17,22 +15,16 @@ export const mainRoutes: Route[] = [
     icon: Home,
     category: 'main',
     requiresAuth: true,
+    description: 'Overview of your HOA management dashboard'
   },
   {
     path: 'homeowners',
-    element: <HomeownerListPage />,
+    element: <Homeowners />,
     label: 'Homeowners',
     icon: Users,
     category: 'main',
     requiresAuth: true,
-    description: 'Manage homeowners and residents'
-  },
-  {
-    path: 'homeowners/:id',
-    element: <HomeownerDetailPage />,
-    label: 'Homeowner Detail',
-    category: 'hidden',
-    requiresAuth: true,
+    description: 'Manage homeowner information and requests'
   },
   {
     path: 'associations',
@@ -41,22 +33,15 @@ export const mainRoutes: Route[] = [
     icon: Building2,
     category: 'main',
     requiresAuth: true,
-    description: 'Manage associations and properties'
-  },
-   {
-    path: 'associations/:id',
-    element: <AssociationDetail />,
-    label: 'Association Detail',
-    category: 'hidden',
-    requiresAuth: true,
+    description: 'Manage HOA associations and properties'
   },
   {
     path: 'events',
-    element: <EventsCalendar />,
+    element: <CalendarPage />,
     label: 'Events',
     icon: Calendar,
     category: 'main',
     requiresAuth: true,
-    description: 'Manage events calendar'
+    description: 'Schedule and manage HOA events'
   },
 ];

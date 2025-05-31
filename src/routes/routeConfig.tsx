@@ -9,6 +9,7 @@ import { aiRoutes } from './aiRoutes';
 import { amenityRoutes } from './amenityRoutes';
 import { reportingRoutes } from './reportingRoutes';
 import { notificationRoutes } from './notificationRoutes';
+import { portalRoutes } from './portalRoutes';
 
 export type { Route } from './types';
 
@@ -22,6 +23,7 @@ export const protectedRoutes: Route[] = [
   ...amenityRoutes,
   ...reportingRoutes,
   ...notificationRoutes,
+  ...portalRoutes,
 ];
 
 export { navigationItems } from './navigationConfig';

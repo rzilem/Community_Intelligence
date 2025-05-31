@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/AppSidebar';
 import { TopNavigation } from '@/components/layout/TopNavigation';
@@ -9,6 +9,8 @@ import { Loader2 } from 'lucide-react';
 
 const AppLayout = () => {
   const { user, loading } = useAuth();
+
+  console.log('AppLayout: user =', user?.id, 'loading =', loading);
 
   if (loading) {
     return (
@@ -22,13 +24,8 @@ const AppLayout = () => {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-gray-600">Please log in to continue</p>
-        </div>
-      </div>
-    );
+    console.log('AppLayout: No user found, redirecting to auth');
+    return <Navigate to="/auth" replace />;
   }
 
   return (
