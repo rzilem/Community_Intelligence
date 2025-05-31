@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { PageTemplate } from '@/components/layout/PageTemplate';
+import PageTemplate from '@/components/layout/PageTemplate';
 import AIQueryInterface from '@/components/ai/AIQueryInterface';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ const AIQueryPage: React.FC = () => {
   return (
     <PageTemplate
       title="AI Query System"
+      icon={<Brain className="h-8 w-8 text-blue-600" />}
       description="Ask questions about your HOA data using natural language"
       actions={
         <Badge variant="secondary" className="bg-blue-100 text-blue-700">

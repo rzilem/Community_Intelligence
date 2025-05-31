@@ -6,14 +6,14 @@ import {
 } from 'react-router-dom';
 
 import Dashboard from '@/pages/Dashboard';
-import Homeowners from '@/pages/homeowners/Homeowners';
+import HomeownerListPage from '@/pages/homeowners/HomeownerListPage';
 import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
 import Associations from '@/pages/Associations';
-import AssociationDetail from '@/pages/AssociationDetail';
-import SettingsPage from '@/pages/SettingsPage';
-import CommunicationTemplates from '@/pages/communication/CommunicationTemplates';
-import CommunicationLogs from '@/pages/communication/CommunicationLogs';
-import EventsCalendar from '@/pages/EventsCalendar';
+import AssociationDetail from '@/pages/system/AssociationProfile';
+import SettingsPage from '@/pages/Settings';
+import CommunicationTemplates from '@/pages/communications/CommunicationTemplates';
+import CommunicationLogs from '@/pages/communications/CommunicationLogs';
+import EventsCalendar from '@/pages/CalendarPage';
 import AssessmentManager from '@/pages/billing/AssessmentManager';
 import UserManagementPage from '@/pages/admin/UserManagementPage';
 import RoleManagementPage from '@/pages/admin/RoleManagementPage';
@@ -40,7 +40,7 @@ export const protectedRoutes: Route[] = [
   },
   {
     path: 'homeowners',
-    element: <Homeowners />,
+    element: <HomeownerListPage />,
     label: 'Homeowners',
     icon: Users,
     category: 'main',
