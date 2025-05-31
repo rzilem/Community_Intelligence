@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { ReactNode, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { NotificationContext } from './NotificationContext';
 import { NotificationItem } from '@/hooks/useNotifications';
 import { useLeadNotifications } from '@/hooks/leads/useLeadNotifications';
@@ -19,6 +19,7 @@ logger.init();
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const { user } = useAuth();
+  const isInitialized = useRef(false);
   
   // Get notifications from different sources - these hooks should be stable
   const { unreadLeadsCount, recentLeads, markAllAsRead: markLeadsAsRead } = useLeadNotifications();
@@ -37,26 +38,57 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     
     // Call mark as read functions - these should be stable from hooks
-    markLeadsAsRead();
-    markInvoicesAsRead();
-    markRequestsAsRead();
-    markEventsAsRead();
+    if (markLeadsAsRead) markLeadsAsRead();
+    if (markInvoicesAsRead) markInvoicesAsRead();
+    if (markRequestsAsRead) markRequestsAsRead();
+    if (markEventsAsRead) markEventsAsRead();
   }, [markLeadsAsRead, markInvoicesAsRead, markRequestsAsRead, markEventsAsRead]);
 
   const deleteNotification = useCallback((notificationId: string) => {
     setNotifications(prev => prev.filter(n => n.id !== notificationId));
   }, []);
 
+  // Stable reference for counts to prevent unnecessary updates
+  const countsRef = useRef({
+    unreadLeadsCount: 0,
+    unreadInvoicesCount: 0,
+    unreadRequestsCount: 0,
+    unreadEventsCount: 0
+  });
+
   // Aggregate notifications with stable dependencies
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      isInitialized.current = false;
       return;
     }
 
+    // Check if counts have actually changed
+    const currentCounts = {
+      unreadLeadsCount: unreadLeadsCount || 0,
+      unreadInvoicesCount: unreadInvoicesCount || 0,
+      unreadRequestsCount: unreadRequestsCount || 0,
+      unreadEventsCount: unreadEventsCount || 0
+    };
+
+    const recentLeadsLength = recentLeads?.length || 0;
+
+    // Only update if something actually changed
+    const hasCountsChanged = JSON.stringify(currentCounts) !== JSON.stringify(countsRef.current);
+    const hasLeadsChanged = isInitialized.current ? false : recentLeadsLength > 0;
+
+    if (!hasCountsChanged && !hasLeadsChanged && isInitialized.current) {
+      return;
+    }
+
+    // Update the ref
+    countsRef.current = currentCounts;
+    isInitialized.current = true;
+
     const aggregatedNotifications: NotificationItem[] = [];
     
-    // Add lead notifications
+    // Add lead notifications only if there are actual leads
     if (recentLeads && recentLeads.length > 0) {
       recentLeads.forEach(lead => {
         aggregatedNotifications.push({
@@ -73,10 +105,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
     
     // Add other notification types only if counts are greater than 0
-    if ((unreadInvoicesCount || 0) > 0) {
+    if (currentCounts.unreadInvoicesCount > 0) {
       aggregatedNotifications.push({
-        id: `invoice-batch-${Date.now()}`,
-        title: `${unreadInvoicesCount} New Invoice(s) Received`,
+        id: `invoice-batch-${currentCounts.unreadInvoicesCount}`,
+        title: `${currentCounts.unreadInvoicesCount} New Invoice(s) Received`,
         description: 'Review pending invoices',
         type: 'invoice',
         severity: 'info',
@@ -86,10 +118,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       });
     }
     
-    if ((unreadRequestsCount || 0) > 0) {
+    if (currentCounts.unreadRequestsCount > 0) {
       aggregatedNotifications.push({
-        id: `request-batch-${Date.now()}`,
-        title: `${unreadRequestsCount} New Homeowner Request(s)`,
+        id: `request-batch-${currentCounts.unreadRequestsCount}`,
+        title: `${currentCounts.unreadRequestsCount} New Homeowner Request(s)`,
         description: 'Homeowner requests need attention',
         type: 'request',
         severity: 'info',
@@ -99,10 +131,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       });
     }
     
-    if ((unreadEventsCount || 0) > 0) {
+    if (currentCounts.unreadEventsCount > 0) {
       aggregatedNotifications.push({
-        id: `event-batch-${Date.now()}`,
-        title: `${unreadEventsCount} Resale Calendar Update(s)`,
+        id: `event-batch-${currentCounts.unreadEventsCount}`,
+        title: `${currentCounts.unreadEventsCount} Resale Calendar Update(s)`,
         description: 'New events on the resale calendar',
         type: 'event',
         severity: 'info',
@@ -118,7 +150,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     );
     
     setNotifications(sortedNotifications);
-  }, [user, recentLeads, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount]);
+  }, [user?.id, unreadInvoicesCount, unreadRequestsCount, unreadEventsCount, unreadLeadsCount]); // Only depend on primitive values
 
   // Memoize the unread count to prevent recalculation on every render
   const unreadCount = useMemo(() => 
