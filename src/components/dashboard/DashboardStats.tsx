@@ -2,18 +2,28 @@
 import React from 'react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { Building, Calendar, DollarSign, MessageSquare, Shield, Users2 } from 'lucide-react';
-import { DashboardStats } from '@/hooks/dashboard/useDashboardData';
 
-interface DashboardStatsProps {
-  stats: DashboardStats | null;
-  associationName?: string;
-  loading: boolean;
+interface DashboardStatsData {
+  propertyCount?: number;
+  residentCount?: number;
+  assessmentAmount?: number;
+  collectionRate?: number;
+  collectionTrend?: number;
+  complianceCount?: number;
+  complianceDelta?: number;
+  complianceTrend?: number;
 }
 
-export const DashboardStatsSection: React.FC<DashboardStatsProps> = ({
+interface DashboardStatsProps {
+  stats?: DashboardStatsData | null;
+  associationName?: string;
+  loading?: boolean;
+}
+
+export const DashboardStats: React.FC<DashboardStatsProps> = ({
   stats,
   associationName,
-  loading
+  loading = false
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -51,4 +61,9 @@ export const DashboardStatsSection: React.FC<DashboardStatsProps> = ({
   );
 };
 
-export default DashboardStatsSection;
+// Default export
+const DashboardStatsDefault: React.FC = () => {
+  return <DashboardStats />;
+};
+
+export default DashboardStatsDefault;

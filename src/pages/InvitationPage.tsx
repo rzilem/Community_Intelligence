@@ -33,7 +33,7 @@ const InvitationPage = () => {
       const { data, error } = await supabase
         .from('resident_invitations')
         .select('*')
-        .eq('token', token)
+        .eq('invitation_token', token)
         .eq('status', 'pending')
         .single();
 
@@ -50,10 +50,12 @@ const InvitationPage = () => {
       }
 
       setInvitation(data);
+      // Extract names from metadata if available
+      const metadata = data.metadata as any;
       setFormData(prev => ({
         ...prev,
-        firstName: data.first_name || '',
-        lastName: data.last_name || ''
+        firstName: metadata?.first_name || '',
+        lastName: metadata?.last_name || ''
       }));
     } catch (error) {
       console.error('Error validating invitation:', error);
@@ -100,7 +102,8 @@ const InvitationPage = () => {
           .from('resident_invitations')
           .update({ 
             status: 'accepted',
-            accepted_at: new Date().toISOString()
+            accepted_at: new Date().toISOString(),
+            accepted_by: authData.user.id
           })
           .eq('id', invitation.id);
 
@@ -146,7 +149,7 @@ const InvitationPage = () => {
             Complete Your Registration
           </CardTitle>
           <p className="text-center text-gray-600">
-            You've been invited to join {invitation.association_name}
+            You've been invited to join the community
           </p>
         </CardHeader>
         <CardContent>

@@ -2,13 +2,13 @@
 import React from 'react';
 import { useAuth } from '@/contexts/auth';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import { DashboardStats } from '@/components/dashboard/DashboardStats';
-import { QuickActionWidgets } from '@/components/dashboard/QuickActionWidgets';
+import DashboardStats from '@/components/dashboard/DashboardStats';
+import QuickActionWidgets from '@/components/dashboard/QuickActionWidgets';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { AIAnalysisSection } from '@/components/dashboard/AIAnalysisSection';
-import { CalendarTab } from '@/components/dashboard/CalendarTab';
+import CalendarTab from '@/components/dashboard/CalendarTab';
 import { MessagesFeed } from '@/components/dashboard/MessagesFeed';
-import { TreasurerDashboard } from '@/components/dashboard/TreasurerDashboard';
+import TreasurerDashboard from '@/components/dashboard/TreasurerDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -19,6 +19,10 @@ const Dashboard = () => {
   if (profile?.role === 'treasurer') {
     return <TreasurerDashboard />;
   }
+
+  // Mock data for components that require props
+  const mockActivityData = [];
+  const mockAIIssues = [];
 
   return (
     <div className="space-y-6">
@@ -38,7 +42,11 @@ const Dashboard = () => {
             
             <TabsContent value="overview" className="space-y-4">
               <QuickActionWidgets />
-              <ActivityFeed />
+              <ActivityFeed 
+                recentActivity={mockActivityData} 
+                loading={false} 
+                error={null} 
+              />
             </TabsContent>
             
             <TabsContent value="calendar">
@@ -50,7 +58,7 @@ const Dashboard = () => {
             </TabsContent>
             
             <TabsContent value="ai-insights">
-              <AIAnalysisSection />
+              <AIAnalysisSection issues={mockAIIssues} />
             </TabsContent>
           </Tabs>
         </div>
