@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Configuration
+
+Create a `.env` file using `.env.example` as a template and provide your Supabase credentials:
+
+```sh
+cp .env.example .env
+```
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`. The app reads these values via `import.meta.env` when creating the Supabase client.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a) and click on Share -> Publish.
