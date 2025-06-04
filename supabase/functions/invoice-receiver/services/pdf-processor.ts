@@ -26,11 +26,11 @@ export function decodePDFContent(content: string, filename: string): Uint8Array 
 /**
  * Validates if the content is a valid PDF
  */
-export function validatePDF(contentBuffer: Uint8Array, filename: string): { 
-  isValid: boolean; 
-  errorMessage?: string; 
+export async function validatePDF(contentBuffer: Uint8Array, filename: string): Promise<{
+  isValid: boolean;
+  errorMessage?: string;
   checksum: string;
-} {
+}> {
   try {
     const pdfHeader = Array.from(contentBuffer.slice(0, 4)).map(b => b.toString(16)).join('');
     if (pdfHeader !== '25504446') { // %PDF in hex
@@ -43,7 +43,7 @@ export function validatePDF(contentBuffer: Uint8Array, filename: string): {
     }
     
     // Compute checksum using native crypto
-    const hashBuffer = crypto.subtle.digestSync("SHA-256", contentBuffer);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", contentBuffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const checksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     
@@ -66,15 +66,15 @@ export function validatePDF(contentBuffer: Uint8Array, filename: string): {
 /**
  * Verifies that an uploaded PDF matches the original
  */
-export function verifyUploadedPDF(
-  uploadedBuffer: Uint8Array, 
-  originalChecksum: string, 
-  originalSize: number, 
+export async function verifyUploadedPDF(
+  uploadedBuffer: Uint8Array,
+  originalChecksum: string,
+  originalSize: number,
   filename: string
-): { 
-  isValid: boolean; 
-  errorMessage?: string; 
-} {
+): Promise<{
+  isValid: boolean;
+  errorMessage?: string;
+}> {
   try {
     // Check size match
     if (uploadedBuffer.byteLength !== originalSize) {
@@ -103,7 +103,7 @@ export function verifyUploadedPDF(
     // If there's an original checksum, verify it
     if (originalChecksum) {
       // Compute checksum using native crypto
-      const hashBuffer = crypto.subtle.digestSync("SHA-256", uploadedBuffer);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", uploadedBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const uploadedChecksum = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       

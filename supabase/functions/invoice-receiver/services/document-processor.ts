@@ -78,7 +78,7 @@ export async function processDocument(attachments: Attachment[] = []) {
 
       // Validate PDF if applicable
       if (contentType === 'application/pdf') {
-        const validationResult = validatePDF(contentBuffer, filename);
+        const validationResult = await validatePDF(contentBuffer, filename);
         if (!validationResult.isValid) {
           console.error(`PDF validation failed for ${filename}: ${validationResult.errorMessage}`);
           continue;
@@ -124,10 +124,10 @@ export async function processDocument(attachments: Attachment[] = []) {
         const uploadedBuffer = new Uint8Array(await response.arrayBuffer());
         
         if (contentType === 'application/pdf') {
-          const verificationResult = verifyUploadedPDF(
-            uploadedBuffer, 
-            originalChecksum, 
-            contentBuffer.byteLength, 
+          const verificationResult = await verifyUploadedPDF(
+            uploadedBuffer,
+            originalChecksum,
+            contentBuffer.byteLength,
             filename
           );
           
