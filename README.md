@@ -4,6 +4,23 @@
 
 **URL**: https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a
 
+## Setup
+
+Copy `.env.example` to `.env` and fill in the values for your environment. At a minimum
+the following variables are required:
+
+- `VITE_SUPABASE_URL` – URL of your Supabase instance
+- `VITE_SUPABASE_ANON_KEY` – Supabase anonymous key
+- `VITE_OPENAI_API_KEY` – OpenAI API key
+- `VITE_STRIPE_PUBLISHABLE_KEY` – public Stripe key used by the app
+
+Install dependencies and start the development server:
+
+```bash
+npm install
+npm run dev
+```
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
