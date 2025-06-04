@@ -1,60 +1,14 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Calendar, FilePlus, MessageSquarePlus, 
-  FileText, AlarmClock, BarChart2
-} from 'lucide-react';
+import { BarChart2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface ActionItem {
-  title: string;
-  icon: React.ReactNode;
-  description: string;
-  path: string;
-  color: string;
-}
+import { quickActionItems, QuickActionItem } from '@/data/quickActionItems';
 
 const QuickActionWidgets: React.FC = () => {
   const navigate = useNavigate();
-  
-  const actions: ActionItem[] = [
-    {
-      title: "Schedule Event",
-      icon: <Calendar className="h-5 w-5 text-hoa-blue-600" />,
-      description: "Create a new calendar event",
-      path: "/operations/calendar",
-      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
-    },
-    {
-      title: "Send Message",
-      icon: <MessageSquarePlus className="h-5 w-5 text-hoa-blue-600" />,
-      description: "Send a new communication",
-      path: "/communications/messaging",
-      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
-    },
-    {
-      title: "View Calendar",
-      icon: <AlarmClock className="h-5 w-5 text-hoa-blue-600" />,
-      description: "View calendar events",
-      path: "/operations/calendar",
-      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
-    },
-    {
-      title: "Create Report",
-      icon: <FileText className="h-5 w-5 text-hoa-blue-600" />,
-      description: "Generate a new report",
-      path: "/records-reports/reports",
-      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
-    },
-    {
-      title: "New Document",
-      icon: <FilePlus className="h-5 w-5 text-hoa-blue-600" />,
-      description: "Upload a new document",
-      path: "/records-reports/documents",
-      color: "bg-gray-100 border-hoa-blue-300 text-hoa-blue-700"
-    }
-  ];
+
+  const actions: QuickActionItem[] = quickActionItems;
   
   const handleActionClick = (path: string, title: string) => {
     navigate(path);
@@ -62,8 +16,7 @@ const QuickActionWidgets: React.FC = () => {
   };
   
   const handleViewAllActions = () => {
-    // You can implement a modal or navigate to an "all actions" page
-    toast.info("View all actions feature coming soon");
+    navigate('/dashboard/actions');
   };
   
   return (

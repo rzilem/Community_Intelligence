@@ -7,6 +7,7 @@ import Auth from '@/pages/Auth';
 import Index from '@/pages/Index';
 import Permissions from '@/pages/system/Permissions';
 import UserProfile from '@/pages/user/UserProfile';
+import AllActions from '@/pages/AllActions';
 
 export const mainRoutes = [
   {
@@ -16,6 +17,10 @@ export const mainRoutes = [
   {
     path: '/dashboard',
     element: <Dashboard />
+  },
+  {
+    path: '/dashboard/actions',
+    element: <AllActions />
   },
   {
     path: '/properties',
