@@ -8,17 +8,41 @@ import { toast } from 'sonner';
 
 interface LeadActionsMenuProps {
   lead: Lead;
-  onDelete?: (lead: Lead) => Promise<void>;
-  onUpdateStatus?: (lead: Lead, status: Lead['status']) => Promise<void>;
+  onDelete: (lead: Lead) => Promise<void>;
+  onUpdateStatus: (lead: Lead, status: Lead['status']) => Promise<void>;
 }
 
-const LeadActionsMenu = ({ lead, onDelete, onUpdateStatus }: LeadActionsMenuProps) => {
+const defaultDeleteLead = async (lead: Lead): Promise<void> => {
+  const res = await fetch(`/api/leads/${lead.id}`, { method: 'DELETE' });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to delete lead');
+  }
+};
+
+const defaultUpdateStatus = async (
+  lead: Lead,
+  status: Lead['status']
+): Promise<void> => {
+  const res = await fetch(`/api/leads/${lead.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ status })
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed to update lead status');
+  }
+};
+
+const LeadActionsMenu = ({
+  lead,
+  onDelete = defaultDeleteLead,
+  onUpdateStatus = defaultUpdateStatus
+}: LeadActionsMenuProps) => {
   const handleDeleteLead = async () => {
-    if (!onDelete) {
-      toast.error("Delete functionality is not implemented yet");
-      return;
-    }
-    
     try {
       await onDelete(lead);
       toast.success(`Lead "${lead.name}" deleted successfully`);
@@ -27,13 +51,8 @@ const LeadActionsMenu = ({ lead, onDelete, onUpdateStatus }: LeadActionsMenuProp
       toast.error("Failed to delete lead");
     }
   };
-  
+
   const handleUpdateStatus = async (status: Lead['status']) => {
-    if (!onUpdateStatus) {
-      toast.error("Status update functionality is not implemented yet");
-      return;
-    }
-    
     try {
       await onUpdateStatus(lead, status);
       toast.success(`Lead status updated to ${status}`);
