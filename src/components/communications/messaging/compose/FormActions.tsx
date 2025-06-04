@@ -3,45 +3,32 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 
 interface FormActionsProps {
-  isPreviewMode: boolean;
-  togglePreview: () => void;
-  handleReset: () => void;
-  handleSendMessage: () => void;
-  canSend: boolean;
+  onSend: () => Promise<void>;
+  onReset: () => void;
   isLoading: boolean;
+  canSend: boolean;
 }
 
 const FormActions: React.FC<FormActionsProps> = ({
-  isPreviewMode,
-  togglePreview,
-  handleReset,
-  handleSendMessage,
-  canSend,
-  isLoading
+  onSend,
+  onReset,
+  isLoading,
+  canSend
 }) => {
   return (
-    <div className="flex justify-between pt-4">
+    <div className="flex justify-end gap-3 pt-4">
       <Button 
         variant="outline" 
-        onClick={togglePreview}
+        onClick={onReset}
       >
-        {isPreviewMode ? 'Edit Message' : 'Preview with Sample Data'}
+        Cancel
       </Button>
-      
-      <div className="flex gap-3">
-        <Button 
-          variant="outline" 
-          onClick={handleReset}
-        >
-          Cancel
-        </Button>
-        <Button 
-          disabled={!canSend || isLoading}
-          onClick={handleSendMessage}
-        >
-          {isLoading ? 'Sending...' : 'Send Message'}
-        </Button>
-      </div>
+      <Button 
+        disabled={!canSend || isLoading}
+        onClick={onSend}
+      >
+        {isLoading ? 'Sending...' : 'Send Message'}
+      </Button>
     </div>
   );
 };

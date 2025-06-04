@@ -1,3 +1,4 @@
+
 import { MessageHistory } from '@/services/communications/message-service';
 
 // We'll keep templates as they might be stored locally or in a different table
@@ -8,6 +9,7 @@ export interface MessageTemplate {
   content: string;
   type: 'email' | 'sms';
   lastUpdated: string;
+  date: string; // Added this property
   category: string;
 }
 
@@ -20,6 +22,7 @@ export const mockTemplates: MessageTemplate[] = [
     content: 'Dear {{resident.name}},\n\nWelcome to {{association.name}}! We\'re excited to have you as part of our community.',
     type: 'email',
     lastUpdated: '2024-01-15',
+    date: '2024-01-15',
     category: 'welcome'
   },
   {
@@ -29,6 +32,7 @@ export const mockTemplates: MessageTemplate[] = [
     content: 'Dear {{resident.name}},\n\nThis is a friendly reminder that your HOA fee of ${{payment.amount}} is due on {{payment.dueDate}}.',
     type: 'email',
     lastUpdated: '2024-01-10',
+    date: '2024-01-10',
     category: 'payments'
   },
   {
@@ -38,6 +42,7 @@ export const mockTemplates: MessageTemplate[] = [
     content: 'Dear Residents,\n\nPlease be advised that maintenance work will be performed in the community on [DATE]. We appreciate your patience.',
     type: 'email',
     lastUpdated: '2024-01-08',
+    date: '2024-01-08',
     category: 'maintenance'
   },
   {
@@ -47,6 +52,7 @@ export const mockTemplates: MessageTemplate[] = [
     content: 'ALERT: {{compliance.violation}} reported at {{property.address}}. Please contact management immediately.',
     type: 'sms',
     lastUpdated: '2024-01-05',
+    date: '2024-01-05',
     category: 'emergency'
   }
 ];

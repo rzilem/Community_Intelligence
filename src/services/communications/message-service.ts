@@ -24,6 +24,15 @@ export interface MessageHistory {
   tracking_number?: string;
 }
 
+interface MessageMetadata {
+  subject?: string;
+  content?: string;
+  type?: string;
+  association_id?: string;
+  recipient_groups?: string[];
+  scheduled_date?: string;
+}
+
 export const messageService = {
   // Send a message
   sendMessage: async (messageData: MessageData): Promise<{ success: boolean; trackingNumber?: string }> => {
@@ -47,7 +56,7 @@ export const messageService = {
             association_id: messageData.association_id,
             recipient_groups: messageData.recipient_groups,
             scheduled_date: messageData.scheduled_date
-          }
+          } as MessageMetadata
         })
         .select()
         .single();
@@ -95,18 +104,21 @@ export const messageService = {
         throw new Error(`Failed to fetch message history: ${error.message}`);
       }
 
-      return (data || []).map(log => ({
-        id: log.id,
-        subject: log.metadata?.subject || 'No Subject',
-        content: log.metadata?.content || '',
-        type: log.metadata?.type || 'email',
-        recipients: log.metadata?.recipient_groups?.length || 0,
-        sent_date: log.processed_at || log.created_at,
-        status: log.status === 'completed' ? 'sent' : 
-                log.status === 'failed' ? 'failed' : 'scheduled',
-        association_id: log.metadata?.association_id || '',
-        tracking_number: log.tracking_number
-      }));
+      return (data || []).map(log => {
+        const metadata = log.metadata as MessageMetadata || {};
+        return {
+          id: log.id,
+          subject: metadata.subject || 'No Subject',
+          content: metadata.content || '',
+          type: (metadata.type as 'email' | 'sms') || 'email',
+          recipients: metadata.recipient_groups?.length || 0,
+          sent_date: log.processed_at || log.created_at,
+          status: log.status === 'completed' ? 'sent' : 
+                  log.status === 'failed' ? 'failed' : 'scheduled',
+          association_id: metadata.association_id || '',
+          tracking_number: log.tracking_number
+        };
+      });
     } catch (error) {
       console.error('Error in getMessageHistory:', error);
       return [];
@@ -127,13 +139,15 @@ export const messageService = {
         throw new Error('Message not found');
       }
 
+      const metadata = originalMessage.metadata as MessageMetadata || {};
+
       // Create a new message with the same data
       const messageData: MessageData = {
-        subject: originalMessage.metadata?.subject || '',
-        content: originalMessage.metadata?.content || '',
-        association_id: originalMessage.metadata?.association_id || '',
-        recipient_groups: originalMessage.metadata?.recipient_groups || [],
-        type: originalMessage.metadata?.type || 'email'
+        subject: metadata.subject || '',
+        content: metadata.content || '',
+        association_id: metadata.association_id || '',
+        recipient_groups: metadata.recipient_groups || [],
+        type: (metadata.type as 'email' | 'sms') || 'email'
       };
 
       const result = await messageService.sendMessage(messageData);

@@ -5,12 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
 interface HistorySearchProps {
-  searchValue: string;
+  searchHistory: string;
   onSearchChange: (value: string) => void;
 }
 
 const HistorySearch: React.FC<HistorySearchProps> = ({
-  searchValue,
+  searchHistory,
   onSearchChange
 }) => {
   return (
@@ -20,7 +20,7 @@ const HistorySearch: React.FC<HistorySearchProps> = ({
         <Input
           placeholder="Search messages"
           className="pl-9 w-[250px]"
-          value={searchValue}
+          value={searchHistory}
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>

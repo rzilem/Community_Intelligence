@@ -1,21 +1,34 @@
 
 import React from 'react';
 import MessageTypeSelector from '../MessageTypeSelector';
+import { Button } from '@/components/ui/button';
 
 interface MessageHeaderProps {
   messageType: 'email' | 'sms';
-  onTypeChange: (type: 'email' | 'sms') => void;
+  onMessageTypeChange: (type: 'email' | 'sms') => void;
+  previewMode: boolean;
+  onTogglePreview: () => void;
 }
 
 const MessageHeader: React.FC<MessageHeaderProps> = ({ 
   messageType, 
-  onTypeChange 
+  onMessageTypeChange,
+  previewMode,
+  onTogglePreview
 }) => {
   return (
-    <MessageTypeSelector 
-      messageType={messageType} 
-      onChange={onTypeChange} 
-    />
+    <div className="flex justify-between items-center">
+      <MessageTypeSelector 
+        messageType={messageType} 
+        onChange={onMessageTypeChange} 
+      />
+      <Button 
+        variant="outline" 
+        onClick={onTogglePreview}
+      >
+        {previewMode ? 'Edit Message' : 'Preview with Sample Data'}
+      </Button>
+    </div>
   );
 };
 
