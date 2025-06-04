@@ -61,19 +61,18 @@ export const useAssociationMutations = () => {
   const deleteAssociation = async (id: string) => {
     try {
       setIsDeleting(true);
-      
-      // Instead of actually deleting, we'll set is_archived to true
+
       const { error } = await supabase
         .from('associations')
-        .update({ is_archived: true })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
-      
+
       return true;
     } catch (error: any) {
-      console.error('Error archiving association:', error);
-      toast.error(`Failed to archive association: ${error.message}`);
+      console.error('Error deleting association:', error);
+      toast.error(`Failed to delete association: ${error.message}`);
       throw error;
     } finally {
       setIsDeleting(false);
@@ -114,12 +113,11 @@ export const useAssociationMutations = () => {
   const bulkDeleteAssociations = async (ids: string[]) => {
     try {
       setIsDeleting(true);
-      
-      // We'll update each association to is_archived=true one by one
-      const promises = ids.map(id => 
+
+      const promises = ids.map(id =>
         supabase
           .from('associations')
-          .update({ is_archived: true })
+          .delete()
           .eq('id', id)
       );
       
@@ -129,13 +127,13 @@ export const useAssociationMutations = () => {
       const errors = results.filter(result => result.error).map(result => result.error);
       
       if (errors.length > 0) {
-        throw new Error(`Failed to archive ${errors.length} associations`);
+        throw new Error(`Failed to delete ${errors.length} associations`);
       }
-      
+
       return true;
     } catch (error: any) {
-      console.error('Error archiving associations:', error);
-      toast.error(`Failed to archive associations: ${error.message}`);
+      console.error('Error deleting associations:', error);
+      toast.error(`Failed to delete associations: ${error.message}`);
       throw error;
     } finally {
       setIsDeleting(false);
