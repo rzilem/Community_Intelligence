@@ -18,6 +18,7 @@ import EmailTemplateList from '@/components/emails/EmailTemplateList';
 import EmailTemplateForm from '@/components/emails/EmailTemplateForm';
 import { useEmailCampaigns } from '@/hooks/emails/useEmailCampaigns';
 import { useEmailTemplates } from '@/hooks/emails/useEmailTemplates';
+// Metrics for campaign analytics are fetched from Supabase via RPC
 import { EmailCampaign, EmailTemplate, CampaignMetrics } from '@/types/email-types';
 import { toast } from 'sonner';
 
