@@ -1,37 +1,69 @@
-# Welcome to your Lovable project
+# HOA AI Community Nexus
+
+Welcome to your Lovable project. This repository contains a Vite + React + TypeScript application configured to work with Supabase.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a
 
-## Setup
+## Prerequisites
 
-Copy `.env.example` to `.env` and fill in the values for your environment. At a minimum
-the following variables are required:
+- **Node.js** (version 18 or higher)
+- **npm**
+- [Supabase CLI](https://supabase.com/docs/guides/cli) (required if you want to run the Supabase stack locally)
 
-- `VITE_SUPABASE_URL` – URL of your Supabase instance
-- `VITE_SUPABASE_ANON_KEY` – Supabase anonymous key
-- `VITE_OPENAI_API_KEY` – OpenAI API key
-- `VITE_STRIPE_PUBLISHABLE_KEY` – public Stripe key used by the app
+## Getting Started
 
-Install dependencies and start the development server:
+1. **Clone the repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd <YOUR_PROJECT_NAME>
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Create an environment file**
+   - Copy `.env.example` to `.env` and fill in at least the following values:
+     - `VITE_SUPABASE_URL`
+     - `VITE_SUPABASE_ANON_KEY`
+     - `VITE_OPENAI_API_KEY` *(optional)*
+     - `VITE_STRIPE_PUBLISHABLE_KEY` *(optional)*
+   - For API routes you also need:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `SUPABASE_SERVICE_ROLE_KEY`
+     - `MAX_FILE_SIZE` *(optional, defaults to 10MB)*
+     - `ALLOWED_FILE_TYPES` *(optional)*
+4. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+5. **Build for production**
+   ```bash
+   npm run build
+   ```
+
+## Supabase Configuration
+
+The project contains a `supabase` directory with functions and migrations. If you wish to run these locally, install the Supabase CLI and run:
 
 ```bash
-npm install
-npm run dev
+supabase start
 ```
+
+This will launch a local Supabase instance using the settings defined in `supabase/config.toml`.
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
 
-**Use Lovable**
+### Use Lovable
 
 Simply visit the [Lovable Project](https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a) and start prompting.
 
 Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
+### Use your preferred IDE
 
 If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
@@ -53,13 +85,13 @@ npm i
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Edit a file directly in GitHub
 
 - Navigate to the desired file(s).
 - Click the "Edit" button (pencil icon) at the top right of the file view.
 - Make your changes and commit the changes.
 
-**Use GitHub Codespaces**
+### Use GitHub Codespaces
 
 - Navigate to the main page of your repository.
 - Click on the "Code" button (green button) near the top right.
