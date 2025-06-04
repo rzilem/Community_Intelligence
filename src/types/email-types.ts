@@ -35,3 +35,14 @@ export interface CampaignRecipient {
   created_at: string;
   updated_at: string;
 }
+
+export interface CampaignMetrics {
+  total_recipients: number;
+  sent_count: number;
+  open_count: number;
+  click_count: number;
+  bounce_count: number;
+  open_rate: number;
+  click_rate: number;
+  bounce_rate: number;
+}
