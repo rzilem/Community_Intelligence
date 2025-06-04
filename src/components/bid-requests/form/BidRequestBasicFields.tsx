@@ -1,18 +1,18 @@
 
 import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
-import { BidRequestFormData } from '@/types/bid-request-form-types';
 import FormFieldInput from '@/components/homeowners/form/FormFieldInput';
 import FormFieldTextarea from '@/components/homeowners/form/FormFieldTextarea';
-import EnhancedProjectTypeSelector from './EnhancedProjectTypeSelector';
+import { BidRequestWithVendors } from '@/types/bid-request-types';
+import BidRequestCategorySelector from './BidRequestCategorySelector';
 
 interface BidRequestBasicFieldsProps {
-  form: UseFormReturn<BidRequestFormData>;
+  form: UseFormReturn<Partial<BidRequestWithVendors>>;
 }
 
 const BidRequestBasicFields: React.FC<BidRequestBasicFieldsProps> = ({ form }) => {
   return (
-    <div className="space-y-6">
+    <>
       <FormFieldInput
         form={form}
         name="title"
@@ -27,26 +27,18 @@ const BidRequestBasicFields: React.FC<BidRequestBasicFieldsProps> = ({ form }) =
         placeholder="Provide details about the bid request"
       />
       
-      <EnhancedProjectTypeSelector form={form} />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormFieldInput
-          form={form}
-          name="budget_range_min"
-          label="Minimum Budget"
-          placeholder="Enter minimum budget"
-          type="number"
-        />
+      <div className="grid grid-cols-1 gap-4">
+        <BidRequestCategorySelector form={form} />
         
         <FormFieldInput
           form={form}
-          name="budget_range_max"
-          label="Maximum Budget"
-          placeholder="Enter maximum budget"
+          name="budget"
+          label="Budget"
+          placeholder="Enter budget"
           type="number"
         />
       </div>
-    </div>
+    </>
   );
 };
 

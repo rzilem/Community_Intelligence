@@ -1,55 +1,48 @@
 
 import React from 'react';
-import { Home, Users, Building2, Calendar } from 'lucide-react';
-import { Dashboard } from '@/pages/Dashboard';
-import Homeowners from '@/pages/Homeowners';
-import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
-import Associations from '@/pages/Associations';
-import CalendarPage from '@/pages/CalendarPage';
-import { Route } from './types';
+import { Navigate } from 'react-router-dom';
+import Dashboard from '@/pages/Dashboard';
+import NotFound from '@/pages/NotFound';
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
+import Permissions from '@/pages/system/Permissions';
+import UserProfile from '@/pages/user/UserProfile';
 
-export const mainRoutes: Route[] = [
+export const mainRoutes = [
   {
-    path: 'dashboard',
-    element: <Dashboard />,
-    label: 'Dashboard',
-    icon: Home,
-    category: 'main',
-    requiresAuth: true,
-    description: 'Overview of your HOA management dashboard'
+    path: '/',
+    element: <Index />
   },
   {
-    path: 'homeowners',
-    element: <Homeowners />,
-    label: 'Homeowners',
-    icon: Users,
-    category: 'main',
-    requiresAuth: true,
-    description: 'Manage homeowner information and requests'
+    path: '/dashboard',
+    element: <Dashboard />
   },
   {
-    path: 'homeowners/:id',
-    element: <HomeownerDetailPage />,
-    category: 'main',
-    requiresAuth: true,
-    description: 'Homeowner detail page'
+    path: '/properties',
+    element: <Navigate to="/associations" />
   },
   {
-    path: 'associations',
-    element: <Associations />,
-    label: 'Associations',
-    icon: Building2,
-    category: 'main',
-    requiresAuth: true,
-    description: 'Manage HOA associations and properties'
+    path: '/residents',
+    element: <Navigate to="/homeowners" />
   },
   {
-    path: 'events',
-    element: <CalendarPage />,
-    label: 'Events',
-    icon: Calendar,
-    category: 'main',
-    requiresAuth: true,
-    description: 'Schedule and manage HOA events'
+    path: '/residents/:id',
+    element: <Navigate to="/homeowners/:id" replace />
   },
+  {
+    path: '/system/permissions',
+    element: <Permissions />
+  },
+  {
+    path: '/user/profile',
+    element: <UserProfile />
+  },
+  {
+    path: '/auth',
+    element: <Auth />
+  },
+  {
+    path: '*',
+    element: <NotFound />
+  }
 ];

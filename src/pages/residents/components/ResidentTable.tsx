@@ -52,6 +52,7 @@ const ResidentTable: React.FC<ResidentTableProps> = ({
   const startIdx = (currentPage - 1) * pageSize;
   const endIdx = Math.min(startIdx + pageSize, residents.length);
   const currentPageItems = residents.slice(startIdx, endIdx);
+  const totalPages = Math.ceil(residents.length / pageSize);
 
   if (loading) {
     return (
@@ -115,8 +116,10 @@ const ResidentTable: React.FC<ResidentTableProps> = ({
       </div>
 
       <HomeownerPagination
+        filteredCount={residents.length}
+        totalCount={totalCount}
         currentPage={currentPage}
-        totalItems={totalCount}
+        totalPages={totalPages}
         pageSize={pageSize}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}

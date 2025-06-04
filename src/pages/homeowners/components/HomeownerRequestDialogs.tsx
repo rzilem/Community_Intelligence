@@ -55,8 +55,8 @@ const HomeownerRequestDialogs = ({ handleRefresh }: HomeownerRequestDialogsProps
       />
 
       <NewRequestDialog
-        open={isNewRequestFormOpen}
-        onOpenChange={setIsNewRequestFormOpen}
+        isOpen={isNewRequestFormOpen}
+        onClose={() => setIsNewRequestFormOpen(false)}
         onSuccess={handleNewRequestSuccess}
       />
     </>

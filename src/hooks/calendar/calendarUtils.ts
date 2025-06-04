@@ -14,9 +14,9 @@ export const mapDbEventsToUiEvents = (calendarEvents: CalendarEvent[]): Calendar
     title: event.title,
     description: event.description,
     location: event.location,
-    date: new Date(event.start),
-    startTime: event.startTime,
-    endTime: event.endTime,
+    date: new Date(event.start_time),
+    startTime: format(new Date(event.start_time), 'HH:mm'),
+    endTime: format(new Date(event.end_time), 'HH:mm'),
     type: event.event_type as any,
     amenityId: event.amenity_id || undefined,
     color: event.color || getDefaultColorForType(event.event_type)

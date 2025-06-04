@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/auth';
-import { Compliance } from '@/types/app-types';
+import { useAuth } from '@/contexts/AuthContext';
+import { Compliance, Property } from '@/types/app-types';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
 import { ComplianceForm } from './ComplianceForm';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,30 +13,13 @@ interface ComplianceDialogProps {
   issue: Compliance | null;
 }
 
-interface DatabaseProperty {
-  id: string;
-  address: string;
-  address_line_2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  property_type?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  square_footage?: number;
-  association_id?: string;
-  unit_number?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({ 
   open, 
   onOpenChange,
   issue 
 }) => {
   const { currentAssociation } = useAuth();
-  const [properties, setProperties] = useState<DatabaseProperty[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(false);
   
   const createIssue = useSupabaseCreate<Compliance>('compliance_issues');
@@ -55,7 +38,24 @@ export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
           
         if (error) throw error;
         
-        setProperties(data || []);
+        // Map to ensure the data conforms to the Property type from app-types.ts
+        const mappedData = (data || []).map(prop => ({
+          id: prop.id,
+          association_id: prop.association_id,
+          address: prop.address,
+          unit_number: prop.unit_number,
+          city: prop.city,
+          state: prop.state,
+          zip: prop.zip,
+          property_type: prop.property_type,
+          bedrooms: prop.bedrooms,
+          bathrooms: prop.bathrooms,
+          square_feet: prop.square_feet,
+          created_at: prop.created_at || new Date().toISOString(),
+          updated_at: prop.updated_at || new Date().toISOString()
+        })) as Property[];
+        
+        setProperties(mappedData);
       } catch (error) {
         console.error('Error fetching properties:', error);
       } finally {
@@ -86,23 +86,6 @@ export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
     }
   };
 
-  // Convert database properties to the format expected by ComplianceForm
-  const convertedProperties = properties.map(prop => ({
-    id: prop.id,
-    association_id: prop.association_id || currentAssociation?.id || '',
-    address: prop.address,
-    unit_number: prop.unit_number,
-    city: prop.city,
-    state: prop.state,
-    zip: prop.zip_code,
-    property_type: prop.property_type || '',
-    bedrooms: prop.bedrooms,
-    bathrooms: prop.bathrooms,
-    square_feet: prop.square_footage,
-    created_at: prop.created_at,
-    updated_at: prop.updated_at
-  }));
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -121,7 +104,7 @@ export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
             status: 'open',
             association_id: currentAssociation?.id || ''
           }}
-          properties={convertedProperties}
+          properties={properties}
           loadingProperties={loading}
           onSubmit={handleSubmit}
           isSubmitting={createIssue.isPending || updateIssue.isPending}

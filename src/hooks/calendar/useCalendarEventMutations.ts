@@ -1,117 +1,106 @@
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth';
-import { CalendarEvent } from '@/types/calendar-types';
+import { useSupabaseCreate, useSupabaseDelete } from '@/hooks/supabase';
+import { NewCalendarEvent } from './types';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDefaultColorForType } from './calendarUtils';
 
-interface UseCalendarEventMutationsProps {
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
-}
+export const useCalendarEventMutations = () => {
+  const { currentAssociation, user } = useAuth();
 
-export const useCalendarEventMutations = ({ onSuccess, onError }: UseCalendarEventMutationsProps = {}) => {
-  const queryClient = useQueryClient();
-  const { currentAssociation } = useAuth();
-
-  // Mutation for creating a new calendar event
-  const createEventMutation = useMutation({
-    mutationFn: async (newEvent: Omit<CalendarEvent, 'id' | 'created_at' | 'updated_at'>) => {
-      if (!currentAssociation) {
-        throw new Error('No association selected');
-      }
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .insert([{ 
-          ...newEvent, 
-          hoa_id: currentAssociation.id,
-          start_time: newEvent.start.toISOString(),
-          end_time: newEvent.end.toISOString()
-        }])
-        .select()
-        .single();
-      if (error) {
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
-      toast.success('Event created successfully!');
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to create event: ${error.message}`);
-      if (onError) {
-        onError(error);
-      }
-    },
+  // Create event mutation
+  const { mutate: createEvent, isPending: isCreating } = useSupabaseCreate('calendar_events', {
+    showSuccessToast: true,
+    invalidateQueries: [['calendar_events']]
   });
 
-  // Mutation for updating an existing calendar event
-  const updateEventMutation = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<CalendarEvent> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      if (error) {
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
-      toast.success('Event updated successfully!');
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to update event: ${error.message}`);
-      if (onError) {
-        onError(error);
-      }
-    },
+  // Delete event mutation
+  const { mutate: deleteEvent, isPending: isDeleting } = useSupabaseDelete('calendar_events', {
+    showSuccessToast: true,
+    invalidateQueries: [['calendar_events']]
   });
 
-  // Mutation for deleting a calendar event
-  const deleteEventMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await supabase
-        .from('calendar_events')
-        .delete()
-        .eq('id', id);
-      if (error) {
-        throw error;
+  const handleCreateEvent = (newEvent: NewCalendarEvent, resetForm: () => void, refetch: () => void): boolean => {
+    if (!currentAssociation) {
+      toast.error("Please select an association first");
+      return false;
+    }
+
+    if (!newEvent.title) {
+      toast.error("Please enter a title for the event");
+      return false;
+    }
+
+    // Create start and end time Date objects
+    const startDate = new Date(newEvent.date);
+    const [startHours, startMinutes] = newEvent.startTime.split(':');
+    startDate.setHours(parseInt(startHours), parseInt(startMinutes));
+
+    const endDate = new Date(newEvent.date);
+    const [endHours, endMinutes] = newEvent.endTime.split(':');
+    endDate.setHours(parseInt(endHours), parseInt(endMinutes));
+
+    if (endDate <= startDate) {
+      toast.error("End time must be after start time");
+      return false;
+    }
+
+    // Create the event object to save to Supabase
+    const eventToSave = {
+      hoa_id: currentAssociation.id,
+      title: newEvent.title,
+      description: newEvent.description || null,
+      location: newEvent.location || null,
+      event_type: newEvent.type,
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
+      amenity_id: newEvent.amenityId || null,
+      booked_by: user?.id || null,
+      visibility: 'private', // Default visibility
+      color: newEvent.color || getDefaultColorForType(newEvent.type)
+    };
+
+    // Save to Supabase
+    createEvent(eventToSave, {
+      onSuccess: () => {
+        toast.success("Event booked successfully!");
+        resetForm();
+        refetch();
+        return true;
+      },
+      onError: (error) => {
+        console.error("Event creation error:", error);
+        toast.error(`Failed to create event: ${error.message}`);
+        return false;
       }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendarEvents'] });
-      toast.success('Event deleted successfully!');
-      if (onSuccess) {
-        onSuccess();
-      }
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to delete event: ${error.message}`);
-      if (onError) {
-        onError(error);
-      }
-    },
-  });
+    });
+    
+    return true; // Default return for optimistic UI updates
+  };
+
+  const handleDeleteEvent = (eventId: string, refetch: () => void) => {
+    if (isDeleting) return;
+
+    // Confirm before deleting
+    if (confirm("Are you sure you want to delete this event?")) {
+      deleteEvent(eventId, {
+        onSuccess: () => {
+          toast.success("Event deleted successfully");
+          refetch();
+        },
+        onError: (error) => {
+          console.error("Event deletion error:", error);
+          toast.error(`Failed to delete event: ${error.message}`);
+        }
+      });
+    }
+  };
 
   return {
-    createEvent: createEventMutation.mutateAsync,
-    updateEvent: updateEventMutation.mutateAsync,
-    deleteEvent: deleteEventMutation.mutateAsync,
-    isCreating: createEventMutation.isPending,
-    isUpdating: updateEventMutation.isPending,
-    isDeleting: deleteEventMutation.isPending,
+    isCreating,
+    isDeleting,
+    handleCreateEvent,
+    handleDeleteEvent,
+    hasAssociation: !!currentAssociation
   };
 };

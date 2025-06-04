@@ -1,35 +1,14 @@
 
 import React, { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useAuth } from '@/contexts/auth';
+import { ProposalRequestFormData } from '@/types/proposal-request-types';
+import { submitProposalRequest } from '@/services/proposal-request-service';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import FormStepOne from './FormStepOne';
 import FormStepTwo from './FormStepTwo';
 import FormStepThree from './FormStepThree';
-import { ProposalRequestFormData, submitProposalRequest } from '@/types/proposal-request-types';
-
-// Define validation schema
-const proposalRequestSchema = z.object({
-  communityName: z.string().min(1, 'Community Name is required'),
-  numberOfBids: z.string().min(1, 'Number of Bids is required'),
-  address: z.object({
-    streetAddress: z.string().min(1, 'Street Address is required'),
-    addressLine2: z.string().optional(),
-    city: z.string().min(1, 'City is required'),
-    zipCode: z.string().min(1, 'ZIP Code is required')
-  }),
-  projectType: z.string().min(1, 'Project Type is required'),
-  bidRequestType: z.string().optional(),
-  workLocation: z.string().optional(),
-  cpaService: z.string().optional(),
-  roadWorkTypes: z.array(z.string()).optional(),
-  fenceLocation: z.string().optional(),
-  additionalDetails: z.string().optional()
-});
 
 const ProposalRequestForm: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -55,11 +34,6 @@ const ProposalRequestForm: React.FC = () => {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const { handleSubmit: formHandleSubmit } = useForm<ProposalRequestFormData>({
-    resolver: zodResolver(proposalRequestSchema),
-    defaultValues: formData
-  });
 
   const handleChange = (field: string, value: any) => {
     if (field.includes('.')) {
@@ -140,7 +114,7 @@ const ProposalRequestForm: React.FC = () => {
     setStep(prev => prev - 1);
   };
 
-  const onSubmit: SubmitHandler<ProposalRequestFormData> = async (data) => {
+  const handleSubmit = async () => {
     if (!validateStep(step)) {
       return;
     }
@@ -153,7 +127,7 @@ const ProposalRequestForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const { data: result, error } = await submitProposalRequest(formData, user.id);
+      const { data, error } = await submitProposalRequest(formData, user.id);
       
       if (error) {
         throw error;
@@ -197,63 +171,59 @@ const ProposalRequestForm: React.FC = () => {
       </div>
       
       <Card className="rounded-t-none p-6">
-        <form onSubmit={formHandleSubmit(onSubmit)}>
-          {step === 1 && (
-            <FormStepOne 
-              formData={formData} 
-              onChange={handleChange} 
-              errors={errors}
-            />
+        {step === 1 && (
+          <FormStepOne 
+            formData={formData} 
+            onChange={handleChange} 
+            errors={errors}
+          />
+        )}
+        
+        {step === 2 && (
+          <FormStepTwo 
+            formData={formData} 
+            onChange={handleChange} 
+            errors={errors}
+          />
+        )}
+        
+        {step === 3 && (
+          <FormStepThree 
+            formData={formData} 
+            onChange={handleChange} 
+            errors={errors}
+          />
+        )}
+        
+        <div className="flex justify-between mt-8">
+          {step > 1 ? (
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious}
+              disabled={isSubmitting}
+            >
+              Previous
+            </Button>
+          ) : (
+            <div />
           )}
           
-          {step === 2 && (
-            <FormStepTwo 
-              formData={formData} 
-              onChange={handleChange} 
-              errors={errors}
-            />
+          {step < 3 ? (
+            <Button 
+              onClick={handleNext}
+              disabled={isSubmitting}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Request'}
+            </Button>
           )}
-          
-          {step === 3 && (
-            <FormStepThree 
-              formData={formData} 
-              onChange={handleChange} 
-              errors={errors}
-            />
-          )}
-          
-          <div className="flex justify-between mt-8">
-            {step > 1 ? (
-              <Button 
-                type="button"
-                variant="outline" 
-                onClick={handlePrevious}
-                disabled={isSubmitting}
-              >
-                Previous
-              </Button>
-            ) : (
-              <div />
-            )}
-            
-            {step < 3 ? (
-              <Button 
-                type="button"
-                onClick={handleNext}
-                disabled={isSubmitting}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button 
-                type="submit"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Request'}
-              </Button>
-            )}
-          </div>
-        </form>
+        </div>
       </Card>
     </div>
   );

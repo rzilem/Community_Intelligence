@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { ResidentWithProfile } from '@/types/app-types';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
 import { ResidentForm } from './ResidentForm';

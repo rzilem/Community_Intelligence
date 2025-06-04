@@ -9,7 +9,6 @@ export interface Profile {
   role: UserRole;
   profile_image_url?: string | null;
   phone?: string | null;
-  phone_number?: string | null;
   created_at: string;
   updated_at: string;
   [key: string]: any; // Allow for additional properties

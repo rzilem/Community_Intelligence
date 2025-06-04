@@ -1,40 +1,86 @@
 
-import React from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/layout/AppSidebar';
-import { TopNavigation } from '@/components/layout/TopNavigation';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
+import { useIsMobile } from '@/hooks/use-mobile';
+import Sidebar from './Sidebar';
+import Header from './Header';
+import { getFilteredNavItems } from './navigation-utils';
+import { AppLayoutProps } from './types';
 
-export function AppLayout() {
-  const { user, loading } = useAuth();
+export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
+  const { user, profile, signOut, userRole, isAuthenticated } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading Community Intelligence...</p>
-        </div>
-      </div>
-    );
-  }
+  console.log('AppLayout rendering, auth state:', { 
+    isAuthenticated: isAuthenticated ? 'yes' : 'no',
+    user: user ? 'logged in' : 'not logged in', 
+    profile: profile ? 'profile loaded' : 'no profile',
+    currentPath: location.pathname
+  });
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  // Handle mobile sidebar closure on route change
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
+
+  // Update sidebar state when mobile status changes
+  useEffect(() => {
+    setIsSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Memoize nav items to prevent unnecessary re-renders
+  const mainNavItems = useMemo(() => {
+    return getFilteredNavItems(userRole);
+  }, [userRole]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <SidebarInset className="flex-1">
-          <TopNavigation />
-          <main className="flex-1 p-6">
-            <Outlet />
-          </main>
-        </SidebarInset>
+    <div className="flex min-h-screen w-full bg-gray-50">
+      <Sidebar 
+        isMobile={isMobile}
+        isSidebarOpen={isSidebarOpen}
+        closeSidebar={() => setIsSidebarOpen(false)}
+        mainNavItems={mainNavItems}
+        handleSignOut={handleSignOut}
+      />
+
+      <div 
+        className={cn(
+          "flex flex-col w-full transition-all duration-300 ease-in-out",
+          !isMobile && isSidebarOpen ? "md:ml-64" : ""
+        )}
+      >
+        <Header 
+          isMobile={isMobile}
+          user={user}
+          profile={profile}
+          toggleSidebar={toggleSidebar}
+          handleSignOut={handleSignOut}
+        />
+
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
-}
+};
+
+export default AppLayout;

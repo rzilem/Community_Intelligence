@@ -1,118 +1,60 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Users, Bell } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { MessageSquare } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageTemplate from '@/components/layout/PageTemplate';
-import MessageThreadList from '@/components/communications/MessageThreadList';
-import MessageThread from '@/components/communications/MessageThread';
-import CreateThreadDialog from '@/components/communications/CreateThreadDialog';
-import { MessageThread as MessageThreadType } from '@/hooks/useMessages';
+import MessagingPage from './communications/Messaging';
+import Announcements from './communications/Announcements';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Communications = () => {
-  const [selectedThread, setSelectedThread] = useState<MessageThreadType | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  
-  // For demo purposes, using a default association ID
-  const defaultAssociationId = 'demo-association-id';
+  const [activeTab, setActiveTab] = useState('messaging');
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const handleSelectThread = (thread: MessageThreadType) => {
-    setSelectedThread(thread);
-  };
+  // Set the correct active tab based on the current route - only run when location.pathname changes
+  useEffect(() => {
+    // Prevent multiple updates for the same path
+    let newTab;
+    if (location.pathname.includes('/communications/announcements')) {
+      newTab = 'announcements';
+    } else {
+      newTab = 'messaging';
+    }
+    
+    if (newTab !== activeTab) {
+      setActiveTab(newTab);
+    }
+  }, [location.pathname, activeTab]);
 
-  const handleBack = () => {
-    setSelectedThread(null);
-  };
+  // Memoize the tab change handler to prevent recreation on every render
+  const handleTabChange = useCallback((value: string) => {
+    if (value === activeTab) return; // Prevent unnecessary navigation if tab hasn't changed
+    
+    setActiveTab(value);
+    navigate(`/communications/${value}`);
+  }, [activeTab, navigate]);
 
-  const handleCreateThread = () => {
-    setShowCreateDialog(true);
-  };
+  // Memoize tab content components to prevent unnecessary re-renders
+  const messagingContent = useMemo(() => activeTab === 'messaging' ? <MessagingPage /> : null, [activeTab]);
+  const announcementsContent = useMemo(() => activeTab === 'announcements' ? <Announcements /> : null, [activeTab]);
 
   return (
-    <PageTemplate
-      title="Communications"
-      icon={<MessageSquare className="h-8 w-8" />}
-      description="Manage community communications and messages"
-    >
-      <div className="space-y-6">
-        {/* Communication Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-8 w-8 text-blue-600" />
-                <div>
-                  <div className="text-2xl font-bold">12</div>
-                  <p className="text-sm text-muted-foreground">Active Threads</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-green-600" />
-                <div>
-                  <div className="text-2xl font-bold">156</div>
-                  <p className="text-sm text-muted-foreground">Community Members</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <Bell className="h-8 w-8 text-orange-600" />
-                <div>
-                  <div className="text-2xl font-bold">8</div>
-                  <p className="text-sm text-muted-foreground">Unread Messages</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Communication Interface */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            {!selectedThread ? (
-              <MessageThreadList
-                associationId={defaultAssociationId}
-                onSelectThread={handleSelectThread}
-                onCreateThread={handleCreateThread}
-              />
-            ) : (
-              <MessageThread
-                thread={selectedThread}
-                onBack={handleBack}
-              />
-            )}
-          </div>
-          
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a thread to view messages</p>
-                  <p className="text-sm">or create a new conversation</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Create Thread Dialog */}
-        <CreateThreadDialog
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          associationId={defaultAssociationId}
-        />
-      </div>
+    <PageTemplate title="Communications" icon={<MessageSquare className="h-8 w-8" />}>
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="w-full grid grid-cols-2 md:w-auto md:inline-flex mb-6">
+          <TabsTrigger value="messaging">Messaging</TabsTrigger>
+          <TabsTrigger value="announcements">Announcements</TabsTrigger>
+        </TabsList>
+        <TabsContent value="messaging">
+          {messagingContent}
+        </TabsContent>
+        <TabsContent value="announcements">
+          {announcementsContent}
+        </TabsContent>
+      </Tabs>
     </PageTemplate>
   );
 };
 
-export default Communications;
+export default React.memo(Communications);

@@ -1,10 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Upload, X, AlertCircle, CheckCircle, Calendar, DollarSign, Users, FileText, Settings, Eye } from 'lucide-react';
-import { useProjectTypes } from '@/hooks/bid-requests/useProjectTypes';
-import EnhancedProjectTypeSelector from './form/EnhancedProjectTypeSelector';
-import { useForm } from 'react-hook-form';
-import { BidRequestFormData } from '@/types/bid-request-form-types';
-import { Vendor } from '@/types/bid-request-types';
+
+// Types defined inline
+interface BidRequestFormData {
+  hoa_id: string;
+  title: string;
+  description: string;
+  location: string;
+  number_of_bids_wanted: number;
+  project_type_id: string;
+  category: string;
+  project_details: Record<string, any>;
+  special_requirements?: string;
+  selected_vendor_ids: string[];
+  allow_public_bidding: boolean;
+  budget_range_min?: number;
+  budget_range_max?: number;
+  preferred_start_date?: string;
+  required_completion_date?: string;
+  bid_deadline: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  attachments: File[];
+  created_by: string;
+  status: 'draft' | 'published';
+}
+
+interface ProjectType {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image_url?: string;
+  conditional_fields: Record<string, any>;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface Vendor {
+  id: string;
+  hoa_id: string;
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  specialties: string[];
+  rating?: number;
+  total_jobs: number;
+  completed_jobs: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface BidRequestFormProps {
   onSubmit: (data: BidRequestFormData) => Promise<void>;
@@ -24,7 +71,6 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<BidRequestFormData>({
     hoa_id: hoaId,
-    association_id: hoaId,
     title: '',
     description: '',
     location: '',
@@ -42,15 +88,10 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
     ...initialData
   });
 
-  const { data: projectTypes, isLoading: projectTypesLoading } = useProjectTypes();
+  const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Create form instance for the enhanced project type selector
-  const form = useForm<BidRequestFormData>({
-    defaultValues: formData
-  });
 
   const steps = [
     { id: 1, name: 'Basic Info', icon: FileText, description: 'Community, address, and overview' },
@@ -62,13 +103,42 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
   ];
 
   useEffect(() => {
+    loadProjectTypes();
     loadVendors();
   }, []);
 
-  // Sync form data with react-hook-form
-  useEffect(() => {
-    form.reset(formData);
-  }, [formData, form]);
+  const loadProjectTypes = async () => {
+    setProjectTypes([
+      {
+        id: '1',
+        name: 'Landscaping & Grounds',
+        slug: 'landscaping',
+        description: 'Lawn care, tree service, irrigation',
+        image_url: '/images/landscaping.jpg',
+        conditional_fields: {
+          area_size: { type: 'number', label: 'Area Size (sq ft)', required: true },
+          service_frequency: { type: 'select', label: 'Service Frequency', options: ['One-time', 'Weekly', 'Bi-weekly', 'Monthly'] }
+        },
+        is_active: true,
+        created_at: '',
+        updated_at: ''
+      },
+      {
+        id: '2',
+        name: 'Building Maintenance',
+        slug: 'building-maintenance',
+        description: 'Repairs, painting, HVAC, plumbing',
+        image_url: '/images/maintenance.jpg',
+        conditional_fields: {
+          building_type: { type: 'select', label: 'Building Type', options: ['Residential', 'Commercial', 'Mixed'] },
+          urgency_level: { type: 'select', label: 'Urgency', options: ['Routine', 'Priority', 'Emergency'] }
+        },
+        is_active: true,
+        created_at: '',
+        updated_at: ''
+      }
+    ]);
+  };
 
   const loadVendors = async () => {
     setVendors([
@@ -207,28 +277,36 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
           <div className="space-y-6">
             <h3 className="text-lg font-semibold mb-4">Select Project Type</h3>
             
-            {projectTypesLoading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading project types...</p>
-              </div>
-            ) : (
-              <EnhancedProjectTypeSelector 
-                form={form}
-                onChange={(projectTypeId, categorySlug) => {
-                  updateFormData({ 
-                    project_type_id: projectTypeId, 
-                    category: categorySlug 
-                  });
-                }}
-              />
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {projectTypes.map((type) => (
+                <div
+                  key={type.id}
+                  onClick={() => updateFormData({ project_type_id: type.id, category: type.slug })}
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    formData.project_type_id === type.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {type.image_url && (
+                    <img 
+                      src={type.image_url} 
+                      alt={type.name}
+                      className="w-full h-32 object-cover rounded-md mb-3"
+                    />
+                  )}
+                  <h4 className="font-semibold text-lg">{type.name}</h4>
+                  <p className="text-gray-600 text-sm mt-1">{type.description}</p>
+                </div>
+              ))}
+            </div>
             
             {errors.project_type && <p className="text-red-500 text-sm">{errors.project_type}</p>}
           </div>
         );
 
       case 3:
-        const selectedProjectType = projectTypes?.find(pt => pt.id === formData.project_type_id);
+        const selectedProjectType = projectTypes.find(pt => pt.id === formData.project_type_id);
         
         return (
           <div className="space-y-6">
@@ -486,7 +564,7 @@ const BidRequestForm: React.FC<BidRequestFormProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <dt className="font-medium">Project Type:</dt>
-                  <dd>{projectTypes?.find(pt => pt.id === formData.project_type_id)?.name}</dd>
+                  <dd>{projectTypes.find(pt => pt.id === formData.project_type_id)?.name}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="font-medium">Priority:</dt>

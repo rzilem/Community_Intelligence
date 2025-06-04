@@ -9,13 +9,12 @@ import { Table, TableBody } from '@/components/ui/table';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
-  columns?: HomeownerRequestColumn[];
-  visibleColumnIds?: string[];
+  columns: HomeownerRequestColumn[];
+  visibleColumnIds: string[];
   isLoading?: boolean;
-  loading?: boolean;
   error?: Error | null;
-  onViewRequest?: (request: HomeownerRequest) => void;
-  onEditRequest?: (request: HomeownerRequest) => void;
+  onViewRequest: (request: HomeownerRequest) => void;
+  onEditRequest: (request: HomeownerRequest) => void;
 }
 
 const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
@@ -23,7 +22,6 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   columns,
   visibleColumnIds,
   isLoading,
-  loading,
   error,
   onViewRequest,
   onEditRequest,
@@ -31,7 +29,6 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const isLoadingState = isLoading || loading;
   const totalPages = Math.ceil(requests.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const paginatedRequests = requests.slice(startIndex, startIndex + pageSize);
@@ -47,7 +44,7 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
     setCurrentPage(1);
   };
 
-  if (isLoadingState) {
+  if (isLoading) {
     return <div className="text-center py-8">Loading requests...</div>;
   }
 
@@ -59,21 +56,19 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
     <div className="space-y-4">
       <div className="overflow-x-auto border rounded-md">
         <Table>
-          {columns && visibleColumnIds && (
-            <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
-          )}
+          <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
           <TableBody>
             {paginatedRequests.length === 0 ? (
-              <EmptyRequestsRow colSpan={(visibleColumnIds?.length || 5) + 1} />
+              <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
             ) : (
               paginatedRequests.map((request) => (
                 <RequestTableRow
                   key={request.id}
                   request={request}
-                  columns={columns || []}
-                  visibleColumnIds={visibleColumnIds || []}
-                  onViewRequest={onViewRequest || (() => {})}
-                  onEditRequest={onEditRequest || (() => {})}
+                  columns={columns}
+                  visibleColumnIds={visibleColumnIds}
+                  onViewRequest={onViewRequest}
+                  onEditRequest={onEditRequest}
                 />
               ))
             )}
@@ -84,8 +79,9 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
       {requests.length > 0 && (
         <HomeownerRequestPagination
           currentPage={currentPage}
-          totalItems={requests.length}
+          totalPages={totalPages}
           pageSize={pageSize}
+          totalRequests={requests.length}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
         />

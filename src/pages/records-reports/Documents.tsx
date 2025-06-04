@@ -36,7 +36,7 @@ const Documents = () => {
     enabled: !!currentAssociation?.id
   });
   
-  const { data: categories = [] } = useDocumentCategories({
+  const { categories } = useDocumentCategories({
     associationId: currentAssociation?.id,
     enabled: !!currentAssociation?.id
   });
@@ -194,7 +194,7 @@ const Documents = () => {
             onCloseCategoryDialog={() => setIsCategoryDialogOpen(false)}
             onUpload={handleUploadDocument}
             onCreateCategory={handleCreateCategory}
-            categories={categories}
+            categories={categories || []}
             isUploading={uploadDocument.isPending}
             isCreatingCategory={createCategory.isPending}
             uploadError={uploadError}

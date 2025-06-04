@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Profile } from '@/types/profile-types';
 import { UserAssociation } from './types';
@@ -124,7 +125,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
       .from('association_users')
       .select(`
         *,
-        association:association_id (*)
+        associations:association_id (*)
       `)
       .eq('user_id', userId);
     
@@ -149,7 +150,7 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
           user_id: userId,
           association_id: mockAssociations[0].id,
           role: 'member',
-          association: mockAssociations[0],
+          associations: mockAssociations[0],
           created_at: new Date().toISOString()
         }];
       }
@@ -162,39 +163,3 @@ export const loadUserAssociations = async (userId: string): Promise<UserAssociat
     return [];
   }
 };
-
-export async function createUserAssociation(
-  userId: string,
-  hoaId: string,
-  role: string = 'resident'
-): Promise<UserAssociation> {
-  // First, get the association data
-  const { data: associationData, error: associationError } = await supabase
-    .from('associations')
-    .select('*')
-    .eq('id', hoaId)
-    .single();
-
-  if (associationError) {
-    throw associationError;
-  }
-
-  // Create the association_users record
-  const { data, error } = await supabase
-    .from('association_users')
-    .insert({
-      user_id: userId,
-      association_id: hoaId,
-      role,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  // Return the data with the association object included
-  return {
-    ...data,
-    association: associationData
-  } as UserAssociation;
-}

@@ -1,21 +1,17 @@
 
 import React, { useState } from 'react';
-import { Sparkles, Send, Loader2, ExternalLink } from 'lucide-react';
+import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useAIQuerySystem } from '@/hooks/ai/useAIQuerySystem';
-import { useNavigate } from 'react-router-dom';
 
 interface AiQueryInputProps {
   onQuery?: (query: string) => Promise<void>;
   placeholder?: string;
   className?: string;
   compact?: boolean;
-  showAdvancedLink?: boolean;
 }
 
 export const AiQueryInput: React.FC<AiQueryInputProps> = ({
@@ -23,37 +19,32 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
   placeholder = "Ask Community Intelligence anything...",
   className,
   compact = false,
-  showAdvancedLink = true,
 }) => {
   const [query, setQuery] = useState<string>('');
-  const navigate = useNavigate();
-  const { processNaturalLanguageQuery, isLoading } = useAIQuerySystem();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
     
+    setIsLoading(true);
+
     try {
+      // In a real implementation, this would connect to Supabase and OpenAI
       if (onQuery) {
         await onQuery(query);
       } else {
-        // Use the new AI Query System
-        const response = await processNaturalLanguageQuery(query);
-        if (response.error) {
-          toast.error(response.explanation);
-        } else {
-          toast.success(response.explanation);
-        }
+        // Demo fallback
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        toast.success("AI feature coming soon! Your query has been logged.");
       }
       setQuery('');
     } catch (error) {
       console.error("Error processing AI query:", error);
       toast.error("There was an error processing your request.");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleAdvancedClick = () => {
-    navigate('/ai-query');
   };
 
   if (compact) {
@@ -83,25 +74,9 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
   return (
     <Card className={cn("p-4 border border-border", className)}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Sparkles size={16} className="text-hoa-blue" />
-            <span className="ai-gradient-text">Community Intelligence AI</span>
-            <Badge variant="secondary" className="text-xs">MILESTONE 4</Badge>
-          </div>
-          
-          {showAdvancedLink && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAdvancedClick}
-              className="text-xs"
-            >
-              <ExternalLink size={12} className="mr-1" />
-              Advanced
-            </Button>
-          )}
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Sparkles size={16} className="text-hoa-blue" />
+          <span className="ai-gradient-text">Community Intelligence AI</span>
         </div>
         
         <Textarea

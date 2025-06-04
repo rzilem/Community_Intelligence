@@ -38,7 +38,18 @@ export const useResidentData = (residentId: string) => {
         // First, try to fetch resident data from the database
         const { data: residentData, error: residentError } = await supabase
           .from('residents')
-          .select('*')
+          .select(`
+            *,
+            property:properties(
+              id, 
+              address, 
+              unit_number, 
+              city, 
+              state, 
+              zip,
+              image_url
+            )
+          `)
           .eq('id', residentId)
           .single();
 
@@ -58,20 +69,6 @@ export const useResidentData = (residentId: string) => {
             setResident(prevState => ({...prevState, id: residentId}));
           }
         } else if (residentData) {
-          // Fetch property data separately if property_id exists
-          let propertyData = null;
-          if (residentData.property_id) {
-            const { data: propData, error: propError } = await supabase
-              .from('properties')
-              .select('id, address, unit_number, city, state, zip_code, association_id')
-              .eq('id', residentData.property_id)
-              .single();
-              
-            if (!propError && propData) {
-              propertyData = propData;
-            }
-          }
-
           // Get user profile data in a separate query if needed
           let profileData = null;
           if (residentData.user_id) {
@@ -87,8 +84,8 @@ export const useResidentData = (residentId: string) => {
           }
           
           // Build the homeowner object from the database data
-          const propertyAddress = propertyData ? 
-            `${propertyData.address || ''} ${propertyData.unit_number || ''}`.trim() : '';
+          const propertyAddress = residentData.property ? 
+            `${residentData.property.address || ''} ${residentData.property.unit_number || ''}`.trim() : '';
           
           let fullName = residentData.name || '';
           if (!fullName && profileData) {
@@ -98,6 +95,7 @@ export const useResidentData = (residentId: string) => {
           const email = residentData.email || (profileData?.email || '');
           const phone = residentData.phone || (profileData?.phone_number || '');
           const avatarUrl = profileData?.profile_image_url || '';
+          const propertyImage = residentData.property?.image_url || '';
           
           const convertedHomeowner: Homeowner = {
             id: residentData.id,
@@ -108,7 +106,7 @@ export const useResidentData = (residentId: string) => {
             moveOutDate: residentData.move_out_date || '',
             property: propertyAddress,
             propertyId: residentData.property_id || '',
-            unit: propertyData?.unit_number || '',
+            unit: residentData.property?.unit_number || '',
             balance: 0, // Would need to fetch from assessments table
             tags: [],
             violations: [], // Would need to fetch from compliance_issues table
@@ -119,7 +117,7 @@ export const useResidentData = (residentId: string) => {
             },
             status: residentData.move_out_date ? 'inactive' : 'active',
             avatarUrl: avatarUrl,
-            propertyImage: '', // Property images would need to be handled separately
+            propertyImage: propertyImage,
             notes: [],
             type: residentData.resident_type as any, // Use 'any' to avoid type error
             propertyAddress: propertyAddress,

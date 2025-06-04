@@ -1,48 +1,42 @@
 
-import React from 'react';
-import { Calculator, Receipt, FileText, TrendingUp } from 'lucide-react';
-import Accounting from '@/pages/Accounting';
-import InvoiceQueue from '@/pages/accounting/InvoiceQueue';
-import { Route } from './types';
+import { RouteObject } from "react-router-dom";
+import { RequireAuth } from "@/components/auth/RequireAuth";
+import AccountingDashboard from "@/pages/accounting/AccountingDashboard";
+import BankAccounts from "@/pages/accounting/BankAccounts";
+import InvoiceQueue from "@/pages/accounting/InvoiceQueue";
+import InvoiceDetail from "@/pages/accounting/InvoiceDetail";
+import TransactionsAndPayments from "@/pages/accounting/TransactionsAndPayments";
+import GLAccounts from "@/pages/accounting/GLAccounts";
+import BudgetPlanning from "@/pages/accounting/BudgetPlanning";
 
-export const accountingRoutes: Route[] = [
+// Accounting Routes
+export const accountingRoutes: RouteObject[] = [
   {
-    path: 'accounting',
-    element: <Accounting />,
-    label: 'Accounting',
-    icon: Calculator,
-    category: 'accounting',
-    requiresAuth: true,
-    description: 'Manage finances, budgets, and transactions'
+    path: "/accounting/dashboard",
+    element: <RequireAuth><AccountingDashboard /></RequireAuth>
   },
   {
-    path: 'accounting/dashboard',
-    element: <Accounting />,
-    label: 'Accounting Dashboard',
-    category: 'accounting',
-    requiresAuth: true,
-    description: 'Financial overview and metrics'
+    path: "/accounting/bank-accounts",
+    element: <RequireAuth><BankAccounts /></RequireAuth>
   },
   {
-    path: 'accounting/invoice-queue',
-    element: <InvoiceQueue />,
-    label: 'Invoice Queue',
-    category: 'accounting',
-    requiresAuth: true,
-    description: 'Process and approve vendor invoices'
+    path: "/accounting/invoice-queue",
+    element: <RequireAuth><InvoiceQueue /></RequireAuth>
   },
   {
-    path: 'accounting/invoice-queue/:id',
-    element: <InvoiceQueue />,
-    category: 'accounting',
-    requiresAuth: true,
-    description: 'View invoice details'
+    path: "/accounting/invoice-queue/:id",
+    element: <RequireAuth><InvoiceDetail /></RequireAuth>
   },
   {
-    path: 'accounting/invoice-queue/new',
-    element: <InvoiceQueue />,
-    category: 'accounting',
-    requiresAuth: true,
-    description: 'Create new invoice'
+    path: "/accounting/transactions-payments",
+    element: <RequireAuth><TransactionsAndPayments /></RequireAuth>
   },
+  {
+    path: "/accounting/gl-accounts",
+    element: <RequireAuth><GLAccounts /></RequireAuth>
+  },
+  {
+    path: "/accounting/budget-planning",
+    element: <RequireAuth><BudgetPlanning /></RequireAuth>
+  }
 ];

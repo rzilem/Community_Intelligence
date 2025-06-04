@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/auth';
 
 export type Notification = {
@@ -40,7 +41,8 @@ export const useNotifications = () => {
     const fetchNotifications = async () => {
       setLoading(true);
       try {
-        // Using mock data since database tables don't exist yet
+        // This would be a real query to a notifications table
+        // For now, we'll return mock data
         const mockNotifications: Notification[] = [
           {
             id: '1',

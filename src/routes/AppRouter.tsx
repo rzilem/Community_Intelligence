@@ -1,61 +1,109 @@
 
 import React from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/AppLayout';
-import Index from '@/pages/Index';
-import Auth from '@/pages/Auth';
-import NotFound from '@/pages/NotFound';
-import InvitationPage from '@/pages/InvitationPage';
-import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
-import { Dashboard } from '@/pages/Dashboard';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { protectedRoutes } from './routeConfig';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { mainRoutes } from './mainRoutes';
+import { communityManagementRoutes } from './communityManagementRoutes';
+import { accountingRoutes } from './accountingRoutes';
+import { communicationsRoutes } from './communicationsRoutes';
+import { leadManagementRoutes } from './leadManagementRoutes';
+import { operationsRoutes } from './operationsRoutes';
+import { recordsReportsRoutes } from './recordsReportsRoutes';
+import { resaleManagementRoutes } from './resaleManagementRoutes';
+import { systemRoutes } from './systemRoutes';
 
+/**
+ * Main application router component that consolidates all routes
+ */
 export const AppRouter = () => {
   const location = useLocation();
   
-  console.log('🚀 AppRouter: Rendering with location:', location.pathname);
-  console.log('🚀 AppRouter: Protected routes count:', protectedRoutes.length);
+  // Log routing for debugging purposes
+  React.useEffect(() => {
+    console.log('Route changed:', location.pathname);
+  }, [location]);
 
   return (
-    <ErrorBoundary>
-      <Routes>
-        {/* Public routes - no layout wrapper needed */}
-        <Route path="/" element={<Index />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/invitation/:token" element={<InvitationPage />} />
-        <Route path="/payment-success" element={<PaymentSuccessPage />} />
-        
-        {/* Protected routes - wrapped in AppLayout */}
-        <Route path="/dashboard" element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
-        </Route>
-        
-        <Route path="/*" element={<AppLayout />}>
-          {protectedRoutes.map((route, index) => {
-            console.log(`🚀 AppRouter: Mapping route ${index}: ${route.path}`);
-            return (
-              <Route 
-                key={`route-${index}-${route.path}`}
-                path={route.path} 
-                element={
-                  <ErrorBoundary>
-                    {route.element}
-                  </ErrorBoundary>
-                } 
-              />
-            );
-          })}
-          
-          {/* Legacy redirects for backward compatibility */}
-          <Route path="properties" element={<Navigate to="/associations" replace />} />
-          <Route path="residents" element={<Navigate to="/homeowners" replace />} />
-          <Route path="residents/:id" element={<Navigate to="/homeowners/:id" replace />} />
-          
-          {/* Catch-all route for 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </ErrorBoundary>
+    <Routes>
+      {/* Main routes */}
+      {mainRoutes.map((route, index) => (
+        <Route 
+          key={`main-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Community Management routes */}
+      {communityManagementRoutes.map((route, index) => (
+        <Route 
+          key={`community-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Accounting routes */}
+      {accountingRoutes.map((route, index) => (
+        <Route 
+          key={`accounting-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Communications routes */}
+      {communicationsRoutes.map((route, index) => (
+        <Route 
+          key={`communications-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Lead Management routes */}
+      {leadManagementRoutes.map((route, index) => (
+        <Route 
+          key={`lead-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Operations routes */}
+      {operationsRoutes.map((route, index) => (
+        <Route 
+          key={`operations-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Records & Reports routes */}
+      {recordsReportsRoutes.map((route, index) => (
+        <Route 
+          key={`records-reports-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* Resale Management routes */}
+      {resaleManagementRoutes.map((route, index) => (
+        <Route 
+          key={`resale-mgmt-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+      
+      {/* System routes */}
+      {systemRoutes.map((route, index) => (
+        <Route 
+          key={`system-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      ))}
+    </Routes>
   );
 };

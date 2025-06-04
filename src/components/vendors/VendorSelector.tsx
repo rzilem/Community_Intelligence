@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
-import { useVendors } from '@/hooks/vendors/useVendors';
+import { vendorService } from '@/services/vendor-service';
 
 interface VendorSelectorProps {
   onVendorChange: (vendorName: string) => void;
@@ -23,8 +24,28 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedVendorName, setSelectedVendorName] = useState<string | undefined>(initialVendorName);
-  
-  const { data: vendors = [], isLoading } = useVendors();
+  const [vendors, setVendors] = useState<Array<{id: string, name: string}>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setIsLoading(true);
+        const vendorData = await vendorService.getVendors();
+        setVendors(vendorData.map(vendor => ({
+          id: vendor.id,
+          name: vendor.name
+        })));
+      } catch (error) {
+        console.error('Error loading vendors:', error);
+        toast.error('Failed to load vendors');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVendors();
+  }, []);
 
   useEffect(() => {
     setSelectedVendorName(initialVendorName);
@@ -51,7 +72,7 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between" // Ensure full width
             disabled={isLoading}
           >
             {isLoading 
@@ -111,3 +132,4 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
 };
 
 export default VendorSelector;
+

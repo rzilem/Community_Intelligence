@@ -26,7 +26,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
   
   const { amenityOptions } = useAmenities();
   const {
-    eventsForSelectedDate,
+    events: eventsForSelectedDate,
     newEvent,
     setNewEvent,
     eventsLoading,
@@ -48,29 +48,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
       setIsDialogOpen(false);
     }
     return true;
-  };
-
-  // Map the newEvent properties to match EventForm expectations
-  const mappedNewEvent = newEvent ? {
-    title: newEvent.title || '',
-    date,
-    startTime: newEvent.startTime || '',
-    endTime: newEvent.endTime || '',
-    description: newEvent.description || '',
-    location: newEvent.location || '',
-    type: newEvent.event_type || 'amenity_booking' as const,
-    amenityId: newEvent.amenity_id || '',
-    color: newEvent.color || '#3b6aff'
-  } : {
-    title: '',
-    date,
-    startTime: '',
-    endTime: '',
-    description: '',
-    location: '',
-    type: 'amenity_booking' as const,
-    amenityId: '',
-    color: '#3b6aff'
   };
 
   return (
@@ -107,7 +84,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ className }) => {
                 </Button>
               </DialogTrigger>
               <EventForm
-                newEvent={mappedNewEvent}
+                newEvent={{...newEvent, date}}
                 setNewEvent={setNewEvent}
                 amenityOptions={amenityOptions}
                 handleCreateEvent={handleSubmitEvent}

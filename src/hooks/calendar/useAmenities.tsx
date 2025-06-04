@@ -1,5 +1,6 @@
+
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useAmenities = () => {
   const { currentAssociation } = useAuth();
