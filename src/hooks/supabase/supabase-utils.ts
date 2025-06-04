@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 // Known table names for type safety
@@ -15,13 +14,17 @@ export type KnownTables =
   | 'email_campaigns'
   | 'resale_events'
   | 'documents'
+  | 'document_categories'
   | 'calendar_events'
   | 'announcements'
   | 'compliance_issues'
   | 'assessments'
   | 'bank_accounts'
   | 'bank_statements'
-  | 'bank_transactions';
+  | 'bank_transactions'
+  | 'amenities'
+  | 'onboarding_projects'
+  | 'onboarding_templates';
 
 // Filter operators
 export type FilterOperator = 'eq' | 'neq' | 'gt' | 'lt' | 'gte' | 'lte' | 'like' | 'ilike' | 'is';

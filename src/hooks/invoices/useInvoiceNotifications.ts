@@ -27,6 +27,7 @@ export interface Invoice {
 
 export const useInvoiceNotifications = () => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadInvoicesCount, setUnreadInvoicesCount] = useState(0);
 
   // Get recent invoices for notifications
   const { data: recentInvoices = [] } = useSupabaseQuery(
@@ -46,15 +47,19 @@ export const useInvoiceNotifications = () => {
   );
 
   useEffect(() => {
-    setUnreadCount(recentInvoices.length);
+    const invoiceCount = recentInvoices.length;
+    setUnreadCount(invoiceCount);
+    setUnreadInvoicesCount(invoiceCount);
   }, [recentInvoices]);
 
   const markAllAsRead = () => {
     setUnreadCount(0);
+    setUnreadInvoicesCount(0);
   };
 
   return {
     unreadCount,
+    unreadInvoicesCount,
     recentInvoices,
     markAllAsRead
   };
