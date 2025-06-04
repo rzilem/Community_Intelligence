@@ -31,7 +31,7 @@ export const updatePropertyImage = async (
     // Update property with image URL
     const { error: updateError } = await supabase
       .from('properties')
-      .update({ image_url: imageUrl })
+      .update({ image_url: imageUrl } as any)
       .eq('id', propertyId);
 
     if (updateError) {

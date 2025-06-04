@@ -72,10 +72,28 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         const { data, error } = await supabase
           .from('properties')
           .select('*')
-          .eq('association_id', selectedAssociationId);
-          
+          .eq('hoa_id', selectedAssociationId);
+
         if (error) throw error;
-        setProperties(data as Property[]);
+
+        const mappedData = (data || []).map(prop => ({
+          id: prop.id,
+          association_id: (prop as any).hoa_id ?? (prop as any).association_id ?? '',
+          address: prop.address,
+          unit_number: (prop as any).unit_number ?? undefined,
+          city: prop.city ?? undefined,
+          state: prop.state ?? undefined,
+          zip: (prop as any).zip_code ?? (prop as any).zip ?? undefined,
+          property_type: prop.property_type ?? '',
+          bedrooms: prop.bedrooms ?? undefined,
+          bathrooms: prop.bathrooms ?? undefined,
+          square_feet: (prop as any).square_footage ?? (prop as any).square_feet ?? undefined,
+          created_at: prop.created_at || new Date().toISOString(),
+          updated_at: prop.updated_at || new Date().toISOString(),
+          image_url: (prop as any).image_url ?? undefined
+        })) as Property[];
+
+        setProperties(mappedData);
         
         // If the currently selected property doesn't belong to this association, clear it
         if (selectedPropertyId) {
