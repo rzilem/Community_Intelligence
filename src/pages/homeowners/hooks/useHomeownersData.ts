@@ -112,8 +112,8 @@ export const useHomeownersData = () => {
         return;
       }
       
-      // Get all property IDs
-      const propertyIds = properties.map(p => p.id);
+      // Get all property IDs - ensure we're accessing the right property
+      const propertyIds = properties.map(p => p?.id).filter(Boolean);
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
