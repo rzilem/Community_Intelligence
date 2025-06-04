@@ -10,7 +10,7 @@ export interface DatabaseProperty {
   bedrooms?: number;
   bathrooms?: number;
   square_footage?: number;
-  association_id?: string;
+  hoa_id?: string; // Changed from association_id to match actual schema
   unit_number?: string;
   created_at: string;
   updated_at: string;
@@ -18,13 +18,18 @@ export interface DatabaseProperty {
 
 export interface DatabaseResident {
   id: string;
+  user_id?: string;
   name?: string;
   email?: string;
   phone?: string;
   resident_type: string;
+  is_primary?: boolean;
   move_in_date?: string;
   move_out_date?: string;
   property_id?: string;
+  emergency_contact?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FormattedResident {

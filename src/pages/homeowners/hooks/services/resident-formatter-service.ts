@@ -47,7 +47,8 @@ export class ResidentFormatterService {
     associationsLookup: AssociationLookup
   ): FormattedResident {
     const property = resident.property_id ? propertiesLookup[resident.property_id] : null;
-    const associationId = property?.association_id;
+    // Use hoa_id to match updated schema
+    const associationId = property?.hoa_id;
     
     // Map resident_type to the expected type union
     const normalizeType = (type: string): 'owner' | 'tenant' | 'family-member' => {
