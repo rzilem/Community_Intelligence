@@ -112,11 +112,15 @@ export const useHomeownersData = () => {
         return;
       }
       
-      // Get all property IDs - ensure we're accessing valid property objects
+      // Get all property IDs - ensure we're accessing valid property objects with proper type checking
       const propertyIds = properties
-        .filter(p => p && typeof p === 'object' && 'id' in p)
-        .map(p => p.id)
-        .filter(Boolean);
+        .filter((p): p is { id: string } & Record<string, any> => 
+          p !== null && 
+          typeof p === 'object' && 
+          'id' in p && 
+          typeof p.id === 'string'
+        )
+        .map(p => p.id);
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
