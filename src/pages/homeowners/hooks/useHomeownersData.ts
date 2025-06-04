@@ -13,7 +13,7 @@ export const useHomeownersData = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch associations from Supabase with explicit typing
-  const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery<AssociationData[]>(
+  const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery(
     'associations',
     {
       select: 'id, name',
@@ -38,7 +38,7 @@ export const useHomeownersData = () => {
       let associationIds: string[] = [];
       
       if (!associationId || associationId === 'all') {
-        associationIds = associations.map((a) => a.id);
+        associationIds = associations.map((a: AssociationData) => a.id);
         console.log('Fetching for all accessible associations:', associationIds);
       } else {
         associationIds = [associationId];
@@ -77,7 +77,7 @@ export const useHomeownersData = () => {
       }
       
       // Get all property IDs
-      const propertyIds = properties.map((p) => p.id);
+      const propertyIds = properties.map((p: any) => p.id);
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
@@ -88,7 +88,7 @@ export const useHomeownersData = () => {
         console.log(`Found ${allResidents.length || 0} residents in total`);
         
         // Format the residents data
-        const formattedResidents = formatResidentsData(allResidents, properties, associations);
+        const formattedResidents = formatResidentsData(allResidents, properties, associations as AssociationData[]);
         
         console.log('Formatted residents:', formattedResidents);
         setResidents(formattedResidents);
@@ -111,7 +111,7 @@ export const useHomeownersData = () => {
     residents,
     loading,
     error,
-    associations,
+    associations: associations as AssociationData[],
     isLoadingAssociations,
     fetchResidentsByAssociationId,
     setError

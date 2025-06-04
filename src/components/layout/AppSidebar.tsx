@@ -526,6 +526,8 @@ export function AppSidebar() {
 
   return (
     <Sidebar 
+      variant="sidebar" 
+      collapsible="icon"
       className="border-r-0 w-80" 
       style={{
         background: 'linear-gradient(180deg, #1e3a8a 0%, #1e40af 25%, #3b82f6 50%, #2563eb 75%, #1d4ed8 100%)',
