@@ -11,6 +11,9 @@ import { amenityRoutes } from './amenityRoutes';
 import { reportingRoutes } from './reportingRoutes';
 import { notificationRoutes } from './notificationRoutes';
 import { portalRoutes } from './portalRoutes';
+import { accountingRoutes } from './accountingRoutes';
+import { customerServiceRoutes } from './customerServiceRoutes';
+import { leadManagementRoutes } from './leadManagementRoutes';
 
 export type { Route } from './types';
 
@@ -19,6 +22,7 @@ export const protectedRoutes: Route[] = [
   ...portfolioRoutes,
   ...communicationRoutes,
   ...billingRoutes,
+  ...accountingRoutes,
   ...onboardingRoutes,
   ...adminRoutes,
   ...aiRoutes,
@@ -26,6 +30,8 @@ export const protectedRoutes: Route[] = [
   ...reportingRoutes,
   ...notificationRoutes,
   ...portalRoutes,
+  ...customerServiceRoutes,
+  ...leadManagementRoutes,
 ];
 
 export { navigationItems } from './navigationConfig';
