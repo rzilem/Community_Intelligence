@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Users, Download, Plus, Search, Filter } from 'lucide-react';
+import { Users, Download, Plus, Search, Filter, RefreshCw, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import HomeownerTable from './components/HomeownerTable';
 import VirtualizedHomeownerTable from './components/VirtualizedHomeownerTable';
 import HomeownerGrid from './HomeownerGrid';
@@ -13,19 +14,23 @@ import HomeownerPagination from './components/HomeownerPagination';
 import { useHomeownersData } from './hooks/useHomeownersData';
 import { useHomeownerFilters } from './hooks/useHomeownerFilters';
 import { useHomeownerColumns } from './hooks/useHomeownerColumns';
+import { performanceMonitor } from './hooks/services/performance-monitor-service';
 import { toast } from 'sonner';
 
 const HomeownerListPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'virtual'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'virtual'>('virtual'); // Default to virtual for better performance
   
   const { 
     residents: homeowners, 
     loading, 
     error, 
     associations, 
-    fetchResidentsByAssociationId: refreshData
+    totalCount,
+    refreshData,
+    isDataCached,
+    lastFetchTime
   } = useHomeownersData();
   
   const { 
@@ -35,7 +40,16 @@ const HomeownerListPage = () => {
     setFilterAssociation: setAssociationFilter,
     filterStatus: statusFilter, 
     setFilterStatus: setStatusFilter,
-    filteredHomeowners 
+    filterType,
+    setFilterType,
+    showBalanceOnly,
+    setShowBalanceOnly,
+    showViolationsOnly,
+    setShowViolationsOnly,
+    filteredHomeowners,
+    clearAllFilters,
+    isFiltered,
+    filteredCount
   } = useHomeownerFilters(homeowners);
   
   const { visibleColumnIds, updateVisibleColumns, resetToDefaults } = useHomeownerColumns();
@@ -43,7 +57,7 @@ const HomeownerListPage = () => {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, associationFilter]);
+  }, [searchTerm, statusFilter, associationFilter, filterType, showBalanceOnly, showViolationsOnly]);
   
   const handleExport = async (format: 'csv' | 'pdf') => {
     try {
@@ -52,7 +66,9 @@ const HomeownerListPage = () => {
         email: homeowner.email,
         propertyAddress: homeowner.propertyAddress,
         status: homeowner.status,
-        association: homeowner.associationName
+        association: homeowner.associationName,
+        balance: homeowner.balance || 0,
+        type: homeowner.type
       }));
       
       if (format === 'csv') {
@@ -65,14 +81,24 @@ const HomeownerListPage = () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'homeowners.csv';
+        a.download = `homeowners-${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
       }
       
-      toast.success(`Homeowners exported as ${format.toUpperCase()}`);
+      toast.success(`${filteredHomeowners.length} homeowners exported as ${format.toUpperCase()}`);
     } catch (error) {
       toast.error(`Failed to export homeowners`);
     }
+  };
+
+  const handleRefresh = () => {
+    refreshData();
+    toast.success('Data refreshed');
+  };
+
+  const handlePerformanceReport = () => {
+    performanceMonitor.logPerformanceReport();
+    toast.success('Performance report logged to console');
   };
 
   const paginatedHomeowners = filteredHomeowners.slice(
@@ -98,10 +124,25 @@ const HomeownerListPage = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="h-8 w-8" />
-          <h1 className="text-3xl font-bold tracking-tight">Homeowners</h1>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Homeowners</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline">{totalCount} Total</Badge>
+              {isFiltered && <Badge variant="secondary">{filteredCount} Filtered</Badge>}
+              {isDataCached && <Badge variant="outline">Cached</Badge>}
+            </div>
+          </div>
         </div>
         
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handlePerformanceReport}>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Performance
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           <Button variant="outline" onClick={() => handleExport('csv')}>
             <Download className="h-4 w-4 mr-2" />
             Export CSV
@@ -117,16 +158,32 @@ const HomeownerListPage = () => {
         </div>
       </div>
 
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <p className="text-red-600">Error: {error}</p>
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="mt-2">
+            Retry
+          </Button>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Homeowner Management</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Homeowner Management</CardTitle>
+            {isFiltered && (
+              <Button variant="outline" size="sm" onClick={clearAllFilters}>
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search homeowners..."
+                placeholder={`Search ${totalCount} homeowners...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -143,11 +200,21 @@ const HomeownerListPage = () => {
 
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'grid' | 'virtual')}>
             <TabsList>
-              <TabsTrigger value="table">Table View</TabsTrigger>
               <TabsTrigger value="virtual">Virtual Table</TabsTrigger>
+              <TabsTrigger value="table">Standard Table</TabsTrigger>
               <TabsTrigger value="grid">Grid View</TabsTrigger>
             </TabsList>
             
+            <TabsContent value="virtual" className="space-y-4">
+              <VirtualizedHomeownerTable
+                homeowners={filteredHomeowners}
+                loading={loading}
+                visibleColumns={visibleColumnIds}
+                onToggleColumn={toggleColumn}
+                onResetColumns={resetColumns}
+              />
+            </TabsContent>
+
             <TabsContent value="table" className="space-y-4">
               <HomeownerTable
                 homeowners={paginatedHomeowners}
@@ -165,16 +232,6 @@ const HomeownerListPage = () => {
                   setPageSize(size);
                   setCurrentPage(1);
                 }}
-              />
-            </TabsContent>
-
-            <TabsContent value="virtual" className="space-y-4">
-              <VirtualizedHomeownerTable
-                homeowners={filteredHomeowners}
-                loading={loading}
-                visibleColumns={visibleColumnIds}
-                onToggleColumn={toggleColumn}
-                onResetColumns={resetColumns}
               />
             </TabsContent>
             

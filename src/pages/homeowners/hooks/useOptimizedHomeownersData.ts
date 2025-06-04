@@ -1,155 +1,168 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSupabaseQuery } from '@/hooks/supabase';
-import { toast } from 'sonner';
 import { FormattedResident, AssociationData } from './types/resident-types';
-import { residentCacheService } from './services/resident-cache-service';
 import { residentFetchService } from './services/resident-fetch-service';
 import { residentFormatterService } from './services/resident-formatter-service';
-import { residentSearchService } from './services/resident-search-service';
 import { performanceMonitor } from './services/performance-monitor-service';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+interface OptimizedDataState {
+  residents: FormattedResident[];
+  associations: AssociationData[];
+  loading: boolean;
+  error: string | null;
+  totalCount: number;
+  lastFetchTime: number | null;
+}
+
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const BATCH_SIZE = 1000; // Optimized for large datasets
 
 export const useOptimizedHomeownersData = () => {
-  const [residents, setResidents] = useState<FormattedResident[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<OptimizedDataState>({
+    residents: [],
+    associations: [],
+    loading: false,
+    error: null,
+    totalCount: 0,
+    lastFetchTime: null
+  });
 
-  // Fetch associations with explicit typing to avoid TS2589 error
-  const associationsQuery = useSupabaseQuery(
-    'associations',
-    {
-      select: 'id, name',
-      filter: [{ column: 'is_archived', operator: 'eq', value: false }],
-      order: { column: 'name', ascending: true }
-    }
-  );
+  // Cache for avoiding unnecessary re-fetches
+  const shouldRefetch = useCallback(() => {
+    if (!state.lastFetchTime) return true;
+    return Date.now() - state.lastFetchTime > CACHE_DURATION;
+  }, [state.lastFetchTime]);
 
-  const associations: AssociationData[] = Array.isArray(associationsQuery.data) 
-    ? associationsQuery.data 
-    : [];
-
-  useEffect(() => {
-    if (associationsQuery.error) {
-      console.error("Error loading associations:", associationsQuery.error);
-      toast.error("Failed to load associations");
-    }
-  }, [associationsQuery.error]);
-
-  const fetchResidentsByAssociationId = useCallback(async (associationId: string | null = null) => {
-    const operationId = performanceMonitor.startOperation('fetchResidentsByAssociationId', { associationId });
+  const fetchAssociations = useCallback(async (): Promise<AssociationData[]> => {
+    const operationId = performanceMonitor.startOperation('fetchAssociations');
     
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Determine association IDs to fetch
-      let associationIds: string[] = [];
-      
-      if (!associationId || associationId === 'all') {
-        associationIds = associations.map((a: AssociationData) => a.id);
-      } else {
-        associationIds = [associationId];
-      }
-      
-      if (associationIds.length === 0) {
-        setResidents([]);
-        setLoading(false);
-        performanceMonitor.endOperation(operationId);
-        return;
-      }
-      
-      // Check cache first
-      const cachedData = residentCacheService.get(associationIds);
-      if (cachedData) {
-        console.log('Using cached resident data');
-        setResidents(cachedData);
-        setLoading(false);
-        performanceMonitor.endOperation(operationId);
-        return;
-      }
-      
-      // Fetch properties for associations
-      const fetchPropertiesId = performanceMonitor.startOperation('fetchProperties');
-      const properties = await residentFetchService.fetchPropertiesByAssociations(associationIds);
-      performanceMonitor.endOperation(fetchPropertiesId);
-      
-      if (properties.length === 0) {
-        console.log('No properties found for associations:', associationIds);
-        setResidents([]);
-        setLoading(false);
-        performanceMonitor.endOperation(operationId);
-        return;
-      }
-      
-      // Get all property IDs
-      const propertyIds = properties.map(p => p.id);
-      
-      // Fetch residents in batches
-      const fetchResidentsId = performanceMonitor.startOperation('fetchResidents');
-      const allResidents = await residentFetchService.fetchResidentsBatched(propertyIds);
-      performanceMonitor.endOperation(fetchResidentsId);
-      
-      // Format the residents data
-      const formatId = performanceMonitor.startOperation('formatResidents');
-      const formattedResidents = residentFormatterService.formatResidentsData(
-        allResidents, 
-        properties, 
-        associations
-      );
-      performanceMonitor.endOperation(formatId);
-      
-      // Build search index for optimization
-      const indexId = performanceMonitor.startOperation('buildSearchIndex');
-      residentSearchService.buildSearchIndex(formattedResidents);
-      performanceMonitor.endOperation(indexId);
-      
-      // Cache the results
-      residentCacheService.set(associationIds, formattedResidents);
-      
-      console.log(`Processed ${formattedResidents.length} residents`);
-      setResidents(formattedResidents);
-      
-    } catch (error: any) {
-      console.error('Error loading residents:', error);
-      setError('Failed to load residents data: ' + (error?.message || 'Unknown error'));
-      toast.error('Failed to load residents');
-    } finally {
-      setLoading(false);
-      performanceMonitor.endOperation(operationId);
-    }
-  }, [associations]);
+      const { data, error } = await supabase
+        .from('associations')
+        .select('id, name')
+        .order('name');
 
-  const invalidateCache = useCallback((associationId?: string) => {
-    residentCacheService.invalidate(associationId);
+      if (error) throw error;
+
+      performanceMonitor.endOperation(operationId);
+      return data || [];
+    } catch (error) {
+      performanceMonitor.endOperation(operationId);
+      throw error;
+    }
   }, []);
 
-  const searchResidents = useCallback((
-    searchTerm: string,
-    statusFilter: string = 'all',
-    associationFilter: string = 'all'
-  ): FormattedResident[] => {
-    const searchId = performanceMonitor.startOperation('searchResidents');
+  const fetchResidentsByAssociationId = useCallback(async (associationIds?: string[]) => {
+    if (!shouldRefetch() && state.residents.length > 0) {
+      return; // Use cached data
+    }
+
+    setState(prev => ({ ...prev, loading: true, error: null }));
     
-    const filtered = residentSearchService.applyAllFilters(
-      residents,
-      searchTerm,
-      statusFilter,
-      associationFilter
-    );
-    
-    performanceMonitor.endOperation(searchId);
-    return filtered;
-  }, [residents]);
+    const operationId = performanceMonitor.startOperation('fetchResidentsOptimized', {
+      associationCount: associationIds?.length || 0,
+      batchSize: BATCH_SIZE
+    });
+
+    try {
+      // Fetch associations first
+      const associations = await fetchAssociations();
+      
+      // Determine which associations to fetch
+      const targetAssociationIds = associationIds?.length 
+        ? associationIds 
+        : associations.map(a => a.id);
+
+      if (targetAssociationIds.length === 0) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          residents: [],
+          associations,
+          totalCount: 0,
+          lastFetchTime: Date.now()
+        }));
+        return;
+      }
+
+      // Fetch properties in optimized batches
+      const properties = await residentFetchService.fetchPropertiesByAssociations(targetAssociationIds);
+      
+      if (properties.length === 0) {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          residents: [],
+          associations,
+          totalCount: 0,
+          lastFetchTime: Date.now()
+        }));
+        return;
+      }
+
+      // Extract property IDs for resident fetching
+      const propertyIds = properties.map(p => p.id);
+
+      // Fetch residents in optimized batches
+      const residents = await residentFetchService.fetchResidentsBatched(propertyIds, BATCH_SIZE);
+
+      // Format the data
+      const formattedResidents = residentFormatterService.formatResidentsData(
+        residents,
+        properties,
+        associations
+      );
+
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        residents: formattedResidents,
+        associations,
+        totalCount: formattedResidents.length,
+        lastFetchTime: Date.now()
+      }));
+
+      performanceMonitor.endOperation(operationId);
+      
+      // Log performance metrics for monitoring
+      console.log(`Loaded ${formattedResidents.length} residents from ${properties.length} properties`);
+      
+    } catch (error) {
+      console.error('Error fetching residents:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Failed to load residents'
+      }));
+      
+      performanceMonitor.endOperation(operationId);
+      toast.error('Failed to load homeowner data');
+    }
+  }, [shouldRefetch, state.residents.length, fetchAssociations]);
+
+  // Initial load
+  useEffect(() => {
+    fetchResidentsByAssociationId();
+  }, []);
+
+  // Force refresh method
+  const refreshData = useCallback(() => {
+    setState(prev => ({ ...prev, lastFetchTime: null }));
+    fetchResidentsByAssociationId();
+  }, [fetchResidentsByAssociationId]);
 
   return {
-    residents,
-    loading,
-    error,
-    associations,
-    isLoadingAssociations: associationsQuery.isLoading,
+    residents: state.residents,
+    associations: state.associations,
+    loading: state.loading,
+    error: state.error,
+    totalCount: state.totalCount,
     fetchResidentsByAssociationId,
-    invalidateCache,
-    searchResidents,
-    setError
+    refreshData,
+    // Additional optimization info
+    isDataCached: !shouldRefetch() && state.residents.length > 0,
+    lastFetchTime: state.lastFetchTime
   };
 };
