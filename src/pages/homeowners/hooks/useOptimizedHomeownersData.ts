@@ -6,6 +6,7 @@ import { FormattedResident, AssociationData } from './types/resident-types';
 import { residentCacheService } from './services/resident-cache-service';
 import { residentFetchService } from './services/resident-fetch-service';
 import { residentFormatterService } from './services/resident-formatter-service';
+import { residentSearchService } from './services/resident-search-service';
 import { performanceMonitor } from './services/performance-monitor-service';
 
 export const useOptimizedHomeownersData = () => {
@@ -97,6 +98,11 @@ export const useOptimizedHomeownersData = () => {
       );
       performanceMonitor.endOperation(formatId);
       
+      // Build search index for optimization
+      const indexId = performanceMonitor.startOperation('buildSearchIndex');
+      residentSearchService.buildSearchIndex(formattedResidents);
+      performanceMonitor.endOperation(indexId);
+      
       // Cache the results
       residentCacheService.set(associationIds, formattedResidents);
       
@@ -117,6 +123,24 @@ export const useOptimizedHomeownersData = () => {
     residentCacheService.invalidate(associationId);
   }, []);
 
+  const searchResidents = useCallback((
+    searchTerm: string,
+    statusFilter: string = 'all',
+    associationFilter: string = 'all'
+  ): FormattedResident[] => {
+    const searchId = performanceMonitor.startOperation('searchResidents');
+    
+    const filtered = residentSearchService.applyAllFilters(
+      residents,
+      searchTerm,
+      statusFilter,
+      associationFilter
+    );
+    
+    performanceMonitor.endOperation(searchId);
+    return filtered;
+  }, [residents]);
+
   return {
     residents,
     loading,
@@ -125,6 +149,7 @@ export const useOptimizedHomeownersData = () => {
     isLoadingAssociations: associationsQuery.isLoading,
     fetchResidentsByAssociationId,
     invalidateCache,
+    searchResidents,
     setError
   };
 };

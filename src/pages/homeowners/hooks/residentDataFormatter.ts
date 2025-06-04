@@ -3,4 +3,6 @@
 export { residentFormatterService } from './services/resident-formatter-service';
 
 // Keep the original function signature for compatibility
-export const formatResidentsData = residentFormatterService.formatResidentsData.bind(residentFormatterService);
+export const formatResidentsData = (residents: any[], properties: any[], associations: any[]) => {
+  return residentFormatterService.formatResidentsData(residents, properties, associations);
+};

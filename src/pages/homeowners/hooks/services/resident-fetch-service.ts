@@ -28,11 +28,11 @@ export class ResidentFetchService {
     const batches: Promise<DatabaseResident[]>[] = [];
     
     for (let i = 0; i < propertyIds.length; i += batchSize) {
-      const batchIds: string[] = propertyIds.slice(i, i + batchSize);
+      const batchIds = propertyIds.slice(i, i + batchSize);
       batches.push(this.fetchResidentBatch(batchIds));
     }
     
-    const results: DatabaseResident[][] = await Promise.all(batches);
+    const results = await Promise.all(batches);
     
     // Flatten results
     for (const batch of results) {
@@ -56,4 +56,4 @@ export class ResidentFetchService {
   }
 }
 
-export const residentFetchService: ResidentFetchService = new ResidentFetchService();
+export const residentFetchService = new ResidentFetchService();

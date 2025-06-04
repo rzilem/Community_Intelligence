@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import HomeownerTable from './components/HomeownerTable';
+import VirtualizedHomeownerTable from './components/VirtualizedHomeownerTable';
 import HomeownerGrid from './HomeownerGrid';
 import HomeownerFilters from './components/HomeownerListFilters';
 import HomeownerPagination from './components/HomeownerPagination';
@@ -17,7 +18,7 @@ import { toast } from 'sonner';
 const HomeownerListPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'grid' | 'virtual'>('table');
   
   const { 
     residents: homeowners, 
@@ -140,9 +141,10 @@ const HomeownerListPage = () => {
             />
           </div>
 
-          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'grid')}>
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'table' | 'grid' | 'virtual')}>
             <TabsList>
               <TabsTrigger value="table">Table View</TabsTrigger>
+              <TabsTrigger value="virtual">Virtual Table</TabsTrigger>
               <TabsTrigger value="grid">Grid View</TabsTrigger>
             </TabsList>
             
@@ -154,23 +156,42 @@ const HomeownerListPage = () => {
                 onToggleColumn={toggleColumn}
                 onResetColumns={resetColumns}
               />
+              <HomeownerPagination
+                currentPage={currentPage}
+                totalItems={filteredHomeowners.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="virtual" className="space-y-4">
+              <VirtualizedHomeownerTable
+                homeowners={filteredHomeowners}
+                loading={loading}
+                visibleColumns={visibleColumnIds}
+                onToggleColumn={toggleColumn}
+                onResetColumns={resetColumns}
+              />
             </TabsContent>
             
             <TabsContent value="grid" className="space-y-4">
               <HomeownerGrid homeowners={paginatedHomeowners} />
+              <HomeownerPagination
+                currentPage={currentPage}
+                totalItems={filteredHomeowners.length}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={(size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
             </TabsContent>
           </Tabs>
-
-          <HomeownerPagination
-            currentPage={currentPage}
-            totalItems={filteredHomeowners.length}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size);
-              setCurrentPage(1);
-            }}
-          />
         </CardContent>
       </Card>
     </div>
