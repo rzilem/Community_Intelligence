@@ -17,9 +17,9 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 60 * 1000, // 1 minute
       retry: 1,
-      refetchOnWindowFocus: false, // Prevent refetches on window focus
-      refetchOnMount: true, // Enable refetches when components mount
-      refetchOnReconnect: true, // Enable refetches on reconnect
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
     },
   },
 });
@@ -30,8 +30,12 @@ const MemoizedAppRouter = memo(AppRouter);
 const App = () => {
   // Initialize the logger once when the app starts
   useEffect(() => {
-    logger.init();
-    console.log('App initialized - client logger initialized');
+    try {
+      logger.init();
+      console.log('App initialized - client logger initialized');
+    } catch (error) {
+      console.error('Failed to initialize logger:', error);
+    }
   }, []);
 
   return (
@@ -39,43 +43,72 @@ const App = () => {
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <AuthProvider>
-              <ErrorBoundary
-                fallback={
-                  <div className="p-8">
-                    <h2 className="text-xl font-bold mb-4">Notification System Error</h2>
-                    <p>There was a problem with the notification system. The app will continue to function without notifications.</p>
-                    <button
-                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                      onClick={() => window.location.reload()}
-                    >
-                      Refresh Application
-                    </button>
-                  </div>
-                }
-              >
-                <NotificationProvider>
-                  <Toaster />
-                  <Sonner />
-                  <ErrorBoundary
-                    fallback={
-                      <div className="p-8 text-center">
-                        <h2 className="text-2xl font-bold text-red-600 mb-4">Route Error</h2>
-                        <p className="mb-4">There was a problem loading this page. Other parts of the application should still work.</p>
-                        <button
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                          onClick={() => window.location.href = '/'}
-                        >
-                          Go to Dashboard
-                        </button>
-                      </div>
-                    }
+            <ErrorBoundary
+              fallback={
+                <div className="p-8">
+                  <h2 className="text-xl font-bold mb-4">Authentication System Error</h2>
+                  <p className="mb-4">There was a problem with the authentication system. Please refresh the page.</p>
+                  <button
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={() => window.location.reload()}
                   >
-                    <MemoizedAppRouter />
-                  </ErrorBoundary>
-                </NotificationProvider>
-              </ErrorBoundary>
-            </AuthProvider>
+                    Refresh Application
+                  </button>
+                </div>
+              }
+            >
+              <AuthProvider>
+                <ErrorBoundary
+                  fallback={
+                    <div className="p-8">
+                      <h2 className="text-xl font-bold mb-4">Notification System Error</h2>
+                      <p className="mb-4">There was a problem with the notification system. The app will continue to function without notifications.</p>
+                      <button
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Application
+                      </button>
+                    </div>
+                  }
+                >
+                  <NotificationProvider>
+                    <Toaster />
+                    <Sonner />
+                    <ErrorBoundary
+                      fallback={
+                        <div className="p-8 text-center">
+                          <h2 className="text-2xl font-bold text-red-600 mb-4">Route Error</h2>
+                          <p className="mb-4">There was a problem loading this page. Please try navigating to another page.</p>
+                          <div className="space-x-4">
+                            <button
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                              onClick={() => window.location.href = '/'}
+                            >
+                              Go to Home
+                            </button>
+                            <button
+                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+                              onClick={() => window.location.href = '/dashboard'}
+                            >
+                              Go to Dashboard
+                            </button>
+                            <button
+                              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+                              onClick={() => window.location.reload()}
+                            >
+                              Refresh Page
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    >
+                      <MemoizedAppRouter />
+                    </ErrorBoundary>
+                  </NotificationProvider>
+                </ErrorBoundary>
+              </AuthProvider>
+            </ErrorBoundary>
           </TooltipProvider>
         </QueryClientProvider>
       </BrowserRouter>

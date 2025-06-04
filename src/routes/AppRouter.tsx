@@ -20,90 +20,79 @@ export const AppRouter = () => {
   // Log routing for debugging purposes
   React.useEffect(() => {
     console.log('Route changed:', location.pathname);
-  }, [location]);
+  }, [location.pathname]);
+
+  const renderRoute = (route: any, index: number, prefix: string) => {
+    try {
+      return (
+        <Route 
+          key={`${prefix}-route-${index}`} 
+          path={route.path} 
+          element={route.element} 
+        />
+      );
+    } catch (error) {
+      console.error(`Error rendering route ${route.path}:`, error);
+      return (
+        <Route 
+          key={`${prefix}-error-route-${index}`} 
+          path={route.path} 
+          element={
+            <div className="p-8 text-center">
+              <h2 className="text-xl font-bold text-red-600 mb-4">Route Error</h2>
+              <p>Error loading route: {route.path}</p>
+            </div>
+          } 
+        />
+      );
+    }
+  };
 
   return (
     <Routes>
       {/* Main routes */}
-      {mainRoutes.map((route, index) => (
-        <Route 
-          key={`main-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {mainRoutes.map((route, index) => renderRoute(route, index, 'main'))}
       
       {/* Community Management routes */}
-      {communityManagementRoutes.map((route, index) => (
-        <Route 
-          key={`community-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {communityManagementRoutes.map((route, index) => renderRoute(route, index, 'community-mgmt'))}
       
       {/* Accounting routes */}
-      {accountingRoutes.map((route, index) => (
-        <Route 
-          key={`accounting-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {accountingRoutes.map((route, index) => renderRoute(route, index, 'accounting'))}
       
       {/* Communications routes */}
-      {communicationsRoutes.map((route, index) => (
-        <Route 
-          key={`communications-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {communicationsRoutes.map((route, index) => renderRoute(route, index, 'communications'))}
       
       {/* Lead Management routes */}
-      {leadManagementRoutes.map((route, index) => (
-        <Route 
-          key={`lead-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {leadManagementRoutes.map((route, index) => renderRoute(route, index, 'lead-mgmt'))}
       
       {/* Operations routes */}
-      {operationsRoutes.map((route, index) => (
-        <Route 
-          key={`operations-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {operationsRoutes.map((route, index) => renderRoute(route, index, 'operations'))}
       
       {/* Records & Reports routes */}
-      {recordsReportsRoutes.map((route, index) => (
-        <Route 
-          key={`records-reports-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {recordsReportsRoutes.map((route, index) => renderRoute(route, index, 'records-reports'))}
       
       {/* Resale Management routes */}
-      {resaleManagementRoutes.map((route, index) => (
-        <Route 
-          key={`resale-mgmt-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {resaleManagementRoutes.map((route, index) => renderRoute(route, index, 'resale-mgmt'))}
       
       {/* System routes */}
-      {systemRoutes.map((route, index) => (
-        <Route 
-          key={`system-route-${index}`} 
-          path={route.path} 
-          element={route.element} 
-        />
-      ))}
+      {systemRoutes.map((route, index) => renderRoute(route, index, 'system'))}
+      
+      {/* Catch-all route for undefined paths */}
+      <Route 
+        path="*" 
+        element={
+          <div className="p-8 text-center">
+            <h2 className="text-xl font-bold mb-4">Page Not Found</h2>
+            <p className="mb-4">The page you're looking for doesn't exist.</p>
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        } 
+      />
     </Routes>
   );
 };

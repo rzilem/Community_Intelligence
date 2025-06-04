@@ -10,6 +10,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
 class ErrorBoundary extends Component<Props, State> {
@@ -29,13 +30,23 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Initialize logger if not already initialized
-    logger.init();
+    try {
+      logger.init();
+    } catch (e) {
+      console.error('Failed to initialize logger:', e);
+    }
     
     // Log error details to help with debugging
     console.error('ErrorBoundary caught an error:', {
       error: error.toString(),
       stack: error.stack,
-      componentStack: errorInfo.componentStack
+      componentStack: errorInfo.componentStack,
+      route: window.location.pathname
+    });
+    
+    // Store error info in state for display
+    this.setState({
+      errorInfo
     });
     
     // Track in localStorage for debugging purposes
@@ -43,6 +54,7 @@ class ErrorBoundary extends Component<Props, State> {
       const errorLog = JSON.parse(localStorage.getItem('error_log') || '[]');
       errorLog.push({
         timestamp: new Date().toISOString(),
+        route: window.location.pathname,
         message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack
@@ -69,18 +81,43 @@ class ErrorBoundary extends Component<Props, State> {
         <div className="p-8 text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
           <p className="mb-4 text-gray-700">
-            The application encountered an error. Please try refreshing the page.
+            The application encountered an error on route: {window.location.pathname}
           </p>
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            onClick={() => window.location.reload()}
-          >
-            Refresh Page
-          </button>
+          <div className="space-y-2 mb-6">
+            <button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2"
+              onClick={() => window.location.reload()}
+            >
+              Refresh Page
+            </button>
+            <button
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mr-2"
+              onClick={() => window.location.href = '/dashboard'}
+            >
+              Go to Dashboard
+            </button>
+            <button
+              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+              onClick={() => window.location.href = '/'}
+            >
+              Go to Home
+            </button>
+          </div>
+          
           {this.state.error && (
-            <div className="mt-6 p-4 bg-gray-100 rounded text-left overflow-auto max-h-40">
-              <p className="font-mono text-sm">{this.state.error.toString()}</p>
-            </div>
+            <details className="mt-6 p-4 bg-gray-100 rounded text-left">
+              <summary className="cursor-pointer font-bold mb-2">Error Details</summary>
+              <div className="overflow-auto max-h-40">
+                <p className="font-mono text-sm mb-2">
+                  <strong>Error:</strong> {this.state.error.toString()}
+                </p>
+                {this.state.error.stack && (
+                  <pre className="font-mono text-xs text-gray-600 whitespace-pre-wrap">
+                    {this.state.error.stack}
+                  </pre>
+                )}
+              </div>
+            </details>
           )}
         </div>
       );
