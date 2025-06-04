@@ -3,84 +3,9 @@ import { useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface DatabaseProperty {
-  id: string;
-  address: string;
-  address_line_2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  property_type?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  square_footage?: number;
-  association_id?: string;
-  unit_number?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface DatabaseResident {
-  id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  resident_type: string;
-  move_in_date?: string;
-  move_out_date?: string;
-  property_id?: string;
-}
-
-interface FormattedResident {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  propertyAddress: string;
-  type: string;
-  status: string;
-  moveInDate: string;
-  moveOutDate?: string;
-  association: string;
-  associationName: string;
-  lastPayment: null;
-  closingDate: null;
-  hasValidAssociation: boolean;
-}
-
-interface AssociationData {
-  id: string;
-  name: string;
-}
-
-/**
- * Fetches resident data in batches to avoid "URL too long" errors
- */
-const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500): Promise<DatabaseResident[]> => {
-  const allResidents: DatabaseResident[] = [];
-  
-  for (let i = 0; i < propertyIds.length; i += batchSize) {
-    const batchIds = propertyIds.slice(i, i + batchSize);
-    console.log(`Fetching batch ${Math.floor(i/batchSize) + 1} with ${batchIds.length} properties`);
-    
-    const { data: residentsData, error: residentsError } = await supabase
-      .from('residents')
-      .select('*')
-      .in('property_id', batchIds);
-    
-    if (residentsError) {
-      console.error('Error fetching residents batch:', residentsError);
-      throw new Error('Failed to load residents: ' + residentsError.message);
-    }
-    
-    if (residentsData) {
-      allResidents.push(...residentsData);
-    }
-  }
-  
-  return allResidents;
-};
+import { FormattedResident, AssociationData } from './types';
+import { fetchResidentsBatched } from './residentBatchService';
+import { formatResidentsData } from './residentDataFormatter';
 
 export const useHomeownersData = () => {
   const [residents, setResidents] = useState<FormattedResident[]>([]);
@@ -162,45 +87,8 @@ export const useHomeownersData = () => {
         
         console.log(`Found ${allResidents.length || 0} residents in total`);
         
-        // Create association name lookup
-        const associationsMap: Record<string, string> = {};
-        associations.forEach((assoc) => {
-          associationsMap[assoc.id] = assoc.name;
-        });
-
-        // Create properties lookup
-        const propertiesMap: Record<string, DatabaseProperty> = {};
-        properties.forEach((prop: DatabaseProperty) => {
-          propertiesMap[prop.id] = prop;
-        });
-        
-        // Format the residents data explicitly using a simple loop
-        const formattedResidents: FormattedResident[] = [];
-        
-        for (let i = 0; i < allResidents.length; i++) {
-          const resident = allResidents[i];
-          const property = resident.property_id ? propertiesMap[resident.property_id] : null;
-          const associationId = property?.association_id;
-          
-          const formattedResident: FormattedResident = {
-            id: resident.id,
-            name: resident.name || 'Unknown',
-            email: resident.email || '',
-            phone: resident.phone || '',
-            propertyAddress: property ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` : 'Unknown',
-            type: resident.resident_type,
-            status: resident.move_out_date ? 'inactive' : 'active',
-            moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
-            moveOutDate: resident.move_out_date,
-            association: associationId || '',
-            associationName: associationId && associationsMap[associationId] ? associationsMap[associationId] : 'Unknown Association',
-            lastPayment: null,
-            closingDate: null,
-            hasValidAssociation: !!associationsMap[associationId || '']
-          };
-          
-          formattedResidents.push(formattedResident);
-        }
+        // Format the residents data
+        const formattedResidents = formatResidentsData(allResidents, properties, associations);
         
         console.log('Formatted residents:', formattedResidents);
         setResidents(formattedResidents);
