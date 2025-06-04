@@ -5,6 +5,7 @@ import { Briefcase } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import OnboardingTemplates from '@/components/onboarding/OnboardingTemplates';
 import ProposalTemplateManager from '@/components/proposals/ProposalTemplateManager';
+import EmailTemplateManager from '@/components/emails/EmailTemplateManager';
 
 const Templates = () => {
   return (
@@ -29,9 +30,7 @@ const Templates = () => {
         </TabsContent>
         
         <TabsContent value="emails">
-          <div className="border rounded-md p-20 flex items-center justify-center">
-            <p className="text-muted-foreground">Email templates management coming soon...</p>
-          </div>
+          <EmailTemplateManager />
         </TabsContent>
       </Tabs>
     </PageTemplate>
