@@ -12,6 +12,7 @@ interface AiQueryInputProps {
   placeholder?: string;
   className?: string;
   compact?: boolean;
+  streaming?: boolean;
 }
 
 export const AiQueryInput: React.FC<AiQueryInputProps> = ({
@@ -19,9 +20,11 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
   placeholder = "Ask Community Intelligence anything...",
   className,
   compact = false,
+  streaming = false,
 }) => {
   const [query, setQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [answer, setAnswer] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,18 +33,44 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
     setIsLoading(true);
 
     try {
-      // In a real implementation, this would connect to Supabase and OpenAI
       if (onQuery) {
         await onQuery(query);
+        setQuery('');
+        return;
+      }
+
+      setAnswer('');
+      const response = await fetch('/api/ai/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, stream: streaming })
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to get AI response');
+      }
+
+      if (streaming && response.body) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        while (!done) {
+          const { value, done: doneReading } = await reader.read();
+          done = doneReading;
+          const chunkValue = decoder.decode(value);
+          setAnswer(prev => prev + chunkValue);
+        }
       } else {
-        // Demo fallback
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success("AI feature coming soon! Your query has been logged.");
+        const data = await response.json();
+        setAnswer(data.answer || '');
       }
       setQuery('');
     } catch (error) {
-      console.error("Error processing AI query:", error);
-      toast.error("There was an error processing your request.");
+      console.error('Error processing AI query:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'There was an error processing your request.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -107,6 +136,11 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
           </Button>
         </div>
       </form>
+      {answer && (
+        <div className="mt-4 whitespace-pre-wrap text-sm border-t pt-4">
+          {answer}
+        </div>
+      )}
     </Card>
   );
 };
