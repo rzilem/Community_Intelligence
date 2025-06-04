@@ -25,6 +25,7 @@ export interface MessageHistory {
 }
 
 interface MessageMetadata {
+  [key: string]: any;
   subject?: string;
   content?: string;
   type?: string;
@@ -105,7 +106,7 @@ export const messageService = {
       }
 
       return (data || []).map(log => {
-        const metadata = log.metadata as MessageMetadata || {};
+        const metadata = (log.metadata as MessageMetadata) || {};
         return {
           id: log.id,
           subject: metadata.subject || 'No Subject',
@@ -139,7 +140,7 @@ export const messageService = {
         throw new Error('Message not found');
       }
 
-      const metadata = originalMessage.metadata as MessageMetadata || {};
+      const metadata = (originalMessage.metadata as MessageMetadata) || {};
 
       // Create a new message with the same data
       const messageData: MessageData = {
