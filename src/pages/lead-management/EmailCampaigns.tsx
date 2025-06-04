@@ -1,16 +1,25 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Mail, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import EmailCampaignList from '@/components/emails/EmailCampaignList';
 import EmailCampaignForm from '@/components/emails/EmailCampaignForm';
 import EmailTemplateList from '@/components/emails/EmailTemplateList';
 import EmailTemplateForm from '@/components/emails/EmailTemplateForm';
 import { useEmailCampaigns } from '@/hooks/emails/useEmailCampaigns';
 import { useEmailTemplates } from '@/hooks/emails/useEmailTemplates';
-import { EmailCampaign, EmailTemplate } from '@/types/email-types';
+import { EmailCampaign, EmailTemplate, CampaignMetrics } from '@/types/email-types';
 import { toast } from 'sonner';
 
 const EmailCampaigns = () => {
@@ -19,8 +28,16 @@ const EmailCampaigns = () => {
   const [isTemplateFormOpen, setIsTemplateFormOpen] = useState(false);
   const [currentCampaign, setCurrentCampaign] = useState<EmailCampaign | null>(null);
   const [currentTemplate, setCurrentTemplate] = useState<EmailTemplate | null>(null);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const [metrics, setMetrics] = useState<CampaignMetrics | null>(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
   
-  const { createCampaign, updateCampaign } = useEmailCampaigns();
+  const {
+    campaigns,
+    createCampaign,
+    updateCampaign,
+    getCampaignMetrics
+  } = useEmailCampaigns();
   const { createTemplate, updateTemplate } = useEmailTemplates();
 
   // Campaign handlers
@@ -35,7 +52,8 @@ const EmailCampaigns = () => {
   };
 
   const handleViewCampaign = (campaign: EmailCampaign) => {
-    toast.info('Campaign analytics coming soon!');
+    setSelectedCampaignId(campaign.id);
+    setActiveTab('analytics');
   };
 
   const handleSendCampaign = (campaign: EmailCampaign) => {
@@ -102,6 +120,21 @@ const EmailCampaigns = () => {
     }
   };
 
+  // Load metrics when analytics tab is active
+  useEffect(() => {
+    if (activeTab === 'analytics' && campaigns.length > 0 && !selectedCampaignId) {
+      setSelectedCampaignId(campaigns[0].id);
+    }
+  }, [activeTab, campaigns, selectedCampaignId]);
+
+  useEffect(() => {
+    if (!selectedCampaignId) return;
+    setLoadingMetrics(true);
+    getCampaignMetrics(selectedCampaignId)
+      .then((data) => setMetrics(data))
+      .finally(() => setLoadingMetrics(false));
+  }, [selectedCampaignId, getCampaignMetrics]);
+
   const renderActionButton = () => {
     if (activeTab === 'campaigns') {
       return (
@@ -151,10 +184,77 @@ const EmailCampaigns = () => {
           />
         </TabsContent>
         
-        <TabsContent value="analytics">
-          <div className="text-center py-10 border rounded-lg">
-            <p className="text-muted-foreground">Email campaign analytics coming soon...</p>
-          </div>
+        <TabsContent value="analytics" className="space-y-4">
+          {campaigns.length === 0 ? (
+            <div className="text-center py-10 border rounded-lg">
+              <p className="text-muted-foreground">No campaigns found.</p>
+            </div>
+          ) : (
+            <>
+              <Select
+                value={selectedCampaignId || undefined}
+                onValueChange={setSelectedCampaignId}
+              >
+                <SelectTrigger className="w-[300px]">
+                  <SelectValue placeholder="Select campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {loadingMetrics || !metrics ? (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Skeleton className="h-28 w-full" />
+                  <Skeleton className="h-28 w-full" />
+                  <Skeleton className="h-28 w-full" />
+                  <Skeleton className="h-28 w-full" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Total Recipients</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.total_recipients}</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Open Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.open_rate}%</div>
+                      <p className="text-xs text-muted-foreground">{metrics.open_count} opens</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Click Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.click_rate}%</div>
+                      <p className="text-xs text-muted-foreground">{metrics.click_count} clicks</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Bounce Rate</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{metrics.bounce_rate}%</div>
+                      <p className="text-xs text-muted-foreground">{metrics.bounce_count} bounces</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </>
+          )}
         </TabsContent>
       </Tabs>
       

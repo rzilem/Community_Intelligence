@@ -1,6 +1,6 @@
 
 import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { EmailCampaign } from '@/types/email-types';
+import { EmailCampaign, CampaignMetrics } from '@/types/email-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useCallback } from 'react';
@@ -50,6 +50,22 @@ export const useEmailCampaigns = () => {
     return data as any[];
   }, []);
 
+  const getCampaignMetrics = useCallback(
+    async (campaignId: string): Promise<CampaignMetrics | null> => {
+      const { data, error } = await supabase.rpc('get_campaign_metrics', {
+        p_campaign_id: campaignId
+      });
+
+      if (error) {
+        toast.error(`Error loading campaign metrics: ${error.message}`);
+        return null;
+      }
+
+      return data as CampaignMetrics;
+    },
+    []
+  );
+
   return {
     campaigns,
     isLoading,
@@ -58,6 +74,7 @@ export const useEmailCampaigns = () => {
     updateCampaign: updateCampaign.mutateAsync,
     deleteCampaign: deleteCampaign.mutateAsync,
     getCampaignRecipients,
+    getCampaignMetrics,
     refreshCampaigns: refetch
   };
 };
