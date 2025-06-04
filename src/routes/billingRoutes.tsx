@@ -1,17 +1,26 @@
 
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
+import BillingDashboard from '@/pages/billing/BillingDashboard';
 import AssessmentManager from '@/pages/billing/AssessmentManager';
 import { Route } from './types';
 
 export const billingRoutes: Route[] = [
   {
     path: 'billing',
-    element: <AssessmentManager />,
+    element: <BillingDashboard />,
     label: 'Billing',
-    icon: CheckSquare,
+    icon: CreditCard,
     category: 'billing',
     requiresAuth: true,
-    description: 'Manage billing and assessments'
+    description: 'Manage billing and payments'
+  },
+  {
+    path: 'billing/assessments',
+    element: <AssessmentManager />,
+    label: 'Assessment Manager',
+    category: 'billing',
+    requiresAuth: true,
+    description: 'Manage HOA assessments'
   },
 ];

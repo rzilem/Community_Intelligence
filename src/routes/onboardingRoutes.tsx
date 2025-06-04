@@ -1,25 +1,24 @@
 
 import React from 'react';
 import { UserPlus } from 'lucide-react';
-import OnboardingTemplatesPage from '@/pages/onboarding/OnboardingTemplatesPage';
-import OnboardingTemplateDetailsPage from '@/pages/onboarding/OnboardingTemplateDetailsPage';
+import OnboardingDashboard from '@/pages/onboarding/OnboardingDashboard';
 import { Route } from './types';
 
 export const onboardingRoutes: Route[] = [
   {
     path: 'onboarding',
-    element: <OnboardingTemplatesPage />,
+    element: <OnboardingDashboard />,
     label: 'Onboarding',
     icon: UserPlus,
     category: 'onboarding',
     requiresAuth: true,
-    description: 'Manage onboarding templates'
+    description: 'Manage resident onboarding'
   },
   {
     path: 'onboarding/:id',
-    element: <OnboardingTemplateDetailsPage />,
-    label: 'Onboarding Template Details',
-    category: 'hidden',
+    element: <OnboardingDashboard />,
+    category: 'onboarding',
     requiresAuth: true,
+    description: 'View onboarding details'
   },
 ];

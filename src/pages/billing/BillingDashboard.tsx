@@ -1,245 +1,158 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
+import { CreditCard, DollarSign, FileText, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useSupabaseQuery } from '@/hooks/supabase';
-import { useAuth } from '@/contexts/auth';
-import { supabase } from '@/integrations/supabase/client';
-import { DollarSign, CreditCard, Calendar, Receipt, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const BillingDashboard = () => {
-  const { user } = useAuth();
-  const [payingAssessment, setPayingAssessment] = useState<string | null>(null);
-
-  const { data: resident } = useSupabaseQuery(
-    'residents',
-    {
-      select: 'id, property_id',
-      filter: [{ column: 'user_id', value: user?.id }],
-      single: true
-    },
-    !!user?.id
-  );
-
-  const { data: assessments = [], refetch: refetchAssessments } = useSupabaseQuery(
-    'assessments',
-    {
-      select: `
-        *,
-        assessment_types(name),
-        properties(address, unit_number)
-      `,
-      filter: [{ column: 'property_id', value: resident?.property_id }],
-      order: { column: 'due_date', ascending: false }
-    },
-    !!resident?.property_id
-  );
-
-  const { data: paymentHistory = [] } = useSupabaseQuery(
-    'payment_transactions',
-    {
-      select: `
-        *,
-        assessments(
-          amount,
-          due_date,
-          assessment_types(name)
-        )
-      `,
-      filter: [
-        { column: 'resident_id', value: resident?.id },
-        { column: 'status', value: 'succeeded' }
-      ],
-      order: { column: 'created_at', ascending: false }
-    },
-    !!resident?.id
-  );
-
-  const unpaidAssessments = assessments.filter((a: any) => a.payment_status === 'unpaid');
-  const totalBalance = unpaidAssessments.reduce((sum: number, a: any) => sum + parseFloat(a.amount), 0);
-
-  const handlePayment = async (assessmentId: string) => {
-    setPayingAssessment(assessmentId);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment-session', {
-        body: { assessmentId }
-      });
-
-      if (error) throw error;
-
-      // Open Stripe checkout in new tab
-      window.open(data.url, '_blank');
-    } catch (error: any) {
-      console.error('Error creating payment session:', error);
-      toast.error('Failed to start payment: ' + error.message);
-    } finally {
-      setPayingAssessment(null);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return <Badge variant="default" className="bg-green-500">Paid</Badge>;
-      case 'unpaid':
-        return <Badge variant="destructive">Unpaid</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
-      case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
+const BillingDashboard: React.FC = () => {
   return (
     <PageTemplate
       title="Billing Dashboard"
-      icon={<DollarSign className="h-8 w-8" />}
-      description="View and pay your assessments"
+      icon={<CreditCard className="h-8 w-8" />}
+      description="Manage HOA assessments, payments, and financial overview"
     >
       <div className="space-y-6">
-        {/* Balance Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Current Balance</p>
-                  <p className="text-2xl font-bold text-red-600">${totalBalance.toFixed(2)}</p>
-                </div>
-                <AlertCircle className="h-8 w-8 text-red-500" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Assessment</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$285.00</div>
+              <p className="text-xs text-muted-foreground">Due January 1st</p>
             </CardContent>
           </Card>
-
+          
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Unpaid Assessments</p>
-                  <p className="text-2xl font-bold">{unpaidAssessments.length}</p>
-                </div>
-                <Calendar className="h-8 w-8 text-orange-500" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">$0.00</div>
+              <p className="text-xs text-muted-foreground">All caught up!</p>
             </CardContent>
           </Card>
-
+          
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Payments This Year</p>
-                  <p className="text-2xl font-bold">{paymentHistory.length}</p>
-                </div>
-                <Receipt className="h-8 w-8 text-green-500" />
-              </div>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Year to Date</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$2,850.00</div>
+              <p className="text-xs text-muted-foreground">10 payments made</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Payment Status</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">Current</div>
+              <p className="text-xs text-muted-foreground">No late fees</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Current Assessments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Current Assessments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {assessments.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No assessments found</p>
-            ) : (
-              <div className="space-y-4">
-                {assessments.map((assessment: any) => (
-                  <div
-                    key={assessment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="space-y-1">
-                      <h4 className="font-medium">
-                        {assessment.assessment_types?.name || 'Assessment'}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {assessment.properties?.address}
-                        {assessment.properties?.unit_number && 
-                          ` Unit ${assessment.properties.unit_number}`
-                        }
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Due: {new Date(assessment.due_date).toLocaleDateString()}
-                      </p>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-bold text-lg">${assessment.amount}</p>
-                        {getStatusBadge(assessment.payment_status)}
-                      </div>
-                      
-                      {assessment.payment_status === 'unpaid' && (
-                        <Button
-                          onClick={() => handlePayment(assessment.id)}
-                          disabled={payingAssessment === assessment.id}
-                          size="sm"
-                        >
-                          {payingAssessment === assessment.id ? (
-                            <LoadingSpinner size="sm" className="mr-2" />
-                          ) : (
-                            <CreditCard className="w-4 h-4 mr-2" />
-                          )}
-                          Pay Now
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="payments" className="w-full">
+          <TabsList>
+            <TabsTrigger value="payments">Payment History</TabsTrigger>
+            <TabsTrigger value="assessments">Assessments</TabsTrigger>
+            <TabsTrigger value="statements">Statements</TabsTrigger>
+          </TabsList>
 
-        {/* Payment History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              Payment History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {paymentHistory.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No payment history</p>
-            ) : (
-              <div className="space-y-3">
-                {paymentHistory.map((payment: any) => (
-                  <div
-                    key={payment.id}
-                    className="flex items-center justify-between p-3 border rounded"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {payment.assessments?.assessment_types?.name || 'Payment'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(payment.created_at).toLocaleDateString()}
-                      </p>
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Payments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { date: '2024-01-01', amount: '$285.00', method: 'Auto-Pay', status: 'Completed' },
+                    { date: '2023-12-01', amount: '$285.00', method: 'Online Payment', status: 'Completed' },
+                    { date: '2023-11-01', amount: '$285.00', method: 'Check', status: 'Completed' },
+                  ].map((payment, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{payment.date}</p>
+                        <p className="text-sm text-muted-foreground">{payment.method}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{payment.amount}</p>
+                        <Badge variant="outline" className="text-green-600 border-green-200">
+                          {payment.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">${payment.amount}</p>
-                      <Badge variant="default" className="bg-green-500">Paid</Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assessments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Assessment Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <h3 className="font-semibold">Regular Assessment</h3>
+                      <p className="text-2xl font-bold text-blue-600">$285.00</p>
+                      <p className="text-sm text-muted-foreground">Monthly</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <h3 className="font-semibold">Special Assessment</h3>
+                      <p className="text-2xl font-bold">$0.00</p>
+                      <p className="text-sm text-muted-foreground">None active</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  
+                  <Button className="w-full">Make Payment</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="statements">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Statements</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { period: 'January 2024', date: '2024-01-31', balance: '$0.00' },
+                    { period: 'December 2023', date: '2023-12-31', balance: '$0.00' },
+                    { period: 'November 2023', date: '2023-11-30', balance: '$0.00' },
+                  ].map((statement, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{statement.period}</p>
+                        <p className="text-sm text-muted-foreground">Statement Date: {statement.date}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <p className="font-medium">Balance: {statement.balance}</p>
+                        <Button variant="outline" size="sm">Download</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </PageTemplate>
   );
