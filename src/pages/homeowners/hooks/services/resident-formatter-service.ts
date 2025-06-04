@@ -49,6 +49,16 @@ export class ResidentFormatterService {
     const property = resident.property_id ? propertiesLookup[resident.property_id] : null;
     const associationId = property?.association_id;
     
+    // Map resident_type to the expected type union
+    const normalizeType = (type: string): 'owner' | 'tenant' | 'family-member' => {
+      const lowerType = type.toLowerCase();
+      if (lowerType.includes('owner')) return 'owner';
+      if (lowerType.includes('tenant')) return 'tenant';
+      if (lowerType.includes('family')) return 'family-member';
+      // Default to owner if we can't determine
+      return 'owner';
+    };
+    
     return {
       id: resident.id,
       name: resident.name || 'Unknown',
@@ -57,8 +67,8 @@ export class ResidentFormatterService {
       propertyAddress: property 
         ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` 
         : 'Unknown',
-      propertyId: resident.property_id || '', // Added this field
-      type: resident.resident_type,
+      propertyId: resident.property_id || '',
+      type: normalizeType(resident.resident_type),
       status: resident.move_out_date ? 'inactive' : 'active',
       moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
       moveOutDate: resident.move_out_date,

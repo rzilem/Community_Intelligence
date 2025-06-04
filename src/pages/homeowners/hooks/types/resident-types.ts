@@ -33,8 +33,8 @@ export interface FormattedResident {
   email: string;
   phone: string;
   propertyAddress: string;
-  propertyId: string; // Added this field to match Homeowner type
-  type: string;
+  propertyId: string;
+  type: 'owner' | 'tenant' | 'family-member'; // Fixed to match Homeowner type
   status: string;
   moveInDate: string;
   moveOutDate?: string;

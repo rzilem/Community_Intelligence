@@ -25,14 +25,14 @@ export class ResidentFetchService {
     const allResidents: DatabaseResident[] = [];
     
     // Process in parallel batches for better performance
-    const batches: Promise<DatabaseResident[]>[] = [];
+    const batches = [];
     
     for (let i = 0; i < propertyIds.length; i += batchSize) {
       const batchIds = propertyIds.slice(i, i + batchSize);
       batches.push(this.fetchResidentBatch(batchIds));
     }
     
-    const results: DatabaseResident[][] = await Promise.all(batches);
+    const results = await Promise.all(batches);
     
     // Flatten results
     for (const batch of results) {
