@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Star, Phone, Mail, MapPin, FileText, CheckCircle, XCircle, Upload } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Types defined inline
 interface Vendor {
@@ -97,56 +99,22 @@ const VendorManagement: React.FC<VendorManagementProps> = ({
   const loadVendors = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      const mockVendors: Vendor[] = [
-        {
-          id: '1',
-          hoa_id: hoaId,
-          name: 'ABC Landscaping',
-          contact_person: 'John Smith',
-          email: 'john@abclandscaping.com',
-          phone: '555-0101',
-          address: '123 Garden St, Austin, TX',
-          license_number: 'LND-2024-001',
-          insurance_info: {
-            provider: 'State Farm',
-            policy_number: 'SF-123456',
-            coverage_amount: 1000000,
-            expiration_date: '2024-12-31'
-          },
-          specialties: ['landscaping', 'irrigation', 'tree-service'],
-          rating: 4.5,
-          total_jobs: 45,
-          completed_jobs: 42,
-          average_response_time: 24,
-          is_active: true,
-          notes: 'Reliable landscaping contractor with excellent customer service.',
-          created_at: '2024-01-01T00:00:00',
-          updated_at: '2024-01-15T10:30:00'
-        },
-        {
-          id: '2',
-          hoa_id: hoaId,
-          name: 'XYZ Plumbing',
-          contact_person: 'Mary Johnson',
-          email: 'mary@xyzplumbing.com',
-          phone: '555-0102',
-          address: '456 Water Ave, Austin, TX',
-          license_number: 'PLB-2024-002',
-          specialties: ['plumbing', 'hvac'],
-          rating: 4.2,
-          total_jobs: 28,
-          completed_jobs: 26,
-          average_response_time: 12,
-          is_active: true,
-          created_at: '2024-01-05T00:00:00',
-          updated_at: '2024-01-12T14:20:00'
-        }
-      ];
-      
-      setVendors(mockVendors);
+      const { data, error } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('hoa_id', hoaId)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error loading vendors:', error);
+        toast.error('Failed to load vendors');
+        setVendors([]);
+      } else {
+        setVendors((data || []) as Vendor[]);
+      }
     } catch (error) {
       console.error('Error loading vendors:', error);
+      toast.error('Failed to load vendors');
     } finally {
       setLoading(false);
     }
@@ -204,16 +172,36 @@ const VendorManagement: React.FC<VendorManagementProps> = ({
         completed_jobs: editingVendor?.completed_jobs || 0
       };
 
-      // TODO: Replace with actual API call
-      console.log('Saving vendor:', vendorData);
-      
-      // Close form and reload vendors
-      setShowForm(false);
-      setEditingVendor(null);
-      resetForm();
-      await loadVendors();
+      let error;
+      if (editingVendor) {
+        ({ error } = await supabase
+          .from('vendors')
+          .update(vendorData)
+          .eq('id', editingVendor.id));
+        if (!error) {
+          toast.success('Vendor updated');
+        }
+      } else {
+        ({ error } = await supabase
+          .from('vendors')
+          .insert(vendorData));
+        if (!error) {
+          toast.success('Vendor created');
+        }
+      }
+
+      if (error) {
+        console.error('Error saving vendor:', error);
+        toast.error('Failed to save vendor');
+      } else {
+        setShowForm(false);
+        setEditingVendor(null);
+        resetForm();
+        await loadVendors();
+      }
     } catch (error) {
       console.error('Error saving vendor:', error);
+      toast.error('Failed to save vendor');
     }
   };
 
@@ -240,11 +228,21 @@ const VendorManagement: React.FC<VendorManagementProps> = ({
   const handleDelete = async (vendorId: string) => {
     if (window.confirm('Are you sure you want to delete this vendor?')) {
       try {
-        // TODO: Replace with actual API call
-        console.log('Deleting vendor:', vendorId);
-        await loadVendors();
+        const { error } = await supabase
+          .from('vendors')
+          .delete()
+          .eq('id', vendorId);
+
+        if (error) {
+          console.error('Error deleting vendor:', error);
+          toast.error('Failed to delete vendor');
+        } else {
+          toast.success('Vendor deleted');
+          await loadVendors();
+        }
       } catch (error) {
         console.error('Error deleting vendor:', error);
+        toast.error('Failed to delete vendor');
       }
     }
   };
