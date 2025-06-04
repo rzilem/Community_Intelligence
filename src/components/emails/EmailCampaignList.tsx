@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useEmailCampaigns } from '@/hooks/emails/useEmailCampaigns';
-import { EmailCampaign } from '@/types/email-types';
+import { EmailCampaign } from '@/hooks/emails/useEmailCampaigns';
 import { 
   Table, 
   TableBody, 

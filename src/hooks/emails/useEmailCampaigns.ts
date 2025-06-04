@@ -7,7 +7,7 @@ export interface EmailCampaign {
   name: string;
   subject: string;
   body: string;
-  status: 'draft' | 'scheduled' | 'sent' | 'paused';
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'cancelled';
   recipient_count: number;
   open_count: number;
   click_count: number;
@@ -60,9 +60,28 @@ export const useEmailCampaigns = () => {
     }
   };
 
+  const deleteCampaign = async (campaignId: string) => {
+    try {
+      const { error } = await supabase
+        .from('email_campaigns')
+        .delete()
+        .eq('id', campaignId);
+
+      if (error) {
+        console.error('Error deleting campaign:', error);
+        throw error;
+      }
+
+      // Update local state
+      setCampaigns(prev => prev.filter(campaign => campaign.id !== campaignId));
+    } catch (error) {
+      console.error('Error deleting campaign:', error);
+      throw error;
+    }
+  };
+
   const getCampaignMetrics = async (campaignId: string): Promise<CampaignMetrics | null> => {
     try {
-      // For now, return mock metrics since the RPC function doesn't exist
       const campaign = campaigns.find(c => c.id === campaignId);
       if (!campaign) return null;
 
@@ -91,6 +110,7 @@ export const useEmailCampaigns = () => {
     isLoading,
     error,
     fetchCampaigns,
+    deleteCampaign,
     getCampaignMetrics,
   };
 };

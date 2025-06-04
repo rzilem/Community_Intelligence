@@ -7,6 +7,23 @@ export interface DashboardStats {
   totalResidents: number;
   pendingRequests: number;
   openViolations: number;
+  propertyCount: number;
+  residentCount: number;
+  assessmentAmount?: number;
+  collectionRate?: number;
+  collectionTrend?: number;
+  complianceCount: number;
+  complianceDelta?: number;
+  complianceTrend?: number;
+}
+
+export interface ActivityItem {
+  id: string;
+  title: string;
+  description: string;
+  timeAgo: string;
+  association: string;
+  iconName: string;
 }
 
 export interface RecentActivity {
@@ -17,14 +34,17 @@ export interface RecentActivity {
   status?: string;
 }
 
-export const useDashboardData = () => {
+export const useDashboardData = (associationId?: string) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     totalResidents: 0,
     pendingRequests: 0,
     openViolations: 0,
+    propertyCount: 0,
+    residentCount: 0,
+    complianceCount: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,28 +53,46 @@ export const useDashboardData = () => {
       setIsLoading(true);
       setError(null);
 
-      // For now, return mock data since the actual tables may not exist
+      // Mock data since actual tables may not exist
       setStats({
         totalProperties: 45,
         totalResidents: 128,
         pendingRequests: 7,
         openViolations: 3,
+        propertyCount: 45,
+        residentCount: 128,
+        assessmentAmount: 25000,
+        collectionRate: 85,
+        collectionTrend: 5,
+        complianceCount: 3,
+        complianceDelta: -2,
+        complianceTrend: -1,
       });
 
       setRecentActivity([
         {
           id: '1',
-          type: 'maintenance',
-          description: 'New maintenance request submitted',
-          timestamp: new Date().toISOString(),
-          status: 'pending'
+          title: 'New maintenance request submitted',
+          description: 'Pool maintenance requested by Unit 101',
+          timeAgo: '2 hours ago',
+          association: 'Sunset Gardens HOA',
+          iconName: 'Shield'
         },
         {
           id: '2',
-          type: 'payment',
-          description: 'Payment received for Unit 101',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          status: 'completed'
+          title: 'Payment received',
+          description: 'Monthly assessment payment received from Unit 205',
+          timeAgo: '4 hours ago',
+          association: 'Sunset Gardens HOA',
+          iconName: 'FileText'
+        },
+        {
+          id: '3',
+          title: 'Compliance violation reported',
+          description: 'Landscaping violation at Unit 312',
+          timeAgo: '1 day ago',
+          association: 'Sunset Gardens HOA',
+          iconName: 'AlertTriangle'
         }
       ]);
 
@@ -68,7 +106,7 @@ export const useDashboardData = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [associationId]);
 
   return {
     stats,
