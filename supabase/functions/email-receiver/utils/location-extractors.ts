@@ -18,9 +18,9 @@ export function extractLocationInfo(content: string): LocationInfo {
   
   // Extract full address using pattern matching
   const addressPatterns = [
-    /[Aa]ddress[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/,
-    /[Ll]ocation[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/,
-    /[Pp]roperty\s*[Aa]ddress[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/
+    /address[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/i,
+    /location[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/i,
+    /property\s*address[:\s]*([^,\n<]{5,}(?:,|\n|$)[^,\n<]{3,}(?:,|\n|$)[^,\n<]{2,})/i
   ];
   
   for (const pattern of addressPatterns) {
