@@ -57,6 +57,7 @@ export class ResidentFormatterService {
       propertyAddress: property 
         ? `${property.address}${property.unit_number ? ` Unit ${property.unit_number}` : ''}` 
         : 'Unknown',
+      propertyId: resident.property_id || '', // Added this field
       type: resident.resident_type,
       status: resident.move_out_date ? 'inactive' : 'active',
       moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],

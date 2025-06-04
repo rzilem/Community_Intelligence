@@ -32,7 +32,7 @@ export class ResidentFetchService {
       batches.push(this.fetchResidentBatch(batchIds));
     }
     
-    const results = await Promise.all(batches);
+    const results: DatabaseResident[][] = await Promise.all(batches);
     
     // Flatten results
     for (const batch of results) {
