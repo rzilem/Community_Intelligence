@@ -28,11 +28,11 @@ export function AppLayout() {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <SidebarInset>
+        <SidebarInset className="flex-1">
           <TopNavigation />
-          <div className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-6">
             <Outlet />
-          </div>
+          </main>
         </SidebarInset>
       </div>
     </SidebarProvider>

@@ -16,10 +16,10 @@ export function TopNavigation() {
   const { user, signOut } = useAuth();
 
   return (
-    <header className="flex h-16 items-center gap-4 border-b bg-background px-6">
-      <SidebarTrigger />
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
       
-      <div className="flex-1 flex items-center gap-4">
+      <div className="flex flex-1 items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
