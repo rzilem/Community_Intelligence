@@ -13,6 +13,18 @@ interface IntegrationCardProps {
   onConfigure: () => void;
   onDisconnect: () => void;
   onConnect: () => void;
+  /**
+   * Optional URL to join a waitlist when the integration is coming soon.
+   * If provided, a "Join Waitlist" button will be shown instead of a disabled
+   * placeholder button.
+   */
+  waitlistUrl?: string;
+  /**
+   * When true and the integration is coming soon, the card will not render at
+   * all. This allows hiding unreleased integrations while keeping the data
+   * definition.
+   */
+  hideWhenComingSoon?: boolean;
 }
 
 const IntegrationCard: React.FC<IntegrationCardProps> = ({
@@ -23,8 +35,14 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
   configDate,
   onConfigure,
   onDisconnect,
-  onConnect
+  onConnect,
+  waitlistUrl,
+  hideWhenComingSoon
 }) => {
+  if (status === 'coming-soon' && hideWhenComingSoon) {
+    return null;
+  }
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
@@ -60,7 +78,17 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
               <Button variant="default" size="sm" onClick={onConnect}>Connect</Button>
             )}
             {status === 'coming-soon' && (
-              <Button variant="outline" size="sm" disabled>Coming Soon</Button>
+              waitlistUrl ? (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={waitlistUrl} target="_blank" rel="noreferrer">
+                    Join Waitlist
+                  </a>
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" disabled>
+                  Coming Soon
+                </Button>
+              )
             )}
           </div>
         </div>
