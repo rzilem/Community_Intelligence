@@ -9,6 +9,8 @@ interface IntegrationsGridProps {
     description: string;
     icon: React.ReactNode;
     configDate?: string;
+    waitlistUrl?: string;
+    hideWhenComingSoon?: boolean;
   }>;
   onConfigure: (name: string) => void;
   onDisconnect: (name: string) => void;
@@ -23,8 +25,10 @@ const IntegrationsGrid: React.FC<IntegrationsGridProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {integrations.map((integration) => (
-        <IntegrationCard 
+      {integrations
+        .filter(i => !(i.status === 'coming-soon' && i.hideWhenComingSoon))
+        .map((integration) => (
+        <IntegrationCard
           key={integration.name}
           name={integration.name}
           status={integration.status}
@@ -34,6 +38,8 @@ const IntegrationsGrid: React.FC<IntegrationsGridProps> = ({
           onDisconnect={() => onDisconnect(integration.name)}
           onConnect={() => onConnect(integration.name)}
           configDate={integration.configDate ? formatDate(integration.configDate) : undefined}
+          waitlistUrl={integration.waitlistUrl}
+          hideWhenComingSoon={integration.hideWhenComingSoon}
         />
       ))}
     </div>

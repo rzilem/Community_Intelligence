@@ -1,6 +1,15 @@
 
 import React from 'react';
-import { Zap, CreditCard, Map, Wallet, Mic, BarChart3 } from 'lucide-react';
+import {
+  Zap,
+  CreditCard,
+  Map,
+  Wallet,
+  Mic,
+  BarChart3,
+  Home,
+  ShoppingBag
+} from 'lucide-react';
 
 export interface IntegrationData {
   name: string;
@@ -8,6 +17,11 @@ export interface IntegrationData {
   icon: React.ReactNode;
   configFields: string[];
   configDate?: string;
+  status?: 'available' | 'coming-soon';
+  /** URL to a waitlist or signup form for upcoming integrations */
+  waitlistUrl?: string;
+  /** When true and status is 'coming-soon', the card will be hidden */
+  hideWhenComingSoon?: boolean;
 }
 
 export const getIntegrationsData = (): IntegrationData[] => [
@@ -15,37 +29,61 @@ export const getIntegrationsData = (): IntegrationData[] => [
     name: 'OpenAI',
     description: 'Power AI capabilities throughout the platform with OpenAI integration',
     icon: <Zap className="h-6 w-6 text-purple-500" />,
-    configFields: ['apiKey', 'model']
+    configFields: ['apiKey', 'model'],
+    status: 'available'
   },
   {
     name: 'Stripe',
     description: 'Process payments for assessments and fees through Stripe',
     icon: <CreditCard className="h-6 w-6 text-blue-500" />,
-    configFields: ['apiKey', 'webhookSecret']
+    configFields: ['apiKey', 'webhookSecret'],
+    status: 'available'
   },
   {
     name: 'Google Maps',
     description: 'Display and manage property locations with Google Maps integration',
     icon: <Map className="h-6 w-6 text-green-500" />,
-    configFields: ['apiKey']
+    configFields: ['apiKey'],
+    status: 'available'
   },
   {
     name: 'Plaid',
     description: 'Link and manage bank accounts securely with Plaid',
     icon: <Wallet className="h-6 w-6 text-teal-500" />,
-    configFields: ['clientId', 'secret']
+    configFields: ['clientId', 'secret'],
+    status: 'available'
   },
   {
     name: 'Eleven Labs',
     description: 'Add voice features to enhance accessibility and user experience',
     icon: <Mic className="h-6 w-6 text-pink-500" />,
-    configFields: []
+    configFields: [],
+    status: 'coming-soon',
+    waitlistUrl: '#'
   },
   {
     name: 'X.AI',
     description: 'Implement advanced analytics capabilities with X.AI integration',
     icon: <BarChart3 className="h-6 w-6 text-amber-500" />,
-    configFields: []
+    configFields: [],
+    status: 'coming-soon',
+    waitlistUrl: '#'
+  },
+  {
+    name: 'Matterport',
+    description: 'Create 3D tours of properties for better visualization',
+    icon: <Home className="h-6 w-6 text-indigo-500" />,
+    configFields: [],
+    status: 'coming-soon',
+    waitlistUrl: '#'
+  },
+  {
+    name: 'Shopify',
+    description: 'Enable community e-commerce capabilities with Shopify',
+    icon: <ShoppingBag className="h-6 w-6 text-emerald-500" />,
+    configFields: [],
+    status: 'coming-soon',
+    waitlistUrl: '#'
   }
 ];
 

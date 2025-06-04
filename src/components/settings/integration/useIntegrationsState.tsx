@@ -149,37 +149,40 @@ export const useIntegrationsState = () => {
 
   // Transform the raw integration data into the format we need for rendering
   const getProcessedIntegrations = () => {
-    const integrationsData = getIntegrationsData().map(integration => {
-      // Check if the integration is connected by looking for an apiKey or any other required field
-      const isConnected = connectedIntegrations[integration.name] && 
-                         Object.keys(connectedIntegrations[integration.name]).some(key => 
-                           key !== 'configDate' && key !== 'model' && 
-                           connectedIntegrations[integration.name][key]);
-      
-      return {
-        ...integration,
-        status: isConnected ? 'connected' : 'available',
-        configDate: connectedIntegrations[integration.name]?.configDate
-      };
-    }) as Array<{
-      name: string;
-      status: 'connected' | 'available' | 'coming-soon';
-      description: string;
-      icon: React.ReactNode;
-      configDate?: string;
-    }>;
+    const integrationsData = getIntegrationsData()
+      .map(integration => {
+        // Check if the integration is connected by looking for an apiKey or any other required field
+        const isConnected =
+          connectedIntegrations[integration.name] &&
+          Object.keys(connectedIntegrations[integration.name]).some(
+            key =>
+              key !== 'configDate' &&
+              key !== 'model' &&
+              connectedIntegrations[integration.name][key]
+          );
 
-    return [
-      ...integrationsData.filter(i => i.name !== 'Eleven Labs' && i.name !== 'X.AI'),
-      {
-        ...integrationsData.find(i => i.name === 'Eleven Labs')!,
-        status: 'coming-soon' as const
-      },
-      {
-        ...integrationsData.find(i => i.name === 'X.AI')!,
-        status: 'coming-soon' as const
-      }
-    ];
+        const baseStatus = integration.status ?? 'available';
+
+        return {
+          ...integration,
+          status: isConnected ? 'connected' : baseStatus,
+          configDate: connectedIntegrations[integration.name]?.configDate
+        };
+      })
+      .filter(
+        integration =>
+          !(integration.status === 'coming-soon' && integration.hideWhenComingSoon)
+      ) as Array<{
+        name: string;
+        status: 'connected' | 'available' | 'coming-soon';
+        description: string;
+        icon: React.ReactNode;
+        configDate?: string;
+        waitlistUrl?: string;
+        hideWhenComingSoon?: boolean;
+      }>;
+
+    return integrationsData;
   };
 
   // Determine if we have a valid OpenAI API key for the selected integration
