@@ -8,20 +8,20 @@ interface CacheEntry {
 }
 
 class ResidentCacheService {
-  private cache = new Map<string, CacheEntry>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private cache: Map<string, CacheEntry> = new Map<string, CacheEntry>();
+  private readonly CACHE_TTL: number = 5 * 60 * 1000; // 5 minutes
 
   private getCacheKey(associationIds: string[]): string {
     return associationIds.sort().join(',') || 'all';
   }
 
   get(associationIds: string[]): FormattedResident[] | null {
-    const key = this.getCacheKey(associationIds);
-    const entry = this.cache.get(key);
+    const key: string = this.getCacheKey(associationIds);
+    const entry: CacheEntry | undefined = this.cache.get(key);
     
     if (!entry) return null;
     
-    const isExpired = Date.now() - entry.timestamp > this.CACHE_TTL;
+    const isExpired: boolean = Date.now() - entry.timestamp > this.CACHE_TTL;
     if (isExpired) {
       this.cache.delete(key);
       return null;
@@ -31,7 +31,7 @@ class ResidentCacheService {
   }
 
   set(associationIds: string[], data: FormattedResident[]): void {
-    const key = this.getCacheKey(associationIds);
+    const key: string = this.getCacheKey(associationIds);
     this.cache.set(key, {
       data: [...data], // Create a copy to prevent mutations
       timestamp: Date.now(),
@@ -58,4 +58,4 @@ class ResidentCacheService {
   }
 }
 
-export const residentCacheService = new ResidentCacheService();
+export const residentCacheService: ResidentCacheService = new ResidentCacheService();
