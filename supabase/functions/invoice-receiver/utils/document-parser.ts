@@ -1,5 +1,7 @@
 
 import { createWorker } from "https://esm.sh/tesseract.js@4.1.1";
+import mammoth from "npm:mammoth";
+import textract from "npm:textract";
 
 /**
  * Determines the document type based on file extension
@@ -47,7 +49,18 @@ export async function extractTextFromPdf(content: string): Promise<string> {
  * @returns Extracted text
  */
 export async function extractTextFromDocx(content: string): Promise<string> {
-  return "DOCX content extraction not implemented";
+  try {
+    const binaryString = atob(content.replace(/^data:.*;base64,/, ''));
+    const buffer = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      buffer[i] = binaryString.charCodeAt(i);
+    }
+    const { value } = await mammoth.extractRawText({ buffer });
+    return value.trim();
+  } catch (error: any) {
+    console.error('Error extracting text from DOCX:', error);
+    return '';
+  }
 }
 
 /**
@@ -56,5 +69,21 @@ export async function extractTextFromDocx(content: string): Promise<string> {
  * @returns Extracted text
  */
 export async function extractTextFromDoc(content: string): Promise<string> {
-  return "DOC content extraction not implemented";
+  try {
+    const binaryString = atob(content.replace(/^data:.*;base64,/, ''));
+    const buffer = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      buffer[i] = binaryString.charCodeAt(i);
+    }
+    const text: string = await new Promise((resolve, reject) => {
+      textract.fromBufferWithName('file.doc', buffer, (err: any, res: string) => {
+        if (err) reject(err);
+        else resolve(res);
+      });
+    });
+    return text.trim();
+  } catch (error: any) {
+    console.error('Error extracting text from DOC:', error);
+    return '';
+  }
 }
