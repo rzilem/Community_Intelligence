@@ -19,14 +19,16 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatDate } from '@/lib/date-utils';
 
 export interface MessageHistoryItem {
   id: string;
   subject: string;
   type: 'email' | 'sms';
   recipients: number;
-  sentDate: string;
+  sent_date: string;
   status: 'sent' | 'scheduled' | 'failed';
+  tracking_number?: string;
   openRate?: number;
 }
 
@@ -44,7 +46,11 @@ const MessageHistoryTable: React.FC<MessageHistoryTableProps> = ({
   if (messages.length === 0) {
     return (
       <div className="text-center py-10">
+        <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <p className="text-muted-foreground">No messages in history yet.</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Send your first message to see it appear here.
+        </p>
       </div>
     );
   }
@@ -59,13 +65,16 @@ const MessageHistoryTable: React.FC<MessageHistoryTableProps> = ({
             <TableHead className="text-center">Recipients</TableHead>
             <TableHead>Sent Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Tracking</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {messages.map((message) => (
             <TableRow key={message.id}>
-              <TableCell className="font-medium">{message.subject}</TableCell>
+              <TableCell className="font-medium max-w-xs truncate">
+                {message.subject}
+              </TableCell>
               <TableCell>
                 <span className="inline-flex items-center">
                   {message.type === 'email' ? (
@@ -76,7 +85,7 @@ const MessageHistoryTable: React.FC<MessageHistoryTableProps> = ({
                 </span>
               </TableCell>
               <TableCell className="text-center">{message.recipients}</TableCell>
-              <TableCell>{message.sentDate}</TableCell>
+              <TableCell>{formatDate(message.sent_date)}</TableCell>
               <TableCell>
                 {message.status === 'sent' && (
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 w-fit">
@@ -95,6 +104,13 @@ const MessageHistoryTable: React.FC<MessageHistoryTableProps> = ({
                     <AlertCircle className="h-3 w-3" />
                     Failed
                   </Badge>
+                )}
+              </TableCell>
+              <TableCell>
+                {message.tracking_number && (
+                  <code className="text-xs bg-muted px-2 py-1 rounded">
+                    {message.tracking_number}
+                  </code>
                 )}
               </TableCell>
               <TableCell className="text-right">

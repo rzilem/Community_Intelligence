@@ -1,89 +1,55 @@
+import { MessageHistory } from '@/services/communications/message-service';
 
-import { MessageHistoryItem } from '@/components/communications/MessageHistoryTable';
-
+// We'll keep templates as they might be stored locally or in a different table
 export interface MessageTemplate {
   id: string;
   title: string;
   description: string;
-  date: string;
+  content: string;
   type: 'email' | 'sms';
+  lastUpdated: string;
+  category: string;
 }
 
-// Mock templates for the templates tab
+// Mock templates for now - these could come from a templates table later
 export const mockTemplates: MessageTemplate[] = [
   {
     id: '1',
-    title: 'Welcome New Resident',
-    description: 'Introduction email for new residents with community guidelines and important contacts.',
-    date: '2025-03-15',
-    type: 'email' 
+    title: 'Welcome to the Community',
+    description: 'A warm welcome message for new residents',
+    content: 'Dear {{resident.name}},\n\nWelcome to {{association.name}}! We\'re excited to have you as part of our community.',
+    type: 'email',
+    lastUpdated: '2024-01-15',
+    category: 'welcome'
   },
   {
     id: '2',
-    title: 'Maintenance Notice',
-    description: 'Template for upcoming maintenance work in the community.',
-    date: '2025-02-28',
-    type: 'email'
+    title: 'HOA Fee Reminder',
+    description: 'Monthly reminder for HOA fee payments',
+    content: 'Dear {{resident.name}},\n\nThis is a friendly reminder that your HOA fee of ${{payment.amount}} is due on {{payment.dueDate}}.',
+    type: 'email',
+    lastUpdated: '2024-01-10',
+    category: 'payments'
   },
   {
     id: '3',
-    title: 'Emergency Alert',
-    description: 'Short text message for urgent community notifications.',
-    date: '2025-03-01',
-    type: 'sms'
+    title: 'Maintenance Notice',
+    description: 'General maintenance notification',
+    content: 'Dear Residents,\n\nPlease be advised that maintenance work will be performed in the community on [DATE]. We appreciate your patience.',
+    type: 'email',
+    lastUpdated: '2024-01-08',
+    category: 'maintenance'
   },
   {
     id: '4',
-    title: 'Payment Reminder',
-    description: 'Friendly reminder about upcoming HOA dues.',
-    date: '2025-03-10',
-    type: 'email'
+    title: 'Emergency Alert',
+    description: 'Quick SMS alert for emergencies',
+    content: 'ALERT: {{compliance.violation}} reported at {{property.address}}. Please contact management immediately.',
+    type: 'sms',
+    lastUpdated: '2024-01-05',
+    category: 'emergency'
   }
 ];
 
-// Mock data for the message history table
-export const mockHistoryData: MessageHistoryItem[] = [
-  {
-    id: '1',
-    subject: 'Community Meeting Reminder',
-    type: 'email',
-    recipients: 145,
-    sentDate: '2025-04-01',
-    status: 'sent',
-    openRate: 72
-  },
-  {
-    id: '2',
-    subject: 'Upcoming Pool Closure',
-    type: 'email',
-    recipients: 145,
-    sentDate: '2025-03-25',
-    status: 'sent',
-    openRate: 68
-  },
-  {
-    id: '3',
-    subject: 'Maintenance Update',
-    type: 'sms',
-    recipients: 132,
-    sentDate: '2025-04-05',
-    status: 'scheduled'
-  },
-  {
-    id: '4',
-    subject: 'Emergency Water Shutdown',
-    type: 'sms',
-    recipients: 145,
-    sentDate: '2025-03-15',
-    status: 'sent',
-    openRate: 91
-  },
-  {
-    id: '5',
-    subject: 'Failed Newsletter',
-    type: 'email',
-    recipients: 145,
-    sentDate: '2025-03-10',
-    status: 'failed'
-  }
-];
+// Export an empty array for history - this will be populated from the database
+export const mockHistoryData: MessageHistory[] = [];

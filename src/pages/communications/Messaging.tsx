@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { toast } from 'sonner';
 
-// Import the mock data
-import { mockHistoryData, mockTemplates } from './messaging/MessagingData';
+// Import the mock data for templates (we'll keep using these for now)
+import { mockTemplates } from './messaging/MessagingData';
 
 // Import component sections
 import ComposeForm from '@/components/communications/messaging/ComposeForm';
@@ -17,29 +17,29 @@ const MessagingPage = () => {
 
   const handleViewMessage = (id: string) => {
     console.log(`Viewing message ${id}`);
-    // Implementation for viewing message details
-  };
-
-  const handleResendMessage = (id: string) => {
-    console.log(`Resending message ${id}`);
-    // Implementation for resending a failed message
+    toast.info(`Message details for ID: ${id}`);
+    // Implementation for viewing message details would go here
   };
 
   const handleUseTemplate = (id: string) => {
     console.log(`Using template ${id}`);
-    // Implementation for using a template
     setActiveTab('compose');
-    // In a real app, we'd load the template content here
     const template = mockTemplates.find(t => t.id === id);
     if (template) {
-      console.log(`Loading template: ${template.title}`);
-      // This would be handled by ComposeForm now
+      toast.success(`Template "${template.title}" loaded`);
+      // The template loading would be handled by the ComposeForm
     }
   };
 
   const handleTemplateAction = (action: string, id: string) => {
     console.log(`${action} template ${id}`);
-    // Implementation for template actions
+    toast.info(`Template ${action} action for ID: ${id}`);
+    // Implementation for template actions (edit, delete, duplicate)
+  };
+
+  const handleMessageSent = () => {
+    toast.success('Message sent successfully!');
+    setActiveTab('history');
   };
 
   return (
@@ -54,18 +54,18 @@ const MessagingPage = () => {
         <TabsContent value="compose" className="space-y-6">
           <h2 className="text-2xl font-semibold">Compose Message</h2>
           <ComposeForm 
-            onMessageSent={() => setActiveTab('history')}
+            onMessageSent={handleMessageSent}
             onUseTemplate={() => setActiveTab('templates')}
           />
         </TabsContent>
         
         <TabsContent value="history">
           <HistorySection 
-            messages={mockHistoryData}
+            messages={[]} // HistorySection will load its own data
             searchHistory={searchHistory}
             onSearchChange={setSearchHistory}
             onViewMessage={handleViewMessage}
-            onResendMessage={handleResendMessage}
+            onResendMessage={() => {}} // Handled internally by HistorySection
           />
         </TabsContent>
         

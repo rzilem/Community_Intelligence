@@ -4,21 +4,8 @@ import { MessageSquare } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-// Simplified content components to prevent import errors
-const MessagingContent = () => (
-  <div className="p-6 border rounded-lg">
-    <h3 className="text-lg font-medium mb-4">Messaging</h3>
-    <p className="text-muted-foreground">Messaging functionality is being loaded...</p>
-  </div>
-);
-
-const AnnouncementsContent = () => (
-  <div className="p-6 border rounded-lg">
-    <h3 className="text-lg font-medium mb-4">Announcements</h3>
-    <p className="text-muted-foreground">Announcements functionality is being loaded...</p>
-  </div>
-);
+import MessagingPage from './communications/Messaging';
+import AnnouncementsPage from './communications/Announcements';
 
 const Communications = () => {
   const [activeTab, setActiveTab] = useState('messaging');
@@ -47,17 +34,6 @@ const Communications = () => {
     navigate(`/communications/${value}`);
   }, [activeTab, navigate]);
 
-  // Memoize tab content components
-  const messagingContent = useMemo(() => 
-    activeTab === 'messaging' ? <MessagingContent /> : null, 
-    [activeTab]
-  );
-  
-  const announcementsContent = useMemo(() => 
-    activeTab === 'announcements' ? <AnnouncementsContent /> : null, 
-    [activeTab]
-  );
-
   return (
     <PageTemplate 
       title="Communications" 
@@ -71,11 +47,11 @@ const Communications = () => {
         </TabsList>
         
         <TabsContent value="messaging" className="space-y-6">
-          {messagingContent}
+          <MessagingPage />
         </TabsContent>
         
         <TabsContent value="announcements" className="space-y-6">
-          {announcementsContent}
+          <AnnouncementsPage />
         </TabsContent>
       </Tabs>
     </PageTemplate>
