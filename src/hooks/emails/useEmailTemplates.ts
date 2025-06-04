@@ -1,46 +1,56 @@
 
-import { useSupabaseQuery, useSupabaseCreate, useSupabaseUpdate, useSupabaseDelete } from '@/hooks/supabase';
-import { EmailTemplate } from '@/types/email-types';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export const useEmailTemplates = () => {
-  const { 
-    data: templates = [],
-    isLoading,
-    error,
-    refetch
-  } = useSupabaseQuery<EmailTemplate[]>('email_templates', {
-    order: { column: 'name', ascending: true }
-  });
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const createTemplate = useSupabaseCreate<EmailTemplate>('email_templates', {
-    onSuccess: () => {
-      toast.success('Email template created successfully');
-      refetch();
-    }
-  });
+  const fetchTemplates = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error: fetchError } = await supabase
+        .from('email_templates')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const updateTemplate = useSupabaseUpdate<EmailTemplate>('email_templates', {
-    onSuccess: () => {
-      toast.success('Email template updated successfully');
-      refetch();
-    }
-  });
+      if (fetchError) {
+        console.error('Error fetching templates:', fetchError);
+        setError('Failed to fetch templates');
+        setTemplates([]);
+        return;
+      }
 
-  const deleteTemplate = useSupabaseDelete('email_templates', {
-    onSuccess: () => {
-      toast.success('Email template deleted successfully');
-      refetch();
+      setTemplates(data || []);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred');
+      setTemplates([]);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
   return {
     templates,
     isLoading,
     error,
-    createTemplate: createTemplate.mutateAsync,
-    updateTemplate: updateTemplate.mutateAsync,
-    deleteTemplate: deleteTemplate.mutateAsync,
-    refreshTemplates: refetch
+    fetchTemplates,
   };
 };
