@@ -1,7 +1,6 @@
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
-import { toast } from 'sonner';
 
 export interface Invoice {
   id: string;
@@ -15,66 +14,48 @@ export interface Invoice {
   association_name?: string;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
   html_content?: string;
+  pdf_url?: string;
+  email_content?: string;
+  source_document?: string;
   created_at: string;
   updated_at: string;
+  payment_method?: string;
+  payment_date?: string;
+  gl_account_id?: string;
+  bank_account_id?: string;
 }
 
 export const useInvoiceNotifications = () => {
-  const [unreadInvoicesCount, setUnreadInvoicesCount] = useState<number>(0);
-  const hasShownToast = useRef(false);
-  
-  // Use localStorage for persistence but keep a ref to the value to avoid re-renders
-  const lastCheckedRef = useRef<string>(
-    localStorage.getItem('lastInvoiceCheckTimestamp') || new Date().toISOString()
-  );
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Get recent invoices to check for unread ones
-  const { data: recentInvoices = [] } = useSupabaseQuery<Invoice[]>(
+  // Get recent invoices for notifications
+  const { data: recentInvoices = [] } = useSupabaseQuery(
     'invoices',
     {
       select: '*',
-      order: { column: 'created_at', ascending: false },
       filter: [
-        { column: 'created_at', operator: 'gt', value: lastCheckedRef.current }
-      ]
+        {
+          column: 'created_at',
+          operator: 'gt',
+          value: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // Last 24 hours
+        }
+      ],
+      order: { column: 'created_at', ascending: false },
+      limit: 10
     }
   );
 
-  // Use a stable effect dependency
-  const recentInvoicesLength = recentInvoices.length;
-
-  // Update unread count whenever we get new data
   useEffect(() => {
-    if (!recentInvoices) return;
-    
-    setUnreadInvoicesCount(recentInvoicesLength);
-    
-    // Show toast only once per session for new invoices
-    if (recentInvoicesLength > 0 && !hasShownToast.current) {
-      hasShownToast.current = true;
-      toast(`${recentInvoicesLength} new invoice${recentInvoicesLength > 1 ? 's' : ''} received`, {
-        description: "Check the invoice queue for details",
-        action: {
-          label: "View",
-          onClick: () => {
-            window.location.href = '/accounting/invoice-queue';
-            markAllAsRead();
-          },
-        },
-      });
-    }
-  }, [recentInvoicesLength]);
+    setUnreadCount(recentInvoices.length);
+  }, [recentInvoices]);
 
-  const markAllAsRead = useCallback(() => {
-    const now = new Date().toISOString();
-    localStorage.setItem('lastInvoiceCheckTimestamp', now);
-    lastCheckedRef.current = now;
-    setUnreadInvoicesCount(0);
-    hasShownToast.current = false;
-  }, []);
+  const markAllAsRead = () => {
+    setUnreadCount(0);
+  };
 
   return {
-    unreadInvoicesCount,
+    unreadCount,
+    recentInvoices,
     markAllAsRead
   };
 };

@@ -55,7 +55,14 @@ const Dashboard = () => {
   }
   
   if (!isAuthenticated) {
-    return null; // Will be redirected by useEffect
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
   }
   
   // Use the profile from auth context

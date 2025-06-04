@@ -9,15 +9,23 @@ import { Button } from '@/components/ui/button';
 
 const Accounting = () => {
   const navigate = useNavigate();
-  const { data: integrationSettings } = useSystemSetting<IntegrationSettings>('integrations');
   
-  const hasOpenAI = integrationSettings?.integrationSettings?.['OpenAI']?.apiKey;
+  // Comment out the system settings hook temporarily to avoid dependency issues
+  // const { data: integrationSettings } = useSystemSetting<IntegrationSettings>('integrations');
+  // const hasOpenAI = integrationSettings?.integrationSettings?.['OpenAI']?.apiKey;
+  const hasOpenAI = false; // Temporary fallback
   
   useEffect(() => {
-    // Redirect to accounting dashboard
-    navigate('/accounting/dashboard');
+    // Add a small delay to ensure navigation works properly
+    const timer = setTimeout(() => {
+      console.log('Redirecting to accounting dashboard from /accounting');
+      navigate('/accounting/dashboard');
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [navigate]);
   
+  // Show a loading state while redirecting
   return (
     <PageTemplate 
       title="Accounting" 
@@ -35,7 +43,14 @@ const Accounting = () => {
           </Button>
         )
       }
-    />
+    >
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="h-8 w-8 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p>Redirecting to Accounting Dashboard...</p>
+        </div>
+      </div>
+    </PageTemplate>
   );
 };
 

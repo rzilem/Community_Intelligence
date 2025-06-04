@@ -20,8 +20,17 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({
   const location = useLocation();
 
   useEffect(() => {
+    console.log('[RequireAuth] Auth state check:', { 
+      loading, 
+      isAuthenticated, 
+      user: !!user, 
+      userRole,
+      currentPath: location.pathname 
+    });
+
     // Don't do anything while still loading auth state
     if (loading) {
+      console.log('[RequireAuth] Still loading auth state');
       return;
     }
     
