@@ -51,12 +51,9 @@ interface FormattedResident {
 
 /**
  * Fetches resident data in batches to avoid "URL too long" errors
- * @param propertyIds Array of property IDs to fetch residents for
- * @param batchSize Maximum number of property IDs to include in a single query
- * @returns Combined array of resident data from all batches
  */
-const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500): Promise<DatabaseResident[]> => {
-  let allResidents: DatabaseResident[] = [];
+const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
+  const allResidents: DatabaseResident[] = [];
   
   for (let i = 0; i < propertyIds.length; i += batchSize) {
     const batchIds = propertyIds.slice(i, i + batchSize);
@@ -73,7 +70,7 @@ const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500): Pr
     }
     
     if (residentsData) {
-      allResidents = [...allResidents, ...residentsData];
+      allResidents.push(...residentsData);
     }
   }
   
@@ -156,19 +153,18 @@ export const useHomeownersData = () => {
       console.log(`Fetching residents for ${propertyIds.length} properties`);
       
       try {
-        // Use the extracted batched fetching function
         const allResidents = await fetchResidentsBatched(propertyIds);
         
         console.log(`Found ${allResidents.length || 0} residents in total`);
         
         // Create association name lookup
-        const associationsMap: Record<string, string> = {};
+        const associationsMap: { [key: string]: string } = {};
         associations.forEach((assoc: any) => {
           associationsMap[assoc.id] = assoc.name;
         });
 
         // Create properties lookup
-        const propertiesMap: Record<string, DatabaseProperty> = {};
+        const propertiesMap: { [key: string]: DatabaseProperty } = {};
         properties.forEach((prop: DatabaseProperty) => {
           propertiesMap[prop.id] = prop;
         });
@@ -178,7 +174,7 @@ export const useHomeownersData = () => {
           const property = resident.property_id ? propertiesMap[resident.property_id] : null;
           const associationId = property?.association_id;
           
-          return {
+          const formattedResident: FormattedResident = {
             id: resident.id,
             name: resident.name || 'Unknown',
             email: resident.email || '',
@@ -194,6 +190,8 @@ export const useHomeownersData = () => {
             closingDate: null,
             hasValidAssociation: !!associationsMap[associationId || '']
           };
+          
+          return formattedResident;
         });
         
         console.log('Formatted residents:', formattedResidents);
