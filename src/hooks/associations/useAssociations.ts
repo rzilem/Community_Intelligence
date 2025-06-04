@@ -102,23 +102,20 @@ export const useAssociations = () => {
   const deleteAssociation = async (id: string) => {
     try {
       setIsDeleting(true);
-      
-      // Instead of actually deleting, we'll set is_archived to true
+
       const { error } = await supabase
         .from('associations')
-        .update({ is_archived: true })
+        .delete()
         .eq('id', id);
 
       if (error) throw error;
-      
-      setAssociations(prev => 
-        prev.map(assoc => assoc.id === id ? { ...assoc, is_archived: true } : assoc)
-      );
-      
-      toast.success('Association archived successfully');
+
+      setAssociations(prev => prev.filter(assoc => assoc.id !== id));
+
+      toast.success('Association deleted successfully');
     } catch (error: any) {
-      console.error('Error archiving association:', error);
-      toast.error(`Failed to archive association: ${error.message}`);
+      console.error('Error deleting association:', error);
+      toast.error(`Failed to delete association: ${error.message}`);
       throw error;
     } finally {
       setIsDeleting(false);
