@@ -58,6 +58,12 @@ export class ResidentFormatterService {
       // Default to owner if we can't determine
       return 'owner';
     };
+
+    // Map status to the expected union type
+    const normalizeStatus = (moveOutDate?: string): 'active' | 'inactive' | 'pending-approval' => {
+      if (moveOutDate) return 'inactive';
+      return 'active'; // Default to active for current residents
+    };
     
     return {
       id: resident.id,
@@ -69,7 +75,7 @@ export class ResidentFormatterService {
         : 'Unknown',
       propertyId: resident.property_id || '',
       type: normalizeType(resident.resident_type),
-      status: resident.move_out_date ? 'inactive' : 'active',
+      status: normalizeStatus(resident.move_out_date),
       moveInDate: resident.move_in_date || new Date().toISOString().split('T')[0],
       moveOutDate: resident.move_out_date,
       association: associationId || '',
@@ -78,7 +84,19 @@ export class ResidentFormatterService {
         : 'Unknown Association',
       lastPayment: null,
       closingDate: null,
-      hasValidAssociation: !!(associationId && associationsLookup[associationId])
+      hasValidAssociation: !!(associationId && associationsLookup[associationId]),
+      // Additional properties to match Homeowner type
+      balance: 0,
+      avatarUrl: undefined,
+      aclStartDate: undefined,
+      unitNumber: property?.unit_number,
+      property: property?.address,
+      unit: property?.unit_number,
+      tags: [],
+      violations: [],
+      lastContact: undefined,
+      notes: [],
+      propertyImage: undefined
     };
   }
 }

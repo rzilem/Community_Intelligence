@@ -34,15 +34,36 @@ export interface FormattedResident {
   phone: string;
   propertyAddress: string;
   propertyId: string;
-  type: 'owner' | 'tenant' | 'family-member'; // Fixed to match Homeowner type
-  status: string;
+  type: 'owner' | 'tenant' | 'family-member';
+  status: 'active' | 'inactive' | 'pending-approval';
   moveInDate: string;
   moveOutDate?: string;
   association: string;
   associationName: string;
-  lastPayment: null;
-  closingDate: null;
+  lastPayment: { amount: number; date: string } | null;
+  closingDate: string | null;
   hasValidAssociation: boolean;
+  // Additional properties to match Homeowner type
+  balance?: number;
+  avatarUrl?: string;
+  aclStartDate?: string;
+  unitNumber?: string;
+  property?: string;
+  unit?: string;
+  tags?: string[];
+  violations?: string[];
+  lastContact?: {
+    called: string;
+    visit: string;
+    email: string;
+  };
+  notes?: {
+    type: 'system' | 'manual';
+    author: string;
+    content: string;
+    date: string;
+  }[];
+  propertyImage?: string;
 }
 
 export interface AssociationData {

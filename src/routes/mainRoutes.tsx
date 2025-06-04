@@ -3,6 +3,7 @@ import React from 'react';
 import { Home, Users, Building2, Calendar } from 'lucide-react';
 import { Dashboard } from '@/pages/Dashboard';
 import Homeowners from '@/pages/Homeowners';
+import HomeownerDetailPage from '@/pages/HomeownerDetailPage';
 import Associations from '@/pages/Associations';
 import CalendarPage from '@/pages/CalendarPage';
 import { Route } from './types';
@@ -25,6 +26,13 @@ export const mainRoutes: Route[] = [
     category: 'main',
     requiresAuth: true,
     description: 'Manage homeowner information and requests'
+  },
+  {
+    path: 'homeowners/:id',
+    element: <HomeownerDetailPage />,
+    category: 'main',
+    requiresAuth: true,
+    description: 'Homeowner detail page'
   },
   {
     path: 'associations',
