@@ -1,10 +1,11 @@
+// Legacy file - functionality moved to services/resident-fetch-service.ts
+// Re-export for backward compatibility
+export { residentFetchService as fetchResidentsBatched } from './services/resident-fetch-service';
 
+// Keep the original function signature for compatibility
 import { supabase } from '@/integrations/supabase/client';
-import { DatabaseResident } from './types';
+import { DatabaseResident } from './types/resident-types';
 
-/**
- * Fetches resident data in batches to avoid "URL too long" errors
- */
 export const fetchResidentsBatched = async (
   propertyIds: string[], 
   batchSize = 500
