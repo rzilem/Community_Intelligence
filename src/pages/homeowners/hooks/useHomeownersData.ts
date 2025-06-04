@@ -112,15 +112,11 @@ export const useHomeownersData = () => {
         return;
       }
       
-      // Get all property IDs - ensure we're accessing valid property objects with proper type checking
-      const propertyIds = properties
-        .filter((p): p is { id: string } & Record<string, any> => 
-          p !== null && 
-          typeof p === 'object' && 
-          'id' in p && 
-          typeof p.id === 'string'
-        )
-        .map(p => p.id);
+      // Get all property IDs - defensively cast the response to avoid
+      // complex Supabase conditional types interfering with the build
+      const propertyIds = (Array.isArray(properties) ? properties : [])
+        .map((p: any) => (p ? p.id : null))
+        .filter((id): id is string => typeof id === 'string');
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
