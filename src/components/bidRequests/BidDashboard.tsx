@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Eye, Edit, Trash2, CheckCircle, XCircle, Clock, AlertTriangle, DollarSign, Calendar, Users } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Types defined inline
 interface BidRequestSummary {
@@ -63,6 +64,9 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
   const [selectedRequest, setSelectedRequest] = useState<string | null>(null);
   const [vendorBids, setVendorBids] = useState<VendorBid[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [vendorBidsLoading, setVendorBidsLoading] = useState(false);
+  const [vendorBidsError, setVendorBidsError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     status: 'all',
     priority: 'all',
@@ -76,117 +80,65 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
   useEffect(() => {
     if (selectedRequest) {
       loadVendorBids(selectedRequest);
+    } else {
+      setVendorBids([]);
     }
   }, [selectedRequest]);
 
   const loadBidRequests = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // TODO: Replace with actual API call
-      const mockData: BidRequestSummary[] = [
-        {
-          id: '1',
-          title: 'Pool Area Renovation',
-          hoa_id: hoaId,
-          status: 'bidding',
-          priority: 'high',
-          budget_range_min: 15000,
-          budget_range_max: 25000,
-          bid_deadline: '2024-02-15T17:00:00',
-          total_bids: 3,
-          lowest_bid: 18500,
-          highest_bid: 24000,
-          average_bid: 21250,
-          created_at: '2024-01-15T10:00:00',
-          updated_at: '2024-01-15T10:00:00'
-        },
-        {
-          id: '2',
-          title: 'Landscape Maintenance Contract',
-          hoa_id: hoaId,
-          status: 'evaluating',
-          priority: 'medium',
-          budget_range_min: 5000,
-          budget_range_max: 8000,
-          bid_deadline: '2024-02-10T17:00:00',
-          total_bids: 5,
-          lowest_bid: 5200,
-          highest_bid: 7800,
-          average_bid: 6400,
-          created_at: '2024-01-10T10:00:00',
-          updated_at: '2024-01-12T15:30:00'
-        }
-      ];
-      
-      let filteredData = mockData;
-      
+      let query = supabase
+        .from('bid_request_summary')
+        .select('*')
+        .eq('hoa_id', hoaId);
+
       if (filters.status !== 'all') {
-        filteredData = filteredData.filter(req => req.status === filters.status);
+        query = query.eq('status', filters.status);
       }
-      
+
       if (filters.priority !== 'all') {
-        filteredData = filteredData.filter(req => req.priority === filters.priority);
+        query = query.eq('priority', filters.priority);
       }
-      
+
       if (filters.search) {
-        filteredData = filteredData.filter(req => 
-          req.title.toLowerCase().includes(filters.search.toLowerCase())
-        );
+        query = query.ilike('title', `%${filters.search}%`);
       }
-      
-      setBidRequests(filteredData);
-    } catch (error) {
-      console.error('Error loading bid requests:', error);
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setBidRequests((data || []) as BidRequestSummary[]);
+    } catch (err) {
+      console.error('Error loading bid requests:', err);
+      setError('Failed to load bid requests');
     } finally {
       setLoading(false);
     }
   };
 
   const loadVendorBids = async (bidRequestId: string) => {
+    setVendorBidsLoading(true);
+    setVendorBidsError(null);
     try {
-      // TODO: Replace with actual API call
-      const mockBids: VendorBid[] = [
-        {
-          id: '1',
-          bid_request_id: bidRequestId,
-          vendor_id: '1',
-          bid_amount: 18500,
-          proposed_timeline: 30,
-          is_selected: false,
-          evaluation_score: 8,
-          status: 'submitted',
-          submitted_at: '2024-01-16T10:00:00',
-          vendor: {
-            id: '1',
-            name: 'ABC Landscaping',
-            email: 'john@abclandscaping.com',
-            phone: '555-0101',
-            rating: 4.5
-          }
-        },
-        {
-          id: '2',
-          bid_request_id: bidRequestId,
-          vendor_id: '2',
-          bid_amount: 21000,
-          proposed_timeline: 25,
-          is_selected: false,
-          evaluation_score: 7,
-          status: 'submitted',
-          submitted_at: '2024-01-17T14:30:00',
-          vendor: {
-            id: '2',
-            name: 'XYZ Construction',
-            email: 'mary@xyzconstruction.com',
-            phone: '555-0102',
-            rating: 4.2
-          }
-        }
-      ];
-      
-      setVendorBids(mockBids);
-    } catch (error) {
-      console.error('Error loading vendor bids:', error);
+      const { data, error } = await supabase
+        .from('vendor_bids')
+        .select(
+          'id,bid_request_id,vendor_id,bid_amount,proposed_timeline,is_selected,evaluation_score,status,submitted_at,vendor:vendors(id,name,email,phone,rating)'
+        )
+        .eq('bid_request_id', bidRequestId)
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+
+      setVendorBids((data || []) as VendorBid[]);
+    } catch (err) {
+      console.error('Error loading vendor bids:', err);
+      setVendorBidsError('Failed to load vendor bids');
+    } finally {
+      setVendorBidsLoading(false);
     }
   };
 
@@ -301,6 +253,10 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
                 <p className="text-gray-500 mt-2">Loading...</p>
               </div>
+            ) : error ? (
+              <div className="p-8 text-center">
+                <p className="text-red-500">{error}</p>
+              </div>
             ) : bidRequests.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-gray-500">No bid requests found</p>
@@ -308,7 +264,7 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
             ) : (
               <div className="divide-y">
                 {bidRequests.map((request) => (
-                  <div 
+                  <div
                     key={request.id}
                     className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
                       selectedRequest === request.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
@@ -402,7 +358,14 @@ const BidDashboard: React.FC<BidDashboardProps> = ({
           
           {selectedRequest ? (
             <div className="p-4">
-              {vendorBids.length === 0 ? (
+              {vendorBidsLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading...</p>
+                </div>
+              ) : vendorBidsError ? (
+                <p className="text-red-500 text-center py-8">{vendorBidsError}</p>
+              ) : vendorBids.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No bids submitted yet</p>
               ) : (
                 <div className="space-y-4">
