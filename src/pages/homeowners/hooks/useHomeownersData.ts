@@ -92,7 +92,7 @@ export const useHomeownersData = () => {
       console.log('Fetching properties for associations:', associationIds);
       
       const { data: properties, error: propertiesError } = await supabase
-        .from('properties')
+        .from('properties' as any)
         .select('*')
         .in('association_id', associationIds);
         
