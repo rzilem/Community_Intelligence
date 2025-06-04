@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Mail, Plus } from 'lucide-react';
