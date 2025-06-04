@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Workflow, WorkflowType, WorkflowStatus } from '@/types/workflow-types';
+import { Workflow, WorkflowType, WorkflowStatus, WorkflowStep } from '@/types/workflow-types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -42,7 +42,8 @@ export const useWorkflows = () => {
           status: template.status || 'template',
           steps: template.steps || [],
           isTemplate: template.is_template || true,
-          isPopular: template.is_popular || false
+          isPopular: template.is_popular || false,
+          createdBy: template.created_by || null
         }));
       } catch (err) {
         console.error("Error fetching workflow templates:", err);
@@ -79,7 +80,8 @@ export const useWorkflows = () => {
           status: workflow.status || 'active',
           steps: workflow.steps || [],
           isTemplate: workflow.is_template || false,
-          isPopular: false
+          isPopular: false,
+          createdBy: workflow.created_by || null
         }));
       } catch (err) {
         console.error("Error fetching active workflows:", err);
@@ -208,6 +210,7 @@ export const useWorkflows = () => {
       name: string;
       description?: string;
       type: WorkflowType;
+      steps?: WorkflowStep[];
     }) => {
       setLoading(true);
       
@@ -216,8 +219,9 @@ export const useWorkflows = () => {
         const { data: userData } = await supabase.auth.getUser();
         const userId = userData.user?.id;
         
-        // Initialize with a single default step
-        const initialSteps = [
+        // Initialize with a single default step if none provided
+        const initialSteps = workflowData.steps && workflowData.steps.length > 0 ?
+          workflowData.steps : [
           {
             id: crypto.randomUUID(),
             name: "First Step",
@@ -363,6 +367,7 @@ export const useWorkflows = () => {
     name: string;
     description?: string;
     type: WorkflowType;
+    steps?: WorkflowStep[];
   }) => {
     createTemplateMutation.mutate(workflowData);
   };

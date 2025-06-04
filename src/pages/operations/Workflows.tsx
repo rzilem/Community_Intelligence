@@ -14,16 +14,19 @@ import WorkflowTabs from '@/components/operations/WorkflowTabs';
 import WorkflowTemplateCard from '@/components/operations/WorkflowTemplateCard';
 import { useWorkflows } from '@/hooks/operations/useWorkflows';
 import ActiveWorkflowCard from '@/components/operations/ActiveWorkflowCard';
-import { WorkflowType } from '@/types/workflow-types';
+import { WorkflowType, WorkflowStep } from '@/types/workflow-types';
 import WorkflowAnalyticsDashboard from '@/components/operations/WorkflowAnalyticsDashboard';
 import WorkflowCreateDialog from '@/components/operations/dialogs/WorkflowCreateDialog';
 import WorkflowDeleteDialog from '@/components/operations/dialogs/WorkflowDeleteDialog';
+import WorkflowBuilder from '@/components/operations/WorkflowBuilder';
+import { useUser } from '@/hooks/auth/useUser';
 
 const Workflows = () => {
   const [activeTab, setActiveTab] = useState<string>('templates');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<WorkflowType | 'all'>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const { user } = useUser();
   const [deleteDialogState, setDeleteDialogState] = useState<{
     isOpen: boolean;
     workflowId: string | null;
@@ -61,6 +64,19 @@ const Workflows = () => {
     });
   }, [workflowTemplates, searchTerm, typeFilter]);
 
+  const customTemplates = useMemo(() => {
+    return workflowTemplates.filter(w => w.createdBy === user?.id);
+  }, [workflowTemplates, user]);
+
+  const filteredCustomTemplates = useMemo(() => {
+    return customTemplates.filter(workflow => {
+      const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        workflow.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = typeFilter === 'all' || workflow.type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [customTemplates, searchTerm, typeFilter]);
+
   const filteredActiveWorkflows = useMemo(() => {
     return activeWorkflows.filter(workflow => {
       const matchesSearch = workflow.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -85,6 +101,16 @@ const Workflows = () => {
     type: WorkflowType;
   }) => {
     await createCustomTemplate(values);
+  };
+
+  const handleSaveWorkflow = async (values: {
+    name: string;
+    description: string;
+    type: WorkflowType;
+    steps: WorkflowStep[];
+  }) => {
+    await createCustomTemplate(values);
+    setActiveTab('templates');
   };
 
   const openDeleteDialog = (id: string, name: string, isTemplate: boolean) => {
@@ -227,15 +253,36 @@ const Workflows = () => {
           <TabsContent value="custom" className="mt-0">
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">Custom Workflows</h2>
-              <p className="text-muted-foreground">This feature is coming soon. Please check back later.</p>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredCustomTemplates.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredCustomTemplates.map((workflow) => (
+                    <WorkflowTemplateCard
+                      key={workflow.id}
+                      workflow={workflow}
+                      onUseTemplate={useWorkflowTemplate}
+                      onDuplicateTemplate={duplicateTemplate}
+                      onEditTemplate={viewWorkflowDetails}
+                      onDeleteTemplate={(id) => openDeleteDialog(id, workflow.name, true)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchTerm || typeFilter !== 'all' ?
+                    'No custom workflows match your search criteria.' :
+                    'No custom workflows created yet.'}
+                </div>
+              )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="builder" className="mt-0">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Workflow Builder</h2>
-              <p className="text-muted-foreground">This feature is coming soon. Please check back later.</p>
-            </div>
+            <WorkflowBuilder onSave={handleSaveWorkflow} isSaving={isCreating} />
           </TabsContent>
           
           <TabsContent value="analytics" className="mt-0">

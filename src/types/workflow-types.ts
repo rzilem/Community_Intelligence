@@ -27,4 +27,5 @@ export interface Workflow {
   steps: WorkflowStep[];
   isTemplate: boolean;
   isPopular?: boolean;
+  createdBy?: string | null;
 }
