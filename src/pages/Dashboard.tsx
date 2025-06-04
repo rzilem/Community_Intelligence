@@ -20,7 +20,7 @@ import CalendarTab from '@/components/dashboard/CalendarTab';
 const Dashboard = () => {
   const { currentAssociation, user, profile, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { stats, recentActivity, loading: dataLoading, error } = useDashboardData(currentAssociation?.id);
+  const { stats, recentActivity, isLoading: dataLoading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
   
@@ -65,7 +65,7 @@ const Dashboard = () => {
     userProfile,
     recentActivity,
     dataLoading,
-    error
+    error ? new Error(error) : null
   );
 
   // Memoize the main content structure to prevent unnecessary re-renders

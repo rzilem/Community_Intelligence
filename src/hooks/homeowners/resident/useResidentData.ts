@@ -1,72 +1,43 @@
-
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchResidentById, updateResident } from '@/services/hoa/residents';
+import { Resident } from '@/types/app-types';
 
-export interface ResidentData {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone?: string;
-  unit_number?: string;
-  address?: string;
-  image_url?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export const useResidentData = () => {
-  const [residents, setResidents] = useState<ResidentData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export const useResidentData = (residentId: string) => {
+  const [resident, setResident] = useState<Resident | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchResidents = async () => {
+  const fetchResident = async () => {
+    if (!residentId) return;
     try {
-      setIsLoading(true);
+      setLoading(true);
+      const data = await fetchResidentById(residentId);
+      setResident(data);
       setError(null);
-
-      // Try to fetch residents data
-      const { data, error: fetchError } = await supabase
-        .from('residents')
-        .select('*');
-
-      if (fetchError) {
-        console.error('Error fetching residents:', fetchError);
-        // Return mock data if table doesn't exist
-        setResidents([
-          {
-            id: '1',
-            first_name: 'John',
-            last_name: 'Doe',
-            email: 'john.doe@example.com',
-            phone: '(555) 123-4567',
-            unit_number: '101',
-            address: '123 Main St, Unit 101',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-        ]);
-        return;
-      }
-
-      setResidents(data || []);
-    } catch (err) {
-      console.error('Unexpected error:', err);
+    } catch (err: any) {
+      console.error('Error fetching resident:', err);
       setError('Failed to load resident data');
-      setResidents([]);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const updateResidentData = async (data: Partial<Resident>) => {
+    if (!residentId) return null;
+    try {
+      const updated = await updateResident(residentId, data);
+      setResident(updated);
+      return updated;
+    } catch (err) {
+      console.error('Error updating resident:', err);
+      throw err;
     }
   };
 
   useEffect(() => {
-    fetchResidents();
-  }, []);
+    fetchResident();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [residentId]);
 
-  return {
-    residents,
-    isLoading,
-    error,
-    refreshResidents: fetchResidents,
-  };
+  return { resident, loading, error, updateResidentData };
 };

@@ -50,7 +50,7 @@ export const useEmailCampaigns = () => {
         return;
       }
 
-      setCampaigns(data || []);
+      setCampaigns((data || []) as EmailCampaign[]);
     } catch (err) {
       console.error('Unexpected error:', err);
       setError('An unexpected error occurred');

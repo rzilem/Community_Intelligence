@@ -8,7 +8,7 @@ import { EmailTemplate } from '@/types/email-types';
 import { toast } from 'sonner';
 
 const EmailTemplateManager: React.FC = () => {
-  const { createTemplate, updateTemplate } = useEmailTemplates();
+  const { createTemplate, updateTemplate, deleteTemplate } = useEmailTemplates();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentTemplate, setCurrentTemplate] = useState<EmailTemplate | null>(null);
 
@@ -30,6 +30,15 @@ const EmailTemplateManager: React.FC = () => {
     } as EmailTemplate;
     setCurrentTemplate(duplicated);
     setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteTemplate(id);
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      toast.error('Failed to delete template');
+    }
   };
 
   const handleSave = async (data: Partial<EmailTemplate>) => {
@@ -55,7 +64,7 @@ const EmailTemplateManager: React.FC = () => {
       <EmailTemplateList
         onEdit={handleEdit}
         onDuplicate={handleDuplicate}
-        onDelete={() => {}}
+        onDelete={handleDelete}
       />
       {isFormOpen && (
         <EmailTemplateForm
