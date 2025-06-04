@@ -49,10 +49,15 @@ interface FormattedResident {
   hasValidAssociation: boolean;
 }
 
+interface AssociationData {
+  id: string;
+  name: string;
+}
+
 /**
  * Fetches resident data in batches to avoid "URL too long" errors
  */
-const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500) => {
+const fetchResidentsBatched = async (propertyIds: string[], batchSize = 500): Promise<DatabaseResident[]> => {
   const allResidents: DatabaseResident[] = [];
   
   for (let i = 0; i < propertyIds.length; i += batchSize) {
@@ -82,8 +87,8 @@ export const useHomeownersData = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch associations from Supabase
-  const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery(
+  // Fetch associations from Supabase with explicit typing
+  const { data: associations = [], isLoading: isLoadingAssociations, error: associationsError } = useSupabaseQuery<AssociationData[]>(
     'associations',
     {
       select: 'id, name',
@@ -108,7 +113,7 @@ export const useHomeownersData = () => {
       let associationIds: string[] = [];
       
       if (!associationId || associationId === 'all') {
-        associationIds = associations.map((a: any) => a.id);
+        associationIds = associations.map((a) => a.id);
         console.log('Fetching for all accessible associations:', associationIds);
       } else {
         associationIds = [associationId];
@@ -147,7 +152,7 @@ export const useHomeownersData = () => {
       }
       
       // Get all property IDs
-      const propertyIds = properties.map((p: DatabaseProperty) => p.id);
+      const propertyIds = properties.map((p) => p.id);
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors
       console.log(`Fetching residents for ${propertyIds.length} properties`);
@@ -158,21 +163,22 @@ export const useHomeownersData = () => {
         console.log(`Found ${allResidents.length || 0} residents in total`);
         
         // Create association name lookup
-        const associationsMap: { [key: string]: string } = {};
-        associations.forEach((assoc: any) => {
+        const associationsMap: Record<string, string> = {};
+        associations.forEach((assoc) => {
           associationsMap[assoc.id] = assoc.name;
         });
 
         // Create properties lookup
-        const propertiesMap: { [key: string]: DatabaseProperty } = {};
+        const propertiesMap: Record<string, DatabaseProperty> = {};
         properties.forEach((prop: DatabaseProperty) => {
           propertiesMap[prop.id] = prop;
         });
         
-        // Format the residents data explicitly
+        // Format the residents data explicitly using a simple loop
         const formattedResidents: FormattedResident[] = [];
         
-        for (const resident of allResidents) {
+        for (let i = 0; i < allResidents.length; i++) {
+          const resident = allResidents[i];
           const property = resident.property_id ? propertiesMap[resident.property_id] : null;
           const associationId = property?.association_id;
           
