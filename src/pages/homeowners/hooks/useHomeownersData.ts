@@ -169,8 +169,10 @@ export const useHomeownersData = () => {
           propertiesMap[prop.id] = prop;
         });
         
-        // Map the results with explicit typing
-        const formattedResidents: FormattedResident[] = allResidents.map((resident: DatabaseResident) => {
+        // Format the residents data explicitly
+        const formattedResidents: FormattedResident[] = [];
+        
+        for (const resident of allResidents) {
           const property = resident.property_id ? propertiesMap[resident.property_id] : null;
           const associationId = property?.association_id;
           
@@ -191,8 +193,8 @@ export const useHomeownersData = () => {
             hasValidAssociation: !!associationsMap[associationId || '']
           };
           
-          return formattedResident;
-        });
+          formattedResidents.push(formattedResident);
+        }
         
         console.log('Formatted residents:', formattedResidents);
         setResidents(formattedResidents);
