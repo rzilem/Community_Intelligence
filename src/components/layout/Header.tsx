@@ -15,6 +15,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import ProfileImageUpload from '@/components/users/ProfileImageUpload';
 import NotificationCenter from './NotificationCenter';
+import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   isMobile: boolean;
@@ -75,6 +76,7 @@ const Header: React.FC<HeaderProps> = ({
         
         <div className="flex items-center gap-4">
           <NotificationCenter />
+          <ThemeToggle />
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
