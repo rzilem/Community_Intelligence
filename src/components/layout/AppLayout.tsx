@@ -8,6 +8,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { getFilteredNavItems } from './navigation-utils';
 import { AppLayoutProps } from './types';
+import GlobalSearch from '../global/GlobalSearch';
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
@@ -61,7 +62,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         handleSignOut={handleSignOut}
       />
 
-      <div 
+      <div
         className={cn(
           "flex flex-col w-full transition-all duration-300 ease-in-out",
           !isMobile && isSidebarOpen ? "md:ml-64" : ""
@@ -79,6 +80,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
+      <GlobalSearch />
     </div>
   );
 };
