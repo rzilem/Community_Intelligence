@@ -35,33 +35,10 @@ export const dataImportService = {
       });
       
       if (!importJob) {
-        return {
-          success: false,
-          totalProcessed: 0,
-          successfulImports: 0,
-          failedImports: 0,
-          details: [{ status: 'error' as const, message: 'Failed to create import job' }]
-        };
+        return createFailureResult('Failed to create import job', 0);
       }
       
-      const processedData = data.map(row => {
-        // Create a new object to hold mapped data
-        const mappedRow: Record<string, any> = {};
-        
-        // Only add association_id for non-association imports
-        if (dataType !== 'associations') {
-          mappedRow.association_id = associationId;
-        }
-        
-        // Map fields from the source data to destination fields
-        Object.entries(mappings).forEach(([column, field]) => {
-          if (field && row[column] !== undefined) {
-            mappedRow[field] = row[column];
-          }
-        });
-        
-        return mappedRow;
-      });
+      const processedData = processDataMappings(data, mappings, dataType, associationId);
       
       const importResult = await processorService.processImportData(
         importJob.id,
@@ -95,29 +72,59 @@ export const dataImportService = {
       };
     } catch (error) {
       console.error('Error importing data:', error);
-      return {
-        success: false,
-        totalProcessed: 0,
-        successfulImports: 0,
-        failedImports: data.length,
-        details: [{ 
-          status: 'error' as const, 
-          message: `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}` 
-        }]
-      };
+      return createFailureResult(
+        `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data.length
+      );
     }
   }
 };
 
+// Helper function to create failure results
+function createFailureResult(message: string, totalProcessed: number): ImportResult {
+  return {
+    success: false,
+    totalProcessed,
+    successfulImports: 0,
+    failedImports: totalProcessed,
+    details: [{ status: 'error' as const, message }]
+  };
+}
+
+// Helper function to process data mappings
+function processDataMappings(
+  data: Record<string, any>[],
+  mappings: Record<string, string>,
+  dataType: string,
+  associationId: string
+): Record<string, any>[] {
+  return data.map(row => {
+    const mappedRow: Record<string, any> = {};
+    
+    // Only add association_id for non-association imports
+    if (dataType !== 'associations') {
+      mappedRow.association_id = associationId;
+    }
+    
+    // Map fields from the source data to destination fields
+    Object.entries(mappings).forEach(([column, field]) => {
+      if (field && row[column] !== undefined) {
+        mappedRow[field] = row[column];
+      }
+    });
+    
+    return mappedRow;
+  });
+}
+
 // Helper function to process combined properties and owners import
 async function processPropertiesOwnersImport(
   associationId: string,
-  data: any[],
+  data: Record<string, any>[],
   mappings: Record<string, string>,
   userId?: string
 ): Promise<ImportResult> {
   try {
-    // Create import job
     const importJob = await jobService.createImportJob({
       associationId,
       importType: 'properties_owners',
@@ -127,33 +134,10 @@ async function processPropertiesOwnersImport(
     });
     
     if (!importJob) {
-      return {
-        success: false,
-        totalProcessed: 0,
-        successfulImports: 0,
-        failedImports: 0,
-        details: [{ status: 'error' as const, message: 'Failed to create import job' }]
-      };
+      return createFailureResult('Failed to create import job', 0);
     }
     
-    // Process the data - separate property and owner fields
-    const processedRows = data.map(row => {
-      const propertyData: Record<string, any> = { association_id: associationId };
-      const ownerData: Record<string, any> = { association_id: associationId };
-      
-      // Map fields from source data to destination fields
-      Object.entries(mappings).forEach(([column, field]) => {
-        if (field && row[column] !== undefined) {
-          if (field.startsWith('property.')) {
-            propertyData[field.replace('property.', '')] = row[column];
-          } else if (field.startsWith('owner.')) {
-            ownerData[field.replace('owner.', '')] = row[column];
-          }
-        }
-      });
-      
-      return { propertyData, ownerData };
-    });
+    const processedRows = processPropertiesOwnersData(data, mappings, associationId);
     
     let successfulImports = 0;
     let failedImports = 0;
@@ -172,52 +156,16 @@ async function processPropertiesOwnersImport(
     
     // If properties were successfully imported, get their IDs and attach to owners
     if (propertyResult.successfulImports > 0) {
-      // Get created properties by matching addresses
-      const { data: createdProperties } = await import('@/integrations/supabase/client').then(mod => 
-        mod.supabase
-          .from('properties')
-          .select('id, address, unit_number')
-          .eq('association_id', associationId)
+      const ownerResult = await processOwnersWithProperties(
+        importJob.id,
+        associationId,
+        processedRows,
+        propertyDataToImport
       );
       
-      // Map owners to their properties and import
-      const ownerDataToImport = [];
-      
-      for (let i = 0; i < processedRows.length; i++) {
-        const { propertyData, ownerData } = processedRows[i];
-        
-        // Find matching property
-        const matchingProperty = createdProperties?.find(p => 
-          p.address === propertyData.address && 
-          (p.unit_number === propertyData.unit_number || 
-            (!p.unit_number && !propertyData.unit_number))
-        );
-        
-        if (matchingProperty) {
-          ownerData.property_id = matchingProperty.id;
-          ownerData.resident_type = 'owner'; // Set resident type to owner
-          ownerDataToImport.push(ownerData);
-        } else {
-          failedImports++;
-          details.push({
-            status: 'error',
-            message: `Could not find matching property for address: ${propertyData.address} ${propertyData.unit_number || ''}`
-          });
-        }
-      }
-      
-      if (ownerDataToImport.length > 0) {
-        const ownerResult = await processorService.processImportData(
-          importJob.id,
-          associationId,
-          'owners',
-          ownerDataToImport
-        );
-        
-        successfulImports = ownerResult.successfulImports;
-        failedImports += ownerResult.failedImports;
-        details.push(...ownerResult.details);
-      }
+      successfulImports = ownerResult.successfulImports;
+      failedImports += ownerResult.failedImports;
+      details.push(...ownerResult.details);
     } else {
       failedImports = data.length;
       details.push({
@@ -226,7 +174,6 @@ async function processPropertiesOwnersImport(
       });
     }
     
-    // Save the mapping for future use
     await mappingService.saveImportMapping(
       associationId,
       'properties_owners',
@@ -234,7 +181,6 @@ async function processPropertiesOwnersImport(
       userId
     );
     
-    // Update job status
     const finalStatus = failedImports === 0 ? 'completed' : 'failed';
     await jobService.updateImportJobStatus(importJob.id, finalStatus as ImportJob['status'], {
       processed: data.length,
@@ -253,15 +199,91 @@ async function processPropertiesOwnersImport(
     };
   } catch (error) {
     console.error('Error in combined import:', error);
-    return {
-      success: false,
-      totalProcessed: 0,
-      successfulImports: 0,
-      failedImports: data.length,
-      details: [{ 
-        status: 'error' as const, 
-        message: `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}` 
-      }]
-    };
+    return createFailureResult(
+      `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      data.length
+    );
   }
+}
+
+// Helper function to process properties and owners data
+function processPropertiesOwnersData(
+  data: Record<string, any>[],
+  mappings: Record<string, string>,
+  associationId: string
+): Array<{ propertyData: Record<string, any>; ownerData: Record<string, any> }> {
+  return data.map(row => {
+    const propertyData: Record<string, any> = { association_id: associationId };
+    const ownerData: Record<string, any> = { association_id: associationId };
+    
+    Object.entries(mappings).forEach(([column, field]) => {
+      if (field && row[column] !== undefined) {
+        if (field.startsWith('property.')) {
+          propertyData[field.replace('property.', '')] = row[column];
+        } else if (field.startsWith('owner.')) {
+          ownerData[field.replace('owner.', '')] = row[column];
+        }
+      }
+    });
+    
+    return { propertyData, ownerData };
+  });
+}
+
+// Helper function to process owners with their properties
+async function processOwnersWithProperties(
+  jobId: string,
+  associationId: string,
+  processedRows: Array<{ propertyData: Record<string, any>; ownerData: Record<string, any> }>,
+  propertyDataToImport: Record<string, any>[]
+): Promise<{ successfulImports: number; failedImports: number; details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> }> {
+  const { supabase } = await import('@/integrations/supabase/client');
+  
+  const { data: createdProperties } = await supabase
+    .from('properties')
+    .select('id, address, unit_number')
+    .eq('association_id', associationId);
+  
+  const ownerDataToImport = [];
+  let failedImports = 0;
+  const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
+  
+  for (let i = 0; i < processedRows.length; i++) {
+    const { propertyData, ownerData } = processedRows[i];
+    
+    const matchingProperty = createdProperties?.find(p => 
+      p.address === propertyData.address && 
+      (p.unit_number === propertyData.unit_number || 
+        (!p.unit_number && !propertyData.unit_number))
+    );
+    
+    if (matchingProperty) {
+      ownerData.property_id = matchingProperty.id;
+      ownerData.resident_type = 'owner';
+      ownerDataToImport.push(ownerData);
+    } else {
+      failedImports++;
+      details.push({
+        status: 'error',
+        message: `Could not find matching property for address: ${propertyData.address} ${propertyData.unit_number || ''}`
+      });
+    }
+  }
+  
+  let successfulImports = 0;
+  
+  if (ownerDataToImport.length > 0) {
+    const ownerResult = await processorService.processImportData(
+      jobId,
+      associationId,
+      'owners',
+      ownerDataToImport
+    );
+    
+    successfulImports = ownerResult.successfulImports;
+    failedImports += ownerResult.failedImports;
+    details.push(...ownerResult.details);
+  }
+  
+  return { successfulImports, failedImports, details };
 }
