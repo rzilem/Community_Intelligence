@@ -28,22 +28,26 @@ const RequestDialogTabs: React.FC<RequestDialogTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 h-full flex flex-col">
-      <div className="flex justify-between items-center gap-4">
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="activity">Activity Feed</TabsTrigger>
-          <TabsTrigger value="email">Original Email</TabsTrigger>
-          <TabsTrigger value="attachments">Attachments</TabsTrigger>
-        </TabsList>
+      <div className="space-y-3">
+        <div className="flex justify-center">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="activity">Activity Feed</TabsTrigger>
+            <TabsTrigger value="email">Original Email</TabsTrigger>
+            <TabsTrigger value="attachments">Attachments</TabsTrigger>
+          </TabsList>
+        </div>
         
-        <QuickEditMenu 
-          assignedTo={assignedTo}
-          associationId={associationId}
-          propertyId={propertyId}
-          onAssignChange={onAssignChange}
-          onAssociationChange={onAssociationChange}
-          onPropertyChange={onPropertyChange}
-        />
+        <div className="flex justify-center">
+          <QuickEditMenu 
+            assignedTo={assignedTo}
+            associationId={associationId}
+            propertyId={propertyId}
+            onAssignChange={onAssignChange}
+            onAssociationChange={onAssociationChange}
+            onPropertyChange={onPropertyChange}
+          />
+        </div>
       </div>
       
       <div className="flex-1 overflow-hidden">
