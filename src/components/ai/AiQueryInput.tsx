@@ -40,11 +40,14 @@ export const AiQueryInput: React.FC<AiQueryInputProps> = ({
       }
 
       setAnswer('');
-      const response = await fetch('/api/ai/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, stream: streaming })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-query`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, stream: streaming })
+        }
+      );
 
       if (!response.ok) {
         const err = await response.json();
