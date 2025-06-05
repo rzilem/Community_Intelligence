@@ -27,7 +27,8 @@ Welcome to your Lovable project. This repository contains a Vite + React + TypeS
    - Copy `.env.example` to `.env` and fill in at least the following values:
      - `VITE_SUPABASE_URL`
      - `VITE_SUPABASE_ANON_KEY`
-     - `VITE_OPENAI_API_KEY` *(optional)*
+    - `VITE_OPENAI_API_KEY` *(optional)*
+    - `OPENAI_WHISPER_API_KEY` *(for audio transcription)*
      - `VITE_STRIPE_PUBLISHABLE_KEY` *(optional)*
    - For API routes you also need:
      - `NEXT_PUBLIC_SUPABASE_URL`
