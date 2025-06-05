@@ -144,10 +144,13 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = ({
       formData.append('invoice', selectedFile);
       formData.append('association_id', associationId);
 
-      const uploadResponse = await fetch('/api/invoices/upload', {
-        method: 'POST',
-        body: formData
-      });
+      const uploadResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-invoice`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
 
       if (!uploadResponse.ok) {
         const uploadError = await uploadResponse.json();
@@ -157,16 +160,19 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = ({
       const { fileUrl } = await uploadResponse.json();
 
       // Step 2: Process with AI
-      const processResponse = await fetch('/api/ai/process-invoice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageUrl: fileUrl,
-          associationId: associationId
-        })
-      });
+      const processResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-invoice`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl: fileUrl,
+            associationId: associationId
+          })
+        }
+      );
 
       if (!processResponse.ok) {
         const processError = await processResponse.json();
@@ -207,17 +213,20 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = ({
     setError('');
 
     try {
-      const response = await fetch('/api/invoices/save-processed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...processedInvoice,
-          association_id: associationId,
-          user_id: userId
-        })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/save-processed-invoice`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...processedInvoice,
+            association_id: associationId,
+            user_id: userId
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
