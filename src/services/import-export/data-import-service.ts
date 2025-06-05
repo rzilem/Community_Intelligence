@@ -239,10 +239,16 @@ async function processOwnersWithProperties(
 ): Promise<{ successfulImports: number; failedImports: number; details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> }> {
   const { supabase } = await import('@/integrations/supabase/client');
   
-  const { data: createdProperties } = await supabase
+  const { data } = await supabase
     .from('properties')
     .select('id, address, unit_number')
     .eq('association_id', associationId);
+
+  const createdProperties = data as Array<{
+    id: string;
+    address: string;
+    unit_number: string | null;
+  }> | null;
   
   const ownerDataToImport = [];
   let failedImports = 0;
