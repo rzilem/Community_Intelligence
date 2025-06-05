@@ -32,13 +32,13 @@ const QuickActionWidgets: React.FC = () => {
         </button>
       </div>
       
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
         {actions.map((action, index) => (
           <button
             key={index}
-            className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all 
-              ${action.color} 
-              hover:shadow-md hover:border-hoa-blue-500 
+            className={`flex flex-col items-center justify-center p-4 sm:p-5 rounded-lg border-2 transition-all
+              ${action.color}
+              hover:shadow-md hover:border-hoa-blue-500
               focus:outline-none focus:ring-2 focus:ring-hoa-blue-300`}
             onClick={() => handleActionClick(action.path, action.title)}
             aria-label={action.description}
