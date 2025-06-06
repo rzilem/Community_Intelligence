@@ -36,3 +36,15 @@ export interface Property {
   updated_at: string; // Making this required to match app-types.ts
   image_url?: string; // Add image_url field
 }
+
+// Raw property record as returned from Supabase. Some legacy queries may use
+// slightly different column names like `association_id`, `zip`, or
+// `square_feet`, so those are included as optional fields.
+import type { Database } from '@/integrations/supabase/types';
+
+export type PropertyRecord =
+  Database['public']['Tables']['properties']['Row'] & {
+    association_id?: string | null;
+    zip?: string | null;
+    square_feet?: number | null;
+  };

@@ -22,20 +22,20 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
         setLoading(true);
         
         // Get property count
-        const { count: propCount, error: propError } = (await (supabase
-          .from('properties' as any)
-          .select('*', { count: 'exact', head: true } as any)
-          .eq('association_id', association.id))) as { count: number | null; error: any };
+        const { count: propCount, error: propError } = await supabase
+          .from('properties')
+          .select('*', { count: 'exact', head: true })
+          .eq('association_id', association.id);
           
         if (propError) throw propError;
         setPropertyCount(propCount);
         
         // Get owners count
         // First, fetch property IDs for this association
-        const { data: propertyData, error: propIdError } = (await (supabase
-          .from('properties' as any)
-          .select('id' as any)
-          .eq('association_id', association.id))) as { data: Array<{ id: string }> | null; error: any };
+        const { data: propertyData, error: propIdError } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('association_id', association.id);
           
         if (propIdError) throw propIdError;
         
@@ -43,11 +43,11 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
           const propertyIds = propertyData.map(p => p.id);
           
           // Then use those IDs to count owners
-          const { data: residents, error: resError } = (await (supabase
-            .from('residents' as any)
-            .select('property_id' as any)
+          const { data: residents, error: resError } = await supabase
+            .from('residents')
+            .select('property_id')
             .eq('resident_type', 'owner')
-            .in('property_id', propertyIds))) as { data: Array<{ property_id: string }> | null; error: any };
+            .in('property_id', propertyIds);
             
           if (resError) throw resError;
           setOwnersCount(residents?.length || 0);

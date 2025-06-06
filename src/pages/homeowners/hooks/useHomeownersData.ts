@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/hooks/supabase';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { PropertyRecord } from '@/types/property-types';
 
 /**
  * Fetches resident data in batches to avoid "URL too long" errors
@@ -92,7 +93,7 @@ export const useHomeownersData = () => {
       console.log('Fetching properties for associations:', associationIds);
       
       const { data: properties, error: propertiesError } = await supabase
-        .from('properties' as any)
+        .from('properties')
         .select('*')
         .in('association_id', associationIds);
         
@@ -114,8 +115,8 @@ export const useHomeownersData = () => {
       
       // Get all property IDs - defensively cast the response to avoid
       // complex Supabase conditional types interfering with the build
-      const propertyIds = (Array.isArray(properties) ? properties : [])
-        .map((p: any) => (p ? p.id : null))
+      const propertyIds = ((properties as PropertyRecord[]) || [])
+        .map(p => (p ? p.id : null))
         .filter((id): id is string => typeof id === 'string');
       
       // Fetch all residents for these properties - in batches to avoid URL too long errors

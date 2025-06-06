@@ -22,11 +22,10 @@ export const AssociationStats: React.FC<AssociationStatsProps> = ({ association 
     const fetchPropertyCount = async () => {
       try {
         setLoading(true);
-        // Cast query to any to avoid deep type instantiation errors
-        const { count, error } = (await (supabase
-          .from('properties' as any)
-          .select('*', { count: 'exact', head: true } as any)
-          .eq('association_id', association.id))) as { count: number | null; error: any };
+        const { count, error } = await supabase
+          .from('properties')
+          .select('*', { count: 'exact', head: true })
+          .eq('association_id', association.id);
           
         if (error) throw error;
         setPropertyCount(count);
