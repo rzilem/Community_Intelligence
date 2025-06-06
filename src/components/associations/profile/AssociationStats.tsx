@@ -22,7 +22,7 @@ export const AssociationStats: React.FC<AssociationStatsProps> = ({ association 
     const fetchPropertyCount = async () => {
       try {
         setLoading(true);
-        const { count, error } = await supabase
+        const { count, error } = await (supabase as any)
           .from('properties')
           .select('*', { count: 'exact', head: true })
           .eq('association_id', association.id);

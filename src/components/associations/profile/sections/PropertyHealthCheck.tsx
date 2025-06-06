@@ -22,7 +22,7 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
         setLoading(true);
         
         // Get property count
-        const { count: propCount, error: propError } = await supabase
+        const { count: propCount, error: propError } = await (supabase as any)
           .from('properties')
           .select('*', { count: 'exact', head: true })
           .eq('association_id', association.id);
@@ -32,7 +32,7 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
         
         // Get owners count
         // First, fetch property IDs for this association
-        const { data: propertyData, error: propIdError } = await supabase
+        const { data: propertyData, error: propIdError } = await (supabase as any)
           .from('properties')
           .select('id')
           .eq('association_id', association.id);
@@ -43,11 +43,11 @@ export const PropertyHealthCheck: React.FC<PropertyHealthCheckProps> = ({ associ
           const propertyIds = propertyData.map(p => p.id);
           
           // Then use those IDs to count owners
-          const { data: residents, error: resError } = await supabase
-            .from('residents')
-            .select('property_id')
-            .eq('resident_type', 'owner')
-            .in('property_id', propertyIds);
+            const { data: residents, error: resError } = await (supabase as any)
+              .from('residents')
+              .select('property_id')
+              .eq('resident_type', 'owner')
+              .in('property_id', propertyIds);
             
           if (resError) throw resError;
           setOwnersCount(residents?.length || 0);
