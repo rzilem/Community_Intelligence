@@ -39,7 +39,6 @@ export interface SystemPreferences {
   defaultCurrency: string;
   defaultLanguage: string;
   autoSave: boolean;
-  sessionTimeout: number;
 }
 
 export interface IntegrationSettings {
