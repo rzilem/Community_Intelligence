@@ -30,11 +30,6 @@ Welcome to your Lovable project. This repository contains a Vite + React + TypeS
     - `VITE_OPENAI_API_KEY` *(optional)*
     - `OPENAI_WHISPER_API_KEY` *(for audio transcription)*
      - `VITE_STRIPE_PUBLISHABLE_KEY` *(optional)*
-   - For API routes you also need:
-     - `NEXT_PUBLIC_SUPABASE_URL`
-     - `SUPABASE_SERVICE_ROLE_KEY`
-     - `MAX_FILE_SIZE` *(optional, defaults to 10MB)*
-     - `ALLOWED_FILE_TYPES` *(optional)*
 4. **Start the development server**
    ```bash
    npm run dev
@@ -53,6 +48,10 @@ supabase start
 ```
 
 This will launch a local Supabase instance using the settings defined in `supabase/config.toml`.
+
+### API Endpoints
+
+Backend logic is implemented with **Supabase Edge Functions** located in the `supabase/functions` directory. These functions replace traditional API routes used in some Vite projects. For example, the voice assistant feature calls the `transcribe-audio` function. From the frontend you can invoke them using `supabase.functions.invoke('function-name')`.
 
 ## How can I edit this code?
 
