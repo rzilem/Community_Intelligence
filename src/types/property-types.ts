@@ -47,4 +47,5 @@ export type PropertyRecord =
     association_id?: string | null;
     zip?: string | null;
     square_feet?: number | null;
+    image_url?: string | null;
   };

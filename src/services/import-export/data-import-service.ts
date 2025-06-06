@@ -239,7 +239,7 @@ async function processOwnersWithProperties(
 ): Promise<{ successfulImports: number; failedImports: number; details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> }> {
   const { supabase } = await import('@/integrations/supabase/client');
 
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from('properties')
     .select('id, address, unit_number')
     .eq('association_id', associationId);

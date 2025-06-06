@@ -4,7 +4,7 @@ import { Property, PropertyRecord } from '@/types/app-types';
 import { mapPropertyRecord } from '@/utils/property-utils';
 
 export const fetchPropertiesByHOA = async (hoaId: string): Promise<Property[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from('properties')
     .select('*')
     .eq('association_id', hoaId)

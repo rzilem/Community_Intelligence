@@ -92,10 +92,12 @@ export const useHomeownersData = () => {
       // First, get all properties for these associations
       console.log('Fetching properties for associations:', associationIds);
       
-      const { data: properties, error: propertiesError } = await supabase
-        .from('properties')
+      const { data: propertiesData, error: propertiesError } = await (supabase
+        .from('properties') as any)
         .select('*')
         .in('association_id', associationIds);
+
+      const properties = propertiesData as PropertyRecord[] | null;
         
       if (propertiesError) {
         console.error('Error fetching properties:', propertiesError);

@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { PropertyRecord } from '@/types/property-types';
 
 export interface PropertyImageData {
   id: string;
@@ -21,7 +20,7 @@ export async function getPropertyImage(propertyId: string): Promise<string | nul
       return null;
     }
 
-    return (data as PropertyRecord | null)?.image_url || null;
+    return (data as { image_url: string | null } | null)?.image_url || null;
   } catch (err) {
     console.error('Property image service error:', err);
     return null;
