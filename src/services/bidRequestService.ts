@@ -1,3 +1,4 @@
+
 // Community Intelligence Bid Request Service
 // File: src/services/bidRequestService.ts
 
@@ -61,7 +62,7 @@ export class BidRequestService {
       if (error) throw error;
 
       // Add selected vendors if any
-      if (data.selected_vendor_ids.length > 0) {
+      if (data.selected_vendor_ids?.length > 0) {
         await this.addVendorsToBidRequest(bidRequest.id, data.selected_vendor_ids);
       }
 

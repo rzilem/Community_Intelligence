@@ -1,668 +1,318 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Upload, X, AlertCircle, CheckCircle, Calendar, DollarSign, Users, FileText, Settings, Eye } from 'lucide-react';
 
-// Types defined inline
-interface BidRequestFormData {
-  hoa_id: string;
-  title: string;
-  description: string;
-  location: string;
-  number_of_bids_wanted: number;
-  project_type_id: string;
-  category: string;
-  project_details: Record<string, any>;
-  special_requirements?: string;
-  selected_vendor_ids: string[];
-  allow_public_bidding: boolean;
-  budget_range_min?: number;
-  budget_range_max?: number;
-  preferred_start_date?: string;
-  required_completion_date?: string;
-  bid_deadline: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  attachments: File[];
-  created_by: string;
-  status: 'draft' | 'published';
-}
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon, Save, Send, Upload } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { BidRequestFormData } from '@/types/bid-request-types';
+import { createBidRequest } from '@/services/bid-requests/bid-request-api';
+import { useAuth } from '@/contexts/auth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-interface ProjectType {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image_url?: string;
-  conditional_fields: Record<string, any>;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface Vendor {
-  id: string;
-  hoa_id: string;
-  name: string;
-  contact_person?: string;
-  email?: string;
-  phone?: string;
-  specialties: string[];
-  rating?: number;
-  total_jobs: number;
-  completed_jobs: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-interface BidRequestFormProps {
-  onSubmit: (data: BidRequestFormData) => Promise<void>;
-  onSaveDraft: (data: BidRequestFormData) => Promise<void>;
-  initialData?: Partial<BidRequestFormData>;
-  hoaId: string;
-  currentUserId: string;
-}
-
-const BidRequestForm: React.FC<BidRequestFormProps> = ({
-  onSubmit,
-  onSaveDraft,
-  initialData,
-  hoaId,
-  currentUserId
-}) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<BidRequestFormData>({
-    hoa_id: hoaId,
+const BidRequestForm = () => {
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<Partial<BidRequestFormData>>({
     title: '',
     description: '',
-    location: '',
-    number_of_bids_wanted: 3,
-    project_type_id: '',
     category: '',
-    project_details: {},
-    selected_vendor_ids: [],
-    allow_public_bidding: true,
-    bid_deadline: '',
     priority: 'medium',
-    attachments: [],
-    created_by: currentUserId,
-    status: 'draft',
-    ...initialData
+    location: '',
+    special_requirements: '',
+    budget_range_min: undefined,
+    budget_range_max: undefined,
+    preferred_start_date: '',
+    required_completion_date: '',
+    bid_deadline: '',
+    status: 'draft'
   });
 
-  const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [bidDeadline, setBidDeadline] = useState<Date>();
+  const [startDate, setStartDate] = useState<Date>();
+  const [completionDate, setCompletionDate] = useState<Date>();
 
-  const steps = [
-    { id: 1, name: 'Basic Info', icon: FileText, description: 'Community, address, and overview' },
-    { id: 2, name: 'Project Type', icon: Settings, description: 'Select your project category' },
-    { id: 3, name: 'Details', icon: AlertCircle, description: 'Project specifications' },
-    { id: 4, name: 'Vendors', icon: Users, description: 'Choose who can bid' },
-    { id: 5, name: 'Budget & Timeline', icon: Calendar, description: 'Set budget and deadlines' },
-    { id: 6, name: 'Review', icon: Eye, description: 'Files and final review' }
-  ];
-
-  useEffect(() => {
-    loadProjectTypes();
-    loadVendors();
-  }, []);
-
-  const loadProjectTypes = async () => {
-    setProjectTypes([
-      {
-        id: '1',
-        name: 'Landscaping & Grounds',
-        slug: 'landscaping',
-        description: 'Lawn care, tree service, irrigation',
-        image_url: '/images/landscaping.jpg',
-        conditional_fields: {
-          area_size: { type: 'number', label: 'Area Size (sq ft)', required: true },
-          service_frequency: { type: 'select', label: 'Service Frequency', options: ['One-time', 'Weekly', 'Bi-weekly', 'Monthly'] }
-        },
-        is_active: true,
-        created_at: '',
-        updated_at: ''
-      },
-      {
-        id: '2',
-        name: 'Building Maintenance',
-        slug: 'building-maintenance',
-        description: 'Repairs, painting, HVAC, plumbing',
-        image_url: '/images/maintenance.jpg',
-        conditional_fields: {
-          building_type: { type: 'select', label: 'Building Type', options: ['Residential', 'Commercial', 'Mixed'] },
-          urgency_level: { type: 'select', label: 'Urgency', options: ['Routine', 'Priority', 'Emergency'] }
-        },
-        is_active: true,
-        created_at: '',
-        updated_at: ''
-      }
-    ]);
-  };
-
-  const loadVendors = async () => {
-    setVendors([
-      {
-        id: '1',
-        hoa_id: hoaId,
-        name: 'ABC Landscaping',
-        contact_person: 'John Smith',
-        email: 'john@abclandscaping.com',
-        phone: '555-0101',
-        specialties: ['landscaping', 'irrigation'],
-        rating: 4.5,
-        total_jobs: 45,
-        completed_jobs: 42,
-        is_active: true,
-        created_at: '',
-        updated_at: ''
-      }
-    ]);
-  };
-
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    switch (step) {
-      case 1:
-        if (!formData.title.trim()) newErrors.title = 'Title is required';
-        if (!formData.description.trim()) newErrors.description = 'Description is required';
-        if (!formData.location.trim()) newErrors.location = 'Location is required';
-        break;
-      case 2:
-        if (!formData.project_type_id) newErrors.project_type = 'Please select a project type';
-        break;
-      case 5:
-        if (!formData.bid_deadline) newErrors.bid_deadline = 'Bid deadline is required';
-        break;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, steps.length));
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
-
-  const updateFormData = (updates: Partial<BidRequestFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const handleSubmit = async (isDraft: boolean = false) => {
+    if (!profile?.association_id || !user?.id) {
+      toast.error('Missing association or user information');
+      return;
+    }
+
+    if (!formData.title?.trim()) {
+      toast.error('Please enter a title for your bid request');
+      return;
+    }
+
     setLoading(true);
     try {
-      const dataToSubmit = { 
-        ...formData, 
-        status: (isDraft ? 'draft' : 'published') as 'draft' | 'published'
+      const bidRequestData: Partial<any> = {
+        title: formData.title,
+        description: formData.description || '',
+        category: formData.category || '',
+        priority: formData.priority || 'medium',
+        location: formData.location || '',
+        special_requirements: formData.special_requirements || '',
+        budget_range_min: formData.budget_range_min,
+        budget_range_max: formData.budget_range_max,
+        preferred_start_date: startDate?.toISOString().split('T')[0],
+        required_completion_date: completionDate?.toISOString().split('T')[0],
+        bid_deadline: bidDeadline?.toISOString(),
+        status: isDraft ? 'draft' : 'published',
+        association_id: profile.association_id,
+        hoa_id: profile.association_id,
+        created_by: user.id,
+        visibility: 'private',
+        attachments: []
       };
-      if (isDraft) {
-        await onSaveDraft(dataToSubmit);
-      } else {
-        await onSubmit(dataToSubmit);
-      }
+
+      await createBidRequest(bidRequestData);
+      
+      toast.success(isDraft ? 'Draft saved successfully' : 'Bid request created successfully');
+      navigate('/community-management/bid-requests');
+    } catch (error) {
+      console.error('Error creating bid request:', error);
+      toast.error('Failed to create bid request');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Project Title *</label>
-              <input
-                type="text"
-                value={formData.title}
-                onChange={(e) => updateFormData({ title: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-md ${errors.title ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="e.g., Pool Area Renovation"
-              />
-              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Project Description *</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => updateFormData({ description: e.target.value })}
-                rows={4}
-                className={`w-full px-3 py-2 border rounded-md ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="Provide detailed description of the work needed..."
-              />
-              {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Location/Address *</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => updateFormData({ location: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-md ${errors.location ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="Specific location within the community"
-              />
-              {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Number of Bids Wanted</label>
-              <select
-                value={formData.number_of_bids_wanted}
-                onChange={(e) => updateFormData({ number_of_bids_wanted: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-              >
-                <option value={1}>1 Bid</option>
-                <option value={2}>2 Bids</option>
-                <option value={3}>3 Bids</option>
-                <option value={4}>4 Bids</option>
-                <option value={5}>5+ Bids</option>
-              </select>
-            </div>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Select Project Type</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {projectTypes.map((type) => (
-                <div
-                  key={type.id}
-                  onClick={() => updateFormData({ project_type_id: type.id, category: type.slug })}
-                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                    formData.project_type_id === type.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {type.image_url && (
-                    <img 
-                      src={type.image_url} 
-                      alt={type.name}
-                      className="w-full h-32 object-cover rounded-md mb-3"
-                    />
-                  )}
-                  <h4 className="font-semibold text-lg">{type.name}</h4>
-                  <p className="text-gray-600 text-sm mt-1">{type.description}</p>
-                </div>
-              ))}
-            </div>
-            
-            {errors.project_type && <p className="text-red-500 text-sm">{errors.project_type}</p>}
-          </div>
-        );
-
-      case 3:
-        const selectedProjectType = projectTypes.find(pt => pt.id === formData.project_type_id);
-        
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Project Details</h3>
-            
-            {selectedProjectType?.conditional_fields && Object.entries(selectedProjectType.conditional_fields).map(([key, field]: [string, any]) => (
-              <div key={key}>
-                <label className="block text-sm font-medium mb-2">
-                  {field.label} {field.required && '*'}
-                </label>
-                
-                {field.type === 'text' && (
-                  <input
-                    type="text"
-                    value={formData.project_details[key] || ''}
-                    onChange={(e) => updateFormData({ 
-                      project_details: { ...formData.project_details, [key]: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                )}
-                
-                {field.type === 'number' && (
-                  <input
-                    type="number"
-                    value={formData.project_details[key] || ''}
-                    onChange={(e) => updateFormData({ 
-                      project_details: { ...formData.project_details, [key]: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                )}
-                
-                {field.type === 'select' && (
-                  <select
-                    value={formData.project_details[key] || ''}
-                    onChange={(e) => updateFormData({ 
-                      project_details: { ...formData.project_details, [key]: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select an option</option>
-                    {field.options?.map((option: string) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            ))}
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Special Requirements</label>
-              <textarea
-                value={formData.special_requirements || ''}
-                onChange={(e) => updateFormData({ special_requirements: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="Any additional requirements or specifications..."
-              />
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Vendor Selection</h3>
-            
-            <div className="mb-4">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={formData.allow_public_bidding}
-                  onChange={(e) => updateFormData({ allow_public_bidding: e.target.checked })}
-                  className="rounded"
-                />
-                <span>Allow public bidding (any qualified vendor can respond)</span>
-              </label>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium">Select Specific Vendors (Optional)</h4>
-              {vendors.map((vendor) => (
-                <label key={vendor.id} className="flex items-center space-x-3 p-3 border rounded-lg">
-                  <input
-                    type="checkbox"
-                    checked={formData.selected_vendor_ids.includes(vendor.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        updateFormData({ 
-                          selected_vendor_ids: [...formData.selected_vendor_ids, vendor.id]
-                        });
-                      } else {
-                        updateFormData({
-                          selected_vendor_ids: formData.selected_vendor_ids.filter(id => id !== vendor.id)
-                        });
-                      }
-                    }}
-                    className="rounded"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{vendor.name}</div>
-                    <div className="text-sm text-gray-600">{vendor.specialties.join(', ')}</div>
-                    {vendor.rating && (
-                      <div className="text-sm text-yellow-600">Rating: {vendor.rating}/5</div>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 5:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Budget & Timeline</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Minimum Budget</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="number"
-                    value={formData.budget_range_min || ''}
-                    onChange={(e) => updateFormData({ budget_range_min: parseFloat(e.target.value) })}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Maximum Budget</label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="number"
-                    value={formData.budget_range_max || ''}
-                    onChange={(e) => updateFormData({ budget_range_max: parseFloat(e.target.value) })}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Preferred Start Date</label>
-                <input
-                  type="date"
-                  value={formData.preferred_start_date || ''}
-                  onChange={(e) => updateFormData({ preferred_start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Required Completion Date</label>
-                <input
-                  type="date"
-                  value={formData.required_completion_date || ''}
-                  onChange={(e) => updateFormData({ required_completion_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Bid Deadline *</label>
-                <input
-                  type="datetime-local"
-                  value={formData.bid_deadline}
-                  onChange={(e) => updateFormData({ bid_deadline: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-md ${errors.bid_deadline ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.bid_deadline && <p className="text-red-500 text-sm mt-1">{errors.bid_deadline}</p>}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Priority Level</label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => updateFormData({ priority: e.target.value as any })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="urgent">Urgent</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold mb-4">Files & Review</h3>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Attachments</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <p className="mt-2 text-sm text-gray-600">
-                  Drag files here or click to upload
-                </p>
-                <input
-                  type="file"
-                  multiple
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      updateFormData({ attachments: Array.from(e.target.files) });
-                    }
-                  }}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label htmlFor="file-upload" className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 mt-2">
-                  Select Files
-                </label>
-              </div>
-            </div>
-
-            {formData.attachments.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Selected Files:</h4>
-                {formData.attachments.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 border rounded">
-                    <span className="text-sm">{file.name}</span>
-                    <button
-                      onClick={() => {
-                        const newFiles = formData.attachments.filter((_, i) => i !== index);
-                        updateFormData({ attachments: newFiles });
-                      }}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Review Your Bid Request</h4>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <dt className="font-medium">Title:</dt>
-                  <dd>{formData.title}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="font-medium">Project Type:</dt>
-                  <dd>{projectTypes.find(pt => pt.id === formData.project_type_id)?.name}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="font-medium">Priority:</dt>
-                  <dd className="capitalize">{formData.priority}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt className="font-medium">Bid Deadline:</dt>
-                  <dd>{new Date(formData.bid_deadline).toLocaleString()}</dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {steps.map((step, index) => {
-            const StepIcon = step.icon;
-            const isActive = currentStep === step.id;
-            const isCompleted = currentStep > step.id;
-            
-            return (
-              <div key={step.id} className="flex flex-col items-center flex-1">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  isCompleted 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : isActive 
-                      ? 'bg-blue-500 border-blue-500 text-white' 
-                      : 'bg-white border-gray-300 text-gray-400'
-                }`}>
-                  {isCompleted ? (
-                    <CheckCircle className="h-5 w-5" />
-                  ) : (
-                    <StepIcon className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="mt-2 text-center">
-                  <div className={`text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>
-                    {step.name}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {step.description}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+          <CardDescription>
+            Provide the essential details for your bid request
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                placeholder="e.g., Parking Lot Resurfacing"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="landscaping">Landscaping</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="roofing">Roofing</SelectItem>
+                  <SelectItem value="plumbing">Plumbing</SelectItem>
+                  <SelectItem value="electrical">Electrical</SelectItem>
+                  <SelectItem value="hvac">HVAC</SelectItem>
+                  <SelectItem value="painting">Painting</SelectItem>
+                  <SelectItem value="cleaning">Cleaning</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
-      <div className="bg-white rounded-lg shadow-sm border p-6 min-h-96">
-        {renderStepContent()}
-      </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="priority">Priority</Label>
+              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                placeholder="e.g., Building A Parking Lot"
+                value={formData.location}
+                onChange={(e) => handleInputChange('location', e.target.value)}
+              />
+            </div>
+          </div>
 
-      <div className="flex justify-between items-center mt-6">
-        <button
-          onClick={prevStep}
-          disabled={currentStep === 1}
-          className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Describe the work that needs to be done..."
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              rows={4}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="special_requirements">Special Requirements</Label>
+            <Textarea
+              id="special_requirements"
+              placeholder="Any special requirements, materials, or considerations..."
+              value={formData.special_requirements}
+              onChange={(e) => handleInputChange('special_requirements', e.target.value)}
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Budget & Timeline</CardTitle>
+          <CardDescription>
+            Set your budget range and project timeline
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="budget_min">Minimum Budget ($)</Label>
+              <Input
+                id="budget_min"
+                type="number"
+                placeholder="0"
+                value={formData.budget_range_min || ''}
+                onChange={(e) => handleInputChange('budget_range_min', e.target.value ? Number(e.target.value) : undefined)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="budget_max">Maximum Budget ($)</Label>
+              <Input
+                id="budget_max"
+                type="number"
+                placeholder="0"
+                value={formData.budget_range_max || ''}
+                onChange={(e) => handleInputChange('budget_range_max', e.target.value ? Number(e.target.value) : undefined)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Bid Deadline</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !bidDeadline && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {bidDeadline ? format(bidDeadline, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={bidDeadline}
+                    onSelect={setBidDeadline}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Preferred Start Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Required Completion</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !completionDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {completionDate ? format(completionDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={completionDate}
+                    onSelect={setCompletionDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-4">
+        <Button
+          variant="outline"
+          onClick={() => handleSubmit(true)}
+          disabled={loading}
         >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Previous
-        </button>
-
-        <div className="flex space-x-3">
-          <button
-            onClick={() => handleSubmit(true)}
-            disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-          >
-            Save Draft
-          </button>
-
-          {currentStep < steps.length ? (
-            <button
-              onClick={nextStep}
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </button>
-          ) : (
-            <button
-              onClick={() => handleSubmit(false)}
-              disabled={loading}
-              className="flex items-center px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:opacity-50"
-            >
-              {loading ? 'Publishing...' : 'Publish Bid Request'}
-            </button>
-          )}
-        </div>
+          <Save className="h-4 w-4 mr-2" />
+          Save Draft
+        </Button>
+        <Button
+          onClick={() => handleSubmit(false)}
+          disabled={loading}
+        >
+          <Send className="h-4 w-4 mr-2" />
+          Publish Request
+        </Button>
       </div>
     </div>
   );
