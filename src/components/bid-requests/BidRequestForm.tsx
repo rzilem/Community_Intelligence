@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth';
 import { createBidRequest } from '@/services/bid-requests/bid-request-api';
+import { BidRequest } from '@/types/bid-request-types';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
@@ -78,11 +79,11 @@ const BidRequestForm = () => {
 
     setIsSubmitting(true);
     try {
-      const bidRequestData = {
+      const bidRequestData: Partial<BidRequest> = {
         ...data,
         association_id: profile.association_id,
         created_by: profile.id,
-        status: isDraft ? 'draft' : 'published',
+        status: (isDraft ? 'draft' : 'published') as BidRequest['status'],
         bid_deadline: data.bid_deadline?.toISOString(),
         preferred_start_date: data.preferred_start_date?.toDateString(),
         required_completion_date: data.required_completion_date?.toDateString(),
