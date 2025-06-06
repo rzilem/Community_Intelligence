@@ -24,6 +24,8 @@ export function useSupabaseUpdate<T = any>(
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<T> }): Promise<T> => {
+      console.log(`Updating ${table} with ${idField} ${id}:`, data);
+
       const { data: result, error } = await supabase
         .from(table as any)
         .update(data as any)
@@ -32,6 +34,7 @@ export function useSupabaseUpdate<T = any>(
         .single();
 
       if (error) {
+        console.error(`Error updating ${table}:`, error);
         if (shouldShowErrorToast) {
           showErrorToast('updating', table, error);
         }
@@ -42,6 +45,7 @@ export function useSupabaseUpdate<T = any>(
         showSuccessToast('updated', table);
       }
 
+      console.log(`Successfully updated ${table}:`, result);
       return result as T;
     },
     onSuccess: (data) => {
