@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "import:demo-data": "node scripts/import-demo-data.ts"
+    "import:demo-data": "node scripts/import-demo-data.ts",
+    "import:vendors": "node scripts/import-vendors-from-csv.ts"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.5.0",
@@ -73,6 +74,7 @@
     "tesseract.js": "^5.0.5",
     "vaul": "^0.9.3",
     "xlsx": "^0.18.5",
+    "csv-parse": "^5.3.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {
