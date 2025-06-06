@@ -1,14 +1,14 @@
 // Main UI component for AI invoice processing
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Upload, 
-  Bot, 
-  Check, 
-  X, 
-  AlertTriangle, 
-  Eye, 
-  Edit3, 
-  Save, 
+import {
+  Upload,
+  Bot,
+  Check,
+  X,
+  AlertTriangle,
+  Eye,
+  Edit3,
+  Save,
   RotateCcw,
   Zap,
   FileText,
@@ -18,6 +18,7 @@ import {
   Loader2,
   ChevronDown
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface InvoiceLineItem {
   id?: string;
@@ -243,8 +244,8 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = ({
       setSelectedFile(null);
       setImagePreviewUrl('');
       setProcessedInvoice(null);
-      
-      alert('Invoice saved successfully!');
+
+      toast.success('Invoice saved successfully!');
     } catch (error) {
       console.error('Error saving invoice:', error);
       setError((error as Error).message);
