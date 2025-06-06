@@ -42,8 +42,7 @@ const defaultSettings: SystemSettings = {
     defaultTimeFormat: '12h',
     defaultCurrency: 'USD',
     defaultLanguage: 'en',
-    autoSave: true,
-    sessionTimeout: 30
+    autoSave: true
   },
   integrations: {
     integrationSettings: {}

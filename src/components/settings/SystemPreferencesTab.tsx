@@ -37,11 +37,9 @@ const SystemPreferencesTab: React.FC<SystemPreferencesTabProps> = ({ settings, o
         onChange={(value) => onChange({ defaultLanguage: value })}
       />
 
-      <OtherPreferencesCard 
+      <OtherPreferencesCard
         autoSave={settings.autoSave}
-        sessionTimeout={settings.sessionTimeout}
         onAutoSaveChange={(checked) => onChange({ autoSave: checked })}
-        onSessionTimeoutChange={(value) => onChange({ sessionTimeout: value })}
       />
     </div>
   );
