@@ -137,3 +137,7 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 Below is a screenshot of the dashboard page.
 
 ![Dashboard screenshot](public/lovable-uploads/a170c61c-25b9-4ed9-b92e-749c91d85cbc.png)
+
+## Changelog
+
+- Removed `bun.lockb` because the project does not currently support the Bun runtime. Use Node.js and npm for dependency management.
