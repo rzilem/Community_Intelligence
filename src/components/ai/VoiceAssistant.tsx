@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Mic, Square, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const VoiceAssistant: React.FC = () => {
   const [recording, setRecording] = useState(false);
@@ -41,17 +42,25 @@ const VoiceAssistant: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
-      const res = await fetch('/api/ai/transcribe', {
+
+      const { data, error } = await supabase.functions.invoke('transcribe-audio', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Transcription failed');
+
+      if (error) {
+        throw new Error(error.message || 'Transcription failed');
       }
-      setTranscript(data.transcript || '');
-      if (data.summary) {
-        setAiResponse(typeof data.summary === 'string' ? data.summary : JSON.stringify(data.summary, null, 2));
+
+      if (data) {
+        setTranscript((data as any).transcript || '');
+        if ((data as any).summary) {
+          setAiResponse(
+            typeof (data as any).summary === 'string'
+              ? (data as any).summary
+              : JSON.stringify((data as any).summary, null, 2)
+          );
+        }
       }
     } catch (err) {
       console.error('Transcription error:', err);
