@@ -31,10 +31,10 @@ export const communityManagementRoutes: RouteObject[] = [
     path: "/compliance",
     element: <RequireAuth><Compliance /></RequireAuth>
   },
-    {
-      path: "/community-management/bid-requests",
-      element: <RequireAuth><BidRequests /></RequireAuth>
-    },
+  {
+    path: "/community-management/bid-requests",
+    element: <RequireAuth><BidRequests /></RequireAuth>
+  },
   {
     path: "/community-management/create-bid-request",
     element: <RequireAuth><CreateBidRequest /></RequireAuth>

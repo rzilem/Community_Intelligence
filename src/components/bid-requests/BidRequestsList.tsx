@@ -1,16 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Filter, MoreHorizontal, Calendar, DollarSign } from 'lucide-react';
+import { Search, Filter, Calendar, FileText, Plus } from 'lucide-react';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { getBidRequests } from '@/services/bid-requests/bid-request-api';
 import { useAuth } from '@/contexts/auth';
 import BidRequestCard from './BidRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Link } from 'react-router-dom';
 
 const BidRequestsList = () => {
   const [bidRequests, setBidRequests] = useState<BidRequestWithVendors[]>([]);
@@ -78,8 +78,8 @@ const BidRequestsList = () => {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Status</SelectItem>
@@ -93,8 +93,8 @@ const BidRequestsList = () => {
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Priority" />
+          <SelectTrigger className="w-full md:w-40">
+            <SelectValue placeholder="All Priority" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All Priority</SelectItem>
@@ -116,7 +116,7 @@ const BidRequestsList = () => {
       ) : (
         <Card>
           <CardContent className="py-12 text-center">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchTerm || statusFilter || priorityFilter ? 'No matching bid requests' : 'No bid requests yet'}
             </h3>
@@ -126,6 +126,14 @@ const BidRequestsList = () => {
                 : 'Get started by creating your first bid request for a maintenance or improvement project.'
               }
             </p>
+            {!searchTerm && !statusFilter && !priorityFilter && (
+              <Link to="/community-management/create-bid-request">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Bid Request
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}

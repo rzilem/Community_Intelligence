@@ -1,95 +1,116 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Save, Send, Upload } from 'lucide-react';
+import { CalendarIcon, Save, Send, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { BidRequestFormData } from '@/types/bid-request-types';
-import { createBidRequest } from '@/services/bid-requests/bid-request-api';
 import { useAuth } from '@/contexts/auth';
-import { useNavigate } from 'react-router-dom';
+import { createBidRequest } from '@/services/bid-requests/bid-request-api';
 import { toast } from 'sonner';
+
+const formSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().min(1, 'Description is required'),
+  category: z.string().min(1, 'Category is required'),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']),
+  location: z.string().optional(),
+  budget_range_min: z.number().min(0).optional(),
+  budget_range_max: z.number().min(0).optional(),
+  preferred_start_date: z.date().optional(),
+  required_completion_date: z.date().optional(),
+  bid_deadline: z.date().optional(),
+  special_requirements: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+const categories = [
+  'Landscaping',
+  'Maintenance',
+  'Repairs',
+  'Construction',
+  'Cleaning',
+  'Security',
+  'Pool & Spa',
+  'HVAC',
+  'Electrical',
+  'Plumbing',
+  'Roofing',
+  'Painting',
+  'Other'
+];
 
 const BidRequestForm = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<BidRequestFormData>>({
-    title: '',
-    description: '',
-    category: '',
-    priority: 'medium',
-    location: '',
-    special_requirements: '',
-    budget_range_min: undefined,
-    budget_range_max: undefined,
-    preferred_start_date: '',
-    required_completion_date: '',
-    bid_deadline: '',
-    status: 'draft'
+  const { profile } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      category: '',
+      priority: 'medium',
+      location: '',
+      special_requirements: '',
+    },
   });
 
-  const [bidDeadline, setBidDeadline] = useState<Date>();
-  const [startDate, setStartDate] = useState<Date>();
-  const [completionDate, setCompletionDate] = useState<Date>();
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSubmit = async (isDraft: boolean = false) => {
-    if (!profile?.association_id || !user?.id) {
-      toast.error('Missing association or user information');
+  const onSubmit = async (data: FormData, isDraft = false) => {
+    if (!profile?.association_id) {
+      toast.error('No association selected');
       return;
     }
 
-    if (!formData.title?.trim()) {
-      toast.error('Please enter a title for your bid request');
-      return;
-    }
-
-    setLoading(true);
+    setIsSubmitting(true);
     try {
-      const bidRequestData: Partial<any> = {
-        title: formData.title,
-        description: formData.description || '',
-        category: formData.category || '',
-        priority: formData.priority || 'medium',
-        location: formData.location || '',
-        special_requirements: formData.special_requirements || '',
-        budget_range_min: formData.budget_range_min,
-        budget_range_max: formData.budget_range_max,
-        preferred_start_date: startDate?.toISOString().split('T')[0],
-        required_completion_date: completionDate?.toISOString().split('T')[0],
-        bid_deadline: bidDeadline?.toISOString(),
-        status: isDraft ? 'draft' : 'published',
+      const bidRequestData = {
+        ...data,
         association_id: profile.association_id,
-        hoa_id: profile.association_id,
-        created_by: user.id,
-        visibility: 'private',
-        attachments: []
+        created_by: profile.id,
+        status: isDraft ? 'draft' : 'published',
+        bid_deadline: data.bid_deadline?.toISOString(),
+        preferred_start_date: data.preferred_start_date?.toDateString(),
+        required_completion_date: data.required_completion_date?.toDateString(),
       };
 
-      await createBidRequest(bidRequestData);
+      const newBidRequest = await createBidRequest(bidRequestData);
       
-      toast.success(isDraft ? 'Draft saved successfully' : 'Bid request created successfully');
+      toast.success(
+        isDraft 
+          ? 'Bid request saved as draft successfully' 
+          : 'Bid request published successfully'
+      );
+      
       navigate('/community-management/bid-requests');
     } catch (error) {
       console.error('Error creating bid request:', error);
       toast.error('Failed to create bid request');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleSaveDraft = () => {
+    form.handleSubmit((data) => onSubmit(data, true))();
+  };
+
+  const handlePublish = () => {
+    form.handleSubmit((data) => onSubmit(data, false))();
   };
 
   return (
@@ -101,86 +122,109 @@ const BidRequestForm = () => {
             Provide the essential details for your bid request
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Parking Lot Resurfacing"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
+        <CardContent>
+          <Form {...form}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Title *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter project title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category} value={category.toLowerCase()}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="md:col-span-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Description *</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe the project requirements, scope, and any specific details..."
+                          className="min-h-[120px]"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Specific location within property" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="landscaping">Landscaping</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="roofing">Roofing</SelectItem>
-                  <SelectItem value="plumbing">Plumbing</SelectItem>
-                  <SelectItem value="electrical">Electrical</SelectItem>
-                  <SelectItem value="hvac">HVAC</SelectItem>
-                  <SelectItem value="painting">Painting</SelectItem>
-                  <SelectItem value="cleaning">Cleaning</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                placeholder="e.g., Building A Parking Lot"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe the work that needs to be done..."
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="special_requirements">Special Requirements</Label>
-            <Textarea
-              id="special_requirements"
-              placeholder="Any special requirements, materials, or considerations..."
-              value={formData.special_requirements}
-              onChange={(e) => handleInputChange('special_requirements', e.target.value)}
-              rows={3}
-            />
-          </div>
+          </Form>
         </CardContent>
       </Card>
 
@@ -188,131 +232,237 @@ const BidRequestForm = () => {
         <CardHeader>
           <CardTitle>Budget & Timeline</CardTitle>
           <CardDescription>
-            Set your budget range and project timeline
+            Set your budget expectations and project timeline
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="budget_min">Minimum Budget ($)</Label>
-              <Input
-                id="budget_min"
-                type="number"
-                placeholder="0"
-                value={formData.budget_range_min || ''}
-                onChange={(e) => handleInputChange('budget_range_min', e.target.value ? Number(e.target.value) : undefined)}
+        <CardContent>
+          <Form {...form}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="budget_range_min"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Minimum Budget ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budget_range_max"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Maximum Budget ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0"
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="preferred_start_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Preferred Start Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="required_completion_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Required Completion Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bid_deadline"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Bid Deadline</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="budget_max">Maximum Budget ($)</Label>
-              <Input
-                id="budget_max"
-                type="number"
-                placeholder="0"
-                value={formData.budget_range_max || ''}
-                onChange={(e) => handleInputChange('budget_range_max', e.target.value ? Number(e.target.value) : undefined)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Bid Deadline</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !bidDeadline && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {bidDeadline ? format(bidDeadline, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={bidDeadline}
-                    onSelect={setBidDeadline}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Preferred Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Required Completion</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !completionDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {completionDate ? format(completionDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={completionDate}
-                    onSelect={setCompletionDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+          </Form>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Additional Requirements</CardTitle>
+          <CardDescription>
+            Any special requirements or specifications for the project
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <FormField
+              control={form.control}
+              name="special_requirements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Special Requirements</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Any special requirements, materials, certifications, or other specifications..."
+                      className="min-h-[100px]"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Form>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-between">
         <Button
           variant="outline"
-          onClick={() => handleSubmit(true)}
-          disabled={loading}
+          onClick={() => navigate('/community-management/bid-requests')}
+          disabled={isSubmitting}
         >
-          <Save className="h-4 w-4 mr-2" />
-          Save Draft
+          Cancel
         </Button>
-        <Button
-          onClick={() => handleSubmit(false)}
-          disabled={loading}
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Publish Request
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            Save Draft
+          </Button>
+          <Button
+            onClick={handlePublish}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Send className="h-4 w-4 mr-2" />
+            )}
+            Publish
+          </Button>
+        </div>
       </div>
     </div>
   );

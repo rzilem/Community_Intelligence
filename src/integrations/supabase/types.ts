@@ -4975,7 +4975,6 @@ export type Database = {
           updated_at: string | null
           village: string | null
           year_built: number | null
-          image_url: string | null
           zip_code: string | null
         }
         Insert: {
@@ -5016,7 +5015,6 @@ export type Database = {
           updated_at?: string | null
           village?: string | null
           year_built?: number | null
-          image_url?: string | null
           zip_code?: string | null
         }
         Update: {
@@ -5057,7 +5055,6 @@ export type Database = {
           updated_at?: string | null
           village?: string | null
           year_built?: number | null
-          image_url?: string | null
           zip_code?: string | null
         }
         Relationships: [
