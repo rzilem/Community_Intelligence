@@ -20,7 +20,7 @@ export async function getPropertyImage(propertyId: string): Promise<string | nul
       return null;
     }
 
-    return (data as { image_url: string | null } | null)?.image_url || null;
+    return (data as unknown as { image_url: string | null } | null)?.image_url || null;
   } catch (err) {
     console.error('Property image service error:', err);
     return null;
@@ -50,7 +50,7 @@ export async function updatePropertyImage(
 
     const { error: updateError } = await supabase
       .from('properties')
-      .update({ image_url: imageUrl })
+      .update({ image_url: imageUrl } as any)
       .eq('id', propertyId);
 
     if (updateError) {
