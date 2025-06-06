@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Settings, User, Bell, Shield, Palette, Smartphone, Globe, Mail } from 'lucide-react';
+import AppearanceTab from '@/components/settings/AppearanceTab';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -287,76 +288,7 @@ const SettingsPage = () => {
         </TabsContent>
         
         <TabsContent value="appearance">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <Palette className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Appearance Settings</h2>
-                  <p className="text-muted-foreground">Customize your view</p>
-                </div>
-              </div>
-              
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Theme</h3>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="border p-4 rounded-md flex flex-col items-center cursor-pointer bg-white">
-                      <div className="bg-white border h-20 w-20 mb-2 rounded overflow-hidden">
-                        <div className="bg-blue-500 h-4 w-full"></div>
-                        <div className="p-2 text-center text-xs">Light</div>
-                      </div>
-                      <p className="text-sm font-medium">Light Mode</p>
-                    </div>
-                    
-                    <div className="border p-4 rounded-md flex flex-col items-center cursor-pointer">
-                      <div className="bg-gray-900 h-20 w-20 mb-2 rounded overflow-hidden">
-                        <div className="bg-blue-600 h-4 w-full"></div>
-                        <div className="p-2 text-center text-xs text-white">Dark</div>
-                      </div>
-                      <p className="text-sm font-medium">Dark Mode</p>
-                    </div>
-                    
-                    <div className="border p-4 rounded-md flex flex-col items-center cursor-pointer">
-                      <div className="bg-white dark:bg-gray-900 h-20 w-20 mb-2 rounded overflow-hidden">
-                        <div className="bg-blue-500 dark:bg-blue-600 h-4 w-full"></div>
-                        <div className="p-2 text-center text-xs">System</div>
-                      </div>
-                      <p className="text-sm font-medium">System Default</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="pt-6 border-t">
-                  <h3 className="text-lg font-medium mb-4">Density</h3>
-                  
-                  <div className="flex space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <input type="radio" id="compact" name="density" className="form-radio" />
-                      <Label htmlFor="compact">Compact</Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input type="radio" id="default" name="density" className="form-radio" defaultChecked />
-                      <Label htmlFor="default">Default</Label>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <input type="radio" id="comfortable" name="density" className="form-radio" />
-                      <Label htmlFor="comfortable">Comfortable</Label>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button>Save Changes</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AppearanceTab />
         </TabsContent>
       </Tabs>
     </PageTemplate>
