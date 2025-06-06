@@ -17,13 +17,10 @@ export const dataExportService = {
           break;
         case 'properties_owners':
           // This will need a more complex query to join properties and residents
-          const { data: properties, error: propertiesError } = (await (supabase
-            .from('properties' as any)
-            .select('*, residents(*)' as any)
-            .eq('association_id', associationId))) as {
-            data: any;
-            error: any;
-          };
+          const { data: properties, error: propertiesError } = await supabase
+            .from('properties')
+            .select('*, residents(*)')
+            .eq('association_id', associationId);
           
           if (propertiesError) throw propertiesError;
           return {

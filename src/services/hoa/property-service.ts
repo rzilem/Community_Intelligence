@@ -1,10 +1,11 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Property } from '@/types/app-types';
+import { Property, PropertyRecord } from '@/types/app-types';
+import { mapPropertyRecord } from '@/utils/property-utils';
 
 export const fetchPropertiesByHOA = async (hoaId: string): Promise<Property[]> => {
   const { data, error } = await supabase
-    .from('properties' as any)
+    .from('properties')
     .select('*')
     .eq('association_id', hoaId)
     .order('address');
@@ -13,20 +14,5 @@ export const fetchPropertiesByHOA = async (hoaId: string): Promise<Property[]> =
     throw new Error(`Error fetching properties: ${error.message}`);
   }
 
-  // Cast data to any to avoid type errors
-  return (data as any[]).map(property => ({
-    id: property.id,
-    association_id: property.association_id,
-    property_type: property.property_type || '',
-    address: property.address,
-    unit_number: property.unit_number,
-    square_feet: property.square_feet,
-    city: property.city,
-    state: property.state,
-    zip: property.zip,
-    bedrooms: property.bedrooms,
-    bathrooms: property.bathrooms,
-    created_at: property.created_at,
-    updated_at: property.updated_at
-  }));
+  return (data as PropertyRecord[]).map(mapPropertyRecord);
 };
