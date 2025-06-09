@@ -69,3 +69,81 @@ export interface Vendor {
   created_at: string;
   updated_at: string;
 }
+
+export interface BidRequestFormData {
+  hoa_id?: string;
+  association_id?: string;
+  title: string;
+  description?: string;
+  category?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  budget_range_min?: number;
+  budget_range_max?: number;
+  preferred_start_date?: string;
+  required_completion_date?: string;
+  location?: string;
+  special_requirements?: string;
+  attachments?: any[];
+  status: 'draft' | 'published';
+  bid_deadline?: string;
+  created_by?: string;
+  createdBy?: string;
+  selected_vendor_ids?: string[];
+  allow_public_bidding?: boolean;
+}
+
+export interface VendorResponseData {
+  vendor_id: string;
+  quote_amount?: number;
+  quote_details?: any;
+}
+
+export interface BidEvaluation {
+  id: string;
+  bid_request_id: string;
+  evaluator_id: string;
+  criteria: any;
+  score: number;
+  notes?: string;
+}
+
+export interface ProjectType {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface VendorPerformance {
+  vendor_id: string;
+  rating: number;
+  completed_jobs: number;
+  total_jobs: number;
+}
+
+export interface BidRequestSummary {
+  id: string;
+  title: string;
+  hoa_id?: string;
+  status: string;
+  priority: string;
+  budget_range_min?: number;
+  budget_range_max?: number;
+  bid_deadline?: string;
+  total_bids: number;
+  selected_vendor_id?: string;
+  awarded_amount?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIConfig {
+  model: string;
+  temperature: number;
+  max_tokens: number;
+}
+
+export interface IntegrationConfig {
+  ai: AIConfig;
+  notifications: boolean;
+  auto_processing: boolean;
+}

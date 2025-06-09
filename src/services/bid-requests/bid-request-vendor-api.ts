@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { BidRequestVendor } from '@/types/bid-request-types';
 
 /**
@@ -16,35 +16,20 @@ export async function getBidRequestVendors(bidRequestId: string): Promise<BidReq
     throw vendorError;
   }
   
-  // Convert snake_case to camelCase and ensure correct types
-  return (vendorData || []).map(item => ({
-    id: item.id,
-    bidRequestId: item.bid_request_id,
-    bid_request_id: item.bid_request_id,
-    vendorId: item.vendor_id,
-    vendor_id: item.vendor_id,
-    status: item.status as "invited" | "accepted" | "declined" | "submitted",
-    quoteAmount: item.quote_amount,
-    quote_amount: item.quote_amount,
-    quoteDetails: item.quote_details as Record<string, any>,
-    quote_details: item.quote_details as Record<string, any>,
-    submittedAt: item.submitted_at,
-    submitted_at: item.submitted_at
-  }));
+  return (vendorData || []) as BidRequestVendor[];
 }
 
 /**
  * Add a vendor to a bid request
  */
 export async function addVendorToBidRequest(bidRequestVendor: Partial<BidRequestVendor>): Promise<BidRequestVendor> {
-  // Convert camelCase to snake_case
   const dbVendor = {
-    bid_request_id: bidRequestVendor.bidRequestId || bidRequestVendor.bid_request_id,
-    vendor_id: bidRequestVendor.vendorId || bidRequestVendor.vendor_id,
+    bid_request_id: bidRequestVendor.bid_request_id,
+    vendor_id: bidRequestVendor.vendor_id,
     status: bidRequestVendor.status || 'invited',
-    quote_amount: bidRequestVendor.quoteAmount || bidRequestVendor.quote_amount,
-    quote_details: bidRequestVendor.quoteDetails || bidRequestVendor.quote_details || {},
-    submitted_at: bidRequestVendor.submittedAt || bidRequestVendor.submitted_at
+    quote_amount: bidRequestVendor.quote_amount,
+    quote_details: bidRequestVendor.quote_details || {},
+    submitted_at: bidRequestVendor.submitted_at
   };
 
   const { data, error } = await supabase
@@ -58,21 +43,7 @@ export async function addVendorToBidRequest(bidRequestVendor: Partial<BidRequest
     throw error;
   }
   
-  // Convert snake_case back to camelCase
-  return {
-    id: data.id,
-    bidRequestId: data.bid_request_id,
-    bid_request_id: data.bid_request_id,
-    vendorId: data.vendor_id,
-    vendor_id: data.vendor_id,
-    status: data.status as "invited" | "accepted" | "declined" | "submitted",
-    quoteAmount: data.quote_amount,
-    quote_amount: data.quote_amount,
-    quoteDetails: data.quote_details as Record<string, any>,
-    quote_details: data.quote_details as Record<string, any>,
-    submittedAt: data.submitted_at,
-    submitted_at: data.submitted_at
-  };
+  return data as BidRequestVendor;
 }
 
 /**

@@ -5,7 +5,7 @@ import { BidRequest, BidRequestWithVendors } from '@/types/bid-request-types';
 export async function createBidRequest(bidRequestData: Partial<BidRequest>): Promise<BidRequest> {
   const { data, error } = await supabase
     .from('bid_requests')
-    .insert([bidRequestData])
+    .insert(bidRequestData as any)
     .select()
     .single();
 
@@ -14,7 +14,7 @@ export async function createBidRequest(bidRequestData: Partial<BidRequest>): Pro
     throw new Error(error.message);
   }
 
-  return data;
+  return data as BidRequest;
 }
 
 export async function getBidRequests(associationId: string): Promise<BidRequestWithVendors[]> {
@@ -26,7 +26,10 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
         id,
         vendor_id,
         status,
-        quote_amount
+        quote_amount,
+        bid_request_id,
+        created_at,
+        updated_at
       )
     `)
     .eq('association_id', associationId)
@@ -37,13 +40,13 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
     throw new Error(error.message);
   }
 
-  return data || [];
+  return (data || []) as BidRequestWithVendors[];
 }
 
 export async function updateBidRequest(id: string, updates: Partial<BidRequest>): Promise<BidRequest> {
   const { data, error } = await supabase
     .from('bid_requests')
-    .update(updates)
+    .update(updates as any)
     .eq('id', id)
     .select()
     .single();
@@ -53,7 +56,7 @@ export async function updateBidRequest(id: string, updates: Partial<BidRequest>)
     throw new Error(error.message);
   }
 
-  return data;
+  return data as BidRequest;
 }
 
 export async function deleteBidRequest(id: string): Promise<void> {
