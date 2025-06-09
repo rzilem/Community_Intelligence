@@ -43,66 +43,13 @@ const App = () => {
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <ErrorBoundary
-              fallback={
-                <div className="p-8">
-                  <h2 className="text-xl font-bold mb-4">Authentication System Error</h2>
-                  <p className="mb-4">There was a problem with the authentication system. Please refresh the page.</p>
-                  <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                    onClick={() => window.location.reload()}
-                  >
-                    Refresh Application
-                  </button>
-                </div>
-              }
-            >
+            <ErrorBoundary>
               <AuthProvider>
-                <ErrorBoundary
-                  fallback={
-                    <div className="p-8">
-                      <h2 className="text-xl font-bold mb-4">Notification System Error</h2>
-                      <p className="mb-4">There was a problem with the notification system. The app will continue to function without notifications.</p>
-                      <button
-                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                        onClick={() => window.location.reload()}
-                      >
-                        Refresh Application
-                      </button>
-                    </div>
-                  }
-                >
+                <ErrorBoundary>
                   <NotificationProvider>
                     <Toaster />
                     <Sonner />
-                    <ErrorBoundary
-                      fallback={
-                        <div className="p-8 text-center">
-                          <h2 className="text-2xl font-bold text-red-600 mb-4">Route Error</h2>
-                          <p className="mb-4">There was a problem loading this page. Please try navigating to another page.</p>
-                          <div className="space-x-4">
-                            <button
-                              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                              onClick={() => window.location.href = '/'}
-                            >
-                              Go to Home
-                            </button>
-                            <button
-                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-                              onClick={() => window.location.href = '/dashboard'}
-                            >
-                              Go to Dashboard
-                            </button>
-                            <button
-                              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
-                              onClick={() => window.location.reload()}
-                            >
-                              Refresh Page
-                            </button>
-                          </div>
-                        </div>
-                      }
-                    >
+                    <ErrorBoundary>
                       <MemoizedAppRouter />
                     </ErrorBoundary>
                   </NotificationProvider>

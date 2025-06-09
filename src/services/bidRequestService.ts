@@ -2,7 +2,7 @@
 // Community Intelligence Bid Request Service
 // File: src/services/bidRequestService.ts
 
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   BidRequest, 
   BidRequestFormData, 
