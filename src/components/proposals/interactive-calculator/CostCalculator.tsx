@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/components/ui/use-toast';
-import { currencyFormatter } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface CostCalculatorProps {
   calculator: InteractiveCostCalculator;
@@ -97,7 +97,7 @@ const CostCalculator: React.FC<CostCalculatorProps> = ({
   const handleSaveConfig = () => {
     toast({
       title: "Configuration Saved",
-      description: `Your custom package with a total of ${currencyFormatter.format(totalPrice)} has been saved.`
+      description: `Your custom package with a total of ${formatCurrency(totalPrice)} has been saved.`
     });
   };
 
@@ -113,7 +113,7 @@ const CostCalculator: React.FC<CostCalculatorProps> = ({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-medium">Base Services</h3>
-            <p className="text-lg font-semibold">{currencyFormatter.format(basePrice)}</p>
+            <p className="text-lg font-semibold">{formatCurrency(basePrice)}</p>
           </div>
           
           {!readOnly && (
@@ -138,7 +138,7 @@ const CostCalculator: React.FC<CostCalculatorProps> = ({
                           {option.name}
                         </Label>
                         <span className="text-sm font-medium">
-                          {currencyFormatter.format(option.price)}
+                          {formatCurrency(option.price)}
                         </span>
                       </div>
                       {option.description && (
@@ -169,7 +169,7 @@ const CostCalculator: React.FC<CostCalculatorProps> = ({
                                 {subOption.name}
                               </Label>
                               <span className="text-sm font-medium">
-                                {currencyFormatter.format(subOption.price)}
+                                {formatCurrency(subOption.price)}
                               </span>
                             </div>
                             {subOption.description && (
@@ -191,7 +191,7 @@ const CostCalculator: React.FC<CostCalculatorProps> = ({
       <CardFooter className="flex flex-col">
         <div className="w-full flex justify-between items-center py-4 border-t">
           <h3 className="text-lg font-medium">Total Price</h3>
-          <p className="text-xl font-bold">{currencyFormatter.format(totalPrice)}</p>
+          <p className="text-xl font-bold">{formatCurrency(totalPrice)}</p>
         </div>
         
         {!readOnly && (

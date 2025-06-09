@@ -153,14 +153,14 @@ export class BidRequestService {
       };
 
       // Handle dual property support
-      if (updates.associationId) {
-        updateData.association_id = updates.associationId;
+      if (updates.association_id) {
+        updateData.association_id = updates.association_id;
       }
-      if (updates.createdBy) {
-        updateData.created_by = updates.createdBy;
+      if (updates.created_by) {
+        updateData.created_by = updates.created_by;
       }
-      if (updates.dueDate) {
-        updateData.due_date = updates.dueDate;
+      if (updates.due_date) {
+        updateData.due_date = updates.due_date;
       }
 
       const { data, error } = await supabase
@@ -206,7 +206,6 @@ export class BidRequestService {
           is_active: true,
           include_in_bids: true,
           category: 'landscaping',
-          hasInsurance: true,
           created_at: '2024-01-01T00:00:00',
           updated_at: '2024-01-15T10:30:00'
         }
@@ -282,7 +281,6 @@ export class BidRequestService {
       id: data.id,
       hoa_id: data.hoa_id || data.association_id,
       association_id: data.association_id || data.hoa_id,
-      associationId: data.association_id || data.hoa_id, // Dual support
       maintenance_request_id: data.maintenance_request_id,
       title: data.title,
       description: data.description,
@@ -301,13 +299,11 @@ export class BidRequestService {
       awarded_amount: data.awarded_amount,
       awarded_at: data.awarded_at,
       created_by: data.created_by,
-      createdBy: data.created_by, // Dual support
       created_at: data.created_at,
       updated_at: data.updated_at,
-      imageUrl: data.image_url,
+      image_url: data.image_url,
       visibility: data.visibility,
       due_date: data.due_date,
-      dueDate: data.due_date, // Dual support
       budget: data.budget
     };
   }

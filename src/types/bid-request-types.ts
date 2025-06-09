@@ -98,6 +98,18 @@ export interface VendorResponseData {
   quote_details?: any;
 }
 
+export interface VendorBid {
+  id: string;
+  bid_request_id: string;
+  vendor_id: string;
+  quote_amount?: number;
+  quote_details?: any;
+  status: 'pending' | 'submitted' | 'accepted' | 'rejected';
+  submitted_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface BidEvaluation {
   id: string;
   bid_request_id: string;
