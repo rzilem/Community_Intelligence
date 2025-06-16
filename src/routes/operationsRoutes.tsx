@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Operations from '@/pages/operations/Operations';
 import Vendors from '@/pages/operations/Vendors';
@@ -10,6 +9,7 @@ import OperationsDashboard from '@/pages/operations/OperationsDashboard';
 import OperationsCalendar from '@/pages/operations/OperationsCalendar';
 import PrintQueue from '@/pages/operations/PrintQueue';
 import OperationsReports from '@/pages/operations/OperationsReports';
+import VendorsAdvanced from '@/pages/operations/VendorsAdvanced';
 
 export const operationsRoutes = [
   {
@@ -27,6 +27,10 @@ export const operationsRoutes = [
   {
     path: '/operations/vendors',
     element: <Vendors />
+  },
+  {
+    path: '/operations/vendors/advanced',
+    element: <VendorsAdvanced />
   },
   {
     path: '/operations/vendors/:id',
