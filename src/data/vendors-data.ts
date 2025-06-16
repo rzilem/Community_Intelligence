@@ -87,9 +87,9 @@ export const mockVendors: Vendor[] = [
 ];
 
 export const vendorStats: VendorStats = {
-  totalVendors: 49,
-  activeVendors: 49,
-  inactiveVendors: 0,
+  totalVendors: mockVendors.length,
+  activeVendors: mockVendors.filter(v => v.is_active).length,
+  inactiveVendors: mockVendors.filter(v => !v.is_active).length,
   topCategory: null,
   serviceCategories: 0,
   withInsurance: 0
