@@ -42,7 +42,7 @@ const VendorQuickFilters: React.FC<VendorQuickFiltersProps> = ({
   ];
 
   return (
-    <div className="bg-white border rounded-lg p-4 mb-6 shadow-sm">
+    <div className="bg-white border rounded-lg p-4 shadow-sm">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">

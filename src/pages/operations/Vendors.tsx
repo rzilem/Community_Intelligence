@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTemplate from '@/components/layout/PageTemplate';
@@ -86,7 +85,7 @@ const Vendors = () => {
       icon={<Building2 className="h-8 w-8" />}
       description="Manage vendor relationships, contracts, and service providers."
     >
-      <div className="space-y-8">
+      <div className="space-y-4">
         {/* Header Section */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
@@ -119,7 +118,7 @@ const Vendors = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3">
             <TabsList className="grid grid-cols-2 w-full max-w-md">
               <TabsTrigger value="list" className="flex items-center gap-2">
                 <Building2 className="h-4 w-4" />

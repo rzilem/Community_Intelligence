@@ -75,7 +75,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header with filters and view toggle */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
@@ -103,7 +103,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
 
       {/* Results count and column selector for table view */}
       {view === 'table' && (
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center py-2">
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters ? `${filteredVendors.length} of ${vendors.length} vendors` : 'All vendors'}
           </div>
