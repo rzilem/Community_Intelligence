@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { PencilIcon } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/useAuth';
+import { useAuth } from '@/contexts/auth';
 
 interface HomeownerHeaderProps {
   id: string;
