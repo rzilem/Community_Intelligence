@@ -1,289 +1,165 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { processMultipartFormData, normalizeEmailData } from "./utils/request-parser.ts";
-import { processEmail } from "./services/email-processor.ts";
-import { createLead } from "./services/lead-service.ts";
-import { corsHeaders } from "./utils/cors-headers.ts";
-import { validateWebhookSecret, getRequestLogInfo } from "../shared/webhook-auth.ts";
-import { createLogger, generateRequestId } from "../shared/logging.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SecurityMiddleware } from "../shared/security-middleware.ts";
+import { sanitizeInput, validateEmail } from "../shared/validation-utils.ts";
 
-// Add a configuration flag to prevent modifications
-const CURRENT_CONFIG_LOCKED = true;
-
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') || '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
-  // Generate a unique request ID
-  const requestId = generateRequestId();
-  const logger = createLogger("email-receiver");
-  
-  // Check if configuration is locked
-  if (CURRENT_CONFIG_LOCKED) {
-    console.log("Configuration is currently locked. No modifications allowed.");
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Handle CORS preflight requests
-    if (req.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders,
-      });
-    }
-    
-    // Log the request information
-    const requestInfo = getRequestLogInfo(req);
-    await logger.info(requestId, "Received email webhook request", requestInfo);
-    
-    // Check webhook authentication
-    const webhookSecret = Deno.env.get("WEBHOOK_SECRET") || Deno.env.get("CLOUDMAILIN_SECRET");
-    const isValidWebhook = validateWebhookSecret(req, webhookSecret);
-    
-    if (!isValidWebhook && !req.headers.has("authorization")) {
-      await logger.error(requestId, "Webhook authentication failed", 
-        new Error("Missing or invalid webhook signature"),
-        { hasWebhookKey: !!req.headers.get('x-webhook-key') || !!req.headers.get('webhook-signature') }
-      );
-      
+    // Security validations
+    const headerValidation = SecurityMiddleware.validateHeaders(req);
+    if (!headerValidation.valid) {
+      SecurityMiddleware.logSecurityEvent('invalid_headers', { error: headerValidation.error });
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Unauthorized webhook request",
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401 
-        }
+        JSON.stringify({ error: 'Invalid request headers' }),
+        { status: 400, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
       );
     }
+
+    // Rate limiting
+    const clientIP = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!SecurityMiddleware.checkRateLimit(clientIP)) {
+      SecurityMiddleware.logSecurityEvent('rate_limit_exceeded', { ip: clientIP });
+      return new Response(
+        JSON.stringify({ error: 'Rate limit exceeded' }),
+        { status: 429, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
+      );
+    }
+
+    // Validate webhook signature
+    const signature = req.headers.get('x-signature') || '';
+    const webhookSecret = Deno.env.get('WEBHOOK_SECRET');
+    const body = await req.text();
     
-    // Get email data from request - handle both JSON and multipart form data
+    if (webhookSecret && !SecurityMiddleware.validateWebhookSignature(body, signature, webhookSecret)) {
+      SecurityMiddleware.logSecurityEvent('invalid_signature', { signature });
+      return new Response(
+        JSON.stringify({ error: 'Invalid signature' }),
+        { status: 401, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
+      );
+    }
+
+    // Parse and sanitize request body
     let emailData;
-    
     try {
-      emailData = await processMultipartFormData(req);
-      await logger.info(requestId, "Successfully processed multipart form data", {
-        dataKeys: Object.keys(emailData)
-      });
-    } catch (parseError) {
-      await logger.error(requestId, "Error parsing request body as multipart form data", parseError);
-      try {
-        // Fallback to regular JSON parsing
-        const clonedRequest = req.clone();
-        emailData = await clonedRequest.json();
-        await logger.info(requestId, "Successfully parsed request as JSON");
-      } catch (jsonError) {
-        await logger.error(requestId, "Error parsing request as JSON", jsonError);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: "Invalid request format",
-            details: "Could not parse request body as multipart form data or JSON",
-            requestId
-          }),
-          { 
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400 
-          }
-        );
-      }
+      emailData = JSON.parse(body);
+      emailData = SecurityMiddleware.sanitizeRequestBody(emailData);
+    } catch (error) {
+      console.error('Invalid JSON in request body:', error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON' }),
+        { status: 400, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
+      );
     }
+
+    // Validate required email fields
+    if (!emailData.from || !validateEmail(emailData.from)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid sender email' }),
+        { status: 400, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
+      );
+    }
+
+    if (!emailData.subject || typeof emailData.subject !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email subject' }),
+        { status: 400, headers: { ...corsHeaders, ...SecurityMiddleware.getSecurityHeaders() } }
+      );
+    }
+
+    // Sanitize email content
+    const sanitizedEmail = {
+      from: sanitizeInput(emailData.from),
+      to: sanitizeInput(emailData.to || ''),
+      subject: sanitizeInput(emailData.subject),
+      body: sanitizeInput(emailData.body || ''),
+      html: emailData.html ? sanitizeInput(emailData.html) : null,
+      attachments: Array.isArray(emailData.attachments) ? emailData.attachments.slice(0, 10) : [] // Limit attachments
+    };
+
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Generate tracking number
+    const { data: trackingData, error: trackingError } = await supabase.rpc('get_next_tracking_number');
     
-    // Validate we have at least some data to work with
-    if (!emailData || (typeof emailData === 'object' && Object.keys(emailData).length === 0)) {
-      await logger.error(requestId, "Empty email data received");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Empty email data", 
-          details: "The email webhook payload was empty or invalid",
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400 
-        }
-      );
-    }
-    
-    // Normalize the email data to handle different formats
-    const normalizedEmailData = normalizeEmailData(emailData);
-    await logger.info(requestId, "Normalized email data", {
-      subject: normalizedEmailData.subject,
-      from: normalizedEmailData.from,
-      hasHtml: !!normalizedEmailData.html,
-      hasAttachments: normalizedEmailData.attachments?.length > 0
-    });
-
-    // Check if we have either HTML content, text content, or subject (minimum required to process)
-    if (!normalizedEmailData.html && !normalizedEmailData.text && !normalizedEmailData.subject) {
-      await logger.error(requestId, "Email missing required content");
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Missing required content", 
-          details: "Email must contain HTML, text content, or at least a subject",
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 422 
-        }
-      );
+    if (trackingError) {
+      console.error('Error generating tracking number:', trackingError);
+      throw trackingError;
     }
 
-    // Process attachments if present
-    let pdfUrl = null;
-    if (normalizedEmailData.attachments && normalizedEmailData.attachments.length > 0) {
-      await logger.info(requestId, "Processing attachments", { 
-        count: normalizedEmailData.attachments.length,
-        types: normalizedEmailData.attachments.map(att => att.contentType)
-      });
-      
-      // Find the first PDF or Word document attachment
-      const attachment = normalizedEmailData.attachments.find(att => 
-        att.contentType.includes('pdf') || 
-        att.contentType.includes('word') || 
-        att.contentType.includes('doc')
-      );
-      
-      if (attachment) {
-        await logger.info(requestId, "Found document attachment", {
-          filename: attachment.filename,
-          contentType: attachment.contentType,
-          size: attachment.size
-        });
-        
-        // Generate a unique filename
-        const fileExt = attachment.filename.substring(attachment.filename.lastIndexOf('.'));
-        const fileName = `invoice_${Date.now()}${fileExt}`;
-        
-        // Upload to storage
-        try {
-          const { error: uploadError } = await supabase.storage
-            .from('invoices')
-            .upload(fileName, Buffer.from(attachment.content, 'base64'), {
-              contentType: attachment.contentType,
-              upsert: true
-            });
-            
-          if (uploadError) {
-            await logger.error(requestId, "Error uploading attachment", null, {
-              error: uploadError
-            });
-          } else {
-            // Get public URL
-            const { data: urlData } = supabase.storage
-              .from('invoices')
-              .getPublicUrl(fileName);
-              
-            pdfUrl = urlData.publicUrl;
-            await logger.info(requestId, "Attachment uploaded successfully", {
-              publicUrl: pdfUrl
-            });
-          }
-        } catch (storageError: any) {
-          await logger.error(requestId, "Storage error", storageError);
-        }
+    const trackingNumber = `EMAIL-${trackingData}`;
+
+    // Store in communications log
+    const { data: logData, error: logError } = await supabase
+      .from('communications_log')
+      .insert({
+        tracking_number: trackingNumber,
+        communication_type: 'email',
+        metadata: {
+          from: sanitizedEmail.from,
+          to: sanitizedEmail.to,
+          subject: sanitizedEmail.subject,
+          body: sanitizedEmail.body,
+          html: sanitizedEmail.html,
+          attachments: sanitizedEmail.attachments,
+          processed_by: 'email-receiver',
+          security_validated: true
+        },
+        status: 'received'
+      })
+      .select()
+      .single();
+
+    if (logError) {
+      console.error('Error storing communication log:', logError);
+      throw logError;
+    }
+
+    console.log('Email processed successfully:', trackingNumber);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        tracking_number: trackingNumber,
+        message: 'Email processed successfully' 
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          ...SecurityMiddleware.getSecurityHeaders(),
+          'Content-Type': 'application/json'
+        } 
       }
-    }
+    );
 
-    // Process the email to extract lead information
-    await logger.info(requestId, "Processing email to extract lead data");
-    const leadData = await processEmail(normalizedEmailData);
-
-    // Validate extracted lead data has required fields
-    if (!leadData || !leadData.email) {
-      await logger.error(requestId, "Failed to extract required lead fields", null, {
-        partial_data: leadData
-      });
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Extraction failed", 
-          details: "Could not extract required lead fields (email)",
-          partial_data: leadData || {},
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 422 
-        }
-      );
-    }
-
-    // Insert lead into the database
-    try {
-      // If we have a PDF URL, add it to the lead data
-      if (pdfUrl) {
-        leadData.pdf_url = pdfUrl;
-      }
-      
-      // If the HTML content is just a placeholder, don't save it
-      if (normalizedEmailData.html && normalizedEmailData.html.includes('See what happens')) {
-        leadData.html_content = null;
-      }
-      
-      await logger.info(requestId, "Creating lead with extracted data", {
-        email: leadData.email,
-        name: leadData.name,
-        hasPdfUrl: !!leadData.pdf_url
-      });
-      
-      const lead = await createLead(leadData);
-      await logger.info(requestId, "Lead created successfully", {
-        leadId: lead.id
-      });
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "Lead created", 
-          lead,
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200 
-        }
-      );
-    } catch (dbError: any) {
-      await logger.error(requestId, "Database error creating lead", dbError, {
-        extracted_data: leadData
-      });
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Database error", 
-          details: dbError.message,
-          extracted_data: leadData || {},
-          requestId
-        }),
-        { 
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 500 
-        }
-      );
-    }
-  } catch (error: any) {
-    await logger.error(requestId, "Error handling email", error);
+  } catch (error) {
+    console.error('Error processing email:', error);
     
     return new Response(
       JSON.stringify({ 
-        success: false, 
-        error: error.message,
-        requestId
+        error: 'Internal server error',
+        message: 'Failed to process email'
       }),
       { 
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500 
+        status: 500, 
+        headers: { 
+          ...corsHeaders, 
+          ...SecurityMiddleware.getSecurityHeaders(),
+          'Content-Type': 'application/json'
+        } 
       }
     );
   }

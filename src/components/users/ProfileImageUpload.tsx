@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Camera, Loader2 } from "lucide-react";
-import { updateProfileImage } from '@/services/user/profile-image-service';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Camera, Upload } from 'lucide-react';
+import { validateFile, sanitizeFilename, ALLOWED_FILE_TYPES } from '@/utils/security-validation';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth';
+import { updateProfileImage } from '@/services/user-service';
 
 interface ProfileImageUploadProps {
   userId: string;
-  imageUrl: string | null;
+  imageUrl?: string | null;
   firstName?: string | null;
   lastName?: string | null;
-  onImageUpdated: (newUrl: string) => void;
+  onImageUpdated: () => void;
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -24,90 +25,86 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
   onImageUpdated,
   size = 'md'
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const { refreshProfile } = useAuth();
-  
-  const avatarSize = {
-    'sm': 'h-10 w-10',
-    'md': 'h-16 w-16',
-    'lg': 'h-24 w-24'
-  }[size];
-  
-  const getUserInitials = (): string => {
-    if (firstName && lastName) {
-      return `${firstName[0]}${lastName[0]}`.toUpperCase();
-    } else if (firstName) {
-      return firstName[0].toUpperCase();
-    } else {
-      return 'U';
+  const [uploading, setUploading] = useState(false);
+
+  const getInitials = () => {
+    const first = firstName?.charAt(0).toUpperCase() || '';
+    const last = lastName?.charAt(0).toUpperCase() || '';
+    return `${first}${last}` || '?';
+  };
+
+  const getSizeClasses = () => {
+    switch (size) {
+      case 'sm':
+        return 'h-8 w-8 text-xs';
+      case 'lg':
+        return 'h-16 w-16 text-lg';
+      default:
+        return 'h-10 w-10 text-sm';
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+
+    // Validate file
+    const validation = validateFile(file, ALLOWED_FILE_TYPES.images);
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
-    
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
-    }
-    
+
+    setUploading(true);
+
     try {
-      setIsUploading(true);
+      // Sanitize filename
+      const sanitizedName = sanitizeFilename(file.name);
       
-      const result = await updateProfileImage(userId, file);
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      
-      if (result.url) {
-        toast.success('Profile image uploaded successfully');
-        onImageUpdated(result.url);
-        
-        await refreshProfile();
-      }
-      
+      // Create a new file with sanitized name
+      const sanitizedFile = new File([file], sanitizedName, { type: file.type });
+
+      await updateProfileImage(userId, sanitizedFile);
+      toast.success('Profile image updated successfully');
+      onImageUpdated();
     } catch (error: any) {
-      toast.error(`Error uploading image: ${error.message}`);
+      console.error('Error uploading profile image:', error);
+      toast.error(error.message || 'Failed to upload image');
     } finally {
-      setIsUploading(false);
+      setUploading(false);
+      // Reset input
+      event.target.value = '';
     }
   };
 
   return (
-    <div className="relative inline-block group">
-      <Avatar className={`${avatarSize} relative ${isUploading ? 'opacity-50' : ''}`}>
-        <AvatarImage src={imageUrl || undefined} alt="Profile" key={imageUrl || 'profile'} />
-        <AvatarFallback>{getUserInitials()}</AvatarFallback>
-        
-        {isUploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-            <Loader2 className="h-5 w-5 animate-spin text-white" />
-          </div>
-        )}
+    <div className="relative group">
+      <Avatar className={getSizeClasses()}>
+        <AvatarImage src={imageUrl || undefined} alt={`${firstName} ${lastName}`} />
+        <AvatarFallback>{getInitials()}</AvatarFallback>
       </Avatar>
       
-      <label 
-        htmlFor={`profile-upload-${userId}`} 
-        className="absolute inset-0 flex items-center justify-center rounded-full cursor-pointer bg-black/0 group-hover:bg-black/30 transition-all"
-      >
-        <Camera className="h-5 w-5 text-transparent group-hover:text-white transition-all" />
-      </label>
+      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
+        <label htmlFor={`profile-upload-${userId}`} className="cursor-pointer">
+          <Camera className="h-4 w-4 text-white" />
+          <span className="sr-only">Upload profile image</span>
+        </label>
+      </div>
       
-      <input
+      <Input
         id={`profile-upload-${userId}`}
         type="file"
-        accept="image/*"
-        onChange={handleImageUpload}
-        className="sr-only"
+        accept={ALLOWED_FILE_TYPES.images.join(',')}
+        onChange={handleFileSelect}
+        disabled={uploading}
+        className="hidden"
       />
+      
+      {uploading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+        </div>
+      )}
     </div>
   );
 };
