@@ -59,6 +59,7 @@ export interface VendorStats {
 export type VendorCategory =
   | 'Access Systems'
   | 'Appliance Repair'
+  | 'Arborist'
   | 'Asphalt'
   | 'Attorney'
   | 'Board Member'
@@ -125,6 +126,7 @@ export type VendorCategory =
 export const VENDOR_CATEGORIES: VendorCategory[] = [
   'Access Systems',
   'Appliance Repair',
+  'Arborist',
   'Asphalt',
   'Attorney',
   'Board Member',
