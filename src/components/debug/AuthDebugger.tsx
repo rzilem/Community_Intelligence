@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/auth';
+import { useSystemSetting } from '@/hooks/settings/use-system-settings';
+import { AppearanceSettings } from '@/types/settings-types';
 
 export const AuthDebugger: React.FC = () => {
   const { user, profile, loading, isAuthenticated, currentAssociation, userAssociations } = useAuth();
+  const { data: appearanceSettings } = useSystemSetting<AppearanceSettings>('appearance');
 
-  // Only show in development
-  if (process.env.NODE_ENV === 'production') {
+  // Only show in development AND when the setting is enabled
+  if (process.env.NODE_ENV === 'production' || !appearanceSettings?.showAuthDebugger) {
     return null;
   }
 

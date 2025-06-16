@@ -1,4 +1,3 @@
-
 export type ColorScheme = 'blue' | 'purple' | 'green' | 'orange' | 'default' | 'teal' | 'slate' | 'cyan';
 
 export type ThemeOption = 'light' | 'dark' | 'system';
@@ -14,6 +13,7 @@ export interface AppearanceSettings {
   density: DensityOption;
   fontScale: number;
   animationsEnabled: boolean;
+  showAuthDebugger: boolean;
 }
 
 export interface NotificationSettings {

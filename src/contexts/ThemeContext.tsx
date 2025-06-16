@@ -60,7 +60,8 @@ const getDefaultSettings = (): AppearanceSettings => ({
   colorScheme: 'default',
   density: 'default',
   fontScale: 1,
-  animationsEnabled: true
+  animationsEnabled: true,
+  showAuthDebugger: false
 });
 
 const applyThemeSettings = (settings: AppearanceSettings) => {

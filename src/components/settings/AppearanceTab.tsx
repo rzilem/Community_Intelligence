@@ -15,6 +15,10 @@ const AppearanceTab: React.FC = () => {
     updateSettings(newSettings);
   };
 
+  const handleAdditionalOptionChange = (key: 'animationsEnabled' | 'showAuthDebugger', value: boolean) => {
+    handleChange({ [key]: value });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -51,7 +55,8 @@ const AppearanceTab: React.FC = () => {
       
       <AdditionalOptionsCard 
         animationsEnabled={settings.animationsEnabled}
-        onChange={(animationsEnabled) => handleChange({ animationsEnabled })}
+        showAuthDebugger={settings.showAuthDebugger}
+        onChange={handleAdditionalOptionChange}
       />
     </div>
   );

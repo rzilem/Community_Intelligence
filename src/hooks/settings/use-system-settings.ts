@@ -21,7 +21,8 @@ const defaultSettings: SystemSettings = {
     colorScheme: 'default',
     density: 'default',
     animationsEnabled: true,
-    fontScale: 1
+    fontScale: 1,
+    showAuthDebugger: false
   },
   notifications: {
     emailNotifications: true,
