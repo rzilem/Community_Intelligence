@@ -36,7 +36,7 @@ export const vendorExtendedService = {
       }
 
       // Try to get extended data, but don't fail if tables don't exist
-      const extendedVendor: ExtendedVendor = { ...vendor };
+      const extendedVendor: ExtendedVendor = { ...vendor, status: vendor.status };
 
       // Try to get documents
       try {

@@ -34,6 +34,7 @@ const VendorDialog: React.FC<VendorDialogProps> = ({
     specialties: vendor?.specialties || [],
     notes: vendor?.notes || "",
     is_active: vendor?.is_active ?? true,
+    status: vendor?.status || 'active',
     hoa_id: vendor?.hoa_id || "",
   });
 
