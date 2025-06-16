@@ -1,14 +1,20 @@
 
 import React, { useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import ColumnSelector from "@/components/table/ColumnSelector";
 import { useUserColumns } from "@/hooks/useUserColumns";
 import VendorCardView from "./VendorCardView";
 import VendorQuickFilters from "./VendorQuickFilters";
 import VendorViewToggle from "./VendorViewToggle";
 import VendorTable from "./VendorTable";
+import VendorBulkActions from "./VendorBulkActions";
+import BulkAddSpecialtiesDialog from "./BulkAddSpecialtiesDialog";
 import { useVendorFilters } from "./hooks/useVendorFilters";
+import { useVendorSelection } from "@/hooks/vendors/useVendorSelection";
 import { COLUMN_OPTIONS } from "./constants/vendor-columns";
-import { Vendor } from "@/types/vendor-types";
+import { Vendor, VendorCategory } from "@/types/vendor-types";
+import { vendorService } from "@/services/vendor-service";
+import { useToast } from "@/hooks/use-toast";
 
 interface VendorListProps {
   vendors: Vendor[];
@@ -16,6 +22,9 @@ interface VendorListProps {
 
 const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   const [view, setView] = useState<'table' | 'cards'>('table');
+  const [bulkSpecialtiesOpen, setBulkSpecialtiesOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { 
     visibleColumnIds, 
@@ -35,6 +44,42 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
     hasActiveFilters,
     handleClearFilters
   } = useVendorFilters(vendors);
+
+  const {
+    selectedVendorIds,
+    selectedCount,
+    toggleVendor,
+    toggleAll,
+    clearSelection,
+    isSelected,
+    isAllSelected,
+    isIndeterminate
+  } = useVendorSelection(filteredVendors);
+
+  const selectedVendors = filteredVendors.filter(vendor => selectedVendorIds.includes(vendor.id));
+
+  const handleBulkAddSpecialties = async (specialties: VendorCategory[]) => {
+    try {
+      await vendorService.bulkAddSpecialties(selectedVendorIds, specialties);
+      
+      // Refresh the vendors query to show updated data
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      
+      clearSelection();
+      toast({
+        title: "Specialties added successfully",
+        description: `Added ${specialties.length} specialties to ${selectedCount} vendors.`,
+      });
+    } catch (error) {
+      console.error('Error bulk adding specialties:', error);
+      toast({
+        title: "Error adding specialties",
+        description: "Failed to add specialties to vendors. Please try again.",
+        variant: "destructive",
+      });
+      throw error; // Re-throw to let the dialog handle it
+    }
+  };
 
   if (error) {
     console.warn('Column preferences error:', error);
@@ -67,11 +112,21 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
         hasActiveFilters={hasActiveFilters}
       />
 
+      {/* Bulk Actions Toolbar */}
+      {view === 'table' && (
+        <VendorBulkActions
+          selectedCount={selectedCount}
+          onClearSelection={clearSelection}
+          onAddSpecialties={() => setBulkSpecialtiesOpen(true)}
+        />
+      )}
+
       {/* Results count and column selector for table view */}
       {view === 'table' && (
         <div className="flex justify-between items-center py-2">
           <div className="text-sm text-muted-foreground">
             {hasActiveFilters ? `${filteredVendors.length} of ${vendors.length} vendors` : 'All vendors'}
+            {selectedCount > 0 && ` • ${selectedCount} selected`}
           </div>
           <ColumnSelector 
             columns={COLUMN_OPTIONS} 
@@ -94,8 +149,25 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
       ) : view === 'cards' ? (
         <VendorCardView vendors={filteredVendors} />
       ) : (
-        <VendorTable vendors={filteredVendors} visibleColumnIds={visibleColumnIds} />
+        <VendorTable 
+          vendors={filteredVendors} 
+          visibleColumnIds={visibleColumnIds}
+          selectedVendorIds={selectedVendorIds}
+          onVendorSelect={toggleVendor}
+          onSelectAll={toggleAll}
+          isAllSelected={isAllSelected}
+          isIndeterminate={isIndeterminate}
+          showSelection={true}
+        />
       )}
+
+      {/* Bulk Add Specialties Dialog */}
+      <BulkAddSpecialtiesDialog
+        open={bulkSpecialtiesOpen}
+        onOpenChange={setBulkSpecialtiesOpen}
+        selectedVendors={selectedVendors}
+        onConfirm={handleBulkAddSpecialties}
+      />
     </div>
   );
 };

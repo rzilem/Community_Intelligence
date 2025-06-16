@@ -2,6 +2,7 @@
 import React from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Vendor } from "@/types/vendor-types";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
@@ -10,9 +11,24 @@ import PhoneLink from "@/components/ui/phone-link";
 interface VendorTableProps {
   vendors: Vendor[];
   visibleColumnIds: string[];
+  selectedVendorIds?: string[];
+  onVendorSelect?: (vendorId: string) => void;
+  onSelectAll?: () => void;
+  isAllSelected?: boolean;
+  isIndeterminate?: boolean;
+  showSelection?: boolean;
 }
 
-const VendorTable: React.FC<VendorTableProps> = ({ vendors, visibleColumnIds }) => {
+const VendorTable: React.FC<VendorTableProps> = ({ 
+  vendors, 
+  visibleColumnIds,
+  selectedVendorIds = [],
+  onVendorSelect,
+  onSelectAll,
+  isAllSelected = false,
+  isIndeterminate = false,
+  showSelection = false
+}) => {
   const parseEmails = (email: string | undefined): string[] => {
     if (!email) return [];
     return email.split(',').map(e => e.trim()).filter(e => e.length > 0);
@@ -65,6 +81,16 @@ const VendorTable: React.FC<VendorTableProps> = ({ vendors, visibleColumnIds }) 
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50">
+            {showSelection && (
+              <TableHead className="w-[40px]">
+                <Checkbox
+                  checked={isAllSelected}
+                  indeterminate={isIndeterminate}
+                  onCheckedChange={onSelectAll}
+                  aria-label="Select all vendors"
+                />
+              </TableHead>
+            )}
             {visibleColumnIds.includes('name') && <TableHead className="font-semibold text-gray-900 w-[200px]">Vendor Name</TableHead>}
             {visibleColumnIds.includes('contact_person') && <TableHead className="font-semibold text-gray-900 w-[140px]">Contact Person</TableHead>}
             {visibleColumnIds.includes('email') && <TableHead className="font-semibold text-gray-900 w-[180px]">Email</TableHead>}
@@ -77,7 +103,21 @@ const VendorTable: React.FC<VendorTableProps> = ({ vendors, visibleColumnIds }) 
         </TableHeader>
         <TableBody>
           {vendors.map((vendor) => (
-            <TableRow key={vendor.id} className="hover:bg-gray-50 transition-colors">
+            <TableRow 
+              key={vendor.id} 
+              className={`hover:bg-gray-50 transition-colors ${
+                selectedVendorIds.includes(vendor.id) ? 'bg-blue-50' : ''
+              }`}
+            >
+              {showSelection && (
+                <TableCell className="py-3">
+                  <Checkbox
+                    checked={selectedVendorIds.includes(vendor.id)}
+                    onCheckedChange={() => onVendorSelect?.(vendor.id)}
+                    aria-label={`Select ${vendor.name}`}
+                  />
+                </TableCell>
+              )}
               {visibleColumnIds.includes('name') && (
                 <TableCell className="font-medium py-3">
                   <Link 
