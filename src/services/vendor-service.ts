@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/auth";
 
 // Real vendor type based on database structure
 export interface Vendor {
@@ -31,6 +30,44 @@ export interface VendorStats {
   topCategory: string | null;
   serviceCategories: number;
   withInsurance: number;
+}
+
+// Create a type that matches what we send to the database for creation
+interface VendorInsert {
+  name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  license_number?: string;
+  insurance_info?: any;
+  specialties: string[];
+  rating?: number;
+  total_jobs?: number;
+  completed_jobs?: number;
+  average_response_time?: number;
+  is_active: boolean;
+  notes?: string;
+  hoa_id: string;
+}
+
+// Create a type that matches what we send to the database for updates
+interface VendorUpdate {
+  name?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  license_number?: string;
+  insurance_info?: any;
+  specialties?: string[];
+  rating?: number;
+  total_jobs?: number;
+  completed_jobs?: number;
+  average_response_time?: number;
+  is_active?: boolean;
+  notes?: string;
+  hoa_id?: string;
 }
 
 export const vendorService = {
@@ -104,10 +141,19 @@ export const vendorService = {
     };
   },
 
-  createVendor: async (vendorData: Partial<Vendor>): Promise<Vendor> => {
+  createVendor: async (vendorData: VendorInsert): Promise<Vendor> => {
+    // Ensure required fields are set with defaults
+    const insertData: VendorInsert = {
+      ...vendorData,
+      total_jobs: vendorData.total_jobs || 0,
+      completed_jobs: vendorData.completed_jobs || 0,
+      is_active: vendorData.is_active ?? true,
+      specialties: vendorData.specialties || []
+    };
+
     const { data, error } = await supabase
       .from('vendors')
-      .insert(vendorData)
+      .insert(insertData)
       .select()
       .single();
 
@@ -119,7 +165,7 @@ export const vendorService = {
     return data;
   },
 
-  updateVendor: async (id: string, vendorData: Partial<Vendor>): Promise<Vendor> => {
+  updateVendor: async (id: string, vendorData: VendorUpdate): Promise<Vendor> => {
     const { data, error } = await supabase
       .from('vendors')
       .update(vendorData)
