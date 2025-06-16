@@ -228,7 +228,9 @@ export const useWorkflows = () => {
             name: "First Step",
             description: "The first step in your workflow",
             order: 0,
-            isComplete: false
+            isComplete: false,
+            notifyRoles: [],
+            autoExecute: false
           }
         ];
             

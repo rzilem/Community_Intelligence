@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Workflow, WorkflowStep } from '@/types/workflow-types';
+import type { UserRole } from '@/types/profile-types';
 import PageTemplate from '@/components/layout/PageTemplate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,12 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +36,15 @@ const WorkflowDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const roles: { id: UserRole; name: string }[] = [
+    { id: 'admin', name: 'Administrator' },
+    { id: 'manager', name: 'Manager' },
+    { id: 'resident', name: 'Resident' },
+    { id: 'maintenance', name: 'Maintenance' },
+    { id: 'accountant', name: 'Accountant' },
+    { id: 'treasurer', name: 'Treasurer' },
+    { id: 'user', name: 'Basic User' }
+  ];
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [workflowData, setWorkflowData] = useState<Partial<Workflow> | null>(null);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
@@ -175,7 +186,7 @@ const WorkflowDetails: React.FC = () => {
   };
   
   // Update step
-  const handleStepChange = (stepId: string, field: string, value: string) => {
+  const handleStepChange = (stepId: string, field: string, value: any) => {
     if (!workflowData?.steps) return;
     
     const updatedSteps = workflowData.steps.map((step) => {
@@ -194,13 +205,15 @@ const WorkflowDetails: React.FC = () => {
   // Add new step
   const addStep = () => {
     if (!workflowData) return;
-    
+
     const newStep: WorkflowStep = {
       id: crypto.randomUUID(),
       name: `Step ${(workflowData.steps?.length || 0) + 1}`,
       description: '',
       order: (workflowData.steps?.length || 0),
-      isComplete: false
+      isComplete: false,
+      notifyRoles: [],
+      autoExecute: false
     };
     
     setWorkflowData({
@@ -434,12 +447,41 @@ const WorkflowDetails: React.FC = () => {
                         
                         <div className="grid gap-2">
                           <Label htmlFor={`step-description-${step.id}`}>Description</Label>
-                          <Textarea 
-                            id={`step-description-${step.id}`} 
-                            value={step.description || ''} 
+                          <Textarea
+                            id={`step-description-${step.id}`}
+                            value={step.description || ''}
                             onChange={(e) => handleStepChange(step.id, 'description', e.target.value)}
                             rows={3}
                           />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label>Notify Roles</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {roles.map(role => (
+                              <div key={role.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`detail-notify-${step.id}-${role.id}`}
+                                  checked={step.notifyRoles?.includes(role.id) || false}
+                                  onCheckedChange={checked => {
+                                    const current = step.notifyRoles || [];
+                                    const updated = checked ? [...current, role.id] : current.filter(r => r !== role.id);
+                                    handleStepChange(step.id, 'notifyRoles', updated);
+                                  }}
+                                />
+                                <label htmlFor={`detail-notify-${step.id}-${role.id}`} className="text-sm">
+                                  {role.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`detail-auto-${step.id}`}
+                            checked={step.autoExecute || false}
+                            onCheckedChange={checked => handleStepChange(step.id, 'autoExecute', checked)}
+                          />
+                          <Label htmlFor={`detail-auto-${step.id}`}>Auto Execute</Label>
                         </div>
                         
                         <div className="flex justify-between pt-2">
