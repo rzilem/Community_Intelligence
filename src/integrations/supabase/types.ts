@@ -4942,6 +4942,7 @@ export type Database = {
           address: string
           address_line_2: string | null
           assessment_amount: number | null
+          association_id: string | null
           bathrooms: number | null
           bedrooms: number | null
           block_number: string | null
@@ -4950,7 +4951,6 @@ export type Database = {
           created_at: string | null
           current_balance: number | null
           full_address: string | null
-          hoa_id: string | null
           homeowner_id: number | null
           id: string
           legal_description: string | null
@@ -4982,6 +4982,7 @@ export type Database = {
           address: string
           address_line_2?: string | null
           assessment_amount?: number | null
+          association_id?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           block_number?: string | null
@@ -4990,7 +4991,6 @@ export type Database = {
           created_at?: string | null
           current_balance?: number | null
           full_address?: string | null
-          hoa_id?: string | null
           homeowner_id?: number | null
           id?: string
           legal_description?: string | null
@@ -5022,6 +5022,7 @@ export type Database = {
           address?: string
           address_line_2?: string | null
           assessment_amount?: number | null
+          association_id?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           block_number?: string | null
@@ -5030,7 +5031,6 @@ export type Database = {
           created_at?: string | null
           current_balance?: number | null
           full_address?: string | null
-          hoa_id?: string | null
           homeowner_id?: number | null
           id?: string
           legal_description?: string | null
@@ -5060,7 +5060,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "properties_hoa_id_fkey"
-            columns: ["hoa_id"]
+            columns: ["association_id"]
             isOneToOne: false
             referencedRelation: "associations"
             referencedColumns: ["id"]

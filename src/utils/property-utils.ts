@@ -1,3 +1,4 @@
+
 import { Property, PropertyRecord } from '@/types/property-types';
 
 /**
@@ -5,7 +6,7 @@ import { Property, PropertyRecord } from '@/types/property-types';
  */
 export const mapPropertyRecord = (record: PropertyRecord): Property => ({
   id: record.id,
-  association_id: record.association_id ?? record.hoa_id ?? '',
+  association_id: record.association_id ?? '',
   address: record.address,
   unit_number: record.unit_number ?? undefined,
   city: record.city ?? undefined,

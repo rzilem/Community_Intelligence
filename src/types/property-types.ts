@@ -32,19 +32,16 @@ export interface Property {
   square_feet?: number;
   association_id: string;
   unit_number?: string;
-  created_at: string; // Making this required to match app-types.ts
-  updated_at: string; // Making this required to match app-types.ts
-  image_url?: string; // Add image_url field
+  created_at: string;
+  updated_at: string;
+  image_url?: string;
 }
 
-// Raw property record as returned from Supabase. Some legacy queries may use
-// slightly different column names like `association_id`, `zip`, or
-// `square_feet`, so those are included as optional fields.
+// Raw property record as returned from Supabase
 import type { Database } from '@/integrations/supabase/types';
 
 export type PropertyRecord =
   Database['public']['Tables']['properties']['Row'] & {
-    association_id?: string | null;
     zip?: string | null;
     square_feet?: number | null;
     image_url?: string | null;
