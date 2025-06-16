@@ -18,15 +18,24 @@ const BidRequestsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
-  const { profile } = useAuth();
+  const { currentAssociation } = useAuth();
 
   useEffect(() => {
     const fetchBidRequests = async () => {
-      if (!profile?.association_id) return;
+      console.log('=== FETCHING BID REQUESTS ===');
+      console.log('Current association:', currentAssociation);
+      
+      if (!currentAssociation?.id) {
+        console.log('No association ID available, skipping fetch');
+        setLoading(false);
+        return;
+      }
       
       setLoading(true);
       try {
-        const requests = await getBidRequests(profile.association_id);
+        console.log('Fetching bid requests for association:', currentAssociation.id);
+        const requests = await getBidRequests(currentAssociation.id);
+        console.log('Fetched bid requests:', requests);
         setBidRequests(requests);
       } catch (error) {
         console.error('Error fetching bid requests:', error);
@@ -36,7 +45,7 @@ const BidRequestsList = () => {
     };
 
     fetchBidRequests();
-  }, [profile?.association_id]);
+  }, [currentAssociation?.id]);
 
   const filteredBidRequests = bidRequests.filter(request => {
     const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,6 +55,23 @@ const BidRequestsList = () => {
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  // Show loading state if no association is selected
+  if (!currentAssociation?.id) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No Association Selected
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Please select an association to view bid requests.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
