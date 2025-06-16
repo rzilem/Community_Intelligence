@@ -1,37 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-
-// Real vendor type based on database structure
-export interface Vendor {
-  id: string;
-  name: string;
-  contact_person?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  license_number?: string;
-  insurance_info?: any;
-  specialties: string[];
-  rating?: number;
-  total_jobs: number;
-  completed_jobs: number;
-  average_response_time?: number;
-  status: string;
-  is_active: boolean;
-  notes?: string;
-  hoa_id: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface VendorStats {
-  totalVendors: number;
-  activeVendors: number;
-  inactiveVendors: number;
-  topCategory: string | null;
-  serviceCategories: number;
-  withInsurance: number;
-}
+import { Vendor, VendorStats } from "@/types/vendor-types";
 
 // Create a type that matches what we send to the database for creation
 interface VendorInsert {
@@ -172,7 +141,7 @@ export const vendorService = {
   updateVendor: async (id: string, vendorData: VendorUpdate): Promise<Vendor> => {
     console.log('Updating vendor with data:', vendorData);
     
-    // Clean the update data to only include fields that exist in the database
+    // Clean the update data to only include fields that are not undefined
     const cleanUpdateData: VendorUpdate = {};
     
     // Only include fields that are not undefined
