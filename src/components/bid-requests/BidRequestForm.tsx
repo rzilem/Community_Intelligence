@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -21,8 +20,10 @@ import { useAuth } from '@/contexts/auth';
 import { createBidRequest } from '@/services/bid-requests/bid-request-api';
 import { BidRequest } from '@/types/bid-request-types';
 import { toast } from 'sonner';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 const formSchema = z.object({
+  association_id: z.string().min(1, 'Association is required'),
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(1, 'Description is required'),
   category: z.string().min(1, 'Category is required'),
@@ -56,12 +57,13 @@ const categories = [
 
 const BidRequestForm = () => {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { currentAssociation, profile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      association_id: currentAssociation?.id || '',
       title: '',
       description: '',
       category: '',
@@ -72,8 +74,13 @@ const BidRequestForm = () => {
   });
 
   const onSubmit = async (data: FormData, isDraft = false) => {
-    if (!profile?.association_id) {
-      toast.error('No association selected');
+    if (!data.association_id) {
+      toast.error('Please select an association');
+      return;
+    }
+
+    if (!profile?.id) {
+      toast.error('User profile not found');
       return;
     }
 
@@ -81,7 +88,6 @@ const BidRequestForm = () => {
     try {
       const bidRequestData: Partial<BidRequest> = {
         ...data,
-        association_id: profile.association_id,
         created_by: profile.id,
         status: (isDraft ? 'draft' : 'published') as BidRequest['status'],
         bid_deadline: data.bid_deadline?.toISOString(),
@@ -114,6 +120,10 @@ const BidRequestForm = () => {
     form.handleSubmit((data) => onSubmit(data, false))();
   };
 
+  const handleAssociationChange = (associationId: string) => {
+    form.setValue('association_id', associationId);
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Card>
@@ -125,7 +135,27 @@ const BidRequestForm = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <FormField
+                  control={form.control}
+                  name="association_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Association *</FormLabel>
+                      <FormControl>
+                        <AssociationSelector 
+                          onAssociationChange={handleAssociationChange}
+                          initialAssociationId={field.value}
+                          label={false}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="md:col-span-2">
                 <FormField
                   control={form.control}
@@ -142,54 +172,56 @@ const BidRequestForm = () => {
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category.toLowerCase()}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category.toLowerCase()}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Priority</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <div className="md:col-span-2">
                 <FormField
