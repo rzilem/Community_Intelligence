@@ -5,7 +5,11 @@ import { useAuth } from '@/contexts/auth';
 import { bidRequestFormSchema, BidRequestFormData } from '../../types/bid-request-form-types';
 
 export const useBidRequestForm = () => {
-  const { currentAssociation } = useAuth();
+  const { currentAssociation, profile } = useAuth();
+
+  console.log('=== FORM INITIALIZATION ===');
+  console.log('Current association:', currentAssociation);
+  console.log('User profile:', profile);
 
   const form = useForm<BidRequestFormData>({
     resolver: zodResolver(bidRequestFormSchema),
@@ -21,6 +25,7 @@ export const useBidRequestForm = () => {
   });
 
   const handleAssociationChange = (associationId: string) => {
+    console.log('Association changed to:', associationId);
     form.setValue('association_id', associationId);
   };
 

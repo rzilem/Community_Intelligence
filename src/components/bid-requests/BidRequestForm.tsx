@@ -15,10 +15,14 @@ const BidRequestForm = () => {
   const { isSubmitting, onSubmit } = useBidRequestSubmission();
 
   const handleSaveDraft = () => {
+    console.log('=== SAVING DRAFT ===');
+    console.log('Current form values:', form.getValues());
     form.handleSubmit((data) => onSubmit(data, true))();
   };
 
   const handlePublish = () => {
+    console.log('=== PUBLISHING ===');
+    console.log('Current form values:', form.getValues());
     form.handleSubmit((data) => onSubmit(data, false))();
   };
 

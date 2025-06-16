@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { BidRequest, BidRequestWithVendors } from '@/types/bid-request-types';
 
 export async function createBidRequest(bidRequestData: Partial<BidRequest>): Promise<BidRequest> {
+  console.log('=== API: Creating bid request ===');
+  console.log('Data being sent to Supabase:', bidRequestData);
+
   const { data, error } = await supabase
     .from('bid_requests')
     .insert(bidRequestData as any)
@@ -10,14 +13,22 @@ export async function createBidRequest(bidRequestData: Partial<BidRequest>): Pro
     .single();
 
   if (error) {
-    console.error('Error creating bid request:', error);
+    console.error('=== SUPABASE ERROR ===');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Error details:', error.details);
+    console.error('Error hint:', error.hint);
     throw new Error(error.message);
   }
 
+  console.log('=== API: Bid request created successfully ===');
+  console.log('Returned data:', data);
   return data as BidRequest;
 }
 
 export async function getBidRequests(associationId: string): Promise<BidRequestWithVendors[]> {
+  console.log('=== API: Fetching bid requests for association ===', associationId);
+  
   const { data, error } = await supabase
     .from('bid_requests')
     .select(`
@@ -40,6 +51,7 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
     throw new Error(error.message);
   }
 
+  console.log('Fetched bid requests:', data);
   return (data || []) as BidRequestWithVendors[];
 }
 
