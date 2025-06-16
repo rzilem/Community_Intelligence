@@ -6035,6 +6035,111 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_applications: {
+        Row: {
+          application_status: string
+          association_id: string | null
+          background_check_date: string | null
+          background_check_status: string | null
+          bond_amount: number | null
+          bond_expiry_date: string | null
+          business_address: string | null
+          business_name: string
+          business_references: Json | null
+          contact_person: string
+          created_at: string | null
+          email: string
+          id: string
+          insurance_expiry_date: string | null
+          insurance_policy_number: string | null
+          insurance_provider: string | null
+          license_number: string | null
+          notes: string | null
+          phone: string | null
+          qualification_score: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          specialties: string[] | null
+          submitted_at: string | null
+          tax_id: string | null
+          updated_at: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          application_status?: string
+          association_id?: string | null
+          background_check_date?: string | null
+          background_check_status?: string | null
+          bond_amount?: number | null
+          bond_expiry_date?: string | null
+          business_address?: string | null
+          business_name: string
+          business_references?: Json | null
+          contact_person: string
+          created_at?: string | null
+          email: string
+          id?: string
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          license_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          qualification_score?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialties?: string[] | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          application_status?: string
+          association_id?: string | null
+          background_check_date?: string | null
+          background_check_status?: string | null
+          bond_amount?: number | null
+          bond_expiry_date?: string | null
+          business_address?: string | null
+          business_name?: string
+          business_references?: Json | null
+          contact_person?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          insurance_expiry_date?: string | null
+          insurance_policy_number?: string | null
+          insurance_provider?: string | null
+          license_number?: string | null
+          notes?: string | null
+          phone?: string | null
+          qualification_score?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          specialties?: string[] | null
+          submitted_at?: string | null
+          tax_id?: string | null
+          updated_at?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_applications_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_availability: {
         Row: {
           created_at: string | null
@@ -6200,6 +6305,118 @@ export type Database = {
           },
         ]
       }
+      vendor_capabilities: {
+        Row: {
+          category_id: string | null
+          certifications: string[] | null
+          created_at: string | null
+          id: string
+          preferred_vendor: boolean | null
+          proficiency_level: string
+          updated_at: string | null
+          vendor_id: string | null
+          years_experience: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          id?: string
+          preferred_vendor?: boolean | null
+          proficiency_level: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          years_experience?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          certifications?: string[] | null
+          created_at?: string | null
+          id?: string
+          preferred_vendor?: boolean | null
+          proficiency_level?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          years_experience?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_capabilities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_capabilities_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_capabilities_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_categories: {
+        Row: {
+          association_id: string | null
+          category_name: string
+          created_at: string | null
+          description: string | null
+          id: string
+          minimum_insurance_amount: number | null
+          parent_category_id: string | null
+          requires_insurance: boolean | null
+          requires_license: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          category_name: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          minimum_insurance_amount?: number | null
+          parent_category_id?: string | null
+          requires_insurance?: boolean | null
+          requires_license?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          category_name?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          minimum_insurance_amount?: number | null
+          parent_category_id?: string | null
+          requires_insurance?: boolean | null
+          requires_license?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_categories_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_certifications: {
         Row: {
           certification_name: string
@@ -6247,6 +6464,343 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_certifications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_compliance_items: {
+        Row: {
+          association_id: string | null
+          compliance_type: string
+          created_at: string | null
+          description: string | null
+          document_url: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          item_name: string
+          last_reminder_sent: string | null
+          notes: string | null
+          renewal_notice_days: number | null
+          required: boolean | null
+          status: string
+          updated_at: string | null
+          vendor_id: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          compliance_type: string
+          created_at?: string | null
+          description?: string | null
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          item_name: string
+          last_reminder_sent?: string | null
+          notes?: string | null
+          renewal_notice_days?: number | null
+          required?: boolean | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          compliance_type?: string
+          created_at?: string | null
+          description?: string | null
+          document_url?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          item_name?: string
+          last_reminder_sent?: string | null
+          notes?: string | null
+          renewal_notice_days?: number | null
+          required?: boolean | null
+          status?: string
+          updated_at?: string | null
+          vendor_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_compliance_items_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_compliance_items_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_compliance_items_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_compliance_items_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_contract_amendments: {
+        Row: {
+          amendment_number: number
+          amendment_type: string
+          approved_at: string | null
+          approved_by: string | null
+          contract_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          effective_date: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          amendment_number: number
+          amendment_type: string
+          approved_at?: string | null
+          approved_by?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          effective_date: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          amendment_number?: number
+          amendment_type?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          contract_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          effective_date?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_contract_amendments_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contract_amendments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contract_amendments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_contract_templates: {
+        Row: {
+          association_id: string | null
+          auto_renew: boolean | null
+          contract_terms: string
+          created_at: string | null
+          created_by: string | null
+          default_duration_months: number | null
+          id: string
+          is_active: boolean | null
+          requires_insurance: boolean | null
+          requires_license: boolean | null
+          template_content: string
+          template_name: string
+          template_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          association_id?: string | null
+          auto_renew?: boolean | null
+          contract_terms: string
+          created_at?: string | null
+          created_by?: string | null
+          default_duration_months?: number | null
+          id?: string
+          is_active?: boolean | null
+          requires_insurance?: boolean | null
+          requires_license?: boolean | null
+          template_content: string
+          template_name: string
+          template_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          association_id?: string | null
+          auto_renew?: boolean | null
+          contract_terms?: string
+          created_at?: string | null
+          created_by?: string | null
+          default_duration_months?: number | null
+          id?: string
+          is_active?: boolean | null
+          requires_insurance?: boolean | null
+          requires_license?: boolean | null
+          template_content?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_contract_templates_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contract_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_contracts: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          association_id: string | null
+          auto_renew: boolean | null
+          contract_number: string
+          contract_terms: string | null
+          contract_title: string
+          contract_type: string
+          contract_value: number | null
+          created_at: string | null
+          created_by: string | null
+          end_date: string
+          id: string
+          payment_terms: string | null
+          renewal_notice_days: number | null
+          start_date: string
+          status: string
+          template_id: string | null
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id?: string | null
+          auto_renew?: boolean | null
+          contract_number: string
+          contract_terms?: string | null
+          contract_title: string
+          contract_type: string
+          contract_value?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date: string
+          id?: string
+          payment_terms?: string | null
+          renewal_notice_days?: number | null
+          start_date: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          association_id?: string | null
+          auto_renew?: boolean | null
+          contract_number?: string
+          contract_terms?: string | null
+          contract_title?: string
+          contract_type?: string
+          contract_value?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string
+          id?: string
+          payment_terms?: string | null
+          renewal_notice_days?: number | null
+          start_date?: string
+          status?: string
+          template_id?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_contracts_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_contract_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contracts_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"
@@ -6580,6 +7134,54 @@ export type Database = {
           },
           {
             foreignKeyName: "vendor_reviews_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_service_areas: {
+        Row: {
+          area_name: string
+          area_type: string
+          area_value: string
+          created_at: string | null
+          id: string
+          is_primary_area: boolean | null
+          travel_fee: number | null
+          vendor_id: string | null
+        }
+        Insert: {
+          area_name: string
+          area_type: string
+          area_value: string
+          created_at?: string | null
+          id?: string
+          is_primary_area?: boolean | null
+          travel_fee?: number | null
+          vendor_id?: string | null
+        }
+        Update: {
+          area_name?: string
+          area_type?: string
+          area_value?: string
+          created_at?: string | null
+          id?: string
+          is_primary_area?: boolean | null
+          travel_fee?: number | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_service_areas_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_service_areas_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "vendors"

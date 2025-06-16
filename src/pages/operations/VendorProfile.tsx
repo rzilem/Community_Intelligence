@@ -1,129 +1,212 @@
 
-import React, { useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import PageTemplate from '@/components/layout/PageTemplate';
-import { Building2, ArrowLeft, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import VendorProfileDetails from '@/components/vendors/VendorProfileDetails';
-import VendorEditDialog from '@/components/vendors/VendorEditDialog';
-import { vendorExtendedService } from '@/services/vendor-extended-service';
-import { useToast } from '@/components/ui/use-toast';
-import { ExtendedVendor } from '@/types/vendor-extended-types';
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { vendorExtendedService } from "@/services/vendor-extended-service";
+import { ArrowLeft, MapPin, Phone, Mail, Star, Edit } from "lucide-react";
+import { Link } from "react-router-dom";
+import VendorEditDialog from "@/components/vendors/VendorEditDialog";
+import VendorDocumentsTab from "@/components/vendors/VendorDocumentsTab";
+import VendorPerformanceTab from "@/components/vendors/VendorPerformanceTab";
+import VendorReviewsTab from "@/components/vendors/VendorReviewsTab";
+import VendorAvailabilityTab from "@/components/vendors/VendorAvailabilityTab";
+import VendorCertificationsTab from "@/components/vendors/VendorCertificationsTab";
+import VendorEmergencyContactsTab from "@/components/vendors/VendorEmergencyContactsTab";
+import VendorContractsTab from "@/components/vendors/contracts/VendorContractsTab";
+import VendorComplianceTab from "@/components/vendors/compliance/VendorComplianceTab";
 
-const VendorProfile = () => {
+const VendorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  const { data: vendor, isLoading, isError } = useQuery({
-    queryKey: ['vendor', id],
-    queryFn: () => vendorExtendedService.getExtendedVendorById(id!),
+  const { data: vendor, isLoading, error } = useQuery({
+    queryKey: ['vendor-extended', id],
+    queryFn: () => vendorExtendedService.getVendorById(id!),
     enabled: !!id,
   });
 
-  const updateVendorMutation = useMutation({
-    mutationFn: (updatedVendor: ExtendedVendor) => {
-      // In a real implementation, this would call an API to update the vendor
-      return Promise.resolve(updatedVendor);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendor', id] });
-      queryClient.invalidateQueries({ queryKey: ['vendors'] });
-      toast({
-        title: "Vendor updated",
-        description: "The vendor information has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error updating vendor",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleSaveVendor = (updatedVendor: ExtendedVendor) => {
-    updateVendorMutation.mutate(updatedVendor);
-  };
-
-  const handleDelete = () => {
-    // In a real app, this would call an API to delete the vendor
-    toast({
-      title: "Vendor deleted",
-      description: "The vendor has been deleted successfully.",
-    });
-    navigate('/operations/vendors');
-  };
-
   if (isLoading) {
     return (
-      <PageTemplate 
-        title="Vendor Profile" 
-        icon={<Building2 className="h-8 w-8" />}
-      >
-        <div className="flex justify-center py-8">Loading vendor profile...</div>
-      </PageTemplate>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">Loading vendor profile...</div>
+      </div>
     );
   }
 
-  if (isError || !vendor) {
+  if (error || !vendor) {
     return (
-      <PageTemplate 
-        title="Vendor Profile" 
-        icon={<Building2 className="h-8 w-8" />}
-      >
-        <div className="flex flex-col items-center py-8">
-          <p className="text-red-500 mb-4">Vendor not found or error loading vendor details.</p>
-          <Button asChild>
-            <Link to="/operations/vendors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Vendors
-            </Link>
-          </Button>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Vendor Not Found</h2>
+          <p className="text-gray-600 mb-4">The vendor you're looking for doesn't exist.</p>
+          <Link to="/operations/vendors">
+            <Button>Back to Vendors</Button>
+          </Link>
         </div>
-      </PageTemplate>
+      </div>
     );
   }
 
   return (
-    <PageTemplate 
-      title="Vendor Profile" 
-      icon={<Building2 className="h-8 w-8" />}
-    >
-      <div className="space-y-6">
-        <div className="flex items-center">
-          <Button variant="ghost" asChild className="mr-auto">
-            <Link to="/operations/vendors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Vendors
-            </Link>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Link to="/operations/vendors">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Vendors
           </Button>
-          <div className="ml-auto space-x-2">
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}>
+        </Link>
+      </div>
+
+      {/* Vendor Header Card */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div className="flex items-center space-x-4">
+              {vendor.logo_url && (
+                <img 
+                  src={vendor.logo_url} 
+                  alt={`${vendor.name} logo`}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  {vendor.name}
+                  {vendor.rating && (
+                    <div className="flex items-center gap-1">
+                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                      <span className="text-lg font-medium">{vendor.rating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </CardTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {vendor.specialties?.map((specialty, index) => (
+                    <Badge key={index} variant="outline">{specialty}</Badge>
+                  ))}
+                  {!vendor.is_active && (
+                    <Badge variant="destructive">Inactive</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Button onClick={() => setIsEditDialogOpen(true)}>
               <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              Edit Vendor
             </Button>
           </div>
-        </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {vendor.email && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-gray-400" />
+                <span>{vendor.email}</span>
+              </div>
+            )}
+            {vendor.phone && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-gray-400" />
+                <span>{vendor.phone}</span>
+              </div>
+            )}
+            {vendor.address && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gray-400" />
+                <span>{vendor.address}</span>
+              </div>
+            )}
+          </div>
+          
+          {vendor.notes && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="font-medium mb-2">Notes</h4>
+              <p className="text-gray-700">{vendor.notes}</p>
+            </div>
+          )}
 
-        <VendorProfileDetails vendor={vendor} />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{vendor.total_jobs}</div>
+              <div className="text-sm text-gray-500">Total Jobs</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{vendor.completed_jobs}</div>
+              <div className="text-sm text-gray-500">Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-yellow-600">
+                {vendor.average_response_time ? `${vendor.average_response_time}h` : 'N/A'}
+              </div>
+              <div className="text-sm text-gray-500">Avg Response</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {vendor.total_jobs > 0 ? `${((vendor.completed_jobs / vendor.total_jobs) * 100).toFixed(1)}%` : '0%'}
+              </div>
+              <div className="text-sm text-gray-500">Success Rate</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        <VendorEditDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          vendor={vendor}
-          onSave={handleSaveVendor}
-        />
-      </div>
-    </PageTemplate>
+      {/* Tabs */}
+      <Tabs defaultValue="documents" className="w-full">
+        <TabsList className="grid w-full grid-cols-9">
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="contracts">Contracts</TabsTrigger>
+          <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="availability">Availability</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
+          <TabsTrigger value="emergency">Emergency</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="documents" className="mt-6">
+          <VendorDocumentsTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="performance" className="mt-6">
+          <VendorPerformanceTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="contracts" className="mt-6">
+          <VendorContractsTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="compliance" className="mt-6">
+          <VendorComplianceTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="reviews" className="mt-6">
+          <VendorReviewsTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="availability" className="mt-6">
+          <VendorAvailabilityTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="certifications" className="mt-6">
+          <VendorCertificationsTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="emergency" className="mt-6">
+          <VendorEmergencyContactsTab vendorId={vendor.id} />
+        </TabsContent>
+      </Tabs>
+
+      <VendorEditDialog 
+        vendor={vendor}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+    </div>
   );
 };
 
