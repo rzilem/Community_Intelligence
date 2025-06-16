@@ -11,7 +11,7 @@ import SupabaseStatus from '@/components/auth/SupabaseStatus';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, isLoading, session } = useAuth();
+  const { signIn, signUp, loading, session } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>(searchParams.get('tab') || 'login');
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -39,8 +39,8 @@ const Auth = () => {
         formData.email, 
         formData.password, 
         { 
-          first_name: formData.firstName, 
-          last_name: formData.lastName 
+          first_name: formData.first_name, 
+          last_name: formData.last_name 
         }
       );
       setRegistrationSuccess(true);
@@ -85,7 +85,7 @@ const Auth = () => {
                   Access your HOA management dashboard
                 </CardDescription>
               </CardHeader>
-              <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+              <LoginForm onSubmit={handleLogin} isLoading={loading} />
             </Card>
           </TabsContent>
           
@@ -100,7 +100,7 @@ const Auth = () => {
                     Join Community Intelligence today
                   </CardDescription>
                 </CardHeader>
-                <SignupForm onSubmit={handleSignup} isLoading={isLoading} />
+                <SignupForm onSubmit={handleSignup} isLoading={loading} />
               </Card>
             )}
           </TabsContent>

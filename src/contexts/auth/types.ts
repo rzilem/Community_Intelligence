@@ -22,7 +22,7 @@ export interface AuthContextType {
   userAssociations: UserAssociation[];
   userRole: string | null;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: any) => Promise<void>;
+  signUp: (email: string, password: string, userData: { first_name: string; last_name: string }) => Promise<void>;
   signOut: () => Promise<void>;
   setCurrentAssociation: (association: any) => void;
   refreshProfile: () => Promise<void>;

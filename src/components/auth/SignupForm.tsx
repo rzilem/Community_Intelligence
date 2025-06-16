@@ -16,27 +16,41 @@ export interface SignupFormValues {
   confirmPassword: string;
   first_name: string;
   last_name: string;
+  firstName: string; // Alias for compatibility
+  lastName: string;   // Alias for compatibility
 }
 
 interface SignupFormProps {
   onSuccess?: () => void;
+  onSubmit?: (formData: SignupFormValues) => Promise<void>;
+  isLoading?: boolean;
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
+const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, onSubmit, isLoading: externalLoading }) => {
   const { signUp } = useAuth();
   const [formData, setFormData] = useState<SignupFormValues>({
     email: '',
     password: '',
     confirmPassword: '',
     first_name: '',
-    last_name: ''
+    last_name: '',
+    firstName: '', // Alias
+    lastName: ''   // Alias
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (field: keyof SignupFormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = field === 'email' ? e.target.value : sanitizeInput(e.target.value);
-    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Update both the main field and alias
+    const updates: Partial<SignupFormValues> = { [field]: value };
+    if (field === 'first_name') updates.firstName = value;
+    if (field === 'last_name') updates.lastName = value;
+    if (field === 'firstName') updates.first_name = value;
+    if (field === 'lastName') updates.last_name = value;
+    
+    setFormData(prev => ({ ...prev, ...updates }));
     setError(null);
   };
 
@@ -82,20 +96,19 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      const result = await signUp(
-        formData.email, 
-        formData.password, 
-        {
-          first_name: formData.first_name.trim(),
-          last_name: formData.last_name.trim()
-        }
-      );
-
-      if (result.success) {
+      if (onSubmit) {
+        await onSubmit(formData);
+      } else {
+        await signUp(
+          formData.email, 
+          formData.password, 
+          {
+            first_name: formData.first_name.trim(),
+            last_name: formData.last_name.trim()
+          }
+        );
         toast.success('Account created successfully! Please check your email to verify your account.');
         onSuccess?.();
-      } else {
-        setError(result.error?.message || 'Failed to create account');
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
@@ -103,6 +116,8 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
       setLoading(false);
     }
   };
+
+  const isSubmitting = loading || externalLoading;
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -129,7 +144,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
                 required
                 value={formData.first_name}
                 onChange={handleInputChange('first_name')}
-                disabled={loading}
+                disabled={isSubmitting}
                 maxLength={50}
               />
             </div>
@@ -141,7 +156,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
                 required
                 value={formData.last_name}
                 onChange={handleInputChange('last_name')}
-                disabled={loading}
+                disabled={isSubmitting}
                 maxLength={50}
               />
             </div>
@@ -155,7 +170,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               required
               value={formData.email}
               onChange={handleInputChange('email')}
-              disabled={loading}
+              disabled={isSubmitting}
               maxLength={254}
             />
           </div>
@@ -168,7 +183,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               required
               value={formData.password}
               onChange={handleInputChange('password')}
-              disabled={loading}
+              disabled={isSubmitting}
               maxLength={128}
             />
             <PasswordStrengthIndicator password={formData.password} />
@@ -182,13 +197,13 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
               required
               value={formData.confirmPassword}
               onChange={handleInputChange('confirmPassword')}
-              disabled={loading}
+              disabled={isSubmitting}
               maxLength={128}
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Create Account'}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
       </CardContent>

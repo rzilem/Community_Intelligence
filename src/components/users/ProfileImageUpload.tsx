@@ -1,110 +1,121 @@
 
 import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Camera, Upload } from 'lucide-react';
-import { validateFile, sanitizeFilename, ALLOWED_FILE_TYPES } from '@/utils/security-validation';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Upload, X } from 'lucide-react';
 import { updateProfileImage } from '@/services/user-service';
+import { toast } from 'sonner';
 
 interface ProfileImageUploadProps {
+  currentImageUrl?: string;
+  onImageUpdate: (url: string) => Promise<void>;
   userId: string;
-  imageUrl?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  onImageUpdated: () => void;
-  size?: 'sm' | 'md' | 'lg';
 }
 
 const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({
-  userId,
-  imageUrl,
-  firstName,
-  lastName,
-  onImageUpdated,
-  size = 'md'
+  currentImageUrl,
+  onImageUpdate,
+  userId
 }) => {
-  const [uploading, setUploading] = useState(false);
-
-  const getInitials = () => {
-    const first = firstName?.charAt(0).toUpperCase() || '';
-    const last = lastName?.charAt(0).toUpperCase() || '';
-    return `${first}${last}` || '?';
-  };
-
-  const getSizeClasses = () => {
-    switch (size) {
-      case 'sm':
-        return 'h-8 w-8 text-xs';
-      case 'lg':
-        return 'h-16 w-16 text-lg';
-      default:
-        return 'h-10 w-10 text-sm';
-    }
-  };
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file
-    const validation = validateFile(file, ALLOWED_FILE_TYPES.images);
-    if (!validation.valid) {
-      toast.error(validation.error);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
       return;
     }
 
-    setUploading(true);
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPreviewUrl(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
 
     try {
-      // Sanitize filename
-      const sanitizedName = sanitizeFilename(file.name);
-      
-      // Create a new file with sanitized name
-      const sanitizedFile = new File([file], sanitizedName, { type: file.type });
-
-      await updateProfileImage(userId, sanitizedFile);
+      const imageUrl = await updateProfileImage(userId, file);
+      await onImageUpdate(imageUrl);
       toast.success('Profile image updated successfully');
-      onImageUpdated();
     } catch (error: any) {
-      console.error('Error uploading profile image:', error);
+      console.error('Error uploading image:', error);
       toast.error(error.message || 'Failed to upload image');
+      setPreviewUrl(null);
     } finally {
-      setUploading(false);
-      // Reset input
-      event.target.value = '';
+      setIsUploading(false);
     }
   };
 
+  const clearPreview = () => {
+    setPreviewUrl(null);
+  };
+
+  const displayUrl = previewUrl || currentImageUrl;
+
   return (
-    <div className="relative group">
-      <Avatar className={getSizeClasses()}>
-        <AvatarImage src={imageUrl || undefined} alt={`${firstName} ${lastName}`} />
-        <AvatarFallback>{getInitials()}</AvatarFallback>
-      </Avatar>
-      
-      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center">
-        <label htmlFor={`profile-upload-${userId}`} className="cursor-pointer">
-          <Camera className="h-4 w-4 text-white" />
-          <span className="sr-only">Upload profile image</span>
-        </label>
+    <div className="space-y-4">
+      <div className="flex items-center space-x-4">
+        <Avatar className="h-20 w-20">
+          <AvatarImage src={displayUrl} />
+          <AvatarFallback>
+            <Upload className="h-8 w-8" />
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className="space-y-2">
+          <Label htmlFor="profile-image" className="text-sm font-medium">
+            Profile Image
+          </Label>
+          <div className="flex items-center space-x-2">
+            <Input
+              id="profile-image"
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => document.getElementById('profile-image')?.click()}
+              disabled={isUploading}
+            >
+              {isUploading ? 'Uploading...' : 'Choose Image'}
+            </Button>
+            
+            {previewUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={clearPreview}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
       
-      <Input
-        id={`profile-upload-${userId}`}
-        type="file"
-        accept={ALLOWED_FILE_TYPES.images.join(',')}
-        onChange={handleFileSelect}
-        disabled={uploading}
-        className="hidden"
-      />
-      
-      {uploading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-        </div>
-      )}
+      <p className="text-xs text-muted-foreground">
+        Recommended: Square image, at least 200x200 pixels. Max size: 5MB.
+      </p>
     </div>
   );
 };
