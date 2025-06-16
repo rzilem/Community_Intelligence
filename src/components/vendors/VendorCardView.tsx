@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star, Phone, Mail, MapPin, Building2, Award } from 'lucide-react';
+import { Star, Phone, Mail, Building2, Award } from 'lucide-react';
 import { Vendor } from '@/types/vendor-types';
 import { Link } from 'react-router-dom';
 import PhoneLink from '@/components/ui/phone-link';
@@ -23,6 +23,31 @@ const VendorCardView: React.FC<VendorCardViewProps> = ({ vendors }) => {
           : "text-gray-300"} 
       />
     ));
+  };
+
+  const parseEmails = (email: string | undefined): string[] => {
+    if (!email) return [];
+    return email.split(',').map(e => e.trim()).filter(e => e.length > 0);
+  };
+
+  const renderEmails = (emails: string[]) => {
+    if (emails.length === 0) return null;
+    
+    return (
+      <div className="space-y-1">
+        {emails.map((email, index) => (
+          <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Mail size={14} />
+            <a 
+              href={`mailto:${email}`} 
+              className="truncate hover:text-blue-600 transition-colors"
+            >
+              {email}
+            </a>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -54,12 +79,7 @@ const VendorCardView: React.FC<VendorCardViewProps> = ({ vendors }) => {
 
             {/* Contact Info */}
             <div className="space-y-2 mb-4">
-              {vendor.email && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Mail size={14} />
-                  <span className="truncate">{vendor.email}</span>
-                </div>
-              )}
+              {renderEmails(parseEmails(vendor.email))}
               {vendor.phone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone size={14} className="text-muted-foreground" />
@@ -92,14 +112,21 @@ const VendorCardView: React.FC<VendorCardViewProps> = ({ vendors }) => {
             {vendor.specialties && vendor.specialties.length > 0 && (
               <div className="mb-4">
                 <div className="flex flex-wrap gap-1">
-                  {vendor.specialties.slice(0, 3).map((specialty, index) => (
-                    <Badge key={index} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  {vendor.specialties.slice(0, 4).map((specialty, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline" 
+                      className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200"
+                    >
                       {specialty}
                     </Badge>
                   ))}
-                  {vendor.specialties.length > 3 && (
-                    <Badge variant="outline" className="text-xs bg-gray-50 text-gray-600 border-gray-200">
-                      +{vendor.specialties.length - 3} more
+                  {vendor.specialties.length > 4 && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs px-2 py-0.5 bg-gray-50 text-gray-600 border-gray-200"
+                    >
+                      +{vendor.specialties.length - 4} more
                     </Badge>
                   )}
                 </div>
