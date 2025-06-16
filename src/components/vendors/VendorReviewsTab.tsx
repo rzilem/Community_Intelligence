@@ -94,7 +94,7 @@ const VendorReviewsTab: React.FC<VendorReviewsTabProps> = ({ vendorId }) => {
           <h3 className="text-lg font-semibold">Reviews</h3>
           {reviews.length > 0 && (
             <div className="flex items-center gap-2">
-              {renderStars(Math.round(parseFloat(getAverageRating())))}
+              {renderStars(Math.round(Number(getAverageRating())))}
               <span className="text-sm text-gray-600">
                 {getAverageRating()} ({reviews.length} reviews)
               </span>
