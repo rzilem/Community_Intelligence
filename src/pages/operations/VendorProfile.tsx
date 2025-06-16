@@ -6,7 +6,7 @@ import PageTemplate from '@/components/layout/PageTemplate';
 import { Building2, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import VendorProfileDetails from '@/components/vendors/VendorProfileDetails';
-import { vendorService } from '@/services/vendor-service';
+import { vendorExtendedService } from '@/services/vendor-extended-service';
 import { useToast } from '@/components/ui/use-toast';
 
 const VendorProfile = () => {
@@ -16,7 +16,7 @@ const VendorProfile = () => {
 
   const { data: vendor, isLoading, isError } = useQuery({
     queryKey: ['vendor', id],
-    queryFn: () => vendorService.getVendorById(id!),
+    queryFn: () => vendorExtendedService.getExtendedVendorById(id!),
     enabled: !!id,
   });
 

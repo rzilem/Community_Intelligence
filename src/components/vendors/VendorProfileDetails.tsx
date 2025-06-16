@@ -2,17 +2,37 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Vendor } from "@/types/vendor-types";
-import { Mail, Phone, Building, Star } from "lucide-react";
+import { ExtendedVendor } from "@/types/vendor-extended-types";
+import { Mail, Phone, Building, Star, Calendar, DollarSign, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import VendorDocumentsTab from "./VendorDocumentsTab";
+import VendorCertificationsTab from "./VendorCertificationsTab";
+import VendorReviewsTab from "./VendorReviewsTab";
+import VendorEmergencyContactsTab from "./VendorEmergencyContactsTab";
+import VendorAvailabilityTab from "./VendorAvailabilityTab";
+import VendorPerformanceTab from "./VendorPerformanceTab";
 
 interface VendorProfileDetailsProps {
-  vendor: Vendor;
+  vendor: ExtendedVendor;
 }
 
 const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) => {
+  const getExpiryStatus = (expiryDate?: string) => {
+    if (!expiryDate) return null;
+    const expiry = new Date(expiryDate);
+    const today = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    
+    if (expiry < today) return { status: 'expired', color: 'bg-red-100 text-red-800' };
+    if (expiry <= thirtyDaysFromNow) return { status: 'expiring', color: 'bg-yellow-100 text-yellow-800' };
+    return { status: 'valid', color: 'bg-green-100 text-green-800' };
+  };
+
   return (
     <div className="space-y-6">
+      {/* Vendor Header */}
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center text-xl font-semibold">
@@ -39,19 +59,120 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
         </div>
       </div>
 
+      {/* Quick Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Total Jobs</p>
+                <p className="text-2xl font-bold">{vendor.total_jobs}</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-gray-400" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Completed Jobs</p>
+                <p className="text-2xl font-bold">{vendor.completed_jobs}</p>
+              </div>
+              <Star className="h-8 w-8 text-gray-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Avg Response</p>
+                <p className="text-2xl font-bold">
+                  {vendor.average_response_time ? `${vendor.average_response_time}h` : 'N/A'}
+                </p>
+              </div>
+              <Calendar className="h-8 w-8 text-gray-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Insurance & Bond Status */}
+      {(vendor.insurance_expiry_date || vendor.bond_expiry_date) && (
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Insurance & Bond Status
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vendor.insurance_expiry_date && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Insurance</p>
+                    <p className="text-sm text-gray-500">
+                      Expires: {format(new Date(vendor.insurance_expiry_date), 'MMM dd, yyyy')}
+                    </p>
+                  </div>
+                  {(() => {
+                    const status = getExpiryStatus(vendor.insurance_expiry_date);
+                    return status ? (
+                      <Badge className={status.color}>
+                        {status.status === 'expired' ? 'Expired' : 
+                         status.status === 'expiring' ? 'Expiring Soon' : 'Valid'}
+                      </Badge>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+              
+              {vendor.bond_expiry_date && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Bond</p>
+                    <p className="text-sm text-gray-500">
+                      Amount: ${vendor.bond_amount?.toLocaleString() || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Expires: {format(new Date(vendor.bond_expiry_date), 'MMM dd, yyyy')}
+                    </p>
+                  </div>
+                  {(() => {
+                    const status = getExpiryStatus(vendor.bond_expiry_date);
+                    return status ? (
+                      <Badge className={status.color}>
+                        {status.status === 'expired' ? 'Expired' : 
+                         status.status === 'expiring' ? 'Expiring Soon' : 'Valid'}
+                      </Badge>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced Tabs */}
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="insurance">Insurance</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="contacts">Contacts</TabsTrigger>
+          <TabsTrigger value="availability">Availability</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
         </TabsList>
         
         <TabsContent value="details" className="space-y-4 pt-4">
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+              
               {vendor.contact_person && (
                 <div className="flex items-center mb-4">
                   <Building className="h-5 w-5 mr-2 text-gray-500" />
@@ -97,6 +218,7 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+              
               {vendor.license_number && (
                 <div className="mb-4">
                   <p className="text-sm text-gray-500">License Number</p>
@@ -116,27 +238,11 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="services">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-500">Total Jobs</p>
-                  <p className="text-2xl font-bold">{vendor.total_jobs}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Completed Jobs</p>
-                  <p className="text-2xl font-bold">{vendor.completed_jobs}</p>
-                </div>
-              </div>
-              {vendor.average_response_time && (
+
+              {vendor.notes && (
                 <div className="mt-4">
-                  <p className="text-sm text-gray-500">Average Response Time</p>
-                  <p>{vendor.average_response_time} hours</p>
+                  <p className="text-sm text-gray-500 mb-2">Notes</p>
+                  <p className="text-gray-700">{vendor.notes}</p>
                 </div>
               )}
             </CardContent>
@@ -144,60 +250,27 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
         </TabsContent>
         
         <TabsContent value="documents">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground">No documents available.</p>
-            </CardContent>
-          </Card>
+          <VendorDocumentsTab vendorId={vendor.id} />
         </TabsContent>
         
-        <TabsContent value="insurance">
-          <Card>
-            <CardContent className="pt-6">
-              {vendor.insurance_info ? (
-                <div className="space-y-4">
-                  {vendor.insurance_info.provider && (
-                    <div>
-                      <p className="text-sm text-gray-500">Provider</p>
-                      <p>{vendor.insurance_info.provider}</p>
-                    </div>
-                  )}
-                  {vendor.insurance_info.policy_number && (
-                    <div>
-                      <p className="text-sm text-gray-500">Policy Number</p>
-                      <p>{vendor.insurance_info.policy_number}</p>
-                    </div>
-                  )}
-                  {vendor.insurance_info.coverage_amount && (
-                    <div>
-                      <p className="text-sm text-gray-500">Coverage Amount</p>
-                      <p>${vendor.insurance_info.coverage_amount.toLocaleString()}</p>
-                    </div>
-                  )}
-                  {vendor.insurance_info.expiration_date && (
-                    <div>
-                      <p className="text-sm text-gray-500">Expiration Date</p>
-                      <p>{vendor.insurance_info.expiration_date}</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No insurance information available.</p>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="certifications">
+          <VendorCertificationsTab vendorId={vendor.id} />
         </TabsContent>
         
-        <TabsContent value="notes">
-          <Card>
-            <CardContent className="pt-6">
-              {vendor.notes ? (
-                <p>{vendor.notes}</p>
-              ) : (
-                <p className="text-muted-foreground">No notes available.</p>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="reviews">
+          <VendorReviewsTab vendorId={vendor.id} />
+        </TabsContent>
+        
+        <TabsContent value="contacts">
+          <VendorEmergencyContactsTab vendorId={vendor.id} />
+        </TabsContent>
+        
+        <TabsContent value="availability">
+          <VendorAvailabilityTab vendorId={vendor.id} />
+        </TabsContent>
+        
+        <TabsContent value="performance">
+          <VendorPerformanceTab vendorId={vendor.id} />
         </TabsContent>
       </Tabs>
     </div>

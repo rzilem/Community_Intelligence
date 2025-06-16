@@ -6035,6 +6035,54 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_availability: {
+        Row: {
+          created_at: string | null
+          day_of_week: number
+          end_time: string | null
+          id: string
+          is_available: boolean | null
+          start_time: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          day_of_week: number
+          end_time?: string | null
+          id?: string
+          is_available?: boolean | null
+          start_time?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string | null
+          id?: string
+          is_available?: boolean | null
+          start_time?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_availability_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_availability_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_bids: {
         Row: {
           admin_notes: string | null
@@ -6152,6 +6200,241 @@ export type Database = {
           },
         ]
       }
+      vendor_certifications: {
+        Row: {
+          certification_name: string
+          certification_number: string | null
+          created_at: string | null
+          expiry_date: string | null
+          id: string
+          issue_date: string | null
+          issuing_authority: string | null
+          status: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          certification_name: string
+          certification_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          certification_name?: string
+          certification_number?: string | null
+          created_at?: string | null
+          expiry_date?: string | null
+          id?: string
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_certifications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_certifications_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_documents: {
+        Row: {
+          created_at: string | null
+          document_name: string
+          document_type: string
+          expiry_date: string | null
+          file_size: number | null
+          file_url: string
+          id: string
+          updated_at: string | null
+          uploaded_by: string | null
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_name: string
+          document_type: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url: string
+          id?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          document_name?: string
+          document_type?: string
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_documents_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_emergency_contacts: {
+        Row: {
+          contact_email: string | null
+          contact_name: string
+          contact_phone: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          relationship: string | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_name: string
+          contact_phone: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          relationship?: string | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_name?: string
+          contact_phone?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          relationship?: string | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_emergency_contacts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_emergency_contacts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_performance_metrics: {
+        Row: {
+          association_id: string
+          average_completion_days: number | null
+          budget_adherence_rate: number | null
+          cancelled_jobs: number | null
+          completed_jobs: number | null
+          created_at: string | null
+          customer_satisfaction_score: number | null
+          id: string
+          on_time_completion_rate: number | null
+          period_end: string
+          period_start: string
+          quality_score: number | null
+          total_jobs: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          association_id: string
+          average_completion_days?: number | null
+          budget_adherence_rate?: number | null
+          cancelled_jobs?: number | null
+          completed_jobs?: number | null
+          created_at?: string | null
+          customer_satisfaction_score?: number | null
+          id?: string
+          on_time_completion_rate?: number | null
+          period_end: string
+          period_start: string
+          quality_score?: number | null
+          total_jobs?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          association_id?: string
+          average_completion_days?: number | null
+          budget_adherence_rate?: number | null
+          cancelled_jobs?: number | null
+          completed_jobs?: number | null
+          created_at?: string | null
+          customer_satisfaction_score?: number | null
+          id?: string
+          on_time_completion_rate?: number | null
+          period_end?: string
+          period_start?: string
+          quality_score?: number | null
+          total_jobs?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_performance_metrics_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_performance_metrics_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_performance_metrics_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_profiles: {
         Row: {
           company_description: string | null
@@ -6240,6 +6523,70 @@ export type Database = {
           },
         ]
       }
+      vendor_reviews: {
+        Row: {
+          association_id: string
+          created_at: string | null
+          id: string
+          is_verified: boolean | null
+          job_reference: string | null
+          rating: number
+          review_date: string | null
+          review_text: string | null
+          reviewer_id: string
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          association_id: string
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          job_reference?: string | null
+          rating: number
+          review_date?: string | null
+          review_text?: string | null
+          reviewer_id: string
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          association_id?: string
+          created_at?: string | null
+          id?: string
+          is_verified?: boolean | null
+          job_reference?: string | null
+          rating?: number
+          review_date?: string | null
+          review_text?: string | null
+          reviewer_id?: string
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_reviews_association_id_fkey"
+            columns: ["association_id"]
+            isOneToOne: false
+            referencedRelation: "associations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_reviews_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_performance"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_reviews_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_staging: {
         Row: {
           Address1: string | null
@@ -6316,6 +6663,8 @@ export type Database = {
         Row: {
           address: string | null
           average_response_time: number | null
+          bond_amount: number | null
+          bond_expiry_date: string | null
           category: string | null
           completed_jobs: number | null
           contact_person: string | null
@@ -6325,6 +6674,8 @@ export type Database = {
           has_insurance: boolean
           hoa_id: string | null
           id: string
+          insurance_certificate_url: string | null
+          insurance_expiry_date: string | null
           insurance_info: Json | null
           is_active: boolean | null
           last_invoice: string | null
@@ -6343,6 +6694,8 @@ export type Database = {
         Insert: {
           address?: string | null
           average_response_time?: number | null
+          bond_amount?: number | null
+          bond_expiry_date?: string | null
           category?: string | null
           completed_jobs?: number | null
           contact_person?: string | null
@@ -6352,6 +6705,8 @@ export type Database = {
           has_insurance?: boolean
           hoa_id?: string | null
           id?: string
+          insurance_certificate_url?: string | null
+          insurance_expiry_date?: string | null
           insurance_info?: Json | null
           is_active?: boolean | null
           last_invoice?: string | null
@@ -6370,6 +6725,8 @@ export type Database = {
         Update: {
           address?: string | null
           average_response_time?: number | null
+          bond_amount?: number | null
+          bond_expiry_date?: string | null
           category?: string | null
           completed_jobs?: number | null
           contact_person?: string | null
@@ -6379,6 +6736,8 @@ export type Database = {
           has_insurance?: boolean
           hoa_id?: string | null
           id?: string
+          insurance_certificate_url?: string | null
+          insurance_expiry_date?: string | null
           insurance_info?: Json | null
           is_active?: boolean | null
           last_invoice?: string | null
