@@ -29,12 +29,16 @@ const VendorTable: React.FC<VendorTableProps> = ({
   isIndeterminate = false,
   showSelection = false
 }) => {
-  const selectAllRef = useRef<HTMLButtonElement>(null);
+  const selectAllRef = useRef<React.ElementRef<typeof Checkbox>>(null);
 
   // Set indeterminate state on the select all checkbox
   useEffect(() => {
     if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = isIndeterminate;
+      // Access the underlying input element within the Radix Checkbox
+      const inputElement = selectAllRef.current.querySelector('input');
+      if (inputElement) {
+        inputElement.indeterminate = isIndeterminate;
+      }
     }
   }, [isIndeterminate]);
 
