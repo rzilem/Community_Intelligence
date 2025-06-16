@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ExtendedVendor, VendorEmergencyContactFormData } from "@/types/vendor-extended-types";
+import { ExtendedVendor } from "@/types/vendor-extended-types";
 import { VENDOR_CATEGORIES } from "@/types/vendor-types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { vendorService } from "@/services/vendor-service";
 
 interface VendorEditDialogProps {
   open: boolean;
@@ -29,6 +31,52 @@ const VendorEditDialog: React.FC<VendorEditDialogProps> = ({
   const [formData, setFormData] = useState<ExtendedVendor>(vendor);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateVendorMutation = useMutation({
+    mutationFn: async (updatedVendor: ExtendedVendor) => {
+      const updateData = {
+        name: updatedVendor.name,
+        contact_person: updatedVendor.contact_person,
+        email: updatedVendor.email,
+        phone: updatedVendor.phone,
+        address: updatedVendor.address,
+        license_number: updatedVendor.license_number,
+        specialties: updatedVendor.specialties || [],
+        is_active: updatedVendor.is_active,
+        notes: updatedVendor.notes,
+        // Extended fields that may not be in the base service
+        insurance_expiry_date: updatedVendor.insurance_expiry_date,
+        bond_amount: updatedVendor.bond_amount,
+        bond_expiry_date: updatedVendor.bond_expiry_date,
+        logo_url: updatedVendor.logo_url,
+      };
+      
+      return await vendorService.updateVendor(vendor.id, updateData);
+    },
+    onSuccess: (updatedVendor) => {
+      // Invalidate and refetch vendor queries
+      queryClient.invalidateQueries({ queryKey: ['vendor-extended', vendor.id] });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-stats'] });
+      
+      toast({
+        title: "Vendor updated",
+        description: `${updatedVendor.name} has been updated successfully.`,
+      });
+      
+      onSave(updatedVendor as ExtendedVendor);
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Error updating vendor:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update vendor. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleChange = (field: keyof ExtendedVendor, value: any) => {
     setFormData(prev => ({
@@ -69,9 +117,13 @@ const VendorEditDialog: React.FC<VendorEditDialogProps> = ({
       return;
     }
 
-    onSave(formData);
-    onOpenChange(false);
+    updateVendorMutation.mutate(formData);
   };
+
+  // Reset form data when vendor prop changes
+  React.useEffect(() => {
+    setFormData(vendor);
+  }, [vendor]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -258,7 +310,12 @@ const VendorEditDialog: React.FC<VendorEditDialogProps> = ({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={updateVendorMutation.isPending}
+          >
+            {updateVendorMutation.isPending ? "Saving..." : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

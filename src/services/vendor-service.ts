@@ -166,9 +166,31 @@ export const vendorService = {
   },
 
   updateVendor: async (id: string, vendorData: VendorUpdate): Promise<Vendor> => {
+    console.log('Updating vendor with data:', vendorData);
+    
+    // Clean the update data to only include fields that exist in the database
+    const cleanUpdateData: VendorUpdate = {};
+    
+    // Only include fields that are not undefined
+    if (vendorData.name !== undefined) cleanUpdateData.name = vendorData.name;
+    if (vendorData.contact_person !== undefined) cleanUpdateData.contact_person = vendorData.contact_person;
+    if (vendorData.email !== undefined) cleanUpdateData.email = vendorData.email;
+    if (vendorData.phone !== undefined) cleanUpdateData.phone = vendorData.phone;
+    if (vendorData.address !== undefined) cleanUpdateData.address = vendorData.address;
+    if (vendorData.license_number !== undefined) cleanUpdateData.license_number = vendorData.license_number;
+    if (vendorData.insurance_info !== undefined) cleanUpdateData.insurance_info = vendorData.insurance_info;
+    if (vendorData.specialties !== undefined) cleanUpdateData.specialties = vendorData.specialties;
+    if (vendorData.rating !== undefined) cleanUpdateData.rating = vendorData.rating;
+    if (vendorData.total_jobs !== undefined) cleanUpdateData.total_jobs = vendorData.total_jobs;
+    if (vendorData.completed_jobs !== undefined) cleanUpdateData.completed_jobs = vendorData.completed_jobs;
+    if (vendorData.average_response_time !== undefined) cleanUpdateData.average_response_time = vendorData.average_response_time;
+    if (vendorData.is_active !== undefined) cleanUpdateData.is_active = vendorData.is_active;
+    if (vendorData.notes !== undefined) cleanUpdateData.notes = vendorData.notes;
+    if (vendorData.hoa_id !== undefined) cleanUpdateData.hoa_id = vendorData.hoa_id;
+
     const { data, error } = await supabase
       .from('vendors')
-      .update(vendorData)
+      .update(cleanUpdateData)
       .eq('id', id)
       .select()
       .single();
@@ -178,6 +200,7 @@ export const vendorService = {
       throw error;
     }
 
+    console.log('Vendor updated successfully:', data);
     return data;
   },
 

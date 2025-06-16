@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -20,10 +20,12 @@ import VendorContractsTab from "@/components/vendors/contracts/VendorContractsTa
 import VendorComplianceTab from "@/components/vendors/compliance/VendorComplianceTab";
 import VendorAnalyticsDashboard from "@/components/vendors/analytics/VendorAnalyticsDashboard";
 import WorkflowAutomationTab from "@/components/vendors/workflows/WorkflowAutomationTab";
+import { ExtendedVendor } from "@/types/vendor-extended-types";
 
 const VendorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: vendor, isLoading, error } = useQuery({
     queryKey: ['vendor-extended', id],
@@ -31,9 +33,14 @@ const VendorProfile: React.FC = () => {
     enabled: !!id,
   });
 
-  const handleSave = () => {
-    // Refresh data after save
-    // This will be handled by the dialog's mutation
+  const handleSave = (updatedVendor: ExtendedVendor) => {
+    // The VendorEditDialog now handles the actual saving and query invalidation
+    // This callback is triggered after successful save to handle any additional UI updates
+    console.log('Vendor updated successfully:', updatedVendor);
+    
+    // Force a refetch of the vendor data to ensure UI is in sync
+    queryClient.invalidateQueries({ queryKey: ['vendor-extended', id] });
+    queryClient.invalidateQueries({ queryKey: ['vendors'] });
   };
 
   if (isLoading) {
