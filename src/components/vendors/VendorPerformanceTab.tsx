@@ -2,11 +2,24 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { vendorExtendedService } from "@/services/vendor-extended-service";
 import { useAuth } from "@/contexts/auth";
-import { TrendingUp, Clock, Star, DollarSign, CheckCircle, XCircle } from "lucide-react";
-import { format } from "date-fns";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
+import { TrendingUp, TrendingDown, Clock, CheckCircle, DollarSign, Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface VendorPerformanceTabProps {
   vendorId: string;
@@ -15,258 +28,265 @@ interface VendorPerformanceTabProps {
 const VendorPerformanceTab: React.FC<VendorPerformanceTabProps> = ({ vendorId }) => {
   const { currentAssociation } = useAuth();
 
-  const { data: performanceMetrics = [], isLoading } = useQuery({
+  const { data: metrics = [], isLoading } = useQuery({
     queryKey: ['vendor-performance-metrics', vendorId, currentAssociation?.id],
     queryFn: () => vendorExtendedService.getVendorPerformanceMetrics(vendorId, currentAssociation?.id),
   });
 
-  const getPerformanceScore = (value?: number) => {
-    if (!value) return { color: 'text-gray-500', label: 'N/A' };
-    if (value >= 0.9) return { color: 'text-green-600', label: 'Excellent' };
-    if (value >= 0.8) return { color: 'text-blue-600', label: 'Good' };
-    if (value >= 0.7) return { color: 'text-yellow-600', label: 'Fair' };
-    return { color: 'text-red-600', label: 'Poor' };
-  };
-
-  const getCompletionRate = (completed: number, total: number) => {
-    if (total === 0) return 0;
-    return (completed / total) * 100;
-  };
+  const { data: reviews = [] } = useQuery({
+    queryKey: ['vendor-reviews', vendorId],
+    queryFn: () => vendorExtendedService.getVendorReviews(vendorId),
+  });
 
   if (isLoading) {
-    return <div className="flex justify-center py-8">Loading performance data...</div>;
+    return <div className="flex justify-center py-8">Loading performance metrics...</div>;
   }
 
-  // Calculate overall metrics from all periods
-  const overallMetrics = performanceMetrics.reduce(
-    (acc, metric) => ({
-      totalJobs: acc.totalJobs + metric.total_jobs,
-      completedJobs: acc.completedJobs + metric.completed_jobs,
-      cancelledJobs: acc.cancelledJobs + metric.cancelled_jobs,
-      avgCompletionDays: acc.avgCompletionDays + (metric.average_completion_days || 0),
-      avgSatisfaction: acc.avgSatisfaction + (metric.customer_satisfaction_score || 0),
-      avgOnTimeRate: acc.avgOnTimeRate + (metric.on_time_completion_rate || 0),
-      avgBudgetAdherence: acc.avgBudgetAdherence + (metric.budget_adherence_rate || 0),
-      avgQualityScore: acc.avgQualityScore + (metric.quality_score || 0),
-      periods: acc.periods + 1,
-    }),
-    {
-      totalJobs: 0,
-      completedJobs: 0,
-      cancelledJobs: 0,
-      avgCompletionDays: 0,
-      avgSatisfaction: 0,
-      avgOnTimeRate: 0,
-      avgBudgetAdherence: 0,
-      avgQualityScore: 0,
-      periods: 0,
-    }
-  );
+  const latestMetrics = metrics[0];
+  
+  const performanceData = metrics.map(metric => ({
+    period: `${metric.period_start} to ${metric.period_end}`,
+    completionRate: metric.completed_jobs / metric.total_jobs * 100,
+    avgDays: metric.average_completion_days,
+    satisfaction: metric.customer_satisfaction_score,
+    onTimeRate: metric.on_time_completion_rate,
+  }));
 
-  // Calculate averages
-  if (overallMetrics.periods > 0) {
-    overallMetrics.avgCompletionDays /= overallMetrics.periods;
-    overallMetrics.avgSatisfaction /= overallMetrics.periods;
-    overallMetrics.avgOnTimeRate /= overallMetrics.periods;
-    overallMetrics.avgBudgetAdherence /= overallMetrics.periods;
-    overallMetrics.avgQualityScore /= overallMetrics.periods;
-  }
+  const jobStatusData = latestMetrics ? [
+    { name: 'Completed', value: latestMetrics.completed_jobs, color: '#10b981' },
+    { name: 'Cancelled', value: latestMetrics.cancelled_jobs, color: '#ef4444' },
+  ] : [];
+
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : 0;
+
+  const getPerformanceColor = (score: number) => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 80) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getPerformanceIcon = (score: number) => {
+    if (score >= 90) return <TrendingUp className="h-4 w-4 text-green-600" />;
+    if (score >= 80) return <Clock className="h-4 w-4 text-yellow-600" />;
+    return <TrendingDown className="h-4 w-4 text-red-600" />;
+  };
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold">Performance Metrics</h3>
 
-      {/* Overall Performance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Completion Rate</p>
-                <p className="text-2xl font-bold">
-                  {overallMetrics.totalJobs > 0 
-                    ? `${getCompletionRate(overallMetrics.completedJobs, overallMetrics.totalJobs).toFixed(1)}%`
-                    : 'N/A'
-                  }
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Avg Completion Time</p>
-                <p className="text-2xl font-bold">
-                  {overallMetrics.avgCompletionDays > 0 
-                    ? `${overallMetrics.avgCompletionDays.toFixed(1)} days`
-                    : 'N/A'
-                  }
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Customer Satisfaction</p>
-                <p className="text-2xl font-bold">
-                  {overallMetrics.avgSatisfaction > 0 
-                    ? `${(overallMetrics.avgSatisfaction * 100).toFixed(1)}%`
-                    : 'N/A'
-                  }
-                </p>
-              </div>
-              <Star className="h-8 w-8 text-yellow-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Budget Adherence</p>
-                <p className="text-2xl font-bold">
-                  {overallMetrics.avgBudgetAdherence > 0 
-                    ? `${(overallMetrics.avgBudgetAdherence * 100).toFixed(1)}%`
-                    : 'N/A'
-                  }
-                </p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Performance Scores */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Scores</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-2">On-Time Completion</p>
-              <div className={`text-3xl font-bold ${getPerformanceScore(overallMetrics.avgOnTimeRate).color}`}>
-                {overallMetrics.avgOnTimeRate > 0 
-                  ? `${(overallMetrics.avgOnTimeRate * 100).toFixed(1)}%`
-                  : 'N/A'
-                }
-              </div>
-              <Badge variant="outline" className="mt-2">
-                {getPerformanceScore(overallMetrics.avgOnTimeRate).label}
-              </Badge>
-            </div>
-
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-2">Quality Score</p>
-              <div className={`text-3xl font-bold ${getPerformanceScore(overallMetrics.avgQualityScore).color}`}>
-                {overallMetrics.avgQualityScore > 0 
-                  ? `${(overallMetrics.avgQualityScore * 100).toFixed(1)}%`
-                  : 'N/A'
-                }
-              </div>
-              <Badge variant="outline" className="mt-2">
-                {getPerformanceScore(overallMetrics.avgQualityScore).label}
-              </Badge>
-            </div>
-
-            <div className="text-center">
-              <p className="text-sm text-gray-500 mb-2">Overall Rating</p>
-              <div className={`text-3xl font-bold ${getPerformanceScore((overallMetrics.avgOnTimeRate + overallMetrics.avgQualityScore + overallMetrics.avgBudgetAdherence) / 3).color}`}>
-                {overallMetrics.avgOnTimeRate > 0 && overallMetrics.avgQualityScore > 0 && overallMetrics.avgBudgetAdherence > 0
-                  ? `${(((overallMetrics.avgOnTimeRate + overallMetrics.avgQualityScore + overallMetrics.avgBudgetAdherence) / 3) * 100).toFixed(1)}%`
-                  : 'N/A'
-                }
-              </div>
-              <Badge variant="outline" className="mt-2">
-                {getPerformanceScore((overallMetrics.avgOnTimeRate + overallMetrics.avgQualityScore + overallMetrics.avgBudgetAdherence) / 3).label}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Historical Performance */}
-      {performanceMetrics.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Historical Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {performanceMetrics.map((metric) => (
-                <div key={metric.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h4 className="font-medium">
-                      {format(new Date(metric.period_start), 'MMM yyyy')} - {format(new Date(metric.period_end), 'MMM yyyy')}
-                    </h4>
-                    <Badge variant="outline">
-                      {metric.completed_jobs}/{metric.total_jobs} jobs
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Completion Rate</p>
-                      <p className="font-medium">
-                        {getCompletionRate(metric.completed_jobs, metric.total_jobs).toFixed(1)}%
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-gray-500">Avg Days</p>
-                      <p className="font-medium">
-                        {metric.average_completion_days?.toFixed(1) || 'N/A'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-gray-500">On-Time Rate</p>
-                      <p className="font-medium">
-                        {metric.on_time_completion_rate 
-                          ? `${(metric.on_time_completion_rate * 100).toFixed(1)}%`
-                          : 'N/A'
-                        }
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-gray-500">Satisfaction</p>
-                      <p className="font-medium">
-                        {metric.customer_satisfaction_score 
-                          ? `${(metric.customer_satisfaction_score * 100).toFixed(1)}%`
-                          : 'N/A'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {performanceMetrics.length === 0 && (
+      {!latestMetrics ? (
         <Card>
           <CardContent className="pt-6 text-center">
-            <TrendingUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">No performance data available</p>
-            <p className="text-sm text-gray-400 mt-2">
-              Performance metrics will appear here after jobs are completed
-            </p>
+            <BarChart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p className="text-gray-500">No performance metrics available</p>
+            <p className="text-sm text-gray-400">Performance data will be available after job completions</p>
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {/* Key Performance Indicators */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Completion Rate</p>
+                    <p className={`text-2xl font-bold ${getPerformanceColor(latestMetrics.completed_jobs / latestMetrics.total_jobs * 100)}`}>
+                      {((latestMetrics.completed_jobs / latestMetrics.total_jobs) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Avg. Completion Time</p>
+                    <p className="text-2xl font-bold">
+                      {latestMetrics.average_completion_days?.toFixed(1) || 'N/A'} days
+                    </p>
+                  </div>
+                  <Clock className="h-8 w-8 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Customer Rating</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-2xl font-bold">{averageRating.toFixed(1)}</p>
+                      <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                    </div>
+                  </div>
+                  <Star className="h-8 w-8 text-gray-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">On-Time Rate</p>
+                    <p className={`text-2xl font-bold ${getPerformanceColor(latestMetrics.on_time_completion_rate || 0)}`}>
+                      {latestMetrics.on_time_completion_rate?.toFixed(1) || 'N/A'}%
+                    </p>
+                  </div>
+                  {getPerformanceIcon(latestMetrics.on_time_completion_rate || 0)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Performance Trends */}
+          {performanceData.length > 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Trends</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={performanceData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="period" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line 
+                      type="monotone" 
+                      dataKey="completionRate" 
+                      stroke="#10b981" 
+                      name="Completion Rate %" 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="onTimeRate" 
+                      stroke="#3b82f6" 
+                      name="On-Time Rate %" 
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="satisfaction" 
+                      stroke="#f59e0b" 
+                      name="Customer Satisfaction" 
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Job Status Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Job Status Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={jobStatusData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {jobStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quality Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Quality Score</span>
+                  <Badge variant="outline" className={getPerformanceColor(latestMetrics.quality_score || 0)}>
+                    {latestMetrics.quality_score?.toFixed(1) || 'N/A'}/10
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Budget Adherence</span>
+                  <Badge variant="outline" className={getPerformanceColor(latestMetrics.budget_adherence_rate || 0)}>
+                    {latestMetrics.budget_adherence_rate?.toFixed(1) || 'N/A'}%
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Customer Satisfaction</span>
+                  <Badge variant="outline" className={getPerformanceColor(latestMetrics.customer_satisfaction_score || 0)}>
+                    {latestMetrics.customer_satisfaction_score?.toFixed(1) || 'N/A'}/10
+                  </Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Total Reviews</span>
+                  <Badge variant="outline">
+                    {reviews.length}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Reviews Summary */}
+          {reviews.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Reviews Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {reviews.slice(0, 3).map((review) => (
+                    <div key={review.id} className="border-b border-gray-200 pb-3 last:border-b-0">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="flex">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i}
+                                  className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-sm text-gray-500">
+                              {review.reviewer?.first_name && review.reviewer?.last_name
+                                ? `${review.reviewer.first_name} ${review.reviewer.last_name}`
+                                : 'Anonymous'
+                              }
+                            </span>
+                          </div>
+                          {review.review_text && (
+                            <p className="text-sm text-gray-700">{review.review_text}</p>
+                          )}
+                          {review.job_reference && (
+                            <p className="text-xs text-gray-500 mt-1">Job: {review.job_reference}</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

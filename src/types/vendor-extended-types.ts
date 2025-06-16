@@ -104,6 +104,7 @@ export interface BaseVendor {
   created_at: string;
   updated_at: string;
   hoa_id?: string;
+  logo_url?: string; // Added logo_url field
 }
 
 export interface ExtendedVendor extends BaseVendor {
