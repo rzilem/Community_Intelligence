@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   // Handle profile image update
-  const handleProfileImageUpdate = (newUrl: string) => {
+  const handleProfileImageUpdate = async (newUrl: string): Promise<void> => {
     // The image will be updated automatically since the Header component
     // will re-render with the new profile data from context
   };
@@ -89,10 +89,7 @@ const Header: React.FC<HeaderProps> = ({
                   <ProfileImageUpload
                     userId={user.id}
                     currentImageUrl={profile?.profile_image_url}
-                    firstName={profile?.first_name}
-                    lastName={profile?.last_name}
                     onImageUpdate={handleProfileImageUpdate}
-                    size="sm"
                   />
                 ) : (
                   <Avatar className="h-8 w-8">

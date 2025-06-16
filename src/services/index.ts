@@ -12,7 +12,6 @@ export { vendorService } from './vendor-service';
 export { fetchHOAs, fetchHOAById, createHOA, updateHOA, deleteHOA } from './hoa-service';
 export { getCommunicationLogs, getCommunicationLogByTrackingNumber, getNextTrackingNumber, registerCommunication, updateCommunicationStatus } from './tracking-service';
 export { communicationService } from './communication-service';
-export { dataExportService } from './data-export-service';
 export { dataImportService, dataExportService, parseCSV } from './data-import-export-service';
 
 // User service exports (avoid duplicate exports)
