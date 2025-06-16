@@ -1,6 +1,9 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { UserSettings } from '@/types/profile-types';
+
+// Add a simple cache to prevent repeated identical requests
+const preferencesCache = new Map<string, { data: string[]; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 seconds
 
 /**
  * Save column preferences for a specific view for a user
@@ -11,6 +14,10 @@ export const saveUserColumnPreferences = async (
   columnIds: string[]
 ): Promise<{ success: boolean; error?: string }> => {
   try {
+    // Update cache immediately for optimistic updates
+    const cacheKey = `${userId}-${viewId}`;
+    preferencesCache.set(cacheKey, { data: columnIds, timestamp: Date.now() });
+
     // First try to get existing user settings
     const { data: settings, error: fetchError } = await supabase
       .from('user_settings')
@@ -69,6 +76,9 @@ export const saveUserColumnPreferences = async (
     return { success: true };
   } catch (error: any) {
     console.error('Error saving column preferences:', error);
+    // Remove from cache on error
+    const cacheKey = `${userId}-${viewId}`;
+    preferencesCache.delete(cacheKey);
     return { success: false, error: error.message };
   }
 };
@@ -81,6 +91,13 @@ export const getUserColumnPreferences = async (
   viewId: string
 ): Promise<{ data?: string[]; error?: string }> => {
   try {
+    // Check cache first
+    const cacheKey = `${userId}-${viewId}`;
+    const cached = preferencesCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return { data: cached.data };
+    }
+
     const { data, error } = await supabase
       .from('user_settings')
       .select('column_preferences')
@@ -112,8 +129,15 @@ export const getUserColumnPreferences = async (
       }
     }
     
+    const result = columnPreferences[viewId];
+    
+    // Update cache with fresh data
+    if (result) {
+      preferencesCache.set(cacheKey, { data: result, timestamp: Date.now() });
+    }
+    
     return { 
-      data: columnPreferences[viewId]
+      data: result
     };
   } catch (error: any) {
     console.error('Error fetching user column preferences:', error);

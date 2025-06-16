@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Vendor } from "@/types/vendor-types";
@@ -14,29 +14,37 @@ interface VendorListProps {
 
 type ColumnKey = 'name' | 'contact_person' | 'email' | 'phone' | 'specialties' | 'is_active' | 'total_jobs' | 'rating';
 
-const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
-  const columnOptions = [
-    { id: 'name', label: 'Vendor Name' },
-    { id: 'contact_person', label: 'Contact Person' },
-    { id: 'email', label: 'Email' },
-    { id: 'phone', label: 'Phone' },
-    { id: 'specialties', label: 'Specialties' },
-    { id: 'is_active', label: 'Status' },
-    { id: 'total_jobs', label: 'Total Jobs' },
-    { id: 'rating', label: 'Rating' }
-  ];
+// Memoize column options to prevent recreation on every render
+const COLUMN_OPTIONS = [
+  { id: 'name', label: 'Vendor Name' },
+  { id: 'contact_person', label: 'Contact Person' },
+  { id: 'email', label: 'Email' },
+  { id: 'phone', label: 'Phone' },
+  { id: 'specialties', label: 'Specialties' },
+  { id: 'is_active', label: 'Status' },
+  { id: 'total_jobs', label: 'Total Jobs' },
+  { id: 'rating', label: 'Rating' }
+];
 
+const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   const { 
     visibleColumnIds, 
     updateVisibleColumns,
-    loading
-  } = useUserColumns(columnOptions, 'vendor-list');
+    loading,
+    error
+  } = useUserColumns(COLUMN_OPTIONS, 'vendor-list');
+
+  // Show error state if column preferences failed to load
+  if (error) {
+    console.warn('Column preferences error:', error);
+    // Continue rendering with default columns rather than blocking the UI
+  }
 
   return (
     <>
       <div className="flex justify-end mb-4">
         <ColumnSelector 
-          columns={columnOptions} 
+          columns={COLUMN_OPTIONS} 
           selectedColumns={visibleColumnIds} 
           onChange={updateVisibleColumns} 
         />
@@ -128,4 +136,4 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   );
 };
 
-export default VendorList;
+export default React.memo(VendorList);
