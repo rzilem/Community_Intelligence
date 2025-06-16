@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +50,9 @@ const AnnouncementsDebug = () => {
         priority: 'normal',
         association_id: currentAssociation.id,
         author_id: user.id,
+        is_published: true,
+        publish_date: new Date().toISOString(),
+        expiry_date: null
       });
       
       setNewTitle('');
