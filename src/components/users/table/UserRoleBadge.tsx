@@ -1,8 +1,9 @@
 
 import React from 'react';
+import { UserRole } from '@/types/profile-types';
 
 interface UserRoleBadgeProps {
-  role?: string;
+  role?: UserRole;
 }
 
 const UserRoleBadge: React.FC<UserRoleBadgeProps> = ({ role = 'user' }) => {
@@ -18,6 +19,8 @@ const UserRoleBadge: React.FC<UserRoleBadgeProps> = ({ role = 'user' }) => {
         return 'bg-amber-100 text-amber-800';
       case 'accountant':
         return 'bg-purple-100 text-purple-800';
+      case 'treasurer':
+        return 'bg-teal-100 text-teal-800';
       case 'user':
       default:
         return 'bg-gray-100 text-gray-800';

@@ -10,17 +10,19 @@ import { toast } from 'sonner';
 import ProfileSyncButton from '@/components/users/sync/ProfileSyncButton';
 import ProfileSyncAlert from '@/components/users/sync/ProfileSyncAlert';
 import { useProfileSync } from '@/hooks/users/useProfileSync';
-import { UserRole } from '@/types/profile-types';
+import { UserRole, ALL_ROLES } from '@/types/profile-types';
 
-const roles = [
-  { id: 'admin' as UserRole, name: 'Administrator' },
-  { id: 'manager' as UserRole, name: 'Manager' },
-  { id: 'resident' as UserRole, name: 'Resident' },
-  { id: 'maintenance' as UserRole, name: 'Maintenance' },
-  { id: 'accountant' as UserRole, name: 'Accountant' },
-  { id: 'treasurer' as UserRole, name: 'Treasurer' },
-  { id: 'user' as UserRole, name: 'Basic User' },
-];
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: 'Administrator',
+  manager: 'Manager',
+  resident: 'Resident',
+  maintenance: 'Maintenance',
+  accountant: 'Accountant',
+  treasurer: 'Treasurer',
+  user: 'Basic User'
+};
+
+const roles = ALL_ROLES.map(role => ({ id: role, name: ROLE_LABELS[role] }));
 
 const Permissions = () => {
   // Query directly from profiles table with more detailed logging

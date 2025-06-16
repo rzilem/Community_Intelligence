@@ -2,6 +2,55 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CheckCircle } from 'lucide-react';
+import { ALL_ROLES, UserRole } from '@/types/profile-types';
+
+const ROLE_INFO: Record<
+  UserRole,
+  { label: string; description: string; color: string; access: string }
+> = {
+  admin: {
+    label: 'Administrator',
+    description: 'Full access to all features, including system settings',
+    color: 'text-green-500',
+    access: 'Unrestricted'
+  },
+  manager: {
+    label: 'Manager',
+    description: 'Access to most features except system configuration',
+    color: 'text-blue-500',
+    access: 'High'
+  },
+  resident: {
+    label: 'Resident',
+    description: 'Access to community information and resident features',
+    color: 'text-amber-500',
+    access: 'Medium'
+  },
+  maintenance: {
+    label: 'Maintenance',
+    description: 'Access to maintenance requests and schedules',
+    color: 'text-amber-500',
+    access: 'Medium'
+  },
+  accountant: {
+    label: 'Accountant',
+    description: 'Access to financial information and reports',
+    color: 'text-amber-500',
+    access: 'Medium'
+  },
+  treasurer: {
+    label: 'Treasurer',
+    description: 'Financial oversight and treasury management features',
+    color: 'text-teal-500',
+    access: 'High'
+  },
+  user: {
+    label: 'Basic User',
+    description: 'Limited access to basic features only',
+    color: 'text-gray-500',
+    access: 'Low'
+  }
+};
 
 const RolePermissionsTable: React.FC = () => {
   return (
@@ -14,78 +63,20 @@ const RolePermissionsTable: React.FC = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Administrator</div>
-          </TableCell>
-          <TableCell>Full access to all features, including system settings</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-              <span>Unrestricted</span>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Manager</div>
-          </TableCell>
-          <TableCell>Access to most features except system configuration</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-blue-500 mr-2" />
-              <span>High</span>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Resident</div>
-          </TableCell>
-          <TableCell>Access to community information and resident features</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
-              <span>Medium</span>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Maintenance</div>
-          </TableCell>
-          <TableCell>Access to maintenance requests and schedules</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
-              <span>Medium</span>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Accountant</div>
-          </TableCell>
-          <TableCell>Access to financial information and reports</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-amber-500 mr-2" />
-              <span>Medium</span>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow>
-          <TableCell>
-            <div className="font-medium">Basic User</div>
-          </TableCell>
-          <TableCell>Limited access to basic features only</TableCell>
-          <TableCell>
-            <div className="flex items-center">
-              <CheckCircle className="h-4 w-4 text-gray-500 mr-2" />
-              <span>Low</span>
-            </div>
-          </TableCell>
-        </TableRow>
+        {ALL_ROLES.map(role => (
+          <TableRow key={role}>
+            <TableCell>
+              <div className="font-medium">{ROLE_INFO[role].label}</div>
+            </TableCell>
+            <TableCell>{ROLE_INFO[role].description}</TableCell>
+            <TableCell>
+              <div className="flex items-center">
+                <CheckCircle className={`h-4 w-4 ${ROLE_INFO[role].color} mr-2`} />
+                <span>{ROLE_INFO[role].access}</span>
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );

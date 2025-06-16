@@ -1,5 +1,22 @@
 
-export type UserRole = 'admin' | 'manager' | 'resident' | 'maintenance' | 'accountant' | 'user' | 'treasurer';
+export type UserRole =
+  | 'admin'
+  | 'manager'
+  | 'resident'
+  | 'maintenance'
+  | 'accountant'
+  | 'user'
+  | 'treasurer';
+
+export const ALL_ROLES: UserRole[] = [
+  'admin',
+  'manager',
+  'resident',
+  'maintenance',
+  'accountant',
+  'user',
+  'treasurer'
+];
 
 export interface Profile {
   id: string;
