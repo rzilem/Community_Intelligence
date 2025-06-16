@@ -17,6 +17,8 @@ interface VendorIntegrationDialogProps {
   vendorId: string;
 }
 
+type IntegrationType = 'api' | 'email' | 'portal' | 'accounting' | 'calendar';
+
 const VendorIntegrationDialog: React.FC<VendorIntegrationDialogProps> = ({
   open,
   onOpenChange,
@@ -27,7 +29,7 @@ const VendorIntegrationDialog: React.FC<VendorIntegrationDialogProps> = ({
 
   const [formData, setFormData] = useState({
     integration_name: '',
-    integration_type: 'api' as const,
+    integration_type: 'api' as IntegrationType,
     configuration: {},
     credentials: {},
     is_active: true
@@ -311,7 +313,7 @@ const VendorIntegrationDialog: React.FC<VendorIntegrationDialogProps> = ({
               <Label htmlFor="integration_type">Integration Type</Label>
               <Select 
                 value={formData.integration_type} 
-                onValueChange={(value: any) => setFormData(prev => ({ 
+                onValueChange={(value: IntegrationType) => setFormData(prev => ({ 
                   ...prev, 
                   integration_type: value,
                   configuration: {},

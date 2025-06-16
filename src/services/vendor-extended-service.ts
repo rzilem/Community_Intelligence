@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   VendorDocument, 
@@ -17,38 +16,125 @@ import {
 export const vendorExtendedService = {
   // Get vendor with all related data
   getExtendedVendorById: async (id: string): Promise<ExtendedVendor | undefined> => {
-    const { data: vendor, error } = await supabase
-      .from('vendors')
-      .select(`
-        *,
-        documents:vendor_documents(*),
-        certifications:vendor_certifications(*),
-        performance_metrics:vendor_performance_metrics(*),
-        reviews:vendor_reviews(*, reviewer:profiles(first_name, last_name, email)),
-        availability:vendor_availability(*),
-        emergency_contacts:vendor_emergency_contacts(*)
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      // First, get the basic vendor information
+      const { data: vendor, error: vendorError } = await supabase
+        .from('vendors')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching extended vendor:', error);
+      if (vendorError) {
+        console.error('Error fetching basic vendor:', vendorError);
+        throw vendorError;
+      }
+
+      if (!vendor) {
+        console.log('No vendor found with id:', id);
+        return undefined;
+      }
+
+      // Try to get extended data, but don't fail if tables don't exist
+      const extendedVendor: ExtendedVendor = { ...vendor };
+
+      // Try to get documents
+      try {
+        const { data: documents } = await supabase
+          .from('vendor_documents')
+          .select('*')
+          .eq('vendor_id', id);
+        extendedVendor.documents = documents || [];
+      } catch (error) {
+        console.warn('Documents table might not exist:', error);
+        extendedVendor.documents = [];
+      }
+
+      // Try to get certifications
+      try {
+        const { data: certifications } = await supabase
+          .from('vendor_certifications')
+          .select('*')
+          .eq('vendor_id', id);
+        extendedVendor.certifications = certifications || [];
+      } catch (error) {
+        console.warn('Certifications table might not exist:', error);
+        extendedVendor.certifications = [];
+      }
+
+      // Try to get performance metrics
+      try {
+        const { data: performanceMetrics } = await supabase
+          .from('vendor_performance_metrics')
+          .select('*')
+          .eq('vendor_id', id);
+        extendedVendor.performance_metrics = performanceMetrics || [];
+      } catch (error) {
+        console.warn('Performance metrics table might not exist:', error);
+        extendedVendor.performance_metrics = [];
+      }
+
+      // Try to get reviews
+      try {
+        const { data: reviews } = await supabase
+          .from('vendor_reviews')
+          .select(`
+            *,
+            reviewer:profiles(first_name, last_name, email)
+          `)
+          .eq('vendor_id', id);
+        extendedVendor.reviews = reviews || [];
+      } catch (error) {
+        console.warn('Reviews table might not exist:', error);
+        extendedVendor.reviews = [];
+      }
+
+      // Try to get availability
+      try {
+        const { data: availability } = await supabase
+          .from('vendor_availability')
+          .select('*')
+          .eq('vendor_id', id);
+        extendedVendor.availability = availability || [];
+      } catch (error) {
+        console.warn('Availability table might not exist:', error);
+        extendedVendor.availability = [];
+      }
+
+      // Try to get emergency contacts
+      try {
+        const { data: emergencyContacts } = await supabase
+          .from('vendor_emergency_contacts')
+          .select('*')
+          .eq('vendor_id', id);
+        extendedVendor.emergency_contacts = emergencyContacts || [];
+      } catch (error) {
+        console.warn('Emergency contacts table might not exist:', error);
+        extendedVendor.emergency_contacts = [];
+      }
+
+      return extendedVendor as ExtendedVendor;
+
+    } catch (error) {
+      console.error('Error in getExtendedVendorById:', error);
       throw error;
     }
-
-    return vendor as ExtendedVendor;
   },
 
   // Document management
   getVendorDocuments: async (vendorId: string): Promise<VendorDocument[]> => {
-    const { data, error } = await supabase
-      .from('vendor_documents')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('vendor_documents')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return (data || []) as VendorDocument[];
+      if (error) throw error;
+      return (data || []) as VendorDocument[];
+    } catch (error) {
+      console.warn('Vendor documents table might not exist:', error);
+      return [];
+    }
   },
 
   createVendorDocument: async (vendorId: string, documentData: VendorDocumentFormData): Promise<VendorDocument> => {
@@ -89,14 +175,19 @@ export const vendorExtendedService = {
 
   // Certification management
   getVendorCertifications: async (vendorId: string): Promise<VendorCertification[]> => {
-    const { data, error } = await supabase
-      .from('vendor_certifications')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .order('expiry_date', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('vendor_certifications')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('expiry_date', { ascending: true });
 
-    if (error) throw error;
-    return (data || []) as VendorCertification[];
+      if (error) throw error;
+      return (data || []) as VendorCertification[];
+    } catch (error) {
+      console.warn('Vendor certifications table might not exist:', error);
+      return [];
+    }
   },
 
   createVendorCertification: async (vendorId: string, certData: VendorCertificationFormData): Promise<VendorCertification> => {
@@ -136,17 +227,22 @@ export const vendorExtendedService = {
 
   // Review management
   getVendorReviews: async (vendorId: string): Promise<VendorReview[]> => {
-    const { data, error } = await supabase
-      .from('vendor_reviews')
-      .select(`
-        *,
-        reviewer:profiles(first_name, last_name, email)
-      `)
-      .eq('vendor_id', vendorId)
-      .order('review_date', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('vendor_reviews')
+        .select(`
+          *,
+          reviewer:profiles(first_name, last_name, email)
+        `)
+        .eq('vendor_id', vendorId)
+        .order('review_date', { ascending: false });
 
-    if (error) throw error;
-    return (data || []) as VendorReview[];
+      if (error) throw error;
+      return (data || []) as VendorReview[];
+    } catch (error) {
+      console.warn('Vendor reviews table might not exist:', error);
+      return [];
+    }
   },
 
   createVendorReview: async (vendorId: string, associationId: string, reviewData: VendorReviewFormData): Promise<VendorReview> => {
@@ -170,31 +266,41 @@ export const vendorExtendedService = {
 
   // Performance metrics
   getVendorPerformanceMetrics: async (vendorId: string, associationId?: string): Promise<VendorPerformanceMetrics[]> => {
-    let query = supabase
-      .from('vendor_performance_metrics')
-      .select('*')
-      .eq('vendor_id', vendorId);
+    try {
+      let query = supabase
+        .from('vendor_performance_metrics')
+        .select('*')
+        .eq('vendor_id', vendorId);
 
-    if (associationId) {
-      query = query.eq('association_id', associationId);
+      if (associationId) {
+        query = query.eq('association_id', associationId);
+      }
+
+      const { data, error } = await query.order('period_start', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as VendorPerformanceMetrics[];
+    } catch (error) {
+      console.warn('Vendor performance metrics table might not exist:', error);
+      return [];
     }
-
-    const { data, error } = await query.order('period_start', { ascending: false });
-
-    if (error) throw error;
-    return (data || []) as VendorPerformanceMetrics[];
   },
 
   // Emergency contacts
   getVendorEmergencyContacts: async (vendorId: string): Promise<VendorEmergencyContact[]> => {
-    const { data, error } = await supabase
-      .from('vendor_emergency_contacts')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .order('is_primary', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('vendor_emergency_contacts')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('is_primary', { ascending: false });
 
-    if (error) throw error;
-    return (data || []) as VendorEmergencyContact[];
+      if (error) throw error;
+      return (data || []) as VendorEmergencyContact[];
+    } catch (error) {
+      console.warn('Vendor emergency contacts table might not exist:', error);
+      return [];
+    }
   },
 
   createVendorEmergencyContact: async (vendorId: string, contactData: VendorEmergencyContactFormData): Promise<VendorEmergencyContact> => {
@@ -234,14 +340,19 @@ export const vendorExtendedService = {
 
   // Availability management
   getVendorAvailability: async (vendorId: string): Promise<VendorAvailability[]> => {
-    const { data, error } = await supabase
-      .from('vendor_availability')
-      .select('*')
-      .eq('vendor_id', vendorId)
-      .order('day_of_week', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('vendor_availability')
+        .select('*')
+        .eq('vendor_id', vendorId)
+        .order('day_of_week', { ascending: true });
 
-    if (error) throw error;
-    return (data || []) as VendorAvailability[];
+      if (error) throw error;
+      return (data || []) as VendorAvailability[];
+    } catch (error) {
+      console.warn('Vendor availability table might not exist:', error);
+      return [];
+    }
   },
 
   updateVendorAvailability: async (vendorId: string, availability: Omit<VendorAvailability, 'id' | 'vendor_id' | 'created_at' | 'updated_at'>[]): Promise<VendorAvailability[]> => {

@@ -13,12 +13,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorWorkflowService } from "@/services/vendor-workflow-service";
 import { useAuth } from "@/contexts/auth";
-import { Plus, X, Settings } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 interface WorkflowAutomationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+type TriggerType = 'contract_expiry' | 'performance_threshold' | 'compliance_due' | 'payment_overdue' | 'custom';
 
 const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
   open,
@@ -31,7 +33,7 @@ const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    trigger_type: 'contract_expiry' as const,
+    trigger_type: 'contract_expiry' as TriggerType,
     trigger_conditions: {} as Record<string, any>,
     actions: [] as Array<{ type: string; config: Record<string, any> }>,
     is_active: true
@@ -275,7 +277,7 @@ const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
                 <Label htmlFor="trigger_type">Trigger Type</Label>
                 <Select 
                   value={formData.trigger_type} 
-                  onValueChange={(value: any) => setFormData(prev => ({ 
+                  onValueChange={(value: TriggerType) => setFormData(prev => ({ 
                     ...prev, 
                     trigger_type: value,
                     trigger_conditions: {}
