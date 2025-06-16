@@ -119,6 +119,10 @@ cp .env.example .env
 
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`. The app reads these values via `import.meta.env` when creating the Supabase client.
 
+## Linting
+
+`npm run lint` currently fails because the ESLint rules are very strict. Make sure to run `npm run setup` before running any lint or test commands.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a) and click on Share -> Publish.
