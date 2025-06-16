@@ -84,10 +84,7 @@ const UserProfile = () => {
                       <ProfileImageUpload
                         userId={user.id}
                         currentImageUrl={`${profile?.profile_image_url}?v=${imageVersion}`}
-                        firstName={profile?.first_name || ''}
-                        lastName={profile?.last_name || ''}
                         onImageUpdate={handleProfileImageUpdate}
-                        size="lg"
                       />
                       <p className="text-sm text-muted-foreground">
                         Click on the avatar to upload a new image

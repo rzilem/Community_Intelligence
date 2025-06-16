@@ -43,7 +43,7 @@ const UserTable: React.FC<UserTableProps> = ({
               loading={loading}
               refreshingProfile={refreshingProfile}
               onRoleUpdate={updateUserRole}
-              onProfileImageUpdate={() => onRoleUpdate()}
+              onProfileImageUpdate={async (url) => onRoleUpdate()}
               onRefreshProfile={refreshUserProfile}
             />
           ))

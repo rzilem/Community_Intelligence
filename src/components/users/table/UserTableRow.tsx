@@ -16,7 +16,7 @@ interface UserTableRowProps {
   loading: Record<string, boolean>;
   refreshingProfile: Record<string, boolean>;
   onRoleUpdate: (userId: string, role: UserRole) => void;
-  onProfileImageUpdate: () => void;
+  onProfileImageUpdate: (url: string) => Promise<void>;
   onRefreshProfile: (userId: string) => void;
 }
 
@@ -41,8 +41,6 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
           <ProfileImageUpload
             userId={user.id}
             currentImageUrl={user.profile?.profile_image_url}
-            firstName={user.profile?.first_name}
-            lastName={user.profile?.last_name}
             onImageUpdate={onProfileImageUpdate}
           />
         </div>
