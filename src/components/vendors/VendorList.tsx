@@ -60,7 +60,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
               <TableRow key={vendor.id}>
                 {visibleColumnIds.includes('name') && (
                   <TableCell className="font-medium">
-                    <Link to={`/operations/vendors/${vendor.id}`} className="hover:underline text-blue-600">
+                    <Link to={`/operations/vendors/${vendor.id}`} className="hover:underline text-blue-800 dark:text-blue-300">
                       {vendor.name}
                     </Link>
                   </TableCell>
