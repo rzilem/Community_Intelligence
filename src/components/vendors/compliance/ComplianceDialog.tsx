@@ -11,12 +11,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorComplianceService } from "@/services/vendor-compliance-service";
 import { useAuth } from "@/contexts/auth";
+import { VendorComplianceItem } from "@/types/contract-types";
 
 interface ComplianceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendorId: string;
-  complianceItem?: any;
+  complianceItem?: VendorComplianceItem;
 }
 
 const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
@@ -46,7 +47,7 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: any }) => 
+    mutationFn: ({ id, data }: { id: string, data: Partial<VendorComplianceItem> }) => 
       vendorComplianceService.updateComplianceItem(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-compliance', vendorId] });
@@ -69,14 +70,14 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
     const itemData = {
       vendor_id: vendorId,
       association_id: currentAssociation?.id,
-      compliance_type: formData.get('compliance_type') as string,
+      compliance_type: formData.get('compliance_type') as VendorComplianceItem['compliance_type'],
       item_name: formData.get('item_name') as string,
       description: formData.get('description') as string,
       required: formData.get('required') === 'on',
-      status: formData.get('status') as string,
+      status: formData.get('status') as VendorComplianceItem['status'],
       document_url: formData.get('document_url') as string,
-      issue_date: formData.get('issue_date') as string || undefined,
-      expiry_date: formData.get('expiry_date') as string || undefined,
+      issue_date: formData.get('issue_date') as string,
+      expiry_date: formData.get('expiry_date') as string,
       renewal_notice_days: Number(formData.get('renewal_notice_days')) || 30,
       notes: formData.get('notes') as string
     };
@@ -100,6 +101,15 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <Label htmlFor="item_name">Item Name</Label>
+              <Input 
+                id="item_name" 
+                name="item_name" 
+                defaultValue={complianceItem?.item_name}
+                required 
+              />
+            </div>
+            <div>
               <Label htmlFor="compliance_type">Compliance Type</Label>
               <Select name="compliance_type" defaultValue={complianceItem?.compliance_type || 'insurance'}>
                 <SelectTrigger>
@@ -116,6 +126,19 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea 
+              id="description" 
+              name="description" 
+              defaultValue={complianceItem?.description}
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="status">Status</Label>
               <Select name="status" defaultValue={complianceItem?.status || 'pending'}>
@@ -132,39 +155,15 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="item_name">Item Name</Label>
-            <Input 
-              id="item_name" 
-              name="item_name" 
-              defaultValue={complianceItem?.item_name}
-              placeholder="e.g., General Liability Insurance"
-              required 
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea 
-              id="description" 
-              name="description" 
-              defaultValue={complianceItem?.description}
-              placeholder="Additional details about this compliance requirement..."
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="document_url">Document URL</Label>
-            <Input 
-              id="document_url" 
-              name="document_url" 
-              type="url"
-              defaultValue={complianceItem?.document_url}
-              placeholder="https://..."
-            />
+            <div>
+              <Label htmlFor="renewal_notice_days">Renewal Notice (Days)</Label>
+              <Input 
+                id="renewal_notice_days" 
+                name="renewal_notice_days" 
+                type="number"
+                defaultValue={complianceItem?.renewal_notice_days || 30}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -189,12 +188,12 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="renewal_notice_days">Renewal Notice (Days)</Label>
+            <Label htmlFor="document_url">Document URL</Label>
             <Input 
-              id="renewal_notice_days" 
-              name="renewal_notice_days" 
-              type="number"
-              defaultValue={complianceItem?.renewal_notice_days || 30}
+              id="document_url" 
+              name="document_url" 
+              defaultValue={complianceItem?.document_url}
+              placeholder="https://..."
             />
           </div>
 
@@ -204,8 +203,7 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
               id="notes" 
               name="notes" 
               defaultValue={complianceItem?.notes}
-              placeholder="Additional notes or comments..."
-              rows={2}
+              rows={3}
             />
           </div>
 
@@ -213,7 +211,7 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
             <Switch 
               id="required" 
               name="required"
-              defaultChecked={complianceItem?.required ?? true}
+              defaultChecked={complianceItem?.required}
             />
             <Label htmlFor="required">Required Item</Label>
           </div>
@@ -228,7 +226,7 @@ const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
             >
               {createMutation.isPending || updateMutation.isPending
                 ? (complianceItem ? 'Updating...' : 'Creating...') 
-                : (complianceItem ? 'Update Item' : 'Add Item')
+                : (complianceItem ? 'Update Item' : 'Create Item')
               }
             </Button>
           </div>

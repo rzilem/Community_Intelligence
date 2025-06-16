@@ -11,12 +11,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { vendorContractService } from "@/services/vendor-contract-service";
 import { useAuth } from "@/contexts/auth";
+import { VendorContract } from "@/types/contract-types";
 
 interface ContractDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendorId: string;
-  contract?: any;
+  contract?: VendorContract;
 }
 
 const ContractDialog: React.FC<ContractDialogProps> = ({
@@ -46,7 +47,7 @@ const ContractDialog: React.FC<ContractDialogProps> = ({
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string, data: any }) => 
+    mutationFn: ({ id, data }: { id: string, data: Partial<VendorContract> }) => 
       vendorContractService.updateVendorContract(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-contracts', vendorId] });
@@ -78,7 +79,7 @@ const ContractDialog: React.FC<ContractDialogProps> = ({
       auto_renew: formData.get('auto_renew') === 'on',
       renewal_notice_days: Number(formData.get('renewal_notice_days')) || 30,
       payment_terms: formData.get('payment_terms') as string,
-      status: 'draft'
+      status: 'draft' as const
     };
 
     if (contract) {

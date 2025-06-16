@@ -25,9 +25,14 @@ const VendorProfile: React.FC = () => {
 
   const { data: vendor, isLoading, error } = useQuery({
     queryKey: ['vendor-extended', id],
-    queryFn: () => vendorExtendedService.getVendorById(id!),
+    queryFn: () => vendorExtendedService.getExtendedVendorById(id!),
     enabled: !!id,
   });
+
+  const handleSave = () => {
+    // Refresh data after save
+    // This will be handled by the dialog's mutation
+  };
 
   if (isLoading) {
     return (
@@ -157,7 +162,7 @@ const VendorProfile: React.FC = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="documents" className="w-full">
-        <TabsList className="grid w-full grid-cols-9">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="contracts">Contracts</TabsTrigger>
@@ -205,6 +210,7 @@ const VendorProfile: React.FC = () => {
         vendor={vendor}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+        onSave={handleSave}
       />
     </div>
   );

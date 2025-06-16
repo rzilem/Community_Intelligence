@@ -11,10 +11,10 @@ export const vendorComplianceService = {
       .order('compliance_type');
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorComplianceItem[];
   },
 
-  async createComplianceItem(item: Partial<VendorComplianceItem>): Promise<VendorComplianceItem> {
+  async createComplianceItem(item: Omit<VendorComplianceItem, 'id' | 'created_at' | 'updated_at'>): Promise<VendorComplianceItem> {
     const { data, error } = await supabase
       .from('vendor_compliance_items')
       .insert(item)
@@ -22,7 +22,7 @@ export const vendorComplianceService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorComplianceItem;
   },
 
   async updateComplianceItem(id: string, updates: Partial<VendorComplianceItem>): Promise<VendorComplianceItem> {
@@ -34,7 +34,7 @@ export const vendorComplianceService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorComplianceItem;
   },
 
   async deleteComplianceItem(id: string): Promise<void> {
@@ -59,6 +59,6 @@ export const vendorComplianceService = {
       .eq('status', 'approved');
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorComplianceItem[];
   }
 };
