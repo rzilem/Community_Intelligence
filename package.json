@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "import:demo-data": "node scripts/import-demo-data.ts",
     "import:vendors": "node scripts/import-vendors-from-csv.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "setup": "npm install"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^16.5.0",
