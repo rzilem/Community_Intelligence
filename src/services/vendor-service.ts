@@ -1,6 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { Vendor, VendorStats } from "@/types/vendor-types";
+import { Vendor, VendorStats, VendorStatus, InsuranceInfo } from "@/types/vendor-types";
 
 // Create a type that matches what we send to the database for creation
 interface VendorInsert {
@@ -42,6 +42,15 @@ interface VendorUpdate {
   hoa_id?: string;
 }
 
+// Helper function to transform database vendor to typed Vendor
+const transformDatabaseVendor = (dbVendor: any): Vendor => {
+  return {
+    ...dbVendor,
+    status: dbVendor.status as VendorStatus,
+    insurance_info: dbVendor.insurance_info as InsuranceInfo | undefined
+  };
+};
+
 export const vendorService = {
   getVendors: async (): Promise<Vendor[]> => {
     const { data, error } = await supabase
@@ -54,7 +63,7 @@ export const vendorService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []).map(transformDatabaseVendor);
   },
 
   getVendorById: async (id: string): Promise<Vendor | undefined> => {
@@ -69,7 +78,7 @@ export const vendorService = {
       throw error;
     }
 
-    return data;
+    return data ? transformDatabaseVendor(data) : undefined;
   },
 
   getVendorStats: async (): Promise<VendorStats> => {
@@ -82,13 +91,14 @@ export const vendorService = {
       throw error;
     }
 
-    const totalVendors = vendors?.length || 0;
-    const activeVendors = vendors?.filter(v => v.is_active).length || 0;
+    const transformedVendors = (vendors || []).map(transformDatabaseVendor);
+    const totalVendors = transformedVendors.length;
+    const activeVendors = transformedVendors.filter(v => v.is_active).length;
     const inactiveVendors = totalVendors - activeVendors;
     
     // Calculate top category from specialties
     const categoryCount: Record<string, number> = {};
-    vendors?.forEach(vendor => {
+    transformedVendors.forEach(vendor => {
       if (vendor.specialties && Array.isArray(vendor.specialties)) {
         vendor.specialties.forEach(specialty => {
           categoryCount[specialty] = (categoryCount[specialty] || 0) + 1;
@@ -101,7 +111,7 @@ export const vendorService = {
       : null;
 
     const serviceCategories = Object.keys(categoryCount).length;
-    const withInsurance = vendors?.filter(v => v.insurance_info && Object.keys(v.insurance_info).length > 0).length || 0;
+    const withInsurance = transformedVendors.filter(v => v.insurance_info && Object.keys(v.insurance_info).length > 0).length;
 
     return {
       totalVendors,
@@ -135,7 +145,7 @@ export const vendorService = {
       throw error;
     }
 
-    return data;
+    return transformDatabaseVendor(data);
   },
 
   updateVendor: async (id: string, vendorData: VendorUpdate): Promise<Vendor> => {
@@ -175,7 +185,7 @@ export const vendorService = {
     }
 
     console.log('Vendor updated successfully:', data);
-    return data;
+    return transformDatabaseVendor(data);
   },
 
   deleteVendor: async (id: string): Promise<void> => {

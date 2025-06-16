@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { 
   VendorDocument, 
@@ -11,8 +10,18 @@ import {
   VendorDocumentFormData,
   VendorCertificationFormData,
   VendorReviewFormData,
-  VendorEmergencyContactFormData
+  VendorEmergencyContactFormData,
+  VendorStatus
 } from "@/types/vendor-extended-types";
+
+// Helper function to transform database vendor to typed ExtendedVendor
+const transformDatabaseVendor = (dbVendor: any): ExtendedVendor => {
+  return {
+    ...dbVendor,
+    status: dbVendor.status as VendorStatus,
+    insurance_info: dbVendor.insurance_info || undefined
+  };
+};
 
 export const vendorExtendedService = {
   // Get vendor with all related data
@@ -35,9 +44,11 @@ export const vendorExtendedService = {
         return undefined;
       }
 
-      // Try to get extended data, but don't fail if tables don't exist
-      const extendedVendor: ExtendedVendor = { ...vendor, status: vendor.status };
+      // Transform the basic vendor data with proper typing
+      const extendedVendor: ExtendedVendor = transformDatabaseVendor(vendor);
 
+      // Try to get extended data, but don't fail if tables don't exist
+      
       // Try to get documents
       try {
         const { data: documents } = await supabase
@@ -122,7 +133,7 @@ export const vendorExtendedService = {
         extendedVendor.emergency_contacts = [];
       }
 
-      return extendedVendor as ExtendedVendor;
+      return extendedVendor;
 
     } catch (error) {
       console.error('Error in getExtendedVendorById:', error);
