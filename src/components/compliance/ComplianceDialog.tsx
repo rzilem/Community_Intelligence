@@ -2,7 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { Compliance, Property } from '@/types/app-types';
+import { Compliance } from '@/types/compliance-types';
+import { Property } from '@/types/app-types';
 import { PropertyRecord } from '@/types/property-types';
 import { mapPropertyRecord } from '@/utils/property-utils';
 import { useSupabaseCreate, useSupabaseUpdate } from '@/hooks/supabase';
@@ -36,7 +37,7 @@ export const ComplianceDialog: React.FC<ComplianceDialogProps> = ({
         const { data, error } = await supabase
           .from('properties')
           .select('*')
-          .eq('hoa_id', currentAssociation.id);
+          .eq('association_id', currentAssociation.id);
           
         if (error) throw error;
         
