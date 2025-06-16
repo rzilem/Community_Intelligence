@@ -21,7 +21,7 @@ const VendorTable: React.FC<VendorTableProps> = ({ vendors, visibleColumnIds }) 
             {visibleColumnIds.includes('name') && <TableHead className="font-semibold text-gray-900">Vendor Name</TableHead>}
             {visibleColumnIds.includes('contact_person') && <TableHead className="font-semibold text-gray-900">Contact Person</TableHead>}
             {visibleColumnIds.includes('email') && <TableHead className="font-semibold text-gray-900">Email</TableHead>}
-            {visibleColumnIds.includes('phone') && <TableHead className="font-semibold text-gray-900">Phone</TableHead>}
+            {visibleColumnIds.includes('phone') && <TableHead className="font-semibold text-gray-900 min-w-[130px]">Phone</TableHead>}
             {visibleColumnIds.includes('specialties') && <TableHead className="font-semibold text-gray-900">Specialties</TableHead>}
             {visibleColumnIds.includes('is_active') && <TableHead className="font-semibold text-gray-900">Status</TableHead>}
             {visibleColumnIds.includes('total_jobs') && <TableHead className="font-semibold text-gray-900">Total Jobs</TableHead>}
@@ -52,7 +52,7 @@ const VendorTable: React.FC<VendorTableProps> = ({ vendors, visibleColumnIds }) 
                 </TableCell>
               )}
               {visibleColumnIds.includes('phone') && (
-                <TableCell className="py-4">
+                <TableCell className="py-4 min-w-[130px] whitespace-nowrap">
                   {vendor.phone ? (
                     <PhoneLink phone={vendor.phone} />
                   ) : (

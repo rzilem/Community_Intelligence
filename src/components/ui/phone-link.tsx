@@ -7,9 +7,12 @@ interface PhoneLinkProps {
 }
 
 const PhoneLink: React.FC<PhoneLinkProps> = ({ phone, className = "" }) => {
-  // Format phone number for display (remove line breaks and extra spaces)
+  // Format phone number for display (remove line breaks and normalize spacing)
   const formatDisplayPhone = (phoneNumber: string) => {
-    return phoneNumber.replace(/\s*\n\s*/g, ' ').trim();
+    return phoneNumber
+      .replace(/\s*\n\s*/g, ' ')  // Replace line breaks with spaces
+      .replace(/\s+/g, ' ')       // Normalize multiple spaces to single space
+      .trim();
   };
 
   // Format phone number for tel: link (digits only)
@@ -23,7 +26,7 @@ const PhoneLink: React.FC<PhoneLinkProps> = ({ phone, className = "" }) => {
   return (
     <a 
       href={`tel:${telPhone}`}
-      className={`text-blue-600 hover:text-blue-800 hover:underline transition-colors ${className}`}
+      className={`text-blue-600 hover:text-blue-800 hover:underline transition-colors whitespace-nowrap ${className}`}
       title={`Call ${displayPhone}`}
     >
       {displayPhone}
