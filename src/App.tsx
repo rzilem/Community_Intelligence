@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/auth";
 import { NotificationProvider } from "./contexts/notifications";
 import { AppRouter } from "./routes";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { AuthDebugger } from "./components/debug/AuthDebugger";
 import { logger } from "./utils/client-logger";
 
 // Create the query client outside of the component with optimized settings
@@ -32,9 +33,10 @@ const App = () => {
   useEffect(() => {
     try {
       logger.init();
-      console.log('App initialized - client logger initialized');
+      console.log('[App] Application initialized - client logger initialized');
+      console.log('[App] Current route:', window.location.pathname);
     } catch (error) {
-      console.error('Failed to initialize logger:', error);
+      console.error('[App] Failed to initialize logger:', error);
     }
   }, []);
 
@@ -51,6 +53,7 @@ const App = () => {
                     <Sonner />
                     <ErrorBoundary>
                       <MemoizedAppRouter />
+                      <AuthDebugger />
                     </ErrorBoundary>
                   </NotificationProvider>
                 </ErrorBoundary>

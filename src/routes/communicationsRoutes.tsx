@@ -1,20 +1,20 @@
 
 import { RouteObject } from "react-router-dom";
-import { RequireAuth } from "@/components/auth/RequireAuth";
+import { SimpleRequireAuth } from "@/components/auth/SimpleRequireAuth";
 import Communications from "@/pages/Communications";
 
-// Communications Routes
+// Communications Routes with simplified auth
 export const communicationsRoutes: RouteObject[] = [
   {
     path: "/communications",
-    element: <RequireAuth><Communications /></RequireAuth>
+    element: <SimpleRequireAuth><Communications /></SimpleRequireAuth>
   },
   {
     path: "/communications/messaging",
-    element: <RequireAuth><Communications /></RequireAuth>
+    element: <SimpleRequireAuth><Communications /></SimpleRequireAuth>
   },
   {
     path: "/communications/announcements",
-    element: <RequireAuth><Communications /></RequireAuth>
+    element: <SimpleRequireAuth><Communications /></SimpleRequireAuth>
   }
 ];
