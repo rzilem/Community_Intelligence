@@ -4,6 +4,7 @@ export type UserRole =
   | 'manager'
   | 'resident'
   | 'maintenance'
+  | 'member'
   | 'accountant'
   | 'user'
   | 'treasurer';
@@ -13,6 +14,7 @@ export const ALL_ROLES: UserRole[] = [
   'manager',
   'resident',
   'maintenance',
+  'member',
   'accountant',
   'user',
   'treasurer'

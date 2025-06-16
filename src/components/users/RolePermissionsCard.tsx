@@ -7,16 +7,16 @@ import { ALL_ROLES, UserRole } from '@/types/profile-types';
 
 const RolePermissionsCard: React.FC = () => {
   const permissions = [
-    { name: 'View Dashboard', admin: true, manager: true, resident: true, maintenance: true, accountant: true, treasurer: true, user: true },
-    { name: 'Manage Users', admin: true, manager: false, resident: false, maintenance: false, accountant: false, treasurer: false, user: false },
-    { name: 'Manage Associations', admin: true, manager: true, resident: false, maintenance: false, accountant: false, treasurer: false, user: false },
-    { name: 'Manage Properties', admin: true, manager: true, resident: false, maintenance: false, accountant: false, treasurer: false, user: false },
-    { name: 'View Financial Reports', admin: true, manager: true, resident: false, maintenance: false, accountant: true, treasurer: true, user: false },
-    { name: 'Process Payments', admin: true, manager: false, resident: false, maintenance: false, accountant: true, treasurer: true, user: false },
-    { name: 'Create Work Orders', admin: true, manager: true, resident: false, maintenance: true, accountant: false, treasurer: false, user: false },
-    { name: 'View Documents', admin: true, manager: true, resident: true, maintenance: true, accountant: true, treasurer: true, user: false },
-    { name: 'Send Communications', admin: true, manager: true, resident: false, maintenance: false, accountant: false, treasurer: false, user: false },
-    { name: 'Manage System Settings', admin: true, manager: false, resident: false, maintenance: false, accountant: false, treasurer: false, user: false },
+    { name: 'View Dashboard', admin: true, manager: true, resident: true, maintenance: true, member: true, accountant: true, treasurer: true, user: true },
+    { name: 'Manage Users', admin: true, manager: false, resident: false, maintenance: false, member: false, accountant: false, treasurer: false, user: false },
+    { name: 'Manage Associations', admin: true, manager: true, resident: false, maintenance: false, member: false, accountant: false, treasurer: false, user: false },
+    { name: 'Manage Properties', admin: true, manager: true, resident: false, maintenance: false, member: false, accountant: false, treasurer: false, user: false },
+    { name: 'View Financial Reports', admin: true, manager: true, resident: false, maintenance: false, member: false, accountant: true, treasurer: true, user: false },
+    { name: 'Process Payments', admin: true, manager: false, resident: false, maintenance: false, member: false, accountant: true, treasurer: true, user: false },
+    { name: 'Create Work Orders', admin: true, manager: true, resident: false, maintenance: true, member: false, accountant: false, treasurer: false, user: false },
+    { name: 'View Documents', admin: true, manager: true, resident: true, maintenance: true, member: true, accountant: true, treasurer: true, user: false },
+    { name: 'Send Communications', admin: true, manager: true, resident: false, maintenance: false, member: false, accountant: false, treasurer: false, user: false },
+    { name: 'Manage System Settings', admin: true, manager: false, resident: false, maintenance: false, member: false, accountant: false, treasurer: false, user: false },
   ];
   const roles: UserRole[] = ALL_ROLES;
 
