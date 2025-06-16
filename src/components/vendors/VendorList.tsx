@@ -98,7 +98,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                 {visibleColumnIds.includes('rating') && (
                   <TableCell>
                     <div className="flex items-center">
-                      {vendor.rating !== undefined ? (
+                      {vendor.rating != null ? (
                         <>
                           <span className="mr-1">{vendor.rating.toFixed(1)}</span>
                           <div className="flex">
