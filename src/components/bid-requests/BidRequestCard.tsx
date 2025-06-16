@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, MapPin, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, Edit, Trash2, Building } from 'lucide-react';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
@@ -11,12 +11,14 @@ interface BidRequestCardProps {
   bidRequest: BidRequestWithVendors;
   onEdit?: (bidRequest: BidRequestWithVendors) => void;
   onDelete?: (id: string) => void;
+  showAssociation?: boolean;
 }
 
 const BidRequestCard: React.FC<BidRequestCardProps> = ({
   bidRequest,
   onEdit,
-  onDelete
+  onDelete,
+  showAssociation = false
 }) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -62,6 +64,13 @@ const BidRequestCard: React.FC<BidRequestCardProps> = ({
 
       <CardContent className="flex-1 flex flex-col justify-between">
         <div className="space-y-3">
+          {showAssociation && bidRequest.associations && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Building className="h-4 w-4" />
+              <span className="font-medium">{bidRequest.associations.name}</span>
+            </div>
+          )}
+
           {bidRequest.location && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <MapPin className="h-4 w-4" />

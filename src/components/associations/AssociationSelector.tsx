@@ -29,13 +29,19 @@ interface AssociationSelectorProps {
    * Set to false to hide the label completely
    */
   label?: React.ReactNode | false;
+
+  /**
+   * Whether to show "All Associations" option
+   */
+  showAllOption?: boolean;
 }
 
 const AssociationSelector: React.FC<AssociationSelectorProps> = ({ 
   onAssociationChange,
   initialAssociationId,
   className,
-  label = "Select Association" // Default label that can be overridden
+  label = "Select Association", // Default label that can be overridden
+  showAllOption = false
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedAssociationId, setSelectedAssociationId] = useState<string | undefined>(initialAssociationId);
@@ -67,6 +73,17 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
   const selectedAssociation = associations.find(assoc => assoc.id === selectedAssociationId);
   console.log('Selected association:', selectedAssociation);
 
+  // Determine display text
+  const getDisplayText = () => {
+    if (selectedAssociationId === 'all') {
+      return 'All Associations';
+    }
+    if (selectedAssociation) {
+      return selectedAssociation.name;
+    }
+    return 'Select an association';
+  };
+
   const handleSelect = (associationId: string) => {
     console.log('Association selected:', associationId);
     setSelectedAssociationId(associationId);
@@ -95,7 +112,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
           >
             {isLoading 
               ? "Loading associations..." 
-              : selectedAssociation?.name || "Select an association"}
+              : getDisplayText()}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -106,6 +123,22 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
               <CommandList>
                 <CommandEmpty>No association found.</CommandEmpty>
                 <CommandGroup>
+                  {/* Show All Associations option if enabled */}
+                  {showAllOption && (
+                    <CommandItem
+                      value="all-associations"
+                      onSelect={() => handleSelect('all')}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedAssociationId === 'all' ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      All Associations
+                    </CommandItem>
+                  )}
+                  
                   {/* Add an option to clear the selection */}
                   <CommandItem
                     value="clear"
@@ -114,7 +147,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        !selectedAssociationId ? "opacity-100" : "opacity-0"
+                        !selectedAssociationId || selectedAssociationId === '' ? "opacity-100" : "opacity-0"
                       )}
                     />
                     No association

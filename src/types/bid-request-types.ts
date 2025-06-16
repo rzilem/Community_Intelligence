@@ -1,4 +1,3 @@
-
 export interface BidRequest {
   id: string;
   association_id: string;
@@ -44,6 +43,10 @@ export interface BidRequestVendor {
 
 export interface BidRequestWithVendors extends BidRequest {
   vendors?: BidRequestVendor[];
+  associations?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface Vendor {

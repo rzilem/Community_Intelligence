@@ -41,6 +41,10 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
         bid_request_id,
         created_at,
         updated_at
+      ),
+      associations(
+        id,
+        name
       )
     `)
     .eq('association_id', associationId)
@@ -52,6 +56,38 @@ export async function getBidRequests(associationId: string): Promise<BidRequestW
   }
 
   console.log('Fetched bid requests:', data);
+  return (data || []) as BidRequestWithVendors[];
+}
+
+export async function getAllBidRequests(): Promise<BidRequestWithVendors[]> {
+  console.log('=== API: Fetching all bid requests ===');
+  
+  const { data, error } = await supabase
+    .from('bid_requests')
+    .select(`
+      *,
+      vendors:bid_request_vendors(
+        id,
+        vendor_id,
+        status,
+        quote_amount,
+        bid_request_id,
+        created_at,
+        updated_at
+      ),
+      associations(
+        id,
+        name
+      )
+    `)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching all bid requests:', error);
+    throw new Error(error.message);
+  }
+
+  console.log('Fetched all bid requests:', data);
   return (data || []) as BidRequestWithVendors[];
 }
 

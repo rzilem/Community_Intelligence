@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Calendar, FileText, Plus } from 'lucide-react';
 import { BidRequestWithVendors } from '@/types/bid-request-types';
-import { getBidRequests } from '@/services/bid-requests/bid-request-api';
+import { getBidRequests, getAllBidRequests } from '@/services/bid-requests/bid-request-api';
 import { useAuth } from '@/contexts/auth';
 import BidRequestCard from './BidRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,23 +19,33 @@ const BidRequestsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all-status');
   const [priorityFilter, setPriorityFilter] = useState('all-priority');
+  const [selectedAssociationId, setSelectedAssociationId] = useState<string>('');
   const { currentAssociation, setCurrentAssociation } = useAuth();
 
   useEffect(() => {
     const fetchBidRequests = async () => {
       console.log('=== FETCHING BID REQUESTS ===');
-      console.log('Current association:', currentAssociation);
-      
-      if (!currentAssociation?.id) {
-        console.log('No association ID available, skipping fetch');
-        setLoading(false);
-        return;
-      }
+      console.log('Selected association ID:', selectedAssociationId);
       
       setLoading(true);
       try {
-        console.log('Fetching bid requests for association:', currentAssociation.id);
-        const requests = await getBidRequests(currentAssociation.id);
+        let requests: BidRequestWithVendors[];
+        
+        if (selectedAssociationId === 'all') {
+          console.log('Fetching bid requests for all associations');
+          requests = await getAllBidRequests();
+        } else if (selectedAssociationId) {
+          console.log('Fetching bid requests for association:', selectedAssociationId);
+          requests = await getBidRequests(selectedAssociationId);
+        } else if (currentAssociation?.id) {
+          console.log('Fetching bid requests for current association:', currentAssociation.id);
+          requests = await getBidRequests(currentAssociation.id);
+        } else {
+          console.log('No association selected, skipping fetch');
+          setLoading(false);
+          return;
+        }
+        
         console.log('Fetched bid requests:', requests);
         setBidRequests(requests);
       } catch (error) {
@@ -46,7 +56,14 @@ const BidRequestsList = () => {
     };
 
     fetchBidRequests();
-  }, [currentAssociation?.id]);
+  }, [selectedAssociationId, currentAssociation?.id]);
+
+  // Initialize selected association ID when component mounts
+  useEffect(() => {
+    if (currentAssociation?.id && !selectedAssociationId) {
+      setSelectedAssociationId(currentAssociation.id);
+    }
+  }, [currentAssociation?.id, selectedAssociationId]);
 
   const filteredBidRequests = bidRequests.filter(request => {
     const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,15 +76,16 @@ const BidRequestsList = () => {
 
   const handleAssociationChange = (associationId: string) => {
     console.log('Association changed to:', associationId);
-    if (setCurrentAssociation) {
-      // Find the association object from the available associations
-      // This will trigger the useEffect to refetch bid requests
+    setSelectedAssociationId(associationId);
+    
+    // Only update currentAssociation if a specific association is selected (not "all")
+    if (associationId !== 'all' && associationId !== '' && setCurrentAssociation) {
       setCurrentAssociation({ id: associationId } as any);
     }
   };
 
-  // Show loading state if no association is selected
-  if (!currentAssociation?.id) {
+  // Show loading state if no association is selected and not viewing all
+  if (!selectedAssociationId && !currentAssociation?.id) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
@@ -100,14 +118,17 @@ const BidRequestsList = () => {
     );
   }
 
+  const isViewingAll = selectedAssociationId === 'all';
+
   return (
     <div className="space-y-6">
       {/* Association Selector */}
       <div className="bg-white rounded-lg border p-4">
         <AssociationSelector
           onAssociationChange={handleAssociationChange}
-          initialAssociationId={currentAssociation?.id}
+          initialAssociationId={selectedAssociationId || currentAssociation?.id}
           label="Viewing Bid Requests for:"
+          showAllOption={true}
         />
       </div>
 
@@ -155,7 +176,11 @@ const BidRequestsList = () => {
       {filteredBidRequests.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBidRequests.map((bidRequest) => (
-            <BidRequestCard key={bidRequest.id} bidRequest={bidRequest} />
+            <BidRequestCard 
+              key={bidRequest.id} 
+              bidRequest={bidRequest} 
+              showAssociation={isViewingAll}
+            />
           ))}
         </div>
       ) : (
@@ -168,10 +193,12 @@ const BidRequestsList = () => {
             <p className="text-gray-500 mb-4">
               {searchTerm || (statusFilter !== 'all-status') || (priorityFilter !== 'all-priority')
                 ? 'Try adjusting your search or filters to find what you\'re looking for.'
+                : isViewingAll
+                ? 'No bid requests found across all your associations.'
                 : 'Get started by creating your first bid request for a maintenance or improvement project.'
               }
             </p>
-            {!searchTerm && statusFilter === 'all-status' && priorityFilter === 'all-priority' && (
+            {!searchTerm && statusFilter === 'all-status' && priorityFilter === 'all-priority' && !isViewingAll && (
               <Link to="/community-management/create-bid-request">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
