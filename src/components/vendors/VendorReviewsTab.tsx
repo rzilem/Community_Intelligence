@@ -51,8 +51,9 @@ const VendorReviewsTab: React.FC<VendorReviewsTabProps> = ({ vendorId }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const ratingValue = formData.get('rating') as string;
     const data: VendorReviewFormData = {
-      rating: parseInt(formData.get('rating') as string),
+      rating: parseInt(ratingValue || '0'),
       review_text: formData.get('review_text') as string || undefined,
       job_reference: formData.get('job_reference') as string || undefined,
     };
