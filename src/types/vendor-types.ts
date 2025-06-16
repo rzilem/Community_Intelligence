@@ -115,6 +115,7 @@ export type VendorCategory =
   | 'Security Surveillance Camera'
   | 'Stormwater'
   | 'Taxes'
+  | 'Towing'
   | 'Trash Removal'
   | 'Tree Service'
   | 'Utility'
@@ -179,6 +180,7 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
   'Security Surveillance Camera',
   'Stormwater',
   'Taxes',
+  'Towing',
   'Trash Removal',
   'Tree Service',
   'Utility',
