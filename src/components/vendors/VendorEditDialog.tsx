@@ -43,6 +43,7 @@ const VendorEditDialog: React.FC<VendorEditDialogProps> = ({
         address: updatedVendor.address,
         license_number: updatedVendor.license_number,
         specialties: updatedVendor.specialties || [],
+        status: updatedVendor.status,
         is_active: updatedVendor.is_active,
         notes: updatedVendor.notes,
         // Extended fields that may not be in the base service

@@ -16,6 +16,7 @@ export interface Vendor {
   total_jobs: number;
   completed_jobs: number;
   average_response_time?: number;
+  status: string;
   is_active: boolean;
   notes?: string;
   hoa_id: string;
@@ -46,6 +47,7 @@ interface VendorInsert {
   total_jobs?: number;
   completed_jobs?: number;
   average_response_time?: number;
+  status: string;
   is_active: boolean;
   notes?: string;
   hoa_id: string;
@@ -65,6 +67,7 @@ interface VendorUpdate {
   total_jobs?: number;
   completed_jobs?: number;
   average_response_time?: number;
+  status?: string;
   is_active?: boolean;
   notes?: string;
   hoa_id?: string;
@@ -147,6 +150,7 @@ export const vendorService = {
       ...vendorData,
       total_jobs: vendorData.total_jobs || 0,
       completed_jobs: vendorData.completed_jobs || 0,
+      status: vendorData.status || 'active',
       is_active: vendorData.is_active ?? true,
       specialties: vendorData.specialties || []
     };
@@ -184,6 +188,7 @@ export const vendorService = {
     if (vendorData.total_jobs !== undefined) cleanUpdateData.total_jobs = vendorData.total_jobs;
     if (vendorData.completed_jobs !== undefined) cleanUpdateData.completed_jobs = vendorData.completed_jobs;
     if (vendorData.average_response_time !== undefined) cleanUpdateData.average_response_time = vendorData.average_response_time;
+    if (vendorData.status !== undefined) cleanUpdateData.status = vendorData.status;
     if (vendorData.is_active !== undefined) cleanUpdateData.is_active = vendorData.is_active;
     if (vendorData.notes !== undefined) cleanUpdateData.notes = vendorData.notes;
     if (vendorData.hoa_id !== undefined) cleanUpdateData.hoa_id = vendorData.hoa_id;

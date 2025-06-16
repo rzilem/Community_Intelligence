@@ -1,4 +1,6 @@
 
+export type VendorStatus = 'active' | 'on-hold' | 'inactive' | 'suspended';
+
 export interface VendorDocument {
   id: string;
   vendor_id: string;
@@ -97,6 +99,7 @@ export interface BaseVendor {
   specialties?: string[];
   notes?: string;
   is_active: boolean;
+  status: VendorStatus;
   rating?: number;
   total_jobs: number;
   completed_jobs: number;

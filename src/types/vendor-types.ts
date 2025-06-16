@@ -1,4 +1,6 @@
 
+export type VendorStatus = 'active' | 'on-hold' | 'inactive' | 'suspended';
+
 export interface Vendor {
   id: string;
   name: string;
@@ -13,6 +15,8 @@ export interface Vendor {
   total_jobs: number;
   completed_jobs: number;
   average_response_time?: number;
+  /** Current status of the vendor record */
+  status: VendorStatus;
   is_active: boolean;
   notes?: string;
   hoa_id: string;
@@ -39,6 +43,7 @@ export interface VendorFormData {
   insurance_info?: InsuranceInfo;
   notes?: string;
   is_active: boolean;
+  status: VendorStatus;
   hoa_id: string;
 }
 
