@@ -38,6 +38,14 @@ Welcome to your Lovable project. This repository contains a Vite + React + TypeS
    ```bash
    npm run build
    ```
+6. **Lint and test**
+   Before running lint or test scripts, make sure all dependencies are installed.
+   ```bash
+   npm install
+   npm run lint
+   npm test
+   ```
+
 
 ## Supabase Configuration
 
