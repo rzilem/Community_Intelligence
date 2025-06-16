@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTemplate from '@/components/layout/PageTemplate';
-import { Building2, Plus, FileDown, SlidersIcon } from 'lucide-react';
+import { Building2, Plus, FileDown, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VendorList from '@/components/vendors/VendorList';
@@ -12,6 +12,7 @@ import { vendorService } from '@/services/vendor-service';
 import { VendorFormData } from '@/types/vendor-types';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/auth';
+import { Link } from 'react-router-dom';
 
 const Vendors = () => {
   const [addVendorOpen, setAddVendorOpen] = useState(false);
@@ -85,51 +86,64 @@ const Vendors = () => {
       icon={<Building2 className="h-8 w-8" />}
       description="Manage vendor relationships, contracts, and service providers."
     >
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <p className="text-muted-foreground">
-              Manage your vendor relationships and services
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              View vendor performance metrics and insurance tracking
-            </p>
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Vendor Management</h1>
+              <p className="text-gray-600 mb-1">
+                Manage your vendor relationships and services
+              </p>
+              <p className="text-sm text-gray-500">
+                View vendor performance metrics and insurance tracking
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button variant="outline" asChild>
+                <Link to="/operations/vendors/advanced">
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Advanced Features
+                </Link>
+              </Button>
+              <Button onClick={() => setAddVendorOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> 
+                Add Vendor
+              </Button>
+            </div>
           </div>
-          <Button onClick={() => setAddVendorOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Add Vendor
-          </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="list">
-              <Building2 className="mr-2 h-4 w-4" />
-              Vendor List
-            </TabsTrigger>
-            <TabsTrigger value="metrics">
-              <SlidersIcon className="mr-2 h-4 w-4" />
-              Metrics & Analytics
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
+        {/* Stats Cards */}
         {vendorStats && <VendorStatsCards stats={vendorStats} />}
 
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">
-            Vendors ({vendors.length})
-          </h2>
-          <Button variant="outline" size="sm">
-            <FileDown className="mr-2 h-4 w-4" />
-            Import/Export
-          </Button>
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <TabsList className="grid grid-cols-2 w-full max-w-md">
+              <TabsTrigger value="list" className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Vendor Directory
+              </TabsTrigger>
+              <TabsTrigger value="metrics" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Performance
+              </TabsTrigger>
+            </TabsList>
+            
+            <Button variant="outline" size="sm">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export Data
+            </Button>
+          </div>
+        </Tabs>
 
+        {/* Content */}
         {isLoadingVendors ? (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-12">
             <div className="text-center">
               <div className="h-8 w-8 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-2">Loading vendors...</p>
+              <p className="mt-4 text-gray-600">Loading vendors...</p>
             </div>
           </div>
         ) : (
