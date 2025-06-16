@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   // Handle profile image update
-  const handleProfileImageUpdated = (newUrl: string) => {
+  const handleProfileImageUpdate = (newUrl: string) => {
     // The image will be updated automatically since the Header component
     // will re-render with the new profile data from context
   };
@@ -88,10 +88,10 @@ const Header: React.FC<HeaderProps> = ({
                 {user && profile ? (
                   <ProfileImageUpload
                     userId={user.id}
-                    imageUrl={profile?.profile_image_url}
+                    currentImageUrl={profile?.profile_image_url}
                     firstName={profile?.first_name}
                     lastName={profile?.last_name}
-                    onImageUpdated={handleProfileImageUpdated}
+                    onImageUpdate={handleProfileImageUpdate}
                     size="sm"
                   />
                 ) : (

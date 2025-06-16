@@ -16,7 +16,7 @@ interface UserTableRowProps {
   loading: Record<string, boolean>;
   refreshingProfile: Record<string, boolean>;
   onRoleUpdate: (userId: string, role: UserRole) => void;
-  onProfileImageUpdated: () => void;
+  onProfileImageUpdate: () => void;
   onRefreshProfile: (userId: string) => void;
 }
 
@@ -27,7 +27,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
   loading,
   refreshingProfile,
   onRoleUpdate,
-  onProfileImageUpdated,
+  onProfileImageUpdate,
   onRefreshProfile
 }) => {
   const userRole = userRoles[user.id] || (user.profile?.role as UserRole) || 'user';
@@ -40,10 +40,10 @@ const UserTableRow: React.FC<UserTableRowProps> = ({
         <div className="flex-shrink-0">
           <ProfileImageUpload
             userId={user.id}
-            imageUrl={user.profile?.profile_image_url}
+            currentImageUrl={user.profile?.profile_image_url}
             firstName={user.profile?.first_name}
             lastName={user.profile?.last_name}
-            onImageUpdated={onProfileImageUpdated}
+            onImageUpdate={onProfileImageUpdate}
           />
         </div>
         <div>
