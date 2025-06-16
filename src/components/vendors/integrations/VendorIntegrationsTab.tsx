@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { vendorIntegrationService } from "@/services/vendor-integration-service";
-import { Plus, Settings, Sync, TestTube, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Plus, Settings, RefreshCw, TestTube, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import VendorIntegrationDialog from "./VendorIntegrationDialog";
 
 interface VendorIntegrationsTabProps {
@@ -159,7 +159,7 @@ const VendorIntegrationsTab: React.FC<VendorIntegrationsTabProps> = ({
                         }
                       }}
                     >
-                      <Sync className="h-4 w-4 mr-1" />
+                      <RefreshCw className="h-4 w-4 mr-1" />
                       Sync
                     </Button>
                   </div>

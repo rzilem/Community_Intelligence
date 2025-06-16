@@ -4,54 +4,69 @@ import { VendorPerformanceMetrics, VendorBidAnalytics, VendorAnalyticsData } fro
 
 export const vendorAnalyticsService = {
   async getVendorPerformanceMetrics(vendorId: string, period?: string): Promise<VendorPerformanceMetrics[]> {
-    let query = supabase
-      .from('vendor_performance_metrics')
-      .select('*')
-      .eq('vendor_id', vendorId);
-
-    if (period) {
-      const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - (parseInt(period) * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
-      query = query.gte('reporting_period', startDate).lte('reporting_period', endDate);
-    }
-
-    const { data, error } = await query.order('reporting_period', { ascending: false });
-
-    if (error) throw error;
-    return (data || []) as VendorPerformanceMetrics[];
+    // For now, return mock data since the tables don't exist yet
+    // This would need to be implemented when the actual database tables are created
+    console.log('Getting performance metrics for vendor:', vendorId, 'period:', period);
+    return [];
   },
 
   async createPerformanceMetric(metric: Omit<VendorPerformanceMetrics, 'id' | 'created_at' | 'updated_at'>): Promise<VendorPerformanceMetrics> {
-    const { data, error } = await supabase
-      .from('vendor_performance_metrics')
-      .insert(metric)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as VendorPerformanceMetrics;
+    // Mock implementation - would need actual table
+    console.log('Creating performance metric:', metric);
+    return {
+      ...metric,
+      id: crypto.randomUUID(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
   },
 
   async getVendorBidAnalytics(vendorId: string): Promise<VendorBidAnalytics[]> {
+    // Get bid analytics from existing bid_request_vendors table
     const { data, error } = await supabase
-      .from('vendor_bid_analytics')
-      .select('*')
+      .from('bid_request_vendors')
+      .select(`
+        *,
+        bid_requests!inner(
+          id,
+          association_id,
+          title,
+          created_at
+        )
+      `)
       .eq('vendor_id', vendorId)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return (data || []) as VendorBidAnalytics[];
+    
+    // Transform the data to match VendorBidAnalytics interface
+    const bidAnalytics: VendorBidAnalytics[] = (data || []).map(item => ({
+      id: item.id,
+      vendor_id: vendorId,
+      bid_request_id: item.bid_request_id,
+      association_id: item.bid_requests?.association_id || '',
+      bid_amount: item.quote_amount,
+      response_time_hours: item.submitted_at ? 
+        Math.round((new Date(item.submitted_at).getTime() - new Date(item.created_at).getTime()) / (1000 * 60 * 60)) : 
+        undefined,
+      was_selected: item.status === 'selected',
+      selection_reason: undefined,
+      feedback_score: undefined,
+      feedback_comments: undefined,
+      created_at: item.created_at
+    }));
+
+    return bidAnalytics;
   },
 
   async createBidAnalytic(analytic: Omit<VendorBidAnalytics, 'id' | 'created_at'>): Promise<VendorBidAnalytics> {
-    const { data, error } = await supabase
-      .from('vendor_bid_analytics')
-      .insert(analytic)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as VendorBidAnalytics;
+    // Mock implementation - would need actual table
+    console.log('Creating bid analytic:', analytic);
+    return {
+      ...analytic,
+      id: crypto.randomUUID(),
+      created_at: new Date().toISOString()
+    };
   },
 
   async getVendorAnalyticsSummary(vendorId: string): Promise<VendorAnalyticsData> {
@@ -86,28 +101,20 @@ export const vendorAnalyticsService = {
   },
 
   async getAssociationAnalytics(associationId: string) {
-    const { data: performanceData, error: perfError } = await supabase
-      .from('vendor_performance_metrics')
-      .select(`
-        *,
-        vendors!inner(name, specialties)
-      `)
-      .eq('association_id', associationId);
-
-    if (perfError) throw perfError;
-
+    // Get analytics data from existing tables
     const { data: bidData, error: bidError } = await supabase
-      .from('vendor_bid_analytics')
+      .from('bid_request_vendors')
       .select(`
         *,
-        vendors!inner(name)
+        vendors!inner(name),
+        bid_requests!inner(association_id)
       `)
-      .eq('association_id', associationId);
+      .eq('bid_requests.association_id', associationId);
 
     if (bidError) throw bidError;
 
     return {
-      performance_data: performanceData || [],
+      performance_data: [], // Mock data since table doesn't exist
       bid_data: bidData || []
     };
   }

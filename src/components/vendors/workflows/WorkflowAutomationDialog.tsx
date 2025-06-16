@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -167,6 +168,52 @@ const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
                   }
                 }))}
                 placeholder="7"
+              />
+            </div>
+          </div>
+        );
+      case 'payment_overdue':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="overdue_days">Days Overdue</Label>
+              <Input
+                id="overdue_days"
+                type="number"
+                value={formData.trigger_conditions.overdue_days || ''}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  trigger_conditions: {
+                    ...prev.trigger_conditions,
+                    overdue_days: parseInt(e.target.value) || 0
+                  }
+                }))}
+                placeholder="30"
+              />
+            </div>
+          </div>
+        );
+      case 'custom':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="custom_condition">Custom Condition (JSON)</Label>
+              <Textarea
+                id="custom_condition"
+                value={JSON.stringify(formData.trigger_conditions, null, 2)}
+                onChange={(e) => {
+                  try {
+                    const conditions = JSON.parse(e.target.value);
+                    setFormData(prev => ({
+                      ...prev,
+                      trigger_conditions: conditions
+                    }));
+                  } catch {
+                    // Invalid JSON, ignore
+                  }
+                }}
+                placeholder='{"key": "value"}'
+                rows={4}
               />
             </div>
           </div>

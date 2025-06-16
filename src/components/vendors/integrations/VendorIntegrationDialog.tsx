@@ -151,6 +151,111 @@ const VendorIntegrationDialog: React.FC<VendorIntegrationDialogProps> = ({
             </div>
           </div>
         );
+      case 'portal':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="portal_url">Portal URL</Label>
+              <Input
+                id="portal_url"
+                placeholder="https://portal.example.com"
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  configuration: { ...prev.configuration, portal_url: e.target.value }
+                }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="portal_username">Username</Label>
+              <Input
+                id="portal_username"
+                placeholder="username"
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  credentials: { ...prev.credentials, username: e.target.value }
+                }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="portal_password">Password</Label>
+              <Input
+                id="portal_password"
+                type="password"
+                placeholder="Enter password"
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  credentials: { ...prev.credentials, password: e.target.value }
+                }))}
+              />
+            </div>
+          </div>
+        );
+      case 'accounting':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="accounting_system">Accounting System</Label>
+              <Select onValueChange={(value) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, system_type: value }
+              }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select system" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="quickbooks">QuickBooks</SelectItem>
+                  <SelectItem value="xero">Xero</SelectItem>
+                  <SelectItem value="sage">Sage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="accounting_api_key">API Key</Label>
+              <Input
+                id="accounting_api_key"
+                type="password"
+                placeholder="Enter API key"
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  credentials: { ...prev.credentials, api_key: e.target.value }
+                }))}
+              />
+            </div>
+          </div>
+        );
+      case 'calendar':
+        return (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="calendar_type">Calendar Type</Label>
+              <Select onValueChange={(value) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, calendar_type: value }
+              }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select calendar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="google">Google Calendar</SelectItem>
+                  <SelectItem value="outlook">Outlook</SelectItem>
+                  <SelectItem value="ical">iCal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="calendar_token">Access Token</Label>
+              <Input
+                id="calendar_token"
+                type="password"
+                placeholder="Enter access token"
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  credentials: { ...prev.credentials, access_token: e.target.value }
+                }))}
+              />
+            </div>
+          </div>
+        );
       default:
         return (
           <div>
