@@ -8,7 +8,7 @@ import { HomeownerInfo } from '@/components/homeowners/detail/HomeownerInfo';
 import { HomeownerTabs } from '@/components/homeowners/detail/HomeownerTabs';
 import { useHomeownerData } from '@/hooks/homeowners/useHomeownerData';
 import HomeownerEditForm from '@/components/homeowners/detail/HomeownerEditForm';
-import { useAuth } from '@/contexts/auth/useAuth';
+import { useAuth } from '@/contexts/auth';
 import { Homeowner, NoteType } from '@/components/homeowners/detail/types';
 import { toast } from 'sonner';
 
