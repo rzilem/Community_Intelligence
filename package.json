@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "import:demo-data": "node scripts/import-demo-data.ts",
     "import:vendors": "node scripts/import-vendors-from-csv.ts",
+    "generate:action-step-map": "node scripts/generate-action-step-map.ts",
     "test": "vitest",
     "setup": "npm install"
   },
