@@ -37,19 +37,6 @@ const VendorAvailabilityTab: React.FC<VendorAvailabilityTabProps> = ({ vendorId 
   const { data: existingAvailability = [], isLoading } = useQuery({
     queryKey: ['vendor-availability', vendorId],
     queryFn: () => vendorExtendedService.getVendorAvailability(vendorId),
-    onSuccess: (data) => {
-      // Initialize state with existing data
-      const availabilityMap: typeof availability = {};
-      DAYS_OF_WEEK.forEach(day => {
-        const existing = data.find(av => av.day_of_week === day.id);
-        availabilityMap[day.id] = {
-          is_available: existing?.is_available ?? true,
-          start_time: existing?.start_time ?? '09:00',
-          end_time: existing?.end_time ?? '17:00',
-        };
-      });
-      setAvailability(availabilityMap);
-    }
   });
 
   const updateAvailabilityMutation = useMutation({

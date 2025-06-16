@@ -85,7 +85,28 @@ export interface VendorEmergencyContact {
   updated_at: string;
 }
 
-export interface ExtendedVendor extends Vendor {
+// Base Vendor interface from the database
+export interface BaseVendor {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  contact_person?: string;
+  license_number?: string;
+  specialties?: string[];
+  notes?: string;
+  is_active: boolean;
+  rating?: number;
+  total_jobs: number;
+  completed_jobs: number;
+  average_response_time?: number;
+  created_at: string;
+  updated_at: string;
+  hoa_id?: string;
+}
+
+export interface ExtendedVendor extends BaseVendor {
   insurance_expiry_date?: string;
   insurance_certificate_url?: string;
   bond_amount?: number;

@@ -36,7 +36,7 @@ export const vendorExtendedService = {
       throw error;
     }
 
-    return vendor;
+    return vendor as ExtendedVendor;
   },
 
   // Document management
@@ -48,7 +48,7 @@ export const vendorExtendedService = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorDocument[];
   },
 
   createVendorDocument: async (vendorId: string, documentData: VendorDocumentFormData): Promise<VendorDocument> => {
@@ -63,7 +63,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorDocument;
   },
 
   updateVendorDocument: async (id: string, documentData: Partial<VendorDocumentFormData>): Promise<VendorDocument> => {
@@ -75,7 +75,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorDocument;
   },
 
   deleteVendorDocument: async (id: string): Promise<void> => {
@@ -96,7 +96,7 @@ export const vendorExtendedService = {
       .order('expiry_date', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorCertification[];
   },
 
   createVendorCertification: async (vendorId: string, certData: VendorCertificationFormData): Promise<VendorCertification> => {
@@ -110,7 +110,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorCertification;
   },
 
   updateVendorCertification: async (id: string, certData: Partial<VendorCertificationFormData>): Promise<VendorCertification> => {
@@ -122,7 +122,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorCertification;
   },
 
   deleteVendorCertification: async (id: string): Promise<void> => {
@@ -146,7 +146,7 @@ export const vendorExtendedService = {
       .order('review_date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorReview[];
   },
 
   createVendorReview: async (vendorId: string, associationId: string, reviewData: VendorReviewFormData): Promise<VendorReview> => {
@@ -165,7 +165,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorReview;
   },
 
   // Performance metrics
@@ -182,7 +182,7 @@ export const vendorExtendedService = {
     const { data, error } = await query.order('period_start', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorPerformanceMetrics[];
   },
 
   // Emergency contacts
@@ -194,7 +194,7 @@ export const vendorExtendedService = {
       .order('is_primary', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorEmergencyContact[];
   },
 
   createVendorEmergencyContact: async (vendorId: string, contactData: VendorEmergencyContactFormData): Promise<VendorEmergencyContact> => {
@@ -208,7 +208,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorEmergencyContact;
   },
 
   updateVendorEmergencyContact: async (id: string, contactData: Partial<VendorEmergencyContactFormData>): Promise<VendorEmergencyContact> => {
@@ -220,7 +220,7 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as VendorEmergencyContact;
   },
 
   deleteVendorEmergencyContact: async (id: string): Promise<void> => {
@@ -241,7 +241,7 @@ export const vendorExtendedService = {
       .order('day_of_week', { ascending: true });
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorAvailability[];
   },
 
   updateVendorAvailability: async (vendorId: string, availability: Omit<VendorAvailability, 'id' | 'vendor_id' | 'created_at' | 'updated_at'>[]): Promise<VendorAvailability[]> => {
@@ -263,6 +263,6 @@ export const vendorExtendedService = {
       .select();
 
     if (error) throw error;
-    return data || [];
+    return (data || []) as VendorAvailability[];
   }
 };
