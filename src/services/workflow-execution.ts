@@ -1,8 +1,9 @@
 import { WorkflowStep } from '@/types/workflow-types';
+import type { UserRole } from '@/types/profile-types';
 
 export interface WorkflowExecutionStep extends WorkflowStep {
   automated?: boolean;
-  notifyRoles?: string[];
+  notifyRoles?: UserRole[];
   execute?: () => void;
 }
 
@@ -17,7 +18,7 @@ export interface WorkflowExecution {
  */
 export function executeWorkflow(
   workflow: WorkflowExecution,
-  notify: (role: string, step: WorkflowExecutionStep) => void
+  notify: (role: UserRole, step: WorkflowExecutionStep) => void
 ): void {
   workflow.steps.forEach(step => {
     if (step.automated && step.execute) {

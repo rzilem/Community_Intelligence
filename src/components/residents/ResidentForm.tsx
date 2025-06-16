@@ -47,7 +47,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   useEffect(() => {
     const fetchAssociations = async () => {
       try {
-        const { data, error } = await supabase.rpc('get_user_associations');
+        const { data, error } = await (supabase as any).rpc('get_user_associations');
         if (error) throw error;
         
         setAssociations(data || []);
@@ -71,7 +71,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       
       setLoading(true);
       try {
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('properties')
           .select('*')
           .eq('hoa_id', selectedAssociationId);
