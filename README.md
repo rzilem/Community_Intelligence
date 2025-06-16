@@ -126,6 +126,7 @@ cp .env.example .env
 ```
 
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env`. The app reads these values via `import.meta.env` when creating the Supabase client.
+If either variable is missing when the app runs, you will see a runtime error saying `supabaseUrl is required`.
 
 ## Linting
 
