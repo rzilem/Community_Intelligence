@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseDelete } from '../supabase/use-supabase-delete';
+import { actionStepMap } from '@/data/actionStepMap';
 
 export const useWorkflows = () => {
   const [loading, setLoading] = useState(false);
@@ -384,6 +385,15 @@ export const useWorkflows = () => {
     cancelWorkflowMutation.mutate(workflowId);
   };
 
+  const triggerWorkflowForStep = (actionStep: string) => {
+    const templateId = actionStepMap[actionStep];
+    if (templateId) {
+      useTemplateMutation.mutate(templateId);
+    } else {
+      toast.info(`No workflow template mapped for step "${actionStep}"`);
+    }
+  };
+
   const deleteTemplate = (templateId: string) => {
     deleteTemplateMutation.mutate(templateId);
   };
@@ -404,6 +414,7 @@ export const useWorkflows = () => {
     resumeWorkflow,
     cancelWorkflow,
     viewWorkflowDetails,
+    triggerWorkflowForStep,
     deleteTemplate,
     isDeleting,
     refreshWorkflows: () => {
