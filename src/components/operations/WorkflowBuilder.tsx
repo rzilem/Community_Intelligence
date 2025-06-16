@@ -31,6 +31,7 @@ const roles: { id: UserRole; name: string }[] = [
   { id: 'manager', name: 'Manager' },
   { id: 'resident', name: 'Resident' },
   { id: 'maintenance', name: 'Maintenance' },
+  { id: 'member', name: 'Member' },
   { id: 'accountant', name: 'Accountant' },
   { id: 'treasurer', name: 'Treasurer' },
   { id: 'user', name: 'Basic User' }

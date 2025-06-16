@@ -32,6 +32,12 @@ const ROLE_INFO: Record<
     color: 'text-amber-500',
     access: 'Medium'
   },
+  member: {
+    label: 'Member',
+    description: 'Standard association member privileges',
+    color: 'text-amber-500',
+    access: 'Medium'
+  },
   accountant: {
     label: 'Accountant',
     description: 'Access to financial information and reports',

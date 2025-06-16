@@ -17,6 +17,8 @@ const UserRoleBadge: React.FC<UserRoleBadgeProps> = ({ role = 'user' }) => {
         return 'bg-green-100 text-green-800';
       case 'maintenance':
         return 'bg-amber-100 text-amber-800';
+      case 'member':
+        return 'bg-green-100 text-green-800';
       case 'accountant':
         return 'bg-purple-100 text-purple-800';
       case 'treasurer':

@@ -17,6 +17,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   manager: 'Manager',
   resident: 'Resident',
   maintenance: 'Maintenance',
+  member: 'Member',
   accountant: 'Accountant',
   treasurer: 'Treasurer',
   user: 'Basic User'
