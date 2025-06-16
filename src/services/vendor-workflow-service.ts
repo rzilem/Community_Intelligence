@@ -137,17 +137,17 @@ export const vendorWorkflowService = {
     }
   },
 
-  private async sendNotificationAction(config: Record<string, any>): Promise<void> {
+  async sendNotificationAction(config: Record<string, any>): Promise<void> {
     // Implementation for sending notifications
     console.log('Sending notification:', config);
   },
 
-  private async createMaintenanceRequestAction(config: Record<string, any>): Promise<void> {
+  async createMaintenanceRequestAction(config: Record<string, any>): Promise<void> {
     // Implementation for creating maintenance requests
     console.log('Creating maintenance request:', config);
   },
 
-  private async updateVendorStatusAction(config: Record<string, any>): Promise<void> {
+  async updateVendorStatusAction(config: Record<string, any>): Promise<void> {
     // Implementation for updating vendor status
     console.log('Updating vendor status:', config);
   }
