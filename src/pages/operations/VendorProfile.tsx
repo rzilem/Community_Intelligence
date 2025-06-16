@@ -18,6 +18,8 @@ import VendorCertificationsTab from "@/components/vendors/VendorCertificationsTa
 import VendorEmergencyContactsTab from "@/components/vendors/VendorEmergencyContactsTab";
 import VendorContractsTab from "@/components/vendors/contracts/VendorContractsTab";
 import VendorComplianceTab from "@/components/vendors/compliance/VendorComplianceTab";
+import VendorAnalyticsDashboard from "@/components/vendors/analytics/VendorAnalyticsDashboard";
+import WorkflowAutomationTab from "@/components/vendors/workflows/WorkflowAutomationTab";
 
 const VendorProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -161,17 +163,23 @@ const VendorProfile: React.FC = () => {
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="documents" className="w-full">
-        <TabsList className="grid w-full grid-cols-8">
+      <Tabs defaultValue="analytics" className="w-full">
+        <TabsList className="grid w-full grid-cols-10">
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="contracts">Contracts</TabsTrigger>
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
+          <TabsTrigger value="workflows">Workflows</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="availability">Availability</TabsTrigger>
           <TabsTrigger value="certifications">Certifications</TabsTrigger>
           <TabsTrigger value="emergency">Emergency</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics" className="mt-6">
+          <VendorAnalyticsDashboard vendorId={vendor.id} />
+        </TabsContent>
 
         <TabsContent value="documents" className="mt-6">
           <VendorDocumentsTab vendorId={vendor.id} />
@@ -187,6 +195,10 @@ const VendorProfile: React.FC = () => {
 
         <TabsContent value="compliance" className="mt-6">
           <VendorComplianceTab vendorId={vendor.id} />
+        </TabsContent>
+
+        <TabsContent value="workflows" className="mt-6">
+          <WorkflowAutomationTab />
         </TabsContent>
 
         <TabsContent value="reviews" className="mt-6">
