@@ -11,30 +11,73 @@ import VendorDialog from '@/components/vendors/VendorDialog';
 import { vendorService } from '@/services/vendor-service';
 import { VendorFormData } from '@/types/vendor-types';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/auth';
 
 const Vendors = () => {
   const [addVendorOpen, setAddVendorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
   const { toast } = useToast();
+  const { currentAssociation } = useAuth();
 
-  const { data: vendors = [], isLoading: isLoadingVendors } = useQuery({
+  const { data: vendors = [], isLoading: isLoadingVendors, error: vendorsError } = useQuery({
     queryKey: ['vendors'],
     queryFn: vendorService.getVendors,
   });
 
-  const { data: vendorStats, isLoading: isLoadingStats } = useQuery({
+  const { data: vendorStats, isLoading: isLoadingStats, error: statsError } = useQuery({
     queryKey: ['vendor-stats'],
     queryFn: vendorService.getVendorStats,
   });
 
-  const handleAddVendor = (data: VendorFormData) => {
-    console.log('Add vendor:', data);
-    toast({
-      title: "Vendor added",
-      description: `${data.name} has been added successfully.`,
-    });
-    setAddVendorOpen(false);
+  const handleAddVendor = async (data: VendorFormData) => {
+    try {
+      if (!currentAssociation) {
+        toast({
+          title: "Error",
+          description: "No association selected. Please select an association first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await vendorService.createVendor({
+        ...data,
+        hoa_id: currentAssociation.id,
+      });
+      
+      toast({
+        title: "Vendor added",
+        description: `${data.name} has been added successfully.`,
+      });
+      setAddVendorOpen(false);
+    } catch (error) {
+      console.error('Error adding vendor:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add vendor. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (vendorsError || statsError) {
+    return (
+      <PageTemplate 
+        title="Vendor Management" 
+        icon={<Building2 className="h-8 w-8" />}
+        description="Manage vendor relationships, contracts, and service providers."
+      >
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 mb-2">Error loading vendors data</p>
+            <p className="text-sm text-muted-foreground">
+              {vendorsError?.message || statsError?.message || 'Unknown error occurred'}
+            </p>
+          </div>
+        </div>
+      </PageTemplate>
+    );
+  }
 
   return (
     <PageTemplate 
@@ -73,7 +116,9 @@ const Vendors = () => {
         {vendorStats && <VendorStatsCards stats={vendorStats} />}
 
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Vendors</h2>
+          <h2 className="text-xl font-semibold">
+            Vendors ({vendors.length})
+          </h2>
           <Button variant="outline" size="sm">
             <FileDown className="mr-2 h-4 w-4" />
             Import/Export
@@ -81,7 +126,12 @@ const Vendors = () => {
         </div>
 
         {isLoadingVendors ? (
-          <div className="flex justify-center py-8">Loading vendors...</div>
+          <div className="flex justify-center py-8">
+            <div className="text-center">
+              <div className="h-8 w-8 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2">Loading vendors...</p>
+            </div>
+          </div>
         ) : (
           <VendorList vendors={vendors} />
         )}

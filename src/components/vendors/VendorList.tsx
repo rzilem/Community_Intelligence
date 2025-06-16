@@ -12,17 +12,17 @@ interface VendorListProps {
   vendors: Vendor[];
 }
 
-type ColumnKey = 'name' | 'contactPerson' | 'email' | 'phone' | 'category' | 'status' | 'lastInvoice' | 'rating';
+type ColumnKey = 'name' | 'contact_person' | 'email' | 'phone' | 'specialties' | 'is_active' | 'total_jobs' | 'rating';
 
 const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   const columnOptions = [
     { id: 'name', label: 'Vendor Name' },
-    { id: 'contactPerson', label: 'Contact Person' },
+    { id: 'contact_person', label: 'Contact Person' },
     { id: 'email', label: 'Email' },
     { id: 'phone', label: 'Phone' },
-    { id: 'category', label: 'Category' },
-    { id: 'status', label: 'Status' },
-    { id: 'lastInvoice', label: 'Last Invoice' },
+    { id: 'specialties', label: 'Specialties' },
+    { id: 'is_active', label: 'Status' },
+    { id: 'total_jobs', label: 'Total Jobs' },
     { id: 'rating', label: 'Rating' }
   ];
 
@@ -46,12 +46,12 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
           <TableHeader>
             <TableRow>
               {visibleColumnIds.includes('name') && <TableHead>Vendor Name</TableHead>}
-              {visibleColumnIds.includes('contactPerson') && <TableHead>Contact Person</TableHead>}
+              {visibleColumnIds.includes('contact_person') && <TableHead>Contact Person</TableHead>}
               {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
               {visibleColumnIds.includes('phone') && <TableHead>Phone</TableHead>}
-              {visibleColumnIds.includes('category') && <TableHead>Category</TableHead>}
-              {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
-              {visibleColumnIds.includes('lastInvoice') && <TableHead>Last Invoice</TableHead>}
+              {visibleColumnIds.includes('specialties') && <TableHead>Specialties</TableHead>}
+              {visibleColumnIds.includes('is_active') && <TableHead>Status</TableHead>}
+              {visibleColumnIds.includes('total_jobs') && <TableHead>Total Jobs</TableHead>}
               {visibleColumnIds.includes('rating') && <TableHead>Rating</TableHead>}
             </TableRow>
           </TableHeader>
@@ -65,21 +65,36 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                     </Link>
                   </TableCell>
                 )}
-                {visibleColumnIds.includes('contactPerson') && <TableCell>{vendor.contactPerson || "-"}</TableCell>}
+                {visibleColumnIds.includes('contact_person') && <TableCell>{vendor.contact_person || "-"}</TableCell>}
                 {visibleColumnIds.includes('email') && <TableCell>{vendor.email || "-"}</TableCell>}
                 {visibleColumnIds.includes('phone') && <TableCell>{vendor.phone || "-"}</TableCell>}
-                {visibleColumnIds.includes('category') && <TableCell>{vendor.category || "-"}</TableCell>}
-                {visibleColumnIds.includes('status') && (
+                {visibleColumnIds.includes('specialties') && (
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {vendor.specialties?.slice(0, 2).map((specialty, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {specialty}
+                        </Badge>
+                      ))}
+                      {vendor.specialties?.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{vendor.specialties.length - 2} more
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumnIds.includes('is_active') && (
                   <TableCell>
                     <Badge 
-                      variant={vendor.status === "active" ? "default" : "secondary"}
-                      className="bg-blue-500"
+                      variant={vendor.is_active ? "default" : "secondary"}
+                      className={vendor.is_active ? "bg-green-500" : "bg-gray-500"}
                     >
-                      {vendor.status === "active" ? "Active" : "Inactive"}
+                      {vendor.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                 )}
-                {visibleColumnIds.includes('lastInvoice') && <TableCell>{vendor.lastInvoice || "N/A"}</TableCell>}
+                {visibleColumnIds.includes('total_jobs') && <TableCell>{vendor.total_jobs || 0}</TableCell>}
                 {visibleColumnIds.includes('rating') && (
                   <TableCell>
                     <div className="flex items-center">

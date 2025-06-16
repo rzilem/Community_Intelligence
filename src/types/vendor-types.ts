@@ -2,24 +2,44 @@
 export interface Vendor {
   id: string;
   name: string;
-  contactPerson?: string;
+  contact_person?: string;
   email?: string;
   phone?: string;
-  category?: string;
-  status: 'active' | 'inactive';
-  lastInvoice?: string;
+  address?: string;
+  license_number?: string;
+  insurance_info?: InsuranceInfo;
+  specialties: string[];
   rating?: number;
-  hasInsurance?: boolean;
+  total_jobs: number;
+  completed_jobs: number;
+  average_response_time?: number;
+  is_active: boolean;
+  notes?: string;
+  hoa_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InsuranceInfo {
+  provider?: string;
+  policy_number?: string;
+  coverage_amount?: number;
+  expiration_date?: string;
+  certificate_url?: string;
 }
 
 export interface VendorFormData {
   name: string;
-  contactPerson?: string;
+  contact_person?: string;
   email?: string;
   phone?: string;
-  category?: string;
-  status: 'active' | 'inactive';
-  hasInsurance?: boolean;
+  address?: string;
+  license_number?: string;
+  specialties: string[];
+  insurance_info?: InsuranceInfo;
+  notes?: string;
+  is_active: boolean;
+  hoa_id: string;
 }
 
 export interface VendorStats {

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { useSupabaseQuery } from '@/hooks/supabase';
 import { toast } from 'sonner';
 import { vendorService } from '@/services/vendor-service';
 
@@ -72,7 +71,7 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between" // Ensure full width
+            className="w-full justify-between"
             disabled={isLoading}
           >
             {isLoading 
@@ -132,4 +131,3 @@ const VendorSelector: React.FC<VendorSelectorProps> = ({
 };
 
 export default VendorSelector;
-
