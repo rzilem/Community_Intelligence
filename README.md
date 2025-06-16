@@ -132,6 +132,23 @@ If either variable is missing when the app runs, you will see a runtime error sa
 
 `npm run lint` currently fails because the ESLint rules are very strict. Make sure to run `npm run setup` before running any lint or test commands.
 
+## Utility Scripts
+
+### Generate Action Step Map
+
+The `generate:action-step-map` script converts a spreadsheet (CSV or XLSX)
+into the `src/data/actionStepMap.ts` file used by the app. Pass the path
+to your spreadsheet and optionally an output file. If the output file has
+a `.json` extension, a JSON file is written instead of a TypeScript module.
+
+```bash
+# Write to the default TypeScript file
+npm run generate:action-step-map -- path/to/steps.xlsx
+
+# Or write to a JSON file
+npm run generate:action-step-map -- path/to/steps.csv actionStepMap.json
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/a73d32bc-6ef6-4db0-a286-f45bb60ffc4a) and click on Share -> Publish.
