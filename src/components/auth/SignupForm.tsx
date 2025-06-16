@@ -10,13 +10,21 @@ import { validatePassword, validateEmail, sanitizeInput } from '@/utils/security
 import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 import { toast } from 'sonner';
 
+export interface SignupFormValues {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  first_name: string;
+  last_name: string;
+}
+
 interface SignupFormProps {
   onSuccess?: () => void;
 }
 
 const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const { signUp } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormValues>({
     email: '',
     password: '',
     confirmPassword: '',
@@ -26,7 +34,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (field: keyof SignupFormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = field === 'email' ? e.target.value : sanitizeInput(e.target.value);
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(null);
@@ -74,7 +82,7 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      const { success, error } = await signUp(
+      const result = await signUp(
         formData.email, 
         formData.password, 
         {
@@ -83,11 +91,11 @@ const SignupForm: React.FC<SignupFormProps> = ({ onSuccess }) => {
         }
       );
 
-      if (success) {
+      if (result.success) {
         toast.success('Account created successfully! Please check your email to verify your account.');
         onSuccess?.();
       } else {
-        setError(error?.message || 'Failed to create account');
+        setError(result.error?.message || 'Failed to create account');
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred');
