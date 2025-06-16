@@ -105,122 +105,131 @@ const WorkflowAutomationDialog: React.FC<WorkflowAutomationDialogProps> = ({
   };
 
   const getTriggerConditionFields = () => {
-    switch (formData.trigger_type) {
-      case 'contract_expiry':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="days_before_expiry">Days Before Expiry</Label>
-              <Input
-                id="days_before_expiry"
-                type="number"
-                value={formData.trigger_conditions.days_before_expiry || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  trigger_conditions: {
-                    ...prev.trigger_conditions,
-                    days_before_expiry: parseInt(e.target.value) || 0
-                  }
-                }))}
-                placeholder="30"
-              />
-            </div>
+    const triggerType = formData.trigger_type;
+    
+    if (triggerType === 'performance_threshold') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="min_rating">Minimum Rating</Label>
+            <Input
+              id="min_rating"
+              type="number"
+              step="0.1"
+              min="0"
+              max="5"
+              value={formData.trigger_conditions.min_rating || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                trigger_conditions: {
+                  ...prev.trigger_conditions,
+                  min_rating: parseFloat(e.target.value) || 0
+                }
+              }))}
+              placeholder="3.0"
+            />
           </div>
-        );
-      case 'performance_threshold':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="min_rating">Minimum Rating</Label>
-              <Input
-                id="min_rating"
-                type="number"
-                step="0.1"
-                min="0"
-                max="5"
-                value={formData.trigger_conditions.min_rating || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  trigger_conditions: {
-                    ...prev.trigger_conditions,
-                    min_rating: parseFloat(e.target.value) || 0
-                  }
-                }))}
-                placeholder="3.0"
-              />
-            </div>
-          </div>
-        );
-      case 'compliance_due':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="days_before_due">Days Before Due</Label>
-              <Input
-                id="days_before_due"
-                type="number"
-                value={formData.trigger_conditions.days_before_due || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  trigger_conditions: {
-                    ...prev.trigger_conditions,
-                    days_before_due: parseInt(e.target.value) || 0
-                  }
-                }))}
-                placeholder="7"
-              />
-            </div>
-          </div>
-        );
-      case 'payment_overdue':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="overdue_days">Days Overdue</Label>
-              <Input
-                id="overdue_days"
-                type="number"
-                value={formData.trigger_conditions.overdue_days || ''}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  trigger_conditions: {
-                    ...prev.trigger_conditions,
-                    overdue_days: parseInt(e.target.value) || 0
-                  }
-                }))}
-                placeholder="30"
-              />
-            </div>
-          </div>
-        );
-      case 'custom':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="custom_condition">Custom Condition (JSON)</Label>
-              <Textarea
-                id="custom_condition"
-                value={JSON.stringify(formData.trigger_conditions, null, 2)}
-                onChange={(e) => {
-                  try {
-                    const conditions = JSON.parse(e.target.value);
-                    setFormData(prev => ({
-                      ...prev,
-                      trigger_conditions: conditions
-                    }));
-                  } catch {
-                    // Invalid JSON, ignore
-                  }
-                }}
-                placeholder='{"key": "value"}'
-                rows={4}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return null;
+        </div>
+      );
     }
+    
+    if (triggerType === 'compliance_due') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="days_before_due">Days Before Due</Label>
+            <Input
+              id="days_before_due"
+              type="number"
+              value={formData.trigger_conditions.days_before_due || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                trigger_conditions: {
+                  ...prev.trigger_conditions,
+                  days_before_due: parseInt(e.target.value) || 0
+                }
+              }))}
+              placeholder="7"
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (triggerType === 'payment_overdue') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="overdue_days">Days Overdue</Label>
+            <Input
+              id="overdue_days"
+              type="number"
+              value={formData.trigger_conditions.overdue_days || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                trigger_conditions: {
+                  ...prev.trigger_conditions,
+                  overdue_days: parseInt(e.target.value) || 0
+                }
+              }))}
+              placeholder="30"
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (triggerType === 'custom') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="custom_condition">Custom Condition (JSON)</Label>
+            <Textarea
+              id="custom_condition"
+              value={JSON.stringify(formData.trigger_conditions, null, 2)}
+              onChange={(e) => {
+                try {
+                  const conditions = JSON.parse(e.target.value);
+                  setFormData(prev => ({
+                    ...prev,
+                    trigger_conditions: conditions
+                  }));
+                } catch {
+                  // Invalid JSON, ignore
+                }
+              }}
+              placeholder='{"key": "value"}'
+              rows={4}
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (triggerType === 'contract_expiry') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="days_before_expiry">Days Before Expiry</Label>
+            <Input
+              id="days_before_expiry"
+              type="number"
+              value={formData.trigger_conditions.days_before_expiry || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                trigger_conditions: {
+                  ...prev.trigger_conditions,
+                  days_before_expiry: parseInt(e.target.value) || 0
+                }
+              }))}
+              placeholder="30"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (

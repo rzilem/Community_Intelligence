@@ -71,211 +71,220 @@ const VendorIntegrationDialog: React.FC<VendorIntegrationDialogProps> = ({
   };
 
   const getConfigurationFields = () => {
-    switch (formData.integration_type) {
-      case 'api':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="api_url">API URL</Label>
-              <Input
-                id="api_url"
-                placeholder="https://api.example.com"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  configuration: { ...prev.configuration, api_url: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="api_key">API Key</Label>
-              <Input
-                id="api_key"
-                type="password"
-                placeholder="Enter API key"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, api_key: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        );
-      case 'email':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="smtp_host">SMTP Host</Label>
-              <Input
-                id="smtp_host"
-                placeholder="smtp.gmail.com"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  configuration: { ...prev.configuration, smtp_host: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="smtp_port">SMTP Port</Label>
-              <Input
-                id="smtp_port"
-                type="number"
-                placeholder="587"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  configuration: { ...prev.configuration, smtp_port: parseInt(e.target.value) }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email_username">Username</Label>
-              <Input
-                id="email_username"
-                placeholder="username@example.com"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, username: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email_password">Password</Label>
-              <Input
-                id="email_password"
-                type="password"
-                placeholder="Enter password"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, password: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        );
-      case 'portal':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="portal_url">Portal URL</Label>
-              <Input
-                id="portal_url"
-                placeholder="https://portal.example.com"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  configuration: { ...prev.configuration, portal_url: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="portal_username">Username</Label>
-              <Input
-                id="portal_username"
-                placeholder="username"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, username: e.target.value }
-                }))}
-              />
-            </div>
-            <div>
-              <Label htmlFor="portal_password">Password</Label>
-              <Input
-                id="portal_password"
-                type="password"
-                placeholder="Enter password"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, password: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        );
-      case 'accounting':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="accounting_system">Accounting System</Label>
-              <Select onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                configuration: { ...prev.configuration, system_type: value }
-              }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select system" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="quickbooks">QuickBooks</SelectItem>
-                  <SelectItem value="xero">Xero</SelectItem>
-                  <SelectItem value="sage">Sage</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="accounting_api_key">API Key</Label>
-              <Input
-                id="accounting_api_key"
-                type="password"
-                placeholder="Enter API key"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, api_key: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        );
-      case 'calendar':
-        return (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="calendar_type">Calendar Type</Label>
-              <Select onValueChange={(value) => setFormData(prev => ({
-                ...prev,
-                configuration: { ...prev.configuration, calendar_type: value }
-              }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select calendar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="google">Google Calendar</SelectItem>
-                  <SelectItem value="outlook">Outlook</SelectItem>
-                  <SelectItem value="ical">iCal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="calendar_token">Access Token</Label>
-              <Input
-                id="calendar_token"
-                type="password"
-                placeholder="Enter access token"
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  credentials: { ...prev.credentials, access_token: e.target.value }
-                }))}
-              />
-            </div>
-          </div>
-        );
-      default:
-        return (
+    const integrationType = formData.integration_type;
+    
+    if (integrationType === 'email') {
+      return (
+        <div className="space-y-4">
           <div>
-            <Label htmlFor="config_json">Configuration (JSON)</Label>
-            <Textarea
-              id="config_json"
-              placeholder='{"key": "value"}'
-              rows={4}
-              onChange={(e) => {
-                try {
-                  const config = JSON.parse(e.target.value);
-                  setFormData(prev => ({ ...prev, configuration: config }));
-                } catch {
-                  // Invalid JSON, ignore
-                }
-              }}
+            <Label htmlFor="smtp_host">SMTP Host</Label>
+            <Input
+              id="smtp_host"
+              placeholder="smtp.gmail.com"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, smtp_host: e.target.value }
+              }))}
             />
           </div>
-        );
+          <div>
+            <Label htmlFor="smtp_port">SMTP Port</Label>
+            <Input
+              id="smtp_port"
+              type="number"
+              placeholder="587"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, smtp_port: parseInt(e.target.value) }
+              }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="email_username">Username</Label>
+            <Input
+              id="email_username"
+              placeholder="username@example.com"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, username: e.target.value }
+              }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="email_password">Password</Label>
+            <Input
+              id="email_password"
+              type="password"
+              placeholder="Enter password"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, password: e.target.value }
+              }))}
+            />
+          </div>
+        </div>
+      );
     }
+    
+    if (integrationType === 'portal') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="portal_url">Portal URL</Label>
+            <Input
+              id="portal_url"
+              placeholder="https://portal.example.com"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, portal_url: e.target.value }
+              }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="portal_username">Username</Label>
+            <Input
+              id="portal_username"
+              placeholder="username"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, username: e.target.value }
+              }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="portal_password">Password</Label>
+            <Input
+              id="portal_password"
+              type="password"
+              placeholder="Enter password"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, password: e.target.value }
+              }))}
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (integrationType === 'accounting') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="accounting_system">Accounting System</Label>
+            <Select onValueChange={(value) => setFormData(prev => ({
+              ...prev,
+              configuration: { ...prev.configuration, system_type: value }
+            }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select system" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="quickbooks">QuickBooks</SelectItem>
+                <SelectItem value="xero">Xero</SelectItem>
+                <SelectItem value="sage">Sage</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="accounting_api_key">API Key</Label>
+            <Input
+              id="accounting_api_key"
+              type="password"
+              placeholder="Enter API key"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, api_key: e.target.value }
+              }))}
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (integrationType === 'calendar') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="calendar_type">Calendar Type</Label>
+            <Select onValueChange={(value) => setFormData(prev => ({
+              ...prev,
+              configuration: { ...prev.configuration, calendar_type: value }
+            }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select calendar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google">Google Calendar</SelectItem>
+                <SelectItem value="outlook">Outlook</SelectItem>
+                <SelectItem value="ical">iCal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="calendar_token">Access Token</Label>
+            <Input
+              id="calendar_token"
+              type="password"
+              placeholder="Enter access token"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, access_token: e.target.value }
+              }))}
+            />
+          </div>
+        </div>
+      );
+    }
+    
+    if (integrationType === 'api') {
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="api_url">API URL</Label>
+            <Input
+              id="api_url"
+              placeholder="https://api.example.com"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                configuration: { ...prev.configuration, api_url: e.target.value }
+              }))}
+            />
+          </div>
+          <div>
+            <Label htmlFor="api_key">API Key</Label>
+            <Input
+              id="api_key"
+              type="password"
+              placeholder="Enter API key"
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                credentials: { ...prev.credentials, api_key: e.target.value }
+              }))}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <Label htmlFor="config_json">Configuration (JSON)</Label>
+        <Textarea
+          id="config_json"
+          placeholder='{"key": "value"}'
+          rows={4}
+          onChange={(e) => {
+            try {
+              const config = JSON.parse(e.target.value);
+              setFormData(prev => ({ ...prev, configuration: config }));
+            } catch {
+              // Invalid JSON, ignore
+            }
+          }}
+        />
+      </div>
+    );
   };
 
   return (
