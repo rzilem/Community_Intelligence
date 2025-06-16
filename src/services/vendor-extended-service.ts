@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { 
   VendorDocument, 
@@ -43,7 +44,10 @@ export const vendorExtendedService = {
           .from('vendor_documents')
           .select('*')
           .eq('vendor_id', id);
-        extendedVendor.documents = documents || [];
+        extendedVendor.documents = (documents || []).map(doc => ({
+          ...doc,
+          document_type: doc.document_type as VendorDocument['document_type']
+        }));
       } catch (error) {
         console.warn('Documents table might not exist:', error);
         extendedVendor.documents = [];
@@ -55,7 +59,10 @@ export const vendorExtendedService = {
           .from('vendor_certifications')
           .select('*')
           .eq('vendor_id', id);
-        extendedVendor.certifications = certifications || [];
+        extendedVendor.certifications = (certifications || []).map(cert => ({
+          ...cert,
+          status: cert.status as VendorCertification['status']
+        }));
       } catch (error) {
         console.warn('Certifications table might not exist:', error);
         extendedVendor.certifications = [];
@@ -73,16 +80,16 @@ export const vendorExtendedService = {
         extendedVendor.performance_metrics = [];
       }
 
-      // Try to get reviews
+      // Try to get reviews (without the problematic profiles join)
       try {
         const { data: reviews } = await supabase
           .from('vendor_reviews')
-          .select(`
-            *,
-            reviewer:profiles(first_name, last_name, email)
-          `)
+          .select('*')
           .eq('vendor_id', id);
-        extendedVendor.reviews = reviews || [];
+        extendedVendor.reviews = (reviews || []).map(review => ({
+          ...review,
+          reviewer: undefined // Skip the profiles join for now since the relation doesn't exist
+        }));
       } catch (error) {
         console.warn('Reviews table might not exist:', error);
         extendedVendor.reviews = [];
@@ -106,7 +113,10 @@ export const vendorExtendedService = {
           .from('vendor_emergency_contacts')
           .select('*')
           .eq('vendor_id', id);
-        extendedVendor.emergency_contacts = emergencyContacts || [];
+        extendedVendor.emergency_contacts = (emergencyContacts || []).map(contact => ({
+          ...contact,
+          relationship: contact.relationship as VendorEmergencyContact['relationship']
+        }));
       } catch (error) {
         console.warn('Emergency contacts table might not exist:', error);
         extendedVendor.emergency_contacts = [];
@@ -130,7 +140,10 @@ export const vendorExtendedService = {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as VendorDocument[];
+      return (data || []).map(doc => ({
+        ...doc,
+        document_type: doc.document_type as VendorDocument['document_type']
+      }));
     } catch (error) {
       console.warn('Vendor documents table might not exist:', error);
       return [];
@@ -149,7 +162,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorDocument;
+    return {
+      ...data,
+      document_type: data.document_type as VendorDocument['document_type']
+    };
   },
 
   updateVendorDocument: async (id: string, documentData: Partial<VendorDocumentFormData>): Promise<VendorDocument> => {
@@ -161,7 +177,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorDocument;
+    return {
+      ...data,
+      document_type: data.document_type as VendorDocument['document_type']
+    };
   },
 
   deleteVendorDocument: async (id: string): Promise<void> => {
@@ -183,7 +202,10 @@ export const vendorExtendedService = {
         .order('expiry_date', { ascending: true });
 
       if (error) throw error;
-      return (data || []) as VendorCertification[];
+      return (data || []).map(cert => ({
+        ...cert,
+        status: cert.status as VendorCertification['status']
+      }));
     } catch (error) {
       console.warn('Vendor certifications table might not exist:', error);
       return [];
@@ -201,7 +223,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorCertification;
+    return {
+      ...data,
+      status: data.status as VendorCertification['status']
+    };
   },
 
   updateVendorCertification: async (id: string, certData: Partial<VendorCertificationFormData>): Promise<VendorCertification> => {
@@ -213,7 +238,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorCertification;
+    return {
+      ...data,
+      status: data.status as VendorCertification['status']
+    };
   },
 
   deleteVendorCertification: async (id: string): Promise<void> => {
@@ -230,15 +258,15 @@ export const vendorExtendedService = {
     try {
       const { data, error } = await supabase
         .from('vendor_reviews')
-        .select(`
-          *,
-          reviewer:profiles(first_name, last_name, email)
-        `)
+        .select('*')
         .eq('vendor_id', vendorId)
         .order('review_date', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as VendorReview[];
+      return (data || []).map(review => ({
+        ...review,
+        reviewer: undefined // Skip the profiles join for now
+      }));
     } catch (error) {
       console.warn('Vendor reviews table might not exist:', error);
       return [];
@@ -254,14 +282,14 @@ export const vendorExtendedService = {
         reviewer_id: (await supabase.auth.getUser()).data.user?.id,
         ...reviewData
       })
-      .select(`
-        *,
-        reviewer:profiles(first_name, last_name, email)
-      `)
+      .select()
       .single();
 
     if (error) throw error;
-    return data as VendorReview;
+    return {
+      ...data,
+      reviewer: undefined // Skip the profiles join for now
+    };
   },
 
   // Performance metrics
@@ -296,7 +324,10 @@ export const vendorExtendedService = {
         .order('is_primary', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as VendorEmergencyContact[];
+      return (data || []).map(contact => ({
+        ...contact,
+        relationship: contact.relationship as VendorEmergencyContact['relationship']
+      }));
     } catch (error) {
       console.warn('Vendor emergency contacts table might not exist:', error);
       return [];
@@ -314,7 +345,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorEmergencyContact;
+    return {
+      ...data,
+      relationship: data.relationship as VendorEmergencyContact['relationship']
+    };
   },
 
   updateVendorEmergencyContact: async (id: string, contactData: Partial<VendorEmergencyContactFormData>): Promise<VendorEmergencyContact> => {
@@ -326,7 +360,10 @@ export const vendorExtendedService = {
       .single();
 
     if (error) throw error;
-    return data as VendorEmergencyContact;
+    return {
+      ...data,
+      relationship: data.relationship as VendorEmergencyContact['relationship']
+    };
   },
 
   deleteVendorEmergencyContact: async (id: string): Promise<void> => {
