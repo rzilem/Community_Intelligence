@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { VendorFormData, VENDOR_CATEGORIES } from "@/types/vendor-types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -26,121 +27,155 @@ const VendorDialog: React.FC<VendorDialogProps> = ({
 }) => {
   const [formData, setFormData] = React.useState<VendorFormData>({
     name: vendor?.name || "",
-    contactPerson: vendor?.contactPerson || "",
+    contact_person: vendor?.contact_person || "",
     email: vendor?.email || "",
     phone: vendor?.phone || "",
-    category: vendor?.category || "",
-    status: vendor?.status || "active",
-    hasInsurance: vendor?.hasInsurance || false,
+    address: vendor?.address || "",
+    license_number: vendor?.license_number || "",
+    specialties: vendor?.specialties || [],
+    notes: vendor?.notes || "",
+    is_active: vendor?.is_active ?? true,
+    hoa_id: vendor?.hoa_id || "",
   });
 
-  const handleChange = (field: keyof VendorFormData, value: string | boolean) => {
+  const handleChange = (field: keyof VendorFormData, value: string | boolean | string[]) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
+  const handleSpecialtyChange = (specialty: string) => {
+    const currentSpecialties = formData.specialties || [];
+    const newSpecialties = currentSpecialties.includes(specialty)
+      ? currentSpecialties.filter(s => s !== specialty)
+      : [...currentSpecialties, specialty];
+    
+    setFormData(prev => ({
+      ...prev,
+      specialties: newSpecialties,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name) return;
     onSubmit(formData);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Vendor Name*</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              required
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="contactPerson">Contact Person</Label>
-            <Input
-              id="contactPerson"
-              value={formData.contactPerson}
-              onChange={(e) => handleChange("contactPerson", e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={formData.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => handleChange("category", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                <ScrollArea className="h-72">
+        <ScrollArea className="max-h-[60vh] px-1">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Vendor Name*</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="contact_person">Contact Person</Label>
+              <Input
+                id="contact_person"
+                value={formData.contact_person}
+                onChange={(e) => handleChange("contact_person", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleChange("email", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleChange("phone", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                value={formData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="license_number">License Number</Label>
+              <Input
+                id="license_number"
+                value={formData.license_number}
+                onChange={(e) => handleChange("license_number", e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Specialties</Label>
+              <ScrollArea className="h-32 border rounded p-2">
+                <div className="grid grid-cols-2 gap-2">
                   {VENDOR_CATEGORIES.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
+                    <div key={category} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={category}
+                        checked={formData.specialties?.includes(category)}
+                        onChange={() => handleSpecialtyChange(category)}
+                        className="rounded"
+                      />
+                      <Label htmlFor={category} className="text-sm cursor-pointer">
+                        {category}
+                      </Label>
+                    </div>
                   ))}
-                </ScrollArea>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => handleChange("status", value as "active" | "inactive")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="hasInsurance"
-              checked={formData.hasInsurance}
-              onCheckedChange={(checked) => handleChange("hasInsurance", checked)}
-            />
-            <Label htmlFor="hasInsurance">Has Insurance</Label>
-          </div>
-          
-          <DialogFooter>
-            <Button type="submit">Save Vendor</Button>
-          </DialogFooter>
-        </form>
+                </div>
+              </ScrollArea>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="is_active"
+                checked={formData.is_active}
+                onCheckedChange={(checked) => handleChange("is_active", checked)}
+              />
+              <Label htmlFor="is_active">Active</Label>
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Vendor</Button>
+            </DialogFooter>
+          </form>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

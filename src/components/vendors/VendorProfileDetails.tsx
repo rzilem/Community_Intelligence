@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Vendor } from "@/types/vendor-types";
-import { Mail, Phone, Building } from "lucide-react";
+import { Mail, Phone, Building, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface VendorProfileDetailsProps {
@@ -21,20 +21,17 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               {vendor.name}
-              <Badge variant="default" className="ml-2 bg-blue-500">
-                {vendor.status === "active" ? "Active" : "Inactive"}
+              <Badge variant="default" className={vendor.is_active ? "bg-green-500" : "bg-gray-500"}>
+                {vendor.is_active ? "Active" : "Inactive"}
               </Badge>
             </h1>
             <div className="flex items-center mt-1">
               {[...Array(5)].map((_, i) => (
-                <svg 
+                <Star 
                   key={i}
-                  className={`w-4 h-4 ${i < Math.floor(vendor.rating || 0) ? "text-yellow-400" : "text-gray-300"}`} 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                </svg>
+                  size={16} 
+                  className={i < Math.floor(vendor.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} 
+                />
               ))}
               <span className="ml-1 text-sm text-gray-500">{vendor.rating?.toFixed(1) || '0.0'}</span>
             </div>
@@ -55,6 +52,16 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+              {vendor.contact_person && (
+                <div className="flex items-center mb-4">
+                  <Building className="h-5 w-5 mr-2 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Contact Person</p>
+                    <p>{vendor.contact_person}</p>
+                  </div>
+                </div>
+              )}
+              
               {vendor.email && (
                 <div className="flex items-center mb-4">
                   <Mail className="h-5 w-5 mr-2 text-gray-500" />
@@ -66,11 +73,21 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
               )}
               
               {vendor.phone && (
-                <div className="flex items-center">
+                <div className="flex items-center mb-4">
                   <Phone className="h-5 w-5 mr-2 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Phone</p>
                     <p>{vendor.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {vendor.address && (
+                <div className="flex items-center">
+                  <Building className="h-5 w-5 mr-2 text-gray-500" />
+                  <div>
+                    <p className="text-sm text-gray-500">Address</p>
+                    <p>{vendor.address}</p>
                   </div>
                 </div>
               )}
@@ -80,12 +97,22 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-lg font-semibold mb-4">Business Information</h3>
-              {vendor.category && (
-                <div className="flex items-center">
-                  <Building className="h-5 w-5 mr-2 text-gray-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p>{vendor.category}</p>
+              {vendor.license_number && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-500">License Number</p>
+                  <p>{vendor.license_number}</p>
+                </div>
+              )}
+
+              {vendor.specialties && vendor.specialties.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500 mb-2">Specialties</p>
+                  <div className="flex flex-wrap gap-2">
+                    {vendor.specialties.map((specialty, index) => (
+                      <Badge key={index} variant="outline">
+                        {specialty}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
@@ -96,7 +123,22 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
         <TabsContent value="services">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-muted-foreground">No services information available.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Total Jobs</p>
+                  <p className="text-2xl font-bold">{vendor.total_jobs}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Completed Jobs</p>
+                  <p className="text-2xl font-bold">{vendor.completed_jobs}</p>
+                </div>
+              </div>
+              {vendor.average_response_time && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500">Average Response Time</p>
+                  <p>{vendor.average_response_time} hours</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -112,7 +154,36 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
         <TabsContent value="insurance">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-muted-foreground">No insurance information available.</p>
+              {vendor.insurance_info ? (
+                <div className="space-y-4">
+                  {vendor.insurance_info.provider && (
+                    <div>
+                      <p className="text-sm text-gray-500">Provider</p>
+                      <p>{vendor.insurance_info.provider}</p>
+                    </div>
+                  )}
+                  {vendor.insurance_info.policy_number && (
+                    <div>
+                      <p className="text-sm text-gray-500">Policy Number</p>
+                      <p>{vendor.insurance_info.policy_number}</p>
+                    </div>
+                  )}
+                  {vendor.insurance_info.coverage_amount && (
+                    <div>
+                      <p className="text-sm text-gray-500">Coverage Amount</p>
+                      <p>${vendor.insurance_info.coverage_amount.toLocaleString()}</p>
+                    </div>
+                  )}
+                  {vendor.insurance_info.expiration_date && (
+                    <div>
+                      <p className="text-sm text-gray-500">Expiration Date</p>
+                      <p>{vendor.insurance_info.expiration_date}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No insurance information available.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -120,7 +191,11 @@ const VendorProfileDetails: React.FC<VendorProfileDetailsProps> = ({ vendor }) =
         <TabsContent value="notes">
           <Card>
             <CardContent className="pt-6">
-              <p className="text-muted-foreground">No notes available.</p>
+              {vendor.notes ? (
+                <p>{vendor.notes}</p>
+              ) : (
+                <p className="text-muted-foreground">No notes available.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
