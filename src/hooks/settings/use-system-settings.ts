@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { isAdminRole } from '@/utils/role-utils';
 import { 
   AppearanceSettings, 
   NotificationSettings, 
@@ -65,8 +66,8 @@ const isUserAdmin = async (): Promise<boolean> => {
       .select('role')
       .eq('id', user.id)
       .single();
-      
-    return data?.role === 'admin';
+
+    return isAdminRole(data?.role);
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;

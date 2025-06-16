@@ -3,6 +3,7 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthContextType } from './types';
+import { isAdminRole } from '@/utils/role-utils';
 
 export const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -40,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Determine if user is an admin
   const isAdmin = useMemo(() => {
-    return profile?.role === 'admin';
+    return isAdminRole(profile?.role);
   }, [profile?.role]);
 
   // Function to refresh the user profile data
