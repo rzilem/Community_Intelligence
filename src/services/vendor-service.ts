@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Vendor, VendorStats, VendorStatus, InsuranceInfo, VendorCategory } from "@/types/vendor-types";
 
@@ -217,29 +218,33 @@ export const vendorService = {
       throw fetchError;
     }
 
-    // Prepare bulk updates
-    const updates = currentVendors.map(vendor => {
+    // Update each vendor individually
+    const updatePromises = currentVendors.map(async (vendor) => {
       const currentSpecialties = vendor.specialties || [];
       const mergedSpecialties = Array.from(new Set([...currentSpecialties, ...specialtiesToAdd]));
       
-      return {
-        id: vendor.id,
-        specialties: mergedSpecialties
-      };
+      const { data, error } = await supabase
+        .from('vendors')
+        .update({ specialties: mergedSpecialties })
+        .eq('id', vendor.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error(`Error updating vendor ${vendor.id}:`, error);
+        throw error;
+      }
+
+      return transformDatabaseVendor(data);
     });
 
-    // Perform bulk update using upsert
-    const { data, error } = await supabase
-      .from('vendors')
-      .upsert(updates)
-      .select();
-
-    if (error) {
-      console.error('Error bulk updating vendor specialties:', error);
+    try {
+      const updatedVendors = await Promise.all(updatePromises);
+      console.log('Bulk specialty update successful:', updatedVendors);
+      return updatedVendors;
+    } catch (error) {
+      console.error('Error in bulk update:', error);
       throw error;
     }
-
-    console.log('Bulk specialty update successful:', data);
-    return (data || []).map(transformDatabaseVendor);
   }
 };

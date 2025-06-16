@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +29,15 @@ const VendorTable: React.FC<VendorTableProps> = ({
   isIndeterminate = false,
   showSelection = false
 }) => {
+  const selectAllRef = useRef<HTMLButtonElement>(null);
+
+  // Set indeterminate state on the select all checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = isIndeterminate;
+    }
+  }, [isIndeterminate]);
+
   const parseEmails = (email: string | undefined): string[] => {
     if (!email) return [];
     return email.split(',').map(e => e.trim()).filter(e => e.length > 0);
@@ -84,8 +93,8 @@ const VendorTable: React.FC<VendorTableProps> = ({
             {showSelection && (
               <TableHead className="w-[40px]">
                 <Checkbox
+                  ref={selectAllRef}
                   checked={isAllSelected}
-                  indeterminate={isIndeterminate}
                   onCheckedChange={onSelectAll}
                   aria-label="Select all vendors"
                 />
