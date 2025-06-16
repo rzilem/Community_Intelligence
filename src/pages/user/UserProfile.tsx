@@ -18,7 +18,7 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("info");
   const [imageVersion, setImageVersion] = useState(Date.now());
 
-  const handleProfileImageUpdated = async (newUrl: string) => {
+  const handleProfileImageUpdate = async (newUrl: string) => {
     toast.success('Profile image updated successfully');
     await refreshProfile();
     setImageVersion(Date.now());
@@ -83,10 +83,10 @@ const UserProfile = () => {
                     <div className="flex flex-col items-center gap-3">
                       <ProfileImageUpload
                         userId={user.id}
-                        imageUrl={`${profile?.profile_image_url}?v=${imageVersion}`} 
+                        currentImageUrl={`${profile?.profile_image_url}?v=${imageVersion}`}
                         firstName={profile?.first_name || ''}
                         lastName={profile?.last_name || ''}
-                        onImageUpdated={handleProfileImageUpdated}
+                        onImageUpdate={handleProfileImageUpdate}
                         size="lg"
                       />
                       <p className="text-sm text-muted-foreground">
