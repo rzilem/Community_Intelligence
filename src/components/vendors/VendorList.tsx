@@ -53,14 +53,14 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumnIds.includes('name') && <TableHead>Vendor Name</TableHead>}
-              {visibleColumnIds.includes('contact_person') && <TableHead>Contact Person</TableHead>}
-              {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
-              {visibleColumnIds.includes('phone') && <TableHead>Phone</TableHead>}
-              {visibleColumnIds.includes('specialties') && <TableHead>Specialties</TableHead>}
-              {visibleColumnIds.includes('is_active') && <TableHead>Status</TableHead>}
-              {visibleColumnIds.includes('total_jobs') && <TableHead>Total Jobs</TableHead>}
-              {visibleColumnIds.includes('rating') && <TableHead>Rating</TableHead>}
+              {visibleColumnIds.includes('name') && <TableHead className="text-foreground">Vendor Name</TableHead>}
+              {visibleColumnIds.includes('contact_person') && <TableHead className="text-foreground">Contact Person</TableHead>}
+              {visibleColumnIds.includes('email') && <TableHead className="text-foreground">Email</TableHead>}
+              {visibleColumnIds.includes('phone') && <TableHead className="text-foreground">Phone</TableHead>}
+              {visibleColumnIds.includes('specialties') && <TableHead className="text-foreground">Specialties</TableHead>}
+              {visibleColumnIds.includes('is_active') && <TableHead className="text-foreground">Status</TableHead>}
+              {visibleColumnIds.includes('total_jobs') && <TableHead className="text-foreground">Total Jobs</TableHead>}
+              {visibleColumnIds.includes('rating') && <TableHead className="text-foreground">Rating</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -68,14 +68,29 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
               <TableRow key={vendor.id}>
                 {visibleColumnIds.includes('name') && (
                   <TableCell className="font-medium">
-                    <Link to={`/operations/vendors/${vendor.id}`} className="hover:underline text-blue-800 dark:text-blue-300">
+                    <Link 
+                      to={`/operations/vendors/${vendor.id}`} 
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium"
+                    >
                       {vendor.name}
                     </Link>
                   </TableCell>
                 )}
-                {visibleColumnIds.includes('contact_person') && <TableCell>{vendor.contact_person || "-"}</TableCell>}
-                {visibleColumnIds.includes('email') && <TableCell>{vendor.email || "-"}</TableCell>}
-                {visibleColumnIds.includes('phone') && <TableCell>{vendor.phone || "-"}</TableCell>}
+                {visibleColumnIds.includes('contact_person') && (
+                  <TableCell className="text-foreground">
+                    {vendor.contact_person || "-"}
+                  </TableCell>
+                )}
+                {visibleColumnIds.includes('email') && (
+                  <TableCell className="text-foreground">
+                    {vendor.email || "-"}
+                  </TableCell>
+                )}
+                {visibleColumnIds.includes('phone') && (
+                  <TableCell className="text-foreground">
+                    {vendor.phone || "-"}
+                  </TableCell>
+                )}
                 {visibleColumnIds.includes('specialties') && (
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
@@ -96,19 +111,23 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                   <TableCell>
                     <Badge 
                       variant={vendor.is_active ? "default" : "secondary"}
-                      className={vendor.is_active ? "bg-green-500" : "bg-gray-500"}
+                      className={vendor.is_active ? "bg-green-500 text-white" : "bg-gray-500 text-white"}
                     >
                       {vendor.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                 )}
-                {visibleColumnIds.includes('total_jobs') && <TableCell>{vendor.total_jobs || 0}</TableCell>}
+                {visibleColumnIds.includes('total_jobs') && (
+                  <TableCell className="text-foreground">
+                    {vendor.total_jobs || 0}
+                  </TableCell>
+                )}
                 {visibleColumnIds.includes('rating') && (
                   <TableCell>
                     <div className="flex items-center">
                       {vendor.rating != null ? (
                         <>
-                          <span className="mr-1">{vendor.rating.toFixed(1)}</span>
+                          <span className="mr-1 text-foreground">{vendor.rating.toFixed(1)}</span>
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <Star 
@@ -122,7 +141,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                           </div>
                         </>
                       ) : (
-                        "N/A"
+                        <span className="text-muted-foreground">N/A</span>
                       )}
                     </div>
                   </TableCell>
