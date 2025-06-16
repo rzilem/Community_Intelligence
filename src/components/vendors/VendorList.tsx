@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { useUserColumns } from "@/hooks/useUserColumns";
 import VendorCardView from "./VendorCardView";
 import VendorQuickFilters from "./VendorQuickFilters";
 import VendorViewToggle from "./VendorViewToggle";
+import PhoneLink from "@/components/ui/phone-link";
 
 interface VendorListProps {
   vendors: Vendor[];
@@ -166,8 +166,12 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
                     </TableCell>
                   )}
                   {visibleColumnIds.includes('phone') && (
-                    <TableCell className="text-gray-700 py-4">
-                      {vendor.phone || <span className="text-gray-400">—</span>}
+                    <TableCell className="py-4">
+                      {vendor.phone ? (
+                        <PhoneLink phone={vendor.phone} />
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
                     </TableCell>
                   )}
                   {visibleColumnIds.includes('specialties') && (

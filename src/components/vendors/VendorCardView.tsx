@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Star, Phone, Mail, MapPin, Building2, Award } from 'lucide-react';
 import { Vendor } from '@/types/vendor-types';
 import { Link } from 'react-router-dom';
+import PhoneLink from '@/components/ui/phone-link';
 
 interface VendorCardViewProps {
   vendors: Vendor[];
@@ -60,9 +61,9 @@ const VendorCardView: React.FC<VendorCardViewProps> = ({ vendors }) => {
                 </div>
               )}
               {vendor.phone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone size={14} />
-                  <span>{vendor.phone}</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone size={14} className="text-muted-foreground" />
+                  <PhoneLink phone={vendor.phone} className="text-sm" />
                 </div>
               )}
             </div>
