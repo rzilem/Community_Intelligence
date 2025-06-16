@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Plus, MoveUp, MoveDown, Trash2, Save } from 'lucide-react';
 import { WorkflowType, WorkflowStep } from '@/types/workflow-types';
+import type { UserRole } from '@/types/profile-types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface WorkflowBuilderProps {
   onSave: (data: { name: string; description: string; type: WorkflowType; steps: WorkflowStep[] }) => void;
@@ -22,6 +24,16 @@ const workflowTypes: WorkflowType[] = [
   'Resident Management',
   'Governance',
   'Communication'
+];
+
+const roles: { id: UserRole; name: string }[] = [
+  { id: 'admin', name: 'Administrator' },
+  { id: 'manager', name: 'Manager' },
+  { id: 'resident', name: 'Resident' },
+  { id: 'maintenance', name: 'Maintenance' },
+  { id: 'accountant', name: 'Accountant' },
+  { id: 'treasurer', name: 'Treasurer' },
+  { id: 'user', name: 'Basic User' }
 ];
 
 const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave, isSaving }) => {
@@ -46,7 +58,7 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave, isSaving }) =
     });
   };
 
-  const handleStepChange = (stepId: string, field: string, value: string) => {
+  const handleStepChange = (stepId: string, field: string, value: any) => {
     const updatedSteps = workflowData.steps.map(step =>
       step.id === stepId ? { ...step, [field]: value } : step
     );
@@ -59,7 +71,9 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave, isSaving }) =
       name: `Step ${(workflowData.steps.length || 0) + 1}`,
       description: '',
       order: workflowData.steps.length,
-      isComplete: false
+      isComplete: false,
+      notifyRoles: [],
+      autoExecute: false
     };
     setWorkflowData({ ...workflowData, steps: [...workflowData.steps, newStep] });
     setExpandedStepId(newStep.id);
@@ -173,6 +187,35 @@ const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave, isSaving }) =
                         <div className="grid gap-2">
                           <Label htmlFor={`step-desc-${step.id}`}>Description</Label>
                           <Textarea id={`step-desc-${step.id}`} value={step.description || ''} onChange={e => handleStepChange(step.id, 'description', e.target.value)} rows={3} />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label>Notify Roles</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {roles.map(role => (
+                              <div key={role.id} className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={`notify-${step.id}-${role.id}`}
+                                  checked={step.notifyRoles?.includes(role.id) || false}
+                                  onCheckedChange={checked => {
+                                    const current = step.notifyRoles || [];
+                                    const updated = checked ? [...current, role.id] : current.filter(r => r !== role.id);
+                                    handleStepChange(step.id, 'notifyRoles', updated);
+                                  }}
+                                />
+                                <label htmlFor={`notify-${step.id}-${role.id}`} className="text-sm">
+                                  {role.name}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`auto-${step.id}`}
+                            checked={step.autoExecute || false}
+                            onCheckedChange={checked => handleStepChange(step.id, 'autoExecute', checked)}
+                          />
+                          <Label htmlFor={`auto-${step.id}`}>Auto Execute</Label>
                         </div>
                         <div className="flex justify-between pt-2">
                           <div className="space-x-2">

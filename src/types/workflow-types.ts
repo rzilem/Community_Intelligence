@@ -1,3 +1,4 @@
+import type { UserRole } from "./profile-types";
 
 export type WorkflowType = 
   | 'Financial' 
@@ -15,6 +16,8 @@ export interface WorkflowStep {
   description: string;
   order: number;
   isComplete?: boolean;
+  notifyRoles?: UserRole[];
+  autoExecute?: boolean;
   [key: string]: any; // Add index signature to make compatible with JSON
 }
 
