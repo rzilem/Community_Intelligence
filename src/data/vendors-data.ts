@@ -1,6 +1,9 @@
 
 import { Vendor, VendorStats } from "@/types/vendor-types";
 
+// Timestamp used for all mock vendor entries so that test data remains stable.
+const MOCK_TIMESTAMP = "2024-01-01T00:00:00.000Z";
+
 export const mockVendors: Vendor[] = [
   {
     id: "v1",
@@ -13,8 +16,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   },
   {
     id: "v2",
@@ -26,8 +29,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   },
   {
     id: "v3",
@@ -40,8 +43,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   },
   {
     id: "v4",
@@ -54,8 +57,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   },
   {
     id: "v5",
@@ -68,8 +71,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   },
   {
     id: "v6",
@@ -81,8 +84,8 @@ export const mockVendors: Vendor[] = [
     completed_jobs: 0,
     specialties: [],
     hoa_id: "",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   }
 ];
 
