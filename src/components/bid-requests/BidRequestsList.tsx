@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/auth';
 import BidRequestCard from './BidRequestCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
+import AssociationSelector from '@/components/associations/AssociationSelector';
 
 const BidRequestsList = () => {
   const [bidRequests, setBidRequests] = useState<BidRequestWithVendors[]>([]);
@@ -18,7 +19,7 @@ const BidRequestsList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all-status');
   const [priorityFilter, setPriorityFilter] = useState('all-priority');
-  const { currentAssociation } = useAuth();
+  const { currentAssociation, setCurrentAssociation } = useAuth();
 
   useEffect(() => {
     const fetchBidRequests = async () => {
@@ -56,6 +57,15 @@ const BidRequestsList = () => {
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  const handleAssociationChange = (associationId: string) => {
+    console.log('Association changed to:', associationId);
+    if (setCurrentAssociation) {
+      // Find the association object from the available associations
+      // This will trigger the useEffect to refetch bid requests
+      setCurrentAssociation({ id: associationId } as any);
+    }
+  };
+
   // Show loading state if no association is selected
   if (!currentAssociation?.id) {
     return (
@@ -92,6 +102,15 @@ const BidRequestsList = () => {
 
   return (
     <div className="space-y-6">
+      {/* Association Selector */}
+      <div className="bg-white rounded-lg border p-4">
+        <AssociationSelector
+          onAssociationChange={handleAssociationChange}
+          initialAssociationId={currentAssociation?.id}
+          label="Viewing Bid Requests for:"
+        />
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
