@@ -57,6 +57,7 @@ export interface VendorStats {
 }
 
 export type VendorCategory =
+  | 'Access Systems'
   | 'Asphalt'
   | 'Attorney'
   | 'Board Member'
@@ -76,13 +77,16 @@ export type VendorCategory =
   | 'Fees and Permits'
   | 'Fence Maintenance'
   | 'Fire Services'
+  | 'Foundation Repair'
   | 'Garbage'
   | 'Gas Reimbursement'
   | 'General Maintenance'
   | 'Heating and Air'
   | 'Homeowner'
   | 'Insurance'
+  | 'Interior Painting'
   | 'Internet'
+  | 'Irrigation'
   | 'Janitorial'
   | 'Landscape'
   | 'Landscaping Maintenance'
@@ -117,6 +121,7 @@ export type VendorCategory =
   | 'Window Cleaning';
 
 export const VENDOR_CATEGORIES: VendorCategory[] = [
+  'Access Systems',
   'Asphalt',
   'Attorney',
   'Board Member',
@@ -136,13 +141,16 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
   'Fees and Permits',
   'Fence Maintenance',
   'Fire Services',
+  'Foundation Repair',
   'Garbage',
   'Gas Reimbursement',
   'General Maintenance',
   'Heating and Air',
   'Homeowner',
   'Insurance',
+  'Interior Painting',
   'Internet',
+  'Irrigation',
   'Janitorial',
   'Landscape',
   'Landscaping Maintenance',
