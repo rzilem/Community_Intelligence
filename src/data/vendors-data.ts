@@ -14,7 +14,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["Construction"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
@@ -27,7 +27,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["Landscape"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
@@ -41,7 +41,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["Security"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
@@ -55,7 +55,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["Fire Services"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
@@ -69,7 +69,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["Fire Services"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
@@ -82,7 +82,7 @@ export const mockVendors: Vendor[] = [
     rating: 0.0,
     total_jobs: 0,
     completed_jobs: 0,
-    specialties: [],
+    specialties: ["General Maintenance"],
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
