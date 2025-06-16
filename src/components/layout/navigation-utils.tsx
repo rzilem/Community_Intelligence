@@ -39,13 +39,14 @@ import {
   Shield,
 } from 'lucide-react';
 import { NavItemProps } from './types';
+import { isAdminRole } from '@/utils/role-utils';
 
 export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
   const items: NavItemProps[] = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   ];
   
-  if (userRole === 'admin' || userRole === 'manager') {
+  if (isAdminRole(userRole) || userRole === 'manager') {
     items.push({ 
       name: 'Community Management', 
       path: '/community-management', 
@@ -60,7 +61,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     });
   }
   
-  if (['admin', 'manager', 'accountant'].includes(userRole || '')) {
+  if (isAdminRole(userRole) || ['manager', 'accountant'].includes(userRole || '')) {
     items.push({ 
       name: 'Accounting', 
       path: '/accounting', 
@@ -86,7 +87,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     ]
   });
   
-  if (['admin', 'manager'].includes(userRole || '')) {
+  if (isAdminRole(userRole) || userRole === 'manager') {
     items.push({ 
       name: 'Lead Management', 
       path: '/lead-management', 
@@ -101,7 +102,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     });
   }
   
-  if (['admin', 'manager', 'maintenance', 'accountant'].includes(userRole || '')) {
+  if (isAdminRole(userRole) || ['manager', 'maintenance', 'accountant'].includes(userRole || '')) {
     items.push({ 
       name: 'Operations', 
       path: '/operations', 
@@ -117,7 +118,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     });
   }
   
-  if (['admin', 'manager', 'maintenance', 'accountant'].includes(userRole || '')) {
+  if (isAdminRole(userRole) || ['manager', 'maintenance', 'accountant'].includes(userRole || '')) {
     items.push({ 
       name: 'Records & Reports', 
       path: '/records-reports', 
@@ -129,7 +130,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     });
   }
   
-  if (['admin', 'manager'].includes(userRole || '')) {
+  if (isAdminRole(userRole) || userRole === 'manager') {
     items.push({ 
       name: 'Resale Management', 
       path: '/resale-management', 
@@ -144,7 +145,7 @@ export const getFilteredNavItems = (userRole?: string): NavItemProps[] => {
     });
   }
   
-  if (userRole === 'admin') {
+  if (isAdminRole(userRole)) {
     items.push({ 
       name: 'System', 
       path: '/system', 
