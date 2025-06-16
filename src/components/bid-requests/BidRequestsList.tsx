@@ -16,8 +16,8 @@ const BidRequestsList = () => {
   const [bidRequests, setBidRequests] = useState<BidRequestWithVendors[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all-status');
+  const [priorityFilter, setPriorityFilter] = useState('all-priority');
   const { currentAssociation } = useAuth();
 
   useEffect(() => {
@@ -50,8 +50,8 @@ const BidRequestsList = () => {
   const filteredBidRequests = bidRequests.filter(request => {
     const matchesSearch = request.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          request.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || request.status === statusFilter;
-    const matchesPriority = !priorityFilter || request.priority === priorityFilter;
+    const matchesStatus = statusFilter === 'all-status' || request.status === statusFilter;
+    const matchesPriority = priorityFilter === 'all-priority' || request.priority === priorityFilter;
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
@@ -108,7 +108,7 @@ const BidRequestsList = () => {
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
+            <SelectItem value="all-status">All Status</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="published">Published</SelectItem>
             <SelectItem value="bidding">Bidding</SelectItem>
@@ -123,7 +123,7 @@ const BidRequestsList = () => {
             <SelectValue placeholder="All Priority" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Priority</SelectItem>
+            <SelectItem value="all-priority">All Priority</SelectItem>
             <SelectItem value="low">Low</SelectItem>
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="high">High</SelectItem>
@@ -144,15 +144,15 @@ const BidRequestsList = () => {
           <CardContent className="py-12 text-center">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm || statusFilter || priorityFilter ? 'No matching bid requests' : 'No bid requests yet'}
+              {searchTerm || (statusFilter !== 'all-status') || (priorityFilter !== 'all-priority') ? 'No matching bid requests' : 'No bid requests yet'}
             </h3>
             <p className="text-gray-500 mb-4">
-              {searchTerm || statusFilter || priorityFilter 
+              {searchTerm || (statusFilter !== 'all-status') || (priorityFilter !== 'all-priority')
                 ? 'Try adjusting your search or filters to find what you\'re looking for.'
                 : 'Get started by creating your first bid request for a maintenance or improvement project.'
               }
             </p>
-            {!searchTerm && !statusFilter && !priorityFilter && (
+            {!searchTerm && statusFilter === 'all-status' && priorityFilter === 'all-priority' && (
               <Link to="/community-management/create-bid-request">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
