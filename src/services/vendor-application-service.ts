@@ -25,7 +25,7 @@ export const vendorApplicationService = {
     return data as VendorApplication;
   },
 
-  async updateApplication(id: string, updates: Partial<VendorApplication>): Promise<VendorApplication> {
+  async updateApplication(id: string, updates: Partial<Omit<VendorApplication, 'id' | 'created_at' | 'updated_at' | 'submitted_at'>>): Promise<VendorApplication> {
     const { data, error } = await supabase
       .from('vendor_applications')
       .update(updates)

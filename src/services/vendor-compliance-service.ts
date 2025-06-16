@@ -25,7 +25,7 @@ export const vendorComplianceService = {
     return data as VendorComplianceItem;
   },
 
-  async updateComplianceItem(id: string, updates: Partial<VendorComplianceItem>): Promise<VendorComplianceItem> {
+  async updateComplianceItem(id: string, updates: Partial<Omit<VendorComplianceItem, 'id' | 'created_at' | 'updated_at'>>): Promise<VendorComplianceItem> {
     const { data, error } = await supabase
       .from('vendor_compliance_items')
       .update(updates)
