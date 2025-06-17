@@ -38,17 +38,13 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     systemFields,
     previewData
   } = useMappingFields(importType, fileData, associationId);
-  
-  // Add association identifier field for multi-association imports
-  let availableFields = [...systemFields];
-  if (isMultiAssociation && importType !== 'associations') {
-    availableFields = [
-      { label: 'Association Identifier', value: 'association_identifier' },
-      ...systemFields
-    ];
-  }
+
+  console.log('File columns:', fileColumns);
+  console.log('System fields:', systemFields);
+  console.log('Is multi-association:', isMultiAssociation);
 
   const handleMappingChange = (column: string, field: string) => {
+    console.log(`Mapping change: ${column} -> ${field}`);
     setMappings(prev => ({
       ...prev,
       [column]: field
@@ -83,6 +79,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
       return;
     }
     
+    console.log('Final mappings:', mappings);
     onConfirm(mappings);
   };
 
@@ -107,6 +104,24 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const requiredFields = getRequiredFields(importType, isMultiAssociation);
   const mappedFields = Object.values(mappings).filter(field => field);
   const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
+
+  // Show loading state if we don't have file columns yet
+  if (!fileColumns || fileColumns.length === 0) {
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Loading Mapping Interface...</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <p>Preparing file data for mapping...</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -136,7 +151,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             <div className="flex-1 min-h-0">
               <ColumnMappingList
                 fileColumns={fileColumns}
-                systemFields={availableFields}
+                systemFields={systemFields}
                 mappings={mappings}
                 onMappingChange={handleMappingChange}
                 previewData={previewData}
@@ -173,7 +188,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
               onClick={handleConfirm}
               disabled={missingRequiredFields.length > 0}
             >
-              Import Data
+              Import Data ({mappedFields.length} fields mapped)
             </Button>
           </div>
         </DialogFooter>

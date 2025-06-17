@@ -30,10 +30,10 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     generateSuggestions 
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
-  // Make sure we have the system fields loaded before generating suggestions
+  // Generate suggestions when component mounts and we have data
   useEffect(() => {
     if (fileColumns.length > 0 && systemFields.length > 0 && previewData.length > 0) {
-      console.log("Generating suggestions on ColumnMappingList mount with", systemFields.length, "system fields");
+      console.log("Auto-generating suggestions on mount with", systemFields.length, "system fields");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, previewData, generateSuggestions]);
@@ -64,53 +64,13 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     // Create a list of unmapped columns
     const unmappedColumns = fileColumns.filter(column => !mappings[column]);
     
-    // First, handle special fields with direct mapping
+    // Apply suggestions for unmapped columns
     unmappedColumns.forEach(column => {
-      const lowerColumn = column.toLowerCase();
-      
-      // Special handling for co_owner_is_primary
-      if (lowerColumn === 'co_owner_is_primary') {
-        const primaryField = systemFields.find(f => 
-          f.value === 'is_primary' || 
-          f.value === 'owner.is_primary'
-        );
-        if (primaryField) {
-          onMappingChange(column, primaryField.value);
-          updateCount++;
-          return;
-        }
-      }
-      
-      // Direct mapping for city, state, zip - higher priority
-      if (lowerColumn === 'city') {
-        const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
-        if (cityField) {
-          onMappingChange(column, cityField.value);
-          updateCount++;
-        }
-      } 
-      else if (lowerColumn === 'state') {
-        const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
-        if (stateField) {
-          onMappingChange(column, stateField.value);
-          updateCount++;
-        }
-      } 
-      else if ((lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code' || lowerColumn === 'postal')) {
-        const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
-        if (zipField) {
-          onMappingChange(column, zipField.value);
-          updateCount++;
-        }
-      }
-      // For other columns, use AI suggestion if confidence is high enough
-      else {
-        const suggestion = newSuggestions[column];
-        if (suggestion && suggestion.confidence >= 0.6) {
-          console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
-          onMappingChange(column, suggestion.fieldValue);
-          updateCount++;
-        }
+      const suggestion = newSuggestions[column];
+      if (suggestion && suggestion.confidence >= 0.6) {
+        console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
+        onMappingChange(column, suggestion.fieldValue);
+        updateCount++;
       }
     });
     
@@ -121,12 +81,36 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }
   };
 
-  // Ensure we have a valid systemFields array
-  const safeSystemFields = Array.isArray(systemFields) ? systemFields : [];
-  
+  console.log('Rendering ColumnMappingList with:', {
+    fileColumnsCount: fileColumns.length,
+    systemFieldsCount: systemFields.length,
+    mappingsCount: Object.keys(mappings).length
+  });
+
+  // Show loading state if we don't have data
+  if (!fileColumns || fileColumns.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center text-muted-foreground">
+          Loading file columns...
+        </div>
+      </div>
+    );
+  }
+
+  if (!systemFields || systemFields.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="text-center text-muted-foreground">
+          Loading system fields...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium">Map File Columns to System Fields:</h3>
         <Button 
           variant="outline" 
@@ -140,19 +124,21 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         </Button>
       </div>
       
-      {Array.isArray(fileColumns) && fileColumns.map(column => (
-        <ColumnMappingField
-          key={column}
-          column={column}
-          systemFields={safeSystemFields}
-          selectedValue={mappings[column] || ''}
-          onMappingChange={(col, field) => handleMappingChange(col, field)}
-          isOpen={!!openState[column]}
-          setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
-          suggestion={suggestions[column]?.fieldValue || ''}
-          confidence={suggestions[column]?.confidence || 0}
-        />
-      ))}
+      <div className="space-y-3">
+        {fileColumns.map(column => (
+          <ColumnMappingField
+            key={column}
+            column={column}
+            systemFields={systemFields}
+            selectedValue={mappings[column] || ''}
+            onMappingChange={(col, field) => handleMappingChange(col, field)}
+            isOpen={!!openState[column]}
+            setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
+            suggestion={suggestions[column]?.fieldValue || ''}
+            confidence={suggestions[column]?.confidence || 0}
+          />
+        ))}
+      </div>
     </div>
   );
 };
