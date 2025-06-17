@@ -1,10 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Users, Plus } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 import { useHomeownerColumns } from './hooks/useHomeownerColumns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -14,7 +12,6 @@ import HomeownerListFilters from './components/HomeownerListFilters';
 import HomeownerTable from './components/HomeownerTable';
 
 const HomeownerListPage = () => {
-  const navigate = useNavigate();
   const { columns, visibleColumnIds, updateVisibleColumns, reorderColumns } = useHomeownerColumns();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
@@ -80,15 +77,11 @@ const HomeownerListPage = () => {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <div className="flex items-center gap-3">
             <Users className="h-8 w-8" />
             <h1 className="text-3xl font-bold tracking-tight">Owners</h1>
           </div>
-          <Button onClick={() => navigate('/homeowners/add')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Owner
-          </Button>
         </div>
 
         <Card>
@@ -103,24 +96,6 @@ const HomeownerListPage = () => {
                 <AlertDescription>
                   {invalidAssociationCount} owners have invalid or missing association assignments. 
                   Please use the import tools to fix these data issues.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {error && (
-              <Alert className="mb-6" variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  {error}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="ml-4"
-                    onClick={handleRetry}
-                  >
-                    Retry
-                  </Button>
                 </AlertDescription>
               </Alert>
             )}
