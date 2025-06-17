@@ -6,6 +6,7 @@ import SystemSettings from "@/pages/system/SystemSettings";
 import Permissions from "@/pages/system/Permissions";
 import DataManagement from "@/pages/system/DataManagement";
 import AssociationProfile from "@/pages/system/AssociationProfile";
+import AssociationPropertyTypes from "@/pages/system/AssociationPropertyTypes";
 import EmailWorkflows from "@/pages/system/EmailWorkflows";
 import WorkflowSchedule from "@/pages/system/WorkflowSchedule";
 import { Navigate } from "react-router-dom";
@@ -52,6 +53,10 @@ export const systemRoutes: RouteObject[] = [
   {
     path: "/system/associations/:id",
     element: <RequireAuth><AssociationProfile /></RequireAuth>
+  },
+  {
+    path: "/system/property-types",
+    element: <RequireAuth><AssociationPropertyTypes /></RequireAuth>
   },
   {
     path: "/system/email-workflows",

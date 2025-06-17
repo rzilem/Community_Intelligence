@@ -1,234 +1,133 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
+import React from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { ValidationResult } from '@/types/import-types';
 import ColumnMappingList from './ColumnMappingList';
-import DataPreviewTable from './DataPreviewTable';
-import ValidationResultsSummary from './ValidationResultsSummary';
-import AssociationIdentifierHelper from './AssociationIdentifierHelper';
-import { useMappingFields } from './useMappingFields';
 import PropertyTypeAutoInfo from './PropertyTypeAutoInfo';
+import PropertyTypeConfigurationAlert from './PropertyTypeConfigurationAlert';
+import { useMappingFields } from './useMappingFields';
 
 interface ImportDataMappingModalProps {
-  importType: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  validationResults: ValidationResult | null;
   fileData: any[];
+  importType: string;
   associationId: string;
-  validationResults?: ValidationResult;
-  onClose: () => void;
-  onConfirm: (mappings: Record<string, string>) => void;
+  associations?: any[];
+  onConfirmMapping: (mappings: Record<string, string>) => void;
+  isImporting: boolean;
 }
 
 const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
-  importType,
-  fileData,
-  associationId,
+  open,
+  onOpenChange,
   validationResults,
-  onClose,
-  onConfirm
+  fileData,
+  importType,
+  associationId,
+  associations = [],
+  onConfirmMapping,
+  isImporting
 }) => {
-  const [mappings, setMappings] = useState<Record<string, string>>({});
-  const isMultiAssociation = associationId === 'all';
+  const [mappings, setMappings] = React.useState<Record<string, string>>({});
   
-  // Get available mapping fields and file data using the hook
-  const {
-    fileColumns,
-    systemFields,
-    previewData,
-    associationPropertyType,
-    hasPropertyType
+  const { 
+    fileColumns, 
+    systemFields, 
+    previewData, 
+    associationPropertyType, 
+    hasPropertyType 
   } = useMappingFields(importType, fileData, associationId);
 
-  console.log('ImportDataMappingModal DEBUG:', {
-    importType,
-    fileDataLength: fileData?.length || 0,
-    associationId,
-    isMultiAssociation,
-    fileColumnsCount: fileColumns?.length || 0,
-    systemFieldsCount: systemFields?.length || 0,
-    mappingsCount: Object.keys(mappings).length,
-    fileColumns: fileColumns,
-    systemFieldsSample: systemFields?.slice(0, 3).map(f => f.label)
-  });
-
   const handleMappingChange = (column: string, field: string) => {
-    console.log(`Mapping change: ${column} -> ${field}`);
     setMappings(prev => ({
       ...prev,
       [column]: field
     }));
   };
 
-  const handleConfirm = () => {
-    // Validate required mappings for multi-association imports
-    if (isMultiAssociation && importType !== 'associations') {
-      const hasAssociationMapping = Object.values(mappings).includes('association_identifier');
-      if (!hasAssociationMapping) {
-        toast.error('Association Identifier mapping is required for multi-association imports');
-        return;
-      }
-    }
-    
-    // Check for duplicate mappings
-    const mappedFields = Object.values(mappings).filter(field => field);
-    const uniqueFields = new Set(mappedFields);
-    
-    if (mappedFields.length !== uniqueFields.size) {
-      toast.error('Each field can only be mapped once. Please check for duplicate mappings.');
-      return;
-    }
-    
-    // Check for required field mappings
-    const requiredFields = getRequiredFields(importType, isMultiAssociation);
-    const missingFields = requiredFields.filter(field => !mappedFields.includes(field));
-    
-    if (missingFields.length > 0) {
-      toast.error(`Missing required field mappings: ${missingFields.join(', ')}`);
-      return;
-    }
-    
-    console.log('Final mappings:', mappings);
-    onConfirm(mappings);
+  const handleConfirmMapping = () => {
+    onConfirmMapping(mappings);
   };
 
-  const getRequiredFields = (type: string, multiAssoc: boolean): string[] => {
-    const baseRequired = {
-      properties: ['address', 'property_type'],
-      owners: ['first_name', 'last_name'],
-      properties_owners: ['address'],
-      financial: ['amount', 'due_date'],
-      compliance: ['violation_type'],
-      maintenance: ['title', 'description'],
-      associations: ['name'],
-    }[type] || [];
-    
-    if (multiAssoc && type !== 'associations') {
-      return [...baseRequired, 'association_identifier'];
-    }
-    
-    return baseRequired;
-  };
-
-  const requiredFields = getRequiredFields(importType, isMultiAssociation);
-  const mappedFields = Object.values(mappings).filter(field => field);
-  const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
-
-  // Check if we have the basic data needed to render the modal
-  const hasBasicData = fileData && fileData.length > 0;
-  
-  console.log('ImportDataMappingModal RENDER CHECK:', {
-    hasBasicData,
-    fileColumnsReady: fileColumns?.length > 0,
-    systemFieldsReady: systemFields?.length > 0,
-    shouldShowInterface: hasBasicData
-  });
-
-  if (!hasBasicData) {
-    return (
-      <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Error Loading Data</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-2">
-              <p>No file data available for mapping.</p>
-              <div className="text-sm text-muted-foreground">
-                File data rows: {fileData?.length || 0}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  // Get association info for the alert
+  const selectedAssociation = associations.find(a => a.id === associationId);
+  const showPropertyTypeAlert = selectedAssociation && 
+    !hasPropertyType && 
+    ['properties', 'properties_owners'].includes(importType);
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>
-            Map Import Fields - {importType.replace('_', ' ').toUpperCase()}
-            {isMultiAssociation && <Badge className="ml-2">Multi-Association</Badge>}
-          </DialogTitle>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Map Data Columns</DialogTitle>
+          <DialogDescription>
+            Map your file columns to system fields. AI suggestions are provided to help with mapping.
+          </DialogDescription>
         </DialogHeader>
-        
-        <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
-          {/* Left side - Column mapping (65% width) */}
-          <div className="flex-[0_0_65%] flex flex-col min-h-0 space-y-2">
-            {/* Compact warnings section */}
-            <div className="flex-shrink-0 space-y-2">
-              {/* Property Type Auto Info */}
-              <PropertyTypeAutoInfo
-                hasPropertyType={hasPropertyType}
-                associationPropertyType={associationPropertyType}
-                importType={importType}
-              />
-              
-              {/* Association Helper - ultra compact */}
-              {isMultiAssociation && (
-                <AssociationIdentifierHelper
-                  isMultiAssociation={isMultiAssociation}
-                  fileColumns={fileColumns || []}
-                  mappings={mappings}
-                />
-              )}
-              
-              {/* Validation Results - compact */}
-              {validationResults && (
-                <ValidationResultsSummary validationResults={validationResults} />
-              )}
-            </div>
-            
-            {/* Main mapping area - takes remaining space */}
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <ScrollArea className="h-full pr-4">
-                <ColumnMappingList
-                  fileColumns={fileColumns || []}
-                  systemFields={systemFields || []}
-                  mappings={mappings}
-                  onMappingChange={handleMappingChange}
-                  previewData={previewData || []}
-                />
-              </ScrollArea>
-            </div>
-          </div>
-          
-          {/* Right side - Data preview (35% width) */}
-          <div className="flex-[0_0_35%] flex flex-col min-h-0">
-            <h3 className="font-medium mb-2 flex-shrink-0 text-sm">Data Preview</h3>
-            <div className="flex-1 min-h-0">
-              <ScrollArea className="h-full border rounded">
-                <DataPreviewTable 
-                  data={fileData.slice(0, 10)} 
-                />
-              </ScrollArea>
-            </div>
-          </div>
-        </div>
 
-        <DialogFooter className="flex justify-between flex-shrink-0 pt-4">
-          <div className="flex items-center gap-2">
-            {missingRequiredFields.length > 0 && (
-              <Badge variant="destructive" className="text-xs">
-                Missing: {missingRequiredFields.join(', ')}
-              </Badge>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
+        <div className="space-y-4">
+          {/* Validation Results Summary */}
+          {validationResults && (
+            <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium">{validationResults.validRows} Valid</span>
+              </div>
+              {validationResults.invalidRows > 0 && (
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <span className="text-sm font-medium">{validationResults.invalidRows} Invalid</span>
+                </div>
+              )}
+              {validationResults.warnings > 0 && (
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                  <span className="text-sm font-medium">{validationResults.warnings} Warnings</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Property Type Configuration Alert */}
+          {showPropertyTypeAlert && (
+            <PropertyTypeConfigurationAlert
+              associationName={selectedAssociation.name}
+              associationId={associationId}
+              importType={importType}
+            />
+          )}
+
+          {/* Property Type Auto Info */}
+          <PropertyTypeAutoInfo
+            hasPropertyType={hasPropertyType}
+            associationPropertyType={associationPropertyType}
+            importType={importType}
+          />
+
+          {/* Column Mapping */}
+          <ColumnMappingList
+            fileColumns={fileColumns}
+            systemFields={systemFields}
+            mappings={mappings}
+            onMappingChange={handleMappingChange}
+            previewData={previewData}
+          />
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleConfirm}
-              disabled={missingRequiredFields.length > 0}
-            >
-              Import Data ({mappedFields.length} fields mapped)
+            <Button onClick={handleConfirmMapping} disabled={isImporting}>
+              {isImporting ? 'Importing...' : 'Confirm & Import'}
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
