@@ -15,6 +15,9 @@ import { useNavigate } from 'react-router-dom';
 import CompactProfileImageUpload from '@/components/users/CompactProfileImageUpload';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
+import GlobalSearch from './GlobalSearch';
+import QuickActions from './QuickActions';
+import StatusIndicators from './StatusIndicators';
 
 interface HeaderProps {
   isMobile: boolean;
@@ -57,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="flex items-center justify-between h-16 px-4 border-b bg-white">
+    <header className="flex items-center justify-between h-16 px-4 border-b bg-gradient-to-r from-background to-background/95 backdrop-blur-sm shadow-sm">
       {isMobile && (
         <Button 
           variant="ghost" 
@@ -71,18 +74,44 @@ const Header: React.FC<HeaderProps> = ({
       )}
       
       <div className="flex-1 flex items-center justify-between">
-        <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
+        {/* Left section - Logo/Brand on mobile */}
+        <div className="flex items-center gap-4">
+          <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
+          
+          {/* Global Search - Desktop */}
+          <div className="hidden md:block">
+            <GlobalSearch />
+          </div>
+        </div>
         
-        <div className="flex items-center gap-4 ml-auto">
+        {/* Right section - Actions and User */}
+        <div className="flex items-center gap-3">
+          {/* Status Indicators - Desktop only */}
+          <div className="hidden lg:block">
+            <StatusIndicators />
+          </div>
+          
+          {/* Quick Actions */}
+          <QuickActions />
+          
+          {/* Global Search - Mobile */}
+          <div className="md:hidden">
+            <GlobalSearch />
+          </div>
+          
+          {/* Notifications */}
           <NotificationCenter />
+          
+          {/* Theme Toggle */}
           <ThemeToggle />
           
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="gap-2 font-normal"
+                className="gap-2 font-normal hover:bg-accent/50"
               >
                 {user && profile ? (
                   <CompactProfileImageUpload
@@ -104,14 +133,15 @@ const Header: React.FC<HeaderProps> = ({
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {profile?.role && <Badge className="ml-2">{profile.role}</Badge>}
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="flex items-center justify-between">
+                <span>My Account</span>
+                {profile?.role && <Badge variant="secondary" className="text-xs">{profile.role}</Badge>}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/user/profile')}>
                 <UserCircle className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+                <span>Profile Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
