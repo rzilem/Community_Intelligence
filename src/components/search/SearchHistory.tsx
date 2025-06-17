@@ -28,10 +28,10 @@ interface SearchHistoryProps {
   currentQuery?: string;
 }
 
-const SearchHistory: React.FC<SearchHistoryProps> = ({
+const SearchHistory = React.forwardRef<any, SearchHistoryProps>(({
   onSelectSearch,
   currentQuery
-}) => {
+}, ref) => {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
@@ -131,8 +131,8 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
     return date.toLocaleDateString();
   };
 
-  // Expose methods for parent components
-  React.useImperativeHandle(React.useRef(), () => ({
+  // Expose methods via ref
+  React.useImperativeHandle(ref, () => ({
     addToHistory,
     saveSearch
   }));
@@ -230,6 +230,8 @@ const SearchHistory: React.FC<SearchHistoryProps> = ({
       )}
     </div>
   );
-};
+});
+
+SearchHistory.displayName = 'SearchHistory';
 
 export default SearchHistory;
