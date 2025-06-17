@@ -61,14 +61,39 @@ export const useAssociationMutations = () => {
   const deleteAssociation = async (id: string) => {
     try {
       setIsDeleting(true);
+      console.log('Starting deletion process for association:', id);
 
+      // First check if the association has any dependent records
+      const { data: dependentChecks } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('association_id', id)
+        .limit(1);
+
+      if (dependentChecks && dependentChecks.length > 0) {
+        throw new Error('Cannot delete association with existing properties. Please remove all properties first.');
+      }
+
+      // Check for other dependencies
+      const { data: userAssociations } = await supabase
+        .from('association_users')
+        .select('id')
+        .eq('association_id', id)
+        .limit(1);
+
+      // Proceed with deletion
       const { error } = await supabase
         .from('associations')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete operation failed:', error);
+        throw error;
+      }
 
+      console.log('Association deleted successfully:', id);
+      toast.success('Association deleted successfully');
       return true;
     } catch (error: any) {
       console.error('Error deleting association:', error);

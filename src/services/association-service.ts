@@ -148,10 +148,47 @@ export const updateAssociation = async (id: string, associationData: {
 };
 
 /**
- * Deletes an association
+ * Deletes an association with proper dependency checking and error handling
  */
 export const deleteAssociation = async (id: string) => {
   try {
+    console.log('Starting association deletion process for ID:', id);
+    
+    // Check for dependent records that would prevent deletion
+    const dependencies = await Promise.all([
+      supabase.from('properties').select('id').eq('association_id', id).limit(1),
+      supabase.from('residents').select('id').eq('association_id', id).limit(1),
+      supabase.from('assessments').select('id').eq('association_id', id).limit(1),
+      supabase.from('invoices').select('id').eq('association_id', id).limit(1)
+    ]);
+
+    const hasProperties = dependencies[0].data && dependencies[0].data.length > 0;
+    const hasResidents = dependencies[1].data && dependencies[1].data.length > 0;
+    const hasAssessments = dependencies[2].data && dependencies[2].data.length > 0;
+    const hasInvoices = dependencies[3].data && dependencies[3].data.length > 0;
+
+    if (hasProperties || hasResidents || hasAssessments || hasInvoices) {
+      const dependencyTypes = [];
+      if (hasProperties) dependencyTypes.push('properties');
+      if (hasResidents) dependencyTypes.push('residents');
+      if (hasAssessments) dependencyTypes.push('assessments');
+      if (hasInvoices) dependencyTypes.push('invoices');
+      
+      throw new Error(`Cannot delete association with existing ${dependencyTypes.join(', ')}. Please remove these records first.`);
+    }
+
+    // Delete association user relationships first
+    const { error: userError } = await supabase
+      .from('association_users')
+      .delete()
+      .eq('association_id', id);
+
+    if (userError) {
+      console.warn('Error deleting association user relationships:', userError);
+      // Continue with deletion even if this fails
+    }
+
+    // Now delete the association
     const { error } = await supabase
       .from('associations')
       .delete()
@@ -162,9 +199,10 @@ export const deleteAssociation = async (id: string) => {
       throw error;
     }
 
+    console.log('Association deleted successfully:', id);
     return true;
   } catch (error) {
     console.error(`Error in deleteAssociation for ID ${id}:`, error);
-    return false;
+    throw error; // Re-throw to let the caller handle it
   }
 };

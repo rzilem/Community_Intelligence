@@ -24,18 +24,22 @@ export function useSupabaseDelete(
 
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
+      console.log(`Attempting to delete ${table} with ID: ${id}`);
+      
       const { error } = await supabase
         .from(table as any)
         .delete()
         .eq(idField, id);
 
       if (error) {
+        console.error(`Error deleting ${table}:`, error);
         if (shouldShowErrorToast) {
           showErrorToast('deleting', table, error);
         }
         throw error;
       }
 
+      console.log(`Successfully deleted ${table} with ID: ${id}`);
       if (shouldShowSuccessToast) {
         showSuccessToast('deleted', table);
       }
@@ -56,6 +60,9 @@ export function useSupabaseDelete(
       if (onSuccess) {
         onSuccess();
       }
+    },
+    onError: (error: any) => {
+      console.error('Delete mutation failed:', error);
     }
   });
 }

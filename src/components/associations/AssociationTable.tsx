@@ -5,6 +5,7 @@ import AssociationEditDialog from './AssociationEditDialog';
 import { AssociationDeleteDialog } from './table/dialogs/AssociationDeleteDialog';
 import AssociationTableLayout from './table/AssociationTableLayout';
 import { useAssociationTable } from '@/hooks/associations/useAssociationTable';
+import { toast } from 'sonner';
 
 interface AssociationTableProps {
   associations: Association[];
@@ -14,6 +15,7 @@ interface AssociationTableProps {
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
   onViewProfile?: (id: string) => void;
+  onRefresh?: () => void;
 }
 
 const AssociationTable: React.FC<AssociationTableProps> = ({ 
@@ -23,7 +25,8 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
   onDelete,
   onToggleSelect,
   selectedAssociations = [],
-  onViewProfile
+  onViewProfile,
+  onRefresh
 }) => {
   const {
     visibleColumns,
@@ -42,7 +45,19 @@ const AssociationTable: React.FC<AssociationTableProps> = ({
     handleSelectAll
   } = useAssociationTable({
     onEdit,
-    onDelete,
+    onDelete: async (id: string) => {
+      try {
+        await onDelete?.(id);
+        // Refresh the data after successful deletion
+        if (onRefresh) {
+          onRefresh();
+        }
+        toast.success('Association deleted successfully');
+      } catch (error: any) {
+        console.error('Failed to delete association:', error);
+        toast.error(`Failed to delete association: ${error.message}`);
+      }
+    },
     selectedAssociations,
     onToggleSelect
   });

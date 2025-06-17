@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Network, Search, RefreshCw, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,55 +54,80 @@ const Associations = () => {
   const activeAssociations = filteredAssociations.filter(a => !a.is_archived);
   const inactiveAssociations = filteredAssociations.filter(a => a.is_archived);
   
-  const handleSaveAssociation = (data: AssociationFormData) => {
-    const newAssociation = {
-      name: data.name,
-      property_type: data.type,
-      total_units: data.units,
-      city: data.city,
-      state: data.state,
-      address: data.address,
-      zip: data.zipCode,
-      phone: data.phone,
-      contact_email: data.email
-    };
-    
-    createAssociation(newAssociation);
-    showSuccessNotification(`Association "${data.name}" created successfully`);
+  const handleSaveAssociation = async (data: AssociationFormData) => {
+    try {
+      const newAssociation = {
+        name: data.name,
+        property_type: data.type,
+        total_units: data.units,
+        city: data.city,
+        state: data.state,
+        address: data.address,
+        zip: data.zipCode,
+        phone: data.phone,
+        contact_email: data.email
+      };
+      
+      await createAssociation(newAssociation);
+      showSuccessNotification(`Association "${data.name}" created successfully`);
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to create association:', error);
+    }
   };
   
-  const handleEditAssociation = (id: string, data: Partial<Association>) => {
-    updateAssociation({ id, data });
-    showSuccessNotification("Association updated successfully");
+  const handleEditAssociation = async (id: string, data: Partial<Association>) => {
+    try {
+      await updateAssociation({ id, data });
+      showSuccessNotification("Association updated successfully");
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to update association:', error);
+    }
   };
   
-  const handleDeleteAssociation = (id: string) => {
-    deleteAssociation(id);
-    showSuccessNotification("Association archived successfully");
+  const handleDeleteAssociation = async (id: string) => {
+    try {
+      await deleteAssociation(id);
+      showSuccessNotification("Association deleted successfully");
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to delete association:', error);
+      // Error handling is already done in the mutation
+    }
   };
 
-  const handleBulkArchive = (ids: string[]) => {
-    Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: true } })))
-      .then(() => {
-        setSelectedAssociations([]);
-        showSuccessNotification(`${ids.length} associations archived successfully`);
-      });
+  const handleBulkArchive = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: true } })));
+      setSelectedAssociations([]);
+      showSuccessNotification(`${ids.length} associations archived successfully`);
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to archive associations:', error);
+    }
   };
 
-  const handleBulkRestore = (ids: string[]) => {
-    Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: false } })))
-      .then(() => {
-        setSelectedAssociations([]);
-        showSuccessNotification(`${ids.length} associations restored successfully`);
-      });
+  const handleBulkRestore = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => updateAssociation({ id, data: { is_archived: false } })));
+      setSelectedAssociations([]);
+      showSuccessNotification(`${ids.length} associations restored successfully`);
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to restore associations:', error);
+    }
   };
 
-  const handleBulkDelete = (ids: string[]) => {
-    Promise.all(ids.map(id => deleteAssociation(id)))
-      .then(() => {
-        setSelectedAssociations([]);
-        showSuccessNotification(`${ids.length} associations deleted successfully`);
-      });
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      await Promise.all(ids.map(id => deleteAssociation(id)));
+      setSelectedAssociations([]);
+      showSuccessNotification(`${ids.length} associations deleted successfully`);
+      manuallyRefresh();
+    } catch (error) {
+      console.error('Failed to delete associations:', error);
+    }
   };
 
   const showSuccessNotification = (message: string) => {
@@ -233,6 +259,7 @@ const Associations = () => {
               onDelete={handleDeleteAssociation}
               onToggleSelect={handleToggleSelectAssociation}
               selectedAssociations={selectedAssociations}
+              onRefresh={manuallyRefresh}
             />
           )}
         </CardContent>
