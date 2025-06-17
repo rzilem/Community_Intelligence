@@ -92,6 +92,22 @@ export const mockVendors: Vendor[] = [
     hoa_id: "",
     created_at: MOCK_TIMESTAMP,
     updated_at: MOCK_TIMESTAMP
+  },
+  {
+    id: "v7",
+    name: "Secure Lock & Key Services",
+    email: "info@securelockkey.com",
+    phone: "(512) 555-0123",
+    is_active: true,
+    status: 'active',
+    rating: 4.8,
+    total_jobs: 45,
+    completed_jobs: 43,
+    average_response_time: 2.5,
+    specialties: ["Locksmith"],
+    hoa_id: "",
+    created_at: MOCK_TIMESTAMP,
+    updated_at: MOCK_TIMESTAMP
   }
 ];
 

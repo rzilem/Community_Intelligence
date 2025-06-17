@@ -11,6 +11,7 @@ export const PROJECT_TYPES = [
   'Electrical',
   'HVAC',
   'Landscaping',
+  'Locksmith',
   'Roofing'
 ];
 

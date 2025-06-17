@@ -93,6 +93,7 @@ export type VendorCategory =
   | 'Landscape'
   | 'Landscaping Maintenance'
   | 'Lighting'
+  | 'Locksmith'
   | 'Mailing Services'
   | 'Management'
   | 'Masonry'
@@ -160,6 +161,7 @@ export const VENDOR_CATEGORIES: VendorCategory[] = [
   'Landscape',
   'Landscaping Maintenance',
   'Lighting',
+  'Locksmith',
   'Mailing Services',
   'Management',
   'Masonry',
