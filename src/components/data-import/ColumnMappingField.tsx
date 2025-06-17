@@ -67,22 +67,24 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
   };
   
   return (
-    <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-card">
-      <div className="grid grid-cols-12 gap-4 items-center">
-        {/* Column name section */}
+    <div className="flex flex-col space-y-1 p-2 border rounded bg-card">
+      <div className="grid grid-cols-12 gap-3 items-center">
+        {/* Column name section - more compact */}
         <div className="col-span-4">
-          <div className="text-sm font-medium text-foreground">{column}</div>
+          <div className="text-sm font-medium text-foreground truncate" title={column}>
+            {column}
+          </div>
           {suggestion && !selectedValue && confidence >= 0.6 && hasSystemFields && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div 
-                    className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer hover:text-foreground" 
+                    className="flex items-center text-[10px] text-muted-foreground mt-0.5 cursor-pointer hover:text-foreground" 
                     onClick={handleSuggestionApply}
                   >
-                    <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                    <span className="hover:underline">
-                      Suggested: {systemFields.find(f => f.value === suggestion)?.label || suggestion}
+                    <Sparkles className="h-2.5 w-2.5 mr-1 text-amber-500" />
+                    <span className="hover:underline truncate">
+                      {systemFields.find(f => f.value === suggestion)?.label || suggestion}
                     </span>
                   </div>
                 </TooltipTrigger>
@@ -102,14 +104,14 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={isOpen}
-                className="w-full justify-between h-10"
+                className="w-full justify-between h-8 text-xs"
                 disabled={!hasSystemFields}
               >
                 <span className="truncate">
                   {!hasSystemFields ? (
                     <div className="flex items-center">
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Loading fields...
+                      <Loader2 className="h-3 w-3 animate-spin mr-2" />
+                      Loading...
                     </div>
                   ) : selectedValue && selectedField ? (
                     selectedField.label
@@ -117,12 +119,12 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                     "Select field..."
                   )}
                 </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[400px] p-0" align="start" sideOffset={4}>
               <Command>
-                <CommandInput placeholder="Search fields..." className="h-9" />
+                <CommandInput placeholder="Search fields..." className="h-8 text-xs" />
                 <CommandEmpty>
                   {!hasSystemFields ? "Loading fields..." : "No field found."}
                 </CommandEmpty>
@@ -133,12 +135,12 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                       key="clear-selection"
                       value=""
                       onSelect={() => handleSelect('')}
-                      className="cursor-pointer flex items-center justify-between text-muted-foreground"
+                      className="cursor-pointer flex items-center justify-between text-muted-foreground text-xs"
                     >
                       <span>Don't map this column</span>
                       <Check
                         className={cn(
-                          "ml-auto h-4 w-4",
+                          "ml-auto h-3 w-3",
                           !selectedValue ? "opacity-100" : "opacity-0"
                         )}
                       />
@@ -150,15 +152,15 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                         key={field.value}
                         value={field.label}
                         onSelect={() => handleSelect(field.value)}
-                        className="cursor-pointer flex items-center justify-between"
+                        className="cursor-pointer flex items-center justify-between text-xs"
                       >
                         <div className="flex flex-col">
                           <span>{field.label}</span>
-                          <span className="text-xs text-muted-foreground">{field.value}</span>
+                          <span className="text-[10px] text-muted-foreground">{field.value}</span>
                         </div>
                         <Check
                           className={cn(
-                            "ml-auto h-4 w-4",
+                            "ml-auto h-3 w-3",
                             selectedValue === field.value
                               ? "opacity-100"
                               : "opacity-0"
@@ -172,12 +174,6 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
             </PopoverContent>
           </Popover>
         </div>
-      </div>
-      
-      {/* Debug info for this field */}
-      <div className="text-xs text-gray-400">
-        Fields available: {systemFields?.length || 0} | Selected: {selectedField?.label || 'None'}
-        {!hasSystemFields && " | ⚠️ Loading..."}
       </div>
     </div>
   );

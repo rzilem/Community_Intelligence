@@ -113,24 +113,24 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      {/* Header with Auto-Map button */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium">Map File Columns to System Fields:</h3>
+    <div className="space-y-3 pb-4">
+      {/* Header with Auto-Map button - more compact */}
+      <div className="flex items-center justify-between py-2 border-b">
+        <h3 className="text-sm font-medium">Map File Columns to System Fields</h3>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={handleAutoMapColumns}
           disabled={isGenerating || !hasSystemFields}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 text-xs px-2 py-1 h-7"
         >
-          <Sparkles className="h-4 w-4" />
-          {isGenerating ? 'Analyzing...' : 'Auto-Map Columns'}
+          <Sparkles className="h-3 w-3" />
+          {isGenerating ? 'Analyzing...' : 'Auto-Map'}
         </Button>
       </div>
       
-      {/* Mapping fields */}
-      <div className="space-y-3">
+      {/* Mapping fields - more compact spacing */}
+      <div className="space-y-2">
         {fileColumns.map((column, index) => {
           console.log(`Rendering mapping field ${index + 1}/${fileColumns.length} for column: "${column}"`);
           return (
@@ -149,9 +149,9 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         })}
       </div>
       
-      {/* Footer info */}
-      <div className="text-xs text-muted-foreground pt-2 border-t">
-        <div>Found {fileColumns.length} columns in your file. Select a system field for each column you want to import.</div>
+      {/* Footer info - more compact */}
+      <div className="text-[10px] text-muted-foreground pt-2 border-t">
+        <div>Found {fileColumns.length} columns. Select a system field for each column you want to import.</div>
         {!hasSystemFields && (
           <div className="text-amber-600 mt-1">
             ⚠️ System fields are still loading...

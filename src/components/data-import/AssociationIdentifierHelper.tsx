@@ -2,7 +2,7 @@
 import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Info, AlertTriangle } from 'lucide-react';
+import { Info, CheckCircle } from 'lucide-react';
 
 interface AssociationIdentifierHelperProps {
   isMultiAssociation: boolean;
@@ -27,44 +27,29 @@ const AssociationIdentifierHelper: React.FC<AssociationIdentifierHelperProps> = 
   const hasAssociationMapping = Object.values(mappings).includes('association_identifier');
   
   return (
-    <div className="space-y-2">
-      {/* Main instruction - compact */}
-      <Alert className="py-2">
-        <Info className="h-4 w-4" />
-        <AlertDescription className="text-sm">
-          <strong>Multi-Association Import:</strong> Map one column to "Association Identifier" below.
+    <Alert className={`py-1.5 px-3 text-xs ${hasAssociationMapping ? 'border-green-200 bg-green-50' : 'border-blue-200 bg-blue-50'}`}>
+      <div className="flex items-center gap-2">
+        {hasAssociationMapping ? (
+          <CheckCircle className="h-3 w-3 text-green-600" />
+        ) : (
+          <Info className="h-3 w-3 text-blue-600" />
+        )}
+        <AlertDescription className="text-xs m-0 flex-1">
+          {hasAssociationMapping ? (
+            <span className="text-green-700 font-medium">✓ Association Identifier mapped</span>
+          ) : (
+            <span className="text-blue-700">
+              <strong>Multi-Association Import:</strong> Map one column to "Association Identifier"
+              {associationColumns.length > 0 && (
+                <span className="ml-2">
+                  (Suggested: {associationColumns.slice(0, 2).join(', ')})
+                </span>
+              )}
+            </span>
+          )}
         </AlertDescription>
-      </Alert>
-      
-      {/* Suggested columns - only show if we found some */}
-      {associationColumns.length > 0 && (
-        <div className="text-xs text-muted-foreground">
-          <strong>Suggested columns:</strong>
-          <div className="flex flex-wrap gap-1 mt-1">
-            {associationColumns.slice(0, 4).map(col => (
-              <Badge key={col} variant="outline" className="text-xs py-0">
-                {col}
-              </Badge>
-            ))}
-            {associationColumns.length > 4 && (
-              <Badge variant="outline" className="text-xs py-0">
-                +{associationColumns.length - 4} more
-              </Badge>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* Error state - only show if no mapping yet */}
-      {!hasAssociationMapping && (
-        <Alert variant="destructive" className="py-2">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="text-sm">
-            <strong>Required:</strong> Select "Association Identifier" from any column dropdown.
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
+      </div>
+    </Alert>
   );
 };
 
