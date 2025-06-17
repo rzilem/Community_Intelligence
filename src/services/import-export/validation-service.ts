@@ -1,5 +1,6 @@
 
 import { ValidationResult } from '@/types/import-types';
+import { supabase } from '@/integrations/supabase/client';
 
 export const validationService = {
   validateData: async (
@@ -18,21 +19,63 @@ export const validationService = {
       };
     }
     
-    console.log(`Validating ${data.length} rows of ${importType} data`);
+    console.log(`Validating ${data.length} rows of ${importType} data for association:`, associationId);
     
     const issues: Array<{ row: number; field: string; issue: string }> = [];
     let warnings = 0;
     
-    // Define required fields based on import type
-    const requiredFields: Record<string, string[]> = {
-      properties: ['address', 'property_type'],
-      owners: ['first_name', 'last_name'],
-      properties_owners: ['address'],
-      financial: ['amount', 'due_date'],
-      compliance: ['violation_type', 'description'],
-      maintenance: ['title', 'description'],
-      associations: ['name'],
+    // Check if association has a default property type
+    let associationHasPropertyType = false;
+    if (associationId && associationId !== 'all') {
+      try {
+        const { data: assocData } = await supabase
+          .from('associations')
+          .select('property_type')
+          .eq('id', associationId)
+          .single();
+        
+        associationHasPropertyType = Boolean(assocData?.property_type);
+        console.log('Association property type check:', { associationId, hasPropertyType: associationHasPropertyType, propertyType: assocData?.property_type });
+      } catch (error) {
+        console.warn('Could not fetch association property type:', error);
+      }
+    }
+    
+    // Define required fields based on import type and association context
+    const getRequiredFields = (type: string): string[] => {
+      switch (type) {
+        case 'properties':
+          // Only require property_type if association doesn't have a default OR importing for all associations
+          if (associationId === 'all' || !associationHasPropertyType) {
+            return ['address', 'property_type'];
+          }
+          return ['address']; // Association has default property type
+          
+        case 'owners':
+          return ['first_name', 'last_name'];
+          
+        case 'properties_owners':
+          // Only require property_type if association doesn't have a default OR importing for all associations
+          if (associationId === 'all' || !associationHasPropertyType) {
+            return ['address', 'property_type'];
+          }
+          return ['address']; // Association has default property type
+          
+        case 'financial':
+          return ['amount', 'due_date'];
+        case 'compliance':
+          return ['violation_type', 'description'];
+        case 'maintenance':
+          return ['title', 'description'];
+        case 'associations':
+          return ['name'];
+        default:
+          return [];
+      }
     };
+
+    const requiredFields = getRequiredFields(importType);
+    console.log('Required fields for validation:', requiredFields);
 
     // Add association identifier requirement for "all associations" imports
     if (associationId === 'all' && importType !== 'associations') {
@@ -110,9 +153,7 @@ export const validationService = {
     // Validate each row
     data.forEach((row, rowIndex) => {
       // Check for required fields
-      const required = requiredFields[importType] || [];
-      
-      required.forEach(field => {
+      requiredFields.forEach(field => {
         if (row[field] === undefined || row[field] === null || row[field] === '') {
           issues.push({
             row: rowIndex + 1,
@@ -180,7 +221,7 @@ export const validationService = {
     
     const invalidRows = new Set(issues.map(issue => issue.row)).size;
     
-    return {
+    const result = {
       valid: invalidRows === 0,
       totalRows: data.length,
       validRows: data.length - invalidRows,
@@ -188,6 +229,15 @@ export const validationService = {
       warnings,
       issues
     };
+
+    console.log('Validation completed:', {
+      associationId,
+      associationHasPropertyType,
+      requiredFields,
+      result
+    });
+    
+    return result;
   }
 };
 
