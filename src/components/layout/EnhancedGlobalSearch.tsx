@@ -1,309 +1,253 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, Clock, Users, FileText, Home, DollarSign, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Clock, FileText, Users, Home, DollarSign, Zap, AlertCircle } from 'lucide-react';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { useOptimizedGlobalSearch, SearchResult } from '@/hooks/search/useOptimizedGlobalSearch';
-import { useSearchCache } from '@/hooks/search/useSearchCache';
-
-const getTypeIcon = (type: string) => {
-  const icons = {
-    association: <Home className="h-4 w-4" />,
-    owner: <Users className="h-4 w-4" />,
-    lead: <Users className="h-4 w-4" />,
-    invoice: <DollarSign className="h-4 w-4" />,
-    request: <AlertCircle className="h-4 w-4" />,
-    property: <Home className="h-4 w-4" />,
-  };
-  return icons[type as keyof typeof icons] || <FileText className="h-4 w-4" />;
-};
-
-const getTypeColor = (type: string) => {
-  const colors = {
-    association: 'bg-blue-100 text-blue-700',
-    owner: 'bg-green-100 text-green-700',
-    lead: 'bg-purple-100 text-purple-700',
-    invoice: 'bg-yellow-100 text-yellow-700',
-    request: 'bg-red-100 text-red-700',
-    property: 'bg-orange-100 text-orange-700',
-  };
-  return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-700';
-};
-
-const highlightMatch = (text: string, query: string) => {
-  if (!query) return text;
-  
-  const regex = new RegExp(`(${query})`, 'gi');
-  const parts = text.split(regex);
-  
-  return (
-    <>
-      {parts.map((part, index) =>
-        regex.test(part) ? (
-          <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">
-            {part}
-          </mark>
-        ) : (
-          <span key={index}>{part}</span>
-        )
-      )}
-    </>
-  );
-};
-
-const getLoadingStateIndicator = (isLoaded: boolean, isLoading: boolean, hasResults: boolean) => {
-  if (isLoading) {
-    return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />;
-  }
-  if (isLoaded && hasResults) {
-    return <CheckCircle2 className="h-3 w-3 text-green-500" />;
-  }
-  if (isLoaded && !hasResults) {
-    return <div className="h-3 w-3 rounded-full bg-gray-300" />;
-  }
-  return <div className="h-3 w-3 rounded-full bg-gray-200" />;
-};
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty,
+  CommandSeparator,
+} from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useServerSearch } from '@/hooks/search/useServerSearch';
+import { toast } from 'sonner';
 
 const EnhancedGlobalSearch: React.FC = () => {
-  const [query, setQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
   const { 
     results, 
     isLoading, 
-    handleResultSelect, 
-    isDebouncing, 
-    hasMinLength,
-    categoryStatus,
-    loadingProgress,
-    hasAnyData
-  } = useOptimizedGlobalSearch(query);
-  
-  const { 
-    recentSearches, 
-    addToRecentSearches 
-  } = useSearchCache();
+    error, 
+    search: performSearch, 
+    searchWithOperators,
+    total,
+    suggestions,
+    clearResults 
+  } = useServerSearch();
 
-  // Keyboard shortcut
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (search.trim().length >= 2) {
+        if (search.includes(':')) {
+          searchWithOperators(search);
+        } else {
+          performSearch(search);
+        }
+      } else {
+        clearResults();
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search, performSearch, searchWithOperators, clearResults]);
+
+  // Keyboard shortcut Ctrl/Cmd + K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        inputRef.current?.focus();
-        setIsOpen(true);
+        setOpen(true);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.min(prev + 1, results.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.max(prev - 1, -1));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedIndex >= 0 && results[selectedIndex]) {
-        handleSelect(results[selectedIndex]);
-      }
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-      inputRef.current?.blur();
+  // Show error toast
+  useEffect(() => {
+    if (error) {
+      toast.error(`Search failed: ${error}`);
     }
-  };
+  }, [error]);
 
-  const handleSelect = (result: SearchResult) => {
-    handleResultSelect(result);
-    setQuery('');
-    setIsOpen(false);
-    setSelectedIndex(-1);
+  const handleSelect = useCallback((path: string, title: string) => {
+    navigate(path);
+    setOpen(false);
+    setSearch('');
     
     // Add to recent searches
-    addToRecentSearches(result.title);
+    setRecentSearches(prev => {
+      const newSearches = [title, ...prev.filter(s => s !== title)].slice(0, 5);
+      return newSearches;
+    });
+  }, [navigate]);
+
+  const getTypeIcon = (type: string) => {
+    const icons = {
+      association: <Home className="h-4 w-4" />,
+      request: <FileText className="h-4 w-4" />,
+      lead: <Users className="h-4 w-4" />,
+      invoice: <DollarSign className="h-4 w-4" />,
+    };
+    return icons[type as keyof typeof icons] || <FileText className="h-4 w-4" />;
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    setSelectedIndex(-1);
-    setIsOpen(value.length > 0 || isOpen);
+  const getTypeColor = (type: string) => {
+    const colors = {
+      association: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+      request: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+      lead: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      invoice: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+    };
+    return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300';
   };
 
-  const showRecentSearches = isOpen && query.length === 0 && recentSearches.length > 0;
-  const showResults = isOpen && hasMinLength;
-  const showDebouncing = isDebouncing && query.length >= 2;
+  const groupedResults = useMemo(() => {
+    const groups: { [key: string]: typeof results } = {};
+    results.forEach(result => {
+      if (!groups[result.type]) {
+        groups[result.type] = [];
+      }
+      groups[result.type].push(result);
+    });
+    return groups;
+  }, [results]);
+
+  const hasSearchOperators = search.includes(':');
 
   return (
-    <div className="relative">
-      <Popover open={showResults || showRecentSearches} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            {showDebouncing && (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
-            )}
-            <Input
-              ref={inputRef}
-              value={query}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setIsOpen(true)}
-              placeholder="Search anything..."
-              className="pl-10 pr-4 h-9 w-full min-w-[400px] lg:min-w-[600px] border-hoa-blue bg-background/60 backdrop-blur-sm text-sm"
-            />
-          </div>
-        </PopoverTrigger>
-        
-        {(showResults || showRecentSearches) && (
-          <PopoverContent 
-            className="w-[400px] lg:w-[600px] p-0 mt-1" 
-            align="start"
-            side="bottom"
-          >
-            <div className="max-h-[400px] overflow-y-auto">
-              {/* Recent Searches */}
-              {showRecentSearches && (
-                <div className="p-2">
-                  <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                    Recent Searches
-                  </div>
-                  {recentSearches.map((recent, index) => (
-                    <Button
+    <>
+      <Button
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="relative h-9 w-full bg-background/60 backdrop-blur-sm border-hoa-blue text-muted-foreground hover:bg-background/80 justify-start text-sm font-normal shadow-sm min-w-[200px] md:min-w-[300px]"
+      >
+        <Search className="mr-2 h-4 w-4" />
+        <span className="hidden lg:inline-flex">Search anything...</span>
+        <span className="inline-flex lg:hidden">Search...</span>
+        <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <span className="text-xs">⌘</span>K
+        </kbd>
+      </Button>
+
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandInput 
+          placeholder="Search pages, owners, leads, invoices... Try 'type:invoice' or 'after:2024-01-01'" 
+          value={search}
+          onValueChange={setSearch}
+        />
+        <CommandList>
+          {isLoading && (
+            <div className="flex items-center justify-center py-6">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                Searching...
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex items-center justify-center py-6">
+              <div className="flex items-center gap-2 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4" />
+                Search failed. Please try again.
+              </div>
+            </div>
+          )}
+
+          {!search && !isLoading && recentSearches.length > 0 && (
+            <CommandGroup heading="Recent Searches">
+              {recentSearches.map((recent, index) => (
+                <CommandItem 
+                  key={index} 
+                  className="flex items-center gap-2"
+                  onSelect={() => setSearch(recent)}
+                >
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  {recent}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {!search && !isLoading && (
+            <CommandGroup heading="Search Tips">
+              <CommandItem className="flex items-center gap-2 text-muted-foreground">
+                <Zap className="h-4 w-4" />
+                Use "type:invoice" to search only invoices
+              </CommandItem>
+              <CommandItem className="flex items-center gap-2 text-muted-foreground">
+                <Zap className="h-4 w-4" />
+                Use "after:2024-01-01" to filter by date
+              </CommandItem>
+            </CommandGroup>
+          )}
+
+          {search && !isLoading && results.length === 0 && !error && (
+            <CommandEmpty>
+              No results found for "{search}".
+              {suggestions && suggestions.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-muted-foreground">Did you mean:</p>
+                  {suggestions.map((suggestion, index) => (
+                    <Button 
                       key={index}
-                      variant="ghost"
-                      className="w-full justify-start h-8 px-2 text-sm"
-                      onClick={() => {
-                        setQuery(recent);
-                        setIsOpen(true);
-                      }}
+                      variant="ghost" 
+                      size="sm"
+                      className="mt-1 mr-2"
+                      onClick={() => setSearch(suggestion)}
                     >
-                      <Clock className="mr-2 h-3 w-3 text-muted-foreground" />
-                      {recent}
+                      {suggestion}
                     </Button>
                   ))}
                 </div>
               )}
-              
-              {/* Search Results */}
-              {showResults && (
-                <div className="p-2">
-                  {/* Progressive Loading Status */}
-                  {hasMinLength && (isLoading || hasAnyData) && (
-                    <div className="px-2 py-2 border-b">
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                        <span>Search Progress</span>
-                        <span>{Math.round(loadingProgress * 100)}%</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                          {getLoadingStateIndicator(
-                            categoryStatus.associations.loaded, 
-                            !categoryStatus.associations.loaded, 
-                            categoryStatus.associations.hasResults
-                          )}
-                          <span>Associations</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {getLoadingStateIndicator(
-                            categoryStatus.requests.loaded, 
-                            !categoryStatus.requests.loaded, 
-                            categoryStatus.requests.hasResults
-                          )}
-                          <span>Requests</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {getLoadingStateIndicator(
-                            categoryStatus.leads.loaded, 
-                            !categoryStatus.leads.loaded, 
-                            categoryStatus.leads.hasResults
-                          )}
-                          <span>Leads</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {getLoadingStateIndicator(
-                            categoryStatus.invoices.loaded, 
-                            !categoryStatus.invoices.loaded, 
-                            categoryStatus.invoices.hasResults
-                          )}
-                          <span>Invoices</span>
-                        </div>
+            </CommandEmpty>
+          )}
+          
+          {Object.entries(groupedResults).map(([type, items]) => (
+            <React.Fragment key={type}>
+              <CommandGroup heading={`${type.charAt(0).toUpperCase() + type.slice(1)}s (${items.length})`}>
+                {items.map((item) => (
+                  <CommandItem
+                    key={item.id}
+                    onSelect={() => handleSelect(item.path, item.title)}
+                    className="flex items-center justify-between py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      {getTypeIcon(item.type)}
+                      <div>
+                        <div className="font-medium">{item.title}</div>
+                        {item.subtitle && (
+                          <div className="text-sm text-muted-foreground">{item.subtitle}</div>
+                        )}
                       </div>
                     </div>
-                  )}
+                    <div className="flex items-center gap-2">
+                      {hasSearchOperators && (
+                        <Badge variant="outline" className="text-xs">
+                          {item.rank.toFixed(2)}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className={`text-xs ${getTypeColor(item.type)}`}>
+                        {item.type}
+                      </Badge>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+            </React.Fragment>
+          ))}
 
-                  {hasMinLength && results.length === 0 && !isLoading && !isDebouncing && (
-                    <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                      No results found for "{query}"
-                    </div>
-                  )}
-                  
-                  {isDebouncing && (
-                    <div className="px-2 py-6 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Searching...
-                    </div>
-                  )}
-                  
-                  {results.length > 0 && (
-                    <>
-                      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        Results ({results.length})
-                      </div>
-                      {results.map((result, index) => (
-                        <Button
-                          key={result.id}
-                          variant="ghost"
-                          className={cn(
-                            "w-full justify-between h-auto p-2 text-left",
-                            selectedIndex === index && "bg-accent"
-                          )}
-                          onClick={() => handleSelect(result)}
-                          onMouseEnter={() => setSelectedIndex(index)}
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-muted shrink-0">
-                              {getTypeIcon(result.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">
-                                {highlightMatch(result.title, query)}
-                              </div>
-                              {result.subtitle && (
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {highlightMatch(result.subtitle, query)}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Badge 
-                            variant="secondary" 
-                            className={cn("text-xs shrink-0", getTypeColor(result.type))}
-                          >
-                            {result.type}
-                          </Badge>
-                        </Button>
-                      ))}
-                    </>
-                  )}
-                </div>
-              )}
+          {search && total > 0 && (
+            <div className="px-2 py-1 text-xs text-muted-foreground border-t">
+              Showing {results.length} of {total} results for "{search}"
+              {hasSearchOperators && <Badge variant="outline" className="ml-2">Advanced Search</Badge>}
             </div>
-          </PopoverContent>
-        )}
-      </Popover>
-    </div>
+          )}
+        </CommandList>
+      </CommandDialog>
+    </>
   );
 };
 

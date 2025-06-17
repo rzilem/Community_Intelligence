@@ -7937,6 +7937,19 @@ export type Database = {
           },
         ]
       }
+      global_search_view: {
+        Row: {
+          association_id: string | null
+          created_at: string | null
+          id: string | null
+          path: string | null
+          search_vector: unknown | null
+          subtitle: string | null
+          title: string | null
+          type: string | null
+        }
+        Relationships: []
+      }
       vendor_learning_progress: {
         Row: {
           association_id: string | null
@@ -8246,6 +8259,23 @@ export type Database = {
           theme: string | null
           updated_at: string | null
           user_id: string
+        }[]
+      }
+      global_search: {
+        Args: {
+          search_query: string
+          result_limit?: number
+          result_offset?: number
+          search_types?: string[]
+        }
+        Returns: {
+          id: string
+          type: string
+          title: string
+          subtitle: string
+          path: string
+          rank: number
+          created_at: string
         }[]
       }
       set_secret: {
