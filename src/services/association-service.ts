@@ -141,37 +141,29 @@ const checkDependencies = async (associationId: string) => {
   console.log('Checking dependencies for association:', associationId);
   
   try {
-    // Use explicit typing to avoid deep instantiation issues
-    const propertiesQuery = supabase
+    // Simplified queries without complex type inference
+    const propertiesResult = await supabase
       .from('properties')
-      .select('id', { count: 'exact' })
+      .select('id')
       .eq('association_id', associationId)
       .limit(1);
     
-    const residentsQuery = supabase
+    const residentsResult = await supabase
       .from('residents')
-      .select('id', { count: 'exact' })
+      .select('id')
       .eq('association_id', associationId)
       .limit(1);
     
-    const assessmentsQuery = supabase
+    const assessmentsResult = await supabase
       .from('assessments')
-      .select('id', { count: 'exact' })
+      .select('id')
       .limit(1);
     
-    const invoicesQuery = supabase
+    const invoicesResult = await supabase
       .from('invoices')
-      .select('id', { count: 'exact' })
+      .select('id')
       .eq('association_id', associationId)
       .limit(1);
-
-    // Execute queries with explicit typing
-    const [propertiesResult, residentsResult, assessmentsResult, invoicesResult] = await Promise.all([
-      propertiesQuery,
-      residentsQuery,
-      assessmentsQuery,
-      invoicesQuery
-    ]);
 
     // Check for errors and extract data
     const hasProperties = Boolean(propertiesResult.data && propertiesResult.data.length > 0);
