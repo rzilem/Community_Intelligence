@@ -20,9 +20,22 @@ import CalendarTab from '@/components/dashboard/CalendarTab';
 const Dashboard = () => {
   const { currentAssociation, user, profile, loading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  
+  // Call ALL hooks at the top, before any conditional logic
   const { stats, recentActivity, isLoading: dataLoading, error } = useDashboardData(currentAssociation?.id);
   const { isTablet, isMobile } = useResponsive();
   const { issues, loading: issuesLoading } = useAIIssues();
+  
+  // Call the useAdminAccess hook here - ensure it's not causing rerenders
+  useAdminAccess(user?.id);
+  
+  // Call useDashboardRoleContent hook here, before any conditional returns
+  const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
+    profile,
+    recentActivity,
+    dataLoading,
+    error ? new Error(error) : null
+  );
   
   console.log('Dashboard rendering, auth state:', { 
     isAuthenticated: isAuthenticated ? 'yes' : 'no',
@@ -32,9 +45,6 @@ const Dashboard = () => {
     currentPath: window.location.pathname
   });
   
-  // Call the useAdminAccess hook here - ensure it's not causing rerenders
-  useAdminAccess(user?.id);
-  
   useEffect(() => {
     // Only redirect if we've confirmed the user isn't authenticated
     if (!loading && !isAuthenticated) {
@@ -42,38 +52,6 @@ const Dashboard = () => {
       navigate('/auth?tab=login');
     }
   }, [isAuthenticated, loading, navigate]);
-  
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-lg">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Use the profile from auth context
-  const userProfile = profile;
-  
-  const { getContentForRole, getActivityContent, getMessagesContent } = useDashboardRoleContent(
-    userProfile,
-    recentActivity,
-    dataLoading,
-    error ? new Error(error) : null
-  );
 
   // Memoize the main content structure to prevent unnecessary re-renders
   const dashboardContent = useMemo(() => {
@@ -135,6 +113,29 @@ const Dashboard = () => {
     getActivityContent, 
     getMessagesContent
   ]);
+  
+  // Now handle conditional rendering AFTER all hooks are called
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-16 w-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-lg">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppLayout>
