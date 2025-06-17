@@ -101,14 +101,11 @@ const GlobalSearch: React.FC = () => {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="relative h-9 w-full max-w-sm bg-background/60 backdrop-blur-sm border-muted-foreground/20 text-muted-foreground hover:bg-background/80 justify-start text-sm font-normal shadow-sm"
+        className="relative h-9 w-full bg-background/60 backdrop-blur-sm border-hoa-blue text-muted-foreground hover:bg-background/80 justify-start text-sm font-normal shadow-sm"
       >
         <Search className="mr-2 h-4 w-4" />
         <span className="hidden lg:inline-flex">Search anything...</span>
         <span className="inline-flex lg:hidden">Search...</span>
-        <kbd className="ml-auto hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-          <span className="text-xs">⌘</span>K
-        </kbd>
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
