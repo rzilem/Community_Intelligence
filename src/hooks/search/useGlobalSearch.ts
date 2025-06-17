@@ -21,7 +21,7 @@ export const useGlobalSearch = (query: string) => {
   
   // Data hooks
   const { associations } = useAssociations();
-  const { requests } = useHomeownerRequests();
+  const { homeownerRequests } = useHomeownerRequests();
   const { leads } = useLeads();
   const { invoices } = useInvoices();
 
@@ -50,17 +50,16 @@ export const useGlobalSearch = (query: string) => {
     });
 
     // Search homeowner requests (work orders)
-    requests?.forEach(request => {
+    homeownerRequests?.forEach(request => {
       if (
         request.title?.toLowerCase().includes(searchTerm) ||
         request.description?.toLowerCase().includes(searchTerm) ||
-        request.resident_name?.toLowerCase().includes(searchTerm) ||
-        request.unit_number?.toLowerCase().includes(searchTerm)
+        request.tracking_number?.toLowerCase().includes(searchTerm)
       ) {
         results.push({
           id: request.id,
           title: request.title || `Request #${request.id.slice(-6)}`,
-          subtitle: request.resident_name || request.unit_number,
+          subtitle: request.tracking_number || request.description?.slice(0, 50),
           type: 'request',
           path: `/homeowners/requests/${request.id}`,
           matchedField: 'request'
@@ -75,13 +74,17 @@ export const useGlobalSearch = (query: string) => {
         lead.last_name?.toLowerCase().includes(searchTerm) ||
         lead.email?.toLowerCase().includes(searchTerm) ||
         lead.company?.toLowerCase().includes(searchTerm) ||
-        lead.address?.toLowerCase().includes(searchTerm)
+        lead.street_address?.toLowerCase().includes(searchTerm) ||
+        lead.city?.toLowerCase().includes(searchTerm)
       ) {
         const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
+        const addressParts = [lead.street_address, lead.city, lead.state].filter(Boolean);
+        const address = addressParts.length > 0 ? addressParts.join(', ') : '';
+        
         results.push({
           id: lead.id,
           title: fullName || lead.email || 'Unnamed Lead',
-          subtitle: lead.company || lead.email || lead.address,
+          subtitle: lead.company || address || lead.email,
           type: 'lead',
           path: `/leads/${lead.id}`,
           matchedField: 'lead'
@@ -93,13 +96,13 @@ export const useGlobalSearch = (query: string) => {
     invoices?.forEach(invoice => {
       if (
         invoice.invoice_number?.toLowerCase().includes(searchTerm) ||
-        invoice.vendor_name?.toLowerCase().includes(searchTerm) ||
+        invoice.vendor?.toLowerCase().includes(searchTerm) ||
         invoice.description?.toLowerCase().includes(searchTerm)
       ) {
         results.push({
           id: invoice.id,
           title: invoice.invoice_number || `Invoice #${invoice.id.slice(-6)}`,
-          subtitle: `${invoice.vendor_name || 'Unknown Vendor'} - $${invoice.amount || '0'}`,
+          subtitle: `${invoice.vendor || 'Unknown Vendor'} - $${invoice.amount || '0'}`,
           type: 'invoice',
           path: `/invoices/${invoice.id}`,
           matchedField: 'invoice'
@@ -123,7 +126,7 @@ export const useGlobalSearch = (query: string) => {
       
       return 0;
     });
-  }, [query, associations, requests, leads, invoices]);
+  }, [query, associations, homeownerRequests, leads, invoices]);
 
   const handleResultSelect = (result: SearchResult) => {
     navigate(result.path);
