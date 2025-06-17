@@ -1,180 +1,121 @@
 
-/**
- * Service for AI-powered mapping suggestions
- */
+import { MappingOption } from '@/components/data-import/types/mapping-types';
+
+interface MappingSuggestion {
+  fieldValue: string;
+  confidence: number;
+}
+
 export const aiMappingService = {
   generateMappingSuggestions: (
     fileColumns: string[],
-    systemFields: { label: string; value: string }[],
+    systemFields: MappingOption[],
     sampleData: any[]
-  ): Record<string, { fieldValue: string; confidence: number }> => {
-    const suggestions: Record<string, { fieldValue: string; confidence: number }> = {};
+  ): Record<string, MappingSuggestion> => {
+    const suggestions: Record<string, MappingSuggestion> = {};
     
-    if (!fileColumns.length || !systemFields.length || !sampleData.length) {
-      console.log("Missing data required for generating suggestions");
-      return suggestions;
-    }
-    
-    console.log("Generating mapping suggestions for", fileColumns.length, "columns");
-    
-    // Special case handlers for common fields
-    const specialCaseHandler = (
-      column: string
-    ): { field: string; confidence: number } | null => {
-      const lowerColumn = column.toLowerCase();
+    fileColumns.forEach(column => {
+      const lowerColumn = column.toLowerCase().trim();
+      let bestMatch: MappingSuggestion | null = null;
       
-      // Handle address fields
-      if (['address', 'street_address', 'street', 'property_address'].includes(lowerColumn)) {
-        const addressField = systemFields.find(f => 
-          f.value === 'address' || 
-          f.value === 'property.address'
+      // Define exact matches with high confidence
+      const exactMatches: Record<string, string> = {
+        'homeowner id': 'homeowner_id',
+        'account #': 'account_number',
+        'account number': 'account_number',
+        'property address': 'address',
+        'address': 'address',
+        'unit no': 'unit_number',
+        'unit number': 'unit_number',
+        'city': 'city',
+        'state': 'state',
+        'zip': 'zip',
+        'first name': 'first_name',
+        'last name': 'last_name',
+        'second owner first name': 'second_owner_first_name',
+        'second owner last name': 'second_owner_last_name',
+        'email': 'email',
+        'phone': 'phone',
+        'settled date': 'move_in_date',
+        'balance': 'Balance',
+        'collection status': 'Collection Status',
+        'business name': 'Business Name',
+        'deed name': 'Deed Name',
+        'mailing address': 'Mailing Address',
+        'lot no': 'Lot No',
+        'block no': 'Block No',
+        'phase': 'Phase',
+        'village': 'Village',
+        'legal description': 'Legal Description',
+        'parcel id': 'Parcel ID',
+        'association id': 'association_identifier',
+        'association name': 'association_identifier',
+        'association code': 'association_identifier',
+        'hoa id': 'association_identifier',
+        'hoa name': 'association_identifier'
+      };
+      
+      // Check for exact matches first
+      if (exactMatches[lowerColumn]) {
+        const matchingField = systemFields.find(field => 
+          field.value === exactMatches[lowerColumn] || 
+          field.label.toLowerCase() === exactMatches[lowerColumn].toLowerCase()
         );
-        if (addressField) return { field: addressField.value, confidence: 0.95 };
-      }
-      
-      // Handle city field
-      if (['city', 'town', 'municipality'].includes(lowerColumn)) {
-        const cityField = systemFields.find(f => 
-          f.value === 'city' || 
-          f.value === 'property.city'
-        );
-        if (cityField) return { field: cityField.value, confidence: 0.95 };
-      }
-      
-      // Handle state field
-      if (['state', 'province', 'region'].includes(lowerColumn)) {
-        const stateField = systemFields.find(f => 
-          f.value === 'state' || 
-          f.value === 'property.state'
-        );
-        if (stateField) return { field: stateField.value, confidence: 0.95 };
-      }
-      
-      // Handle zip code field
-      if (['zip', 'zipcode', 'postal_code', 'postal'].includes(lowerColumn)) {
-        const zipField = systemFields.find(f => 
-          f.value === 'zip' || 
-          f.value === 'property.zip'
-        );
-        if (zipField) return { field: zipField.value, confidence: 0.95 };
-      }
-      
-      // Handle name fields
-      if (['first_name', 'firstname', 'first'].includes(lowerColumn)) {
-        const firstNameField = systemFields.find(f => 
-          f.value === 'first_name' || 
-          f.value === 'owner.first_name'
-        );
-        if (firstNameField) return { field: firstNameField.value, confidence: 0.95 };
-      }
-      
-      if (['last_name', 'lastname', 'last', 'surname'].includes(lowerColumn)) {
-        const lastNameField = systemFields.find(f => 
-          f.value === 'last_name' || 
-          f.value === 'owner.last_name'
-        );
-        if (lastNameField) return { field: lastNameField.value, confidence: 0.95 };
-      }
-      
-      // Handle email
-      if (['email', 'email_address', 'mail'].includes(lowerColumn)) {
-        const emailField = systemFields.find(f => 
-          f.value === 'email' || 
-          f.value === 'owner.email' ||
-          f.value === 'contact_email'
-        );
-        if (emailField) return { field: emailField.value, confidence: 0.95 };
-      }
-      
-      // Handle phone
-      if (['phone', 'phone_number', 'telephone', 'contact_number'].includes(lowerColumn)) {
-        const phoneField = systemFields.find(f => 
-          f.value === 'phone' || 
-          f.value === 'owner.phone'
-        );
-        if (phoneField) return { field: phoneField.value, confidence: 0.95 };
-      }
-      
-      // Handle boolean fields (is_primary)
-      if (['is_primary', 'primary', 'co_owner_is_primary', 'is_primary_owner'].includes(lowerColumn)) {
-        const primaryField = systemFields.find(f => 
-          f.value === 'is_primary' || 
-          f.value === 'owner.is_primary'
-        );
-        if (primaryField) return { field: primaryField.value, confidence: 0.95 };
-      }
-      
-      return null;
-    };
-
-    // For each file column, find the best matching system field
-    for (const column of fileColumns) {
-      // First try special case handler
-      const specialCase = specialCaseHandler(column);
-      if (specialCase) {
-        suggestions[column] = {
-          fieldValue: specialCase.field,
-          confidence: specialCase.confidence
-        };
-        continue;
-      }
-      
-      // Calculate semantic similarity for each system field
-      const lowerColumn = column.toLowerCase();
-      let bestMatch = null;
-      let highestScore = 0;
-      
-      for (const field of systemFields) {
-        // Get field name without parent object (e.g. "property.address" -> "address")
-        const fieldName = field.value.split('.').pop() || field.value;
-        const fieldLabel = field.label.toLowerCase();
         
-        // Calculate simple similarity score
-        let score = 0;
-        
-        // Exact match
-        if (lowerColumn === fieldName) {
-          score = 1.0;
+        if (matchingField) {
+          bestMatch = {
+            fieldValue: matchingField.value,
+            confidence: 0.95
+          };
         }
-        // Field name is contained in column name
-        else if (lowerColumn.includes(fieldName)) {
-          score = 0.9;
-        }
-        // Column name is contained in field name
-        else if (fieldName.includes(lowerColumn)) {
-          score = 0.8;
-        }
-        // Column name is similar to field label
-        else if (fieldLabel.includes(lowerColumn) || lowerColumn.includes(fieldLabel)) {
-          score = 0.7;
-        }
-        // Check for partial matches after removing non-alphanumeric chars
-        else {
-          const cleanColumn = lowerColumn.replace(/[^a-z0-9]/gi, '');
-          const cleanField = fieldName.replace(/[^a-z0-9]/gi, '');
+      }
+      
+      // If no exact match, try fuzzy matching
+      if (!bestMatch) {
+        systemFields.forEach(field => {
+          const fieldLower = field.label.toLowerCase();
+          const fieldValueLower = field.value.toLowerCase();
           
-          if (cleanColumn === cleanField) {
-            score = 0.6;
-          } else if (cleanColumn.includes(cleanField) || cleanField.includes(cleanColumn)) {
-            score = 0.5;
+          let confidence = 0;
+          
+          // Exact match on label or value
+          if (fieldLower === lowerColumn || fieldValueLower === lowerColumn) {
+            confidence = 0.9;
           }
-        }
-        
-        if (score > highestScore) {
-          highestScore = score;
-          bestMatch = field.value;
-        }
+          // Contains match
+          else if (fieldLower.includes(lowerColumn) || lowerColumn.includes(fieldLower)) {
+            confidence = 0.7;
+          }
+          // Partial word match
+          else {
+            const columnWords = lowerColumn.split(/[\s_-]+/);
+            const fieldWords = fieldLower.split(/[\s_-]+/);
+            
+            const matchingWords = columnWords.filter(word => 
+              fieldWords.some(fieldWord => 
+                fieldWord.includes(word) || word.includes(fieldWord)
+              )
+            );
+            
+            if (matchingWords.length > 0) {
+              confidence = (matchingWords.length / Math.max(columnWords.length, fieldWords.length)) * 0.6;
+            }
+          }
+          
+          if (confidence > (bestMatch?.confidence || 0)) {
+            bestMatch = {
+              fieldValue: field.value,
+              confidence
+            };
+          }
+        });
       }
       
-      if (bestMatch && highestScore > 0.4) {
-        suggestions[column] = {
-          fieldValue: bestMatch,
-          confidence: highestScore
-        };
+      if (bestMatch && bestMatch.confidence > 0.5) {
+        suggestions[column] = bestMatch;
       }
-    }
+    });
     
-    console.log("Generated mapping suggestions:", suggestions);
     return suggestions;
   }
 };

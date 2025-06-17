@@ -11,7 +11,6 @@ import DataPreviewTable from './DataPreviewTable';
 import ValidationResultsSummary from './ValidationResultsSummary';
 import AssociationIdentifierHelper from './AssociationIdentifierHelper';
 import { useMappingFields } from './useMappingFields';
-import { useAIMappingSuggestions } from './hooks/useAIMappingSuggestions';
 
 interface ImportDataMappingModalProps {
   importType: string;
@@ -33,34 +32,21 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const [mappings, setMappings] = useState<Record<string, string>>({});
   const isMultiAssociation = associationId === 'all';
   
-  // Get available mapping fields based on import type
-  const { getFieldsForImportType } = useMappingFields();
-  let availableFields = getFieldsForImportType(importType);
+  // Get available mapping fields and file data using the hook
+  const {
+    fileColumns,
+    systemFields,
+    previewData
+  } = useMappingFields(importType, fileData, associationId);
   
   // Add association identifier field for multi-association imports
+  let availableFields = [...systemFields];
   if (isMultiAssociation && importType !== 'associations') {
     availableFields = [
       { label: 'Association Identifier', value: 'association_identifier' },
-      ...availableFields
+      ...systemFields
     ];
   }
-  
-  // Get file columns
-  const fileColumns = fileData.length > 0 ? Object.keys(fileData[0]) : [];
-  
-  // Use AI suggestions for initial mappings
-  const { suggestions, isLoading: isLoadingSuggestions } = useAIMappingSuggestions(
-    fileColumns,
-    availableFields,
-    importType
-  );
-  
-  // Apply AI suggestions when they're available
-  useEffect(() => {
-    if (suggestions && Object.keys(suggestions).length > 0 && Object.keys(mappings).length === 0) {
-      setMappings(suggestions);
-    }
-  }, [suggestions, mappings]);
 
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
@@ -104,7 +90,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     const baseRequired = {
       properties: ['address', 'property_type'],
       owners: ['first_name', 'last_name'],
-      properties_owners: ['property.address'],
+      properties_owners: ['address'],
       financial: ['amount', 'due_date'],
       compliance: ['violation_type'],
       maintenance: ['title', 'description'],
@@ -143,18 +129,17 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             
             {validationResults && (
               <div className="mb-4">
-                <ValidationResultsSummary results={validationResults} />
+                <ValidationResultsSummary validationResults={validationResults} />
               </div>
             )}
             
             <div className="flex-1 min-h-0">
               <ColumnMappingList
                 fileColumns={fileColumns}
-                availableFields={availableFields}
+                systemFields={availableFields}
                 mappings={mappings}
                 onMappingChange={handleMappingChange}
-                requiredFields={requiredFields}
-                isLoading={isLoadingSuggestions}
+                previewData={previewData}
               />
             </div>
           </div>
@@ -166,7 +151,6 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
               <ScrollArea className="h-full border rounded">
                 <DataPreviewTable 
                   data={fileData.slice(0, 10)} 
-                  mappings={mappings}
                 />
               </ScrollArea>
             </div>
