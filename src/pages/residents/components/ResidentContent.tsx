@@ -93,8 +93,9 @@ const ResidentContent: React.FC<ResidentContentProps> = ({
         
         <ResidentTable 
           loading={loading}
-          residents={filteredResidents}
-          totalCount={residents.length}
+          filteredResidents={filteredResidents}
+          error={null}
+          onRetry={() => {}}
           currentPage={currentPage}
           pageSize={pageSize}
           onPageChange={onPageChange}

@@ -13,7 +13,7 @@ export const propertiesOwnersProcessor = {
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
 
     try {
-      // First, process all properties with account numbers
+      // First, process all properties with account numbers and defaults
       const propertyData = processedData.map(row => {
         // Use existing account number from CSV or generate new one
         const accountNumber = row.account_number || row['Account #'] || null;
@@ -21,7 +21,7 @@ export const propertiesOwnersProcessor = {
         return {
           address: row.address || row['Property Address'] || row['Address'],
           unit_number: row.unit_number || row['Unit No'] || null,
-          property_type: row.property_type || 'residential',
+          property_type: row.property_type || 'residential', // Default to residential if not specified
           city: row.city || row['City'],
           state: row.state || row['State'],
           zip: row.zip || row['Zip'],
@@ -34,13 +34,13 @@ export const propertiesOwnersProcessor = {
         };
       });
 
-      // Filter out invalid property data
+      // Filter out invalid property data (must have address)
       const validPropertyData = propertyData.filter(prop => prop.address);
       
       if (validPropertyData.length === 0) {
         details.push({
           status: 'error',
-          message: 'No valid property data found in the import file'
+          message: 'No valid property data found in the import file. At least one property address is required.'
         });
         failedImports = processedData.length;
         
@@ -57,6 +57,14 @@ export const propertiesOwnersProcessor = {
           failedImports,
           details
         };
+      }
+      
+      if (validPropertyData.length < processedData.length) {
+        const skippedCount = processedData.length - validPropertyData.length;
+        details.push({
+          status: 'warning',
+          message: `Skipped ${skippedCount} rows without valid property addresses`
+        });
       }
       
       // Process properties in batches and generate account numbers as needed

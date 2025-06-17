@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Check } from 'lucide-react';
+import { AlertCircle, Check, Info } from 'lucide-react';
 import ColumnMappingList from './ColumnMappingList';
 import DataPreviewTable from './DataPreviewTable';
 import ValidationResultsSummary from './ValidationResultsSummary';
@@ -37,58 +37,57 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   } = useMappingFields(importType, fileData, associationId);
   
   const [activeTab, setActiveTab] = useState('mapping');
-  const [hasAllRequiredMappings, setHasAllRequiredMappings] = useState(false);
+  const [hasMinimumMappings, setHasMinimumMappings] = useState(false);
   
-  // Define required fields based on import type
-  const getRequiredFields = () => {
+  // Define minimum required fields based on import type
+  const getMinimumRequiredFields = () => {
     switch (importType) {
       case 'properties':
-        return ['address', 'property_type'];
+        return ['address']; // Only address is truly required, property_type will default to 'residential'
       case 'owners':
-        return ['property_id', 'first_name', 'last_name'];
+        return ['property_id']; // Need to link to a property
       case 'properties_owners':
-        return ['address', 'property_type'];
+        return ['address']; // Only address is required for combined import
       case 'financial':
-        return ['property_id', 'amount', 'due_date'];
+        return ['amount'];
       case 'compliance':
-        return ['property_id', 'violation_type'];
+        return ['violation_type'];
       case 'maintenance':
-        return ['property_id', 'title', 'description'];
+        return ['title'];
       default:
         return [];
     }
   };
   
-  // Check if all required fields are mapped
+  // Check if minimum required fields are mapped
   useEffect(() => {
     if (!mappings) {
-      setHasAllRequiredMappings(false);
+      setHasMinimumMappings(false);
       return;
     }
 
-    const requiredFields = getRequiredFields();
-    const mappedFields = Object.values(mappings);
+    const minimumFields = getMinimumRequiredFields();
+    const mappedFields = Object.values(mappings).filter(field => field && field.trim() !== '');
     
-    // For properties_owners, we have a special case
-    if (importType === 'properties_owners') {
-      const requiredPropertyFields = ['address', 'property_type'].every(field => 
-        mappedFields.includes(field) || mappedFields.includes(`property.${field}`)
-      );
-      
-      const requiredOwnerFields = ['first_name', 'last_name'].some(field => 
-        mappedFields.includes(field) || mappedFields.includes(`owner.${field}`)
-      );
-      
-      setHasAllRequiredMappings(requiredPropertyFields && (fileColumns.length === 0 || requiredOwnerFields));
-    } else {
-      // For other import types
-      const allRequiredFieldsMapped = requiredFields.every(field => {
-        return mappedFields.includes(field);
-      });
-      
-      setHasAllRequiredMappings(allRequiredFieldsMapped || requiredFields.length === 0);
+    if (minimumFields.length === 0) {
+      setHasMinimumMappings(true);
+      return;
     }
-  }, [mappings, importType, fileColumns.length]);
+    
+    // For properties_owners, we just need address mapped
+    if (importType === 'properties_owners') {
+      const hasAddress = mappedFields.some(field => 
+        field === 'address' || field === 'Property Address'
+      );
+      setHasMinimumMappings(hasAddress);
+    } else {
+      // For other import types, check if minimum fields are mapped
+      const hasMinimumFields = minimumFields.every(field => 
+        mappedFields.includes(field)
+      );
+      setHasMinimumMappings(hasMinimumFields);
+    }
+  }, [mappings, importType]);
   
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
@@ -99,6 +98,33 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   
   const handleConfirm = () => {
     onConfirm(mappings);
+  };
+
+  const getMappedFieldsCount = () => {
+    return Object.values(mappings).filter(field => field && field.trim() !== '').length;
+  };
+
+  const getValidationMessage = () => {
+    if (importType === 'properties_owners') {
+      const hasAddress = Object.values(mappings).some(field => 
+        field === 'address' || field === 'Property Address'
+      );
+      if (!hasAddress) {
+        return "Please map a column to 'Property Address' to proceed with the import.";
+      }
+      return `Ready to import! ${getMappedFieldsCount()} fields mapped. Property type will default to 'residential' if not specified.`;
+    }
+    
+    const minimumFields = getMinimumRequiredFields();
+    if (minimumFields.length === 0) {
+      return `Ready to import! ${getMappedFieldsCount()} fields mapped.`;
+    }
+    
+    if (!hasMinimumMappings) {
+      return `Please map the required fields: ${minimumFields.join(', ')}`;
+    }
+    
+    return `Ready to import! ${getMappedFieldsCount()} fields mapped.`;
   };
   
   return (
@@ -120,22 +146,25 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
         {validationResults && !validationResults.valid && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Validation Issues</AlertTitle>
+            <AlertTitle>Data Validation Issues</AlertTitle>
             <AlertDescription>
-              Your data has {validationResults.invalidRows || 0} issues that should be reviewed.
+              Your file has {validationResults.invalidRows || 0} rows with validation issues. 
+              These will be reported during import but won't prevent the import from proceeding.
             </AlertDescription>
           </Alert>
         )}
         
-        {!hasAllRequiredMappings && (
-          <Alert variant="warning" className="mb-4">
+        <Alert variant={hasMinimumMappings ? "default" : "destructive"} className="mb-4">
+          {hasMinimumMappings ? (
+            <Check className="h-4 w-4" />
+          ) : (
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Missing Required Mappings</AlertTitle>
-            <AlertDescription>
-              Please map all required fields for {importType}: {getRequiredFields().join(', ')}
-            </AlertDescription>
-          </Alert>
-        )}
+          )}
+          <AlertTitle>Field Mapping Status</AlertTitle>
+          <AlertDescription>
+            {getValidationMessage()}
+          </AlertDescription>
+        </Alert>
         
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid grid-cols-2 w-[400px]">
@@ -169,7 +198,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button 
             onClick={handleConfirm} 
-            disabled={!hasAllRequiredMappings}
+            disabled={!hasMinimumMappings}
             className="gap-1"
           >
             <Check className="h-4 w-4" />

@@ -60,7 +60,7 @@ export function useMappingFields(importType: string, fileData: any[], associatio
         
         case 'properties_owners':
           return [
-            // Property fields
+            // Property fields (more flexible - address is the only truly required field)
             { label: 'Property Address', value: 'address' },
             { label: 'Property Address (Alt)', value: 'Property Address' },
             { label: 'Unit Number', value: 'unit_number' },

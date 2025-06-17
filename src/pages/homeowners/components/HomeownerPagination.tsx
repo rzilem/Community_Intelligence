@@ -23,6 +23,7 @@ interface HomeownerPaginationProps {
   currentPage: number;
   totalPages: number;
   pageSize: number;
+  totalItems: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }
@@ -33,6 +34,7 @@ const HomeownerPagination: React.FC<HomeownerPaginationProps> = ({
   currentPage = 1,
   totalPages = 1,
   pageSize,
+  totalItems,
   onPageChange,
   onPageSizeChange
 }) => {
@@ -52,7 +54,7 @@ const HomeownerPagination: React.FC<HomeownerPaginationProps> = ({
     <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-3">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredCount} of {totalCount} owners
+          Showing {filteredCount} of {totalItems} owners
         </p>
         <div className="flex items-center gap-2">
           <Label htmlFor="page-size" className="text-sm">Show:</Label>
