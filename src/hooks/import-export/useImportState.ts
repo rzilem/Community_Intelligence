@@ -176,7 +176,7 @@ export function useImportState() {
       case 'owners':
         return ['first_name', 'last_name', 'property_id'];
       case 'properties_owners':
-        return ['property.address', 'property.property_type'];
+        return ['address', 'property_type'];
       case 'financial':
         return ['property_id', 'amount', 'due_date'];
       case 'compliance':

@@ -97,8 +97,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
         case 'properties':
           return [
             { label: 'Property Address', value: 'address' },
-            { label: 'Unit Number', value: 'unit_number' },
             { label: 'Property Type', value: 'property_type' },
+            { label: 'Unit Number', value: 'unit_number' },
             { label: 'City', value: 'city' },
             { label: 'State', value: 'state' },
             { label: 'ZIP Code', value: 'zip' },
@@ -129,8 +129,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
           return [
             // Property fields
             { label: 'Property Address', value: 'address' },
-            { label: 'Unit Number', value: 'unit_number' },
             { label: 'Property Type', value: 'property_type' },
+            { label: 'Unit Number', value: 'unit_number' },
             { label: 'City', value: 'city' },
             { label: 'State', value: 'state' },
             { label: 'ZIP Code', value: 'zip' },
@@ -168,6 +168,7 @@ export function useMappingFields(importType: string, fileData: any[], associatio
         
         case 'financial':
           return [
+            { label: 'Property Address', value: 'address' },
             { label: 'Property ID', value: 'property_id' },
             { label: 'Amount', value: 'amount' },
             { label: 'Due Date', value: 'due_date' },
@@ -177,6 +178,7 @@ export function useMappingFields(importType: string, fileData: any[], associatio
         
         case 'compliance':
           return [
+            { label: 'Property Address', value: 'address' },
             { label: 'Property ID', value: 'property_id' },
             { label: 'Violation Type', value: 'violation_type' },
             { label: 'Description', value: 'description' },
@@ -187,6 +189,7 @@ export function useMappingFields(importType: string, fileData: any[], associatio
         
         case 'maintenance':
           return [
+            { label: 'Property Address', value: 'address' },
             { label: 'Property ID', value: 'property_id' },
             { label: 'Title', value: 'title' },
             { label: 'Description', value: 'description' },
@@ -204,6 +207,17 @@ export function useMappingFields(importType: string, fileData: any[], associatio
             { label: 'ZIP Code', value: 'zip' },
             { label: 'Phone', value: 'phone' },
             { label: 'Contact Email', value: 'contact_email' }
+          ];
+        
+        case 'vendors':
+          return [
+            { label: 'Vendor Name', value: 'name' },
+            { label: 'Contact Person', value: 'contact_person' },
+            { label: 'Email', value: 'email' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Category', value: 'category' },
+            { label: 'Status', value: 'status' },
+            { label: 'Has Insurance', value: 'has_insurance' }
           ];
         
         default:
