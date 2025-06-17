@@ -21,6 +21,11 @@ export interface SearchResponse {
     searchTime: number;
     resultCount: number;
   };
+  analytics?: {
+    popularTerms: string[];
+    averageResponseTime: number;
+    totalSearches: number;
+  };
 }
 
 export interface SearchFilters {
@@ -29,6 +34,14 @@ export interface SearchFilters {
     start: string;
     end: string;
   };
+  status?: string[];
+  priority?: string[];
+  types?: string[];
+  assignedTo?: string[];
+  amount?: {
+    operator: string;
+    value: number;
+  };
 }
 
 export interface SearchOptions {
@@ -36,11 +49,18 @@ export interface SearchOptions {
   limit?: number;
   offset?: number;
   filters?: SearchFilters;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 class GlobalSearchService {
   private cache = new Map<string, { data: SearchResponse; timestamp: number }>();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private analytics = {
+    totalSearches: 0,
+    averageResponseTime: 0,
+    popularTerms: [] as string[]
+  };
   
   async search(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
     const cacheKey = this.generateCacheKey(query, options);
@@ -52,8 +72,10 @@ class GlobalSearchService {
       return cached.data;
     }
 
+    const startTime = Date.now();
+
     try {
-      console.log('Making server search request:', { query, options });
+      console.log('Making enhanced server search request:', { query, options });
       
       const { data, error } = await supabase.functions.invoke('global-search', {
         body: {
@@ -61,7 +83,9 @@ class GlobalSearchService {
           types: options.types,
           limit: options.limit,
           offset: options.offset,
-          filters: options.filters
+          filters: options.filters,
+          sortBy: options.sortBy,
+          sortOrder: options.sortOrder
         }
       });
 
@@ -70,7 +94,19 @@ class GlobalSearchService {
         throw new Error(`Search failed: ${error.message}`);
       }
 
-      const response: SearchResponse = data;
+      const searchTime = Date.now() - startTime;
+      
+      // Update analytics
+      this.updateAnalytics(query, searchTime);
+
+      const response: SearchResponse = {
+        ...data,
+        analytics: this.analytics,
+        performance: {
+          ...data.performance,
+          searchTime
+        }
+      };
       
       // Cache the result
       this.cache.set(cacheKey, { data: response, timestamp: Date.now() });
@@ -81,68 +117,77 @@ class GlobalSearchService {
       return response;
       
     } catch (error) {
-      console.error('Error in global search service:', error);
+      console.error('Error in enhanced global search service:', error);
       throw error;
     }
   }
 
   async searchWithOperators(query: string, options: SearchOptions = {}): Promise<SearchResponse> {
-    // Parse search operators like "type:invoice" or "status:open"
-    const { cleanQuery, parsedFilters } = this.parseSearchOperators(query);
-    
-    const mergedOptions: SearchOptions = {
-      ...options,
-      filters: {
-        ...options.filters,
-        ...parsedFilters
-      }
-    };
-
-    return this.search(cleanQuery, mergedOptions);
+    // Enhanced operator parsing is now handled in the SearchOperatorParser
+    return this.search(query, options);
   }
 
-  private parseSearchOperators(query: string): { cleanQuery: string; parsedFilters: SearchFilters } {
-    const operators = {
-      type: /type:(\w+)/g,
-      association: /association:([a-f0-9-]+)/g,
-      after: /after:(\d{4}-\d{2}-\d{2})/g,
-      before: /before:(\d{4}-\d{2}-\d{2})/g
-    };
-
-    let cleanQuery = query;
-    const parsedFilters: SearchFilters = {};
-
-    // Parse type operator
-    const typeMatch = operators.type.exec(query);
-    if (typeMatch) {
-      // This would be handled in the search options
-      cleanQuery = cleanQuery.replace(operators.type, '').trim();
-    }
-
-    // Parse association operator
-    const associationMatch = operators.association.exec(query);
-    if (associationMatch) {
-      parsedFilters.associationId = associationMatch[1];
-      cleanQuery = cleanQuery.replace(operators.association, '').trim();
-    }
-
-    // Parse date operators
-    const afterMatch = operators.after.exec(query);
-    const beforeMatch = operators.before.exec(query);
+  async getSearchSuggestions(query: string): Promise<string[]> {
+    // Generate smart suggestions based on query and search history
+    const suggestions: string[] = [];
     
-    if (afterMatch || beforeMatch) {
-      parsedFilters.dateRange = {
-        start: afterMatch ? afterMatch[1] : '1900-01-01',
-        end: beforeMatch ? beforeMatch[1] : new Date().toISOString().split('T')[0]
-      };
+    // Popular terms matching the query
+    const matchingTerms = this.analytics.popularTerms
+      .filter(term => term.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 3);
+    
+    suggestions.push(...matchingTerms);
+    
+    // Add operator suggestions
+    if (query.includes(':')) {
+      const operatorSuggestions = [
+        'type:invoice',
+        'status:open',
+        'priority:high',
+        'after:2024-01-01'
+      ].filter(op => op.toLowerCase().includes(query.toLowerCase()));
       
-      cleanQuery = cleanQuery
-        .replace(operators.after, '')
-        .replace(operators.before, '')
-        .trim();
+      suggestions.push(...operatorSuggestions);
     }
+    
+    return suggestions.slice(0, 5);
+  }
 
-    return { cleanQuery: cleanQuery.replace(/\s+/g, ' ').trim(), parsedFilters };
+  async exportSearchResults(results: ServerSearchResult[], format: 'csv' | 'json' = 'csv'): Promise<string> {
+    if (format === 'json') {
+      return JSON.stringify(results, null, 2);
+    }
+    
+    // CSV export
+    const headers = ['Type', 'Title', 'Subtitle', 'Path', 'Rank', 'Created Date'];
+    const rows = results.map(result => [
+      result.type,
+      `"${result.title.replace(/"/g, '""')}"`,
+      `"${(result.subtitle || '').replace(/"/g, '""')}"`,
+      result.path,
+      result.rank.toString(),
+      new Date(result.created_at).toLocaleDateString()
+    ]);
+    
+    return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+  }
+
+  getSearchAnalytics() {
+    return this.analytics;
+  }
+
+  private updateAnalytics(query: string, responseTime: number) {
+    this.analytics.totalSearches++;
+    this.analytics.averageResponseTime = 
+      (this.analytics.averageResponseTime * (this.analytics.totalSearches - 1) + responseTime) / 
+      this.analytics.totalSearches;
+    
+    // Update popular terms
+    const cleanQuery = query.toLowerCase().trim();
+    if (cleanQuery && !this.analytics.popularTerms.includes(cleanQuery)) {
+      this.analytics.popularTerms.unshift(cleanQuery);
+      this.analytics.popularTerms = this.analytics.popularTerms.slice(0, 20);
+    }
   }
 
   private generateCacheKey(query: string, options: SearchOptions): string {
@@ -160,6 +205,14 @@ class GlobalSearchService {
 
   clearCache(): void {
     this.cache.clear();
+  }
+
+  clearAnalytics(): void {
+    this.analytics = {
+      totalSearches: 0,
+      averageResponseTime: 0,
+      popularTerms: []
+    };
   }
 }
 

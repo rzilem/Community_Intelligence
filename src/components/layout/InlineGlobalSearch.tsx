@@ -1,70 +1,103 @@
-
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Clock, FileText, Users, Home, DollarSign, Zap, AlertCircle, TrendingUp } from 'lucide-react';
+import { Search, X, Filter, History, Sparkles, Download, MoreHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { useServerSearch } from '@/hooks/search/useServerSearch';
 import { toast } from 'sonner';
+import AdvancedSearchFilters, { SearchFilters } from '@/components/search/AdvancedSearchFilters';
+import SearchHistory from '@/components/search/SearchHistory';
+import SmartSuggestions from '@/components/search/SmartSuggestions';
+import SearchOperatorParser from '@/services/search/SearchOperatorParser';
 
 const InlineGlobalSearch: React.FC = () => {
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>({});
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [searchAnalytics, setSearchAnalytics] = useState({ searches: 0, avgTime: 0 });
+  const [searchAnalytics, setSearchAnalytics] = useState({
+    totalSearches: 0,
+    avgResponseTime: 0,
+    popularQueries: [] as string[]
+  });
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchStartTime = useRef<number>(0);
+  const searchHistoryRef = useRef<any>(null);
   
   const { 
     results, 
     isLoading, 
     error, 
-    search: performSearch, 
+    search, 
     searchWithOperators,
     total,
     suggestions,
     clearResults 
   } = useServerSearch();
 
-  // Performance optimized debounced search
+  // Enhanced search function that parses operators
+  const performSearch = useCallback(async (searchQuery: string, searchFilters?: SearchFilters) => {
+    if (!searchQuery.trim()) {
+      clearResults();
+      return;
+    }
+
+    const startTime = Date.now();
+    
+    try {
+      // Parse search operators
+      const parsed = SearchOperatorParser.parse(searchQuery);
+      const mergedFilters = { ...searchFilters, ...parsed.filters };
+      
+      // Perform search
+      if (Object.keys(parsed.operators).length > 0) {
+        await searchWithOperators(searchQuery, { filters: mergedFilters });
+      } else {
+        await search(parsed.query, { filters: mergedFilters });
+      }
+
+      // Track analytics
+      const responseTime = Date.now() - startTime;
+      setSearchAnalytics(prev => ({
+        totalSearches: prev.totalSearches + 1,
+        avgResponseTime: (prev.avgResponseTime * prev.totalSearches + responseTime) / (prev.totalSearches + 1),
+        popularQueries: [searchQuery, ...prev.popularQueries.filter(q => q !== searchQuery)].slice(0, 10)
+      }));
+
+      // Add to search history
+      if (searchHistoryRef.current?.addToHistory) {
+        searchHistoryRef.current.addToHistory(searchQuery, total || 0, mergedFilters);
+      }
+
+    } catch (err) {
+      console.error('Search failed:', err);
+      toast.error('Search failed. Please try again.');
+    }
+  }, [search, searchWithOperators, clearResults, total]);
+
+  // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (search.trim().length >= 2) {
-        searchStartTime.current = Date.now();
-        if (search.includes(':')) {
-          searchWithOperators(search);
-        } else {
-          performSearch(search);
-        }
-        
-        // Track search analytics
-        setSearchAnalytics(prev => ({
-          searches: prev.searches + 1,
-          avgTime: prev.avgTime
-        }));
+      if (query.trim().length >= 2) {
+        performSearch(query, filters);
       } else {
         clearResults();
       }
-    }, 200); // Reduced debounce for better responsiveness
+    }, 200); // Reduced debounce time for better performance
 
     return () => clearTimeout(timer);
-  }, [search, performSearch, searchWithOperators, clearResults]);
-
-  // Track search completion time
-  useEffect(() => {
-    if (!isLoading && results.length > 0 && searchStartTime.current > 0) {
-      const searchTime = Date.now() - searchStartTime.current;
-      setSearchAnalytics(prev => ({
-        ...prev,
-        avgTime: (prev.avgTime + searchTime) / 2
-      }));
-      searchStartTime.current = 0;
-    }
-  }, [isLoading, results]);
+  }, [query, filters, performSearch, clearResults]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -74,118 +107,120 @@ const InlineGlobalSearch: React.FC = () => {
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
-          setSelectedIndex(prev => {
-            const maxIndex = results.length + (recentSearches.length > 0 ? recentSearches.length : 0) - 1;
-            return prev < maxIndex ? prev + 1 : 0;
-          });
+          setSelectedIndex(prev => 
+            prev < results.length - 1 ? prev + 1 : prev
+          );
           break;
         case 'ArrowUp':
           e.preventDefault();
-          setSelectedIndex(prev => {
-            const maxIndex = results.length + (recentSearches.length > 0 ? recentSearches.length : 0) - 1;
-            return prev > 0 ? prev - 1 : maxIndex;
-          });
+          setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
           break;
         case 'Enter':
           e.preventDefault();
-          if (selectedIndex >= 0) {
-            if (!search && selectedIndex < recentSearches.length) {
-              setSearch(recentSearches[selectedIndex]);
-            } else if (results.length > 0) {
-              const result = results[selectedIndex];
-              if (result) {
-                handleSelect(result.path, result.title);
-              }
-            }
+          if (selectedIndex >= 0 && selectedIndex < results.length) {
+            handleResultClick(results[selectedIndex]);
+          } else if (query.trim()) {
+            // Search without selecting a specific result
+            performSearch(query, filters);
           }
           break;
         case 'Escape':
           e.preventDefault();
           setIsOpen(false);
+          setSelectedIndex(-1);
           inputRef.current?.blur();
           break;
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedIndex, results, recentSearches, search]);
-
-  // Global keyboard shortcut
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handleGlobalKeyDown);
-    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
-
-  // Focus management
-  useEffect(() => {
-    const handleFocus = () => {
-      setIsOpen(true);
-      setSelectedIndex(-1);
-    };
-    
-    const handleBlur = (e: FocusEvent) => {
-      if (dropdownRef.current && dropdownRef.current.contains(e.relatedTarget as Node)) {
-        return;
-      }
-      setTimeout(() => setIsOpen(false), 150);
-    };
-
-    const input = inputRef.current;
-    if (input) {
-      input.addEventListener('focus', handleFocus);
-      input.addEventListener('blur', handleBlur);
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
     }
+  }, [isOpen, selectedIndex, results, query, filters, performSearch]);
 
-    return () => {
-      if (input) {
-        input.removeEventListener('focus', handleFocus);
-        input.removeEventListener('blur', handleBlur);
-      }
-    };
-  }, []);
-
-  // Error handling with toast
-  useEffect(() => {
-    if (error) {
-      toast.error(`Search failed: ${error}`);
-    }
-  }, [error]);
-
-  const handleSelect = useCallback((path: string, title: string) => {
-    navigate(path);
+  const handleResultClick = (result: any) => {
+    navigate(result.path);
     setIsOpen(false);
-    setSearch('');
+    setQuery('');
+    setSelectedIndex(-1);
+    toast.success(`Navigating to ${result.title}`);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
     setSelectedIndex(-1);
     
-    // Add to recent searches with deduplication
-    setRecentSearches(prev => {
-      const newSearches = [title, ...prev.filter(s => s !== title)].slice(0, 5);
-      return newSearches;
-    });
-  }, [navigate]);
+    if (value.trim()) {
+      setIsOpen(true);
+    }
+  };
 
-  // Highlight matched terms in results
-  const highlightMatch = useCallback((text: string, query: string) => {
-    if (!query) return text;
+  const handleInputFocus = () => {
+    if (query.trim() || results.length > 0) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleClearSearch = () => {
+    setQuery('');
+    clearResults();
+    setSelectedIndex(-1);
+    inputRef.current?.focus();
+  };
+
+  const handleSaveSearch = (name: string) => {
+    if (searchHistoryRef.current?.saveSearch) {
+      searchHistoryRef.current.saveSearch(name, query, filters);
+      toast.success(`Search saved as "${name}"`);
+    }
+  };
+
+  const handleExportResults = () => {
+    if (results.length === 0) {
+      toast.error('No results to export');
+      return;
+    }
+
+    const csv = [
+      ['Type', 'Title', 'Subtitle', 'Path', 'Created Date'].join(','),
+      ...results.map(result => [
+        result.type,
+        `"${result.title}"`,
+        `"${result.subtitle || ''}"`,
+        result.path,
+        new Date(result.created_at).toLocaleDateString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search-results-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
     
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
-      regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 rounded px-1">
-          {part}
-        </mark>
-      ) : part
-    );
-  }, []);
+    toast.success('Results exported successfully');
+  };
+
+  const handleSelectSuggestion = (suggestionQuery: string, suggestionFilters?: any) => {
+    setQuery(suggestionQuery);
+    if (suggestionFilters) {
+      setFilters(suggestionFilters);
+    }
+    performSearch(suggestionQuery, suggestionFilters);
+  };
+
+  const handleSelectHistorySearch = (historyQuery: string, historyFilters?: any) => {
+    setQuery(historyQuery);
+    if (historyFilters) {
+      setFilters(historyFilters);
+    }
+    setShowHistory(false);
+    performSearch(historyQuery, historyFilters);
+  };
 
   const getTypeIcon = (type: string) => {
     const icons = {
@@ -207,117 +242,124 @@ const InlineGlobalSearch: React.FC = () => {
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300';
   };
 
-  const groupedResults = useMemo(() => {
-    const groups: { [key: string]: typeof results } = {};
-    results.forEach(result => {
-      if (!groups[result.type]) {
-        groups[result.type] = [];
-      }
-      groups[result.type].push(result);
-    });
-    return groups;
-  }, [results]);
-
-  const hasSearchOperators = search.includes(':');
-  const shouldShowDropdown = isOpen && (search.length >= 2 || recentSearches.length > 0);
+  const highlightText = (text: string, searchQuery: string) => {
+    if (!searchQuery) return text;
+    
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) =>
+      regex.test(part) ? (
+        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">
+          {part}
+        </mark>
+      ) : (
+        <span key={index}>{part}</span>
+      )
+    );
+  };
 
   return (
     <div className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search anything... (Ctrl+K)"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="h-12 w-full bg-background/60 backdrop-blur-sm border-hoa-blue text-base pl-12 pr-4"
+          placeholder="Search anything... (try 'type:invoice status:overdue')"
+          value={query}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          className="pl-10 pr-24 h-9 bg-background/60 backdrop-blur-sm border-hoa-blue focus-visible:ring-hoa-blue-200"
         />
-        {searchAnalytics.searches > 0 && (
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-            <Badge variant="outline" className="text-xs">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              {searchAnalytics.searches} searches
+        
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+          {/* Analytics Badge */}
+          {searchAnalytics.totalSearches > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {searchAnalytics.totalSearches} searches
             </Badge>
-          </div>
-        )}
+          )}
+          
+          {/* Action Buttons */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className="h-6 w-6 p-0"
+          >
+            <History className="h-3 w-3" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="h-6 w-6 p-0"
+          >
+            <Filter className="h-3 w-3" />
+          </Button>
+          
+          {query && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearSearch}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
       </div>
 
-      {shouldShowDropdown && (
-        <div 
-          ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-[600px] overflow-y-auto"
-        >
-          {isLoading && (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3 text-base text-muted-foreground">
-                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
-                Searching...
-                {searchAnalytics.avgTime > 0 && (
-                  <span className="text-sm">~{Math.round(searchAnalytics.avgTime)}ms</span>
-                )}
+      {/* Search Results Popover */}
+      {isOpen && (query.trim() || results.length > 0) && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-96 overflow-hidden">
+          <ScrollArea className="max-h-80">
+            {/* Loading State */}
+            {isLoading && (
+              <div className="flex items-center justify-center py-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  Searching...
+                  {searchAnalytics.avgResponseTime > 0 && (
+                    <span className="text-xs">
+                      (avg: {Math.round(searchAnalytics.avgResponseTime)}ms)
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {error && (
-            <div className="flex items-center justify-center py-8">
-              <div className="flex items-center gap-3 text-base text-destructive">
-                <AlertCircle className="h-5 w-5" />
-                Search failed. Please try again.
-                <Button variant="ghost" size="sm" onClick={() => window.location.reload()}>
+            {/* Error State */}
+            {error && (
+              <div className="p-4 text-center">
+                <div className="text-destructive text-sm mb-2">Search failed</div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => performSearch(query, filters)}
+                >
                   Retry
                 </Button>
               </div>
-            </div>
-          )}
+            )}
 
-          {!search && recentSearches.length > 0 && (
-            <div className="p-4">
-              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">Recent Searches</div>
-              {recentSearches.map((recent, index) => (
-                <div 
-                  key={index} 
-                  className={`flex items-center gap-3 px-3 py-3 hover:bg-accent rounded-sm cursor-pointer text-base ${
-                    selectedIndex === index ? 'bg-accent' : ''
-                  }`}
-                  onClick={() => setSearch(recent)}
-                >
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  {recent}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {!search && (
-            <div className="p-4">
-              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">Search Tips</div>
-              <div className="flex items-center gap-3 text-muted-foreground px-3 py-2 text-base">
-                <Zap className="h-5 w-5" />
-                Use "type:invoice" to search only invoices
-              </div>
-              <div className="flex items-center gap-3 text-muted-foreground px-3 py-2 text-base">
-                <Zap className="h-5 w-5" />
-                Use "after:2024-01-01" to filter by date
-              </div>
-            </div>
-          )}
-
-          {search && results.length === 0 && !isLoading && !error && (
-            <div className="p-6 text-center">
-              <div className="text-base text-muted-foreground">
-                No results found for "{search}".
+            {/* No Results */}
+            {!isLoading && !error && query.trim() && results.length === 0 && (
+              <div className="p-4 text-center text-sm text-muted-foreground">
+                No results found for "{query}"
                 {suggestions && suggestions.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-base text-muted-foreground">Did you mean:</p>
+                  <div className="mt-2">
+                    <div className="text-xs mb-1">Did you mean:</div>
                     {suggestions.map((suggestion, index) => (
-                      <Button 
+                      <Button
                         key={index}
-                        variant="ghost" 
+                        variant="ghost"
                         size="sm"
-                        className="mt-2 mr-2"
-                        onClick={() => setSearch(suggestion)}
+                        className="mr-1 mb-1"
+                        onClick={() => setQuery(suggestion)}
                       >
                         {suggestion}
                       </Button>
@@ -325,69 +367,97 @@ const InlineGlobalSearch: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
-          )}
-          
-          {Object.entries(groupedResults).map(([type, items]) => (
-            <div key={type} className="p-4">
-              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">
-                {type.charAt(0).toUpperCase() + type.slice(1)}s ({items.length})
-              </div>
-              {items.map((item, itemIndex) => {
-                const globalIndex = Object.entries(groupedResults)
-                  .slice(0, Object.keys(groupedResults).indexOf(type))
-                  .reduce((acc, [, prevItems]) => acc + prevItems.length, 0) + itemIndex;
-                
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => handleSelect(item.path, item.title)}
-                    className={`flex items-center justify-between py-3 px-3 hover:bg-accent rounded-sm cursor-pointer ${
-                      selectedIndex === globalIndex ? 'bg-accent' : ''
-                    }`}
+            )}
+
+            {/* Search Results */}
+            {results.length > 0 && (
+              <div className="p-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">
+                    {total} results found
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleExportResults}
+                    className="h-6 text-xs"
                   >
-                    <div className="flex items-center gap-4">
-                      {getTypeIcon(item.type)}
-                      <div>
-                        <div className="font-medium text-base">
-                          {highlightMatch(item.title, search)}
-                        </div>
-                        {item.subtitle && (
-                          <div className="text-sm text-muted-foreground">
-                            {highlightMatch(item.subtitle, search)}
-                          </div>
-                        )}
+                    <Download className="h-3 w-3 mr-1" />
+                    Export
+                  </Button>
+                </div>
+                
+                {results.map((result, index) => (
+                  <div
+                    key={result.id}
+                    className={`flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors ${
+                      selectedIndex === index ? 'bg-accent' : 'hover:bg-accent/50'
+                    }`}
+                    onClick={() => handleResultClick(result)}
+                  >
+                    {getTypeIcon(result.type)}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">
+                        {highlightText(result.title, query)}
                       </div>
+                      {result.subtitle && (
+                        <div className="text-xs text-muted-foreground truncate">
+                          {highlightText(result.subtitle, query)}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      {hasSearchOperators && (
-                        <Badge variant="outline" className="text-sm">
-                          {item.rank.toFixed(2)}
+                    <div className="flex items-center gap-1">
+                      <Badge variant="secondary" className={`text-xs ${getTypeColor(result.type)}`}>
+                        {result.type}
+                      </Badge>
+                      {result.rank && (
+                        <Badge variant="outline" className="text-xs">
+                          {result.rank.toFixed(2)}
                         </Badge>
                       )}
-                      <Badge variant="secondary" className={`text-sm ${getTypeColor(item.type)}`}>
-                        {item.type}
-                      </Badge>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ))}
+                ))}
+              </div>
+            )}
 
-          {search && total > 0 && (
-            <div className="px-6 py-3 text-sm text-muted-foreground border-t bg-muted/50 flex items-center justify-between">
-              <span>
-                Showing {results.length} of {total} results for "{search}"
-                {hasSearchOperators && <Badge variant="outline" className="ml-2 text-sm">Advanced Search</Badge>}
-              </span>
-              {searchAnalytics.avgTime > 0 && (
-                <span className="text-xs">
-                  Avg: {Math.round(searchAnalytics.avgTime)}ms
-                </span>
-              )}
-            </div>
-          )}
+            {/* Smart Suggestions */}
+            {query.trim() && !isLoading && (
+              <SmartSuggestions
+                query={query}
+                onSelectSuggestion={handleSelectSuggestion}
+                context={{
+                  currentPage: window.location.pathname,
+                  recentActivity: searchAnalytics.popularQueries
+                }}
+              />
+            )}
+          </ScrollArea>
+        </div>
+      )}
+
+      {/* Advanced Filters Panel */}
+      {showFilters && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-40">
+          <AdvancedSearchFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSaveSearch={handleSaveSearch}
+            onExportResults={handleExportResults}
+            isOpen={showFilters}
+            onToggle={() => setShowFilters(!showFilters)}
+          />
+        </div>
+      )}
+
+      {/* Search History Panel */}
+      {showHistory && (
+        <div className="absolute top-full right-0 mt-1 w-80 z-40">
+          <SearchHistory
+            ref={searchHistoryRef}
+            onSelectSearch={handleSelectHistorySearch}
+            currentQuery={query}
+          />
         </div>
       )}
     </div>
