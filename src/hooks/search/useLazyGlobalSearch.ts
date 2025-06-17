@@ -11,7 +11,10 @@ export const useLazyGlobalSearch = (shouldLoad: boolean) => {
     const unsubscribe = searchDataManager.subscribe(() => {
       setSearchData(searchDataManager.getState());
     });
-    return unsubscribe;
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Initialize data loading when needed
