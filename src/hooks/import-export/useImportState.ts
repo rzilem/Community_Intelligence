@@ -4,6 +4,7 @@ import { ValidationResult, ImportResult } from '@/types/import-types';
 import { dataImportService } from '@/services/import-export';
 import { validationService } from '@/services/import-export/validation-service';
 import { toast } from 'sonner';
+import { useAssociationPropertyType } from './useAssociationPropertyType';
 
 export function useImportState() {
   const { user, currentAssociation } = useAuth();
@@ -16,6 +17,9 @@ export function useImportState() {
   const [importType, setImportType] = useState<string>('associations');
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  
+  // Get association property type for smart validation
+  const { hasPropertyType } = useAssociationPropertyType(selectedAssociationId);
   
   // Set the current association as the selected association when available
   useEffect(() => {
@@ -172,7 +176,7 @@ export function useImportState() {
     switch (type) {
       case 'properties':
         // For specific associations that have a property type, don't require property_type mapping
-        if (associationId !== 'all') {
+        if (associationId !== 'all' && hasPropertyType) {
           return ['address']; // Only require address, property_type will be auto-populated
         }
         return ['address', 'property_type'];
@@ -180,7 +184,7 @@ export function useImportState() {
         return ['first_name', 'last_name', 'property_id'];
       case 'properties_owners':
         // For specific associations that have a property type, don't require property_type mapping
-        if (associationId !== 'all') {
+        if (associationId !== 'all' && hasPropertyType) {
           return ['address']; // Only require address, property_type will be auto-populated
         }
         return ['address', 'property_type'];
