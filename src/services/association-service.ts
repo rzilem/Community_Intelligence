@@ -148,36 +148,36 @@ const checkDependencies = async (associationId: string) => {
 
   try {
     // Check properties
-    const { data: properties } = await supabase
-      .from('properties')
+    const { data: properties } = await (supabase
+      .from('properties' as any)
       .select('id')
       .eq('association_id', associationId)
-      .limit(1);
+      .limit(1)) as any;
     hasProperties = Array.isArray(properties) && properties.length > 0;
 
     // Check residents
-    const { data: residents } = await supabase
-      .from('residents')
+    const { data: residents } = await (supabase
+      .from('residents' as any)
       .select('id')
       .eq('association_id', associationId)
-      .limit(1);
+      .limit(1)) as any;
     hasResidents = Array.isArray(residents) && residents.length > 0;
 
     // Check assessments (with association filter)
-    const { data: assessments } = await supabase
-      .from('assessments')
+    const { data: assessments } = await (supabase
+      .from('assessments' as any)
       .select('assessments.id')
       .innerJoin('properties', 'properties.id = assessments.property_id')
       .eq('properties.association_id', associationId)
-      .limit(1);
+      .limit(1)) as any;
     hasAssessments = Array.isArray(assessments) && assessments.length > 0;
 
     // Check invoices
-    const { data: invoices } = await supabase
-      .from('invoices')
+    const { data: invoices } = await (supabase
+      .from('invoices' as any)
       .select('id')
       .eq('association_id', associationId)
-      .limit(1);
+      .limit(1)) as any;
     hasInvoices = Array.isArray(invoices) && invoices.length > 0;
 
     console.log('Dependency check results:', {
