@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -232,6 +231,8 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
         </div>
 
         <HomeownerPagination
+          filteredCount={currentPageData.length}
+          totalCount={allResidentsCount}
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={pageSize}
