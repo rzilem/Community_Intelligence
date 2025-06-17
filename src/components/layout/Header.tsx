@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import CompactProfileImageUpload from '@/components/users/CompactProfileImageUpload';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
-import GlobalSearch from './GlobalSearch';
+import EnhancedGlobalSearch from './EnhancedGlobalSearch';
 import QuickActions from './QuickActions';
 import StatusIndicators from './StatusIndicators';
 
@@ -78,9 +78,9 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-4">
           <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
           
-          {/* Global Search - Desktop */}
+          {/* Enhanced Global Search - Desktop */}
           <div className="hidden md:block">
-            <GlobalSearch />
+            <EnhancedGlobalSearch />
           </div>
         </div>
         
@@ -94,9 +94,9 @@ const Header: React.FC<HeaderProps> = ({
           {/* Quick Actions */}
           <QuickActions />
           
-          {/* Global Search - Mobile */}
+          {/* Enhanced Global Search - Mobile */}
           <div className="md:hidden">
-            <GlobalSearch />
+            <EnhancedGlobalSearch />
           </div>
           
           {/* Notifications */}
