@@ -78,8 +78,8 @@ const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-4">
           <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
           
-          {/* Inline Global Search - Desktop */}
-          <div className="hidden md:block flex-1 max-w-2xl">
+          {/* Inline Global Search - Desktop - Made twice as wide */}
+          <div className="hidden md:block flex-1 max-w-5xl">
             <InlineGlobalSearch />
           </div>
         </div>
@@ -94,8 +94,8 @@ const Header: React.FC<HeaderProps> = ({
           {/* Quick Actions */}
           <QuickActions />
           
-          {/* Inline Global Search - Mobile */}
-          <div className="md:hidden flex-1 max-w-sm">
+          {/* Inline Global Search - Mobile - Made twice as wide */}
+          <div className="md:hidden flex-1 max-w-lg">
             <InlineGlobalSearch />
           </div>
           
