@@ -1,15 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface EmailTemplate {
-  id: string;
-  name: string;
-  subject: string;
-  body: string;
-  created_at: string;
-  updated_at: string;
-}
+import { EmailTemplate } from '@/types/email-campaign-types';
 
 export const useEmailTemplates = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
@@ -24,6 +15,7 @@ export const useEmailTemplates = () => {
       const { data, error: fetchError } = await supabase
         .from('email_templates')
         .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -44,12 +36,19 @@ export const useEmailTemplates = () => {
   };
 
   const createTemplate = async (template: Partial<EmailTemplate>) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) throw new Error('User not authenticated');
+
     const { data, error: createError } = await supabase
       .from('email_templates')
       .insert({
         name: template.name || 'New Template',
         subject: template.subject || '',
-        body: template.body || ''
+        body: template.body || '',
+        category: template.category || 'custom',
+        description: template.description,
+        preview_text: template.preview_text,
+        created_by: user.user.id
       })
       .select()
       .single();
@@ -85,7 +84,7 @@ export const useEmailTemplates = () => {
   const deleteTemplate = async (templateId: string) => {
     const { error: deleteError } = await supabase
       .from('email_templates')
-      .delete()
+      .update({ is_active: false })
       .eq('id', templateId);
 
     if (deleteError) {
