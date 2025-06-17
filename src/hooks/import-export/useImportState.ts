@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ValidationResult, ImportResult } from '@/types/import-types';
@@ -103,8 +104,8 @@ export function useImportState() {
     setShowMappingModal(false);
     setIsImporting(true);
     
-    // Validate that we have the required mappings
-    const requiredMappings = getRequiredMappings(importType, selectedAssociationId);
+    // Enhanced validation with smarter property type requirements
+    const requiredMappings = getRequiredMappings(importType, selectedAssociationId, hasPropertyType);
     const mappedFields = Object.values(mappings);
     
     const missingMappings = requiredMappings.filter(field => !mappedFields.includes(field));
@@ -160,9 +161,9 @@ export function useImportState() {
     }
   };
   
-  // Helper function to get required mappings based on import type
-  const getRequiredMappings = (type: string, associationId: string): string[] => {
-    const baseMappings = getBaseMappings(type, associationId);
+  // Enhanced helper function with smarter property type logic
+  const getRequiredMappings = (type: string, associationId: string, hasPropertyType: boolean): string[] => {
+    const baseMappings = getBaseMappings(type, associationId, hasPropertyType);
     
     // Add association identifier requirement for "all associations" imports
     if (associationId === 'all' && type !== 'associations') {
@@ -172,30 +173,37 @@ export function useImportState() {
     return baseMappings;
   };
 
-  const getBaseMappings = (type: string, associationId: string): string[] => {
+  const getBaseMappings = (type: string, associationId: string, hasPropertyType: boolean): string[] => {
     switch (type) {
       case 'properties':
-        // For specific associations that have a property type, don't require property_type mapping
-        if (associationId !== 'all' && hasPropertyType) {
-          return ['address']; // Only require address, property_type will be auto-populated
+        // Smart property type requirement: only if importing for all associations OR specific association without property type
+        if (associationId === 'all' || !hasPropertyType) {
+          return ['address', 'property_type'];
         }
-        return ['address', 'property_type'];
+        return ['address']; // Only require address if association has default property type
+        
       case 'owners':
         return ['first_name', 'last_name', 'property_id'];
+        
       case 'properties_owners':
-        // For specific associations that have a property type, don't require property_type mapping
-        if (associationId !== 'all' && hasPropertyType) {
-          return ['address']; // Only require address, property_type will be auto-populated
+        // Smart property type requirement: only if importing for all associations OR specific association without property type
+        if (associationId === 'all' || !hasPropertyType) {
+          return ['address', 'property_type'];
         }
-        return ['address', 'property_type'];
+        return ['address']; // Only require address if association has default property type
+        
       case 'financial':
         return ['property_id', 'amount', 'due_date'];
+        
       case 'compliance':
         return ['property_id', 'violation_type'];
+        
       case 'maintenance':
         return ['property_id', 'title', 'description'];
+        
       case 'associations':
         return ['name'];
+        
       default:
         return [];
     }
