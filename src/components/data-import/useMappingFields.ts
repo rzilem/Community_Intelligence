@@ -12,29 +12,52 @@ export function useMappingFields(importType: string, fileData: any[], associatio
   const [previewData, setPreviewData] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log('useMappingFields: Processing file data:', {
+      fileDataLength: fileData?.length,
+      fileDataSample: fileData?.slice(0, 2),
+      importType,
+      associationId
+    });
+
     if (fileData && fileData.length > 0) {
       // Extract column names from the first row
-      const columns = Object.keys(fileData[0]);
+      const firstRow = fileData[0];
+      const columns = Object.keys(firstRow);
+      
+      console.log('useMappingFields: Extracted columns:', columns);
       setFileColumns(columns);
       
       // Set preview data (first 5 rows)
       setPreviewData(fileData.slice(0, 5));
+    } else {
+      console.log('useMappingFields: No file data available');
+      setFileColumns([]);
+      setPreviewData([]);
     }
   }, [fileData]);
 
   useEffect(() => {
+    console.log('useMappingFields: Generating system fields for:', {
+      importType,
+      associationId,
+      isMultiAssociation: associationId === 'all'
+    });
+
     // Define system fields based on import type
     const getSystemFields = (type: string): MappingOption[] => {
       const baseFields = getBaseFieldsForType(type);
       
       // Add association identifier field for multi-association imports
       if (associationId === 'all' && type !== 'associations') {
-        return [
+        const fieldsWithAssociation = [
           { label: 'Association Identifier', value: 'association_identifier' },
           ...baseFields
         ];
+        console.log('useMappingFields: Added association identifier, total fields:', fieldsWithAssociation.length);
+        return fieldsWithAssociation;
       }
       
+      console.log('useMappingFields: Using base fields only, total:', baseFields.length);
       return baseFields;
     };
 
@@ -153,12 +176,23 @@ export function useMappingFields(importType: string, fileData: any[], associatio
           ];
         
         default:
+          console.log('useMappingFields: Unknown import type:', type);
           return [];
       }
     };
 
-    setSystemFields(getSystemFields(importType));
+    const fields = getSystemFields(importType);
+    console.log('useMappingFields: Generated system fields:', fields);
+    setSystemFields(fields);
   }, [importType, associationId]);
+
+  console.log('useMappingFields: Final state:', {
+    fileColumnsCount: fileColumns.length,
+    systemFieldsCount: systemFields.length,
+    previewDataCount: previewData.length,
+    fileColumns,
+    systemFieldsSample: systemFields.slice(0, 3)
+  });
 
   return {
     fileColumns,

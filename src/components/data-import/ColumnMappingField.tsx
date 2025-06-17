@@ -42,26 +42,39 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
 }) => {
   const selectedField = systemFields.find(field => field.value === selectedValue);
   
-  console.log(`ColumnMappingField render for ${column}:`, {
+  console.log(`ColumnMappingField render for "${column}":`, {
     systemFieldsCount: systemFields?.length || 0,
     selectedValue,
+    selectedField: selectedField?.label,
     suggestion,
     confidence,
-    isOpen
+    isOpen,
+    systemFieldsSample: systemFields?.slice(0, 3).map(f => f.label)
   });
 
   const handleSelect = (value: string) => {
-    console.log(`Field selection for ${column}: ${value}`);
+    console.log(`Field selection for "${column}": ${value}`);
     onMappingChange(column, value);
     setIsOpen(false);
   };
 
   const handleSuggestionApply = () => {
     if (suggestion) {
-      console.log(`Applying suggestion for ${column}: ${suggestion}`);
+      console.log(`Applying suggestion for "${column}": ${suggestion}`);
       onMappingChange(column, suggestion);
     }
   };
+
+  // Validation
+  if (!Array.isArray(systemFields) || systemFields.length === 0) {
+    console.error(`ColumnMappingField: Invalid systemFields for column "${column}":`, systemFields);
+    return (
+      <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-red-50">
+        <div className="text-sm font-medium text-red-600">{column}</div>
+        <div className="text-xs text-red-500">Error: No system fields available</div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-card">
@@ -132,7 +145,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                     </CommandItem>
                     
                     {/* Render all system fields */}
-                    {systemFields && systemFields.map((field) => (
+                    {systemFields.map((field) => (
                       <CommandItem
                         key={field.value}
                         value={field.label}
@@ -159,6 +172,11 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
             </PopoverContent>
           </Popover>
         </div>
+      </div>
+      
+      {/* Debug info for this field */}
+      <div className="text-xs text-gray-400">
+        Fields available: {systemFields.length} | Selected: {selectedField?.label || 'None'}
       </div>
     </div>
   );
