@@ -18,13 +18,17 @@ const RecommendationsTab: React.FC<RecommendationsTabProps> = ({
   onCriteriaChange,
   onSelectVendor
 }) => {
+  const handleSelectVendor = (vendor: Vendor) => {
+    onSelectVendor(vendor.id);
+  };
+
   return (
     <TabsContent value={VENDOR_TABS.RECOMMENDATIONS} className="space-y-6">
       <VendorRecommendationEngine
         vendors={vendors}
         criteria={criteria}
         onCriteriaChange={onCriteriaChange}
-        onSelectVendor={onSelectVendor}
+        onSelectVendor={handleSelectVendor}
       />
     </TabsContent>
   );
