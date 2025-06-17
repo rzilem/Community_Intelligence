@@ -4,7 +4,8 @@ import { ValidationResult } from '@/types/import-types';
 export const validationService = {
   validateData: async (
     data: any[],
-    importType: string
+    importType: string,
+    associationId?: string
   ): Promise<ValidationResult> => {
     if (!data || data.length === 0) {
       return {
@@ -32,6 +33,23 @@ export const validationService = {
       maintenance: ['title', 'description'],
       associations: ['name'],
     };
+
+    // Add association identifier requirement for "all associations" imports
+    if (associationId === 'all' && importType !== 'associations') {
+      // Check if any of the association identifier columns exist
+      const associationColumns = ['association_id', 'association_name', 'association_code', 'hoa_id', 'hoa_name'];
+      const hasAssociationColumn = data.length > 0 && associationColumns.some(col => 
+        Object.keys(data[0]).some(key => key.toLowerCase().includes(col.replace('_', '').toLowerCase()))
+      );
+      
+      if (!hasAssociationColumn) {
+        issues.push({
+          row: 0,
+          field: 'association_identifier',
+          issue: 'When importing for "All Associations", your file must include an association identifier column (Association ID, Association Name, or Association Code)'
+        });
+      }
+    }
     
     // Define field type validations
     const fieldValidators: Record<string, (value: any) => boolean> = {
@@ -136,6 +154,25 @@ export const validationService = {
             row: rowIndex + 1,
             field: 'first_name/last_name',
             issue: 'Warning: Missing owner name information'
+          });
+        }
+      }
+
+      // Validate association identifier for "all associations" imports
+      if (associationId === 'all' && importType !== 'associations') {
+        const associationIdentifiers = [
+          row.association_id, row.association_name, row.association_code,
+          row.hoa_id, row.hoa_name, row['Association ID'], row['Association Name'], 
+          row['Association Code'], row['HOA ID'], row['HOA Name']
+        ];
+        
+        const hasValidIdentifier = associationIdentifiers.some(id => id && String(id).trim());
+        
+        if (!hasValidIdentifier) {
+          issues.push({
+            row: rowIndex + 1,
+            field: 'association_identifier',
+            issue: 'Missing association identifier (Association ID, Name, or Code required for multi-association imports)'
           });
         }
       }

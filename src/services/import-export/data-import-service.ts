@@ -1,4 +1,3 @@
-
 import { ImportJob, ImportResult } from '@/types/import-types';
 import { ImportOptions } from './types';
 import { jobService } from './job-service';
@@ -21,6 +20,11 @@ export const dataImportService = {
     const { associationId, dataType, data, mappings, userId } = options;
     
     try {
+      // Handle multi-association imports
+      if (associationId === 'all') {
+        return await processMultiAssociationImport(dataType, data, mappings, userId);
+      }
+      
       // Special handling for properties_owners import type
       if (dataType === 'properties_owners') {
         return await processPropertiesOwnersImport(associationId, data, mappings, userId);
@@ -101,8 +105,8 @@ function processDataMappings(
   return data.map(row => {
     const mappedRow: Record<string, any> = {};
     
-    // Only add association_id for non-association imports
-    if (dataType !== 'associations') {
+    // Only add association_id for non-association imports and when not "all"
+    if (dataType !== 'associations' && associationId !== 'all') {
       mappedRow.association_id = associationId;
     }
     
@@ -115,6 +119,139 @@ function processDataMappings(
     
     return mappedRow;
   });
+}
+
+// Helper function to process multi-association imports
+async function processMultiAssociationImport(
+  dataType: string,
+  data: Record<string, any>[],
+  mappings: Record<string, string>,
+  userId?: string
+): Promise<ImportResult> {
+  try {
+    // Get all associations for lookup
+    const { supabase } = await import('@/integrations/supabase/client');
+    const { data: associations, error } = await (supabase as any)
+      .from('associations')
+      .select('id, name, code');
+    
+    if (error) {
+      throw new Error(`Failed to fetch associations: ${error.message}`);
+    }
+    
+    // Group data by association
+    const associationGroups = new Map<string, any[]>();
+    const unmatchedRows: any[] = [];
+    
+    data.forEach((row, index) => {
+      const associationIdentifier = getAssociationIdentifier(row, mappings);
+      
+      if (!associationIdentifier) {
+        unmatchedRows.push({ ...row, originalIndex: index });
+        return;
+      }
+      
+      // Find matching association
+      const matchingAssociation = associations?.find(assoc => 
+        assoc.id === associationIdentifier ||
+        assoc.name?.toLowerCase() === associationIdentifier.toLowerCase() ||
+        assoc.code?.toLowerCase() === associationIdentifier.toLowerCase()
+      );
+      
+      if (!matchingAssociation) {
+        unmatchedRows.push({ ...row, originalIndex: index, associationIdentifier });
+        return;
+      }
+      
+      if (!associationGroups.has(matchingAssociation.id)) {
+        associationGroups.set(matchingAssociation.id, []);
+      }
+      
+      associationGroups.get(matchingAssociation.id)!.push(row);
+    });
+    
+    // Process each association group
+    let totalSuccessful = 0;
+    let totalFailed = unmatchedRows.length;
+    const allDetails: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
+    
+    // Add errors for unmatched rows
+    unmatchedRows.forEach(row => {
+      allDetails.push({
+        status: 'error',
+        message: `Row ${row.originalIndex + 1}: Could not match association identifier "${row.associationIdentifier || 'missing'}"`
+      });
+    });
+    
+    // Process each association's data
+    for (const [associationId, associationData] of associationGroups) {
+      try {
+        const result = await dataImportService.importData({
+          associationId,
+          dataType,
+          data: associationData,
+          mappings,
+          userId
+        });
+        
+        totalSuccessful += result.successfulImports;
+        totalFailed += result.failedImports;
+        
+        const associationName = associations?.find(a => a.id === associationId)?.name || associationId;
+        allDetails.push({
+          status: 'success',
+          message: `${associationName}: ${result.successfulImports} successful, ${result.failedImports} failed`
+        });
+        
+        allDetails.push(...result.details);
+      } catch (error) {
+        const associationName = associations?.find(a => a.id === associationId)?.name || associationId;
+        totalFailed += associationData.length;
+        allDetails.push({
+          status: 'error',
+          message: `${associationName}: Failed to import ${associationData.length} records - ${error instanceof Error ? error.message : 'Unknown error'}`
+        });
+      }
+    }
+    
+    return {
+      success: totalFailed === 0,
+      totalProcessed: data.length,
+      successfulImports: totalSuccessful,
+      failedImports: totalFailed,
+      details: allDetails
+    };
+  } catch (error) {
+    console.error('Error in multi-association import:', error);
+    return createFailureResult(
+      `Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      data.length
+    );
+  }
+}
+
+// Helper function to get association identifier from row
+function getAssociationIdentifier(row: Record<string, any>, mappings: Record<string, string>): string | null {
+  // Check if association_identifier is mapped
+  const associationField = Object.entries(mappings).find(([_, field]) => field === 'association_identifier')?.[0];
+  if (associationField && row[associationField]) {
+    return String(row[associationField]).trim();
+  }
+  
+  // Fallback to common association identifier fields
+  const identifierFields = [
+    'association_id', 'association_name', 'association_code',
+    'hoa_id', 'hoa_name', 'Association ID', 'Association Name', 
+    'Association Code', 'HOA ID', 'HOA Name'
+  ];
+  
+  for (const field of identifierFields) {
+    if (row[field]) {
+      return String(row[field]).trim();
+    }
+  }
+  
+  return null;
 }
 
 // Helper function to process combined properties and owners import

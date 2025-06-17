@@ -57,7 +57,7 @@ export function useImportState() {
       }
       
       toast.info(`Validating ${parsedData.length} rows of data...`);
-      const results = await validationService.validateData(parsedData, type);
+      const results = await validationService.validateData(parsedData, type, selectedAssociationId);
       console.log('Validation results:', results);
       
       setValidationResults(results);
@@ -101,7 +101,7 @@ export function useImportState() {
     setIsImporting(true);
     
     // Validate that we have the required mappings
-    const requiredMappings = getRequiredMappings(importType);
+    const requiredMappings = getRequiredMappings(importType, selectedAssociationId);
     const mappedFields = Object.values(mappings);
     
     const missingMappings = requiredMappings.filter(field => !mappedFields.includes(field));
@@ -158,7 +158,18 @@ export function useImportState() {
   };
   
   // Helper function to get required mappings based on import type
-  const getRequiredMappings = (type: string): string[] => {
+  const getRequiredMappings = (type: string, associationId: string): string[] => {
+    const baseMappings = getBaseMappings(type);
+    
+    // Add association identifier requirement for "all associations" imports
+    if (associationId === 'all' && type !== 'associations') {
+      return [...baseMappings, 'association_identifier'];
+    }
+    
+    return baseMappings;
+  };
+
+  const getBaseMappings = (type: string): string[] => {
     switch (type) {
       case 'properties':
         return ['address', 'property_type'];

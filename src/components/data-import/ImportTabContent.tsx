@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 import FileUploader from './FileUploader';
 import DataTypeSelector from './DataTypeSelector';
 import AssociationSelector from '@/components/associations/AssociationSelector';
@@ -62,7 +64,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
             <CardHeader>
               <CardTitle>Import Data</CardTitle>
               <CardDescription>
-                Upload property, owner, or financial data to import into your association
+                Upload property, owner, or financial data to import into your association(s)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -71,7 +73,19 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                   initialAssociationId={associationId}
                   onAssociationChange={onAssociationChange}
                   label="Select Association"
+                  showAllOption={true}
                 />
+                
+                {associationId === 'all' && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      When importing for "All Associations", your file must include an association identifier column 
+                      (Association ID, Association Name, or Association Code) for each row. This column will need to 
+                      be mapped during the import process.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 
                 <DataTypeSelector 
                   value={selectedType}

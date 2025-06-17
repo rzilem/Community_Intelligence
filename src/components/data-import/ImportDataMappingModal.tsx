@@ -2,208 +2,196 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Check, Info } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { ValidationResult } from '@/types/import-types';
 import ColumnMappingList from './ColumnMappingList';
 import DataPreviewTable from './DataPreviewTable';
 import ValidationResultsSummary from './ValidationResultsSummary';
-import { ValidationResult } from '@/types/import-types';
+import AssociationIdentifierHelper from './AssociationIdentifierHelper';
 import { useMappingFields } from './useMappingFields';
+import { useAIMappingSuggestions } from './hooks/useAIMappingSuggestions';
 
 interface ImportDataMappingModalProps {
   importType: string;
   fileData: any[];
   associationId: string;
-  validationResults?: ValidationResult | null;
+  validationResults?: ValidationResult;
   onClose: () => void;
   onConfirm: (mappings: Record<string, string>) => void;
 }
 
 const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   importType,
-  fileData = [],
+  fileData,
   associationId,
   validationResults,
   onClose,
   onConfirm
 }) => {
-  const {
+  const [mappings, setMappings] = useState<Record<string, string>>({});
+  const isMultiAssociation = associationId === 'all';
+  
+  // Get available mapping fields based on import type
+  const { getFieldsForImportType } = useMappingFields();
+  let availableFields = getFieldsForImportType(importType);
+  
+  // Add association identifier field for multi-association imports
+  if (isMultiAssociation && importType !== 'associations') {
+    availableFields = [
+      { label: 'Association Identifier', value: 'association_identifier' },
+      ...availableFields
+    ];
+  }
+  
+  // Get file columns
+  const fileColumns = fileData.length > 0 ? Object.keys(fileData[0]) : [];
+  
+  // Use AI suggestions for initial mappings
+  const { suggestions, isLoading: isLoadingSuggestions } = useAIMappingSuggestions(
     fileColumns,
-    systemFields,
-    mappings,
-    setMappings,
-    previewData
-  } = useMappingFields(importType, fileData, associationId);
+    availableFields,
+    importType
+  );
   
-  const [activeTab, setActiveTab] = useState('mapping');
-  const [hasMinimumMappings, setHasMinimumMappings] = useState(false);
-  
-  // Define minimum required fields based on import type
-  const getMinimumRequiredFields = () => {
-    switch (importType) {
-      case 'properties':
-        return ['address']; // Only address is truly required, property_type will default to 'residential'
-      case 'owners':
-        return ['property_id']; // Need to link to a property
-      case 'properties_owners':
-        return ['address']; // Only address is required for combined import
-      case 'financial':
-        return ['amount'];
-      case 'compliance':
-        return ['violation_type'];
-      case 'maintenance':
-        return ['title'];
-      default:
-        return [];
-    }
-  };
-  
-  // Check if minimum required fields are mapped
+  // Apply AI suggestions when they're available
   useEffect(() => {
-    if (!mappings) {
-      setHasMinimumMappings(false);
-      return;
+    if (suggestions && Object.keys(suggestions).length > 0 && Object.keys(mappings).length === 0) {
+      setMappings(suggestions);
     }
+  }, [suggestions, mappings]);
 
-    const minimumFields = getMinimumRequiredFields();
-    const mappedFields = Object.values(mappings).filter(field => field && field.trim() !== '');
-    
-    if (minimumFields.length === 0) {
-      setHasMinimumMappings(true);
-      return;
-    }
-    
-    // For properties_owners, we just need address mapped
-    if (importType === 'properties_owners') {
-      const hasAddress = mappedFields.some(field => 
-        field === 'address' || field === 'Property Address'
-      );
-      setHasMinimumMappings(hasAddress);
-    } else {
-      // For other import types, check if minimum fields are mapped
-      const hasMinimumFields = minimumFields.every(field => 
-        mappedFields.includes(field)
-      );
-      setHasMinimumMappings(hasMinimumFields);
-    }
-  }, [mappings, importType]);
-  
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
       ...prev,
       [column]: field
     }));
   };
-  
+
   const handleConfirm = () => {
+    // Validate required mappings for multi-association imports
+    if (isMultiAssociation && importType !== 'associations') {
+      const hasAssociationMapping = Object.values(mappings).includes('association_identifier');
+      if (!hasAssociationMapping) {
+        toast.error('Association Identifier mapping is required for multi-association imports');
+        return;
+      }
+    }
+    
+    // Check for duplicate mappings
+    const mappedFields = Object.values(mappings).filter(field => field);
+    const uniqueFields = new Set(mappedFields);
+    
+    if (mappedFields.length !== uniqueFields.size) {
+      toast.error('Each field can only be mapped once. Please check for duplicate mappings.');
+      return;
+    }
+    
+    // Check for required field mappings
+    const requiredFields = getRequiredFields(importType, isMultiAssociation);
+    const missingFields = requiredFields.filter(field => !mappedFields.includes(field));
+    
+    if (missingFields.length > 0) {
+      toast.error(`Missing required field mappings: ${missingFields.join(', ')}`);
+      return;
+    }
+    
     onConfirm(mappings);
   };
 
-  const getMappedFieldsCount = () => {
-    return Object.values(mappings).filter(field => field && field.trim() !== '').length;
+  const getRequiredFields = (type: string, multiAssoc: boolean): string[] => {
+    const baseRequired = {
+      properties: ['address', 'property_type'],
+      owners: ['first_name', 'last_name'],
+      properties_owners: ['property.address'],
+      financial: ['amount', 'due_date'],
+      compliance: ['violation_type'],
+      maintenance: ['title', 'description'],
+      associations: ['name'],
+    }[type] || [];
+    
+    if (multiAssoc && type !== 'associations') {
+      return [...baseRequired, 'association_identifier'];
+    }
+    
+    return baseRequired;
   };
 
-  const getValidationMessage = () => {
-    if (importType === 'properties_owners') {
-      const hasAddress = Object.values(mappings).some(field => 
-        field === 'address' || field === 'Property Address'
-      );
-      if (!hasAddress) {
-        return "Please map a column to 'Property Address' to proceed with the import.";
-      }
-      return `Ready to import! ${getMappedFieldsCount()} fields mapped. Property type will default to 'residential' if not specified.`;
-    }
-    
-    const minimumFields = getMinimumRequiredFields();
-    if (minimumFields.length === 0) {
-      return `Ready to import! ${getMappedFieldsCount()} fields mapped.`;
-    }
-    
-    if (!hasMinimumMappings) {
-      return `Please map the required fields: ${minimumFields.join(', ')}`;
-    }
-    
-    return `Ready to import! ${getMappedFieldsCount()} fields mapped.`;
-  };
-  
+  const requiredFields = getRequiredFields(importType, isMultiAssociation);
+  const mappedFields = Object.values(mappings).filter(field => field);
+  const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Map Your Data</DialogTitle>
+          <DialogTitle>
+            Map Import Fields - {importType.replace('_', ' ').toUpperCase()}
+            {isMultiAssociation && <Badge className="ml-2">Multi-Association</Badge>}
+          </DialogTitle>
         </DialogHeader>
         
-        {importType && (
-          <div className="mb-4">
-            <div className="text-sm font-medium text-muted-foreground mb-2">Selected Import Type:</div>
-            <div className="bg-muted p-2 rounded-md inline-block font-medium">
-              {importType.charAt(0).toUpperCase() + importType.slice(1).replace('_', ' & ')}
-            </div>
-          </div>
-        )}
-        
-        {validationResults && !validationResults.valid && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Data Validation Issues</AlertTitle>
-            <AlertDescription>
-              Your file has {validationResults.invalidRows || 0} rows with validation issues. 
-              These will be reported during import but won't prevent the import from proceeding.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <Alert variant={hasMinimumMappings ? "default" : "destructive"} className="mb-4">
-          {hasMinimumMappings ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
-          <AlertTitle>Field Mapping Status</AlertTitle>
-          <AlertDescription>
-            {getValidationMessage()}
-          </AlertDescription>
-        </Alert>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-2 w-[400px]">
-            <TabsTrigger value="mapping">Field Mapping</TabsTrigger>
-            <TabsTrigger value="preview">Data Preview</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="mapping" className="space-y-4 pt-4">
-            <ColumnMappingList
+        <div className="flex-1 flex gap-4 min-h-0">
+          {/* Left side - Column mapping */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <AssociationIdentifierHelper
+              isMultiAssociation={isMultiAssociation}
               fileColumns={fileColumns}
-              systemFields={systemFields}
               mappings={mappings}
-              onMappingChange={handleMappingChange}
-              previewData={previewData}
             />
-          </TabsContent>
-          
-          <TabsContent value="preview">
-            <ValidationResultsSummary validationResults={validationResults} className="mb-4" />
             
-            <div className="border rounded-md overflow-hidden">
-              <DataPreviewTable
-                data={previewData.slice(0, 5)}
-                highlightedColumns={Object.keys(mappings)}
+            {validationResults && (
+              <div className="mb-4">
+                <ValidationResultsSummary results={validationResults} />
+              </div>
+            )}
+            
+            <div className="flex-1 min-h-0">
+              <ColumnMappingList
+                fileColumns={fileColumns}
+                availableFields={availableFields}
+                mappings={mappings}
+                onMappingChange={handleMappingChange}
+                requiredFields={requiredFields}
+                isLoading={isLoadingSuggestions}
               />
             </div>
-          </TabsContent>
-        </Tabs>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button 
-            onClick={handleConfirm} 
-            disabled={!hasMinimumMappings}
-            className="gap-1"
-          >
-            <Check className="h-4 w-4" />
-            Confirm & Import
-          </Button>
+          </div>
+          
+          {/* Right side - Data preview */}
+          <div className="w-1/2 flex flex-col min-h-0">
+            <h3 className="font-medium mb-2">Data Preview</h3>
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full border rounded">
+                <DataPreviewTable 
+                  data={fileData.slice(0, 10)} 
+                  mappings={mappings}
+                />
+              </ScrollArea>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="flex justify-between">
+          <div className="flex items-center gap-2">
+            {missingRequiredFields.length > 0 && (
+              <Badge variant="destructive">
+                Missing: {missingRequiredFields.join(', ')}
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirm}
+              disabled={missingRequiredFields.length > 0}
+            >
+              Import Data
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
