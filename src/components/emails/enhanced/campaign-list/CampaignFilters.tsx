@@ -9,10 +9,10 @@ interface CampaignFiltersProps {
   onSearchChange: (value: string) => void;
   statusFilter: string;
   onStatusFilterChange: (value: string) => void;
-  sortBy: string;
-  onSortByChange: (value: string) => void;
-  sortOrder: string;
-  onSortOrderChange: (value: string) => void;
+  sortBy: 'name' | 'created_at' | 'send_at';
+  onSortByChange: (value: 'name' | 'created_at' | 'send_at') => void;
+  sortOrder: 'asc' | 'desc';
+  onSortOrderChange: (value: 'asc' | 'desc') => void;
 }
 
 const CampaignFilters: React.FC<CampaignFiltersProps> = ({
@@ -54,7 +54,7 @@ const CampaignFilters: React.FC<CampaignFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={sortBy} onValueChange={onSortByChange}>
+        <Select value={sortBy} onValueChange={(value: string) => onSortByChange(value as 'name' | 'created_at' | 'send_at')}>
           <SelectTrigger className="w-32">
             <SelectValue />
           </SelectTrigger>
@@ -65,7 +65,7 @@ const CampaignFilters: React.FC<CampaignFiltersProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={sortOrder} onValueChange={onSortOrderChange}>
+        <Select value={sortOrder} onValueChange={(value: string) => onSortOrderChange(value as 'asc' | 'desc')}>
           <SelectTrigger className="w-24">
             <SelectValue />
           </SelectTrigger>
