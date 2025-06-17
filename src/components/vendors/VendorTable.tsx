@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -56,12 +57,12 @@ const VendorTable: React.FC<VendorTableProps> = ({
     if (emails.length === 0) return <span className="text-gray-400">—</span>;
     
     return (
-      <div className="space-y-1">
+      <div className="flex flex-col space-y-1">
         {emails.map((email, index) => (
-          <div key={index} className="text-sm">
+          <div key={index} className="block">
             <a 
               href={`mailto:${email}`} 
-              className="text-blue-600 hover:text-blue-800 hover:underline"
+              className="text-blue-600 hover:text-blue-800 hover:underline text-sm break-all"
             >
               {email}
             </a>
@@ -142,11 +143,11 @@ const VendorTable: React.FC<VendorTableProps> = ({
                 currentSortKey={sortConfig.key}
                 currentDirection={sortConfig.direction}
                 onSort={onSort}
-                className="w-[180px]"
+                className="w-[240px]"
               />
             )}
             {visibleColumnIds.includes('email') && !onSort && (
-              <TableHead className="font-semibold text-gray-900 w-[180px]">Email</TableHead>
+              <TableHead className="font-semibold text-gray-900 w-[240px]">Email</TableHead>
             )}
             {visibleColumnIds.includes('phone') && onSort && (
               <SortableTableHeader
