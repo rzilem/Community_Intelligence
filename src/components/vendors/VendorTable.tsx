@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect } from "react";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,8 @@ import { Vendor } from "@/types/vendor-types";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import PhoneLink from "@/components/ui/phone-link";
+import SortableTableHeader from "./SortableTableHeader";
+import { SortConfig } from "@/hooks/vendors/useSortableTable";
 
 interface VendorTableProps {
   vendors: Vendor[];
@@ -17,6 +18,8 @@ interface VendorTableProps {
   isAllSelected?: boolean;
   isIndeterminate?: boolean;
   showSelection?: boolean;
+  sortConfig?: SortConfig;
+  onSort?: (key: string) => void;
 }
 
 const VendorTable: React.FC<VendorTableProps> = ({ 
@@ -27,7 +30,9 @@ const VendorTable: React.FC<VendorTableProps> = ({
   onSelectAll,
   isAllSelected = false,
   isIndeterminate = false,
-  showSelection = false
+  showSelection = false,
+  sortConfig = { key: '', direction: null },
+  onSort
 }) => {
   const selectAllRef = useRef<React.ElementRef<typeof Checkbox>>(null);
 
@@ -104,14 +109,110 @@ const VendorTable: React.FC<VendorTableProps> = ({
                 />
               </TableHead>
             )}
-            {visibleColumnIds.includes('name') && <TableHead className="font-semibold text-gray-900 w-[200px]">Vendor Name</TableHead>}
-            {visibleColumnIds.includes('contact_person') && <TableHead className="font-semibold text-gray-900 w-[140px]">Contact Person</TableHead>}
-            {visibleColumnIds.includes('email') && <TableHead className="font-semibold text-gray-900 w-[180px]">Email</TableHead>}
-            {visibleColumnIds.includes('phone') && <TableHead className="font-semibold text-gray-900 w-[130px]">Phone</TableHead>}
-            {visibleColumnIds.includes('specialties') && <TableHead className="font-semibold text-gray-900 w-[200px]">Specialties</TableHead>}
-            {visibleColumnIds.includes('is_active') && <TableHead className="font-semibold text-gray-900 w-[80px]">Status</TableHead>}
-            {visibleColumnIds.includes('total_jobs') && <TableHead className="font-semibold text-gray-900 w-[80px]">Jobs</TableHead>}
-            {visibleColumnIds.includes('rating') && <TableHead className="font-semibold text-gray-900 w-[120px]">Rating</TableHead>}
+            {visibleColumnIds.includes('name') && onSort && (
+              <SortableTableHeader
+                label="Vendor Name"
+                sortKey="name"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[200px]"
+              />
+            )}
+            {visibleColumnIds.includes('name') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[200px]">Vendor Name</TableHead>
+            )}
+            {visibleColumnIds.includes('contact_person') && onSort && (
+              <SortableTableHeader
+                label="Contact Person"
+                sortKey="contact_person"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[140px]"
+              />
+            )}
+            {visibleColumnIds.includes('contact_person') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[140px]">Contact Person</TableHead>
+            )}
+            {visibleColumnIds.includes('email') && onSort && (
+              <SortableTableHeader
+                label="Email"
+                sortKey="email"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[180px]"
+              />
+            )}
+            {visibleColumnIds.includes('email') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[180px]">Email</TableHead>
+            )}
+            {visibleColumnIds.includes('phone') && onSort && (
+              <SortableTableHeader
+                label="Phone"
+                sortKey="phone"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[130px]"
+              />
+            )}
+            {visibleColumnIds.includes('phone') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[130px]">Phone</TableHead>
+            )}
+            {visibleColumnIds.includes('specialties') && onSort && (
+              <SortableTableHeader
+                label="Specialties"
+                sortKey="specialties"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[200px]"
+              />
+            )}
+            {visibleColumnIds.includes('specialties') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[200px]">Specialties</TableHead>
+            )}
+            {visibleColumnIds.includes('is_active') && onSort && (
+              <SortableTableHeader
+                label="Status"
+                sortKey="is_active"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[80px]"
+              />
+            )}
+            {visibleColumnIds.includes('is_active') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[80px]">Status</TableHead>
+            )}
+            {visibleColumnIds.includes('total_jobs') && onSort && (
+              <SortableTableHeader
+                label="Jobs"
+                sortKey="total_jobs"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[80px]"
+              />
+            )}
+            {visibleColumnIds.includes('total_jobs') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[80px]">Jobs</TableHead>
+            )}
+            {visibleColumnIds.includes('rating') && onSort && (
+              <SortableTableHeader
+                label="Rating"
+                sortKey="rating"
+                currentSortKey={sortConfig.key}
+                currentDirection={sortConfig.direction}
+                onSort={onSort}
+                className="w-[120px]"
+              />
+            )}
+            {visibleColumnIds.includes('rating') && !onSort && (
+              <TableHead className="font-semibold text-gray-900 w-[120px]">Rating</TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>

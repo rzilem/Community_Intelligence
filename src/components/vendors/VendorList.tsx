@@ -5,6 +5,7 @@ import ColumnSelector from "@/components/table/ColumnSelector";
 import { useUserColumns } from "@/hooks/useUserColumns";
 import VendorCardView from "./VendorCardView";
 import VendorQuickFilters from "./VendorQuickFilters";
+import VendorAdvancedFilters from "./VendorAdvancedFilters";
 import VendorViewToggle from "./VendorViewToggle";
 import VendorTable from "./VendorTable";
 import VendorBulkActions from "./VendorBulkActions";
@@ -23,6 +24,7 @@ interface VendorListProps {
 const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
   const [view, setView] = useState<'table' | 'cards'>('table');
   const [bulkSpecialtiesOpen, setBulkSpecialtiesOpen] = useState(false);
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -40,9 +42,16 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
     setStatusFilter,
     specialtyFilter,
     setSpecialtyFilter,
+    advancedFilters,
+    setAdvancedFilters,
     filteredVendors,
     hasActiveFilters,
-    handleClearFilters
+    hasActiveAdvancedFilters,
+    handleClearFilters,
+    handleClearAdvancedFilters,
+    sortConfig,
+    handleSort,
+    clearSort
   } = useVendorFilters(vendors);
 
   const {
@@ -110,6 +119,18 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
         onSpecialtyFilterChange={setSpecialtyFilter}
         onClearFilters={handleClearFilters}
         hasActiveFilters={hasActiveFilters}
+        sortConfig={sortConfig}
+        onClearSort={clearSort}
+      />
+
+      {/* Advanced Filters */}
+      <VendorAdvancedFilters
+        filters={advancedFilters}
+        onFiltersChange={setAdvancedFilters}
+        onClearAdvanced={handleClearAdvancedFilters}
+        hasActiveAdvancedFilters={hasActiveAdvancedFilters}
+        open={advancedFiltersOpen}
+        onOpenChange={setAdvancedFiltersOpen}
       />
 
       {/* Bulk Actions Toolbar */}
@@ -125,8 +146,9 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
       {view === 'table' && (
         <div className="flex justify-between items-center py-2">
           <div className="text-sm text-muted-foreground">
-            {hasActiveFilters ? `${filteredVendors.length} of ${vendors.length} vendors` : 'All vendors'}
+            {hasActiveFilters || hasActiveAdvancedFilters ? `${filteredVendors.length} of ${vendors.length} vendors` : 'All vendors'}
             {selectedCount > 0 && ` • ${selectedCount} selected`}
+            {sortConfig.key && ` • Sorted by ${sortConfig.key}`}
           </div>
           <ColumnSelector 
             columns={COLUMN_OPTIONS} 
@@ -140,7 +162,7 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
       {filteredVendors.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500 text-lg">No vendors found</p>
-          {hasActiveFilters && (
+          {(hasActiveFilters || hasActiveAdvancedFilters) && (
             <p className="text-sm text-gray-400 mt-2">
               Try adjusting your filters or clearing them to see more results
             </p>
@@ -158,6 +180,8 @@ const VendorList: React.FC<VendorListProps> = ({ vendors }) => {
           isAllSelected={isAllSelected}
           isIndeterminate={isIndeterminate}
           showSelection={true}
+          sortConfig={sortConfig}
+          onSort={handleSort}
         />
       )}
 
