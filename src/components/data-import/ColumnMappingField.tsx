@@ -42,6 +42,14 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
 }) => {
   const selectedField = systemFields.find(field => field.value === selectedValue);
   
+  console.log(`ColumnMappingField render for ${column}:`, {
+    systemFieldsCount: systemFields?.length || 0,
+    selectedValue,
+    suggestion,
+    confidence,
+    isOpen
+  });
+
   const handleSelect = (value: string) => {
     console.log(`Field selection for ${column}: ${value}`);
     onMappingChange(column, value);
@@ -55,16 +63,10 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
     }
   };
   
-  console.log(`Rendering ColumnMappingField for ${column}:`, {
-    systemFieldsCount: systemFields.length,
-    selectedValue,
-    suggestion,
-    confidence
-  });
-  
   return (
     <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-card">
       <div className="grid grid-cols-12 gap-4 items-center">
+        {/* Column name section */}
         <div className="col-span-4">
           <div className="text-sm font-medium text-foreground">{column}</div>
           {suggestion && !selectedValue && confidence >= 0.6 && (
@@ -89,6 +91,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
           )}
         </div>
         
+        {/* Dropdown section */}
         <div className="col-span-8">
           <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
@@ -99,22 +102,22 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 className="w-full justify-between h-10"
               >
                 <span className="truncate">
-                  {selectedValue
-                    ? systemFields.find(f => f.value === selectedValue)?.label || "Select field..."
+                  {selectedValue && selectedField
+                    ? selectedField.label
                     : "Select field..."}
                 </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start" sideOffset={4}>
+            <PopoverContent className="w-[400px] p-0" align="start" sideOffset={4}>
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
                 <CommandEmpty>No field found.</CommandEmpty>
-                <CommandGroup>
-                  <CommandList className="max-h-[300px]">
+                <CommandList className="max-h-[300px]">
+                  <CommandGroup>
                     {/* Add option to clear selection */}
                     <CommandItem
-                      key="clear"
+                      key="clear-selection"
                       value=""
                       onSelect={() => handleSelect('')}
                       className="cursor-pointer flex items-center justify-between text-muted-foreground"
@@ -128,14 +131,18 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                       />
                     </CommandItem>
                     
-                    {Array.isArray(systemFields) && systemFields.map((field) => (
+                    {/* Render all system fields */}
+                    {systemFields && systemFields.map((field) => (
                       <CommandItem
                         key={field.value}
-                        value={field.value}
+                        value={field.label}
                         onSelect={() => handleSelect(field.value)}
                         className="cursor-pointer flex items-center justify-between"
                       >
-                        <span>{field.label}</span>
+                        <div className="flex flex-col">
+                          <span>{field.label}</span>
+                          <span className="text-xs text-muted-foreground">{field.value}</span>
+                        </div>
                         <Check
                           className={cn(
                             "ml-auto h-4 w-4",
@@ -146,8 +153,8 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                         />
                       </CommandItem>
                     ))}
-                  </CommandList>
-                </CommandGroup>
+                  </CommandGroup>
+                </CommandList>
               </Command>
             </PopoverContent>
           </Popover>

@@ -30,10 +30,19 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     generateSuggestions 
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
+  console.log('ColumnMappingList render - Debug info:', {
+    fileColumnsCount: fileColumns?.length || 0,
+    systemFieldsCount: systemFields?.length || 0,
+    fileColumns: fileColumns,
+    systemFields: systemFields?.map(f => ({ label: f.label, value: f.value })),
+    mappingsCount: Object.keys(mappings || {}).length,
+    previewDataCount: previewData?.length || 0
+  });
+
   // Generate suggestions when component mounts and we have data
   useEffect(() => {
-    if (fileColumns.length > 0 && systemFields.length > 0 && previewData.length > 0) {
-      console.log("Auto-generating suggestions on mount with", systemFields.length, "system fields");
+    if (fileColumns?.length > 0 && systemFields?.length > 0 && previewData?.length > 0) {
+      console.log("Auto-generating suggestions on mount");
       generateSuggestions();
     }
   }, [fileColumns, systemFields, previewData, generateSuggestions]);
@@ -55,7 +64,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   };
   
   const handleAutoMapColumns = () => {
-    console.log("Auto-mapping columns with system fields:", systemFields);
+    console.log("Auto-mapping columns triggered");
     const newSuggestions = generateSuggestions();
     
     // Track updates for toast message
@@ -81,34 +90,32 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }
   };
 
-  console.log('Rendering ColumnMappingList with:', {
-    fileColumnsCount: fileColumns.length,
-    systemFieldsCount: systemFields.length,
-    mappingsCount: Object.keys(mappings).length,
-    fileColumns,
-    systemFields: systemFields.map(f => f.label)
-  });
-
-  // Show loading state if we don't have data
+  // Early return conditions with better debugging
   if (!fileColumns || fileColumns.length === 0) {
+    console.log('ColumnMappingList: No file columns available');
     return (
       <div className="space-y-4">
-        <div className="text-center text-muted-foreground">
-          Loading file columns...
+        <div className="text-center text-muted-foreground p-8 border rounded-lg">
+          <p>No file columns detected.</p>
+          <p className="text-sm mt-2">Please check your file format or try uploading again.</p>
         </div>
       </div>
     );
   }
 
   if (!systemFields || systemFields.length === 0) {
+    console.log('ColumnMappingList: No system fields available');
     return (
       <div className="space-y-4">
-        <div className="text-center text-muted-foreground">
-          Loading system fields...
+        <div className="text-center text-muted-foreground p-8 border rounded-lg">
+          <p>No system fields available.</p>
+          <p className="text-sm mt-2">System fields are still loading...</p>
         </div>
       </div>
     );
   }
+
+  console.log('ColumnMappingList: Rendering mapping interface with', fileColumns.length, 'columns');
 
   return (
     <div className="space-y-4">
@@ -127,11 +134,11 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
       </div>
       
       <div className="space-y-3 border rounded-lg p-4">
-        {fileColumns.map(column => {
-          console.log(`Rendering mapping field for column: ${column}`);
+        {fileColumns.map((column, index) => {
+          console.log(`Rendering mapping field ${index + 1}/${fileColumns.length} for column: ${column}`);
           return (
             <ColumnMappingField
-              key={column}
+              key={`column-${column}-${index}`}
               column={column}
               systemFields={systemFields}
               selectedValue={mappings[column] || ''}
@@ -145,11 +152,9 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         })}
       </div>
       
-      {fileColumns.length === 0 && (
-        <div className="text-center text-muted-foreground py-8">
-          No file columns detected. Please check your file format.
-        </div>
-      )}
+      <div className="text-xs text-muted-foreground mt-2">
+        Found {fileColumns.length} columns in your file. Select a system field for each column you want to import.
+      </div>
     </div>
   );
 };

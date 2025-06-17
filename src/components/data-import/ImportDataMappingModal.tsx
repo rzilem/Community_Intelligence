@@ -39,18 +39,20 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     previewData
   } = useMappingFields(importType, fileData, associationId);
 
-  console.log('ImportDataMappingModal state:', {
+  console.log('ImportDataMappingModal render - Debug info:', {
     importType,
     fileDataLength: fileData?.length || 0,
     associationId,
     isMultiAssociation,
-    fileColumns,
-    systemFields: systemFields.map(f => f.label),
-    mappingsCount: Object.keys(mappings).length
+    fileColumnsCount: fileColumns?.length || 0,
+    systemFieldsCount: systemFields?.length || 0,
+    mappingsCount: Object.keys(mappings).length,
+    fileColumns: fileColumns,
+    systemFields: systemFields?.slice(0, 3).map(f => f.label) // Show first 3 for debugging
   });
 
   const handleMappingChange = (column: string, field: string) => {
-    console.log(`Mapping change: ${column} -> ${field}`);
+    console.log(`Mapping change in modal: ${column} -> ${field}`);
     setMappings(prev => ({
       ...prev,
       [column]: field
@@ -111,8 +113,9 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const mappedFields = Object.values(mappings).filter(field => field);
   const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
 
-  // Show loading state if we don't have file columns yet
-  if (!fileColumns || fileColumns.length === 0) {
+  // Show loading state with better messaging
+  if (!fileColumns || fileColumns.length === 0 || !systemFields || systemFields.length === 0) {
+    console.log('ImportDataMappingModal: Showing loading state');
     return (
       <Dialog open={true} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
@@ -120,17 +123,22 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             <DialogTitle>Loading Mapping Interface...</DialogTitle>
           </DialogHeader>
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <p>Preparing file data for mapping...</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                File data rows: {fileData?.length || 0}
-              </p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>File data rows: {fileData?.length || 0}</p>
+                <p>File columns: {fileColumns?.length || 0}</p>
+                <p>System fields: {systemFields?.length || 0}</p>
+                <p>Import type: {importType}</p>
+              </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     );
   }
+
+  console.log('ImportDataMappingModal: Rendering full interface');
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
