@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Clock, Users, FileText, Home, DollarSign, AlertCircle } from 'lucide-react';
+import { Search, Clock, Users, FileText, Home, DollarSign, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useGlobalSearch, SearchResult } from '@/hooks/search/useGlobalSearch';
+import { useOptimizedGlobalSearch, SearchResult } from '@/hooks/search/useOptimizedGlobalSearch';
+import { useSearchCache } from '@/hooks/search/useSearchCache';
 
 const getTypeIcon = (type: string) => {
   const icons = {
@@ -61,10 +62,20 @@ const EnhancedGlobalSearch: React.FC = () => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  const { results, isLoading, handleResultSelect } = useGlobalSearch(query);
+  const { 
+    results, 
+    isLoading, 
+    handleResultSelect, 
+    isDebouncing, 
+    hasMinLength 
+  } = useOptimizedGlobalSearch(query);
+  
+  const { 
+    recentSearches, 
+    addToRecentSearches 
+  } = useSearchCache();
 
   // Keyboard shortcut
   useEffect(() => {
@@ -105,10 +116,7 @@ const EnhancedGlobalSearch: React.FC = () => {
     setSelectedIndex(-1);
     
     // Add to recent searches
-    setRecentSearches(prev => {
-      const newSearches = [result.title, ...prev.filter(s => s !== result.title)].slice(0, 5);
-      return newSearches;
-    });
+    addToRecentSearches(result.title);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,7 +127,8 @@ const EnhancedGlobalSearch: React.FC = () => {
   };
 
   const showRecentSearches = isOpen && query.length === 0 && recentSearches.length > 0;
-  const showResults = isOpen && (results.length > 0 || query.length > 0);
+  const showResults = isOpen && hasMinLength;
+  const showDebouncing = isDebouncing && query.length >= 2;
 
   return (
     <div className="relative">
@@ -127,6 +136,9 @@ const EnhancedGlobalSearch: React.FC = () => {
         <PopoverTrigger asChild>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {showDebouncing && (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
             <Input
               ref={inputRef}
               value={query}
@@ -172,9 +184,16 @@ const EnhancedGlobalSearch: React.FC = () => {
               {/* Search Results */}
               {showResults && (
                 <div className="p-2">
-                  {query.length > 0 && results.length === 0 && !isLoading && (
+                  {hasMinLength && results.length === 0 && !isLoading && !isDebouncing && (
                     <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                       No results found for "{query}"
+                    </div>
+                  )}
+                  
+                  {isDebouncing && (
+                    <div className="px-2 py-6 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Searching...
                     </div>
                   )}
                   
