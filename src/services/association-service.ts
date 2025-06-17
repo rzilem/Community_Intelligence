@@ -142,17 +142,35 @@ export const deleteAssociation = async (id: string) => {
     console.log('Starting association deletion process for ID:', id);
     
     // Check for dependent records that would prevent deletion
-    const dependencies = await Promise.all([
-      supabase.from('properties').select('id').eq('association_id', id).limit(1),
-      supabase.from('residents').select('id').eq('association_id', id).limit(1),
-      supabase.from('assessments').select('id').eq('association_id', id).limit(1),
-      supabase.from('invoices').select('id').eq('association_id', id).limit(1)
-    ]);
+    // Simplify the queries to avoid deep type instantiation
+    const propertiesCheck = await supabase
+      .from('properties')
+      .select('id')
+      .eq('association_id', id)
+      .limit(1);
+      
+    const residentsCheck = await supabase
+      .from('residents')
+      .select('id')
+      .eq('association_id', id)
+      .limit(1);
+      
+    const assessmentsCheck = await supabase
+      .from('assessments')
+      .select('id')
+      .eq('association_id', id)
+      .limit(1);
+      
+    const invoicesCheck = await supabase
+      .from('invoices')
+      .select('id')
+      .eq('association_id', id)
+      .limit(1);
 
-    const hasProperties = dependencies[0].data && dependencies[0].data.length > 0;
-    const hasResidents = dependencies[1].data && dependencies[1].data.length > 0;
-    const hasAssessments = dependencies[2].data && dependencies[2].data.length > 0;
-    const hasInvoices = dependencies[3].data && dependencies[3].data.length > 0;
+    const hasProperties = propertiesCheck.data && propertiesCheck.data.length > 0;
+    const hasResidents = residentsCheck.data && residentsCheck.data.length > 0;
+    const hasAssessments = assessmentsCheck.data && assessmentsCheck.data.length > 0;
+    const hasInvoices = invoicesCheck.data && invoicesCheck.data.length > 0;
 
     if (hasProperties || hasResidents || hasAssessments || hasInvoices) {
       const dependencyTypes = [];
