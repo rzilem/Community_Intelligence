@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Clock, Users, FileText, Home, DollarSign, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Clock, Users, FileText, Home, DollarSign, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +57,19 @@ const highlightMatch = (text: string, query: string) => {
   );
 };
 
+const getLoadingStateIndicator = (isLoaded: boolean, isLoading: boolean, hasResults: boolean) => {
+  if (isLoading) {
+    return <Loader2 className="h-3 w-3 animate-spin text-blue-500" />;
+  }
+  if (isLoaded && hasResults) {
+    return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+  }
+  if (isLoaded && !hasResults) {
+    return <div className="h-3 w-3 rounded-full bg-gray-300" />;
+  }
+  return <div className="h-3 w-3 rounded-full bg-gray-200" />;
+};
+
 const EnhancedGlobalSearch: React.FC = () => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -69,7 +81,10 @@ const EnhancedGlobalSearch: React.FC = () => {
     isLoading, 
     handleResultSelect, 
     isDebouncing, 
-    hasMinLength 
+    hasMinLength,
+    categoryStatus,
+    loadingProgress,
+    hasAnyData
   } = useOptimizedGlobalSearch(query);
   
   const { 
@@ -184,6 +199,50 @@ const EnhancedGlobalSearch: React.FC = () => {
               {/* Search Results */}
               {showResults && (
                 <div className="p-2">
+                  {/* Progressive Loading Status */}
+                  {hasMinLength && (isLoading || hasAnyData) && (
+                    <div className="px-2 py-2 border-b">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                        <span>Search Progress</span>
+                        <span>{Math.round(loadingProgress * 100)}%</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          {getLoadingStateIndicator(
+                            categoryStatus.associations.loaded, 
+                            !categoryStatus.associations.loaded, 
+                            categoryStatus.associations.hasResults
+                          )}
+                          <span>Associations</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {getLoadingStateIndicator(
+                            categoryStatus.requests.loaded, 
+                            !categoryStatus.requests.loaded, 
+                            categoryStatus.requests.hasResults
+                          )}
+                          <span>Requests</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {getLoadingStateIndicator(
+                            categoryStatus.leads.loaded, 
+                            !categoryStatus.leads.loaded, 
+                            categoryStatus.leads.hasResults
+                          )}
+                          <span>Leads</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {getLoadingStateIndicator(
+                            categoryStatus.invoices.loaded, 
+                            !categoryStatus.invoices.loaded, 
+                            categoryStatus.invoices.hasResults
+                          )}
+                          <span>Invoices</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {hasMinLength && results.length === 0 && !isLoading && !isDebouncing && (
                     <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                       No results found for "{query}"
