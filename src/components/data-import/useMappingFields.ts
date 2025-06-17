@@ -1,34 +1,162 @@
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { MappingOption } from './types/mapping-types';
 import { useAssociationPropertyType } from '@/hooks/import-export/useAssociationPropertyType';
 
-export function useMappingFields(
-  importType: string, 
-  fileData: any[], 
-  associationId: string
-) {
-  const [fileColumns, setFileColumns] = useState<string[]>([]);
-  const [systemFields, setSystemFields] = useState<MappingOption[]>([]);
-  const [previewData, setPreviewData] = useState<any[]>([]);
-  
+export function useMappingFields(importType: string, fileData: any[], associationId: string) {
   const { associationPropertyType, hasPropertyType } = useAssociationPropertyType(associationId);
-
-  useEffect(() => {
-    if (fileData && fileData.length > 0) {
-      // Extract columns from the first row of data
-      const columns = Object.keys(fileData[0] || {});
-      setFileColumns(columns);
-      
-      // Set preview data (first 3 rows for mapping preview)
-      setPreviewData(fileData.slice(0, 3));
+  
+  const fileColumns = useMemo(() => {
+    if (!fileData || !Array.isArray(fileData) || fileData.length === 0) {
+      return [];
     }
+    
+    const firstRow = fileData[0];
+    if (!firstRow || typeof firstRow !== 'object') {
+      return [];
+    }
+    
+    return Object.keys(firstRow).filter(key => key && key.trim() !== '');
   }, [fileData]);
 
-  useEffect(() => {
-    // Generate system fields based on import type
-    const fields = generateSystemFields(importType, associationId, hasPropertyType);
-    setSystemFields(fields);
+  const previewData = useMemo(() => {
+    return fileData?.slice(0, 3) || [];
+  }, [fileData]);
+
+  const systemFields = useMemo((): MappingOption[] => {
+    const baseFields: MappingOption[] = [];
+    
+    if (importType === 'properties') {
+      baseFields.push(
+        { label: 'Address', value: 'address', required: true },
+        { label: 'Unit Number', value: 'unit_number' },
+        { label: 'Square Footage', value: 'square_footage' },
+        { label: 'Bedrooms', value: 'bedrooms' },
+        { label: 'Bathrooms', value: 'bathrooms' }
+      );
+      
+      // Only add property_type as required if association doesn't have default property type
+      if (!hasPropertyType || associationId === 'all') {
+        baseFields.push({ label: 'Property Type', value: 'property_type', required: true });
+      }
+      
+      baseFields.push(
+        { label: 'Property Status', value: 'status' },
+        { label: 'Property ID', value: 'property_id' },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Lot Number', value: 'lot_number' },
+        { label: 'Block Number', value: 'block_number' },
+        { label: 'Section', value: 'section' },
+        { label: 'Phase', value: 'phase' },
+        { label: 'Building', value: 'building' },
+        { label: 'Floor', value: 'floor' },
+        { label: 'Year Built', value: 'year_built' },
+        { label: 'Parking Spaces', value: 'parking_spaces' },
+        { label: 'Special Assessments', value: 'special_assessments' },
+        { label: 'Notes', value: 'notes' }
+      );
+    } else if (importType === 'owners' || importType === 'residents') {
+      baseFields.push(
+        { label: 'First Name', value: 'first_name', required: true },
+        { label: 'Last Name', value: 'last_name', required: true },
+        { label: 'Email', value: 'email' },
+        { label: 'Phone', value: 'phone' },
+        { label: 'Address', value: 'address' },
+        { label: 'Property ID', value: 'property_id', required: true },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Owner Type', value: 'owner_type' },
+        { label: 'Mailing Address', value: 'mailing_address' },
+        { label: 'Emergency Contact', value: 'emergency_contact' },
+        { label: 'Emergency Phone', value: 'emergency_phone' },
+        { label: 'Move In Date', value: 'move_in_date' },
+        { label: 'Move Out Date', value: 'move_out_date' },
+        { label: 'Notes', value: 'notes' }
+      );
+    } else if (importType === 'properties_owners') {
+      baseFields.push(
+        { label: 'Address', value: 'address', required: true },
+        { label: 'First Name', value: 'first_name' },
+        { label: 'Last Name', value: 'last_name' },
+        { label: 'Email', value: 'email' },
+        { label: 'Phone', value: 'phone' },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Unit Number', value: 'unit_number' },
+        { label: 'Property ID', value: 'property_id' },
+        { label: 'Owner Type', value: 'owner_type' },
+        { label: 'Mailing Address', value: 'mailing_address' },
+        { label: 'Emergency Contact', value: 'emergency_contact' },
+        { label: 'Emergency Phone', value: 'emergency_phone' }
+      );
+      
+      // Only add property_type as required if association doesn't have default property type
+      if (!hasPropertyType || associationId === 'all') {
+        baseFields.push({ label: 'Property Type', value: 'property_type', required: true });
+      }
+    } else if (importType === 'financial') {
+      baseFields.push(
+        { label: 'Property ID', value: 'property_id', required: true },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Amount', value: 'amount', required: true },
+        { label: 'Due Date', value: 'due_date', required: true },
+        { label: 'Assessment Type', value: 'assessment_type' },
+        { label: 'Description', value: 'description' },
+        { label: 'Late Fee', value: 'late_fee' },
+        { label: 'Payment Status', value: 'payment_status' },
+        { label: 'Payment Date', value: 'payment_date' },
+        { label: 'Payment Method', value: 'payment_method' },
+        { label: 'Reference Number', value: 'reference_number' }
+      );
+    } else if (importType === 'compliance') {
+      baseFields.push(
+        { label: 'Property ID', value: 'property_id', required: true },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Violation Type', value: 'violation_type', required: true },
+        { label: 'Description', value: 'description' },
+        { label: 'Due Date', value: 'due_date' },
+        { label: 'Fine Amount', value: 'fine_amount' },
+        { label: 'Status', value: 'status' },
+        { label: 'Resolved Date', value: 'resolved_date' },
+        { label: 'Notes', value: 'notes' }
+      );
+    } else if (importType === 'maintenance') {
+      baseFields.push(
+        { label: 'Property ID', value: 'property_id', required: true },
+        { label: 'Account Number', value: 'account_number' },
+        { label: 'Title', value: 'title', required: true },
+        { label: 'Description', value: 'description', required: true },
+        { label: 'Priority', value: 'priority' },
+        { label: 'Status', value: 'status' },
+        { label: 'Category', value: 'category' },
+        { label: 'Assigned To', value: 'assigned_to' },
+        { label: 'Due Date', value: 'due_date' },
+        { label: 'Completed Date', value: 'completed_date' }
+      );
+    } else if (importType === 'associations') {
+      baseFields.push(
+        { label: 'Association Name', value: 'name', required: true },
+        { label: 'Association Code', value: 'code' },
+        { label: 'Address', value: 'address' },
+        { label: 'City', value: 'city' },
+        { label: 'State', value: 'state' },
+        { label: 'ZIP Code', value: 'zip' },
+        { label: 'Phone', value: 'phone' },
+        { label: 'Email', value: 'contact_email' },
+        { label: 'Property Type', value: 'property_type' },
+        { label: 'Total Units', value: 'total_units' },
+        { label: 'Description', value: 'description' }
+      );
+    }
+
+    // Add association identifier for "all associations" imports
+    if (associationId === 'all' && importType !== 'associations') {
+      baseFields.unshift(
+        { label: 'Association ID', value: 'association_id' },
+        { label: 'Association Code', value: 'association_code' },
+        { label: 'Association Name', value: 'association_name' }
+      );
+    }
+
+    return baseFields;
   }, [importType, associationId, hasPropertyType]);
 
   return {
@@ -38,187 +166,4 @@ export function useMappingFields(
     associationPropertyType,
     hasPropertyType
   };
-}
-
-function generateSystemFields(importType: string, associationId: string, hasPropertyType: boolean): MappingOption[] {
-  const commonFields: MappingOption[] = [
-    { label: 'Association Identifier', value: 'association_identifier', required: associationId === 'all' },
-    { label: 'Association Name', value: 'association_identifier', required: associationId === 'all' },
-    { label: 'Association Code', value: 'association_identifier', required: associationId === 'all' },
-    { label: 'HOA ID', value: 'association_identifier', required: associationId === 'all' },
-    { label: 'HOA Name', value: 'association_identifier', required: associationId === 'all' }
-  ];
-
-  const baseFields: Record<string, MappingOption[]> = {
-    properties: [
-      { label: 'Address', value: 'address', required: true },
-      { label: 'Property Address', value: 'address', required: true },
-      { label: 'Unit Number', value: 'unit_number', required: false },
-      { label: 'Unit No', value: 'unit_number', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Homeowner ID', value: 'homeowner_id', required: false },
-      { label: 'City', value: 'city', required: false },
-      { label: 'State', value: 'state', required: false },
-      { label: 'ZIP Code', value: 'zip', required: false },
-      { label: 'Zip', value: 'zip', required: false },
-      { label: 'Square Feet', value: 'square_feet', required: false },
-      { label: 'Bedrooms', value: 'bedrooms', required: false },
-      { label: 'Bathrooms', value: 'bathrooms', required: false },
-      { label: 'Lot Number', value: 'lot_number', required: false },
-      { label: 'Lot No', value: 'lot_number', required: false },
-      { label: 'Block Number', value: 'block_number', required: false },
-      { label: 'Block No', value: 'block_number', required: false },
-      { label: 'Phase', value: 'phase', required: false },
-      { label: 'Village', value: 'village', required: false },
-      { label: 'Legal Description', value: 'legal_description', required: false },
-      { label: 'Parcel ID', value: 'parcel_id', required: false }
-    ],
-    
-    owners: [
-      { label: 'First Name', value: 'first_name', required: true },
-      { label: 'Last Name', value: 'last_name', required: true },
-      { label: 'Property ID', value: 'property_id', required: true },
-      { label: 'Property Address', value: 'property_address', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Homeowner ID', value: 'homeowner_id', required: false },
-      { label: 'Email', value: 'email', required: false },
-      { label: 'Phone', value: 'phone', required: false },
-      { label: 'Second Owner First Name', value: 'second_owner_first_name', required: false },
-      { label: 'Second Owner Last Name', value: 'second_owner_last_name', required: false },
-      { label: 'Business Name', value: 'business_name', required: false },
-      { label: 'Deed Name', value: 'deed_name', required: false },
-      { label: 'Mailing Address', value: 'mailing_address', required: false },
-      { label: 'Move In Date', value: 'move_in_date', required: false },
-      { label: 'Settled Date', value: 'move_in_date', required: false }
-    ],
-
-    properties_owners: [
-      { label: 'Address', value: 'address', required: true },
-      { label: 'Property Address', value: 'address', required: true },
-      { label: 'First Name', value: 'first_name', required: false },
-      { label: 'Last Name', value: 'last_name', required: false },
-      { label: 'Unit Number', value: 'unit_number', required: false },
-      { label: 'Unit No', value: 'unit_number', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Homeowner ID', value: 'homeowner_id', required: false },
-      { label: 'Email', value: 'email', required: false },
-      { label: 'Phone', value: 'phone', required: false },
-      { label: 'Second Owner First Name', value: 'second_owner_first_name', required: false },
-      { label: 'Second Owner Last Name', value: 'second_owner_last_name', required: false },
-      { label: 'Business Name', value: 'business_name', required: false },
-      { label: 'Deed Name', value: 'deed_name', required: false },
-      { label: 'Mailing Address', value: 'mailing_address', required: false },
-      { label: 'Move In Date', value: 'move_in_date', required: false },
-      { label: 'Settled Date', value: 'move_in_date', required: false },
-      { label: 'City', value: 'city', required: false },
-      { label: 'State', value: 'state', required: false },
-      { label: 'ZIP Code', value: 'zip', required: false },
-      { label: 'Zip', value: 'zip', required: false },
-      { label: 'Square Feet', value: 'square_feet', required: false },
-      { label: 'Bedrooms', value: 'bedrooms', required: false },
-      { label: 'Bathrooms', value: 'bathrooms', required: false },
-      { label: 'Balance', value: 'balance', required: false },
-      { label: 'Collection Status', value: 'collection_status', required: false }
-    ],
-
-    financial: [
-      { label: 'Property ID', value: 'property_id', required: true },
-      { label: 'Property Address', value: 'property_address', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Amount', value: 'amount', required: true },
-      { label: 'Due Date', value: 'due_date', required: true },
-      { label: 'Assessment Type', value: 'assessment_type', required: false },
-      { label: 'Description', value: 'description', required: false },
-      { label: 'Late Fee', value: 'late_fee', required: false },
-      { label: 'Payment Status', value: 'payment_status', required: false },
-      { label: 'Balance', value: 'balance', required: false }
-    ],
-
-    compliance: [
-      { label: 'Property ID', value: 'property_id', required: true },
-      { label: 'Property Address', value: 'property_address', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Violation Type', value: 'violation_type', required: true },
-      { label: 'Description', value: 'description', required: false },
-      { label: 'Due Date', value: 'due_date', required: false },
-      { label: 'Fine Amount', value: 'fine_amount', required: false },
-      { label: 'Status', value: 'status', required: false }
-    ],
-
-    maintenance: [
-      { label: 'Property ID', value: 'property_id', required: true },
-      { label: 'Property Address', value: 'property_address', required: false },
-      { label: 'Account Number', value: 'account_number', required: false },
-      { label: 'Account #', value: 'account_number', required: false },
-      { label: 'Title', value: 'title', required: true },
-      { label: 'Description', value: 'description', required: true },
-      { label: 'Priority', value: 'priority', required: false },
-      { label: 'Status', value: 'status', required: false },
-      { label: 'Category', value: 'category', required: false },
-      { label: 'Assigned To', value: 'assigned_to', required: false }
-    ],
-
-    associations: [
-      { label: 'Name', value: 'name', required: true },
-      { label: 'Association Name', value: 'name', required: true },
-      { label: 'Code', value: 'code', required: false },
-      { label: 'Association Code', value: 'code', required: false },
-      { label: 'Address', value: 'address', required: false },
-      { label: 'City', value: 'city', required: false },
-      { label: 'State', value: 'state', required: false },
-      { label: 'ZIP Code', value: 'zip', required: false },
-      { label: 'Zip', value: 'zip', required: false },
-      { label: 'Phone', value: 'phone', required: false },
-      { label: 'Contact Email', value: 'contact_email', required: false },
-      { label: 'Property Type', value: 'property_type', required: false },
-      { label: 'Total Units', value: 'total_units', required: false }
-    ]
-  };
-
-  // Get base fields for the import type
-  let fields = baseFields[importType] || [];
-
-  // Add property type field only when actually needed
-  const needsPropertyType = shouldIncludePropertyType(importType, associationId, hasPropertyType);
-  if (needsPropertyType) {
-    const propertyTypeField: MappingOption = {
-      label: 'Property Type',
-      value: 'property_type',
-      required: true
-    };
-    // Add property type field after address fields but before optional fields
-    const insertIndex = fields.findIndex(f => ['unit_number', 'account_number', 'city'].includes(f.value));
-    if (insertIndex > 0) {
-      fields.splice(insertIndex, 0, propertyTypeField);
-    } else {
-      fields.push(propertyTypeField);
-    }
-  }
-
-  // Add common association fields for "All Associations" imports
-  if (associationId === 'all' && importType !== 'associations') {
-    fields = [...commonFields, ...fields];
-  }
-
-  return fields;
-}
-
-function shouldIncludePropertyType(importType: string, associationId: string, hasPropertyType: boolean): boolean {
-  // Don't require property type for non-property related imports
-  if (!['properties', 'properties_owners'].includes(importType)) {
-    return false;
-  }
-
-  // Always require for "All Associations" imports
-  if (associationId === 'all') {
-    return true;
-  }
-
-  // For specific associations, only require if they don't have a default property type
-  return !hasPropertyType;
 }

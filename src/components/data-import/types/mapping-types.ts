@@ -1,7 +1,7 @@
-
 export interface MappingOption {
   label: string;
   value: string;
+  required?: boolean;
 }
 
 export interface ValidationSummary {
