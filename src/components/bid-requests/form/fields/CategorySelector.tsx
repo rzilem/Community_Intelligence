@@ -4,7 +4,7 @@ import { UseFormReturn } from 'react-hook-form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { BidRequestFormData } from '../../types/bid-request-form-types';
-import { BID_REQUEST_CATEGORIES } from '../../constants/bid-request-constants';
+import { CATEGORY_MAPPINGS } from '@/constants/category-mappings';
 
 interface CategorySelectorProps {
   form: UseFormReturn<BidRequestFormData>;
@@ -25,9 +25,9 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({ form }) => {
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {BID_REQUEST_CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category.toLowerCase()}>
-                  {category}
+              {CATEGORY_MAPPINGS.map((mapping) => (
+                <SelectItem key={mapping.bidRequestCategory} value={mapping.bidRequestCategory}>
+                  {mapping.displayName}
                 </SelectItem>
               ))}
             </SelectContent>
