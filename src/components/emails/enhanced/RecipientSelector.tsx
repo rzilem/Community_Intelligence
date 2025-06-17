@@ -25,8 +25,8 @@ export const RecipientSelector: React.FC<RecipientSelectorProps> = ({
   const { leads = [], isLoading } = useLeads();
 
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = lead.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         lead.contact_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         lead.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || lead.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -41,15 +41,15 @@ export const RecipientSelector: React.FC<RecipientSelectorProps> = ({
 
   const handleSelectAll = () => {
     const allEmails = filteredLeads
-      .filter(lead => lead.contact_email)
-      .map(lead => lead.contact_email!);
+      .filter(lead => lead.email)
+      .map(lead => lead.email!);
     onRecipientsChange([...new Set([...selectedRecipients, ...allEmails])]);
   };
 
   const handleDeselectAll = () => {
     const filteredEmails = filteredLeads
-      .filter(lead => lead.contact_email)
-      .map(lead => lead.contact_email!);
+      .filter(lead => lead.email)
+      .map(lead => lead.email!);
     onRecipientsChange(selectedRecipients.filter(email => !filteredEmails.includes(email)));
   };
 
@@ -130,19 +130,19 @@ export const RecipientSelector: React.FC<RecipientSelectorProps> = ({
                 ) : (
                   <div className="space-y-0">
                     {filteredLeads.map(lead => (
-                      lead.contact_email && (
+                      lead.email && (
                         <div
                           key={lead.id}
                           className="flex items-center justify-between p-3 border-b hover:bg-muted/50"
                         >
                           <div className="flex items-center space-x-3">
                             <Checkbox
-                              checked={selectedRecipients.includes(lead.contact_email)}
-                              onCheckedChange={() => handleLeadToggle(lead.contact_email!)}
+                              checked={selectedRecipients.includes(lead.email)}
+                              onCheckedChange={() => handleLeadToggle(lead.email!)}
                             />
                             <div>
-                              <div className="font-medium">{lead.contact_name}</div>
-                              <div className="text-sm text-muted-foreground">{lead.contact_email}</div>
+                              <div className="font-medium">{lead.name}</div>
+                              <div className="text-sm text-muted-foreground">{lead.email}</div>
                             </div>
                           </div>
                           <Badge variant="outline">{lead.status}</Badge>
