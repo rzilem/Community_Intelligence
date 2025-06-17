@@ -91,12 +91,14 @@ const DataImportExport: React.FC = () => {
 
       {showMappingModal && (
         <ImportDataMappingModal
+          open={showMappingModal}
+          onOpenChange={setShowMappingModal}
           importType={importType}
           fileData={importData}
           associationId={selectedAssociationId}
-          validationResults={validationResults || undefined}
-          onClose={() => setShowMappingModal(false)}
-          onConfirm={importDataWithMapping}
+          validationResults={validationResults}
+          onConfirmMapping={importDataWithMapping}
+          isImporting={isImporting}
         />
       )}
     </PageTemplate>
