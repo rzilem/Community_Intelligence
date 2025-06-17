@@ -79,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({
           <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
           
           {/* Inline Global Search - Desktop */}
-          <div className="hidden md:block flex-1 max-w-md">
+          <div className="hidden md:block flex-1 max-w-2xl">
             <InlineGlobalSearch />
           </div>
         </div>
@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({
           <QuickActions />
           
           {/* Inline Global Search - Mobile */}
-          <div className="md:hidden flex-1 max-w-xs">
+          <div className="md:hidden flex-1 max-w-sm">
             <InlineGlobalSearch />
           </div>
           

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Clock, FileText, Users, Home, DollarSign, Zap, AlertCircle } from 'lucide-react';
@@ -102,12 +101,12 @@ const InlineGlobalSearch: React.FC = () => {
 
   const getTypeIcon = (type: string) => {
     const icons = {
-      association: <Home className="h-4 w-4" />,
-      request: <FileText className="h-4 w-4" />,
-      lead: <Users className="h-4 w-4" />,
-      invoice: <DollarSign className="h-4 w-4" />,
+      association: <Home className="h-5 w-5" />,
+      request: <FileText className="h-5 w-5" />,
+      lead: <Users className="h-5 w-5" />,
+      invoice: <DollarSign className="h-5 w-5" />,
     };
-    return icons[type as keyof typeof icons] || <FileText className="h-4 w-4" />;
+    return icons[type as keyof typeof icons] || <FileText className="h-5 w-5" />;
   };
 
   const getTypeColor = (type: string) => {
@@ -137,50 +136,50 @@ const InlineGlobalSearch: React.FC = () => {
   return (
     <div className="relative w-full">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           ref={inputRef}
           type="text"
           placeholder="Search anything..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="h-9 w-full bg-background/60 backdrop-blur-sm border-hoa-blue text-sm pl-10 pr-4"
+          className="h-12 w-full bg-background/60 backdrop-blur-sm border-hoa-blue text-base pl-12 pr-4"
         />
       </div>
 
       {shouldShowDropdown && (
         <div 
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-md shadow-lg z-50 max-h-[600px] overflow-y-auto"
         >
           {isLoading && (
-            <div className="flex items-center justify-center py-6">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center gap-3 text-base text-muted-foreground">
+                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
                 Searching...
               </div>
             </div>
           )}
 
           {error && (
-            <div className="flex items-center justify-center py-6">
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center justify-center py-8">
+              <div className="flex items-center gap-3 text-base text-destructive">
+                <AlertCircle className="h-5 w-5" />
                 Search failed. Please try again.
               </div>
             </div>
           )}
 
           {!search && recentSearches.length > 0 && (
-            <div className="p-2">
-              <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Recent Searches</div>
+            <div className="p-4">
+              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">Recent Searches</div>
               {recentSearches.map((recent, index) => (
                 <div 
                   key={index} 
-                  className="flex items-center gap-2 px-2 py-2 hover:bg-accent rounded-sm cursor-pointer text-sm"
+                  className="flex items-center gap-3 px-3 py-3 hover:bg-accent rounded-sm cursor-pointer text-base"
                   onClick={() => setSearch(recent)}
                 >
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                   {recent}
                 </div>
               ))}
@@ -188,32 +187,32 @@ const InlineGlobalSearch: React.FC = () => {
           )}
 
           {!search && (
-            <div className="p-2">
-              <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Search Tips</div>
-              <div className="flex items-center gap-2 text-muted-foreground px-2 py-1 text-sm">
-                <Zap className="h-4 w-4" />
+            <div className="p-4">
+              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">Search Tips</div>
+              <div className="flex items-center gap-3 text-muted-foreground px-3 py-2 text-base">
+                <Zap className="h-5 w-5" />
                 Use "type:invoice" to search only invoices
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground px-2 py-1 text-sm">
-                <Zap className="h-4 w-4" />
+              <div className="flex items-center gap-3 text-muted-foreground px-3 py-2 text-base">
+                <Zap className="h-5 w-5" />
                 Use "after:2024-01-01" to filter by date
               </div>
             </div>
           )}
 
           {search && results.length === 0 && !isLoading && !error && (
-            <div className="p-4 text-center">
-              <div className="text-sm text-muted-foreground">
+            <div className="p-6 text-center">
+              <div className="text-base text-muted-foreground">
                 No results found for "{search}".
                 {suggestions && suggestions.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-muted-foreground">Did you mean:</p>
+                  <div className="mt-3">
+                    <p className="text-base text-muted-foreground">Did you mean:</p>
                     {suggestions.map((suggestion, index) => (
                       <Button 
                         key={index}
                         variant="ghost" 
                         size="sm"
-                        className="mt-1 mr-2"
+                        className="mt-2 mr-2"
                         onClick={() => setSearch(suggestion)}
                       >
                         {suggestion}
@@ -226,32 +225,32 @@ const InlineGlobalSearch: React.FC = () => {
           )}
           
           {Object.entries(groupedResults).map(([type, items]) => (
-            <div key={type} className="p-2">
-              <div className="text-xs font-medium text-muted-foreground mb-2 px-2">
+            <div key={type} className="p-4">
+              <div className="text-sm font-medium text-muted-foreground mb-3 px-2">
                 {type.charAt(0).toUpperCase() + type.slice(1)}s ({items.length})
               </div>
               {items.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => handleSelect(item.path, item.title)}
-                  className="flex items-center justify-between py-2 px-2 hover:bg-accent rounded-sm cursor-pointer"
+                  className="flex items-center justify-between py-3 px-3 hover:bg-accent rounded-sm cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     {getTypeIcon(item.type)}
                     <div>
-                      <div className="font-medium text-sm">{item.title}</div>
+                      <div className="font-medium text-base">{item.title}</div>
                       {item.subtitle && (
-                        <div className="text-xs text-muted-foreground">{item.subtitle}</div>
+                        <div className="text-sm text-muted-foreground">{item.subtitle}</div>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     {hasSearchOperators && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-sm">
                         {item.rank.toFixed(2)}
                       </Badge>
                     )}
-                    <Badge variant="secondary" className={`text-xs ${getTypeColor(item.type)}`}>
+                    <Badge variant="secondary" className={`text-sm ${getTypeColor(item.type)}`}>
                       {item.type}
                     </Badge>
                   </div>
@@ -261,9 +260,9 @@ const InlineGlobalSearch: React.FC = () => {
           ))}
 
           {search && total > 0 && (
-            <div className="px-4 py-2 text-xs text-muted-foreground border-t bg-muted/50">
+            <div className="px-6 py-3 text-sm text-muted-foreground border-t bg-muted/50">
               Showing {results.length} of {total} results for "{search}"
-              {hasSearchOperators && <Badge variant="outline" className="ml-2 text-xs">Advanced Search</Badge>}
+              {hasSearchOperators && <Badge variant="outline" className="ml-2 text-sm">Advanced Search</Badge>}
             </div>
           )}
         </div>
