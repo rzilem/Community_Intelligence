@@ -2,7 +2,6 @@
 import React from 'react';
 import { LogOut, Menu, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from 'react-router-dom';
-import ProfileImageUpload from '@/components/users/ProfileImageUpload';
+import CompactProfileImageUpload from '@/components/users/CompactProfileImageUpload';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 
@@ -74,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({
       <div className="flex-1 flex items-center justify-between">
         <h1 className="md:hidden font-display font-bold text-xl text-hoa-blue">Community Intelligence</h1>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 ml-auto">
           <NotificationCenter />
           <ThemeToggle />
           
@@ -86,15 +85,16 @@ const Header: React.FC<HeaderProps> = ({
                 className="gap-2 font-normal"
               >
                 {user && profile ? (
-                  <ProfileImageUpload
+                  <CompactProfileImageUpload
                     userId={user.id}
                     currentImageUrl={profile?.profile_image_url}
                     onImageUpdate={handleProfileImageUpdate}
+                    userInitials={getUserInitials()}
                   />
                 ) : (
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                  </Avatar>
+                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-sm font-medium">{getUserInitials()}</span>
+                  </div>
                 )}
                 <span className="hidden md:inline-block truncate max-w-[120px]">
                   {profile?.first_name ? 
