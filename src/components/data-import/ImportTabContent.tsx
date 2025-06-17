@@ -8,6 +8,7 @@ import DataTypeSelector from './DataTypeSelector';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
+import AssociationPropertyTypeDebugger from './AssociationPropertyTypeDebugger';
 import { ImportResult } from '@/types/import-types';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
 import { toast } from 'sonner';
@@ -60,6 +61,11 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
     <div className="space-y-6">
       {!importResults ? (
         <>
+          {/* Debug info for property types */}
+          {process.env.NODE_ENV === 'development' && (
+            <AssociationPropertyTypeDebugger />
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Import Data</CardTitle>

@@ -43,6 +43,14 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     hasPropertyType 
   } = useMappingFields(importType, fileData, associationId);
 
+  console.log('ImportDataMappingModal render:', {
+    associationId,
+    hasPropertyType,
+    associationPropertyType,
+    importType,
+    systemFields: systemFields?.length || 0
+  });
+
   const handleMappingChange = (column: string, field: string) => {
     setMappings(prev => ({
       ...prev,
@@ -58,7 +66,8 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const selectedAssociation = associations.find(a => a.id === associationId);
   const showPropertyTypeAlert = selectedAssociation && 
     !hasPropertyType && 
-    ['properties', 'properties_owners'].includes(importType);
+    ['properties', 'properties_owners'].includes(importType) &&
+    associationId !== 'all';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,6 +116,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             hasPropertyType={hasPropertyType}
             associationPropertyType={associationPropertyType}
             importType={importType}
+            associationId={associationId}
           />
 
           {/* Column Mapping */}

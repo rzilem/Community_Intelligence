@@ -13,28 +13,33 @@ export function useAssociationPropertyType(associationId: string) {
       setError(null);
       
       if (!associationId || associationId === 'all') {
+        console.log('useAssociationPropertyType: No associationId or "all" selected, setting to null');
         setAssociationPropertyType(null);
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
+      console.log('useAssociationPropertyType: Fetching property type for association:', associationId);
+      
       try {
         const { data, error } = await supabase
           .from('associations')
-          .select('property_type')
+          .select('property_type, name')
           .eq('id', associationId)
           .single();
 
         if (error) {
-          console.error('Error fetching association property type:', error);
+          console.error('useAssociationPropertyType: Error fetching association property type:', error);
           setError(error.message);
           setAssociationPropertyType(null);
         } else {
+          console.log('useAssociationPropertyType: Association data:', data);
+          console.log('useAssociationPropertyType: Property type found:', data?.property_type);
           setAssociationPropertyType(data?.property_type || null);
         }
       } catch (error) {
-        console.error('Error in fetchAssociationPropertyType:', error);
+        console.error('useAssociationPropertyType: Error in fetchAssociationPropertyType:', error);
         setError(error instanceof Error ? error.message : 'Unknown error');
         setAssociationPropertyType(null);
       } finally {
@@ -45,10 +50,20 @@ export function useAssociationPropertyType(associationId: string) {
     fetchAssociationPropertyType();
   }, [associationId]);
 
+  const hasPropertyType = !!associationPropertyType;
+  
+  console.log('useAssociationPropertyType: Final values:', {
+    associationId,
+    associationPropertyType,
+    hasPropertyType,
+    isLoading,
+    error
+  });
+
   return {
     associationPropertyType,
     isLoading,
     error,
-    hasPropertyType: !!associationPropertyType
+    hasPropertyType
   };
 }
