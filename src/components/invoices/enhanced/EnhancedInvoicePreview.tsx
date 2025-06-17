@@ -10,7 +10,7 @@ interface EnhancedInvoicePreviewProps {
   emailContent?: string;
 }
 
-export const EnhancedInvoicePreview: React.FC<EnhancedInvoicePreviewProps> = React.memo(({
+const EnhancedInvoicePreview: React.FC<EnhancedInvoicePreviewProps> = React.memo(({
   pdfUrl,
   htmlContent,
   emailContent
@@ -35,3 +35,5 @@ export const EnhancedInvoicePreview: React.FC<EnhancedInvoicePreviewProps> = Rea
 });
 
 EnhancedInvoicePreview.displayName = 'EnhancedInvoicePreview';
+
+export default EnhancedInvoicePreview;
