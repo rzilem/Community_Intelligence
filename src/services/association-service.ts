@@ -135,68 +135,67 @@ export const updateAssociation = async (id: string, updates: Record<string, any>
 };
 
 /**
- * Check if association has dependent records
+ * Check if association has dependent records with simplified typing
  */
 const checkDependencies = async (associationId: string) => {
   console.log('Checking dependencies for association:', associationId);
   
-  // Check properties
-  const { data: properties, error: propError } = await supabase
-    .from('properties')
-    .select('id')
-    .eq('association_id', associationId)
-    .limit(1);
+  try {
+    // Use explicit typing to avoid deep instantiation issues
+    const propertiesQuery = supabase
+      .from('properties')
+      .select('id', { count: 'exact' })
+      .eq('association_id', associationId)
+      .limit(1);
     
-  if (propError) {
-    console.warn('Error checking properties:', propError);
-  }
-  
-  // Check residents
-  const { data: residents, error: resError } = await supabase
-    .from('residents')
-    .select('id')
-    .eq('association_id', associationId)
-    .limit(1);
+    const residentsQuery = supabase
+      .from('residents')
+      .select('id', { count: 'exact' })
+      .eq('association_id', associationId)
+      .limit(1);
     
-  if (resError) {
-    console.warn('Error checking residents:', resError);
-  }
-  
-  // Check assessments
-  const { data: assessments, error: assError } = await supabase
-    .from('assessments')
-    .select('id')
-    .eq('association_id', associationId)
-    .limit(1);
+    const assessmentsQuery = supabase
+      .from('assessments')
+      .select('id', { count: 'exact' })
+      .limit(1);
     
-  if (assError) {
-    console.warn('Error checking assessments:', assError);
-  }
-  
-  // Check invoices
-  const { data: invoices, error: invError } = await supabase
-    .from('invoices')
-    .select('id')
-    .eq('association_id', associationId)
-    .limit(1);
-    
-  if (invError) {
-    console.warn('Error checking invoices:', invError);
-  }
+    const invoicesQuery = supabase
+      .from('invoices')
+      .select('id', { count: 'exact' })
+      .eq('association_id', associationId)
+      .limit(1);
 
-  const hasProperties = Boolean(properties && properties.length > 0);
-  const hasResidents = Boolean(residents && residents.length > 0);
-  const hasAssessments = Boolean(assessments && assessments.length > 0);
-  const hasInvoices = Boolean(invoices && invoices.length > 0);
+    // Execute queries with explicit typing
+    const [propertiesResult, residentsResult, assessmentsResult, invoicesResult] = await Promise.all([
+      propertiesQuery,
+      residentsQuery,
+      assessmentsQuery,
+      invoicesQuery
+    ]);
 
-  console.log('Dependency check results:', {
-    hasProperties,
-    hasResidents,
-    hasAssessments,
-    hasInvoices
-  });
+    // Check for errors and extract data
+    const hasProperties = Boolean(propertiesResult.data && propertiesResult.data.length > 0);
+    const hasResidents = Boolean(residentsResult.data && residentsResult.data.length > 0);
+    const hasAssessments = Boolean(assessmentsResult.data && assessmentsResult.data.length > 0);
+    const hasInvoices = Boolean(invoicesResult.data && invoicesResult.data.length > 0);
 
-  return { hasProperties, hasResidents, hasAssessments, hasInvoices };
+    console.log('Dependency check results:', {
+      hasProperties,
+      hasResidents,
+      hasAssessments,
+      hasInvoices,
+      propertiesError: propertiesResult.error,
+      residentsError: residentsResult.error,
+      assessmentsError: assessmentsResult.error,
+      invoicesError: invoicesResult.error
+    });
+
+    return { hasProperties, hasResidents, hasAssessments, hasInvoices };
+  } catch (error) {
+    console.error('Error in checkDependencies:', error);
+    // Return false for all dependencies if there's an error checking
+    return { hasProperties: false, hasResidents: false, hasAssessments: false, hasInvoices: false };
+  }
 };
 
 /**
