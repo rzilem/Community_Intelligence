@@ -153,22 +153,30 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="flex-1 flex gap-4 min-h-0">
+        <div className="flex-1 flex gap-4 min-h-0 overflow-hidden">
           {/* Left side - Column mapping */}
-          <div className="flex-1 flex flex-col min-h-0 space-y-4">
-            <AssociationIdentifierHelper
-              isMultiAssociation={isMultiAssociation}
-              fileColumns={fileColumns || []}
-              mappings={mappings}
-            />
-            
-            {validationResults && (
-              <ValidationResultsSummary validationResults={validationResults} />
+          <div className="flex-1 flex flex-col min-h-0 space-y-3">
+            {/* Compact Association Helper - only show if multi-association */}
+            {isMultiAssociation && (
+              <div className="flex-shrink-0">
+                <AssociationIdentifierHelper
+                  isMultiAssociation={isMultiAssociation}
+                  fileColumns={fileColumns || []}
+                  mappings={mappings}
+                />
+              </div>
             )}
             
-            <div className="flex-1 min-h-0">
+            {/* Validation Results - compact */}
+            {validationResults && (
+              <div className="flex-shrink-0">
+                <ValidationResultsSummary validationResults={validationResults} />
+              </div>
+            )}
+            
+            {/* Main mapping area - takes remaining space */}
+            <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
-                {/* Force render ColumnMappingList even if data isn't perfect */}
                 <ColumnMappingList
                   fileColumns={fileColumns || []}
                   systemFields={systemFields || []}
@@ -182,7 +190,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           
           {/* Right side - Data preview */}
           <div className="w-1/2 flex flex-col min-h-0">
-            <h3 className="font-medium mb-2">Data Preview</h3>
+            <h3 className="font-medium mb-2 flex-shrink-0">Data Preview</h3>
             <div className="flex-1 min-h-0">
               <ScrollArea className="h-full border rounded">
                 <DataPreviewTable 
@@ -193,7 +201,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="flex justify-between">
+        <DialogFooter className="flex justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             {missingRequiredFields.length > 0 && (
               <Badge variant="destructive">

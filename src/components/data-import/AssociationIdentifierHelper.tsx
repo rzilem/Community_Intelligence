@@ -20,55 +20,50 @@ const AssociationIdentifierHelper: React.FC<AssociationIdentifierHelperProps> = 
   const associationColumns = fileColumns.filter(col => 
     col.toLowerCase().includes('association') || 
     col.toLowerCase().includes('hoa') ||
-    col.toLowerCase().includes('community')
+    col.toLowerCase().includes('community') ||
+    col.toLowerCase().includes('account')
   );
 
   const hasAssociationMapping = Object.values(mappings).includes('association_identifier');
   
   return (
-    <div className="space-y-3">
-      <Alert>
+    <div className="space-y-2">
+      {/* Main instruction - compact */}
+      <Alert className="py-2">
         <Info className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Multi-Association Import:</strong> Each row must include an association identifier. 
-          Map one of your columns to "Association Identifier" below.
+        <AlertDescription className="text-sm">
+          <strong>Multi-Association Import:</strong> Map one column to "Association Identifier" below.
         </AlertDescription>
       </Alert>
       
+      {/* Suggested columns - only show if we found some */}
       {associationColumns.length > 0 && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Detected Association Columns:</strong>
-            <div className="flex flex-wrap gap-1 mt-2">
-              {associationColumns.map(col => (
-                <Badge key={col} variant="outline" className="text-xs">
-                  {col}
-                </Badge>
-              ))}
-            </div>
-          </AlertDescription>
-        </Alert>
+        <div className="text-xs text-muted-foreground">
+          <strong>Suggested columns:</strong>
+          <div className="flex flex-wrap gap-1 mt-1">
+            {associationColumns.slice(0, 4).map(col => (
+              <Badge key={col} variant="outline" className="text-xs py-0">
+                {col}
+              </Badge>
+            ))}
+            {associationColumns.length > 4 && (
+              <Badge variant="outline" className="text-xs py-0">
+                +{associationColumns.length - 4} more
+              </Badge>
+            )}
+          </div>
+        </div>
       )}
       
+      {/* Error state - only show if no mapping yet */}
       {!hasAssociationMapping && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="py-2">
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Required:</strong> You must map a column to "Association Identifier" for multi-association imports.
-            This can be Association ID, Association Name, or Association Code.
+          <AlertDescription className="text-sm">
+            <strong>Required:</strong> Select "Association Identifier" from any column dropdown.
           </AlertDescription>
         </Alert>
       )}
-      
-      <div className="text-sm text-muted-foreground">
-        <strong>Supported identifier formats:</strong>
-        <ul className="list-disc list-inside mt-1 space-y-1">
-          <li>Association ID (UUID format)</li>
-          <li>Association Name (exact match, case-insensitive)</li>
-          <li>Association Code (exact match, case-insensitive)</li>
-        </ul>
-      </div>
     </div>
   );
 };
