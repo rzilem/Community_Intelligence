@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Clock, Home, FileText, Users, DollarSign } from 'lucide-react';
+import { Search, Home, FileText, Users, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -163,7 +163,7 @@ const InlineGlobalSearch: React.FC = () => {
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search everything... (Ctrl+K)"
+          placeholder="Search everything..."
           value={query}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
