@@ -27,7 +27,6 @@ const RecommendationsTab: React.FC<RecommendationsTabProps> = ({
       <VendorRecommendationEngine
         vendors={vendors}
         criteria={criteria}
-        onCriteriaChange={onCriteriaChange}
         onSelectVendor={handleSelectVendor}
       />
     </TabsContent>
