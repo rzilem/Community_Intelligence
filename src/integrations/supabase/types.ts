@@ -6014,6 +6014,7 @@ export type Database = {
       }
       residents: {
         Row: {
+          account_number: string | null
           client_portal_link: string | null
           created_at: string
           email: string | null
@@ -6031,6 +6032,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          account_number?: string | null
           client_portal_link?: string | null
           created_at?: string
           email?: string | null
@@ -6048,6 +6050,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          account_number?: string | null
           client_portal_link?: string | null
           created_at?: string
           email?: string | null
@@ -8024,6 +8027,10 @@ export type Database = {
       delete_totp_secret: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      generate_account_number: {
+        Args: { p_association_id: string; p_prefix?: string }
+        Returns: string
       }
       generate_order_number: {
         Args: Record<PropertyKey, never>

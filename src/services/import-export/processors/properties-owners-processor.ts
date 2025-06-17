@@ -13,24 +13,31 @@ export const propertiesOwnersProcessor = {
     const details: Array<{ status: 'success' | 'error' | 'warning'; message: string }> = [];
 
     try {
-      // First, process all properties
+      // First, process all properties with account numbers
       const propertyData = processedData.map(row => {
+        // Use existing account number from CSV or generate new one
+        const accountNumber = row.account_number || row['Account #'] || null;
+        
         return {
-          address: row.address,
-          unit_number: row.unit_number,
-          property_type: row.property_type || 'residential', // Default to residential if not specified
-          city: row.city,
-          state: row.state,
-          zip: row.zip,
+          address: row.address || row['Property Address'] || row['Address'],
+          unit_number: row.unit_number || row['Unit No'] || null,
+          property_type: row.property_type || 'residential',
+          city: row.city || row['City'],
+          state: row.state || row['State'],
+          zip: row.zip || row['Zip'],
           square_feet: row.square_feet,
           bedrooms: row.bedrooms,
           bathrooms: row.bathrooms,
-          association_id: associationId
+          association_id: associationId,
+          account_number: accountNumber,
+          homeowner_id: row.homeowner_id || row['Homeowner ID'] || null
         };
       });
 
-      // Check if we have valid property data
-      if (!propertyData.length || !propertyData[0].address) {
+      // Filter out invalid property data
+      const validPropertyData = propertyData.filter(prop => prop.address);
+      
+      if (validPropertyData.length === 0) {
         details.push({
           status: 'error',
           message: 'No valid property data found in the import file'
@@ -52,20 +59,43 @@ export const propertiesOwnersProcessor = {
         };
       }
       
-      // Process properties in batches
+      // Process properties in batches and generate account numbers as needed
       const propertyBatchSize = 25;
       let propertySuccessCount = 0;
       const insertedProperties = [];
       
-      for (let i = 0; i < propertyData.length; i += propertyBatchSize) {
-        const batch = propertyData.slice(i, i + propertyBatchSize);
-        console.log(`Inserting property batch ${Math.floor(i/propertyBatchSize) + 1} (${batch.length} records)`);
+      for (let i = 0; i < validPropertyData.length; i += propertyBatchSize) {
+        const batch = validPropertyData.slice(i, i + propertyBatchSize);
+        console.log(`Processing property batch ${Math.floor(i/propertyBatchSize) + 1} (${batch.length} records)`);
+        
+        // Generate account numbers for properties that don't have them
+        for (const property of batch) {
+          if (!property.account_number) {
+            try {
+              const { data: generatedAccountNumber, error } = await supabase
+                .rpc('generate_account_number', {
+                  p_association_id: associationId,
+                  p_prefix: 'ACC'
+                });
+              
+              if (error) {
+                console.error('Error generating account number:', error);
+                property.account_number = `ACC${Date.now()}${Math.floor(Math.random() * 1000)}`;
+              } else {
+                property.account_number = generatedAccountNumber;
+              }
+            } catch (err) {
+              console.error('Error calling generate_account_number function:', err);
+              property.account_number = `ACC${Date.now()}${Math.floor(Math.random() * 1000)}`;
+            }
+          }
+        }
         
         try {
           const { data: batchResult, error: propertyError } = await supabase
             .from('properties')
             .insert(batch)
-            .select('id, address, unit_number');
+            .select('id, address, unit_number, account_number');
             
           if (propertyError) {
             console.error('Error importing property batch:', propertyError);
@@ -123,28 +153,51 @@ export const propertiesOwnersProcessor = {
         };
       }
       
-      // Now prepare owner data with the property IDs
+      // Now prepare owner data with the property IDs, handling multiple owners per property
       const ownerData = [];
       for (let i = 0; i < processedData.length; i++) {
         const matchingProperty = i < insertedProperties.length ? insertedProperties[i] : null;
         
         if (matchingProperty) {
           const row = processedData[i];
-          // Only add owner if first name or last name exists
-          if (row.first_name || row.last_name) {
-            // Combine first_name and last_name into name field since residents table has name, not first_name/last_name
-            const name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+          
+          // Primary owner
+          const firstName = row.first_name || row['First Name'];
+          const lastName = row.last_name || row['Last Name'];
+          
+          if (firstName || lastName) {
+            const name = `${firstName || ''} ${lastName || ''}`.trim();
             
             ownerData.push({
               property_id: matchingProperty.id,
               resident_type: 'owner',
-              name: name, // Use combined name format
-              email: row.email,
-              phone: row.phone,
-              move_in_date: row.move_in_date,
-              is_primary: row.is_primary === 'true' || row.is_primary === true,
-              emergency_contact: row.emergency_contact
-              // Intentionally omitting first_name, last_name, and association_id
+              name: name,
+              email: row.email || row['Email'],
+              phone: row.phone || row['Phone'],
+              move_in_date: row.move_in_date || row['Settled Date'],
+              is_primary: true,
+              emergency_contact: row.emergency_contact,
+              account_number: matchingProperty.account_number
+            });
+          }
+          
+          // Second owner/co-owner
+          const secondFirstName = row.second_owner_first_name || row['Second Owner First Name'];
+          const secondLastName = row.second_owner_last_name || row['Second Owner Last Name'];
+          
+          if (secondFirstName || secondLastName) {
+            const secondName = `${secondFirstName || ''} ${secondLastName || ''}`.trim();
+            
+            ownerData.push({
+              property_id: matchingProperty.id,
+              resident_type: 'owner',
+              name: secondName,
+              email: row.email || row['Email'], // Use same email if no separate email provided
+              phone: row.phone || row['Phone'], // Use same phone if no separate phone provided
+              move_in_date: row.move_in_date || row['Settled Date'],
+              is_primary: false,
+              emergency_contact: row.emergency_contact,
+              account_number: matchingProperty.account_number
             });
           }
         }
@@ -191,7 +244,7 @@ export const propertiesOwnersProcessor = {
           
           // Update job status after each batch
           await jobService.updateImportJobStatus(jobId, 'processing', {
-            processed: propertyData.length + i + batch.length,
+            processed: validPropertyData.length + i + batch.length,
             succeeded: successfulPropertyImports + ownerSuccessCount,
             failed: failedImports
           });

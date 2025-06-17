@@ -1,191 +1,165 @@
 
 import { useState, useEffect } from 'react';
-import { MappingOption } from './types/mapping-types';
 
-export const useMappingFields = (
-  importType: string,
-  fileData: any[],
-  associationId: string,
-  savedMappings?: Record<string, string>
-) => {
+interface MappingOption {
+  label: string;
+  value: string;
+}
+
+export function useMappingFields(importType: string, fileData: any[], associationId: string) {
   const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [systemFields, setSystemFields] = useState<MappingOption[]>([]);
-  const [mappings, setMappings] = useState<Record<string, string>>(savedMappings || {});
+  const [mappings, setMappings] = useState<Record<string, string>>({});
   const [previewData, setPreviewData] = useState<any[]>([]);
-  
-  // Extract columns from the file data
+
   useEffect(() => {
-    if (fileData.length > 0) {
+    if (fileData && fileData.length > 0) {
+      // Extract column names from the first row
       const columns = Object.keys(fileData[0]);
       setFileColumns(columns);
       
-      // Set preview data (first 3 rows)
-      setPreviewData(fileData.slice(0, 3));
-      
-      if (!savedMappings) {
-        autoMapColumns(columns);
-      }
+      // Set preview data (first 5 rows)
+      setPreviewData(fileData.slice(0, 5));
     }
-  }, [fileData, savedMappings]);
-  
-  // Load appropriate system fields based on importType
+  }, [fileData]);
+
   useEffect(() => {
-    console.log("Loading system fields for import type:", importType);
-    switch (importType) {
-      case 'associations':
-        setSystemFields([
-          { value: 'name', label: 'Association Name' },
-          { value: 'address', label: 'Street Address' },
-          { value: 'city', label: 'City' },
-          { value: 'state', label: 'State' },
-          { value: 'zip', label: 'Zip Code' },
-          { value: 'phone', label: 'Phone Number' },
-          { value: 'contact_email', label: 'Contact Email' },
-          { value: 'property_type', label: 'Property Type' },
-          { value: 'total_units', label: 'Total Units' }
-        ]);
-        break;
-      case 'properties_owners':
-        setSystemFields([
-          { value: 'property.address', label: 'Property: Street Address' },
-          { value: 'property.unit_number', label: 'Property: Unit Number' },
-          { value: 'property.city', label: 'Property: City' },
-          { value: 'property.state', label: 'Property: State' },
-          { value: 'property.zip', label: 'Property: Zip Code' },
-          { value: 'property.square_feet', label: 'Property: Square Footage' },
-          { value: 'property.bedrooms', label: 'Property: Bedrooms' },
-          { value: 'property.bathrooms', label: 'Property: Bathrooms' },
-          { value: 'property.property_type', label: 'Property: Type' },
-          { value: 'owner.first_name', label: 'Owner: First Name' },
-          { value: 'owner.last_name', label: 'Owner: Last Name' },
-          { value: 'owner.email', label: 'Owner: Email Address' },
-          { value: 'owner.phone', label: 'Owner: Phone Number' },
-          { value: 'owner.move_in_date', label: 'Owner: Move-in Date' },
-          { value: 'owner.closing_date', label: 'Owner: Closing Date' },
-          { value: 'owner.is_primary', label: 'Owner: Is Primary Owner' },
-          { value: 'owner.emergency_contact', label: 'Owner: Emergency Contact' }
-        ]);
-        break;
-      case 'owners':
-        setSystemFields([
-          { value: 'first_name', label: 'First Name' },
-          { value: 'last_name', label: 'Last Name' },
-          { value: 'email', label: 'Email Address' },
-          { value: 'phone', label: 'Phone Number' },
-          { value: 'property_id', label: 'Property ID' },
-          { value: 'move_in_date', label: 'Move-in Date' },
-          { value: 'closing_date', label: 'Closing Date' },
-          { value: 'is_primary', label: 'Is Primary Owner' },
-          { value: 'emergency_contact', label: 'Emergency Contact' }
-        ]);
-        break;
-      case 'properties':
-        setSystemFields([
-          { value: 'address', label: 'Street Address' },
-          { value: 'unit_number', label: 'Unit Number' },
-          { value: 'city', label: 'City' },
-          { value: 'state', label: 'State' },
-          { value: 'zip', label: 'Zip Code' },
-          { value: 'square_feet', label: 'Square Footage' },
-          { value: 'bedrooms', label: 'Bedrooms' },
-          { value: 'bathrooms', label: 'Bathrooms' },
-          { value: 'property_type', label: 'Property Type' }
-        ]);
-        break;
-      case 'financial':
-        setSystemFields([
-          { value: 'property_id', label: 'Property ID' },
-          { value: 'assessment_type_id', label: 'Assessment Type ID' },
-          { value: 'amount', label: 'Amount' },
-          { value: 'due_date', label: 'Due Date' },
-          { value: 'paid', label: 'Paid Status' },
-          { value: 'payment_date', label: 'Payment Date' },
-          { value: 'late_fee', label: 'Late Fee Amount' }
-        ]);
-        break;
-      case 'compliance':
-        setSystemFields([
-          { value: 'property_id', label: 'Property ID' },
-          { value: 'resident_id', label: 'Resident ID' },
-          { value: 'violation_type', label: 'Violation Type' },
-          { value: 'description', label: 'Description' },
-          { value: 'status', label: 'Status' },
-          { value: 'due_date', label: 'Due Date' },
-          { value: 'fine_amount', label: 'Fine Amount' },
-          { value: 'resolved_date', label: 'Resolved Date' }
-        ]);
-        break;
-      case 'maintenance':
-        setSystemFields([
-          { value: 'property_id', label: 'Property ID' },
-          { value: 'title', label: 'Title' },
-          { value: 'description', label: 'Description' },
-          { value: 'priority', label: 'Priority' },
-          { value: 'status', label: 'Status' },
-          { value: 'assigned_to', label: 'Assigned To' },
-          { value: 'resolved_date', label: 'Resolved Date' }
-        ]);
-        break;
-      default:
-        setSystemFields([]);
-    }
-  }, [importType]);
-  
-  // Auto-map columns that have similar names to system fields
-  const autoMapColumns = (columns: string[]) => {
-    const initialMappings: Record<string, string> = {};
-    columns.forEach(column => {
-      const lowerColumn = column.toLowerCase();
-      
-      // Special handling for co_owner_is_primary
-      if (lowerColumn === 'co_owner_is_primary') {
-        const primaryField = systemFields.find(f => 
-          f.value === 'is_primary' || 
-          f.value === 'owner.is_primary'
-        );
-        if (primaryField) {
-          initialMappings[column] = primaryField.value;
-        }
-      }
-      // Handle common mappings directly based on the available system fields
-      else if (lowerColumn === 'city') {
-        // Check if we have city or property.city in our system fields
-        const cityField = systemFields.find(f => f.value === 'city' || f.value === 'property.city');
-        if (cityField) {
-          initialMappings[column] = cityField.value;
-        }
-      } 
-      else if (lowerColumn === 'state') {
-        const stateField = systemFields.find(f => f.value === 'state' || f.value === 'property.state');
-        if (stateField) {
-          initialMappings[column] = stateField.value;
-        }
-      } 
-      else if (lowerColumn === 'zip' || lowerColumn === 'zipcode' || lowerColumn === 'postal_code') {
-        const zipField = systemFields.find(f => f.value === 'zip' || f.value === 'property.zip');
-        if (zipField) {
-          initialMappings[column] = zipField.value;
-        }
-      } 
-      else {
-        // Try to find a match for other fields based on the actual field values
-        const match = systemFields.find(field => {
-          const fieldKey = field.value.split('.').pop() || field.value;
-          return lowerColumn.includes(fieldKey) || 
-                 field.label.toLowerCase().includes(lowerColumn) ||
-                 lowerColumn.replace(/[^a-z0-9]/gi, '') === fieldKey.replace(/[^a-z0-9]/gi, '') ||
-                 lowerColumn.replace(/[^a-z0-9]/gi, '') === field.label.toLowerCase().replace(/[^a-z0-9]/gi, '');
-        });
+    // Define system fields based on import type
+    const getSystemFields = (type: string): MappingOption[] => {
+      switch (type) {
+        case 'properties':
+          return [
+            { label: 'Property Address', value: 'address' },
+            { label: 'Unit Number', value: 'unit_number' },
+            { label: 'Property Type', value: 'property_type' },
+            { label: 'City', value: 'city' },
+            { label: 'State', value: 'state' },
+            { label: 'ZIP Code', value: 'zip' },
+            { label: 'Square Feet', value: 'square_feet' },
+            { label: 'Bedrooms', value: 'bedrooms' },
+            { label: 'Bathrooms', value: 'bathrooms' },
+            { label: 'Account Number', value: 'account_number' },
+            { label: 'Homeowner ID', value: 'homeowner_id' }
+          ];
         
-        if (match) {
-          initialMappings[column] = match.value;
-        }
+        case 'owners':
+        case 'residents':
+          return [
+            { label: 'First Name', value: 'first_name' },
+            { label: 'Last Name', value: 'last_name' },
+            { label: 'Full Name', value: 'name' },
+            { label: 'Email', value: 'email' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Property ID', value: 'property_id' },
+            { label: 'Resident Type', value: 'resident_type' },
+            { label: 'Is Primary', value: 'is_primary' },
+            { label: 'Move In Date', value: 'move_in_date' },
+            { label: 'Emergency Contact', value: 'emergency_contact' },
+            { label: 'Account Number', value: 'account_number' }
+          ];
+        
+        case 'properties_owners':
+          return [
+            // Property fields
+            { label: 'Property Address', value: 'address' },
+            { label: 'Property Address (Alt)', value: 'Property Address' },
+            { label: 'Unit Number', value: 'unit_number' },
+            { label: 'Unit Number (Alt)', value: 'Unit No' },
+            { label: 'Property Type', value: 'property_type' },
+            { label: 'City', value: 'city' },
+            { label: 'City (Alt)', value: 'City' },
+            { label: 'State', value: 'state' },
+            { label: 'State (Alt)', value: 'State' },
+            { label: 'ZIP Code', value: 'zip' },
+            { label: 'ZIP Code (Alt)', value: 'Zip' },
+            { label: 'Square Feet', value: 'square_feet' },
+            { label: 'Bedrooms', value: 'bedrooms' },
+            { label: 'Bathrooms', value: 'bathrooms' },
+            { label: 'Account Number', value: 'account_number' },
+            { label: 'Account Number (Alt)', value: 'Account #' },
+            { label: 'Homeowner ID', value: 'homeowner_id' },
+            { label: 'Homeowner ID (Alt)', value: 'Homeowner ID' },
+            
+            // Primary owner fields
+            { label: 'First Name', value: 'first_name' },
+            { label: 'First Name (Alt)', value: 'First Name' },
+            { label: 'Last Name', value: 'last_name' },
+            { label: 'Last Name (Alt)', value: 'Last Name' },
+            { label: 'Email', value: 'email' },
+            { label: 'Email (Alt)', value: 'Email' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Phone (Alt)', value: 'Phone' },
+            { label: 'Move In Date', value: 'move_in_date' },
+            { label: 'Settled Date', value: 'Settled Date' },
+            { label: 'Emergency Contact', value: 'emergency_contact' },
+            
+            // Second owner fields
+            { label: 'Second Owner First Name', value: 'second_owner_first_name' },
+            { label: 'Second Owner First Name (Alt)', value: 'Second Owner First Name' },
+            { label: 'Second Owner Last Name', value: 'second_owner_last_name' },
+            { label: 'Second Owner Last Name (Alt)', value: 'Second Owner Last Name' },
+            
+            // Additional fields from CSV
+            { label: 'Business Name', value: 'Business Name' },
+            { label: 'Deed Name', value: 'Deed Name' },
+            { label: 'Mailing Address', value: 'Mailing Address' },
+            { label: 'Lot Number', value: 'Lot No' },
+            { label: 'Block Number', value: 'Block No' },
+            { label: 'Phase', value: 'Phase' },
+            { label: 'Village', value: 'Village' },
+            { label: 'Legal Description', value: 'Legal Description' },
+            { label: 'Parcel ID', value: 'Parcel ID' },
+            { label: 'Balance', value: 'Balance' },
+            { label: 'Collection Status', value: 'Collection Status' }
+          ];
+        
+        case 'financial':
+          return [
+            { label: 'Property ID', value: 'property_id' },
+            { label: 'Amount', value: 'amount' },
+            { label: 'Due Date', value: 'due_date' },
+            { label: 'Description', value: 'description' },
+            { label: 'Account Number', value: 'account_number' }
+          ];
+        
+        case 'compliance':
+          return [
+            { label: 'Property ID', value: 'property_id' },
+            { label: 'Violation Type', value: 'violation_type' },
+            { label: 'Description', value: 'description' },
+            { label: 'Fine Amount', value: 'fine_amount' },
+            { label: 'Due Date', value: 'due_date' },
+            { label: 'Account Number', value: 'account_number' }
+          ];
+        
+        case 'maintenance':
+          return [
+            { label: 'Property ID', value: 'property_id' },
+            { label: 'Title', value: 'title' },
+            { label: 'Description', value: 'description' },
+            { label: 'Priority', value: 'priority' },
+            { label: 'Status', value: 'status' },
+            { label: 'Account Number', value: 'account_number' }
+          ];
+        
+        case 'associations':
+          return [
+            { label: 'Association Name', value: 'name' },
+            { label: 'Address', value: 'address' },
+            { label: 'City', value: 'city' },
+            { label: 'State', value: 'state' },
+            { label: 'ZIP Code', value: 'zip' },
+            { label: 'Phone', value: 'phone' },
+            { label: 'Contact Email', value: 'contact_email' }
+          ];
+        
+        default:
+          return [];
       }
-    });
-    
-    console.log("Auto-mapped fields:", initialMappings);
-    setMappings(initialMappings);
-  };
+    };
+
+    setSystemFields(getSystemFields(importType));
+  }, [importType]);
 
   return {
     fileColumns,
@@ -194,4 +168,4 @@ export const useMappingFields = (
     setMappings,
     previewData
   };
-};
+}

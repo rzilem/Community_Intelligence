@@ -1,6 +1,9 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -8,17 +11,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/date-utils';
-import { LoadingState } from '@/components/ui/loading-state';
+import { Homeowner } from '../homeowner-types';
 import HomeownerPagination from './HomeownerPagination';
 
 interface HomeownerTableProps {
   loading: boolean;
-  filteredHomeowners: any[];
+  filteredHomeowners: Homeowner[];
   visibleColumnIds: string[];
-  extractStreetAddress: (address: string | undefined) => string;
+  extractStreetAddress: (address: string) => string;
   allResidentsCount: number;
   error: string | null;
   onRetry: () => void;
@@ -41,123 +43,204 @@ const HomeownerTable: React.FC<HomeownerTableProps> = ({
   onPageChange,
   onPageSizeChange
 }) => {
-  const navigate = useNavigate();
-
   // Calculate pagination
-  const totalPages = Math.max(1, Math.ceil(filteredHomeowners.length / pageSize));
+  const totalPages = Math.ceil(filteredHomeowners.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, filteredHomeowners.length);
-  const paginatedHomeowners = filteredHomeowners.slice(startIndex, endIndex);
+  const endIndex = startIndex + pageSize;
+  const currentPageData = filteredHomeowners.slice(startIndex, endIndex);
+
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      'active': 'default',
+      'inactive': 'secondary',
+      'pending-approval': 'outline'
+    };
+    return variants[status] || 'outline';
+  };
+
+  const getTypeBadge = (type: string) => {
+    const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+      'owner': 'default',
+      'tenant': 'secondary',
+      'family-member': 'outline'
+    };
+    return variants[type] || 'outline';
+  };
+
+  const formatCurrency = (amount?: number) => {
+    if (typeof amount !== 'number') return 'N/A';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
 
   if (loading) {
-    return <LoadingState text="Loading owners..." />;
+    return (
+      <Card>
+        <CardContent className="p-6 flex flex-col items-center justify-center min-h-[400px]">
+          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+          <h3 className="text-lg font-medium">Loading homeowners...</h3>
+          <p className="text-muted-foreground">Please wait while we fetch your data</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+                onClick={onRetry}
+              >
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {visibleColumnIds.includes('name') && <TableHead>Name</TableHead>}
-              {visibleColumnIds.includes('email') && <TableHead>Email</TableHead>}
-              {visibleColumnIds.includes('propertyAddress') && <TableHead>Street Address</TableHead>}
-              {visibleColumnIds.includes('association') && <TableHead>Association</TableHead>}
-              {visibleColumnIds.includes('status') && <TableHead>Status</TableHead>}
-              {visibleColumnIds.includes('type') && <TableHead>Type</TableHead>}
-              {visibleColumnIds.includes('lastPaymentDate') && <TableHead>Last Payment Date</TableHead>}
-              {visibleColumnIds.includes('closingDate') && <TableHead>Closing Date</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedHomeowners.length === 0 ? (
+    <Card>
+      <CardContent className="p-6">
+        <div className="mb-4 text-sm text-muted-foreground">
+          Showing {Math.min(filteredHomeowners.length, pageSize)} of {filteredHomeowners.length} homeowners
+          {allResidentsCount > 0 && ` (${allResidentsCount} total in database)`}
+        </div>
+        
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={visibleColumnIds.length} className="text-center h-24 text-muted-foreground">
-                  {allResidentsCount > 0 
-                    ? "No homeowners found matching your search criteria."
-                    : "No homeowners found. Try selecting a different association or importing homeowner data."}
-                </TableCell>
+                {visibleColumnIds.includes('account') && (
+                  <TableHead>Account #</TableHead>
+                )}
+                {visibleColumnIds.includes('name') && (
+                  <TableHead>Name</TableHead>
+                )}
+                {visibleColumnIds.includes('email') && (
+                  <TableHead>Email</TableHead>
+                )}
+                {visibleColumnIds.includes('phone') && (
+                  <TableHead>Phone</TableHead>
+                )}
+                {visibleColumnIds.includes('property') && (
+                  <TableHead>Property</TableHead>
+                )}
+                {visibleColumnIds.includes('unit') && (
+                  <TableHead>Unit</TableHead>
+                )}
+                {visibleColumnIds.includes('association') && (
+                  <TableHead>Association</TableHead>
+                )}
+                {visibleColumnIds.includes('type') && (
+                  <TableHead>Type</TableHead>
+                )}
+                {visibleColumnIds.includes('status') && (
+                  <TableHead>Status</TableHead>
+                )}
+                {visibleColumnIds.includes('balance') && (
+                  <TableHead>Balance</TableHead>
+                )}
+                {visibleColumnIds.includes('moveInDate') && (
+                  <TableHead>Move In</TableHead>
+                )}
               </TableRow>
-            ) : (
-              paginatedHomeowners.map(homeowner => (
-                <TableRow key={homeowner.id} className="group">
-                  {visibleColumnIds.includes('name') && (
-                    <TableCell className="font-medium">
-                      <span 
-                        className="cursor-pointer hover:text-primary hover:underline"
-                        onClick={() => navigate(`/homeowners/${homeowner.id}`)}
-                      >
-                        {homeowner.name}
-                      </span>
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('email') && (
-                    <TableCell>{homeowner.email}</TableCell>
-                  )}
-                  {visibleColumnIds.includes('propertyAddress') && (
-                    <TableCell>
-                      <span 
-                        className="cursor-pointer hover:text-primary hover:underline"
-                        onClick={() => navigate(`/homeowners/${homeowner.id}`)}
-                      >
-                        {extractStreetAddress(homeowner.propertyAddress)}
-                      </span>
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('association') && (
-                    <TableCell className="text-muted-foreground truncate max-w-[200px]">
-                      {homeowner.associationName}
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('status') && (
-                    <TableCell>
-                      <Badge 
-                        variant={homeowner.status === 'active' ? 'default' : 'outline'} 
-                        className={homeowner.status === 'inactive' ? 'bg-gray-100 text-gray-800' : ''}
-                      >
-                        {homeowner.status === 'active' ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('type') && (
-                    <TableCell>
-                      {homeowner.type === 'owner' ? 'Owner' : 
-                       homeowner.type === 'tenant' ? 'Tenant' : 
-                       homeowner.type === 'family' ? 'Family Member' : 
-                       homeowner.type}
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('lastPaymentDate') && (
-                    <TableCell>
-                      {homeowner.lastPayment ? 
-                        formatDate(homeowner.lastPayment.date) : 
-                        '-'}
-                    </TableCell>
-                  )}
-                  {visibleColumnIds.includes('closingDate') && (
-                    <TableCell>
-                      {homeowner.closingDate ? 
-                        formatDate(homeowner.closingDate) : 
-                        '-'}
-                    </TableCell>
-                  )}
+            </TableHeader>
+            <TableBody>
+              {currentPageData.length === 0 ? (
+                <TableRow>
+                  <TableCell 
+                    colSpan={visibleColumnIds.length} 
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    No homeowners found matching your criteria
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      
-      <HomeownerPagination
-        filteredCount={paginatedHomeowners.length}
-        totalCount={allResidentsCount}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        onPageChange={onPageChange}
-        onPageSizeChange={onPageSizeChange}
-      />
-    </>
+              ) : (
+                currentPageData.map((homeowner) => (
+                  <TableRow key={homeowner.id}>
+                    {visibleColumnIds.includes('account') && (
+                      <TableCell className="font-mono text-sm">
+                        {homeowner.id}
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('name') && (
+                      <TableCell className="font-medium">
+                        {homeowner.name}
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('email') && (
+                      <TableCell>{homeowner.email}</TableCell>
+                    )}
+                    {visibleColumnIds.includes('phone') && (
+                      <TableCell>{homeowner.phone}</TableCell>
+                    )}
+                    {visibleColumnIds.includes('property') && (
+                      <TableCell>
+                        {extractStreetAddress(homeowner.propertyAddress)}
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('unit') && (
+                      <TableCell>{homeowner.unitNumber || '-'}</TableCell>
+                    )}
+                    {visibleColumnIds.includes('association') && (
+                      <TableCell>{homeowner.association}</TableCell>
+                    )}
+                    {visibleColumnIds.includes('type') && (
+                      <TableCell>
+                        <Badge variant={getTypeBadge(homeowner.type)}>
+                          {homeowner.type.replace('-', ' ')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('status') && (
+                      <TableCell>
+                        <Badge variant={getStatusBadge(homeowner.status)}>
+                          {homeowner.status.replace('-', ' ')}
+                        </Badge>
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('balance') && (
+                      <TableCell className="font-mono">
+                        {formatCurrency(homeowner.balance)}
+                      </TableCell>
+                    )}
+                    {visibleColumnIds.includes('moveInDate') && (
+                      <TableCell>
+                        {homeowner.moveInDate ? 
+                          new Date(homeowner.moveInDate).toLocaleDateString() : 
+                          '-'
+                        }
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        <HomeownerPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredHomeowners.length}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,56 +1,141 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { MappingOption } from '@/components/data-import/types/mapping-types';
-import { aiMappingService } from '@/services/import-export/ai-mapping-service';
+import { useState, useCallback } from 'react';
 
-export const useAIMappingSuggestions = (
+interface MappingOption {
+  label: string;
+  value: string;
+}
+
+interface MappingSuggestion {
+  fieldValue: string;
+  confidence: number;
+}
+
+export function useAIMappingSuggestions(
   fileColumns: string[],
   systemFields: MappingOption[],
-  sampleData: any[]
-) => {
-  const [suggestions, setSuggestions] = useState<Record<string, { fieldValue: string; confidence: number }>>({});
+  previewData: any[]
+) {
+  const [suggestions, setSuggestions] = useState<Record<string, MappingSuggestion>>({});
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Generate suggestions function
   const generateSuggestions = useCallback(() => {
-    console.log("Generating suggestions with:", fileColumns.length, "columns and", systemFields.length, "system fields");
-    
-    if (fileColumns.length === 0 || systemFields.length === 0) {
-      console.log("Missing required data for generating suggestions");
+    if (!fileColumns.length || !systemFields.length) {
       return {};
     }
-    
+
     setIsGenerating(true);
+    
     try {
-      // Use the AI mapping service to generate suggestions
-      const results = aiMappingService.generateMappingSuggestions(
-        fileColumns,
-        systemFields,
-        sampleData
-      );
+      const newSuggestions: Record<string, MappingSuggestion> = {};
       
-      console.log("Generated suggestions:", results);
-      setSuggestions(results);
-      return results;
-    } catch (error) {
-      console.error('Error generating mapping suggestions:', error);
-      return {};
+      fileColumns.forEach(column => {
+        const lowerColumn = column.toLowerCase().trim();
+        let bestMatch: MappingSuggestion | null = null;
+        
+        // Define exact matches with high confidence
+        const exactMatches: Record<string, string> = {
+          'homeowner id': 'homeowner_id',
+          'account #': 'account_number',
+          'account number': 'account_number',
+          'property address': 'address',
+          'address': 'address',
+          'unit no': 'unit_number',
+          'unit number': 'unit_number',
+          'city': 'city',
+          'state': 'state',
+          'zip': 'zip',
+          'first name': 'first_name',
+          'last name': 'last_name',
+          'second owner first name': 'second_owner_first_name',
+          'second owner last name': 'second_owner_last_name',
+          'email': 'email',
+          'phone': 'phone',
+          'settled date': 'move_in_date',
+          'balance': 'Balance',
+          'collection status': 'Collection Status',
+          'business name': 'Business Name',
+          'deed name': 'Deed Name',
+          'mailing address': 'Mailing Address',
+          'lot no': 'Lot No',
+          'block no': 'Block No',
+          'phase': 'Phase',
+          'village': 'Village',
+          'legal description': 'Legal Description',
+          'parcel id': 'Parcel ID'
+        };
+        
+        // Check for exact matches first
+        if (exactMatches[lowerColumn]) {
+          const matchingField = systemFields.find(field => 
+            field.value === exactMatches[lowerColumn] || 
+            field.label.toLowerCase() === exactMatches[lowerColumn].toLowerCase()
+          );
+          
+          if (matchingField) {
+            bestMatch = {
+              fieldValue: matchingField.value,
+              confidence: 0.95
+            };
+          }
+        }
+        
+        // If no exact match, try fuzzy matching
+        if (!bestMatch) {
+          systemFields.forEach(field => {
+            const fieldLower = field.label.toLowerCase();
+            const fieldValueLower = field.value.toLowerCase();
+            
+            let confidence = 0;
+            
+            // Exact match on label or value
+            if (fieldLower === lowerColumn || fieldValueLower === lowerColumn) {
+              confidence = 0.9;
+            }
+            // Contains match
+            else if (fieldLower.includes(lowerColumn) || lowerColumn.includes(fieldLower)) {
+              confidence = 0.7;
+            }
+            // Partial word match
+            else {
+              const columnWords = lowerColumn.split(/[\s_-]+/);
+              const fieldWords = fieldLower.split(/[\s_-]+/);
+              
+              const matchingWords = columnWords.filter(word => 
+                fieldWords.some(fieldWord => 
+                  fieldWord.includes(word) || word.includes(fieldWord)
+                )
+              );
+              
+              if (matchingWords.length > 0) {
+                confidence = (matchingWords.length / Math.max(columnWords.length, fieldWords.length)) * 0.6;
+              }
+            }
+            
+            if (confidence > (bestMatch?.confidence || 0)) {
+              bestMatch = {
+                fieldValue: field.value,
+                confidence
+              };
+            }
+          });
+        }
+        
+        if (bestMatch && bestMatch.confidence > 0.5) {
+          newSuggestions[column] = bestMatch;
+        }
+      });
+      
+      setSuggestions(newSuggestions);
+      return newSuggestions;
     } finally {
       setIsGenerating(false);
     }
-  }, [fileColumns, systemFields, sampleData]);
-
-  // Generate suggestions when component mounts or when data changes
-  useEffect(() => {
-    if (fileColumns.length > 0 && systemFields.length > 0 && sampleData.length > 0) {
-      console.log("Auto-generating suggestions based on updated data");
-      generateSuggestions();
-    }
-  }, [fileColumns, systemFields, sampleData, generateSuggestions]);
+  }, [fileColumns, systemFields]);
 
   return {
     suggestions,
     isGenerating,
     generateSuggestions
   };
-};
+}
