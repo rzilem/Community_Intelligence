@@ -39,7 +39,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     previewData
   } = useMappingFields(importType, fileData, associationId);
 
-  console.log('ImportDataMappingModal render - Debug info:', {
+  console.log('ImportDataMappingModal DEBUG:', {
     importType,
     fileDataLength: fileData?.length || 0,
     associationId,
@@ -48,11 +48,11 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     systemFieldsCount: systemFields?.length || 0,
     mappingsCount: Object.keys(mappings).length,
     fileColumns: fileColumns,
-    systemFields: systemFields?.slice(0, 3).map(f => f.label) // Show first 3 for debugging
+    systemFieldsSample: systemFields?.slice(0, 3).map(f => f.label)
   });
 
   const handleMappingChange = (column: string, field: string) => {
-    console.log(`Mapping change in modal: ${column} -> ${field}`);
+    console.log(`Mapping change: ${column} -> ${field}`);
     setMappings(prev => ({
       ...prev,
       [column]: field
@@ -113,23 +113,28 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const mappedFields = Object.values(mappings).filter(field => field);
   const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
 
-  // Show loading state with better messaging
-  if (!fileColumns || fileColumns.length === 0 || !systemFields || systemFields.length === 0) {
-    console.log('ImportDataMappingModal: Showing loading state');
+  // Force render if we have basic data
+  const hasBasicData = fileData && fileData.length > 0;
+  
+  console.log('ImportDataMappingModal RENDER CHECK:', {
+    hasBasicData,
+    fileColumnsReady: fileColumns?.length > 0,
+    systemFieldsReady: systemFields?.length > 0,
+    shouldShowInterface: hasBasicData
+  });
+
+  if (!hasBasicData) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Loading Mapping Interface...</DialogTitle>
+            <DialogTitle>Error Loading Data</DialogTitle>
           </DialogHeader>
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-2">
-              <p>Preparing file data for mapping...</p>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>File data rows: {fileData?.length || 0}</p>
-                <p>File columns: {fileColumns?.length || 0}</p>
-                <p>System fields: {systemFields?.length || 0}</p>
-                <p>Import type: {importType}</p>
+              <p>No file data available for mapping.</p>
+              <div className="text-sm text-muted-foreground">
+                File data rows: {fileData?.length || 0}
               </div>
             </div>
           </div>
@@ -137,8 +142,6 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
       </Dialog>
     );
   }
-
-  console.log('ImportDataMappingModal: Rendering full interface');
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -155,7 +158,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           <div className="flex-1 flex flex-col min-h-0 space-y-4">
             <AssociationIdentifierHelper
               isMultiAssociation={isMultiAssociation}
-              fileColumns={fileColumns}
+              fileColumns={fileColumns || []}
               mappings={mappings}
             />
             
@@ -165,12 +168,13 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             
             <div className="flex-1 min-h-0">
               <ScrollArea className="h-full">
+                {/* Always render ColumnMappingList if we have file data */}
                 <ColumnMappingList
-                  fileColumns={fileColumns}
-                  systemFields={systemFields}
+                  fileColumns={fileColumns || []}
+                  systemFields={systemFields || []}
                   mappings={mappings}
                   onMappingChange={handleMappingChange}
-                  previewData={previewData}
+                  previewData={previewData || []}
                 />
               </ScrollArea>
             </div>

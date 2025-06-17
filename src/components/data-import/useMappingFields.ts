@@ -22,7 +22,11 @@ export function useMappingFields(importType: string, fileData: any[], associatio
     if (fileData && fileData.length > 0) {
       // Extract column names from the first row
       const firstRow = fileData[0];
-      const columns = Object.keys(firstRow);
+      let columns: string[] = [];
+      
+      if (firstRow && typeof firstRow === 'object') {
+        columns = Object.keys(firstRow);
+      }
       
       console.log('useMappingFields: Extracted columns:', columns);
       setFileColumns(columns);

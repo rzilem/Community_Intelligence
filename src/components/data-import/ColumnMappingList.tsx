@@ -30,15 +30,13 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     generateSuggestions 
   } = useAIMappingSuggestions(fileColumns, systemFields, previewData);
 
-  console.log('ColumnMappingList DEBUG:', {
+  console.log('ColumnMappingList RENDER:', {
     fileColumns,
     fileColumnsLength: fileColumns?.length,
     systemFields,
     systemFieldsLength: systemFields?.length,
     mappings,
-    previewDataLength: previewData?.length,
-    hasFileColumns: Boolean(fileColumns && fileColumns.length > 0),
-    hasSystemFields: Boolean(systemFields && systemFields.length > 0)
+    previewDataLength: previewData?.length
   });
 
   // Generate suggestions when component mounts and we have data
@@ -92,20 +90,17 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }
   };
 
-  // Debug validation of props
-  const hasValidFileColumns = Array.isArray(fileColumns) && fileColumns.length > 0;
-  const hasValidSystemFields = Array.isArray(systemFields) && systemFields.length > 0;
+  // Always render the interface if we have any data, even if incomplete
+  const canRender = fileColumns && Array.isArray(fileColumns) && fileColumns.length > 0;
+  const hasSystemFields = systemFields && Array.isArray(systemFields) && systemFields.length > 0;
 
-  console.log('Validation checks:', {
-    hasValidFileColumns,
-    hasValidSystemFields,
-    fileColumnsType: typeof fileColumns,
-    systemFieldsType: typeof systemFields
+  console.log('ColumnMappingList RENDER DECISION:', {
+    canRender,
+    hasSystemFields,
+    willRender: canRender
   });
 
-  // Early return if no file columns
-  if (!hasValidFileColumns) {
-    console.log('ColumnMappingList: No valid file columns available:', fileColumns);
+  if (!canRender) {
     return (
       <div className="space-y-4">
         <div className="text-center text-muted-foreground p-8 border rounded-lg">
@@ -122,27 +117,6 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     );
   }
 
-  // Early return if no system fields
-  if (!hasValidSystemFields) {
-    console.log('ColumnMappingList: No valid system fields available:', systemFields);
-    return (
-      <div className="space-y-4">
-        <div className="text-center text-muted-foreground p-8 border rounded-lg">
-          <p>No system fields available.</p>
-          <p className="text-sm mt-2">System fields are still loading...</p>
-          <div className="mt-4 text-xs bg-gray-100 p-2 rounded">
-            <strong>Debug Info:</strong>
-            <br />System fields: {JSON.stringify(systemFields)}
-            <br />Type: {typeof systemFields}
-            <br />Is Array: {Array.isArray(systemFields)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  console.log('ColumnMappingList: Rendering mapping interface with', fileColumns.length, 'columns and', systemFields.length, 'system fields');
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -151,7 +125,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
           variant="outline" 
           size="sm" 
           onClick={handleAutoMapColumns}
-          disabled={isGenerating}
+          disabled={isGenerating || !hasSystemFields}
           className="flex items-center gap-1"
         >
           <Sparkles className="h-4 w-4" />
@@ -166,7 +140,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
             <ColumnMappingField
               key={`column-${column}-${index}`}
               column={column}
-              systemFields={systemFields}
+              systemFields={hasSystemFields ? systemFields : []}
               selectedValue={mappings[column] || ''}
               onMappingChange={(col, field) => handleMappingChange(col, field)}
               isOpen={!!openState[column]}
@@ -180,6 +154,11 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
       
       <div className="text-xs text-muted-foreground mt-2">
         Found {fileColumns.length} columns in your file. Select a system field for each column you want to import.
+        {!hasSystemFields && (
+          <div className="text-amber-600 mt-1">
+            ⚠️ System fields are still loading...
+          </div>
+        )}
       </div>
       
       {/* Debug information */}
@@ -187,7 +166,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         <summary className="text-xs text-gray-500 cursor-pointer">Debug Information</summary>
         <div className="mt-2 text-xs bg-gray-50 p-3 rounded border space-y-2">
           <div><strong>File Columns ({fileColumns.length}):</strong> {fileColumns.join(', ')}</div>
-          <div><strong>System Fields ({systemFields.length}):</strong> {systemFields.slice(0, 5).map(f => f.label).join(', ')}...</div>
+          <div><strong>System Fields ({systemFields?.length || 0}):</strong> {systemFields?.slice(0, 5).map(f => f.label).join(', ') || 'Loading...'}...</div>
           <div><strong>Current Mappings:</strong> {JSON.stringify(mappings, null, 2)}</div>
         </div>
       </details>

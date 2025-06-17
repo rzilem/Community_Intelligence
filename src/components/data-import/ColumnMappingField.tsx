@@ -6,7 +6,7 @@ import {
   PopoverContent
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown, Sparkles } from 'lucide-react';
+import { Check, ChevronsUpDown, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MappingOption } from './types/mapping-types';
 import {
@@ -40,7 +40,8 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
   suggestion,
   confidence = 0
 }) => {
-  const selectedField = systemFields.find(field => field.value === selectedValue);
+  const selectedField = systemFields?.find(field => field.value === selectedValue);
+  const hasSystemFields = Array.isArray(systemFields) && systemFields.length > 0;
   
   console.log(`ColumnMappingField render for "${column}":`, {
     systemFieldsCount: systemFields?.length || 0,
@@ -49,7 +50,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
     suggestion,
     confidence,
     isOpen,
-    systemFieldsSample: systemFields?.slice(0, 3).map(f => f.label)
+    hasSystemFields
   });
 
   const handleSelect = (value: string) => {
@@ -64,17 +65,6 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
       onMappingChange(column, suggestion);
     }
   };
-
-  // Validation
-  if (!Array.isArray(systemFields) || systemFields.length === 0) {
-    console.error(`ColumnMappingField: Invalid systemFields for column "${column}":`, systemFields);
-    return (
-      <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-red-50">
-        <div className="text-sm font-medium text-red-600">{column}</div>
-        <div className="text-xs text-red-500">Error: No system fields available</div>
-      </div>
-    );
-  }
   
   return (
     <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-card">
@@ -82,7 +72,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
         {/* Column name section */}
         <div className="col-span-4">
           <div className="text-sm font-medium text-foreground">{column}</div>
-          {suggestion && !selectedValue && confidence >= 0.6 && (
+          {suggestion && !selectedValue && confidence >= 0.6 && hasSystemFields && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -113,11 +103,19 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 role="combobox"
                 aria-expanded={isOpen}
                 className="w-full justify-between h-10"
+                disabled={!hasSystemFields}
               >
                 <span className="truncate">
-                  {selectedValue && selectedField
-                    ? selectedField.label
-                    : "Select field..."}
+                  {!hasSystemFields ? (
+                    <div className="flex items-center">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading fields...
+                    </div>
+                  ) : selectedValue && selectedField ? (
+                    selectedField.label
+                  ) : (
+                    "Select field..."
+                  )}
                 </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
@@ -125,7 +123,9 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
             <PopoverContent className="w-[400px] p-0" align="start" sideOffset={4}>
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
-                <CommandEmpty>No field found.</CommandEmpty>
+                <CommandEmpty>
+                  {!hasSystemFields ? "Loading fields..." : "No field found."}
+                </CommandEmpty>
                 <CommandList className="max-h-[300px]">
                   <CommandGroup>
                     {/* Add option to clear selection */}
@@ -145,7 +145,7 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                     </CommandItem>
                     
                     {/* Render all system fields */}
-                    {systemFields.map((field) => (
+                    {hasSystemFields && systemFields.map((field) => (
                       <CommandItem
                         key={field.value}
                         value={field.label}
@@ -176,7 +176,8 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
       
       {/* Debug info for this field */}
       <div className="text-xs text-gray-400">
-        Fields available: {systemFields.length} | Selected: {selectedField?.label || 'None'}
+        Fields available: {systemFields?.length || 0} | Selected: {selectedField?.label || 'None'}
+        {!hasSystemFields && " | ⚠️ Loading..."}
       </div>
     </div>
   );
