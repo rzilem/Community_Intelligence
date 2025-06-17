@@ -4,12 +4,13 @@ import { getAllBidRequestCategories, getCategoryDisplayName } from '@/constants/
 // Get all available categories from the mapping system
 const allCategories = getAllBidRequestCategories();
 
+// Create the categories array with proper typing
 export const BID_REQUEST_CATEGORIES = allCategories.map(category => 
   getCategoryDisplayName(category)
-) as const;
+);
 
 // Also export the category values for form validation
-export const BID_REQUEST_CATEGORY_VALUES = allCategories as const;
+export const BID_REQUEST_CATEGORY_VALUES = allCategories;
 
 export const BID_REQUEST_PRIORITIES = [
   { value: 'low', label: 'Low' },
