@@ -1,60 +1,59 @@
-import { useState } from 'react';
+
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Invoice } from '@/types/invoice-types';
 
-interface UseEnhancedInvoiceActionsProps {
+interface UseInvoiceActionsProps {
   invoice: Invoice;
   onInvoiceUpdate?: (updatedInvoice: Invoice) => void;
 }
 
-// This hook is now deprecated - use useInvoiceActions instead
-// Keeping for backward compatibility
-export const useEnhancedInvoiceActions = ({ 
-  invoice, 
-  onInvoiceUpdate 
-}: UseEnhancedInvoiceActionsProps) => {
-  const [isActionLoading, setIsActionLoading] = useState(false);
+export const useInvoiceActions = ({ invoice, onInvoiceUpdate }: UseInvoiceActionsProps) => {
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleApprove = async () => {
-    setIsActionLoading(true);
+  const handleApprove = useCallback(async () => {
+    setIsLoading(true);
     try {
+      // TODO: Implement actual approval logic
       toast.success('Invoice approved successfully');
       onInvoiceUpdate?.({ ...invoice, status: 'approved' });
     } catch (error) {
       toast.error('Failed to approve invoice');
       console.error('Approval error:', error);
     } finally {
-      setIsActionLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [invoice, onInvoiceUpdate]);
 
-  const handleReject = async () => {
-    setIsActionLoading(true);
+  const handleReject = useCallback(async () => {
+    setIsLoading(true);
     try {
+      // TODO: Implement actual rejection logic
       toast.success('Invoice rejected');
       onInvoiceUpdate?.({ ...invoice, status: 'rejected' });
     } catch (error) {
       toast.error('Failed to reject invoice');
       console.error('Rejection error:', error);
     } finally {
-      setIsActionLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, [invoice, onInvoiceUpdate]);
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (invoice.pdf_url) {
       window.open(invoice.pdf_url, '_blank');
     } else {
       toast.error('No PDF available for download');
     }
-  };
+  }, [invoice.pdf_url]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
+    // TODO: Implement send functionality
     toast.info('Send functionality not yet implemented');
-  };
+  }, []);
 
   return {
-    isActionLoading,
+    isLoading,
     handleApprove,
     handleReject,
     handleDownload,

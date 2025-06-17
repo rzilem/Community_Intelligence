@@ -1,12 +1,13 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Invoice } from '@/types/invoice-types';
 import { EnhancedInvoiceHeader } from './invoices/enhanced/EnhancedInvoiceHeader';
-import { EnhancedInvoicePreview } from './invoices/enhanced/EnhancedInvoicePreview';
-import { EnhancedInvoiceDetails } from './invoices/enhanced/EnhancedInvoiceDetails';
-import { EnhancedInvoiceActions } from './invoices/enhanced/EnhancedInvoiceActions';
-import { useEnhancedInvoiceData } from './invoices/enhanced/hooks/useEnhancedInvoiceData';
-import { useEnhancedInvoiceActions } from './invoices/enhanced/hooks/useEnhancedInvoiceActions';
+import { InvoiceLayoutManager } from './invoices/enhanced/components/InvoiceLayoutManager';
+import { InvoiceContentSection } from './invoices/enhanced/components/InvoiceContentSection';
+import { InvoicePreviewSection } from './invoices/enhanced/components/InvoicePreviewSection';
+import { InvoiceActionsSection } from './invoices/enhanced/components/InvoiceActionsSection';
+import { useInvoiceUIState } from './invoices/enhanced/hooks/useInvoiceUIState';
+import { useInvoiceActions } from './invoices/enhanced/hooks/useInvoiceActions';
 
 interface EnhancedInvoiceUIProps {
   invoice: Invoice;
@@ -21,29 +22,15 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = React.memo(({
   onEdit,
   showPreview = true
 }) => {
-  const { invoiceMetadata, isLoading } = useEnhancedInvoiceData({ invoice });
+  const { layoutConfig } = useInvoiceUIState({ invoice, showPreview });
   
   const {
-    isActionLoading,
+    isLoading,
     handleApprove,
     handleReject,
     handleDownload,
     handleSend
-  } = useEnhancedInvoiceActions({ invoice, onInvoiceUpdate });
-
-  // Memoize the layout to prevent unnecessary re-renders
-  const layout = useMemo(() => {
-    if (showPreview) {
-      return {
-        leftColumn: "lg:col-span-2",
-        rightColumn: "lg:col-span-1"
-      };
-    }
-    return {
-      leftColumn: "lg:col-span-3",
-      rightColumn: "lg:col-span-1"
-    };
-  }, [showPreview]);
+  } = useInvoiceActions({ invoice, onInvoiceUpdate });
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -52,32 +39,25 @@ const EnhancedInvoiceUI: React.FC<EnhancedInvoiceUIProps> = React.memo(({
         onEdit={onEdit}
       />
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className={layout.leftColumn}>
-          <div className="space-y-6">
-            <EnhancedInvoiceDetails invoice={invoice} />
-            
-            {showPreview && (
-              <EnhancedInvoicePreview
-                pdfUrl={invoice.pdf_url}
-                htmlContent={invoice.html_content}
-                emailContent={invoice.email_content}
-              />
-            )}
-          </div>
-        </div>
-        
-        <div className={layout.rightColumn}>
-          <EnhancedInvoiceActions
+      <InvoiceLayoutManager
+        showPreview={layoutConfig.showPreview && layoutConfig.hasPreview}
+        leftContent={<InvoiceContentSection invoice={invoice} />}
+        rightContent={
+          <InvoiceActionsSection
             invoice={invoice}
             onApprove={handleApprove}
             onReject={handleReject}
             onDownload={handleDownload}
             onSend={handleSend}
-            isLoading={isActionLoading || isLoading}
+            isLoading={isLoading}
           />
-        </div>
-      </div>
+        }
+        previewContent={
+          layoutConfig.showPreview && layoutConfig.hasPreview ? (
+            <InvoicePreviewSection invoice={invoice} />
+          ) : undefined
+        }
+      />
     </div>
   );
 });
