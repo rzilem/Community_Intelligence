@@ -36,6 +36,10 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
 }) => {
   const [selectedType, setSelectedType] = React.useState('associations');
 
+  // Add debugging for association selection
+  console.log('ImportTabContent: Current associationId:', associationId);
+  console.log('ImportTabContent: Import file:', importFile?.name);
+
   const handleStartImport = async () => {
     if (!importFile) {
       toast.error("Please select a file to import");
@@ -46,6 +50,8 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
       toast.error("Please select an association first");
       return;
     }
+    
+    console.log('ImportTabContent: Starting import for association:', associationId);
     
     try {
       // Call the file upload handler with empty parsed data array
@@ -77,7 +83,10 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
               <div className="space-y-6">
                 <AssociationSelector
                   initialAssociationId={associationId}
-                  onAssociationChange={onAssociationChange}
+                  onAssociationChange={(id) => {
+                    console.log('ImportTabContent: Association changed to:', id);
+                    onAssociationChange(id);
+                  }}
                   label="Select Association"
                   showAllOption={true}
                 />
@@ -96,6 +105,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 <DataTypeSelector 
                   value={selectedType}
                   onChange={(type) => {
+                    console.log('ImportTabContent: Data type changed to:', type);
                     setSelectedType(type);
                     if (importFile) {
                       onFileUpload(importFile, [], type);
@@ -105,6 +115,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 
                 <FileUploader 
                   onFileSelected={(file) => {
+                    console.log('ImportTabContent: File selected:', file?.name);
                     if (file) {
                       // Just set the file, don't start import immediately
                       onFileUpload(file, [], selectedType);

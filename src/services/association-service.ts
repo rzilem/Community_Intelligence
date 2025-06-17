@@ -135,6 +135,71 @@ export const updateAssociation = async (id: string, updates: Record<string, any>
 };
 
 /**
+ * Check if association has dependent records
+ */
+const checkDependencies = async (associationId: string) => {
+  console.log('Checking dependencies for association:', associationId);
+  
+  // Check properties
+  const { data: properties, error: propError } = await supabase
+    .from('properties')
+    .select('id')
+    .eq('association_id', associationId)
+    .limit(1);
+    
+  if (propError) {
+    console.warn('Error checking properties:', propError);
+  }
+  
+  // Check residents
+  const { data: residents, error: resError } = await supabase
+    .from('residents')
+    .select('id')
+    .eq('association_id', associationId)
+    .limit(1);
+    
+  if (resError) {
+    console.warn('Error checking residents:', resError);
+  }
+  
+  // Check assessments
+  const { data: assessments, error: assError } = await supabase
+    .from('assessments')
+    .select('id')
+    .eq('association_id', associationId)
+    .limit(1);
+    
+  if (assError) {
+    console.warn('Error checking assessments:', assError);
+  }
+  
+  // Check invoices
+  const { data: invoices, error: invError } = await supabase
+    .from('invoices')
+    .select('id')
+    .eq('association_id', associationId)
+    .limit(1);
+    
+  if (invError) {
+    console.warn('Error checking invoices:', invError);
+  }
+
+  const hasProperties = Boolean(properties && properties.length > 0);
+  const hasResidents = Boolean(residents && residents.length > 0);
+  const hasAssessments = Boolean(assessments && assessments.length > 0);
+  const hasInvoices = Boolean(invoices && invoices.length > 0);
+
+  console.log('Dependency check results:', {
+    hasProperties,
+    hasResidents,
+    hasAssessments,
+    hasInvoices
+  });
+
+  return { hasProperties, hasResidents, hasAssessments, hasInvoices };
+};
+
+/**
  * Deletes an association with proper dependency checking and error handling
  */
 export const deleteAssociation = async (id: string) => {
@@ -142,35 +207,7 @@ export const deleteAssociation = async (id: string) => {
     console.log('Starting association deletion process for ID:', id);
     
     // Check for dependent records that would prevent deletion
-    // Simplify the queries to avoid deep type instantiation
-    const propertiesCheck = await supabase
-      .from('properties')
-      .select('id')
-      .eq('association_id', id)
-      .limit(1);
-      
-    const residentsCheck = await supabase
-      .from('residents')
-      .select('id')
-      .eq('association_id', id)
-      .limit(1);
-      
-    const assessmentsCheck = await supabase
-      .from('assessments')
-      .select('id')
-      .eq('association_id', id)
-      .limit(1);
-      
-    const invoicesCheck = await supabase
-      .from('invoices')
-      .select('id')
-      .eq('association_id', id)
-      .limit(1);
-
-    const hasProperties = propertiesCheck.data && propertiesCheck.data.length > 0;
-    const hasResidents = residentsCheck.data && residentsCheck.data.length > 0;
-    const hasAssessments = assessmentsCheck.data && assessmentsCheck.data.length > 0;
-    const hasInvoices = invoicesCheck.data && invoicesCheck.data.length > 0;
+    const { hasProperties, hasResidents, hasAssessments, hasInvoices } = await checkDependencies(id);
 
     if (hasProperties || hasResidents || hasAssessments || hasInvoices) {
       const dependencyTypes = [];
@@ -179,7 +216,9 @@ export const deleteAssociation = async (id: string) => {
       if (hasAssessments) dependencyTypes.push('assessments');
       if (hasInvoices) dependencyTypes.push('invoices');
       
-      throw new Error(`Cannot delete association with existing ${dependencyTypes.join(', ')}. Please remove these records first.`);
+      const errorMessage = `Cannot delete association with existing ${dependencyTypes.join(', ')}. Please remove these records first.`;
+      console.error(errorMessage);
+      throw new Error(errorMessage);
     }
 
     // Delete association user relationships first
@@ -205,6 +244,7 @@ export const deleteAssociation = async (id: string) => {
     }
 
     console.log('Association deleted successfully:', id);
+    toast.success('Association deleted successfully');
     return true;
   } catch (error) {
     console.error(`Error in deleteAssociation for ID ${id}:`, error);

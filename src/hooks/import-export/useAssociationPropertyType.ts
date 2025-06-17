@@ -25,7 +25,7 @@ export function useAssociationPropertyType(associationId: string) {
       try {
         const { data, error } = await supabase
           .from('associations')
-          .select('property_type, name')
+          .select('property_type, name, is_archived')
           .eq('id', associationId)
           .single();
 
@@ -36,6 +36,13 @@ export function useAssociationPropertyType(associationId: string) {
         } else {
           console.log('useAssociationPropertyType: Association data:', data);
           console.log('useAssociationPropertyType: Property type found:', data?.property_type);
+          console.log('useAssociationPropertyType: Is archived:', data?.is_archived);
+          
+          // Add additional logging for debugging the import issue
+          if (data?.is_archived) {
+            console.warn('useAssociationPropertyType: WARNING - Selected association is archived:', data.name);
+          }
+          
           setAssociationPropertyType(data?.property_type || null);
         }
       } catch (error) {
