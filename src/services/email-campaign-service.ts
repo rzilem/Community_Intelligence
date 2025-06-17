@@ -35,7 +35,14 @@ export const emailCampaignService = {
     const { data, error } = await supabase
       .from('email_campaigns')
       .insert({
-        ...campaign,
+        name: campaign.name || 'New Campaign',
+        subject: campaign.subject || '',
+        body: campaign.body || '',
+        status: campaign.status || 'draft',
+        template_id: campaign.template_id,
+        send_at: campaign.send_at,
+        target_audience: campaign.target_audience || {},
+        campaign_settings: campaign.campaign_settings || {},
         created_by: user.user.id
       })
       .select()
@@ -75,7 +82,12 @@ export const emailCampaignService = {
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    return data || [];
+    
+    // Transform the data to match our types
+    return (data || []).map(template => ({
+      ...template,
+      merge_tags: Array.isArray(template.merge_tags) ? template.merge_tags : []
+    })) as EmailTemplate[];
   },
 
   createTemplate: async (template: Partial<EmailTemplate>): Promise<EmailTemplate> => {
@@ -85,14 +97,24 @@ export const emailCampaignService = {
     const { data, error } = await supabase
       .from('email_templates')
       .insert({
-        ...template,
+        name: template.name || 'New Template',
+        subject: template.subject || '',
+        body: template.body || '',
+        category: template.category || 'custom',
+        description: template.description,
+        preview_text: template.preview_text,
+        merge_tags: template.merge_tags || [],
         created_by: user.user.id
       })
       .select()
       .single();
     
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      merge_tags: Array.isArray(data.merge_tags) ? data.merge_tags : []
+    } as EmailTemplate;
   },
 
   updateTemplate: async (id: string, updates: Partial<EmailTemplate>): Promise<EmailTemplate> => {
@@ -104,7 +126,11 @@ export const emailCampaignService = {
       .single();
     
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      merge_tags: Array.isArray(data.merge_tags) ? data.merge_tags : []
+    } as EmailTemplate;
   },
 
   // Recipient Management

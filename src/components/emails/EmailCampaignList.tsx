@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useEmailCampaigns } from '@/hooks/emails/useEmailCampaigns';
-import { EmailCampaign } from '@/hooks/emails/useEmailCampaigns';
+import { EmailCampaign } from '@/types/email-campaign-types';
 import { 
   Table, 
   TableBody, 
@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Edit, MoreHorizontal, Trash2, Eye, Send, Pause, CheckCircle } from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2, Eye, Send, Pause } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,7 +39,7 @@ const EmailCampaignList: React.FC<EmailCampaignListProps> = ({
   onSend,
   onPause
 }) => {
-  const { campaigns, isLoading, deleteCampaign } = useEmailCampaigns();
+  const { campaigns, isLoading } = useEmailCampaigns();
 
   const getStatusBadge = (status: EmailCampaign['status']) => {
     const statusStyles = {
@@ -48,6 +48,7 @@ const EmailCampaignList: React.FC<EmailCampaignListProps> = ({
       sending: 'bg-blue-200 text-blue-800',
       sent: 'bg-green-200 text-green-800',
       cancelled: 'bg-red-200 text-red-800',
+      paused: 'bg-orange-200 text-orange-800',
     };
 
     return <Badge className={statusStyles[status]}>{status}</Badge>;
@@ -55,7 +56,7 @@ const EmailCampaignList: React.FC<EmailCampaignListProps> = ({
 
   const handleDelete = async (campaignId: string) => {
     try {
-      await deleteCampaign(campaignId);
+      onDelete(campaignId);
     } catch (error) {
       console.error('Error deleting campaign:', error);
     }

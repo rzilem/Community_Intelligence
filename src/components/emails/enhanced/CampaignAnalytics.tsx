@@ -20,7 +20,7 @@ import {
   AreaChart
 } from 'recharts';
 import { CampaignMetrics, EmailCampaign } from '@/types/email-campaign-types';
-import { Mail, Eye, MousePointer, Bounce, UserX, TrendingUp } from 'lucide-react';
+import { Mail, Eye, MousePointer, Bone, UserX, TrendingUp } from 'lucide-react';
 
 interface CampaignAnalyticsProps {
   campaign: EmailCampaign;
@@ -100,7 +100,7 @@ export const CampaignAnalytics: React.FC<CampaignAnalyticsProps> = ({
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center mb-2">
-                <Bounce className="h-8 w-8 text-red-500" />
+                <Bone className="h-8 w-8 text-red-500" />
               </div>
               <div className="text-2xl font-bold">{metrics.bounced_count}</div>
               <div className="text-sm text-muted-foreground">Bounced</div>

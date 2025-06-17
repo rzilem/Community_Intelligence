@@ -22,7 +22,7 @@ export const RecipientSelector: React.FC<RecipientSelectorProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [manualEmails, setManualEmails] = useState('');
-  const { data: leads = [], isLoading } = useLeads();
+  const { leads = [], isLoading } = useLeads();
 
   const filteredLeads = leads.filter(lead => {
     const matchesSearch = lead.contact_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
