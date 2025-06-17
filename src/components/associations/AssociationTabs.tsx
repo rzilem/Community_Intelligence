@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AssociationTable, { associationTableColumns } from './AssociationTable';
+import AssociationTable from './AssociationTable';
+import { DEFAULT_VISIBLE_COLUMNS } from './table/config/association-table-columns';
 import { Association } from '@/types/association-types';
 import { LoadingState } from '@/components/ui/loading-state';
 
@@ -36,9 +36,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
     const savedColumns = localStorage.getItem('associationTableColumns');
     if (!savedColumns) {
       // If no saved preferences, set defaults
-      localStorage.setItem('associationTableColumns', JSON.stringify(
-        associationTableColumns.filter(col => ['name', 'property_type', 'location', 'contact_email', 'status', 'actions'].includes(col.id)).map(col => col.id)
-      ));
+      localStorage.setItem('associationTableColumns', JSON.stringify(DEFAULT_VISIBLE_COLUMNS));
     }
   }, []);
 
