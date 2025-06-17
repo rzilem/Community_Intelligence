@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 /**
  * Updates a user's profile image in Supabase storage and updates the profile record
  */
-export const updateProfileImage = async (userId: string, file: File): Promise<{ url?: string; error?: string }> => {
+export const updateProfileImage = async (userId: string, file: File): Promise<string> => {
   try {
     // Upload file to storage
     const fileName = `${userId}-${Date.now()}`;
@@ -14,7 +14,7 @@ export const updateProfileImage = async (userId: string, file: File): Promise<{ 
 
     if (uploadError) {
       console.error('Error uploading profile image:', uploadError);
-      return { error: uploadError.message };
+      throw new Error(uploadError.message);
     }
 
     // Get public URL
@@ -33,12 +33,12 @@ export const updateProfileImage = async (userId: string, file: File): Promise<{ 
 
     if (updateError) {
       console.error('Error updating profile with image URL:', updateError);
-      return { error: updateError.message };
+      throw new Error(updateError.message);
     }
 
-    return { url: imageUrl };
+    return imageUrl;
   } catch (error: any) {
     console.error('Unexpected error updating profile image:', error);
-    return { error: error.message };
+    throw new Error(error.message || 'Failed to upload image');
   }
 };
