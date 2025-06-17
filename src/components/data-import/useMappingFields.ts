@@ -20,15 +20,42 @@ export function useMappingFields(importType: string, fileData: any[], associatio
     });
 
     if (fileData && fileData.length > 0) {
-      // Extract column names from the first row
+      // Extract column names from the first row with multiple fallback strategies
       const firstRow = fileData[0];
       let columns: string[] = [];
       
-      if (firstRow && typeof firstRow === 'object') {
+      console.log('useMappingFields: First row analysis:', {
+        firstRow,
+        typeof: typeof firstRow,
+        isObject: typeof firstRow === 'object',
+        isArray: Array.isArray(firstRow),
+        keys: firstRow ? Object.keys(firstRow) : 'no keys'
+      });
+      
+      if (firstRow && typeof firstRow === 'object' && !Array.isArray(firstRow)) {
+        // Standard object-based CSV parsing
         columns = Object.keys(firstRow);
+        console.log('useMappingFields: Extracted columns from object keys:', columns);
+      } else if (Array.isArray(firstRow)) {
+        // Array-based CSV parsing - use indices as column names or look for header row
+        columns = firstRow.map((_, index) => `Column ${index + 1}`);
+        console.log('useMappingFields: Extracted columns from array indices:', columns);
+      } else {
+        // Fallback: try to extract from all rows to find common keys
+        const allKeys = new Set<string>();
+        fileData.forEach(row => {
+          if (row && typeof row === 'object') {
+            Object.keys(row).forEach(key => allKeys.add(key));
+          }
+        });
+        columns = Array.from(allKeys);
+        console.log('useMappingFields: Extracted columns from all rows:', columns);
       }
       
-      console.log('useMappingFields: Extracted columns:', columns);
+      // Filter out empty or undefined column names
+      columns = columns.filter(col => col && col.trim() !== '');
+      
+      console.log('useMappingFields: Final extracted columns:', columns);
       setFileColumns(columns);
       
       // Set preview data (first 5 rows)

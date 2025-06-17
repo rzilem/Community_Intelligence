@@ -113,7 +113,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const mappedFields = Object.values(mappings).filter(field => field);
   const missingRequiredFields = requiredFields.filter(field => !mappedFields.includes(field));
 
-  // Force render if we have basic data
+  // Check if we have the basic data needed to render the modal
   const hasBasicData = fileData && fileData.length > 0;
   
   console.log('ImportDataMappingModal RENDER CHECK:', {
@@ -168,7 +168,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             
             <div className="flex-1 min-h-0">
               <ScrollArea className="h-full">
-                {/* Always render ColumnMappingList if we have file data */}
+                {/* Force render ColumnMappingList even if data isn't perfect */}
                 <ColumnMappingList
                   fileColumns={fileColumns || []}
                   systemFields={systemFields || []}

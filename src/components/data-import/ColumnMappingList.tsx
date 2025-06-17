@@ -90,17 +90,18 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
     }
   };
 
-  // Always render the interface if we have any data, even if incomplete
-  const canRender = fileColumns && Array.isArray(fileColumns) && fileColumns.length > 0;
-  const hasSystemFields = systemFields && Array.isArray(systemFields) && systemFields.length > 0;
+  // Check if we have the minimum data needed to render
+  const hasFileColumns = Array.isArray(fileColumns) && fileColumns.length > 0;
+  const hasSystemFields = Array.isArray(systemFields) && systemFields.length > 0;
 
   console.log('ColumnMappingList RENDER DECISION:', {
-    canRender,
+    hasFileColumns,
     hasSystemFields,
-    willRender: canRender
+    willRender: hasFileColumns
   });
 
-  if (!canRender) {
+  // Always show something if we don't have file columns
+  if (!hasFileColumns) {
     return (
       <div className="space-y-4">
         <div className="text-center text-muted-foreground p-8 border rounded-lg">
@@ -111,6 +112,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
             <br />File columns: {JSON.stringify(fileColumns)}
             <br />Type: {typeof fileColumns}
             <br />Is Array: {Array.isArray(fileColumns)}
+            <br />Length: {fileColumns?.length || 'undefined'}
           </div>
         </div>
       </div>
