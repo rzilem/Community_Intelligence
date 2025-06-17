@@ -113,24 +113,11 @@ export const createAssociation = async (associationData: {
 /**
  * Updates an association's details
  */
-export const updateAssociation = async (id: string, associationData: {
-  name?: string,
-  address?: string,
-  contact_email?: string,
-  city?: string,
-  state?: string,
-  zip?: string,
-  phone?: string,
-  website?: string,
-  property_type?: string,
-  total_units?: number,
-  description?: string,
-  is_archived?: boolean
-}) => {
+export const updateAssociation = async (id: string, updates: Record<string, any>) => {
   try {
     const { data, error } = await supabase
       .from('associations')
-      .update(associationData)
+      .update(updates)
       .eq('id', id)
       .select()
       .single();

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AssociationTable from './AssociationTable';
@@ -16,6 +17,7 @@ interface AssociationTabsProps {
   onToggleSelect?: (association: Association) => void;
   selectedAssociations?: Association[];
   onViewProfile?: (id: string) => void;
+  onRefresh?: () => void;
 }
 
 const AssociationTabs: React.FC<AssociationTabsProps> = ({
@@ -28,7 +30,8 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
   onDelete,
   onToggleSelect,
   selectedAssociations = [],
-  onViewProfile
+  onViewProfile,
+  onRefresh
 }) => {
   // Restore saved column preferences on initial render
   useEffect(() => {
@@ -82,6 +85,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
               onViewProfile={onViewProfile}
+              onRefresh={onRefresh}
             />
           </TabsContent>
           
@@ -94,6 +98,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
               onViewProfile={onViewProfile}
+              onRefresh={onRefresh}
             />
           </TabsContent>
           
@@ -106,6 +111,7 @@ const AssociationTabs: React.FC<AssociationTabsProps> = ({
               onToggleSelect={onToggleSelect}
               selectedAssociations={selectedAssociations}
               onViewProfile={onViewProfile}
+              onRefresh={onRefresh}
             />
           </TabsContent>
         </>
