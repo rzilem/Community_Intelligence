@@ -112,8 +112,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
             { label: 'Homeowner ID', value: 'homeowner_id' }
           ];
           
-          // Only include Property Type if the association doesn't have one set
-          if (!skipPropertyType) {
+          // Only include Property Type if the association doesn't have one set OR it's multi-association
+          if (!skipPropertyType || associationId === 'all') {
             propertyFields.splice(1, 0, { label: 'Property Type', value: 'property_type' });
           }
           
@@ -175,8 +175,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
             { label: 'Collection Status', value: 'collection_status' }
           ];
           
-          // Only include Property Type if the association doesn't have one set
-          if (!skipPropertyType) {
+          // Only include Property Type if the association doesn't have one set OR it's multi-association
+          if (!skipPropertyType || associationId === 'all') {
             propertiesOwnersFields.splice(1, 0, { label: 'Property Type', value: 'property_type' });
           }
           

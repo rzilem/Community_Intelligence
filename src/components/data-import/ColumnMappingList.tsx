@@ -64,27 +64,41 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   };
   
   const handleAutoMapColumns = () => {
-    console.log("Auto-mapping columns triggered");
+    console.log("Smart auto-mapping columns triggered");
     const newSuggestions = generateSuggestions();
     
     // Track updates for toast message
     let updateCount = 0;
+    const usedFields = new Set<string>();
+    
+    // First, preserve existing mappings
+    Object.values(mappings).forEach(field => {
+      if (field) usedFields.add(field);
+    });
     
     // Create a list of unmapped columns
     const unmappedColumns = fileColumns.filter(column => !mappings[column]);
     
-    // Apply suggestions for unmapped columns
-    unmappedColumns.forEach(column => {
+    // Sort unmapped columns by suggestion confidence (highest first)
+    const sortedUnmappedColumns = unmappedColumns.sort((a, b) => {
+      const aConfidence = newSuggestions[a]?.confidence || 0;
+      const bConfidence = newSuggestions[b]?.confidence || 0;
+      return bConfidence - aConfidence;
+    });
+    
+    // Apply suggestions for unmapped columns, ensuring no duplicates
+    sortedUnmappedColumns.forEach(column => {
       const suggestion = newSuggestions[column];
-      if (suggestion && suggestion.confidence >= 0.6) {
-        console.log(`Auto-mapping: ${column} -> ${suggestion.fieldValue}`);
+      if (suggestion && suggestion.confidence >= 0.6 && !usedFields.has(suggestion.fieldValue)) {
+        console.log(`Smart auto-mapping: ${column} -> ${suggestion.fieldValue} (confidence: ${suggestion.confidence})`);
         onMappingChange(column, suggestion.fieldValue);
+        usedFields.add(suggestion.fieldValue);
         updateCount++;
       }
     });
     
     if (updateCount > 0) {
-      toast.success(`Auto-mapped ${updateCount} columns successfully`);
+      toast.success(`Smart-mapped ${updateCount} columns with no duplicates`);
     } else {
       toast.info("No additional columns could be automatically mapped");
     }
@@ -114,7 +128,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
 
   return (
     <div className="space-y-3 pb-4">
-      {/* Header with Auto-Map button - more compact */}
+      {/* Header with Smart Auto-Map button - more compact */}
       <div className="flex items-center justify-between py-2 border-b">
         <h3 className="text-sm font-medium">Map File Columns to System Fields</h3>
         <Button 
@@ -125,7 +139,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
           className="flex items-center gap-1 text-xs px-2 py-1 h-7"
         >
           <Sparkles className="h-3 w-3" />
-          {isGenerating ? 'Analyzing...' : 'Auto-Map'}
+          {isGenerating ? 'Analyzing...' : 'Smart Auto-Map'}
         </Button>
       </div>
       
@@ -151,7 +165,7 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
       
       {/* Footer info - more compact */}
       <div className="text-[10px] text-muted-foreground pt-2 border-t">
-        <div>Found {fileColumns.length} columns. Select a system field for each column you want to import.</div>
+        <div>Found {fileColumns.length} columns. Smart auto-mapping prevents duplicate field assignments.</div>
         {!hasSystemFields && (
           <div className="text-amber-600 mt-1">
             ⚠️ System fields are still loading...
