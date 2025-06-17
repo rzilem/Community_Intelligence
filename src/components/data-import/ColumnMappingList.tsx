@@ -84,7 +84,9 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
   console.log('Rendering ColumnMappingList with:', {
     fileColumnsCount: fileColumns.length,
     systemFieldsCount: systemFields.length,
-    mappingsCount: Object.keys(mappings).length
+    mappingsCount: Object.keys(mappings).length,
+    fileColumns,
+    systemFields: systemFields.map(f => f.label)
   });
 
   // Show loading state if we don't have data
@@ -124,21 +126,30 @@ const ColumnMappingList: React.FC<ColumnMappingListProps> = ({
         </Button>
       </div>
       
-      <div className="space-y-3">
-        {fileColumns.map(column => (
-          <ColumnMappingField
-            key={column}
-            column={column}
-            systemFields={systemFields}
-            selectedValue={mappings[column] || ''}
-            onMappingChange={(col, field) => handleMappingChange(col, field)}
-            isOpen={!!openState[column]}
-            setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
-            suggestion={suggestions[column]?.fieldValue || ''}
-            confidence={suggestions[column]?.confidence || 0}
-          />
-        ))}
+      <div className="space-y-3 border rounded-lg p-4">
+        {fileColumns.map(column => {
+          console.log(`Rendering mapping field for column: ${column}`);
+          return (
+            <ColumnMappingField
+              key={column}
+              column={column}
+              systemFields={systemFields}
+              selectedValue={mappings[column] || ''}
+              onMappingChange={(col, field) => handleMappingChange(col, field)}
+              isOpen={!!openState[column]}
+              setIsOpen={(isOpen) => setIsOpen(column, isOpen)}
+              suggestion={suggestions[column]?.fieldValue || ''}
+              confidence={suggestions[column]?.confidence || 0}
+            />
+          );
+        })}
       </div>
+      
+      {fileColumns.length === 0 && (
+        <div className="text-center text-muted-foreground py-8">
+          No file columns detected. Please check your file format.
+        </div>
+      )}
     </div>
   );
 };

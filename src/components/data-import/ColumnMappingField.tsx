@@ -55,30 +55,34 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
     }
   };
   
-  // Check if this is a city, state, or zip column for special handling
-  const isSpecialColumn = column.toLowerCase() === 'city' || 
-                          column.toLowerCase() === 'state' || 
-                          column.toLowerCase() === 'zip' ||
-                          column.toLowerCase() === 'zipcode' ||
-                          column.toLowerCase() === 'postal' ||
-                          column.toLowerCase() === 'postal_code';
+  console.log(`Rendering ColumnMappingField for ${column}:`, {
+    systemFieldsCount: systemFields.length,
+    selectedValue,
+    suggestion,
+    confidence
+  });
   
   return (
-    <div className="flex flex-col space-y-1">
-      <div className="grid grid-cols-12 gap-2">
+    <div className="flex flex-col space-y-2 p-3 border rounded-lg bg-card">
+      <div className="grid grid-cols-12 gap-4 items-center">
         <div className="col-span-4">
-          <div className="text-sm font-medium">{column}</div>
+          <div className="text-sm font-medium text-foreground">{column}</div>
           {suggestion && !selectedValue && confidence >= 0.6 && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer" onClick={handleSuggestionApply}>
+                  <div 
+                    className="flex items-center text-xs text-muted-foreground mt-1 cursor-pointer hover:text-foreground" 
+                    onClick={handleSuggestionApply}
+                  >
                     <Sparkles className="h-3 w-3 mr-1 text-amber-500" />
-                    <span className="hover:underline">Suggested: {systemFields.find(f => f.value === suggestion)?.label || suggestion}</span>
+                    <span className="hover:underline">
+                      Suggested: {systemFields.find(f => f.value === suggestion)?.label || suggestion}
+                    </span>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Click to apply this suggestion</p>
+                  <p>Click to apply this AI suggestion</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -92,23 +96,38 @@ const ColumnMappingField: React.FC<ColumnMappingFieldProps> = ({
                 variant="outline"
                 role="combobox"
                 aria-expanded={isOpen}
-                className={cn(
-                  "w-full justify-between",
-                  isSpecialColumn && !selectedValue ? "border-amber-400 ring-1 ring-amber-400" : ""
-                )}
+                className="w-full justify-between h-10"
               >
-                {selectedValue
-                  ? systemFields.find(f => f.value === selectedValue)?.label || "Select field..."
-                  : "Select field..."}
+                <span className="truncate">
+                  {selectedValue
+                    ? systemFields.find(f => f.value === selectedValue)?.label || "Select field..."
+                    : "Select field..."}
+                </span>
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-0 z-50" align="start" sideOffset={4}>
+            <PopoverContent className="w-full p-0" align="start" sideOffset={4}>
               <Command>
                 <CommandInput placeholder="Search fields..." className="h-9" />
                 <CommandEmpty>No field found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandList className="max-h-[300px] overflow-y-auto">
+                  <CommandList className="max-h-[300px]">
+                    {/* Add option to clear selection */}
+                    <CommandItem
+                      key="clear"
+                      value=""
+                      onSelect={() => handleSelect('')}
+                      className="cursor-pointer flex items-center justify-between text-muted-foreground"
+                    >
+                      <span>Don't map this column</span>
+                      <Check
+                        className={cn(
+                          "ml-auto h-4 w-4",
+                          !selectedValue ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                    
                     {Array.isArray(systemFields) && systemFields.map((field) => (
                       <CommandItem
                         key={field.value}

@@ -39,9 +39,15 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
     previewData
   } = useMappingFields(importType, fileData, associationId);
 
-  console.log('File columns:', fileColumns);
-  console.log('System fields:', systemFields);
-  console.log('Is multi-association:', isMultiAssociation);
+  console.log('ImportDataMappingModal state:', {
+    importType,
+    fileDataLength: fileData?.length || 0,
+    associationId,
+    isMultiAssociation,
+    fileColumns,
+    systemFields: systemFields.map(f => f.label),
+    mappingsCount: Object.keys(mappings).length
+  });
 
   const handleMappingChange = (column: string, field: string) => {
     console.log(`Mapping change: ${column} -> ${field}`);
@@ -116,6 +122,9 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
               <p>Preparing file data for mapping...</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                File data rows: {fileData?.length || 0}
+              </p>
             </div>
           </div>
         </DialogContent>
@@ -135,7 +144,7 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
         
         <div className="flex-1 flex gap-4 min-h-0">
           {/* Left side - Column mapping */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 space-y-4">
             <AssociationIdentifierHelper
               isMultiAssociation={isMultiAssociation}
               fileColumns={fileColumns}
@@ -143,19 +152,19 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
             />
             
             {validationResults && (
-              <div className="mb-4">
-                <ValidationResultsSummary validationResults={validationResults} />
-              </div>
+              <ValidationResultsSummary validationResults={validationResults} />
             )}
             
             <div className="flex-1 min-h-0">
-              <ColumnMappingList
-                fileColumns={fileColumns}
-                systemFields={systemFields}
-                mappings={mappings}
-                onMappingChange={handleMappingChange}
-                previewData={previewData}
-              />
+              <ScrollArea className="h-full">
+                <ColumnMappingList
+                  fileColumns={fileColumns}
+                  systemFields={systemFields}
+                  mappings={mappings}
+                  onMappingChange={handleMappingChange}
+                  previewData={previewData}
+                />
+              </ScrollArea>
             </div>
           </div>
           
