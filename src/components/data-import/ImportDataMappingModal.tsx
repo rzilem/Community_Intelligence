@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import DataPreviewTable from './DataPreviewTable';
 import ValidationResultsSummary from './ValidationResultsSummary';
 import AssociationIdentifierHelper from './AssociationIdentifierHelper';
 import { useMappingFields } from './useMappingFields';
+import PropertyTypeAutoInfo from './PropertyTypeAutoInfo';
 
 interface ImportDataMappingModalProps {
   importType: string;
@@ -36,7 +36,9 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
   const {
     fileColumns,
     systemFields,
-    previewData
+    previewData,
+    associationPropertyType,
+    hasPropertyType
   } = useMappingFields(importType, fileData, associationId);
 
   console.log('ImportDataMappingModal DEBUG:', {
@@ -158,6 +160,13 @@ const ImportDataMappingModal: React.FC<ImportDataMappingModalProps> = ({
           <div className="flex-[0_0_65%] flex flex-col min-h-0 space-y-2">
             {/* Compact warnings section */}
             <div className="flex-shrink-0 space-y-2">
+              {/* Property Type Auto Info */}
+              <PropertyTypeAutoInfo
+                hasPropertyType={hasPropertyType}
+                associationPropertyType={associationPropertyType}
+                importType={importType}
+              />
+              
               {/* Association Helper - ultra compact */}
               {isMultiAssociation && (
                 <AssociationIdentifierHelper

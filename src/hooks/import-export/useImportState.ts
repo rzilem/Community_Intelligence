@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ValidationResult, ImportResult } from '@/types/import-types';
@@ -159,7 +158,7 @@ export function useImportState() {
   
   // Helper function to get required mappings based on import type
   const getRequiredMappings = (type: string, associationId: string): string[] => {
-    const baseMappings = getBaseMappings(type);
+    const baseMappings = getBaseMappings(type, associationId);
     
     // Add association identifier requirement for "all associations" imports
     if (associationId === 'all' && type !== 'associations') {
@@ -169,13 +168,21 @@ export function useImportState() {
     return baseMappings;
   };
 
-  const getBaseMappings = (type: string): string[] => {
+  const getBaseMappings = (type: string, associationId: string): string[] => {
     switch (type) {
       case 'properties':
+        // For specific associations that have a property type, don't require property_type mapping
+        if (associationId !== 'all') {
+          return ['address']; // Only require address, property_type will be auto-populated
+        }
         return ['address', 'property_type'];
       case 'owners':
         return ['first_name', 'last_name', 'property_id'];
       case 'properties_owners':
+        // For specific associations that have a property type, don't require property_type mapping
+        if (associationId !== 'all') {
+          return ['address']; // Only require address, property_type will be auto-populated
+        }
         return ['address', 'property_type'];
       case 'financial':
         return ['property_id', 'amount', 'due_date'];

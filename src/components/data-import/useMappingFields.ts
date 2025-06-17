@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useAssociationPropertyType } from '@/hooks/import-export/useAssociationPropertyType';
 
 interface MappingOption {
   label: string;
@@ -10,6 +10,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
   const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [systemFields, setSystemFields] = useState<MappingOption[]>([]);
   const [previewData, setPreviewData] = useState<any[]>([]);
+
+  const { associationPropertyType, hasPropertyType } = useAssociationPropertyType(associationId);
 
   useEffect(() => {
     console.log('useMappingFields: Processing file data:', {
@@ -71,12 +73,14 @@ export function useMappingFields(importType: string, fileData: any[], associatio
     console.log('useMappingFields: Generating system fields for:', {
       importType,
       associationId,
-      isMultiAssociation: associationId === 'all'
+      isMultiAssociation: associationId === 'all',
+      hasPropertyType,
+      associationPropertyType
     });
 
     // Define system fields based on import type
     const getSystemFields = (type: string): MappingOption[] => {
-      const baseFields = getBaseFieldsForType(type);
+      const baseFields = getBaseFieldsForType(type, hasPropertyType);
       
       // Add association identifier field for multi-association imports
       if (associationId === 'all' && type !== 'associations') {
@@ -92,12 +96,11 @@ export function useMappingFields(importType: string, fileData: any[], associatio
       return baseFields;
     };
 
-    const getBaseFieldsForType = (type: string): MappingOption[] => {
+    const getBaseFieldsForType = (type: string, skipPropertyType: boolean): MappingOption[] => {
       switch (type) {
         case 'properties':
-          return [
+          const propertyFields = [
             { label: 'Property Address', value: 'address' },
-            { label: 'Property Type', value: 'property_type' },
             { label: 'Unit Number', value: 'unit_number' },
             { label: 'City', value: 'city' },
             { label: 'State', value: 'state' },
@@ -108,6 +111,13 @@ export function useMappingFields(importType: string, fileData: any[], associatio
             { label: 'Account Number', value: 'account_number' },
             { label: 'Homeowner ID', value: 'homeowner_id' }
           ];
+          
+          // Only include Property Type if the association doesn't have one set
+          if (!skipPropertyType) {
+            propertyFields.splice(1, 0, { label: 'Property Type', value: 'property_type' });
+          }
+          
+          return propertyFields;
         
         case 'owners':
         case 'residents':
@@ -126,10 +136,9 @@ export function useMappingFields(importType: string, fileData: any[], associatio
           ];
         
         case 'properties_owners':
-          return [
+          const propertiesOwnersFields = [
             // Property fields
             { label: 'Property Address', value: 'address' },
-            { label: 'Property Type', value: 'property_type' },
             { label: 'Unit Number', value: 'unit_number' },
             { label: 'City', value: 'city' },
             { label: 'State', value: 'state' },
@@ -165,6 +174,13 @@ export function useMappingFields(importType: string, fileData: any[], associatio
             { label: 'Balance', value: 'balance' },
             { label: 'Collection Status', value: 'collection_status' }
           ];
+          
+          // Only include Property Type if the association doesn't have one set
+          if (!skipPropertyType) {
+            propertiesOwnersFields.splice(1, 0, { label: 'Property Type', value: 'property_type' });
+          }
+          
+          return propertiesOwnersFields;
         
         case 'financial':
           return [
@@ -229,7 +245,7 @@ export function useMappingFields(importType: string, fileData: any[], associatio
     const fields = getSystemFields(importType);
     console.log('useMappingFields: Generated system fields:', fields);
     setSystemFields(fields);
-  }, [importType, associationId]);
+  }, [importType, associationId, hasPropertyType, associationPropertyType]);
 
   console.log('useMappingFields: Final state:', {
     fileColumnsCount: fileColumns.length,
@@ -242,6 +258,8 @@ export function useMappingFields(importType: string, fileData: any[], associatio
   return {
     fileColumns,
     systemFields,
-    previewData
+    previewData,
+    associationPropertyType,
+    hasPropertyType
   };
 }
