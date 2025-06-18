@@ -1,481 +1,565 @@
 
-import { ocrService, type OCRResult } from './ocr-service';
+import Tesseract from 'tesseract.js';
 import { devLog } from '@/utils/dev-logger';
 
-export interface AdvancedOCRResult extends OCRResult {
-  tableData?: TableExtractionResult[];
-  formFields?: FormFieldResult[];
-  structuredRegions?: RegionResult[];
-  documentLayout?: LayoutAnalysis;
-  qualityScore: number;
+export interface OCRResult {
+  text: string;
+  confidence: number;
+  words: Array<{
+    text: string;
+    bbox: { x0: number; y0: number; x1: number; y1: number };
+    confidence: number;
+  }>;
+  lines: Array<{
+    text: string;
+    bbox: { x0: number; y0: number; x1: number; y1: number };
+    words: any[];
+  }>;
 }
 
 export interface TableExtractionResult {
-  rows: string[][];
-  headers: string[];
-  confidence: number;
-  boundingBox: BoundingBox;
+  tables: Array<{
+    rows: string[][];
+    confidence: number;
+    bbox: { x: number; y: number; width: number; height: number };
+  }>;
+  forms: Array<{
+    fields: Array<{ label: string; value: string; confidence: number }>;
+    bbox: { x: number; y: number; width: number; height: number };
+  }>;
 }
 
-export interface FormFieldResult {
-  fieldName: string;
-  fieldValue: string;
-  fieldType: 'text' | 'number' | 'date' | 'checkbox' | 'signature';
-  confidence: number;
-  boundingBox: BoundingBox;
+export interface DocumentLayoutAnalysis {
+  regions: Array<{
+    type: 'text' | 'table' | 'image' | 'header' | 'footer';
+    bbox: { x: number; y: number; width: number; height: number };
+    confidence: number;
+    content?: string;
+  }>;
+  readingOrder: number[];
+  pageStructure: {
+    headers: string[];
+    paragraphs: string[];
+    tables: any[];
+    images: any[];
+  };
 }
 
-export interface RegionResult {
-  type: 'header' | 'body' | 'footer' | 'sidebar' | 'table' | 'form';
-  content: string;
-  confidence: number;
-  boundingBox: BoundingBox;
+export interface DocumentQualityAssessment {
+  overallScore: number;
+  issues: Array<{
+    type: 'blur' | 'skew' | 'low_contrast' | 'noise' | 'incomplete';
+    severity: 'low' | 'medium' | 'high';
+    description: string;
+    suggestion: string;
+  }>;
+  recommendations: string[];
+  processingStrategy: 'standard' | 'enhanced' | 'manual_review';
 }
 
-export interface LayoutAnalysis {
-  pageCount: number;
-  orientation: 'portrait' | 'landscape';
-  margins: { top: number; right: number; bottom: number; left: number };
-  columns: number;
-  readingOrder: string[];
+export interface AdvancedOCROptions {
+  language?: string;
+  psm?: number;
+  oem?: number;
+  whitelist?: string;
+  blacklist?: string;
+  dpi?: number;
+  enhanceImage?: boolean;
+  extractTables?: boolean;
+  analyzeLayout?: boolean;
+  qualityCheck?: boolean;
 }
 
-export interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export const advancedOcrService = {
-  async processDocumentAdvanced(file: File): Promise<AdvancedOCRResult> {
+export const advancedOCRService = {
+  async processDocument(
+    file: File,
+    options: AdvancedOCROptions = {}
+  ): Promise<{
+    ocr: OCRResult;
+    tables?: TableExtractionResult;
+    layout?: DocumentLayoutAnalysis;
+    quality?: DocumentQualityAssessment;
+  }> {
     devLog.info('Starting advanced OCR processing for:', file.name);
     
     try {
-      // Get basic OCR results first
-      const basicOcr = await ocrService.extractTextFromImage(file, file.name);
+      const startTime = Date.now();
       
-      // Enhance with advanced features
-      const tableData = await this.extractTables(basicOcr);
-      const formFields = await this.extractFormFields(basicOcr);
-      const structuredRegions = await this.analyzeRegions(basicOcr);
-      const documentLayout = await this.analyzeLayout(basicOcr);
-      const qualityScore = this.calculateQualityScore(basicOcr);
+      // Pre-process image if needed
+      const processedFile = options.enhanceImage 
+        ? await this.enhanceImageQuality(file)
+        : file;
       
-      const result: AdvancedOCRResult = {
-        ...basicOcr,
-        tableData,
-        formFields,
-        structuredRegions,
-        documentLayout,
-        qualityScore
-      };
+      // Perform OCR
+      const ocrResult = await this.performOCR(processedFile, options);
       
-      devLog.info('Advanced OCR processing complete:', {
-        filename: file.name,
-        qualityScore: result.qualityScore,
-        tablesFound: tableData.length,
-        formFieldsFound: formFields.length,
-        regionsFound: structuredRegions.length
-      });
+      const results: any = { ocr: ocrResult };
       
-      return result;
+      // Extract tables and forms if requested
+      if (options.extractTables) {
+        results.tables = await this.extractTablesAndForms(processedFile, ocrResult);
+      }
+      
+      // Analyze document layout if requested
+      if (options.analyzeLayout) {
+        results.layout = await this.analyzeDocumentLayout(processedFile, ocrResult);
+      }
+      
+      // Assess document quality if requested
+      if (options.qualityCheck) {
+        results.quality = await this.assessDocumentQuality(processedFile, ocrResult);
+      }
+      
+      const processingTime = Date.now() - startTime;
+      devLog.info(`Advanced OCR completed in ${processingTime}ms with confidence: ${ocrResult.confidence}%`);
+      
+      return results;
       
     } catch (error) {
       devLog.error('Advanced OCR processing failed:', error);
-      throw new Error(`Advanced OCR failed for ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`OCR processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
-  async extractTables(ocrResult: OCRResult): Promise<TableExtractionResult[]> {
-    const tables: TableExtractionResult[] = [];
+  async batchProcessDocuments(
+    files: File[],
+    options: AdvancedOCROptions = {},
+    progressCallback?: (progress: { current: number; total: number; filename: string }) => void
+  ): Promise<Array<{
+    filename: string;
+    success: boolean;
+    result?: any;
+    error?: string;
+  }>> {
+    const results = [];
     
-    try {
-      // Analyze word positions to detect table structures
-      const words = ocrResult.words;
-      if (!words || words.length === 0) return tables;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       
-      // Group words by approximate Y positions (rows)
-      const rowGroups = this.groupWordsByRows(words);
-      
-      // Detect column structures within rows
-      const potentialTables = this.detectTableStructures(rowGroups);
-      
-      // Convert detected structures to table format
-      for (const tableStructure of potentialTables) {
-        const table = this.convertToTableFormat(tableStructure);
-        if (table.rows.length > 1) { // Must have at least header + 1 data row
-          tables.push(table);
-        }
+      if (progressCallback) {
+        progressCallback({ current: i + 1, total: files.length, filename: file.name });
       }
       
-      devLog.info(`Extracted ${tables.length} tables from document`);
-      return tables;
+      try {
+        const result = await this.processDocument(file, options);
+        results.push({
+          filename: file.name,
+          success: true,
+          result
+        });
+      } catch (error) {
+        results.push({
+          filename: file.name,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+    
+    return results;
+  },
+
+  async extractTextFromImages(images: File[]): Promise<Array<{
+    filename: string;
+    text: string;
+    confidence: number;
+    wordCount: number;
+  }>> {
+    const results = [];
+    
+    for (const image of images) {
+      try {
+        const ocrResult = await this.performOCR(image, { language: 'eng' });
+        results.push({
+          filename: image.name,
+          text: ocrResult.text,
+          confidence: ocrResult.confidence,
+          wordCount: ocrResult.words.length
+        });
+      } catch (error) {
+        devLog.error(`Failed to extract text from ${image.name}:`, error);
+        results.push({
+          filename: image.name,
+          text: '',
+          confidence: 0,
+          wordCount: 0
+        });
+      }
+    }
+    
+    return results;
+  },
+
+  async performOCR(file: File, options: AdvancedOCROptions): Promise<OCRResult> {
+    const worker = await Tesseract.createWorker({
+      logger: m => devLog.debug('Tesseract:', m)
+    });
+    
+    try {
+      await worker.loadLanguage(options.language || 'eng');
+      await worker.initialize(options.language || 'eng');
       
-    } catch (error) {
-      devLog.error('Table extraction failed:', error);
-      return tables;
+      // Configure Tesseract parameters
+      if (options.psm !== undefined) {
+        await worker.setParameters({ tessedit_pageseg_mode: options.psm });
+      }
+      if (options.oem !== undefined) {
+        await worker.setParameters({ tessedit_ocr_engine_mode: options.oem });
+      }
+      if (options.whitelist) {
+        await worker.setParameters({ tessedit_char_whitelist: options.whitelist });
+      }
+      if (options.blacklist) {
+        await worker.setParameters({ tessedit_char_blacklist: options.blacklist });
+      }
+      
+      const { data } = await worker.recognize(file);
+      
+      return {
+        text: data.text,
+        confidence: data.confidence,
+        words: data.words.map(word => ({
+          text: word.text,
+          bbox: word.bbox,
+          confidence: word.confidence
+        })),
+        lines: data.lines.map(line => ({
+          text: line.text,
+          bbox: line.bbox,
+          words: line.words
+        }))
+      };
+      
+    } finally {
+      await worker.terminate();
     }
   },
 
-  async extractFormFields(ocrResult: OCRResult): Promise<FormFieldResult[]> {
-    const formFields: FormFieldResult[] = [];
-    
-    try {
-      const text = ocrResult.text;
-      const words = ocrResult.words;
+  async enhanceImageQuality(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
       
-      // Common form field patterns
-      const fieldPatterns = [
-        { pattern: /(\w+)\s*:\s*([^\n\r]+)/gi, type: 'text' as const },
-        { pattern: /(\w+)\s*\[\s*\]\s*([^\n\r]*)/gi, type: 'checkbox' as const },
-        { pattern: /(\w+)\s*_+\s*([^\n\r]*)/gi, type: 'text' as const },
-        { pattern: /(date|Date|DATE)\s*:\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi, type: 'date' as const },
-        { pattern: /(amount|Amount|AMOUNT|total|Total|TOTAL)\s*:\s*\$?(\d+\.?\d*)/gi, type: 'number' as const }
-      ];
-      
-      fieldPatterns.forEach(({ pattern, type }) => {
-        let match;
-        while ((match = pattern.exec(text)) !== null) {
-          const fieldName = match[1].trim();
-          const fieldValue = match[2].trim();
-          
-          if (fieldName && fieldValue) {
-            // Find approximate bounding box for this field
-            const boundingBox = this.findFieldBoundingBox(fieldName, fieldValue, words);
-            
-            formFields.push({
-              fieldName,
-              fieldValue,
-              fieldType: type,
-              confidence: 0.8, // Base confidence for pattern matching
-              boundingBox: boundingBox || { x: 0, y: 0, width: 0, height: 0 }
-            });
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        // Draw image
+        ctx.drawImage(img, 0, 0);
+        
+        // Apply enhancements
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const enhancedData = this.applyImageEnhancements(imageData);
+        ctx.putImageData(enhancedData, 0, 0);
+        
+        // Convert back to file
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const enhancedFile = new File([blob], file.name, { type: file.type });
+            resolve(enhancedFile);
+          } else {
+            reject(new Error('Failed to create enhanced image'));
           }
-        }
-      });
-      
-      devLog.info(`Extracted ${formFields.length} form fields`);
-      return formFields;
-      
-    } catch (error) {
-      devLog.error('Form field extraction failed:', error);
-      return formFields;
-    }
-  },
-
-  async analyzeRegions(ocrResult: OCRResult): Promise<RegionResult[]> {
-    const regions: RegionResult[] = [];
-    
-    try {
-      const words = ocrResult.words;
-      if (!words || words.length === 0) return regions;
-      
-      // Sort words by Y position to analyze document flow
-      const sortedWords = [...words].sort((a, b) => a.bbox.y0 - b.bbox.y0);
-      
-      // Detect different regions based on position and content
-      const documentHeight = Math.max(...words.map(w => w.bbox.y1));
-      const documentWidth = Math.max(...words.map(w => w.bbox.x1));
-      
-      // Header region (top 15% of document)
-      const headerWords = sortedWords.filter(w => w.bbox.y0 < documentHeight * 0.15);
-      if (headerWords.length > 0) {
-        regions.push({
-          type: 'header',
-          content: headerWords.map(w => w.text).join(' '),
-          confidence: 0.9,
-          boundingBox: this.calculateRegionBounds(headerWords)
-        });
-      }
-      
-      // Footer region (bottom 15% of document)
-      const footerWords = sortedWords.filter(w => w.bbox.y0 > documentHeight * 0.85);
-      if (footerWords.length > 0) {
-        regions.push({
-          type: 'footer',
-          content: footerWords.map(w => w.text).join(' '),
-          confidence: 0.9,
-          boundingBox: this.calculateRegionBounds(footerWords)
-        });
-      }
-      
-      // Body region (middle section)
-      const bodyWords = sortedWords.filter(w => 
-        w.bbox.y0 >= documentHeight * 0.15 && 
-        w.bbox.y0 <= documentHeight * 0.85
-      );
-      if (bodyWords.length > 0) {
-        regions.push({
-          type: 'body',
-          content: bodyWords.map(w => w.text).join(' '),
-          confidence: 0.8,
-          boundingBox: this.calculateRegionBounds(bodyWords)
-        });
-      }
-      
-      devLog.info(`Analyzed ${regions.length} document regions`);
-      return regions;
-      
-    } catch (error) {
-      devLog.error('Region analysis failed:', error);
-      return regions;
-    }
-  },
-
-  async analyzeLayout(ocrResult: OCRResult): Promise<LayoutAnalysis> {
-    try {
-      const words = ocrResult.words;
-      if (!words || words.length === 0) {
-        return {
-          pageCount: 1,
-          orientation: 'portrait',
-          margins: { top: 0, right: 0, bottom: 0, left: 0 },
-          columns: 1,
-          readingOrder: []
-        };
-      }
-      
-      const documentWidth = Math.max(...words.map(w => w.bbox.x1));
-      const documentHeight = Math.max(...words.map(w => w.bbox.y1));
-      
-      // Determine orientation
-      const orientation = documentWidth > documentHeight ? 'landscape' : 'portrait';
-      
-      // Calculate margins
-      const leftMargin = Math.min(...words.map(w => w.bbox.x0));
-      const rightMargin = documentWidth - Math.max(...words.map(w => w.bbox.x1));
-      const topMargin = Math.min(...words.map(w => w.bbox.y0));
-      const bottomMargin = documentHeight - Math.max(...words.map(w => w.bbox.y1));
-      
-      // Detect columns by analyzing X positions
-      const xPositions = words.map(w => w.bbox.x0).sort((a, b) => a - b);
-      const columns = this.detectColumns(xPositions, documentWidth);
-      
-      // Create reading order
-      const readingOrder = this.createReadingOrder(words);
-      
-      return {
-        pageCount: 1, // Single page for image processing
-        orientation,
-        margins: {
-          top: topMargin,
-          right: rightMargin,
-          bottom: bottomMargin,
-          left: leftMargin
-        },
-        columns,
-        readingOrder
+        }, file.type);
       };
       
-    } catch (error) {
-      devLog.error('Layout analysis failed:', error);
-      return {
-        pageCount: 1,
-        orientation: 'portrait',
-        margins: { top: 0, right: 0, bottom: 0, left: 0 },
-        columns: 1,
-        readingOrder: []
-      };
-    }
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
   },
 
-  calculateQualityScore(ocrResult: OCRResult): number {
-    try {
-      let score = 0;
-      let factors = 0;
-      
-      // Base confidence from OCR
-      if (ocrResult.confidence !== undefined) {
-        score += ocrResult.confidence;
-        factors++;
-      }
-      
-      // Text length factor (more text generally means better extraction)
-      const textLength = ocrResult.text.length;
-      if (textLength > 0) {
-        score += Math.min(textLength / 1000, 1) * 100; // Max 100 points for length
-        factors++;
-      }
-      
-      // Word count factor
-      const wordCount = ocrResult.words.length;
-      if (wordCount > 0) {
-        score += Math.min(wordCount / 100, 1) * 100; // Max 100 points for word count
-        factors++;
-      }
-      
-      // Character diversity (more diverse text is usually better quality)
-      const uniqueChars = new Set(ocrResult.text.toLowerCase()).size;
-      if (uniqueChars > 0) {
-        score += Math.min(uniqueChars / 26, 1) * 100; // Max 100 points for character diversity
-        factors++;
-      }
-      
-      return factors > 0 ? Math.round(score / factors) : 0;
-      
-    } catch (error) {
-      devLog.error('Quality score calculation failed:', error);
-      return 0;
-    }
-  },
-
-  // Helper methods
-  private groupWordsByRows(words: any[]): any[][] {
-    const tolerance = 5; // Pixels tolerance for same row
-    const rows: any[][] = [];
+  applyImageEnhancements(imageData: ImageData): ImageData {
+    const data = imageData.data;
     
-    const sortedWords = [...words].sort((a, b) => a.bbox.y0 - b.bbox.y0);
-    
-    for (const word of sortedWords) {
-      let addedToRow = false;
+    // Apply contrast enhancement and noise reduction
+    for (let i = 0; i < data.length; i += 4) {
+      // Convert to grayscale
+      const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
       
-      for (const row of rows) {
-        const rowY = row[0].bbox.y0;
-        if (Math.abs(word.bbox.y0 - rowY) <= tolerance) {
-          row.push(word);
-          addedToRow = true;
-          break;
-        }
-      }
+      // Apply contrast enhancement
+      const enhanced = Math.min(255, Math.max(0, 1.2 * (gray - 128) + 128));
       
-      if (!addedToRow) {
-        rows.push([word]);
-      }
+      data[i] = enhanced;     // Red
+      data[i + 1] = enhanced; // Green
+      data[i + 2] = enhanced; // Blue
     }
     
-    // Sort words within each row by X position
-    rows.forEach(row => row.sort((a, b) => a.bbox.x0 - b.bbox.x0));
-    
-    return rows;
+    return imageData;
   },
 
-  private detectTableStructures(rowGroups: any[][]): any[] {
+  async extractTablesAndForms(file: File, ocrResult: OCRResult): Promise<TableExtractionResult> {
+    // Simplified table detection based on OCR layout
+    const tables = this.detectTables(ocrResult);
+    const forms = this.detectForms(ocrResult);
+    
+    return { tables, forms };
+  },
+
+  detectTables(ocrResult: OCRResult): Array<{
+    rows: string[][];
+    confidence: number;
+    bbox: { x: number; y: number; width: number; height: number };
+  }> {
+    // Simple table detection based on line alignment
+    const lines = ocrResult.lines;
     const tables = [];
     
-    // Look for consecutive rows with similar column structures
-    for (let i = 0; i < rowGroups.length - 1; i++) {
-      const potentialTable = [rowGroups[i]];
+    // Group lines that might form a table
+    const potentialTableLines = lines.filter(line => 
+      line.text.includes('|') || 
+      line.text.match(/\s{3,}/) || // Multiple spaces
+      line.words.length > 2
+    );
+    
+    if (potentialTableLines.length > 2) {
+      const rows = potentialTableLines.map(line => 
+        line.text.split(/\s{2,}|\|/).filter(cell => cell.trim())
+      );
       
-      for (let j = i + 1; j < rowGroups.length; j++) {
-        if (this.rowsHaveSimilarStructure(rowGroups[i], rowGroups[j])) {
-          potentialTable.push(rowGroups[j]);
-        } else {
-          break;
+      tables.push({
+        rows,
+        confidence: 0.7, // Simplified confidence
+        bbox: {
+          x: Math.min(...potentialTableLines.map(l => l.bbox.x0)),
+          y: Math.min(...potentialTableLines.map(l => l.bbox.y0)),
+          width: Math.max(...potentialTableLines.map(l => l.bbox.x1)) - Math.min(...potentialTableLines.map(l => l.bbox.x0)),
+          height: Math.max(...potentialTableLines.map(l => l.bbox.y1)) - Math.min(...potentialTableLines.map(l => l.bbox.y0))
         }
-      }
-      
-      if (potentialTable.length >= 2) {
-        tables.push(potentialTable);
-        i += potentialTable.length - 1; // Skip processed rows
-      }
+      });
     }
     
     return tables;
   },
 
-  private rowsHaveSimilarStructure(row1: any[], row2: any[]): boolean {
-    // Simple heuristic: similar number of words and similar X positions
-    if (Math.abs(row1.length - row2.length) > 1) return false;
-    
-    const tolerance = 20; // Pixel tolerance for column alignment
-    const minWords = Math.min(row1.length, row2.length);
-    
-    for (let i = 0; i < minWords; i++) {
-      if (Math.abs(row1[i].bbox.x0 - row2[i].bbox.x0) > tolerance) {
-        return false;
-      }
-    }
-    
-    return true;
-  },
-
-  private convertToTableFormat(tableStructure: any[]): TableExtractionResult {
-    const rows = tableStructure.map(row => row.map((word: any) => word.text));
-    const headers = rows[0] || [];
-    
-    return {
-      rows,
-      headers,
-      confidence: 0.8,
-      boundingBox: this.calculateTableBounds(tableStructure)
-    };
-  },
-
-  private calculateTableBounds(tableStructure: any[]): BoundingBox {
-    const allWords = tableStructure.flat();
-    const minX = Math.min(...allWords.map(w => w.bbox.x0));
-    const minY = Math.min(...allWords.map(w => w.bbox.y0));
-    const maxX = Math.max(...allWords.map(w => w.bbox.x1));
-    const maxY = Math.max(...allWords.map(w => w.bbox.y1));
-    
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  },
-
-  private findFieldBoundingBox(fieldName: string, fieldValue: string, words: any[]): BoundingBox | null {
-    // Find words that match the field name or value
-    const matchingWords = words.filter(word => 
-      word.text.toLowerCase().includes(fieldName.toLowerCase()) ||
-      word.text.toLowerCase().includes(fieldValue.toLowerCase())
+  detectForms(ocrResult: OCRResult): Array<{
+    fields: Array<{ label: string; value: string; confidence: number }>;
+    bbox: { x: number; y: number; width: number; height: number };
+  }> {
+    // Simple form field detection
+    const forms = [];
+    const formLines = ocrResult.lines.filter(line => 
+      line.text.includes(':') || 
+      line.text.includes('____') ||
+      line.text.match(/\[\s*\]/) // Checkboxes
     );
     
-    if (matchingWords.length === 0) return null;
-    
-    return this.calculateRegionBounds(matchingWords);
-  },
-
-  private calculateRegionBounds(words: any[]): BoundingBox {
-    if (words.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-    
-    const minX = Math.min(...words.map(w => w.bbox.x0));
-    const minY = Math.min(...words.map(w => w.bbox.y0));
-    const maxX = Math.max(...words.map(w => w.bbox.x1));
-    const maxY = Math.max(...words.map(w => w.bbox.y1));
-    
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  },
-
-  private detectColumns(xPositions: number[], documentWidth: number): number {
-    // Simple column detection based on X position clustering
-    const threshold = documentWidth * 0.1; // 10% of document width
-    const clusters = [];
-    
-    for (const x of xPositions) {
-      let addedToCluster = false;
+    if (formLines.length > 0) {
+      const fields = formLines.map(line => {
+        const parts = line.text.split(':');
+        return {
+          label: parts[0]?.trim() || '',
+          value: parts[1]?.trim() || '',
+          confidence: 0.6
+        };
+      }).filter(field => field.label);
       
-      for (const cluster of clusters) {
-        if (Math.abs(cluster[0] - x) <= threshold) {
-          cluster.push(x);
-          addedToCluster = true;
-          break;
-        }
-      }
-      
-      if (!addedToCluster) {
-        clusters.push([x]);
+      if (fields.length > 0) {
+        forms.push({
+          fields,
+          bbox: {
+            x: Math.min(...formLines.map(l => l.bbox.x0)),
+            y: Math.min(...formLines.map(l => l.bbox.y0)),
+            width: Math.max(...formLines.map(l => l.bbox.x1)) - Math.min(...formLines.map(l => l.bbox.x0)),
+            height: Math.max(...formLines.map(l => l.bbox.y1)) - Math.min(...formLines.map(l => l.bbox.y0))
+          }
+        });
       }
     }
     
-    return Math.max(1, clusters.length);
+    return forms;
   },
 
-  private createReadingOrder(words: any[]): string[] {
-    // Sort by Y position first (top to bottom), then by X position (left to right)
-    const sortedWords = [...words].sort((a, b) => {
-      const yDiff = a.bbox.y0 - b.bbox.y0;
-      return yDiff !== 0 ? yDiff : a.bbox.x0 - b.bbox.x0;
+  async analyzeDocumentLayout(file: File, ocrResult: OCRResult): Promise<DocumentLayoutAnalysis> {
+    const regions = this.identifyDocumentRegions(ocrResult);
+    const readingOrder = this.determineReadingOrder(regions);
+    const pageStructure = this.analyzePageStructure(ocrResult);
+    
+    return {
+      regions,
+      readingOrder,
+      pageStructure
+    };
+  },
+
+  identifyDocumentRegions(ocrResult: OCRResult): Array<{
+    type: 'text' | 'table' | 'image' | 'header' | 'footer';
+    bbox: { x: number; y: number; width: number; height: number };
+    confidence: number;
+    content?: string;
+  }> {
+    const regions = [];
+    
+    // Identify headers (top of page, larger font, centered)
+    const topLines = ocrResult.lines.filter(line => line.bbox.y0 < 100);
+    topLines.forEach(line => {
+      if (line.text.trim()) {
+        regions.push({
+          type: 'header' as const,
+          bbox: {
+            x: line.bbox.x0,
+            y: line.bbox.y0,
+            width: line.bbox.x1 - line.bbox.x0,
+            height: line.bbox.y1 - line.bbox.y0
+          },
+          confidence: 0.8,
+          content: line.text
+        });
+      }
     });
     
-    return sortedWords.map(word => word.text);
+    // Identify main text regions
+    const mainLines = ocrResult.lines.filter(line => 
+      line.bbox.y0 >= 100 && 
+      line.bbox.y1 <= (ocrResult.lines[ocrResult.lines.length - 1]?.bbox.y1 || 0) - 100
+    );
+    
+    mainLines.forEach(line => {
+      if (line.text.trim()) {
+        regions.push({
+          type: 'text' as const,
+          bbox: {
+            x: line.bbox.x0,
+            y: line.bbox.y0,
+            width: line.bbox.x1 - line.bbox.x0,
+            height: line.bbox.y1 - line.bbox.y0
+          },
+          confidence: 0.9,
+          content: line.text
+        });
+      }
+    });
+    
+    return regions;
+  },
+
+  determineReadingOrder(regions: any[]): number[] {
+    // Sort regions by y-coordinate (top to bottom), then x-coordinate (left to right)
+    return regions
+      .map((region, index) => ({ region, index }))
+      .sort((a, b) => {
+        const yDiff = a.region.bbox.y - b.region.bbox.y;
+        if (Math.abs(yDiff) < 20) { // Same line tolerance
+          return a.region.bbox.x - b.region.bbox.x;
+        }
+        return yDiff;
+      })
+      .map(item => item.index);
+  },
+
+  analyzePageStructure(ocrResult: OCRResult): {
+    headers: string[];
+    paragraphs: string[];
+    tables: any[];
+    images: any[];
+  } {
+    const headers: string[] = [];
+    const paragraphs: string[] = [];
+    
+    // Simple heuristics for identifying headers vs paragraphs
+    ocrResult.lines.forEach(line => {
+      const text = line.text.trim();
+      if (!text) return;
+      
+      // Headers are typically shorter, may be in caps, or at specific positions
+      if (text.length < 50 && (text === text.toUpperCase() || line.bbox.y0 < 100)) {
+        headers.push(text);
+      } else if (text.length > 20) {
+        paragraphs.push(text);
+      }
+    });
+    
+    return {
+      headers,
+      paragraphs,
+      tables: [], // Would be populated by table detection
+      images: []  // Would be populated by image detection
+    };
+  },
+
+  async assessDocumentQuality(file: File, ocrResult: OCRResult): Promise<DocumentQualityAssessment> {
+    const issues = [];
+    let overallScore = 100;
+    
+    // Check OCR confidence
+    if (ocrResult.confidence < 70) {
+      issues.push({
+        type: 'low_contrast' as const,
+        severity: 'high' as const,
+        description: `Low OCR confidence: ${ocrResult.confidence}%`,
+        suggestion: 'Consider image enhancement or manual review'
+      });
+      overallScore -= 30;
+    }
+    
+    // Check for potential blur (low word confidence)
+    const lowConfidenceWords = ocrResult.words.filter(word => word.confidence < 60);
+    if (lowConfidenceWords.length > ocrResult.words.length * 0.2) {
+      issues.push({
+        type: 'blur' as const,
+        severity: 'medium' as const,
+        description: `${lowConfidenceWords.length} words have low confidence`,
+        suggestion: 'Image may be blurry, try image enhancement'
+      });
+      overallScore -= 20;
+    }
+    
+    // Check for incomplete text (very short output)
+    if (ocrResult.text.length < 50) {
+      issues.push({
+        type: 'incomplete' as const,
+        severity: 'high' as const,
+        description: 'Very little text extracted',
+        suggestion: 'Document may be incomplete or require manual processing'
+      });
+      overallScore -= 40;
+    }
+    
+    const recommendations = this.generateQualityRecommendations(issues);
+    const processingStrategy = this.determineProcessingStrategy(overallScore, issues);
+    
+    return {
+      overallScore: Math.max(0, overallScore),
+      issues,
+      recommendations,
+      processingStrategy
+    };
+  },
+
+  generateQualityRecommendations(issues: any[]): string[] {
+    const recommendations = [];
+    
+    if (issues.some(issue => issue.type === 'blur')) {
+      recommendations.push('Apply image sharpening or deblurring filters');
+    }
+    
+    if (issues.some(issue => issue.type === 'low_contrast')) {
+      recommendations.push('Increase image contrast and brightness');
+    }
+    
+    if (issues.some(issue => issue.type === 'skew')) {
+      recommendations.push('Apply deskewing correction');
+    }
+    
+    if (issues.some(issue => issue.severity === 'high')) {
+      recommendations.push('Consider manual review and correction');
+    }
+    
+    return recommendations;
+  },
+
+  determineProcessingStrategy(overallScore: number, issues: any[]): 'standard' | 'enhanced' | 'manual_review' {
+    if (overallScore >= 80) {
+      return 'standard';
+    } else if (overallScore >= 50) {
+      return 'enhanced';
+    } else {
+      return 'manual_review';
+    }
   }
 };
