@@ -62,6 +62,37 @@ export const parseService = {
       console.error('Error parsing CSV:', error);
       throw new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  },
+
+  parseFileContent: async (content: string, filename: string): Promise<{ data: any[]; headers: string[] }> => {
+    console.log('Parsing file content for:', filename);
+    
+    try {
+      const fileExtension = filename.toLowerCase().split('.').pop();
+      
+      switch (fileExtension) {
+        case 'csv':
+        case 'txt':
+          const csvData = parseService.parseCSV(content);
+          const headers = csvData.length > 0 ? Object.keys(csvData[0]) : [];
+          return { data: csvData, headers };
+          
+        case 'xlsx':
+        case 'xls':
+          // For now, treat Excel files as CSV (will be enhanced in future)
+          // This is a temporary fallback until we implement proper Excel parsing
+          console.warn('Excel file detected, attempting to parse as CSV');
+          const excelData = parseService.parseCSV(content);
+          const excelHeaders = excelData.length > 0 ? Object.keys(excelData[0]) : [];
+          return { data: excelData, headers: excelHeaders };
+          
+        default:
+          throw new Error(`Unsupported file type: ${fileExtension}`);
+      }
+    } catch (error) {
+      console.error('Error parsing file content:', error);
+      throw new Error(`Failed to parse ${filename}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 };
 
