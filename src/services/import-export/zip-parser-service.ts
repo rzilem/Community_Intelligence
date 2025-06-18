@@ -84,7 +84,7 @@ export const zipParserService = {
     }
   },
 
-  private async extractFileData(zipObject: JSZip.JSZipObject): Promise<any[]> {
+  async extractFileData(zipObject: JSZip.JSZipObject): Promise<any[]> {
     const filename = zipObject.name.toLowerCase();
     
     if (filename.endsWith('.csv')) {
@@ -101,7 +101,7 @@ export const zipParserService = {
     return [];
   },
 
-  private detectDataType(filename: string, data: any[]): string {
+  detectDataType(filename: string, data: any[]): string {
     const name = filename.toLowerCase();
     const firstRow = data[0] || {};
     const columns = Object.keys(firstRow);
@@ -143,7 +143,7 @@ export const zipParserService = {
     return 'properties'; // Default fallback
   },
 
-  private extractAssociationHint(filename: string): string | undefined {
+  extractAssociationHint(filename: string): string | undefined {
     const path = filename.toLowerCase();
     const segments = path.split('/');
     
@@ -162,7 +162,7 @@ export const zipParserService = {
     return undefined;
   },
 
-  private calculateConfidence(filename: string, data: any[], detectedType: string): number {
+  calculateConfidence(filename: string, data: any[], detectedType: string): number {
     let confidence = 0.5; // Base confidence
     
     // Boost confidence based on filename match
@@ -181,7 +181,7 @@ export const zipParserService = {
     return Math.min(confidence, 0.95);
   },
 
-  private isIgnoredFile(filename: string): boolean {
+  isIgnoredFile(filename: string): boolean {
     const name = filename.toLowerCase();
     return name.startsWith('__macosx') || 
            name.includes('.ds_store') || 

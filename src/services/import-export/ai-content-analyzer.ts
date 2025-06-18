@@ -93,7 +93,7 @@ export const aiContentAnalyzer = {
     }
   },
 
-  private performSmartAnalysis(file: ZipFileEntry, columns: string[], sampleData: any[]): AIAnalysisResult {
+  performSmartAnalysis(file: ZipFileEntry, columns: string[], sampleData: any[]): AIAnalysisResult {
     const mappings: Record<string, string> = {};
     const warnings: string[] = [];
     let confidence = 0.6;
@@ -179,7 +179,7 @@ export const aiContentAnalyzer = {
     };
   },
 
-  private async enhanceWithAI(
+  async enhanceWithAI(
     baseAnalysis: AIAnalysisResult, 
     file: ZipFileEntry, 
     columns: string[], 

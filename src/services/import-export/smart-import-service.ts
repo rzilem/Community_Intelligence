@@ -75,7 +75,7 @@ export const smartImportService = {
     }
   },
 
-  private determineImportStrategy(
+  determineImportStrategy(
     aiAnalysis: BatchAnalysisResult, 
     options: SmartImportOptions
   ) {
@@ -92,7 +92,7 @@ export const smartImportService = {
     return { autoImport, threshold };
   },
 
-  private async executeAutoImport(
+  async executeAutoImport(
     zipAnalysis: ZipAnalysisResult,
     aiAnalysis: BatchAnalysisResult,
     options: SmartImportOptions
@@ -155,7 +155,7 @@ export const smartImportService = {
     return result;
   },
 
-  private async executeManualImport(
+  async executeManualImport(
     zipAnalysis: ZipAnalysisResult,
     aiAnalysis: BatchAnalysisResult,
     options: SmartImportOptions
@@ -183,7 +183,7 @@ export const smartImportService = {
     };
   },
 
-  private async processFileWithAutoImport(
+  async processFileWithAutoImport(
     file: any,
     analysis: any,
     options: SmartImportOptions
@@ -216,7 +216,7 @@ export const smartImportService = {
     };
   },
 
-  private chunkArray<T>(array: T[], size: number): T[][] {
+  chunkArray<T>(array: T[], size: number): T[][] {
     const chunks: T[][] = [];
     for (let i = 0; i < array.length; i += size) {
       chunks.push(array.slice(i, i + size));
