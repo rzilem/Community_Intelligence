@@ -1,10 +1,9 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { jobService } from '../job-service';
 
 export const financialProcessor = {
   process: async (jobId: string, associationId: string, processedData: Record<string, any>[]) => {
-    await jobService.updateImportJobStatus(jobId, 'validating');
+    await jobService.updateImportJobStatus(jobId, 'processing');
     
     const tableName = 'assessments';
     const batchSize = 25;

@@ -36,11 +36,11 @@ export const ocrService = {
       const result: OCRResult = {
         text: data.text,
         confidence: data.confidence,
-        words: data.words?.map(word => ({
+        words: (data.words || []).map(word => ({
           text: word.text,
           confidence: word.confidence,
           bbox: word.bbox
-        })) || []
+        }))
       };
       
       devLog.info('OCR extraction completed:', {
