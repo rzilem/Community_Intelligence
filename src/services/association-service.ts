@@ -171,10 +171,13 @@ const checkDependencies = async (associationId: string) => {
       .eq('association_id', associationId);
     
     if (propertyIds && propertyIds.length > 0) {
+      // Extract property IDs into a separate variable with explicit typing
+      const propertyIdList: string[] = propertyIds.map(p => p.id);
+      
       const { data: assessments } = await supabase
         .from('assessments')
         .select('id')
-        .in('property_id', propertyIds.map(p => p.id))
+        .in('property_id', propertyIdList)
         .limit(1);
       hasAssessments = Array.isArray(assessments) && assessments.length > 0;
     }
