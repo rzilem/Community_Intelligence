@@ -1,450 +1,377 @@
 
 import React, { useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  FileText, 
-  Brain, 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  Upload,
-  BarChart3,
-  FileImage,
-  Table,
-  FormInput
+  Upload, FileText, Image, Table, Brain, CheckCircle, 
+  AlertTriangle, Info, Zap, Settings 
 } from 'lucide-react';
-import { intelligentContentAnalyzer, type IntelligentAnalysisResult } from '@/services/import-export/intelligent-content-analyzer';
-import { useToast } from '@/hooks/use-toast';
-import TooltipButton from '@/components/ui/tooltip-button';
+import { toast } from 'sonner';
 
-interface EnhancedDocumentProcessorProps {
-  onAnalysisComplete?: (result: IntelligentAnalysisResult) => void;
-  onFileSelect?: (file: File) => void;
+// Import services
+import { advancedOCRService, AdvancedOCRResult } from '@/services/import-export/advanced-ocr-service';
+import { multiFormatProcessor, ProcessedDocument } from '@/services/import-export/multi-format-processor';
+import { intelligentContentAnalyzer, ContentAnalysisResult } from '@/services/import-export/intelligent-content-analyzer';
+
+interface ProcessingResult {
+  filename: string;
+  status: 'processing' | 'completed' | 'failed';
+  progress: number;
+  ocr?: AdvancedOCRResult;
+  processed?: ProcessedDocument;
+  analysis?: ContentAnalysisResult;
+  errors?: string[];
 }
 
-const EnhancedDocumentProcessor: React.FC<EnhancedDocumentProcessorProps> = ({
-  onAnalysisComplete,
-  onFileSelect
-}) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+interface ProcessingOptions {
+  enableOCR: boolean;
+  ocrLanguages: string[];
+  enableTableExtraction: boolean;
+  enableFormDetection: boolean;
+  enableLayoutAnalysis: boolean;
+  enableIntelligentAnalysis: boolean;
+  qualityThreshold: number;
+}
+
+const EnhancedDocumentProcessor: React.FC = () => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [results, setResults] = useState<ProcessingResult[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<IntelligentAnalysisResult | null>(null);
-  const [processingStage, setProcessingStage] = useState<string>('');
-  const [progress, setProgress] = useState(0);
-  const { toast } = useToast();
+  const [options, setOptions] = useState<ProcessingOptions>({
+    enableOCR: true,
+    ocrLanguages: ['eng'],
+    enableTableExtraction: true,
+    enableFormDetection: true,
+    enableLayoutAnalysis: true,
+    enableIntelligentAnalysis: true,
+    qualityThreshold: 80
+  });
 
-  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setAnalysisResult(null);
-      onFileSelect?.(file);
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFiles = Array.from(event.target.files || []);
+    setFiles(prev => [...prev, ...uploadedFiles]);
+    
+    // Initialize results for new files
+    const newResults: ProcessingResult[] = uploadedFiles.map(file => ({
+      filename: file.name,
+      status: 'processing',
+      progress: 0
+    }));
+    
+    setResults(prev => [...prev, ...newResults]);
+  }, []);
+
+  const processFiles = useCallback(async () => {
+    if (files.length === 0) {
+      toast.error('Please upload files first');
+      return;
     }
-  }, [onFileSelect]);
-
-  const processDocument = useCallback(async () => {
-    if (!selectedFile) return;
 
     setIsProcessing(true);
-    setProgress(0);
-    setProcessingStage('Initializing...');
-
+    
     try {
-      // Simulate progress updates
-      const stages = [
-        'Reading document format...',
-        'Extracting content...',
-        'Analyzing structure...',
-        'Running AI analysis...',
-        'Assessing quality...',
-        'Generating recommendations...',
-        'Finalizing analysis...'
-      ];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const resultIndex = results.findIndex(r => r.filename === file.name);
+        
+        if (resultIndex === -1) continue;
 
-      for (let i = 0; i < stages.length; i++) {
-        setProcessingStage(stages[i]);
-        setProgress(((i + 1) / stages.length) * 90);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Update progress
+        setResults(prev => prev.map((result, idx) => 
+          idx === resultIndex 
+            ? { ...result, status: 'processing', progress: 10 }
+            : result
+        ));
+
+        try {
+          // Step 1: Multi-format processing
+          const processed = await multiFormatProcessor.processFile(file, {
+            enableOCR: options.enableOCR,
+            ocrLanguages: options.ocrLanguages,
+            fallbackToOCR: true,
+            qualityThreshold: options.qualityThreshold
+          });
+
+          setResults(prev => prev.map((result, idx) => 
+            idx === resultIndex 
+              ? { ...result, processed, progress: 40 }
+              : result
+          ));
+
+          // Step 2: OCR processing (if enabled and needed)
+          let ocrResult: AdvancedOCRResult | undefined;
+          if (options.enableOCR && ['pdf', 'image', 'word'].includes(processed.format)) {
+            ocrResult = await advancedOCRService.processDocument(file, {
+              enableTableExtraction: options.enableTableExtraction,
+              enableFormDetection: options.enableFormDetection,
+              enableLayoutAnalysis: options.enableLayoutAnalysis,
+              languages: options.ocrLanguages
+            });
+
+            setResults(prev => prev.map((result, idx) => 
+              idx === resultIndex 
+                ? { ...result, ocr: ocrResult, progress: 70 }
+                : result
+            ));
+          }
+
+          // Step 3: Intelligent analysis
+          let analysis: ContentAnalysisResult | undefined;
+          if (options.enableIntelligentAnalysis && processed.content) {
+            const analysisResult = await intelligentContentAnalyzer.analyzeContent(
+              processed.content,
+              file.name,
+              {
+                includeStructural: true,
+                includeDocumentIntelligence: true,
+                enableAIAnalysis: true
+              }
+            );
+            analysis = analysisResult.analysis;
+
+            setResults(prev => prev.map((result, idx) => 
+              idx === resultIndex 
+                ? { ...result, analysis, progress: 90 }
+                : result
+            ));
+          }
+
+          // Complete
+          setResults(prev => prev.map((result, idx) => 
+            idx === resultIndex 
+              ? { ...result, status: 'completed', progress: 100 }
+              : result
+          ));
+
+          toast.success(`Processed ${file.name} successfully`);
+          
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Processing failed';
+          
+          setResults(prev => prev.map((result, idx) => 
+            idx === resultIndex 
+              ? { 
+                  ...result, 
+                  status: 'failed', 
+                  progress: 0,
+                  errors: [errorMessage]
+                }
+              : result
+          ));
+
+          toast.error(`Failed to process ${file.name}: ${errorMessage}`);
+        }
       }
-
-      // Perform actual analysis
-      const result = await intelligentContentAnalyzer.analyzeDocument(selectedFile);
-      
-      setProgress(100);
-      setProcessingStage('Complete!');
-      setAnalysisResult(result);
-      onAnalysisComplete?.(result);
-
-      toast({
-        title: "Analysis Complete",
-        description: `Document analyzed with ${result.confidence * 100}% confidence`,
-      });
-
-    } catch (error) {
-      console.error('Document processing failed:', error);
-      toast({
-        title: "Processing Failed",
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
-        variant: "destructive",
-      });
     } finally {
       setIsProcessing(false);
-      setProcessingStage('');
-      setProgress(0);
     }
-  }, [selectedFile, onAnalysisComplete, toast]);
+  }, [files, results, options]);
 
-  const getQualityColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+  const renderProcessingOptions = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Settings className="h-5 w-5" />
+          Processing Options
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="enableOCR"
+            checked={options.enableOCR}
+            onChange={(e) => setOptions(prev => ({ ...prev, enableOCR: e.target.checked }))}
+          />
+          <label htmlFor="enableOCR">Enable OCR Processing</label>
+        </div>
+        
+        {options.enableOCR && (
+          <>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="enableTableExtraction"
+                checked={options.enableTableExtraction}
+                onChange={(e) => setOptions(prev => ({ ...prev, enableTableExtraction: e.target.checked }))}
+              />
+              <label htmlFor="enableTableExtraction">Extract Tables</label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="enableFormDetection"
+                checked={options.enableFormDetection}
+                onChange={(e) => setOptions(prev => ({ ...prev, enableFormDetection: e.target.checked }))}
+              />
+              <label htmlFor="enableFormDetection">Detect Forms</label>
+            </div>
+          </>
+        )}
+        
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id="enableIntelligentAnalysis"
+            checked={options.enableIntelligentAnalysis}
+            onChange={(e) => setOptions(prev => ({ ...prev, enableIntelligentAnalysis: e.target.checked }))}
+          />
+          <label htmlFor="enableIntelligentAnalysis">AI Content Analysis</label>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-  const getQualityBadgeVariant = (score: number) => {
-    if (score >= 80) return 'default';
-    if (score >= 60) return 'secondary';
-    return 'destructive';
-  };
+  const renderFileUpload = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Upload className="h-5 w-5" />
+          Upload Documents
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          <input
+            type="file"
+            multiple
+            onChange={handleFileUpload}
+            className="hidden"
+            id="file-upload"
+            accept=".pdf,.jpg,.jpeg,.png,.gif,.csv,.txt,.xlsx,.xls,.doc,.docx"
+          />
+          <label
+            htmlFor="file-upload"
+            className="cursor-pointer flex flex-col items-center space-y-2"
+          >
+            <Upload className="h-8 w-8 text-gray-400" />
+            <span className="text-sm text-gray-600">
+              Click to upload or drag and drop
+            </span>
+            <span className="text-xs text-gray-400">
+              Supports PDF, Images, CSV, Excel, Word documents
+            </span>
+          </label>
+        </div>
+        
+        {files.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h4 className="font-medium">Uploaded Files:</h4>
+            {files.map((file, index) => (
+              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                <span className="text-sm">{file.name}</span>
+                <Badge variant="outline">{(file.size / 1024).toFixed(1)} KB</Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  const renderResults = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Brain className="h-5 w-5" />
+          Processing Results
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {results.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No results yet. Upload and process files to see results.</p>
+        ) : (
+          <div className="space-y-4">
+            {results.map((result, index) => (
+              <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{result.filename}</span>
+                  <Badge 
+                    variant={
+                      result.status === 'completed' ? 'default' : 
+                      result.status === 'failed' ? 'destructive' : 'secondary'
+                    }
+                  >
+                    {result.status}
+                  </Badge>
+                </div>
+                
+                <Progress value={result.progress} className="w-full" />
+                
+                {result.errors && result.errors.length > 0 && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {result.errors.map((error, i) => (
+                        <div key={i}>{String(error)}</div>
+                      ))}
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {result.processed && (
+                  <div className="text-sm space-y-1">
+                    <div><strong>Format:</strong> {result.processed.format}</div>
+                    <div><strong>Extraction:</strong> {result.processed.metadata.extractionMethod}</div>
+                    {result.processed.metadata.confidence && (
+                      <div><strong>Confidence:</strong> {result.processed.metadata.confidence.toFixed(1)}%</div>
+                    )}
+                  </div>
+                )}
+                
+                {result.analysis && (
+                  <div className="text-sm space-y-1">
+                    <div><strong>Data Type:</strong> {result.analysis.dataType}</div>
+                    <div><strong>Quality Score:</strong> {result.analysis.qualityScore.toFixed(1)}/100</div>
+                    <div><strong>Confidence:</strong> {(result.analysis.confidence * 100).toFixed(1)}%</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      {/* File Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Enhanced Document Intelligence
-          </CardTitle>
-          <CardDescription>
-            Upload documents for AI-powered analysis with advanced OCR, table extraction, and quality assessment
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="file-upload" className="text-sm font-medium">
-              Select Document
-            </label>
-            <input
-              id="file-upload"
-              type="file"
-              onChange={handleFileSelect}
-              accept=".pdf,.jpg,.jpeg,.png,.tiff,.csv,.xlsx,.xls,.doc,.docx"
-              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-            />
-          </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Enhanced Document Processor</h2>
+        <Button 
+          onClick={processFiles} 
+          disabled={isProcessing || files.length === 0}
+          className="flex items-center gap-2"
+        >
+          <Zap className="h-4 w-4" />
+          {isProcessing ? 'Processing...' : 'Process Files'}
+        </Button>
+      </div>
 
-          {selectedFile && (
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-medium">{selectedFile.name}</span>
-                <Badge variant="outline">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </Badge>
-              </div>
-              <TooltipButton
-                onClick={processDocument}
-                disabled={isProcessing}
-                tooltip="Start intelligent document analysis"
-              >
-                {isProcessing ? (
-                  <>
-                    <span className="animate-spin mr-2">⚡</span>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Analyze Document
-                  </>
-                )}
-              </TooltipButton>
-            </div>
-          )}
-
-          {/* Processing Progress */}
-          {isProcessing && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{processingStage}</span>
-                <span>{progress.toFixed(0)}%</span>
-              </div>
-              <Progress value={progress} className="w-full" />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Analysis Results */}
-      {analysisResult && (
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="quality">Quality</TabsTrigger>
-            <TabsTrigger value="structure">Structure</TabsTrigger>
-            <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Analysis Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {analysisResult.dataType}
-                    </div>
-                    <div className="text-sm text-slate-500">Data Type</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getQualityColor(analysisResult.confidence * 100)}`}>
-                      {(analysisResult.confidence * 100).toFixed(0)}%
-                    </div>
-                    <div className="text-sm text-slate-500">Confidence</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {analysisResult.structuralAnalysis.recordCount}
-                    </div>
-                    <div className="text-sm text-slate-500">Records</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {analysisResult.structuralAnalysis.fieldCount}
-                    </div>
-                    <div className="text-sm text-slate-500">Fields</div>
-                  </div>
-                </div>
-
-                {/* Document Features */}
-                <div className="space-y-2">
-                  <h4 className="font-medium">Document Features</h4>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      {analysisResult.metadata.documentFormat.toUpperCase()}
-                    </Badge>
-                    {analysisResult.metadata.hasStructuredData && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Table className="h-3 w-3" />
-                        Structured Data
-                      </Badge>
-                    )}
-                    {analysisResult.metadata.ocrQuality && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <FileImage className="h-3 w-3" />
-                        OCR Quality: {analysisResult.metadata.ocrQuality}%
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Processing Strategy */}
-                <div className="space-y-2">
-                  <h4 className="font-medium">Recommended Processing</h4>
-                  <Badge variant={analysisResult.processingStrategy.recommendedApproach === 'direct_import' ? 'default' : 'secondary'}>
-                    {analysisResult.processingStrategy.recommendedApproach.replace('_', ' ').toUpperCase()}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="quality" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  Quality Assessment
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Quality Scores */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getQualityColor(analysisResult.qualityAssessment.overallScore)}`}>
-                      {analysisResult.qualityAssessment.overallScore}%
-                    </div>
-                    <div className="text-sm text-slate-500">Overall</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getQualityColor(analysisResult.qualityAssessment.completeness)}`}>
-                      {analysisResult.qualityAssessment.completeness}%
-                    </div>
-                    <div className="text-sm text-slate-500">Completeness</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getQualityColor(analysisResult.qualityAssessment.consistency)}`}>
-                      {analysisResult.qualityAssessment.consistency}%
-                    </div>
-                    <div className="text-sm text-slate-500">Consistency</div>
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-2xl font-bold ${getQualityColor(analysisResult.qualityAssessment.accuracy)}`}>
-                      {analysisResult.qualityAssessment.accuracy}%
-                    </div>
-                    <div className="text-sm text-slate-500">Accuracy</div>
-                  </div>
-                </div>
-
-                {/* Quality Issues */}
-                {analysisResult.qualityAssessment.issues.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Quality Issues</h4>
-                    <div className="space-y-2">
-                      {analysisResult.qualityAssessment.issues.map((issue, index) => (
-                        <Alert key={index} variant={issue.severity === 'critical' ? 'destructive' : 'default'}>
-                          {issue.severity === 'critical' ? (
-                            <XCircle className="h-4 w-4" />
-                          ) : (
-                            <AlertTriangle className="h-4 w-4" />
-                          )}
-                          <AlertDescription className="flex justify-between items-center">
-                            <span>{issue.description}</span>
-                            <Badge variant={getQualityBadgeVariant(issue.severity === 'critical' ? 0 : issue.severity === 'high' ? 40 : 80)}>
-                              {issue.severity}
-                            </Badge>
-                          </AlertDescription>
-                        </Alert>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="structure" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Table className="h-5 w-5" />
-                  Structural Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Field Types */}
-                <div className="space-y-2">
-                  <h4 className="font-medium">Field Types</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {Object.entries(analysisResult.structuralAnalysis.fieldTypes).map(([field, type]) => (
-                      <div key={field} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                        <span className="text-sm font-medium">{field}</span>
-                        <Badge variant="outline">{type}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Data Patterns */}
-                {analysisResult.structuralAnalysis.dataPatterns.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Detected Patterns</h4>
-                    <div className="space-y-2">
-                      {analysisResult.structuralAnalysis.dataPatterns.map((pattern, index) => (
-                        <div key={index} className="p-3 bg-slate-50 rounded-lg">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-medium">{pattern.pattern}</span>
-                            <Badge variant="outline">{(pattern.confidence * 100).toFixed(0)}%</Badge>
-                          </div>
-                          <p className="text-sm text-slate-600">{pattern.description}</p>
-                          {pattern.examples.length > 0 && (
-                            <div className="text-xs text-slate-500 mt-1">
-                              Examples: {pattern.examples.join(', ')}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Relationships */}
-                {analysisResult.structuralAnalysis.relationshipPotential.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Potential Relationships</h4>
-                    <div className="space-y-2">
-                      {analysisResult.structuralAnalysis.relationshipPotential.map((rel, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                          <span className="text-sm">{rel.field1} → {rel.field2}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{rel.type}</Badge>
-                            <Badge variant="outline">{rel.score}%</Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="recommendations" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5" />
-                  AI Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Recommendations List */}
-                <div className="space-y-2">
-                  {analysisResult.recommendations.map((recommendation, index) => (
-                    <Alert key={index}>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>{recommendation}</AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-
-                {/* Processing Steps */}
-                {analysisResult.processingStrategy.preprocessingSteps.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Preprocessing Steps</h4>
-                    <ol className="list-decimal list-inside space-y-1">
-                      {analysisResult.processingStrategy.preprocessingSteps.map((step, index) => (
-                        <li key={index} className="text-sm text-slate-600">{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-
-                {/* Validation Rules */}
-                {analysisResult.processingStrategy.validationRules.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Validation Rules</h4>
-                    <div className="space-y-2">
-                      {analysisResult.processingStrategy.validationRules.map((rule, index) => (
-                        <div key={index} className="flex justify-between items-center p-2 bg-slate-50 rounded">
-                          <div>
-                            <span className="font-medium">{rule.field}</span>
-                            <p className="text-sm text-slate-600">{rule.message}</p>
-                          </div>
-                          <Badge variant={rule.severity === 'error' ? 'destructive' : 'secondary'}>
-                            {rule.severity}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList>
+          <TabsTrigger value="upload">Upload & Configure</TabsTrigger>
+          <TabsTrigger value="results">Results</TabsTrigger>
+          <TabsTrigger value="options">Options</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upload" className="space-y-6">
+          {renderFileUpload()}
+        </TabsContent>
+        
+        <TabsContent value="results" className="space-y-6">
+          {renderResults()}
+        </TabsContent>
+        
+        <TabsContent value="options" className="space-y-6">
+          {renderProcessingOptions()}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

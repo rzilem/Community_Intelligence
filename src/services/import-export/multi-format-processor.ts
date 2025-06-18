@@ -1,338 +1,276 @@
 
 import { parseService } from './parse-service';
-import { advancedOcrService, type AdvancedOCRResult } from './advanced-ocr-service';
+import { advancedOCRService, AdvancedOCRResult } from './advanced-ocr-service';
 import { devLog } from '@/utils/dev-logger';
 
-export interface MultiFormatResult {
+export interface ProcessedDocument {
   filename: string;
-  format: DocumentFormat;
-  extractedData: any[];
-  structuredContent?: AdvancedOCRResult;
-  confidence: number;
-  processingTime: number;
+  format: string;
+  content: any;
   metadata: {
-    fileSize: number;
-    pageCount?: number;
-    hasTableData: boolean;
-    hasFormFields: boolean;
-    qualityScore?: number;
+    size: number;
+    pages?: number;
+    extractionMethod: 'direct' | 'ocr' | 'hybrid';
+    confidence?: number;
+    processingTime: number;
   };
+  errors?: string[];
+  warnings?: string[];
 }
 
-export type DocumentFormat = 
-  | 'csv' 
-  | 'excel' 
-  | 'pdf_text' 
-  | 'pdf_image' 
-  | 'image' 
-  | 'word' 
-  | 'unknown';
+export interface MultiFormatProcessorOptions {
+  enableOCR?: boolean;
+  ocrLanguages?: string[];
+  fallbackToOCR?: boolean;
+  qualityThreshold?: number;
+  maxFileSize?: number;
+}
 
 export const multiFormatProcessor = {
-  async processDocument(file: File): Promise<MultiFormatResult> {
+  async processFile(
+    file: File,
+    options: MultiFormatProcessorOptions = {}
+  ): Promise<ProcessedDocument> {
     const startTime = Date.now();
-    devLog.info('Starting multi-format processing for:', file.name);
-    
+    devLog.info('Processing file with multi-format processor', { 
+      filename: file.name, 
+      size: file.size,
+      type: file.type 
+    });
+
     try {
-      const format = this.detectDocumentFormat(file);
-      let extractedData: any[] = [];
-      let structuredContent: AdvancedOCRResult | undefined;
-      let confidence = 0;
-      
+      const format = this.detectFormat(file);
+      let result: ProcessedDocument;
+
       switch (format) {
         case 'csv':
-          extractedData = await this.processCsvFile(file);
-          confidence = 0.95; // High confidence for structured data
+        case 'txt':
+          result = await this.processTextFile(file, format);
           break;
-          
         case 'excel':
-          extractedData = await this.processExcelFile(file);
-          confidence = 0.9;
+          result = await this.processExcelFile(file);
           break;
-          
-        case 'pdf_text':
-          extractedData = await this.processPdfWithText(file);
-          confidence = 0.8;
+        case 'pdf':
+          result = await this.processPDFFile(file, options);
           break;
-          
-        case 'pdf_image':
         case 'image':
-          const ocrResult = await this.processImageDocument(file);
-          structuredContent = ocrResult;
-          extractedData = this.convertOcrToStructuredData(ocrResult);
-          confidence = ocrResult.qualityScore / 100;
+          result = await this.processImageFile(file, options);
           break;
-          
         case 'word':
-          extractedData = await this.processWordDocument(file);
-          confidence = 0.75;
+          result = await this.processWordFile(file, options);
           break;
-          
         default:
-          throw new Error(`Unsupported document format: ${format}`);
+          result = await this.processUnknownFile(file, options);
       }
+
+      result.metadata.processingTime = Date.now() - startTime;
       
-      const processingTime = Date.now() - startTime;
-      
-      const result: MultiFormatResult = {
+      devLog.info('File processing completed', {
         filename: file.name,
-        format,
-        extractedData,
-        structuredContent,
-        confidence,
-        processingTime,
-        metadata: {
-          fileSize: file.size,
-          pageCount: structuredContent?.documentLayout?.pageCount,
-          hasTableData: (structuredContent?.tableData?.length || 0) > 0,
-          hasFormFields: (structuredContent?.formFields?.length || 0) > 0,
-          qualityScore: structuredContent?.qualityScore
-        }
-      };
-      
-      devLog.info('Multi-format processing complete:', {
-        filename: file.name,
-        format,
-        confidence,
-        processingTime,
-        recordsExtracted: extractedData.length
+        format: result.format,
+        extractionMethod: result.metadata.extractionMethod,
+        processingTime: result.metadata.processingTime
       });
-      
+
       return result;
-      
     } catch (error) {
-      devLog.error('Multi-format processing failed:', error);
-      throw new Error(`Processing failed for ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      devLog.error('File processing failed', error);
+      throw new Error(`Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
-  detectDocumentFormat(file: File): DocumentFormat {
-    const extension = file.name.toLowerCase().split('.').pop();
+  async processBatch(
+    files: File[],
+    options: MultiFormatProcessorOptions = {}
+  ): Promise<ProcessedDocument[]> {
+    devLog.info('Processing batch of files', { count: files.length });
+
+    const results: ProcessedDocument[] = [];
+    const errors: string[] = [];
+
+    for (const file of files) {
+      try {
+        const result = await this.processFile(file, options);
+        results.push(result);
+      } catch (error) {
+        const errorMessage = `Failed to process ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        errors.push(errorMessage);
+        devLog.error(errorMessage, error);
+      }
+    }
+
+    if (errors.length > 0) {
+      devLog.warn('Batch processing completed with errors', { 
+        processed: results.length, 
+        failed: errors.length 
+      });
+    }
+
+    return results;
+  },
+
+  detectFormat(file: File): string {
+    const extension = file.name.toLowerCase().split('.').pop() || '';
     const mimeType = file.type.toLowerCase();
-    
-    // CSV files
-    if (extension === 'csv' || mimeType.includes('csv')) {
-      return 'csv';
-    }
-    
-    // Excel files
-    if (['xlsx', 'xls'].includes(extension || '') || 
-        mimeType.includes('spreadsheet') || 
-        mimeType.includes('excel')) {
-      return 'excel';
-    }
-    
-    // PDF files (we'll determine text vs image content during processing)
-    if (extension === 'pdf' || mimeType.includes('pdf')) {
-      return 'pdf_text'; // Default assumption, will be corrected if needed
-    }
-    
-    // Word documents
-    if (['docx', 'doc'].includes(extension || '') || 
-        mimeType.includes('document') || 
-        mimeType.includes('word')) {
-      return 'word';
-    }
-    
-    // Image files
-    if (['jpg', 'jpeg', 'png', 'tiff', 'bmp', 'gif'].includes(extension || '') || 
-        mimeType.includes('image')) {
-      return 'image';
-    }
-    
+
+    // Direct format detection
+    if (extension === 'csv' || mimeType.includes('csv')) return 'csv';
+    if (extension === 'txt' || mimeType.includes('text/plain')) return 'txt';
+    if (['xlsx', 'xls'].includes(extension) || mimeType.includes('spreadsheet')) return 'excel';
+    if (extension === 'pdf' || mimeType.includes('pdf')) return 'pdf';
+    if (['docx', 'doc'].includes(extension) || mimeType.includes('document')) return 'word';
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff'].includes(extension) || mimeType.startsWith('image/')) return 'image';
+
     return 'unknown';
   },
 
-  async processCsvFile(file: File): Promise<any[]> {
-    try {
-      const content = await this.readFileAsText(file);
-      const parsed = await parseService.parseFileContent(content, file.name);
-      return parsed.data;
-    } catch (error) {
-      devLog.error('CSV processing failed:', error);
-      throw new Error(`CSV processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  },
+  async processTextFile(file: File, format: string): Promise<ProcessedDocument> {
+    const content = await file.text();
+    const parsed = await parseService.parseFileContent(content, file.name);
 
-  async processExcelFile(file: File): Promise<any[]> {
-    try {
-      // For now, treat Excel files as potential CSV exports
-      const content = await this.readFileAsText(file);
-      const parsed = await parseService.parseFileContent(content, file.name);
-      return parsed.data;
-    } catch (error) {
-      devLog.error('Excel processing failed:', error);
-      
-      // Fallback: try OCR if it's an Excel file saved as image
-      try {
-        const ocrResult = await advancedOcrService.processDocumentAdvanced(file);
-        return this.convertOcrToStructuredData(ocrResult);
-      } catch (ocrError) {
-        throw new Error(`Excel processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return {
+      filename: file.name,
+      format,
+      content: parsed.data,
+      metadata: {
+        size: file.size,
+        extractionMethod: 'direct',
+        processingTime: 0
       }
-    }
+    };
   },
 
-  async processPdfWithText(file: File): Promise<any[]> {
+  async processExcelFile(file: File): Promise<ProcessedDocument> {
+    // For now, attempt to read as text and parse as CSV
+    // This would be enhanced with proper Excel parsing
     try {
-      // Try to extract text-based content first
-      // For now, fall back to OCR processing
-      const ocrResult = await advancedOcrService.processDocumentAdvanced(file);
-      return this.convertOcrToStructuredData(ocrResult);
+      const content = await file.text();
+      const parsed = await parseService.parseFileContent(content, file.name);
+
+      return {
+        filename: file.name,
+        format: 'excel',
+        content: parsed.data,
+        metadata: {
+          size: file.size,
+          extractionMethod: 'direct',
+          processingTime: 0
+        },
+        warnings: ['Excel file processed as CSV - some formatting may be lost']
+      };
     } catch (error) {
-      devLog.error('PDF text processing failed:', error);
-      throw new Error(`PDF processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Excel processing not fully implemented: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
-  async processImageDocument(file: File): Promise<AdvancedOCRResult> {
-    try {
-      return await advancedOcrService.processDocumentAdvanced(file);
-    } catch (error) {
-      devLog.error('Image document processing failed:', error);
-      throw new Error(`Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  async processPDFFile(file: File, options: MultiFormatProcessorOptions): Promise<ProcessedDocument> {
+    // PDF processing would require pdf-parse or similar library
+    // For now, fall back to OCR if enabled
+    if (options.enableOCR || options.fallbackToOCR) {
+      return await this.processWithOCR(file, 'pdf', options);
     }
+
+    throw new Error('PDF processing requires OCR to be enabled');
   },
 
-  async processWordDocument(file: File): Promise<any[]> {
-    try {
-      // For now, try OCR processing as fallback
-      const ocrResult = await advancedOcrService.processDocumentAdvanced(file);
-      return this.convertOcrToStructuredData(ocrResult);
-    } catch (error) {
-      devLog.error('Word document processing failed:', error);
-      throw new Error(`Word processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  async processImageFile(file: File, options: MultiFormatProcessorOptions): Promise<ProcessedDocument> {
+    if (options.enableOCR || options.fallbackToOCR) {
+      return await this.processWithOCR(file, 'image', options);
     }
+
+    throw new Error('Image processing requires OCR to be enabled');
   },
 
-  convertOcrToStructuredData(ocrResult: AdvancedOCRResult): any[] {
-    const structuredData: any[] = [];
-    
+  async processWordFile(file: File, options: MultiFormatProcessorOptions): Promise<ProcessedDocument> {
+    // Word processing would require mammoth or similar library
+    // For now, fall back to OCR if enabled
+    if (options.enableOCR || options.fallbackToOCR) {
+      return await this.processWithOCR(file, 'word', options);
+    }
+
+    throw new Error('Word document processing requires OCR to be enabled');
+  },
+
+  async processUnknownFile(file: File, options: MultiFormatProcessorOptions): Promise<ProcessedDocument> {
+    if (options.enableOCR || options.fallbackToOCR) {
+      return await this.processWithOCR(file, 'unknown', options);
+    }
+
+    throw new Error(`Unsupported file format: ${file.name}`);
+  },
+
+  async processWithOCR(
+    file: File,
+    detectedFormat: string,
+    options: MultiFormatProcessorOptions
+  ): Promise<ProcessedDocument> {
     try {
-      // Convert table data to structured records
-      if (ocrResult.tableData && ocrResult.tableData.length > 0) {
-        for (const table of ocrResult.tableData) {
-          const headers = table.headers;
-          
-          // Skip header row and convert data rows
-          for (let i = 1; i < table.rows.length; i++) {
-            const row = table.rows[i];
-            const record: any = {};
-            
-            headers.forEach((header, index) => {
-              if (header && row[index] !== undefined) {
-                record[header] = row[index];
-              }
-            });
-            
-            if (Object.keys(record).length > 0) {
-              structuredData.push(record);
-            }
-          }
+      const ocrResult = await advancedOCRService.processDocument(file, {
+        languages: options.ocrLanguages || ['eng'],
+        enableTableExtraction: true,
+        enableFormDetection: true,
+        enableLayoutAnalysis: true
+      });
+
+      // Convert OCR text to structured data if possible
+      let structuredContent: any[] = [];
+      if (ocrResult.ocr.text.trim()) {
+        try {
+          const parsed = await parseService.parseCSV(ocrResult.ocr.text);
+          structuredContent = parsed;
+        } catch {
+          // If CSV parsing fails, return as plain text
+          structuredContent = [{ content: ocrResult.ocr.text }];
         }
       }
-      
-      // Convert form fields to structured records
-      if (ocrResult.formFields && ocrResult.formFields.length > 0) {
-        const formRecord: any = {};
-        
-        ocrResult.formFields.forEach(field => {
-          if (field.fieldName && field.fieldValue) {
-            formRecord[field.fieldName] = field.fieldValue;
-          }
-        });
-        
-        if (Object.keys(formRecord).length > 0) {
-          structuredData.push(formRecord);
-        }
-      }
-      
-      // If no structured data found, create a text-based record
-      if (structuredData.length === 0 && ocrResult.text) {
-        structuredData.push({
-          content: ocrResult.text,
-          confidence: ocrResult.confidence,
-          extracted_at: new Date().toISOString()
-        });
-      }
-      
-      devLog.info(`Converted OCR to ${structuredData.length} structured records`);
-      return structuredData;
-      
+
+      return {
+        filename: file.name,
+        format: detectedFormat,
+        content: structuredContent,
+        metadata: {
+          size: file.size,
+          extractionMethod: 'ocr',
+          confidence: ocrResult.ocr.confidence,
+          processingTime: ocrResult.metadata.processingTime
+        },
+        warnings: ocrResult.quality.score < 80 ? ['Low OCR confidence - results may be incomplete'] : undefined
+      };
     } catch (error) {
-      devLog.error('OCR to structured data conversion failed:', error);
-      return [];
+      throw new Error(`OCR processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
-  async readFileAsText(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
-    });
-  },
-
-  async readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsArrayBuffer(file);
-    });
-  },
-
-  // Validation and quality assessment
-  validateExtractedData(data: any[]): { isValid: boolean; issues: string[] } {
+  async validateProcessedContent(document: ProcessedDocument): Promise<{
+    isValid: boolean;
+    issues: string[];
+    suggestions: string[];
+  }> {
     const issues: string[] = [];
-    
-    if (!Array.isArray(data)) {
-      issues.push('Extracted data is not an array');
-      return { isValid: false, issues };
+    const suggestions: string[] = [];
+
+    // Check if content is empty
+    if (!document.content || (Array.isArray(document.content) && document.content.length === 0)) {
+      issues.push('No content extracted from document');
+      suggestions.push('Try enabling OCR or check if the file is corrupted');
     }
-    
-    if (data.length === 0) {
-      issues.push('No data records extracted');
-      return { isValid: false, issues };
+
+    // Check confidence for OCR results
+    if (document.metadata.extractionMethod === 'ocr' && document.metadata.confidence && document.metadata.confidence < 70) {
+      issues.push('Low OCR confidence detected');
+      suggestions.push('Consider improving image quality or scanning resolution');
     }
-    
-    // Check for consistent structure
-    const firstRecord = data[0];
-    const expectedKeys = Object.keys(firstRecord);
-    
-    for (let i = 1; i < data.length; i++) {
-      const record = data[i];
-      const recordKeys = Object.keys(record);
-      
-      if (recordKeys.length !== expectedKeys.length) {
-        issues.push(`Record ${i + 1} has inconsistent number of fields`);
-      }
-      
-      for (const key of expectedKeys) {
-        if (!(key in record)) {
-          issues.push(`Record ${i + 1} missing field: ${key}`);
-        }
-      }
+
+    // Check processing time (potential timeout issues)
+    if (document.metadata.processingTime > 30000) {
+      issues.push('Processing took longer than expected');
+      suggestions.push('Consider reducing file size or complexity');
     }
-    
-    // Check for empty values
-    const emptyValueCount = data.reduce((count, record) => {
-      return count + Object.values(record).filter(value => 
-        value === null || value === undefined || value === ''
-      ).length;
-    }, 0);
-    
-    const totalValues = data.length * Object.keys(firstRecord).length;
-    const emptyPercentage = (emptyValueCount / totalValues) * 100;
-    
-    if (emptyPercentage > 50) {
-      issues.push(`High percentage of empty values: ${emptyPercentage.toFixed(1)}%`);
-    }
-    
+
     return {
       isValid: issues.length === 0,
-      issues
+      issues,
+      suggestions
     };
   }
 };
