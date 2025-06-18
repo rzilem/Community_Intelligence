@@ -149,7 +149,7 @@ export const documentIntelligenceService = {
     const fields: string[] = [];
     
     // Common field patterns
-    const fieldPatterns = {
+    const fieldPatterns: Record<string, string[]> = {
       invoice: ['vendor', 'amount', 'date', 'invoice_number', 'description'],
       property_list: ['address', 'unit_number', 'property_type', 'owner_name'],
       financial_statement: ['account', 'balance', 'date', 'transaction_type'],
@@ -157,8 +157,7 @@ export const documentIntelligenceService = {
       assessment: ['property_id', 'amount', 'due_date', 'assessment_type']
     };
     
-    const typeFields = fieldPatterns[documentType as keyof typeof fieldPatterns] || 
-                      fieldPatterns.invoice;
+    const typeFields = fieldPatterns[documentType] || fieldPatterns.invoice;
     
     // Add detected fields from text patterns
     if (text.toLowerCase().includes('email')) fields.push('email');
@@ -207,8 +206,8 @@ export const documentIntelligenceService = {
     // Apply AI field mappings
     if (aiAnalysis?.fieldMappings) {
       Object.entries(aiAnalysis.fieldMappings).forEach(([source, target]) => {
-        if (structured[source] && !structured[target]) {
-          structured[target] = structured[source];
+        if (structured[source] && !structured[target as string]) {
+          structured[target as string] = structured[source];
         }
       });
     }
@@ -303,6 +302,11 @@ export const documentIntelligenceService = {
       'assessment': 'assessments'
     };
     
-    return typeMapping[documentType] || 'unknown';
+    // Check if documentType exists as a key in typeMapping
+    if (documentType in typeMapping) {
+      return typeMapping[documentType];
+    }
+    
+    return 'unknown';
   }
 };
