@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { ImportMappingTable } from '@/types/import-types';
 
 export const mappingService = {
   saveImportMapping: async (
@@ -11,7 +10,7 @@ export const mappingService = {
   ): Promise<void> => {
     try {
       const { data: existingMapping } = await supabase
-        .from('import_mappings' as ImportMappingTable)
+        .from('import_mappings')
         .select('*')
         .eq('association_id', associationId)
         .eq('import_type', importType)
@@ -19,12 +18,12 @@ export const mappingService = {
       
       if (existingMapping) {
         await supabase
-          .from('import_mappings' as ImportMappingTable)
+          .from('import_mappings')
           .update({ mappings: mappings as any })
           .eq('id', existingMapping.id);
       } else {
         await supabase
-          .from('import_mappings' as ImportMappingTable)
+          .from('import_mappings')
           .insert({
             association_id: associationId,
             import_type: importType,
@@ -43,7 +42,7 @@ export const mappingService = {
   ): Promise<Record<string, string> | null> => {
     try {
       const { data, error } = await supabase
-        .from('import_mappings' as ImportMappingTable)
+        .from('import_mappings')
         .select('mappings')
         .eq('association_id', associationId)
         .eq('import_type', importType)

@@ -1,4 +1,3 @@
-
 import Tesseract from 'tesseract.js';
 import { devLog } from '@/utils/dev-logger';
 

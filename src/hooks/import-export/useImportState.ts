@@ -144,14 +144,20 @@ export function useImportState() {
       console.error('Error importing data:', error);
       toast.error('Failed to import data');
       
-      const errorResults = {
+      const errorResults: ImportResult = {
         success: false,
         totalProcessed: importData?.length || 0,
         successfulImports: 0,
         failedImports: importData?.length || 0,
         details: [
-          { status: 'error' as const, message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}` }
-        ]
+          { 
+            status: 'error' as const, 
+            message: `Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            recordsProcessed: 0
+          }
+        ],
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        warnings: []
       };
       
       setImportResults(errorResults);

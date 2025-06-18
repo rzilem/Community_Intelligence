@@ -1,244 +1,172 @@
+
 import { ValidationResult } from '@/types/import-types';
-import { supabase } from '@/integrations/supabase/client';
 import { devLog } from '@/utils/dev-logger';
 
 export const validationService = {
-  validateData: async (
+  async validateData(
     data: any[],
-    importType: string,
-    associationId?: string
-  ): Promise<ValidationResult> => {
-    if (!data || data.length === 0) {
+    dataType: string,
+    associationId: string
+  ): Promise<ValidationResult> {
+    try {
+      devLog.info('Starting data validation:', { dataType, recordCount: data.length });
+      
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        return {
+          valid: false,
+          totalRows: 0,
+          validRows: 0,
+          invalidRows: 0,
+          warnings: 0,
+          issues: [{ row: 0, field: 'data', issue: 'No data provided for validation' }]
+        };
+      }
+
+      const issues: Array<{ row: number; field: string; issue: string }> = [];
+      let validRows = 0;
+      let warnings = 0;
+
+      // Validate each row
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const rowIssues = this.validateRow(row, dataType, i + 1);
+        
+        if (rowIssues.length === 0) {
+          validRows++;
+        } else {
+          const criticalIssues = rowIssues.filter(issue => issue.issue.includes('required') || issue.issue.includes('invalid'));
+          const warningIssues = rowIssues.filter(issue => !issue.issue.includes('required') && !issue.issue.includes('invalid'));
+          
+          warnings += warningIssues.length;
+          issues.push(...rowIssues);
+        }
+      }
+
+      const invalidRows = data.length - validRows;
+      const result: ValidationResult = {
+        valid: invalidRows === 0,
+        totalRows: data.length,
+        validRows,
+        invalidRows,
+        warnings,
+        issues
+      };
+
+      devLog.info('Validation completed:', result);
+      return result;
+    } catch (error) {
+      devLog.error('Validation error:', error);
       return {
         valid: false,
-        totalRows: 0,
+        totalRows: data.length || 0,
         validRows: 0,
-        invalidRows: 0,
+        invalidRows: data.length || 0,
         warnings: 0,
-        issues: []
+        issues: [{ row: 0, field: 'validation', issue: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}` }]
       };
     }
-    
-    devLog.info(`Validating ${data.length} rows of ${importType} data for association:`, associationId);
-    
+  },
+
+  validateRow(row: any, dataType: string, rowNumber: number): Array<{ row: number; field: string; issue: string }> {
     const issues: Array<{ row: number; field: string; issue: string }> = [];
-    let warnings = 0;
     
-    // Check if association has a default property type
-    let associationHasPropertyType = false;
-    if (associationId && associationId !== 'all') {
-      try {
-        const { data: assocData } = await supabase
-          .from('associations')
-          .select('property_type')
-          .eq('id', associationId)
-          .single();
-        
-        associationHasPropertyType = Boolean(assocData?.property_type);
-        devLog.debug('Association property type check:', { associationId, hasPropertyType: associationHasPropertyType, propertyType: assocData?.property_type });
-      } catch (error) {
-        devLog.warn('Could not fetch association property type:', error);
-      }
+    if (!row || typeof row !== 'object') {
+      issues.push({ row: rowNumber, field: 'row', issue: 'Invalid row data' });
+      return issues;
     }
-    
-    // Define required fields based on import type and association context
-    const getRequiredFields = (type: string): string[] => {
-      switch (type) {
-        case 'properties':
-          // Only require property_type if association doesn't have a default OR importing for all associations
-          if (associationId === 'all' || !associationHasPropertyType) {
-            return ['address', 'property_type'];
-          }
-          return ['address']; // Association has default property type
-          
-        case 'owners':
-          return ['first_name', 'last_name'];
-          
-        case 'properties_owners':
-          // Only require property_type if association doesn't have a default OR importing for all associations
-          if (associationId === 'all' || !associationHasPropertyType) {
-            return ['address', 'property_type'];
-          }
-          return ['address']; // Association has default property type
-          
-        case 'financial':
-          return ['amount', 'due_date'];
-        case 'compliance':
-          return ['violation_type', 'description'];
-        case 'maintenance':
-          return ['title', 'description'];
-        case 'associations':
-          return ['name'];
-        default:
-          return [];
-      }
-    };
 
-    const requiredFields = getRequiredFields(importType);
-    devLog.debug('Required fields for validation:', requiredFields);
-
-    // Add association identifier requirement for "all associations" imports
-    if (associationId === 'all' && importType !== 'associations') {
-      // Check if any of the association identifier columns exist
-      const associationColumns = ['association_id', 'association_name', 'association_code', 'hoa_id', 'hoa_name'];
-      const hasAssociationColumn = data.length > 0 && associationColumns.some(col => 
-        Object.keys(data[0]).some(key => key.toLowerCase().includes(col.replace('_', '').toLowerCase()))
-      );
-      
-      if (!hasAssociationColumn) {
-        issues.push({
-          row: 0,
-          field: 'association_identifier',
-          issue: 'When importing for "All Associations", your file must include an association identifier column (Association ID, Association Name, or Association Code)'
-        });
-      }
+    // Validate based on data type
+    switch (dataType) {
+      case 'properties':
+        this.validateProperty(row, rowNumber, issues);
+        break;
+      case 'owners':
+        this.validateOwner(row, rowNumber, issues);
+        break;
+      case 'properties_owners':
+        this.validatePropertyOwner(row, rowNumber, issues);
+        break;
+      case 'financial':
+        this.validateFinancial(row, rowNumber, issues);
+        break;
+      case 'compliance':
+        this.validateCompliance(row, rowNumber, issues);
+        break;
+      case 'maintenance':
+        this.validateMaintenance(row, rowNumber, issues);
+        break;
+      case 'associations':
+        this.validateAssociation(row, rowNumber, issues);
+        break;
+      default:
+        // Generic validation
+        this.validateGeneric(row, rowNumber, issues);
     }
-    
-    // Define field type validations
-    const fieldValidators: Record<string, (value: any) => boolean> = {
-      email: (value) => {
-        if (!value) return true; // Optional field
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-      },
-      phone: (value) => {
-        if (!value) return true; // Optional field
-        return /^[0-9\-\+\(\)\s\.]{7,20}$/.test(value);
-      },
-      zip: (value) => {
-        if (!value) return true; // Optional field
-        return /^[0-9\-\s]{5,10}$/.test(value);
-      },
-      number: (value) => {
-        if (value === undefined || value === null || value === '') return true; // Optional field
-        return !isNaN(Number(value));
-      },
-      date: (value) => {
-        if (!value) return true; // Optional field
-        return !isNaN(Date.parse(value));
-      },
-      boolean: (value) => {
-        if (value === undefined || value === null || value === '') return true; // Optional field
-        return typeof value === 'boolean' || value === 'true' || value === 'false' || value === 1 || value === 0;
-      }
-    };
-    
-    // Map fields to their validators
-    const fieldTypeMap: Record<string, string> = {
-      email: 'email',
-      contact_email: 'email',
-      'owner.email': 'email',
-      phone: 'phone',
-      'owner.phone': 'phone',
-      zip: 'zip',
-      'property.zip': 'zip',
-      square_feet: 'number',
-      'property.square_feet': 'number',
-      bedrooms: 'number',
-      'property.bedrooms': 'number',
-      bathrooms: 'number',
-      'property.bathrooms': 'number',
-      amount: 'number',
-      due_date: 'date',
-      payment_date: 'date',
-      move_in_date: 'date',
-      'owner.move_in_date': 'date',
-      move_out_date: 'date',
-      'owner.move_out_date': 'date',
-      closing_date: 'date',
-      'owner.closing_date': 'date',
-      is_primary: 'boolean',
-      'owner.is_primary': 'boolean'
-    };
-    
-    // Validate each row
-    data.forEach((row, rowIndex) => {
-      // Check for required fields
-      requiredFields.forEach(field => {
-        if (row[field] === undefined || row[field] === null || row[field] === '') {
-          issues.push({
-            row: rowIndex + 1,
-            field,
-            issue: `Missing required field: ${field}`
-          });
-        }
-      });
-      
-      // Validate field types
-      Object.entries(row).forEach(([field, value]) => {
-        const fieldType = fieldTypeMap[field];
-        if (fieldType && fieldValidators[fieldType]) {
-          if (!fieldValidators[fieldType](value)) {
-            issues.push({
-              row: rowIndex + 1,
-              field,
-              issue: `Invalid ${fieldType} format: ${value}`
-            });
-          }
-        }
-      });
-      
-      // Special validations for specific import types
-      if (importType === 'properties_owners') {
-        // Check if address is present
-        if (!row.address) {
-          issues.push({
-            row: rowIndex + 1,
-            field: 'address',
-            issue: 'Missing property address'
-          });
-        }
-        
-        // Check if either first_name or last_name is present
-        if (!row.first_name && !row.last_name) {
-          warnings++;
-          issues.push({
-            row: rowIndex + 1,
-            field: 'first_name/last_name',
-            issue: 'Warning: Missing owner name information'
-          });
-        }
-      }
 
-      // Validate association identifier for "all associations" imports
-      if (associationId === 'all' && importType !== 'associations') {
-        const associationIdentifiers = [
-          row.association_id, row.association_name, row.association_code,
-          row.hoa_id, row.hoa_name, row['Association ID'], row['Association Name'], 
-          row['Association Code'], row['HOA ID'], row['HOA Name']
-        ];
-        
-        const hasValidIdentifier = associationIdentifiers.some(id => id && String(id).trim());
-        
-        if (!hasValidIdentifier) {
-          issues.push({
-            row: rowIndex + 1,
-            field: 'association_identifier',
-            issue: 'Missing association identifier (Association ID, Name, or Code required for multi-association imports)'
-          });
-        }
-      }
-    });
-    
-    const invalidRows = new Set(issues.map(issue => issue.row)).size;
-    
-    const result = {
-      valid: invalidRows === 0,
-      totalRows: data.length,
-      validRows: data.length - invalidRows,
-      invalidRows,
-      warnings,
-      issues
-    };
+    return issues;
+  },
 
-    devLog.info('Validation completed:', {
-      associationId,
-      associationHasPropertyType,
-      requiredFields,
-      result
-    });
-    
-    return result;
+  validateProperty(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.address && !row.property_address && !row.street_address) {
+      issues.push({ row: rowNumber, field: 'address', issue: 'Address is required' });
+    }
+  },
+
+  validateOwner(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.first_name && !row.name) {
+      issues.push({ row: rowNumber, field: 'first_name', issue: 'First name is required' });
+    }
+    if (!row.last_name && !row.name) {
+      issues.push({ row: rowNumber, field: 'last_name', issue: 'Last name is required' });
+    }
+    if (row.email && !this.isValidEmail(row.email)) {
+      issues.push({ row: rowNumber, field: 'email', issue: 'Invalid email format' });
+    }
+  },
+
+  validatePropertyOwner(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    this.validateProperty(row, rowNumber, issues);
+    if (!row.owner_name && !row.first_name) {
+      issues.push({ row: rowNumber, field: 'owner_name', issue: 'Owner name is required' });
+    }
+  },
+
+  validateFinancial(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.amount && !row.balance && !row.payment_amount) {
+      issues.push({ row: rowNumber, field: 'amount', issue: 'Amount is required' });
+    }
+    if (row.amount && isNaN(parseFloat(row.amount))) {
+      issues.push({ row: rowNumber, field: 'amount', issue: 'Amount must be a valid number' });
+    }
+  },
+
+  validateCompliance(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.violation_type && !row.issue_type) {
+      issues.push({ row: rowNumber, field: 'violation_type', issue: 'Violation type is required' });
+    }
+  },
+
+  validateMaintenance(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.title && !row.description) {
+      issues.push({ row: rowNumber, field: 'title', issue: 'Title or description is required' });
+    }
+  },
+
+  validateAssociation(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    if (!row.name && !row.association_name) {
+      issues.push({ row: rowNumber, field: 'name', issue: 'Association name is required' });
+    }
+  },
+
+  validateGeneric(row: any, rowNumber: number, issues: Array<{ row: number; field: string; issue: string }>) {
+    const keys = Object.keys(row);
+    if (keys.length === 0) {
+      issues.push({ row: rowNumber, field: 'row', issue: 'Row is empty' });
+    }
+  },
+
+  isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 };
-
-export default validationService;

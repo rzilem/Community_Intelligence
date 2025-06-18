@@ -1,4 +1,5 @@
 
+// Core import result types
 export interface ImportResult {
   success: boolean;
   totalProcessed: number;
@@ -6,12 +7,13 @@ export interface ImportResult {
   failedImports: number;
   details: Array<{
     filename?: string;
-    status: 'success' | 'error' | 'skipped';
+    status: 'success' | 'error' | 'skipped' | 'warning';
     recordsProcessed: number;
     message: string;
   }>;
   errors: string[];
   warnings: string[];
+  job_id?: string;
 }
 
 // Smart import extends regular import with additional metadata
@@ -22,3 +24,37 @@ export interface SmartImportResult extends ImportResult {
   totalRecords: number;
   importedRecords: number;
 }
+
+// Validation result interface
+export interface ValidationResult {
+  valid: boolean;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  warnings: number;
+  issues: Array<{
+    row: number;
+    field: string;
+    issue: string;
+  }>;
+}
+
+// Import job interfaces
+export interface ImportJob {
+  id: string;
+  association_id: string;
+  import_type: string;
+  status: 'processing' | 'completed' | 'failed' | 'cancelled';
+  file_name: string;
+  file_size: number;
+  rows_processed?: number;
+  rows_succeeded?: number;
+  rows_failed?: number;
+  error_details?: Record<string, any>;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ImportJobTable = 'import_jobs';
+export type ImportMappingTable = 'import_mappings';
