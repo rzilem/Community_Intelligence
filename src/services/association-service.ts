@@ -2,27 +2,28 @@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Association } from '@/types/association-types';
+import { devLog } from '@/utils/dev-logger';
 
 /**
  * Fetches all available associations with improved error handling
  * Uses security definer function to avoid RLS issues
  */
 export const fetchAllAssociations = async () => {
-  console.log('Fetching all associations...');
+  devLog.info('Fetching all associations...');
   try {
     // Use the security definer function to get associations
     const { data, error } = await supabase
       .rpc('get_user_associations');
 
     if (error) {
-      console.error('Error fetching associations:', error);
+      devLog.error('Error fetching associations:', error);
       throw error;
     }
     
-    console.log(`Successfully fetched ${data?.length || 0} associations`);
+    devLog.info(`Successfully fetched ${data?.length || 0} associations`);
     return data || [];
   } catch (error) {
-    console.error('Error in fetchAllAssociations:', error);
+    devLog.error('Error in fetchAllAssociations:', error);
     throw error;
   }
 };
@@ -39,13 +40,13 @@ export const fetchAssociationById = async (id: string) => {
       .single();
 
     if (error) {
-      console.error(`Error fetching association with ID ${id}:`, error);
+      devLog.error(`Error fetching association with ID ${id}:`, error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error(`Error in fetchAssociationById for ID ${id}:`, error);
+    devLog.error(`Error in fetchAssociationById for ID ${id}:`, error);
     return null;
   }
 };
@@ -67,7 +68,7 @@ export const createAssociation = async (associationData: {
   total_units?: number
 }) => {
   try {
-    console.log('Creating association with data:', associationData);
+    devLog.info('Creating association with data:', associationData);
     
     // Call the updated security definer function that handles both creating the association
     // and assigning the current user as admin in one operation
@@ -85,7 +86,7 @@ export const createAssociation = async (associationData: {
       });
     
     if (error) {
-      console.error('Error creating association:', error);
+      devLog.error('Error creating association:', error);
       toast.error(`Failed to create association: ${error.message}`);
       throw error;
     }
@@ -98,14 +99,14 @@ export const createAssociation = async (associationData: {
       .single();
 
     if (fetchError) {
-      console.error('Error fetching newly created association:', fetchError);
+      devLog.error('Error fetching newly created association:', fetchError);
       throw fetchError;
     }
 
     toast.success(`Association "${newAssociation.name}" created successfully`);
     return newAssociation;
   } catch (error) {
-    console.error('Error in createAssociation:', error);
+    devLog.error('Error in createAssociation:', error);
     throw error; // Re-throw the error so it can be handled by the caller
   }
 };
@@ -123,13 +124,13 @@ export const updateAssociation = async (id: string, updates: Record<string, any>
       .single();
 
     if (error) {
-      console.error(`Error updating association with ID ${id}:`, error);
+      devLog.error(`Error updating association with ID ${id}:`, error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error(`Error in updateAssociation for ID ${id}:`, error);
+    devLog.error(`Error in updateAssociation for ID ${id}:`, error);
     return null;
   }
 };
@@ -138,7 +139,7 @@ export const updateAssociation = async (id: string, updates: Record<string, any>
  * Simple dependency check with explicit types
  */
 const checkDependencies = async (associationId: string) => {
-  console.log('Checking dependencies for association:', associationId);
+  devLog.info('Checking dependencies for association:', associationId);
   
   // Initialize with explicit boolean types
   let hasProperties: boolean = false;
@@ -180,7 +181,7 @@ const checkDependencies = async (associationId: string) => {
       .limit(1)) as any;
     hasInvoices = Array.isArray(invoices) && invoices.length > 0;
 
-    console.log('Dependency check results:', {
+    devLog.debug('Dependency check results:', {
       hasProperties,
       hasResidents,
       hasAssessments,
@@ -189,7 +190,7 @@ const checkDependencies = async (associationId: string) => {
 
     return { hasProperties, hasResidents, hasAssessments, hasInvoices };
   } catch (error) {
-    console.error('Error in checkDependencies:', error);
+    devLog.error('Error in checkDependencies:', error);
     return { 
       hasProperties: false, 
       hasResidents: false, 
@@ -204,7 +205,7 @@ const checkDependencies = async (associationId: string) => {
  */
 export const deleteAssociation = async (id: string) => {
   try {
-    console.log('Starting association deletion process for ID:', id);
+    devLog.info('Starting association deletion process for ID:', id);
     
     // Check for dependent records that would prevent deletion
     const { hasProperties, hasResidents, hasAssessments, hasInvoices } = await checkDependencies(id);
@@ -217,7 +218,7 @@ export const deleteAssociation = async (id: string) => {
       if (hasInvoices) dependencyTypes.push('invoices');
       
       const errorMessage = `Cannot delete association with existing ${dependencyTypes.join(', ')}. Please remove these records first.`;
-      console.error(errorMessage);
+      devLog.error(errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -228,7 +229,7 @@ export const deleteAssociation = async (id: string) => {
       .eq('association_id', id);
 
     if (userError) {
-      console.warn('Error deleting association user relationships:', userError);
+      devLog.warn('Error deleting association user relationships:', userError);
       // Continue with deletion even if this fails
     }
 
@@ -239,15 +240,15 @@ export const deleteAssociation = async (id: string) => {
       .eq('id', id);
 
     if (error) {
-      console.error(`Error deleting association with ID ${id}:`, error);
+      devLog.error(`Error deleting association with ID ${id}:`, error);
       throw error;
     }
 
-    console.log('Association deleted successfully:', id);
+    devLog.info('Association deleted successfully:', id);
     toast.success('Association deleted successfully');
     return true;
   } catch (error) {
-    console.error(`Error in deleteAssociation for ID ${id}:`, error);
+    devLog.error(`Error in deleteAssociation for ID ${id}:`, error);
     throw error; // Re-throw to let the caller handle it
   }
 };

@@ -11,6 +11,7 @@ import LoadingIndicator from './LoadingIndicator';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
 import { ImportResult } from '@/types/import-types';
 import { toast } from 'sonner';
+import { devLog } from '@/utils/dev-logger';
 
 interface ImportTabContentProps {
   associationId: string;
@@ -35,9 +36,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
 }) => {
   const [selectedType, setSelectedType] = React.useState('associations');
 
-  // Add debugging for association selection
-  console.log('ImportTabContent: Current associationId:', associationId);
-  console.log('ImportTabContent: Import file:', importFile?.name);
+  devLog.debug('ImportTabContent render:', { associationId, fileName: importFile?.name });
 
   const handleStartImport = async () => {
     if (!importFile) {
@@ -50,14 +49,14 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
       return;
     }
     
-    console.log('ImportTabContent: Starting import for association:', associationId);
+    devLog.info('Starting import for association:', associationId);
     
     try {
       // Call the file upload handler with empty parsed data array
       // The handler will parse the file
       onFileUpload(importFile, [], selectedType);
     } catch (error) {
-      console.error('Error starting import process:', error);
+      devLog.error('Error starting import process:', error);
       toast.error("Failed to start the import process");
     }
   };
@@ -78,7 +77,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 <AssociationSelector
                   initialAssociationId={associationId}
                   onAssociationChange={(id) => {
-                    console.log('ImportTabContent: Association changed to:', id);
+                    devLog.debug('Association changed to:', id);
                     onAssociationChange(id);
                   }}
                   label="Select Association"
@@ -99,7 +98,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 <DataTypeSelector 
                   value={selectedType}
                   onChange={(type) => {
-                    console.log('ImportTabContent: Data type changed to:', type);
+                    devLog.debug('Data type changed to:', type);
                     setSelectedType(type);
                     if (importFile) {
                       onFileUpload(importFile, [], type);
@@ -109,7 +108,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 
                 <FileUploader 
                   onFileSelected={(file) => {
-                    console.log('ImportTabContent: File selected:', file?.name);
+                    devLog.debug('File selected:', file?.name);
                     if (file) {
                       // Just set the file, don't start import immediately
                       onFileUpload(file, [], selectedType);

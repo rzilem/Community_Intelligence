@@ -1,6 +1,6 @@
-
 import { ValidationResult } from '@/types/import-types';
 import { supabase } from '@/integrations/supabase/client';
+import { devLog } from '@/utils/dev-logger';
 
 export const validationService = {
   validateData: async (
@@ -19,7 +19,7 @@ export const validationService = {
       };
     }
     
-    console.log(`Validating ${data.length} rows of ${importType} data for association:`, associationId);
+    devLog.info(`Validating ${data.length} rows of ${importType} data for association:`, associationId);
     
     const issues: Array<{ row: number; field: string; issue: string }> = [];
     let warnings = 0;
@@ -35,9 +35,9 @@ export const validationService = {
           .single();
         
         associationHasPropertyType = Boolean(assocData?.property_type);
-        console.log('Association property type check:', { associationId, hasPropertyType: associationHasPropertyType, propertyType: assocData?.property_type });
+        devLog.debug('Association property type check:', { associationId, hasPropertyType: associationHasPropertyType, propertyType: assocData?.property_type });
       } catch (error) {
-        console.warn('Could not fetch association property type:', error);
+        devLog.warn('Could not fetch association property type:', error);
       }
     }
     
@@ -75,7 +75,7 @@ export const validationService = {
     };
 
     const requiredFields = getRequiredFields(importType);
-    console.log('Required fields for validation:', requiredFields);
+    devLog.debug('Required fields for validation:', requiredFields);
 
     // Add association identifier requirement for "all associations" imports
     if (associationId === 'all' && importType !== 'associations') {
@@ -230,7 +230,7 @@ export const validationService = {
       issues
     };
 
-    console.log('Validation completed:', {
+    devLog.info('Validation completed:', {
       associationId,
       associationHasPropertyType,
       requiredFields,
