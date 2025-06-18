@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Announcement, AnnouncementPriority } from '@/types/communication-types';
 import { toast } from 'sonner';
+import { devLog } from '@/utils/dev-logger';
 
 export const useAnnouncementsDebug = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -11,7 +12,7 @@ export const useAnnouncementsDebug = () => {
 
   // Debug function to log state
   const logDebugInfo = () => {
-    console.log('[useAnnouncementsDebug] Current state:', {
+    devLog.debug('useAnnouncementsDebug Current state:', {
       announcementsCount: announcements.length,
       isLoading,
       error: error?.message,
@@ -21,7 +22,7 @@ export const useAnnouncementsDebug = () => {
 
   // Fetch announcements with debugging
   const fetchAnnouncements = async () => {
-    console.log('[useAnnouncementsDebug] Starting fetch...');
+    devLog.info('useAnnouncementsDebug Starting fetch...');
     setIsLoading(true);
     setError(null);
     
@@ -31,7 +32,7 @@ export const useAnnouncementsDebug = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('[useAnnouncementsDebug] Fetch result:', { data, error });
+      devLog.debug('useAnnouncementsDebug Fetch result:', { data, error });
 
       if (error) {
         throw new Error(error.message);
@@ -43,21 +44,21 @@ export const useAnnouncementsDebug = () => {
         priority: (item.priority || 'normal') as AnnouncementPriority
       })) || [];
       
-      console.log('[useAnnouncementsDebug] Processed data:', typedData);
+      devLog.debug('useAnnouncementsDebug Processed data:', typedData);
       setAnnouncements(typedData);
     } catch (error: any) {
-      console.error('[useAnnouncementsDebug] Error fetching announcements:', error);
+      devLog.error('useAnnouncementsDebug Error fetching announcements:', error);
       setError(error);
       toast.error(`Failed to load announcements: ${error.message}`);
     } finally {
       setIsLoading(false);
-      console.log('[useAnnouncementsDebug] Fetch completed');
+      devLog.info('useAnnouncementsDebug Fetch completed');
     }
   };
 
   // Create a new announcement with debugging
   const createAnnouncement = async (announcement: Omit<Announcement, 'id' | 'created_at' | 'updated_at'>) => {
-    console.log('[useAnnouncementsDebug] Creating announcement:', announcement);
+    devLog.info('useAnnouncementsDebug Creating announcement:', announcement);
     
     try {
       const { data, error } = await supabase
@@ -78,10 +79,10 @@ export const useAnnouncementsDebug = () => {
 
       setAnnouncements((prev) => [typedData, ...prev]);
       toast.success('Announcement created successfully');
-      console.log('[useAnnouncementsDebug] Announcement created:', typedData);
+      devLog.info('useAnnouncementsDebug Announcement created:', typedData);
       return typedData;
     } catch (error: any) {
-      console.error('[useAnnouncementsDebug] Error creating announcement:', error);
+      devLog.error('useAnnouncementsDebug Error creating announcement:', error);
       toast.error(`Failed to create announcement: ${error.message}`);
       throw error;
     }
@@ -89,7 +90,7 @@ export const useAnnouncementsDebug = () => {
 
   // Update an announcement with debugging
   const updateAnnouncement = async (id: string, updates: Partial<Announcement>) => {
-    console.log('[useAnnouncementsDebug] Updating announcement:', { id, updates });
+    devLog.info('useAnnouncementsDebug Updating announcement:', { id, updates });
     
     try {
       const { data, error } = await supabase
@@ -113,10 +114,10 @@ export const useAnnouncementsDebug = () => {
         prev.map((item) => (item.id === id ? { ...item, ...typedData } : item))
       );
       toast.success('Announcement updated successfully');
-      console.log('[useAnnouncementsDebug] Announcement updated:', typedData);
+      devLog.info('useAnnouncementsDebug Announcement updated:', typedData);
       return typedData;
     } catch (error: any) {
-      console.error('[useAnnouncementsDebug] Error updating announcement:', error);
+      devLog.error('useAnnouncementsDebug Error updating announcement:', error);
       toast.error(`Failed to update announcement: ${error.message}`);
       throw error;
     }
@@ -124,7 +125,7 @@ export const useAnnouncementsDebug = () => {
 
   // Delete an announcement with debugging
   const deleteAnnouncement = async (id: string) => {
-    console.log('[useAnnouncementsDebug] Deleting announcement:', id);
+    devLog.info('useAnnouncementsDebug Deleting announcement:', id);
     
     try {
       const { error } = await supabase
@@ -138,9 +139,9 @@ export const useAnnouncementsDebug = () => {
 
       setAnnouncements((prev) => prev.filter((item) => item.id !== id));
       toast.success('Announcement deleted successfully');
-      console.log('[useAnnouncementsDebug] Announcement deleted:', id);
+      devLog.info('useAnnouncementsDebug Announcement deleted:', id);
     } catch (error: any) {
-      console.error('[useAnnouncementsDebug] Error deleting announcement:', error);
+      devLog.error('useAnnouncementsDebug Error deleting announcement:', error);
       toast.error(`Failed to delete announcement: ${error.message}`);
       throw error;
     }
@@ -148,7 +149,7 @@ export const useAnnouncementsDebug = () => {
 
   // Load announcements on component mount
   useEffect(() => {
-    console.log('[useAnnouncementsDebug] Hook initialized, fetching announcements...');
+    devLog.info('useAnnouncementsDebug Hook initialized, fetching announcements...');
     fetchAnnouncements();
   }, []);
 

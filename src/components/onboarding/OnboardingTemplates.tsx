@@ -8,6 +8,7 @@ import TemplatesFilter from './templates/TemplatesFilter';
 import TemplatesList from './templates/TemplatesList';
 import { useTemplateActions } from './hooks/useTemplateActions';
 import { useTemplateStages } from './hooks/useTemplateStages';
+import { devLog } from '@/utils/dev-logger';
 
 const OnboardingTemplates = () => {
   const { 
@@ -41,10 +42,10 @@ const OnboardingTemplates = () => {
   } = useTemplateStages(templates);
 
   useEffect(() => {
-    console.log("OnboardingTemplates component loaded. Templates:", templates);
+    devLog.info("OnboardingTemplates component loaded. Templates:", templates);
     
     if (templates.length === 0 && !isLoading) {
-      console.log("No templates found, refreshing...");
+      devLog.info("No templates found, refreshing...");
       refreshTemplates();
     }
   }, [templates, isLoading, refreshTemplates]);

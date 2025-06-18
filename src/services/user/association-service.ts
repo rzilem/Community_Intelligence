@@ -1,4 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { devLog } from '@/utils/dev-logger';
 
 /**
  * Fetches associations for the current user based on their role
@@ -9,7 +11,7 @@ export const fetchUserAssociations = async (userId: string) => {
     const { data, error } = await supabase.rpc('get_user_associations');
 
     if (error) {
-      console.error('Error fetching user associations:', error);
+      devLog.error('Error fetching user associations:', error);
       throw error;
     }
 
@@ -22,7 +24,7 @@ export const fetchUserAssociations = async (userId: string) => {
 
     return formattedData;
   } catch (error) {
-    console.error('Error in fetchUserAssociations:', error);
+    devLog.error('Error in fetchUserAssociations:', error);
     return [];
   }
 };
@@ -44,13 +46,13 @@ export const assignUserToAssociation = async (
     });
 
     if (error) {
-      console.error('Error assigning user to association:', error);
+      devLog.error('Error assigning user to association:', error);
       throw error;
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Error in assignUserToAssociation:', error);
+    devLog.error('Error in assignUserToAssociation:', error);
     return null;
   }
 };
@@ -72,13 +74,13 @@ export const updateUserRole = async (
       .single();
 
     if (error) {
-      console.error('Error updating user role:', error);
+      devLog.error('Error updating user role:', error);
       throw error;
     }
 
     return data;
   } catch (error) {
-    console.error('Error in updateUserRole:', error);
+    devLog.error('Error in updateUserRole:', error);
     return null;
   }
 };

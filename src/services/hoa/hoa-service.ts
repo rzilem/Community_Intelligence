@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Association } from '@/types/association-types';
+import { devLog } from '@/utils/dev-logger';
 
 // Create a type alias for HOA using Association to maintain backwards compatibility
 type HOA = Association;

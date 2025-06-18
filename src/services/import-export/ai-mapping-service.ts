@@ -1,6 +1,7 @@
 
 import { MappingOption } from '@/components/data-import/types/mapping-types';
 import { smartMappingService } from './smart-mapping-service';
+import { devLog } from '@/utils/dev-logger';
 
 interface MappingSuggestion {
   fieldValue: string;
@@ -13,7 +14,7 @@ export const aiMappingService = {
     systemFields: MappingOption[],
     sampleData: any[]
   ): Record<string, MappingSuggestion> => {
-    console.log('Generating AI mapping suggestions with smart mapping...');
+    devLog.info('Generating AI mapping suggestions with smart mapping...');
     
     // Use the smart mapping service for better suggestions
     const smartSuggestions = smartMappingService.generateSmartMappings(
@@ -32,7 +33,7 @@ export const aiMappingService = {
       };
     });
     
-    console.log('Generated smart mapping suggestions:', suggestions);
+    devLog.info('Generated smart mapping suggestions:', suggestions);
     return suggestions;
   }
 };

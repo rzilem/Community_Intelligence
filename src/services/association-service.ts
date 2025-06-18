@@ -149,36 +149,42 @@ const checkDependencies = async (associationId: string) => {
 
   try {
     // Check properties
-    const { data: properties } = await (supabase
-      .from('properties' as any)
+    const { data: properties } = await supabase
+      .from('properties')
       .select('id')
       .eq('association_id', associationId)
-      .limit(1)) as any;
+      .limit(1);
     hasProperties = Array.isArray(properties) && properties.length > 0;
 
     // Check residents
-    const { data: residents } = await (supabase
-      .from('residents' as any)
+    const { data: residents } = await supabase
+      .from('residents')
       .select('id')
       .eq('association_id', associationId)
-      .limit(1)) as any;
+      .limit(1);
     hasResidents = Array.isArray(residents) && residents.length > 0;
 
-    // Check assessments (with association filter)
-    const { data: assessments } = await (supabase
-      .from('assessments' as any)
-      .select('assessments.id')
-      .innerJoin('properties', 'properties.id = assessments.property_id')
-      .eq('properties.association_id', associationId)
-      .limit(1)) as any;
-    hasAssessments = Array.isArray(assessments) && assessments.length > 0;
+    // Check assessments by getting properties first, then checking assessments
+    const { data: propertyIds } = await supabase
+      .from('properties')
+      .select('id')
+      .eq('association_id', associationId);
+    
+    if (propertyIds && propertyIds.length > 0) {
+      const { data: assessments } = await supabase
+        .from('assessments')
+        .select('id')
+        .in('property_id', propertyIds.map(p => p.id))
+        .limit(1);
+      hasAssessments = Array.isArray(assessments) && assessments.length > 0;
+    }
 
     // Check invoices
-    const { data: invoices } = await (supabase
-      .from('invoices' as any)
+    const { data: invoices } = await supabase
+      .from('invoices')
       .select('id')
       .eq('association_id', associationId)
-      .limit(1)) as any;
+      .limit(1);
     hasInvoices = Array.isArray(invoices) && invoices.length > 0;
 
     devLog.debug('Dependency check results:', {

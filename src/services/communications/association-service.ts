@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { Association } from '@/types/association-types';
+import { devLog } from '@/utils/dev-logger';
 
 export const associationService = {
   // Get all associations the user has access to
@@ -14,7 +15,7 @@ export const associationService = {
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching associations:', error);
+      devLog.error('Error fetching associations:', error);
       return [];
     }
   },
@@ -31,7 +32,7 @@ export const associationService = {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error(`Error fetching association with ID ${associationId}:`, error);
+      devLog.error(`Error fetching association with ID ${associationId}:`, error);
       return null;
     }
   }

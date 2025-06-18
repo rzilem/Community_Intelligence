@@ -3,6 +3,7 @@
  * Client-side rotating log utility
  * Captures console logs and stores them in localStorage with rotation
  */
+import { devLog } from './dev-logger';
 
 export interface LogEntry {
   timestamp: string;
@@ -63,7 +64,7 @@ export class ClientLogger {
       };
 
       this.isInitialized = true;
-      this.originalInfo.call(console, 'Client logger initialized');
+      devLog.info('Client logger initialized');
     } catch (error) {
       // Use the original console methods to log any initialization errors
       this.originalError.call(console, 'Failed to initialize logger:', error);
@@ -163,7 +164,7 @@ export class ClientLogger {
     console.error = this.originalError;
     
     this.isInitialized = false;
-    console.info('Client logger restored');
+    devLog.info('Client logger restored');
   }
 }
 
