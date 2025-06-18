@@ -4,6 +4,7 @@ import { ImportResult } from '@/types/import-types';
 import { jobService } from './job-service';
 import { propertiesOwnersProcessor } from './processors/properties-owners-processor';
 import { financialProcessor } from './processors/financial-processor';
+import { ownersProcessor } from './processors/owners-processor';
 import { genericProcessor } from './processors/generic-processor';
 
 export const processorService = {
@@ -18,28 +19,20 @@ export const processorService = {
     failedImports: number;
     details: Array<{ status: 'success' | 'error' | 'warning'; message: string }>;
   }> => {
-    // Special handling for properties_owners combined import
-    if (dataType === 'properties_owners') {
-      return await propertiesOwnersProcessor.process(jobId, associationId, processedData);
+    // Route to appropriate processor based on data type
+    switch (dataType) {
+      case 'properties_owners':
+        return await propertiesOwnersProcessor.process(jobId, associationId, processedData);
+      
+      case 'owners':
+        return await ownersProcessor.process(jobId, associationId, processedData);
+      
+      case 'financial':
+      case 'assessments':
+        return await financialProcessor.process(jobId, associationId, processedData);
+      
+      default:
+        return await genericProcessor.process(jobId, associationId, dataType, processedData);
     }
-    
-    // Special handling for financial data
-    if (dataType === 'financial') {
-      return await financialProcessor.process(jobId, associationId, processedData);
-    }
-    
-    // Handle all other data types
-    const result = await genericProcessor.process(jobId, associationId, dataType, processedData);
-    
-    // Update job status to completed or failed
-    const finalStatus = result.failedImports === 0 ? 'completed' : 'failed';
-    await jobService.updateImportJobStatus(jobId, finalStatus, {
-      processed: processedData.length,
-      succeeded: result.successfulImports,
-      failed: result.failedImports,
-      errorDetails: result.failedImports > 0 ? { details: result.details } : undefined
-    });
-    
-    return result;
   }
 };
