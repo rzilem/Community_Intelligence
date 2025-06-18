@@ -81,15 +81,10 @@ export const advancedOCRService = {
     devLog.info('Starting advanced OCR processing', { filename: typeof file === 'string' ? file : file.name });
 
     try {
-      // Initialize Tesseract worker
-      const worker = await Tesseract.createWorker();
+      // Initialize Tesseract worker with correct API
+      const worker = await Tesseract.createWorker(options.languages?.join('+') || 'eng');
       
       try {
-        // Set language (default to English)
-        const languages = options.languages?.join('+') || 'eng';
-        await worker.loadLanguage(languages);
-        await worker.initialize(languages);
-
         // Configure OCR parameters
         await worker.setParameters({
           tessedit_pageseg_mode: Tesseract.PSM.AUTO,
@@ -99,14 +94,14 @@ export const advancedOCRService = {
         // Perform OCR
         const { data } = await worker.recognize(file);
         
-        // Extract basic OCR results
+        // Extract basic OCR results with correct data structure
         const ocrResult: OCRResult = {
-          text: data.text,
-          confidence: data.confidence,
+          text: data.text || '',
+          confidence: data.confidence || 0,
           boundingBoxes: data.words?.map(word => ({
-            text: word.text,
-            bbox: word.bbox,
-            confidence: word.confidence
+            text: word.text || '',
+            bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 },
+            confidence: word.confidence || 0
           })) || []
         };
 
@@ -190,7 +185,7 @@ export const advancedOCRService = {
 
     // Check for potential blur (low confidence + short words)
     const shortLowConfidenceWords = data.words?.filter((w: any) => 
-      w.text.length <= 3 && w.confidence < 60
+      w.text?.length <= 3 && w.confidence < 60
     ).length || 0;
 
     if (shortLowConfidenceWords > 5) {
