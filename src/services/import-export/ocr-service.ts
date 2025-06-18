@@ -1,3 +1,4 @@
+
 import Tesseract from 'tesseract.js';
 import { devLog } from '@/utils/dev-logger';
 
@@ -24,6 +25,25 @@ export interface DocumentOCRResult {
   documentType?: string;
 }
 
+// Define interface for words data that may come from Tesseract
+interface TesseractWord {
+  text: string;
+  confidence: number;
+  bbox: {
+    x0: number;
+    y0: number;
+    x1: number;
+    y1: number;
+  };
+}
+
+// Extended interface for Tesseract page data
+interface TesseractPageData {
+  text: string;
+  confidence: number;
+  words?: TesseractWord[];
+}
+
 export const ocrService = {
   async extractTextFromImage(imageFile: File | Blob, filename: string): Promise<OCRResult> {
     try {
@@ -33,14 +53,18 @@ export const ocrService = {
         logger: m => devLog.debug('Tesseract progress:', m)
       });
       
+      // Safely extract words data with proper fallback
+      const wordsData = (data as TesseractPageData).words || [];
+      const processedWords = Array.isArray(wordsData) ? wordsData.map(word => ({
+        text: word.text || '',
+        confidence: word.confidence || 0,
+        bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 }
+      })) : [];
+
       const result: OCRResult = {
         text: data.text,
         confidence: data.confidence,
-        words: (data.words && Array.isArray(data.words) ? data.words : []).map(word => ({
-          text: word.text || '',
-          confidence: word.confidence || 0,
-          bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 }
-        }))
+        words: processedWords
       };
       
       devLog.info('OCR extraction completed:', {

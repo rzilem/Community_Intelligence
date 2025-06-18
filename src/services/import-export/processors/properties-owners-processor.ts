@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { jobService } from '../job-service';
 
@@ -43,6 +44,15 @@ export const propertiesOwnersProcessor = {
             
             // Then, create the owner/resident if owner data exists
             if (record.first_name || record.last_name || record.owner_name) {
+              // Helper function to determine resident type
+              const determineResidentType = (data: any): 'owner' | 'tenant' | 'family' | 'other' => {
+                if (data.resident_type) return data.resident_type;
+                if (data.owner_type?.toLowerCase().includes('tenant')) return 'tenant';
+                if (data.is_tenant === true || data.tenant === true) return 'tenant';
+                if (data.is_owner === false) return 'tenant';
+                return 'owner'; // Default to owner
+              };
+
               const ownerData = {
                 association_id: associationId,
                 property_id: property.id,
@@ -52,7 +62,8 @@ export const propertiesOwnersProcessor = {
                 phone: record.phone || record.phone_number,
                 move_in_date: record.move_in_date || null,
                 is_primary: record.is_primary !== undefined ? record.is_primary : true,
-                emergency_contact: record.emergency_contact || null
+                emergency_contact: record.emergency_contact || null,
+                resident_type: determineResidentType(record)
               };
               
               const { error: ownerError } = await supabase

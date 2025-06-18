@@ -11,6 +11,7 @@ import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
 import ZipFileUploader from './ZipFileUploader';
+import AISmartImport from './AISmartImport';
 import { ImportResult } from '@/types/import-types';
 import { useSmartImport } from '@/hooks/import-export/useSmartImport';
 import { toast } from 'sonner';
@@ -111,7 +112,8 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                 Enhanced Data Import
               </CardTitle>
               <CardDescription>
-                Upload individual files or ZIP archives containing multiple data files. AI will automatically analyze, map, and import everything for you.
+                Choose between AI-powered bulk import or traditional single-file import. 
+                AI can process entire ZIP files and reduce manual work by 90%.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -137,14 +139,22 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                   </Alert>
                 )}
 
-                <Tabs defaultValue="zip" className="space-y-4">
-                  <TabsList className="grid w-full grid-cols-2">
+                <Tabs defaultValue="ai-bulk" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="ai-bulk" className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      AI Bulk Import
+                    </TabsTrigger>
                     <TabsTrigger value="zip" className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4" />
                       Smart ZIP Import
                     </TabsTrigger>
                     <TabsTrigger value="single">Single File Import</TabsTrigger>
                   </TabsList>
+
+                  <TabsContent value="ai-bulk" className="space-y-4">
+                    <AISmartImport />
+                  </TabsContent>
 
                   <TabsContent value="zip" className="space-y-4">
                     <ZipFileUploader
