@@ -149,7 +149,7 @@ const checkDependencies = async (associationId: string) => {
 
   try {
     // Check properties
-    const { data: properties } = await supabase
+    const { data: properties } = await (supabase as any)
       .from('properties')
       .select('id')
       .eq('association_id', associationId)
@@ -157,7 +157,7 @@ const checkDependencies = async (associationId: string) => {
     hasProperties = Array.isArray(properties) && properties.length > 0;
 
     // Check residents
-    const { data: residents } = await supabase
+    const { data: residents } = await (supabase as any)
       .from('residents')
       .select('id')
       .eq('association_id', associationId)
@@ -165,7 +165,7 @@ const checkDependencies = async (associationId: string) => {
     hasResidents = Array.isArray(residents) && residents.length > 0;
 
     // Check assessments by getting properties first, then checking assessments
-    const { data: propertyIds } = await supabase
+    const { data: propertyIds } = await (supabase as any)
       .from('properties')
       .select('id')
       .eq('association_id', associationId);
@@ -174,7 +174,7 @@ const checkDependencies = async (associationId: string) => {
       // Extract property IDs into a separate variable with explicit typing
       const propertyIdList: string[] = propertyIds.map(p => p.id);
       
-      const { data: assessments } = await supabase
+      const { data: assessments } = await (supabase as any)
         .from('assessments')
         .select('id')
         .in('property_id', propertyIdList)
@@ -183,7 +183,7 @@ const checkDependencies = async (associationId: string) => {
     }
 
     // Check invoices
-    const { data: invoices } = await supabase
+    const { data: invoices } = await (supabase as any)
       .from('invoices')
       .select('id')
       .eq('association_id', associationId)
@@ -232,7 +232,7 @@ export const deleteAssociation = async (id: string) => {
     }
 
     // Delete association user relationships first
-    const { error: userError } = await supabase
+    const { error: userError } = await (supabase as any)
       .from('association_users')
       .delete()
       .eq('association_id', id);
@@ -243,7 +243,7 @@ export const deleteAssociation = async (id: string) => {
     }
 
     // Now delete the association
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('associations')
       .delete()
       .eq('id', id);
