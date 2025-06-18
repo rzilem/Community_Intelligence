@@ -2,14 +2,17 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
+import { Info, Sparkles } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FileUploader from './FileUploader';
 import DataTypeSelector from './DataTypeSelector';
 import AssociationSelector from '@/components/associations/AssociationSelector';
 import ImportResultsTable from './ImportResultsTable';
 import LoadingIndicator from './LoadingIndicator';
 import NolanCityAddressGenerator from './NolanCityAddressGenerator';
+import ZipFileUploader from './ZipFileUploader';
 import { ImportResult } from '@/types/import-types';
+import { useSmartImport } from '@/hooks/import-export/useSmartImport';
 import { toast } from 'sonner';
 import { devLog } from '@/utils/dev-logger';
 
@@ -35,6 +38,9 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
   onAssociationChange
 }) => {
   const [selectedType, setSelectedType] = React.useState('associations');
+  const [selectedZipFile, setSelectedZipFile] = React.useState<File | null>(null);
+  
+  const { isProcessing: isSmartProcessing, smartImportResult, processZipFile, resetSmartImport } = useSmartImport();
 
   devLog.debug('ImportTabContent render:', { associationId, fileName: importFile?.name });
 
@@ -52,8 +58,6 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
     devLog.info('Starting import for association:', associationId);
     
     try {
-      // Call the file upload handler with empty parsed data array
-      // The handler will parse the file
       onFileUpload(importFile, [], selectedType);
     } catch (error) {
       devLog.error('Error starting import process:', error);
@@ -61,15 +65,45 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
     }
   };
 
+  const handleSmartImport = async () => {
+    if (!selectedZipFile) {
+      toast.error("Please select a ZIP file first");
+      return;
+    }
+    
+    if (!associationId) {
+      toast.error("Please select an association first");
+      return;
+    }
+
+    await processZipFile(selectedZipFile, {
+      associationId,
+      autoImportThreshold: 0.85,
+      skipValidation: false
+    });
+  };
+
+  const handleImportAnother = () => {
+    onImportAnother();
+    resetSmartImport();
+    setSelectedZipFile(null);
+  };
+
+  // Show results if we have either regular import results or smart import results
+  const hasResults = importResults || smartImportResult;
+
   return (
     <div className="space-y-6">
-      {!importResults ? (
+      {!hasResults ? (
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Import Data</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-blue-500" />
+                Enhanced Data Import
+              </CardTitle>
               <CardDescription>
-                Upload property, owner, or financial data to import into your association(s)
+                Upload individual files or ZIP archives containing multiple data files. AI will automatically analyze, map, and import everything for you.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -94,33 +128,57 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
                     </AlertDescription>
                   </Alert>
                 )}
+
+                <Tabs defaultValue="zip" className="space-y-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="zip" className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Smart ZIP Import
+                    </TabsTrigger>
+                    <TabsTrigger value="single">Single File Import</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="zip" className="space-y-4">
+                    <ZipFileUploader
+                      onZipSelected={setSelectedZipFile}
+                      selectedFile={selectedZipFile}
+                      onSmartImport={handleSmartImport}
+                      isProcessing={isSmartProcessing}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="single" className="space-y-4">
+                    <DataTypeSelector 
+                      value={selectedType}
+                      onChange={(type) => {
+                        devLog.debug('Data type changed to:', type);
+                        setSelectedType(type);
+                        if (importFile) {
+                          onFileUpload(importFile, [], type);
+                        }
+                      }}
+                    />
+                    
+                    <FileUploader 
+                      onFileSelected={(file) => {
+                        devLog.debug('File selected:', file?.name);
+                        if (file) {
+                          onFileUpload(file, [], selectedType);
+                        }
+                      }}
+                      selectedFile={importFile}
+                      onSubmit={handleStartImport}
+                    />
+                  </TabsContent>
+                </Tabs>
                 
-                <DataTypeSelector 
-                  value={selectedType}
-                  onChange={(type) => {
-                    devLog.debug('Data type changed to:', type);
-                    setSelectedType(type);
-                    if (importFile) {
-                      onFileUpload(importFile, [], type);
-                    }
-                  }}
-                />
-                
-                <FileUploader 
-                  onFileSelected={(file) => {
-                    devLog.debug('File selected:', file?.name);
-                    if (file) {
-                      // Just set the file, don't start import immediately
-                      onFileUpload(file, [], selectedType);
-                    }
-                  }}
-                  selectedFile={importFile}
-                  onSubmit={handleStartImport}
-                />
-                
-                {(isValidating || isImporting) && (
+                {(isValidating || isImporting || isSmartProcessing) && (
                   <LoadingIndicator 
-                    message={isValidating ? "Validating data..." : "Importing data..."}
+                    message={
+                      isSmartProcessing ? "AI processing ZIP file..." :
+                      isValidating ? "Validating data..." : 
+                      "Importing data..."
+                    }
                   />
                 )}
               </div>
@@ -131,8 +189,8 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
         </>
       ) : (
         <ImportResultsTable 
-          results={importResults}
-          onImportAnother={onImportAnother}
+          results={importResults || smartImportResult}
+          onImportAnother={handleImportAnother}
           associationId={associationId}
         />
       )}
