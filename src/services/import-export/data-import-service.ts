@@ -1,8 +1,8 @@
-
 import { ImportResult, ImportJob, ImportOptions } from '@/types/import-types';
 import { supabase } from '@/integrations/supabase/client';
 import { jobService } from './job-service';
 import { processorService } from './processor-service';
+import { templateService } from './template-service';
 import { devLog } from '@/utils/dev-logger';
 
 export const dataImportService = {
@@ -18,11 +18,11 @@ export const dataImportService = {
     try {
       // Create import job
       const job = await jobService.createImportJob({
-        association_id: associationId,
-        import_type: dataType,
-        file_name: `${dataType}_import_${new Date().toISOString()}`,
-        file_size: JSON.stringify(data).length,
-        created_by: userId
+        associationId: associationId,
+        importType: dataType,
+        fileName: `${dataType}_import_${new Date().toISOString()}`,
+        fileSize: JSON.stringify(data).length,
+        userId: userId
       });
 
       if (!job) {
@@ -89,6 +89,11 @@ export const dataImportService = {
         warnings: []
       };
     }
+  },
+
+  // Add the missing getImportTemplate method
+  getImportTemplate(dataType: string) {
+    return templateService.getImportTemplate(dataType);
   },
 
   applyFieldMappings(data: any[], mappings: Record<string, string>): Record<string, any>[] {

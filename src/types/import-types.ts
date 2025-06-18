@@ -39,6 +39,22 @@ export interface ValidationResult {
   }>;
 }
 
+// Import options interface
+export interface ImportOptions {
+  associationId: string;
+  dataType: string;
+  data: any[];
+  mappings: Record<string, string>;
+  userId?: string;
+}
+
+// Export options interface
+export interface ExportOptions {
+  associationId: string;
+  dataType: string;
+  format?: 'csv' | 'xlsx';
+}
+
 // Import job interfaces
 export interface ImportJob {
   id: string;

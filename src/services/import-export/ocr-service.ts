@@ -36,10 +36,10 @@ export const ocrService = {
       const result: OCRResult = {
         text: data.text,
         confidence: data.confidence,
-        words: (data.words || []).map(word => ({
-          text: word.text,
-          confidence: word.confidence,
-          bbox: word.bbox
+        words: (data.words && Array.isArray(data.words) ? data.words : []).map(word => ({
+          text: word.text || '',
+          confidence: word.confidence || 0,
+          bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 }
         }))
       };
       
