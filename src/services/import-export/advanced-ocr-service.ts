@@ -94,21 +94,39 @@ export const advancedOCRService = {
         // Perform OCR
         const { data } = await worker.recognize(file);
         
+        // Extract words from the hierarchical structure
+        const words: any[] = [];
+        if (data.blocks) {
+          data.blocks.forEach((block: any) => {
+            if (block.paragraphs) {
+              block.paragraphs.forEach((paragraph: any) => {
+                if (paragraph.lines) {
+                  paragraph.lines.forEach((line: any) => {
+                    if (line.words) {
+                      words.push(...line.words);
+                    }
+                  });
+                }
+              });
+            }
+          });
+        }
+        
         // Extract basic OCR results with correct data structure
         const ocrResult: OCRResult = {
           text: data.text || '',
           confidence: data.confidence || 0,
-          boundingBoxes: data.words?.map(word => ({
+          boundingBoxes: words.map(word => ({
             text: word.text || '',
             bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 },
             confidence: word.confidence || 0
-          })) || []
+          }))
         };
 
         // Build result
         const result: AdvancedOCRResult = {
           ocr: ocrResult,
-          quality: this.assessQuality(data),
+          quality: this.assessQuality(data, words),
           metadata: {
             processingTime: Date.now() - startTime,
             imageSize: { width: 0, height: 0 }, // Would be filled from image analysis
@@ -166,7 +184,7 @@ export const advancedOCRService = {
     return results;
   },
 
-  assessQuality(data: any): QualityAssessmentResult {
+  assessQuality(data: any, words: any[]): QualityAssessmentResult {
     const issues: QualityAssessmentResult['issues'] = [];
     const recommendations: string[] = [];
     let score = 100;
@@ -184,7 +202,7 @@ export const advancedOCRService = {
     }
 
     // Check for potential blur (low confidence + short words)
-    const shortLowConfidenceWords = data.words?.filter((w: any) => 
+    const shortLowConfidenceWords = words.filter((w: any) => 
       w.text?.length <= 3 && w.confidence < 60
     ).length || 0;
 
