@@ -25,7 +25,6 @@ export const duplicateDetectionService = {
     const duplicates: DuplicateMatch[] = [];
     const allRecords = this.prepareRecordsForComparison(files);
     
-    // Compare each record against all other records
     for (let i = 0; i < allRecords.length; i++) {
       for (let j = i + 1; j < allRecords.length; j++) {
         const match = this.compareRecords(
@@ -75,7 +74,6 @@ export const duplicateDetectionService = {
   },
 
   compareRecords(record1: any, record2: any, index1: number, index2: number): DuplicateMatch | null {
-    // Skip if from same file
     if (record1._source_file === record2._source_file) {
       return null;
     }
@@ -85,13 +83,11 @@ export const duplicateDetectionService = {
     let exactMatches = 0;
     let fuzzyMatches = 0;
     
-    // Get all fields from both records
     const allFields = new Set([
       ...Object.keys(record1),
       ...Object.keys(record2)
     ]);
     
-    // Remove metadata fields
     allFields.delete('_source_file');
     allFields.delete('_source_index');
     
@@ -121,7 +117,6 @@ export const duplicateDetectionService = {
     
     const confidence = (exactMatches + fuzzyMatches * 0.7) / Math.max(totalFields, 1);
     
-    // Special handling for key fields
     const keyFieldMatches = this.checkKeyFieldMatches(record1, record2);
     const adjustedConfidence = Math.min(confidence + keyFieldMatches * 0.2, 1.0);
     
@@ -156,7 +151,6 @@ export const duplicateDetectionService = {
     if (str1 === str2) return 1.0;
     if (!str1 || !str2) return 0.0;
     
-    // Simple Levenshtein distance implementation
     const matrix = [];
     const len1 = str1.length;
     const len2 = str2.length;
@@ -211,11 +205,11 @@ export const duplicateDetectionService = {
 
   determineSuggestedAction(confidence: number, matchingFields: string[]): 'merge' | 'skip' | 'keep_both' {
     if (confidence > 0.95) {
-      return 'skip'; // Very high confidence duplicate - skip the duplicate
+      return 'skip';
     } else if (confidence > 0.85) {
-      return 'merge'; // High confidence - merge the records
+      return 'merge';
     } else {
-      return 'keep_both'; // Medium confidence - keep both for manual review
+      return 'keep_both';
     }
   },
 
@@ -235,8 +229,9 @@ export const duplicateDetectionService = {
     
     const fileGroups = this.groupDuplicatesByFile(duplicates);
     for (const [files, count] of Object.entries(fileGroups)) {
-      if (count > 5) {
-        suggestions.push(`High overlap detected between ${files} (${count} matches)`);
+      const fileCount = Number(count);
+      if (fileCount > 5) {
+        suggestions.push(`High overlap detected between ${files} (${fileCount} matches)`);
       }
     }
     

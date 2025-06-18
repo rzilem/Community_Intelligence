@@ -91,6 +91,14 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
 
   // Show results if we have either regular import results or smart import results
   const hasResults = importResults || smartImportResult;
+  
+  // Convert SmartImportResult to ImportResult format for the results table
+  const displayResults = smartImportResult ? {
+    ...smartImportResult,
+    totalProcessed: smartImportResult.totalProcessed || smartImportResult.importedRecords,
+    successfulImports: smartImportResult.successfulImports || smartImportResult.importedRecords,
+    failedImports: smartImportResult.failedImports || 0
+  } : importResults;
 
   return (
     <div className="space-y-6">
@@ -189,7 +197,7 @@ const ImportTabContent: React.FC<ImportTabContentProps> = ({
         </>
       ) : (
         <ImportResultsTable 
-          results={importResults || smartImportResult}
+          results={displayResults}
           onImportAnother={handleImportAnother}
           associationId={associationId}
         />

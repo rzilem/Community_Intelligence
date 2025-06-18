@@ -3,31 +3,15 @@ import { zipParserService, ZipAnalysisResult } from './zip-parser-service';
 import { aiContentAnalyzer, BatchAnalysisResult } from './ai-content-analyzer';
 import { dataImportService } from './data-import-service';
 import { validationService } from './validation-service';
+import { SmartImportResult } from '@/types/import-types';
 import { devLog } from '@/utils/dev-logger';
 import { toast } from 'sonner';
 
 export interface SmartImportOptions {
   associationId: string;
   userId?: string;
-  autoImportThreshold?: number; // Confidence threshold for auto-import
+  autoImportThreshold?: number;
   skipValidation?: boolean;
-}
-
-export interface SmartImportResult {
-  success: boolean;
-  totalFiles: number;
-  processedFiles: number;
-  skippedFiles: number;
-  totalRecords: number;
-  importedRecords: number;
-  errors: string[];
-  warnings: string[];
-  details: Array<{
-    filename: string;
-    status: 'success' | 'error' | 'skipped';
-    recordsProcessed: number;
-    message: string;
-  }>;
 }
 
 export const smartImportService = {
@@ -38,15 +22,12 @@ export const smartImportService = {
     devLog.info('Starting smart import process for:', zipFile.name);
     
     try {
-      // Phase 1: Parse and analyze zip file
       toast.info('Analyzing zip file contents...');
       const zipAnalysis = await zipParserService.parseZipFile(zipFile);
       
-      // Phase 2: AI content analysis
       toast.info('AI analyzing file contents and mappings...');
       const aiAnalysis = await aiContentAnalyzer.analyzeBatch(zipAnalysis.files);
       
-      // Phase 3: Determine import strategy
       const importStrategy = this.determineImportStrategy(aiAnalysis, options);
       
       if (importStrategy.autoImport) {
@@ -68,6 +49,9 @@ export const smartImportService = {
         skippedFiles: 0,
         totalRecords: 0,
         importedRecords: 0,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: 0,
         errors: [errorMessage],
         warnings: [],
         details: []
@@ -104,12 +88,14 @@ export const smartImportService = {
       skippedFiles: 0,
       totalRecords: zipAnalysis.totalRecords,
       importedRecords: 0,
+      totalProcessed: 0,
+      successfulImports: 0,
+      failedImports: 0,
       errors: [],
       warnings: [],
       details: []
     };
     
-    // Process files in parallel (with concurrency limit)
     const concurrencyLimit = 3;
     const fileGroups = this.chunkArray(zipAnalysis.files, concurrencyLimit);
     
@@ -127,6 +113,8 @@ export const smartImportService = {
           const fileResult = promiseResult.value;
           result.processedFiles++;
           result.importedRecords += fileResult.recordsImported;
+          result.successfulImports += fileResult.recordsImported;
+          result.totalProcessed += fileResult.recordsImported;
           
           if (fileResult.warnings.length > 0) {
             result.warnings.push(...fileResult.warnings);
@@ -140,6 +128,7 @@ export const smartImportService = {
           });
         } else {
           result.errors.push(`Error processing ${file.filename}: ${promiseResult.reason}`);
+          result.failedImports++;
           result.details.push({
             filename: file.filename,
             status: 'error',
@@ -160,18 +149,18 @@ export const smartImportService = {
     aiAnalysis: BatchAnalysisResult,
     options: SmartImportOptions
   ): Promise<SmartImportResult> {
-    // For manual import, we'll return the analysis results for user review
-    // This would typically trigger the mapping modal in the UI
-    
     devLog.info('Manual import mode - preparing for user review');
     
     return {
-      success: false, // Indicates manual review needed
+      success: false,
       totalFiles: zipAnalysis.files.length,
       processedFiles: 0,
       skippedFiles: 0,
       totalRecords: zipAnalysis.totalRecords,
       importedRecords: 0,
+      totalProcessed: 0,
+      successfulImports: 0,
+      failedImports: 0,
       errors: [],
       warnings: ['Manual review required - confidence below threshold'],
       details: zipAnalysis.files.map(file => ({

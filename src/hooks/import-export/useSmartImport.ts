@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
-import { smartImportService, SmartImportOptions, SmartImportResult } from '@/services/import-export/smart-import-service';
+import { smartImportService, SmartImportOptions } from '@/services/import-export/smart-import-service';
+import { SmartImportResult } from '@/types/import-types';
 import { toast } from 'sonner';
 import { devLog } from '@/utils/dev-logger';
 
@@ -39,6 +40,9 @@ export function useSmartImport() {
         skippedFiles: 0,
         totalRecords: 0,
         importedRecords: 0,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: 0,
         errors: [errorMessage],
         warnings: [],
         details: []
