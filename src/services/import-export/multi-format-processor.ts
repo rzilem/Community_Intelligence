@@ -1,6 +1,7 @@
 import { devLog } from '@/utils/dev-logger';
 import { advancedOCRService } from './advanced-ocr-service';
 import { parseService } from './parse-service';
+import { enhancedMultiFormatProcessor, EnhancedProcessingOptions } from './enhanced-multi-format-processor';
 import { 
   ProcessedDocument, 
   ProcessingOptions, 
@@ -53,6 +54,11 @@ const classifyDocument = async (content: string): Promise<ClassificationResult> 
 };
 
 export const multiFormatProcessor = {
+  // Enhanced method that includes address intelligence
+  async processWithAddressIntelligence(files: File[], options: EnhancedProcessingOptions = {}) {
+    return enhancedMultiFormatProcessor.processWithAddressIntelligence(files, options);
+  },
+
   async processWithEnhancedAnalysis(files: File[], options: ProcessingOptions = {}): Promise<MultiFormatProcessingResult> {
     const startTime = Date.now();
     const processedDocuments: ProcessedDocument[] = [];
