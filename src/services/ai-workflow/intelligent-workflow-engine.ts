@@ -179,20 +179,30 @@ export class IntelligentWorkflowEngine {
     ai_insights?: Record<string, any>;
     completed_at?: string;
   }): Promise<WorkflowExecution> {
+    // Step 1: Update the record without selecting
     const updateData = {
       ...updates,
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { error: updateError } = await supabase
       .from('workflow_executions')
       .update(updateData)
-      .eq('id', executionId)
+      .eq('id', executionId);
+
+    if (updateError) {
+      throw new Error(`Failed to update workflow execution: ${updateError.message}`);
+    }
+
+    // Step 2: Fetch the updated record separately
+    const { data, error: fetchError } = await supabase
+      .from('workflow_executions')
       .select('*')
+      .eq('id', executionId)
       .single();
 
-    if (error) {
-      throw new Error(`Failed to update workflow execution: ${error.message}`);
+    if (fetchError || !data) {
+      throw new Error(`Failed to fetch updated workflow execution: ${fetchError?.message}`);
     }
 
     return convertToWorkflowExecution(data);

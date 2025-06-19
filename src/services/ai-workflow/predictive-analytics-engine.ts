@@ -97,8 +97,9 @@ export class PredictiveAnalyticsEngine {
       const avgCost = totalCost / Math.max(maintenanceCosts.length, 1);
       const projectedCost = avgCost * (options.includeInflation ? 1.15 : 1.0);
 
-      const predictionData = {
-        prediction_type: 'maintenance_cost',
+      // Step 1: Prepare prediction data with explicit typing
+      const predictionInsert = {
+        prediction_type: 'maintenance_cost' as const,
         association_id: associationId,
         prediction_data: {
           projected_annual_cost: projectedCost,
@@ -114,14 +115,15 @@ export class PredictiveAnalyticsEngine {
         valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       };
 
+      // Step 2: Insert without complex chaining
       const { data, error: insertError } = await supabase
         .from('ai_predictions')
-        .insert(predictionData)
+        .insert(predictionInsert)
         .select('*')
-        .single();
+        .single() as { data: any, error: any };
 
-      if (insertError) {
-        throw new Error(`Failed to save prediction: ${insertError.message}`);
+      if (insertError || !data) {
+        throw new Error(`Failed to save prediction: ${insertError?.message}`);
       }
 
       return convertToAIPrediction(data);
@@ -153,8 +155,8 @@ export class PredictiveAnalyticsEngine {
   }
 
   async generateVendorPerformancePrediction(associationId: string): Promise<AIPrediction> {
-    const predictionData = {
-      prediction_type: 'vendor_performance',
+    const predictionInsert = {
+      prediction_type: 'vendor_performance' as const,
       association_id: associationId,
       prediction_data: {
         vendor_scores: {},
@@ -167,20 +169,20 @@ export class PredictiveAnalyticsEngine {
 
     const { data, error } = await supabase
       .from('ai_predictions')
-      .insert(predictionData)
+      .insert(predictionInsert)
       .select('*')
-      .single();
+      .single() as { data: any, error: any };
 
-    if (error) {
-      throw new Error(`Failed to save vendor prediction: ${error.message}`);
+    if (error || !data) {
+      throw new Error(`Failed to save vendor prediction: ${error?.message}`);
     }
 
     return convertToAIPrediction(data);
   }
 
   async generateCommunityHealthScore(associationId: string): Promise<AIPrediction> {
-    const predictionData = {
-      prediction_type: 'community_health',
+    const predictionInsert = {
+      prediction_type: 'community_health' as const,
       association_id: associationId,
       prediction_data: {
         overall_score: 85,
@@ -197,20 +199,20 @@ export class PredictiveAnalyticsEngine {
 
     const { data, error } = await supabase
       .from('ai_predictions')
-      .insert(predictionData)
+      .insert(predictionInsert)
       .select('*')
-      .single();
+      .single() as { data: any, error: any };
 
-    if (error) {
-      throw new Error(`Failed to save health score: ${error.message}`);
+    if (error || !data) {
+      throw new Error(`Failed to save health score: ${error?.message}`);
     }
 
     return convertToAIPrediction(data);
   }
 
   async generateBudgetVariancePrediction(associationId: string): Promise<AIPrediction> {
-    const predictionData = {
-      prediction_type: 'budget_variance',
+    const predictionInsert = {
+      prediction_type: 'budget_variance' as const,
       association_id: associationId,
       prediction_data: {
         predicted_variance: 0.05,
@@ -224,32 +226,42 @@ export class PredictiveAnalyticsEngine {
 
     const { data, error } = await supabase
       .from('ai_predictions')
-      .insert(predictionData)
+      .insert(predictionInsert)
       .select('*')
-      .single();
+      .single() as { data: any, error: any };
 
-    if (error) {
-      throw new Error(`Failed to save budget prediction: ${error.message}`);
+    if (error || !data) {
+      throw new Error(`Failed to save budget prediction: ${error?.message}`);
     }
 
     return convertToAIPrediction(data);
   }
 
   async updatePredictionAccuracy(predictionId: string, actualOutcome: Record<string, any>): Promise<AIPrediction> {
+    // Step 1: Update without selecting
     const updateData = {
       actual_outcome: actualOutcome,
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { error: updateError } = await supabase
       .from('ai_predictions')
       .update(updateData)
-      .eq('id', predictionId)
+      .eq('id', predictionId);
+
+    if (updateError) {
+      throw new Error(`Failed to update prediction accuracy: ${updateError.message}`);
+    }
+
+    // Step 2: Fetch updated record
+    const { data, error: fetchError } = await supabase
+      .from('ai_predictions')
       .select('*')
+      .eq('id', predictionId)
       .single();
 
-    if (error) {
-      throw new Error(`Failed to update prediction accuracy: ${error.message}`);
+    if (fetchError || !data) {
+      throw new Error(`Failed to fetch updated prediction: ${fetchError?.message}`);
     }
 
     return convertToAIPrediction(data);
