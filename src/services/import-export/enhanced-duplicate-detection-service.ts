@@ -1,376 +1,95 @@
 import { devLog } from '@/utils/dev-logger';
 
-export interface EnhancedDuplicateMatch {
-  id: string;
-  sourceRecord: any;
-  targetRecord: any;
+export interface DuplicateMatch {
   sourceIndex: number;
   targetIndex: number;
   sourceFile: string;
   targetFile: string;
   confidence: number;
-  matchType: 'exact' | 'fuzzy' | 'semantic' | 'phonetic';
-  matchingFields: Array<{
-    field: string;
-    sourceValue: any;
-    targetValue: any;
-    similarity: number;
-    matchType: string;
-  }>;
-  suggestedAction: 'merge' | 'skip' | 'keep_both' | 'manual_review';
-  riskLevel: 'low' | 'medium' | 'high';
-  mergeStrategy?: 'prefer_source' | 'prefer_target' | 'combine' | 'manual';
-  qualityScore: number;
+  matchingFields: string[];
+  suggestedAction: 'merge' | 'skip' | 'keep_both';
+  reasoning: string;
 }
 
-export interface DuplicateCluster {
-  id: string;
-  records: any[];
-  masterRecord: any;
-  confidence: number;
-  clusterSize: number;
-  suggestedAction: string;
-}
-
-export interface EnhancedDuplicateDetectionResult {
-  duplicates: EnhancedDuplicateMatch[];
-  clusters: DuplicateCluster[];
+export interface DuplicateDetectionResult {
+  duplicates: DuplicateMatch[];
   totalDuplicates: number;
   highConfidenceMatches: number;
   mediumConfidenceMatches: number;
   lowConfidenceMatches: number;
   suggestions: string[];
-  performanceMetrics: {
-    processingTime: number;
-    recordsProcessed: number;
-    comparisons: number;
-    algorithmsUsed: string[];
-  };
+  processingTime: number;
+}
+
+export interface CrossFileAnalysis {
+  fileComparisons: Array<{
+    file1: string;
+    file2: string;
+    duplicateCount: number;
+    confidence: number;
+  }>;
+  overallSimilarity: number;
+  recommendations: string[];
 }
 
 export const enhancedDuplicateDetectionService = {
-  async detectDuplicatesAdvanced(files: Array<{ filename: string; data: any[] }>): Promise<EnhancedDuplicateDetectionResult> {
+  async detectDuplicatesAcrossFiles(
+    files: Array<{ filename: string; data: any[] }>,
+    options: {
+      strictMode?: boolean;
+      fuzzyMatching?: boolean;
+      keyFields?: string[];
+      confidenceThreshold?: number;
+    } = {}
+  ): Promise<DuplicateDetectionResult> {
     const startTime = Date.now();
-    devLog.info('Starting enhanced duplicate detection...');
+    devLog.info('Starting enhanced duplicate detection across files...');
     
-    const duplicates: EnhancedDuplicateMatch[] = [];
+    const duplicates: DuplicateMatch[] = [];
     const allRecords = this.prepareRecordsForComparison(files);
-    let comparisons = 0;
+    const keyFields = options.keyFields || ['email', 'name', 'address', 'phone', 'id'];
+    const confidenceThreshold = options.confidenceThreshold || 0.7;
     
-    // Use multiple detection algorithms
-    const algorithms = ['exact', 'fuzzy', 'semantic', 'phonetic'];
-    
+    // Enhanced comparison with machine learning-like scoring
     for (let i = 0; i < allRecords.length; i++) {
       for (let j = i + 1; j < allRecords.length; j++) {
-        comparisons++;
-        
-        const matches = await this.runMultipleAlgorithms(
+        const match = this.compareRecordsAdvanced(
           allRecords[i], 
           allRecords[j],
-          i,
-          j,
-          algorithms
+          keyFields,
+          options
         );
         
-        const bestMatch = this.selectBestMatch(matches);
-        if (bestMatch && bestMatch.confidence > 0.5) {
-          duplicates.push(bestMatch);
+        if (match && match.confidence >= confidenceThreshold) {
+          duplicates.push(match);
         }
       }
     }
-    
-    // Create clusters
-    const clusters = this.createDuplicateClusters(duplicates, allRecords);
     
     const processingTime = Date.now() - startTime;
-    const result = this.buildDetectionResult(duplicates, clusters, processingTime, comparisons, allRecords.length, algorithms);
+    const highConfidenceMatches = duplicates.filter(d => d.confidence > 0.9).length;
+    const mediumConfidenceMatches = duplicates.filter(d => d.confidence > 0.75 && d.confidence <= 0.9).length;
+    const lowConfidenceMatches = duplicates.filter(d => d.confidence >= 0.7 && d.confidence <= 0.75).length;
+    
+    const suggestions = this.generateAdvancedSuggestions(duplicates, files);
     
     devLog.info('Enhanced duplicate detection complete:', {
-      duplicates: duplicates.length,
-      clusters: clusters.length,
-      processingTime,
-      comparisons
+      totalDuplicates: duplicates.length,
+      highConfidenceMatches,
+      mediumConfidenceMatches,
+      lowConfidenceMatches,
+      processingTime
     });
     
-    return result;
-  },
-
-  async runMultipleAlgorithms(
-    record1: any, 
-    record2: any, 
-    index1: number, 
-    index2: number,
-    algorithms: string[]
-  ): Promise<EnhancedDuplicateMatch[]> {
-    const matches: EnhancedDuplicateMatch[] = [];
-    
-    for (const algorithm of algorithms) {
-      const match = await this.runSingleAlgorithm(record1, record2, index1, index2, algorithm);
-      if (match) {
-        matches.push(match);
-      }
-    }
-    
-    return matches;
-  },
-
-  async runSingleAlgorithm(
-    record1: any,
-    record2: any,
-    index1: number,
-    index2: number,
-    algorithm: string
-  ): Promise<EnhancedDuplicateMatch | null> {
-    if (record1._source_file === record2._source_file) {
-      return null;
-    }
-    
-    let confidence = 0;
-    const matchingFields: EnhancedDuplicateMatch['matchingFields'] = [];
-    
-    switch (algorithm) {
-      case 'exact':
-        ({ confidence, matchingFields: matchingFields } = this.exactMatch(record1, record2));
-        break;
-      case 'fuzzy':
-        ({ confidence, matchingFields: matchingFields } = this.fuzzyMatch(record1, record2));
-        break;
-      case 'semantic':
-        ({ confidence, matchingFields: matchingFields } = await this.semanticMatch(record1, record2));
-        break;
-      case 'phonetic':
-        ({ confidence, matchingFields: matchingFields } = this.phoneticMatch(record1, record2));
-        break;
-    }
-    
-    if (confidence < 0.3) return null;
-    
     return {
-      id: `${index1}-${index2}-${algorithm}`,
-      sourceRecord: record1,
-      targetRecord: record2,
-      sourceIndex: index1,
-      targetIndex: index2,
-      sourceFile: record1._source_file,
-      targetFile: record2._source_file,
-      confidence,
-      matchType: algorithm as any,
-      matchingFields,
-      suggestedAction: this.determineSuggestedAction(confidence, matchingFields),
-      riskLevel: this.determineRiskLevel(confidence, matchingFields),
-      qualityScore: this.calculateQualityScore(record1, record2, matchingFields)
+      duplicates,
+      totalDuplicates: duplicates.length,
+      highConfidenceMatches,
+      mediumConfidenceMatches,
+      lowConfidenceMatches,
+      suggestions,
+      processingTime
     };
-  },
-
-  exactMatch(record1: any, record2: any) {
-    const matchingFields: EnhancedDuplicateMatch['matchingFields'] = [];
-    let exactMatches = 0;
-    let totalFields = 0;
-    
-    const allFields = new Set([...Object.keys(record1), ...Object.keys(record2)]);
-    allFields.delete('_source_file');
-    allFields.delete('_source_index');
-    
-    for (const field of allFields) {
-      if (!record1[field] && !record2[field]) continue;
-      
-      totalFields++;
-      const value1 = this.normalizeValue(record1[field]);
-      const value2 = this.normalizeValue(record2[field]);
-      
-      if (value1 === value2 && value1 !== '') {
-        exactMatches++;
-        matchingFields.push({
-          field,
-          sourceValue: record1[field],
-          targetValue: record2[field],
-          similarity: 1.0,
-          matchType: 'exact'
-        });
-      }
-    }
-    
-    const confidence = totalFields > 0 ? exactMatches / totalFields : 0;
-    return { confidence, matchingFields };
-  },
-
-  fuzzyMatch(record1: any, record2: any) {
-    const matchingFields: EnhancedDuplicateMatch['matchingFields'] = [];
-    let fuzzyScore = 0;
-    let totalFields = 0;
-    
-    const allFields = new Set([...Object.keys(record1), ...Object.keys(record2)]);
-    allFields.delete('_source_file');
-    allFields.delete('_source_index');
-    
-    for (const field of allFields) {
-      if (!record1[field] && !record2[field]) continue;
-      
-      totalFields++;
-      const value1 = this.normalizeValue(record1[field]);
-      const value2 = this.normalizeValue(record2[field]);
-      
-      const similarity = this.calculateStringSimilarity(value1, value2);
-      if (similarity > 0.7) {
-        fuzzyScore += similarity;
-        matchingFields.push({
-          field,
-          sourceValue: record1[field],
-          targetValue: record2[field],
-          similarity,
-          matchType: 'fuzzy'
-        });
-      }
-    }
-    
-    const confidence = totalFields > 0 ? fuzzyScore / totalFields : 0;
-    return { confidence, matchingFields };
-  },
-
-  async semanticMatch(record1: any, record2: any) {
-    // Placeholder for semantic matching using AI/ML
-    // In a real implementation, this would use embeddings or NLP
-    const matchingFields: EnhancedDuplicateMatch['matchingFields'] = [];
-    
-    // Simple semantic rules for now
-    const textFields = ['description', 'notes', 'comments', 'address'];
-    let semanticScore = 0;
-    let textFieldsCount = 0;
-    
-    for (const field of textFields) {
-      if (record1[field] && record2[field]) {
-        textFieldsCount++;
-        const similarity = this.calculateSemanticSimilarity(record1[field], record2[field]);
-        if (similarity > 0.6) {
-          semanticScore += similarity;
-          matchingFields.push({
-            field,
-            sourceValue: record1[field],
-            targetValue: record2[field],
-            similarity,
-            matchType: 'semantic'
-          });
-        }
-      }
-    }
-    
-    const confidence = textFieldsCount > 0 ? semanticScore / textFieldsCount : 0;
-    return { confidence, matchingFields };
-  },
-
-  phoneticMatch(record1: any, record2: any) {
-    const matchingFields: EnhancedDuplicateMatch['matchingFields'] = [];
-    const nameFields = ['name', 'first_name', 'last_name', 'company_name'];
-    let phoneticScore = 0;
-    let nameFieldsCount = 0;
-    
-    for (const field of nameFields) {
-      if (record1[field] && record2[field]) {
-        nameFieldsCount++;
-        const similarity = this.calculatePhoneticSimilarity(record1[field], record2[field]);
-        if (similarity > 0.8) {
-          phoneticScore += similarity;
-          matchingFields.push({
-            field,
-            sourceValue: record1[field],
-            targetValue: record2[field],
-            similarity,
-            matchType: 'phonetic'
-          });
-        }
-      }
-    }
-    
-    const confidence = nameFieldsCount > 0 ? phoneticScore / nameFieldsCount : 0;
-    return { confidence, matchingFields };
-  },
-
-  calculateSemanticSimilarity(text1: string, text2: string): number {
-    // Simple keyword-based semantic similarity
-    const words1 = text1.toLowerCase().split(/\s+/);
-    const words2 = text2.toLowerCase().split(/\s+/);
-    
-    const commonWords = words1.filter(word => words2.includes(word));
-    const totalWords = new Set([...words1, ...words2]).size;
-    
-    return totalWords > 0 ? commonWords.length / totalWords : 0;
-  },
-
-  calculatePhoneticSimilarity(name1: string, name2: string): number {
-    // Simple phonetic similarity using soundex-like approach
-    const soundex1 = this.simpleSoundex(name1);
-    const soundex2 = this.simpleSoundex(name2);
-    
-    return soundex1 === soundex2 ? 1.0 : 0.0;
-  },
-
-  simpleSoundex(str: string): string {
-    // Very basic soundex implementation
-    return str.toLowerCase()
-      .replace(/[aeiouyhw]/g, '')
-      .replace(/(.)\1+/g, '$1')
-      .substring(0, 4)
-      .padEnd(4, '0');
-  },
-
-  selectBestMatch(matches: EnhancedDuplicateMatch[]): EnhancedDuplicateMatch | null {
-    if (matches.length === 0) return null;
-    
-    // Return the match with highest confidence
-    return matches.reduce((best, current) => 
-      current.confidence > best.confidence ? current : best
-    );
-  },
-
-  createDuplicateClusters(duplicates: EnhancedDuplicateMatch[], allRecords: any[]): DuplicateCluster[] {
-    const clusters: DuplicateCluster[] = [];
-    const processed = new Set<number>();
-    
-    for (const duplicate of duplicates) {
-      if (processed.has(duplicate.sourceIndex) || processed.has(duplicate.targetIndex)) {
-        continue;
-      }
-      
-      const clusterRecords = [
-        allRecords[duplicate.sourceIndex],
-        allRecords[duplicate.targetIndex]
-      ];
-      
-      // Find master record (highest quality)
-      const masterRecord = clusterRecords.reduce((best, current) => 
-        this.calculateRecordQuality(current) > this.calculateRecordQuality(best) ? current : best
-      );
-      
-      clusters.push({
-        id: `cluster-${clusters.length}`,
-        records: clusterRecords,
-        masterRecord,
-        confidence: duplicate.confidence,
-        clusterSize: clusterRecords.length,
-        suggestedAction: duplicate.suggestedAction
-      });
-      
-      processed.add(duplicate.sourceIndex);
-      processed.add(duplicate.targetIndex);
-    }
-    
-    return clusters;
-  },
-
-  calculateRecordQuality(record: any): number {
-    let quality = 0;
-    let fieldsCount = 0;
-    
-    for (const [key, value] of Object.entries(record)) {
-      if (key.startsWith('_')) continue;
-      
-      fieldsCount++;
-      if (value && value !== '' && value !== null && value !== undefined) {
-        quality++;
-      }
-    }
-    
-    return fieldsCount > 0 ? quality / fieldsCount : 0;
   },
 
   prepareRecordsForComparison(files: Array<{ filename: string; data: any[] }>) {
@@ -381,12 +100,103 @@ export const enhancedDuplicateDetectionService = {
         allRecords.push({
           ...file.data[i],
           _source_file: file.filename,
-          _source_index: i
+          _source_index: i,
+          _normalized_data: this.normalizeRecord(file.data[i])
         });
       }
     }
     
     return allRecords;
+  },
+
+  normalizeRecord(record: any): any {
+    const normalized: any = {};
+    
+    for (const [key, value] of Object.entries(record)) {
+      if (typeof value === 'string') {
+        normalized[key] = value
+          .toLowerCase()
+          .trim()
+          .replace(/[^\w\s]/g, '')
+          .replace(/\s+/g, ' ');
+      } else {
+        normalized[key] = value;
+      }
+    }
+    
+    return normalized;
+  },
+
+  compareRecordsAdvanced(
+    record1: any, 
+    record2: any, 
+    keyFields: string[],
+    options: any
+  ): DuplicateMatch | null {
+    if (record1._source_file === record2._source_file) {
+      return null;
+    }
+    
+    let matchingFields: string[] = [];
+    let totalScore = 0;
+    let maxPossibleScore = 0;
+    
+    const allFields = new Set([
+      ...Object.keys(record1),
+      ...Object.keys(record2)
+    ]);
+    
+    // Remove internal fields
+    allFields.delete('_source_file');
+    allFields.delete('_source_index');
+    allFields.delete('_normalized_data');
+    
+    for (const field of allFields) {
+      if (!record1[field] && !record2[field]) continue;
+      
+      const isKeyField = keyFields.includes(field);
+      const fieldWeight = isKeyField ? 3 : 1;
+      maxPossibleScore += fieldWeight;
+      
+      const value1 = record1._normalized_data?.[field] || this.normalizeValue(record1[field]);
+      const value2 = record2._normalized_data?.[field] || this.normalizeValue(record2[field]);
+      
+      if (value1 === value2) {
+        totalScore += fieldWeight;
+        matchingFields.push(field);
+      } else if (options.fuzzyMatching) {
+        const similarity = this.calculateAdvancedSimilarity(value1, value2, field);
+        if (similarity > 0.8) {
+          totalScore += fieldWeight * similarity;
+          matchingFields.push(`${field} (fuzzy: ${Math.round(similarity * 100)}%)`);
+        }
+      }
+    }
+    
+    if (matchingFields.length === 0) {
+      return null;
+    }
+    
+    const confidence = maxPossibleScore > 0 ? totalScore / maxPossibleScore : 0;
+    
+    // Enhanced key field matching bonus
+    const keyFieldMatches = this.checkKeyFieldMatches(record1, record2, keyFields);
+    const adjustedConfidence = Math.min(confidence + keyFieldMatches * 0.15, 1.0);
+    
+    if (adjustedConfidence < 0.7) {
+      return null;
+    }
+    
+    return {
+      sourceIndex: record1._source_index,
+      targetIndex: record2._source_index,
+      sourceFile: record1._source_file,
+      targetFile: record2._source_file,
+      confidence: adjustedConfidence,
+      matchingFields,
+      suggestedAction: this.determineSuggestedAction(adjustedConfidence, matchingFields),
+      reasoning: this.generateReasoning(adjustedConfidence, matchingFields, keyFields)
+    };
   },
 
   normalizeValue(value: any): string {
@@ -401,10 +211,44 @@ export const enhancedDuplicateDetectionService = {
       .replace(/\s+/g, ' ');
   },
 
-  calculateStringSimilarity(str1: string, str2: string): number {
+  calculateAdvancedSimilarity(str1: string, str2: string, field: string): number {
     if (str1 === str2) return 1.0;
     if (!str1 || !str2) return 0.0;
     
+    // Use different algorithms based on field type
+    if (field.toLowerCase().includes('email')) {
+      return this.calculateEmailSimilarity(str1, str2);
+    } else if (field.toLowerCase().includes('phone')) {
+      return this.calculatePhoneSimilarity(str1, str2);
+    } else {
+      return this.calculateLevenshteinSimilarity(str1, str2);
+    }
+  },
+
+  calculateEmailSimilarity(email1: string, email2: string): number {
+    const [user1, domain1] = email1.split('@');
+    const [user2, domain2] = email2.split('@');
+    
+    if (domain1 !== domain2) return 0.0;
+    
+    return this.calculateLevenshteinSimilarity(user1, user2);
+  },
+
+  calculatePhoneSimilarity(phone1: string, phone2: string): number {
+    const clean1 = phone1.replace(/\D/g, '');
+    const clean2 = phone2.replace(/\D/g, '');
+    
+    if (clean1 === clean2) return 1.0;
+    
+    // Check if one is a subset of the other (e.g., with/without country code)
+    if (clean1.includes(clean2) || clean2.includes(clean1)) {
+      return 0.9;
+    }
+    
+    return this.calculateLevenshteinSimilarity(clean1, clean2);
+  },
+
+  calculateLevenshteinSimilarity(str1: string, str2: string): number {
     const matrix = [];
     const len1 = str1.length;
     const len2 = str2.length;
@@ -435,87 +279,131 @@ export const enhancedDuplicateDetectionService = {
     return maxLen === 0 ? 1.0 : (maxLen - matrix[len2][len1]) / maxLen;
   },
 
-  determineSuggestedAction(confidence: number, matchingFields: any[]): 'merge' | 'skip' | 'keep_both' | 'manual_review' {
-    if (confidence > 0.95) return 'skip';
-    if (confidence > 0.85) return 'merge';
-    if (confidence > 0.7) return 'manual_review';
-    return 'keep_both';
-  },
-
-  determineRiskLevel(confidence: number, matchingFields: any[]): 'low' | 'medium' | 'high' {
-    if (confidence > 0.9) return 'low';
-    if (confidence > 0.7) return 'medium';
-    return 'high';
-  },
-
-  calculateQualityScore(record1: any, record2: any, matchingFields: any[]): number {
-    const quality1 = this.calculateRecordQuality(record1);
-    const quality2 = this.calculateRecordQuality(record2);
-    const matchQuality = matchingFields.length > 0 ? 
-      matchingFields.reduce((sum, field) => sum + field.similarity, 0) / matchingFields.length : 0;
+  checkKeyFieldMatches(record1: any, record2: any, keyFields: string[]): number {
+    let keyMatches = 0;
+    let totalKeyFields = 0;
     
-    return (quality1 + quality2 + matchQuality) / 3;
-  },
-
-  buildDetectionResult(
-    duplicates: EnhancedDuplicateMatch[],
-    clusters: DuplicateCluster[],
-    processingTime: number,
-    comparisons: number,
-    recordsProcessed: number,
-    algorithms: string[]
-  ): EnhancedDuplicateDetectionResult {
-    const highConfidenceMatches = duplicates.filter(d => d.confidence > 0.9).length;
-    const mediumConfidenceMatches = duplicates.filter(d => d.confidence > 0.7 && d.confidence <= 0.9).length;
-    const lowConfidenceMatches = duplicates.filter(d => d.confidence <= 0.7).length;
-    
-    const suggestions = this.generateAdvancedSuggestions(duplicates, clusters);
-    
-    return {
-      duplicates,
-      clusters,
-      totalDuplicates: duplicates.length,
-      highConfidenceMatches,
-      mediumConfidenceMatches,
-      lowConfidenceMatches,
-      suggestions,
-      performanceMetrics: {
-        processingTime,
-        recordsProcessed,
-        comparisons,
-        algorithmsUsed: algorithms
+    for (const field of keyFields) {
+      if (record1[field] || record2[field]) {
+        totalKeyFields++;
+        if (this.normalizeValue(record1[field]) === this.normalizeValue(record2[field])) {
+          keyMatches++;
+        }
       }
-    };
+    }
+    
+    return totalKeyFields > 0 ? keyMatches / totalKeyFields : 0;
   },
 
-  generateAdvancedSuggestions(duplicates: EnhancedDuplicateMatch[], clusters: DuplicateCluster[]): string[] {
+  determineSuggestedAction(confidence: number, matchingFields: string[]): 'merge' | 'skip' | 'keep_both' {
+    if (confidence > 0.95) {
+      return 'skip';
+    } else if (confidence > 0.85) {
+      return 'merge';
+    } else {
+      return 'keep_both';
+    }
+  },
+
+  generateReasoning(confidence: number, matchingFields: string[], keyFields: string[]): string {
+    const keyFieldMatches = matchingFields.filter(field => 
+      keyFields.some(key => field.toLowerCase().includes(key.toLowerCase()))
+    );
+    
+    if (keyFieldMatches.length > 0) {
+      return `High confidence match based on key fields: ${keyFieldMatches.join(', ')}`;
+    } else {
+      return `Potential duplicate with ${Math.round(confidence * 100)}% confidence based on: ${matchingFields.slice(0, 3).join(', ')}`;
+    }
+  },
+
+  generateAdvancedSuggestions(duplicates: DuplicateMatch[], files: Array<{ filename: string; data: any[] }>): string[] {
     const suggestions: string[] = [];
     
-    if (duplicates.length === 0) {
-      suggestions.push('No duplicates detected - data appears to be clean');
-      return suggestions;
+    const highConfidence = duplicates.filter(d => d.confidence > 0.9).length;
+    const mediumConfidence = duplicates.filter(d => d.confidence > 0.75 && d.confidence <= 0.9).length;
+    const lowConfidence = duplicates.filter(d => d.confidence >= 0.7 && d.confidence <= 0.75).length;
+    
+    if (highConfidence > 0) {
+      suggestions.push(`${highConfidence} high-confidence duplicates can be automatically merged or skipped`);
     }
     
-    const autoSkipCount = duplicates.filter(d => d.suggestedAction === 'skip').length;
-    const autoMergeCount = duplicates.filter(d => d.suggestedAction === 'merge').length;
-    const manualReviewCount = duplicates.filter(d => d.suggestedAction === 'manual_review').length;
-    
-    if (autoSkipCount > 0) {
-      suggestions.push(`${autoSkipCount} high-confidence duplicates can be automatically skipped`);
+    if (mediumConfidence > 0) {
+      suggestions.push(`${mediumConfidence} medium-confidence matches need manual review`);
     }
     
-    if (autoMergeCount > 0) {
-      suggestions.push(`${autoMergeCount} duplicates can be automatically merged`);
+    if (lowConfidence > 0) {
+      suggestions.push(`${lowConfidence} low-confidence matches should be carefully reviewed`);
     }
     
-    if (manualReviewCount > 0) {
-      suggestions.push(`${manualReviewCount} potential duplicates require manual review`);
+    // File-specific analysis
+    const fileAnalysis = this.analyzeFileOverlap(duplicates);
+    for (const [fileCombo, count] of Object.entries(fileAnalysis)) {
+      if (count > 10) {
+        suggestions.push(`High overlap detected between ${fileCombo} (${count} potential duplicates)`);
+      }
     }
     
-    if (clusters.length > 0) {
-      suggestions.push(`${clusters.length} duplicate clusters identified for batch processing`);
+    // Performance suggestions
+    if (duplicates.length > 100) {
+      suggestions.push('Consider processing files in smaller batches for better performance');
     }
     
     return suggestions;
+  },
+
+  analyzeFileOverlap(duplicates: DuplicateMatch[]): Record<string, number> {
+    const fileGroups: Record<string, number> = {};
+    
+    for (const duplicate of duplicates) {
+      const key = [duplicate.sourceFile, duplicate.targetFile].sort().join(' <-> ');
+      fileGroups[key] = (fileGroups[key] || 0) + 1;
+    }
+    
+    return fileGroups;
+  },
+
+  async analyzeCrossFilePatterns(files: Array<{ filename: string; data: any[] }>): Promise<CrossFileAnalysis> {
+    const comparisons = [];
+    
+    for (let i = 0; i < files.length; i++) {
+      for (let j = i + 1; j < files.length; j++) {
+        const result = await this.detectDuplicatesAcrossFiles([files[i], files[j]]);
+        comparisons.push({
+          file1: files[i].filename,
+          file2: files[j].filename,
+          duplicateCount: result.totalDuplicates,
+          confidence: result.totalDuplicates > 0 ? 
+            result.duplicates.reduce((sum, d) => sum + d.confidence, 0) / result.duplicates.length : 0
+        });
+      }
+    }
+    
+    const overallSimilarity = comparisons.length > 0 ?
+      comparisons.reduce((sum, c) => sum + c.confidence, 0) / comparisons.length : 0;
+    
+    const recommendations = this.generateCrossFileRecommendations(comparisons);
+    
+    return {
+      fileComparisons: comparisons,
+      overallSimilarity,
+      recommendations
+    };
+  },
+
+  generateCrossFileRecommendations(comparisons: any[]): string[] {
+    const recommendations = [];
+    
+    const highOverlap = comparisons.filter(c => c.duplicateCount > 20);
+    if (highOverlap.length > 0) {
+      recommendations.push('Consider consolidating files with high duplicate overlap');
+    }
+    
+    const lowQuality = comparisons.filter(c => c.confidence < 0.5 && c.duplicateCount > 0);
+    if (lowQuality.length > 0) {
+      recommendations.push('Review data quality - some matches have low confidence scores');
+    }
+    
+    return recommendations;
   }
 };

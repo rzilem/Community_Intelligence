@@ -56,11 +56,20 @@ export function useEnhancedImportWorkflow() {
         fallbackToOCR: true
       });
 
-      setState(prev => ({ ...prev, progress: 100, results }));
+      setState(prev => ({ 
+        ...prev, 
+        progress: 100, 
+        results: {
+          processedDocuments: results.processedDocuments || [],
+          duplicateResults: results.duplicateResults || null,
+          qualityResults: results.qualityResults || null,
+          recommendations: results.recommendations || []
+        }
+      }));
       
       toast.success(`Successfully processed ${files.length} files`);
       
-      if (results.recommendations.length > 0) {
+      if (results.recommendations && results.recommendations.length > 0) {
         toast.info(`Review ${results.recommendations.length} recommendations`);
       }
 
