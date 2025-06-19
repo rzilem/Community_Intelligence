@@ -1,49 +1,111 @@
-import { zipParserService, ZipAnalysisResult } from './zip-parser-service';
-import { aiContentAnalyzer, BatchAnalysisResult } from './ai-content-analyzer';
-import { dataImportService } from './data-import-service';
+
+import JSZip from 'jszip';
 import { enhancedValidationService } from './enhanced-validation-service';
 import { enhancedExcelProcessor } from './enhanced-excel-processor';
+import { multiFormatProcessor } from './multi-format-processor';
 import { SmartImportResult } from '@/types/import-types';
 import { devLog } from '@/utils/dev-logger';
-import { toast } from 'sonner';
+import { ZipFileEntry } from './types';
 
 export interface SmartImportOptions {
   associationId: string;
-  userId?: string;
   autoImportThreshold?: number;
   skipValidation?: boolean;
+  enableOCR?: boolean;
+  enableDuplicateDetection?: boolean;
 }
 
-export const smartImportService = {
-  async processZipFile(
-    zipFile: File, 
-    options: SmartImportOptions
-  ): Promise<SmartImportResult> {
-    devLog.info('Starting enhanced smart import process for:', zipFile.name);
-    
+class SmartImportService {
+  async processZipFile(zipFile: File, options: SmartImportOptions): Promise<SmartImportResult> {
     try {
-      toast.info('Analyzing zip file contents...');
-      const zipAnalysis = await zipParserService.parseZipFile(zipFile);
+      devLog.info('Starting smart ZIP import:', zipFile.name);
       
-      // Enhanced Excel processing for each file
-      const processedFiles = await this.preprocessFiles(zipAnalysis.files);
+      const result: SmartImportResult = {
+        success: false,
+        totalFiles: 0,
+        processedFiles: 0,
+        skippedFiles: 0,
+        totalRecords: 0,
+        importedRecords: 0,
+        totalProcessed: 0,
+        successfulImports: 0,
+        failedImports: 0,
+        errors: [],
+        warnings: [],
+        details: []
+      };
+
+      // Extract ZIP contents
+      const zipContents = await this.extractZipContents(zipFile);
+      result.totalFiles = zipContents.length;
       
-      toast.info('AI analyzing file contents and mappings...');
-      const aiAnalysis = await aiContentAnalyzer.analyzeBatch(processedFiles);
-      
-      const importStrategy = this.determineImportStrategy(aiAnalysis, options);
-      
-      if (importStrategy.autoImport) {
-        toast.success(`High confidence detected! Auto-importing ${processedFiles.length} files...`);
-        return await this.executeAutoImport({ ...zipAnalysis, files: processedFiles }, aiAnalysis, options);
-      } else {
-        toast.info('Manual review required for some files');
-        return await this.executeManualImport({ ...zipAnalysis, files: processedFiles }, aiAnalysis, options);
+      if (zipContents.length === 0) {
+        result.errors.push('ZIP file contains no processable files');
+        return result;
       }
+
+      // Process each file
+      for (const entry of zipContents) {
+        try {
+          const fileResult = await this.processZipEntry(entry, options);
+          
+          if (fileResult.success) {
+            result.processedFiles++;
+            result.importedRecords += fileResult.recordsProcessed || 0;
+            result.details.push({
+              filename: entry.filename,
+              status: 'success',
+              recordsProcessed: fileResult.recordsProcessed || 0,
+              message: `Successfully processed ${fileResult.recordsProcessed || 0} records`
+            });
+          } else {
+            result.skippedFiles++;
+            result.errors.push(...(fileResult.errors || []));
+            result.details.push({
+              filename: entry.filename,
+              status: 'error',
+              recordsProcessed: 0,
+              message: fileResult.errors?.join(', ') || 'Processing failed'
+            });
+          }
+        } catch (error) {
+          result.skippedFiles++;
+          const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
+          result.errors.push(`Error processing ${entry.filename}: ${errorMessage}`);
+          
+          result.details.push({
+            filename: entry.filename,
+            status: 'error',
+            recordsProcessed: 0,
+            message: errorMessage
+          });
+        }
+      }
+
+      // Update totals
+      result.totalProcessed = result.importedRecords;
+      result.successfulImports = result.importedRecords;
+      result.failedImports = result.totalFiles - result.processedFiles;
+      result.success = result.processedFiles > 0 && result.errors.length === 0;
+
+      // Add aggregate processing errors and warnings
+      const allProcessingErrors = zipContents
+        .filter(entry => entry.processingErrors && entry.processingErrors.length > 0)
+        .flatMap(entry => entry.processingErrors || []);
       
+      const allProcessingWarnings = zipContents
+        .filter(entry => entry.processingWarnings && entry.processingWarnings.length > 0)
+        .flatMap(entry => entry.processingWarnings || []);
+
+      result.errors.push(...allProcessingErrors);
+      result.warnings.push(...allProcessingWarnings);
+
+      devLog.info('Smart import completed:', result);
+      return result;
+
     } catch (error) {
-      devLog.error('Enhanced smart import failed:', error);
-      const errorMessage = this.safeErrorMessage(error);
+      devLog.error('Smart import failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       return {
         success: false,
@@ -60,234 +122,192 @@ export const smartImportService = {
         details: []
       };
     }
-  },
+  }
 
-  async preprocessFiles(files: any[]): Promise<any[]> {
-    const processedFiles = [];
-    
-    for (const file of files) {
-      try {
-        if (file.filename.toLowerCase().endsWith('.xlsx') || file.filename.toLowerCase().endsWith('.xls')) {
-          devLog.info('Enhanced Excel processing for:', file.filename);
-          
-          // Create a File object from the data
-          const blob = new Blob([new Uint8Array(file.content)], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  private async extractZipContents(zipFile: File): Promise<ZipFileEntry[]> {
+    const zip = new JSZip();
+    const zipData = await zip.loadAsync(zipFile);
+    const entries: ZipFileEntry[] = [];
+
+    for (const [filename, zipEntry] of Object.entries(zipData.files)) {
+      if (!zipEntry.dir && this.isProcessableFile(filename)) {
+        try {
+          const data = await zipEntry.async('uint8array');
+          entries.push({
+            filename,
+            data,
+            isDirectory: false,
+            processingErrors: [],
+            processingWarnings: []
           });
-          const excelFile = new File([blob], file.filename);
-          
-          const excelResult = await enhancedExcelProcessor.processExcelFile(excelFile);
-          
-          if (excelResult.success && excelResult.data.length > 0) {
-            processedFiles.push({
-              ...file,
-              data: excelResult.data,
-              processingMetadata: excelResult.metadata,
-              processingWarnings: excelResult.warnings
-            });
-          } else {
-            devLog.warn('Excel processing failed for:', file.filename, excelResult.errors);
-            processedFiles.push({
-              ...file,
-              processingErrors: excelResult.errors,
-              processingWarnings: excelResult.warnings
-            });
-          }
-        } else {
-          // Keep non-Excel files as-is
-          processedFiles.push(file);
+        } catch (error) {
+          devLog.warn(`Failed to extract ${filename}:`, error);
         }
-      } catch (error) {
-        devLog.error('File preprocessing failed:', file.filename, error);
-        processedFiles.push({
-          ...file,
-          processingErrors: [this.safeErrorMessage(error)]
-        });
       }
     }
-    
-    return processedFiles;
-  },
 
-  determineImportStrategy(
-    aiAnalysis: BatchAnalysisResult, 
-    options: SmartImportOptions
-  ) {
-    const threshold = options.autoImportThreshold || 0.85;
-    const autoImport = aiAnalysis.readyForAutoImport && aiAnalysis.overallConfidence >= threshold;
-    
-    devLog.info('Import strategy determined:', {
-      autoImport,
-      overallConfidence: aiAnalysis.overallConfidence,
-      threshold,
-      readyForAutoImport: aiAnalysis.readyForAutoImport
-    });
-    
-    return { autoImport, threshold };
-  },
+    return entries;
+  }
 
-  async executeAutoImport(
-    zipAnalysis: ZipAnalysisResult,
-    aiAnalysis: BatchAnalysisResult,
-    options: SmartImportOptions
-  ): Promise<SmartImportResult> {
-    const result: SmartImportResult = {
-      success: true,
-      totalFiles: zipAnalysis.files.length,
-      processedFiles: 0,
-      skippedFiles: 0,
-      totalRecords: zipAnalysis.totalRecords,
-      importedRecords: 0,
-      totalProcessed: 0,
-      successfulImports: 0,
-      failedImports: 0,
-      errors: [],
-      warnings: [],
-      details: []
-    };
-    
-    const concurrencyLimit = 3;
-    const fileGroups = this.chunkArray(zipAnalysis.files, concurrencyLimit);
-    
-    for (const fileGroup of fileGroups) {
-      const promises = fileGroup.map(file => 
-        this.processFileWithAutoImport(file, aiAnalysis.fileAnalyses[file.path], options)
-      );
+  private isProcessableFile(filename: string): boolean {
+    const supportedExtensions = ['.xlsx', '.xls', '.csv', '.txt', '.pdf'];
+    const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    return supportedExtensions.includes(extension);
+  }
+
+  private async processZipEntry(entry: ZipFileEntry, options: SmartImportOptions) {
+    try {
+      // Convert Uint8Array to File for processing
+      const file = new File([entry.data], entry.filename);
       
-      const groupResults = await Promise.allSettled(promises);
-      
-      groupResults.forEach((promiseResult, index) => {
-        const file = fileGroup[index];
-        
-        if (promiseResult.status === 'fulfilled') {
-          const fileResult = promiseResult.value;
-          result.processedFiles++;
-          result.importedRecords += fileResult.recordsImported;
-          result.successfulImports += fileResult.recordsImported;
-          result.totalProcessed += fileResult.recordsImported;
-          
-          if (fileResult.warnings.length > 0) {
-            result.warnings.push(...fileResult.warnings.map(w => this.safeErrorMessage(w)));
-          }
-          
-          result.details.push({
-            filename: file.filename,
-            status: 'success',
-            recordsProcessed: fileResult.recordsImported,
-            message: `Successfully imported ${fileResult.recordsImported} records`
-          });
-        } else {
-          const errorMessage = this.safeErrorMessage(promiseResult.reason);
-          result.errors.push(`Error processing ${file.filename}: ${errorMessage}`);
-          result.failedImports++;
-          result.details.push({
-            filename: file.filename,
-            status: 'error',
-            recordsProcessed: 0,
-            message: errorMessage
-          });
-        }
-      });
+      // Determine file type and process accordingly
+      if (entry.filename.toLowerCase().endsWith('.xlsx') || entry.filename.toLowerCase().endsWith('.xls')) {
+        return await this.processExcelFile(file, entry, options);
+      } else if (entry.filename.toLowerCase().endsWith('.csv')) {
+        return await this.processCSVFile(file, entry, options);
+      } else {
+        // Try multi-format processor for other types
+        return await this.processWithMultiFormat(file, entry, options);
+      }
+    } catch (error) {
+      devLog.error(`Error processing ${entry.filename}:`, error);
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : 'Processing failed'],
+        recordsProcessed: 0
+      };
     }
-    
-    result.success = result.errors.length === 0;
-    
-    return result;
-  },
+  }
 
-  async executeManualImport(
-    zipAnalysis: ZipAnalysisResult,
-    aiAnalysis: BatchAnalysisResult,
-    options: SmartImportOptions
-  ): Promise<SmartImportResult> {
-    devLog.info('Manual import mode - preparing detailed analysis for user review');
-    
-    const details = await Promise.all(
-      zipAnalysis.files.map(async (file) => {
-        const analysis = aiAnalysis.fileAnalyses[file.path];
-        let message = `Confidence: ${(analysis?.confidence * 100).toFixed(1)}%`;
-        
-        // Add specific processing issues if any
-        if (file.processingErrors?.length > 0) {
-          message += ` - Errors: ${file.processingErrors.join(', ')}`;
-        }
-        if (file.processingWarnings?.length > 0) {
-          message += ` - Warnings: ${file.processingWarnings.join(', ')}`;
-        }
+  private async processExcelFile(file: File, entry: ZipFileEntry, options: SmartImportOptions) {
+    try {
+      // Use enhanced Excel processor
+      const processingResult = await enhancedExcelProcessor.processExcelFile(file);
+      
+      if (!processingResult.success) {
+        entry.processingErrors?.push(...processingResult.errors);
+        entry.processingWarnings?.push(...processingResult.warnings);
+        return {
+          success: false,
+          errors: processingResult.errors,
+          warnings: processingResult.warnings,
+          recordsProcessed: 0
+        };
+      }
+
+      // Validate the processed data
+      const validationResult = await enhancedValidationService.validateWithDetailedFeedback(
+        processingResult.data,
+        'properties', // Default type, could be made configurable
+        options.associationId
+      );
+
+      if (!validationResult.isValid) {
+        entry.processingErrors?.push(...validationResult.errors);
+        entry.processingWarnings?.push(...validationResult.warnings);
         
         return {
-          filename: file.filename,
-          status: 'skipped' as const,
-          recordsProcessed: 0,
-          message
+          success: false,
+          errors: validationResult.errors,
+          warnings: validationResult.warnings,
+          recordsProcessed: processingResult.data.length,
+          validationSuggestions: validationResult.suggestions
         };
-      })
-    );
-    
-    return {
-      success: false,
-      totalFiles: zipAnalysis.files.length,
-      processedFiles: 0,
-      skippedFiles: zipAnalysis.files.length,
-      totalRecords: zipAnalysis.totalRecords,
-      importedRecords: 0,
-      totalProcessed: 0,
-      successfulImports: 0,
-      failedImports: 0,
-      errors: [],
-      warnings: ['Manual review required - confidence below threshold'],
-      details
-    };
-  },
+      }
 
-  async processFileWithAutoImport(
-    file: any,
-    analysis: any,
-    options: SmartImportOptions
-  ) {
-    // Use enhanced validation with detailed feedback
-    const validation = await enhancedValidationService.validateDataWithDetails(
-      file.data, 
-      analysis.detectedType, 
-      options.associationId,
-      file.filename
-    );
-    
-    if (!validation.valid && !options.skipValidation) {
-      const detailedErrors = validation.suggestedFixes.join('; ');
-      throw new Error(`Enhanced validation failed: ${detailedErrors}`);
-    }
-    
-    const importResult = await dataImportService.importData({
-      associationId: options.associationId,
-      dataType: analysis.detectedType,
-      data: file.data,
-      mappings: analysis.suggestedMappings,
-      userId: options.userId
-    });
-    
-    if (!importResult.success) {
-      throw new Error(`Import failed: ${importResult.details.map(d => d.message).join(', ')}`);
-    }
-    
-    return {
-      recordsImported: importResult.successfulImports,
-      warnings: validation.issues.map(issue => issue.issue)
-    };
-  },
+      return {
+        success: true,
+        recordsProcessed: processingResult.data.length,
+        data: processingResult.data,
+        warnings: [...processingResult.warnings, ...validationResult.warnings]
+      };
 
-  safeErrorMessage(error: any): string {
-    if (typeof error === 'string') return error;
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'object' && error?.message) return error.message;
-    return 'Unknown error occurred';
-  },
-
-  chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = [];
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Excel processing failed';
+      entry.processingErrors?.push(errorMessage);
+      
+      return {
+        success: false,
+        errors: [errorMessage],
+        recordsProcessed: 0
+      };
     }
-    return chunks;
   }
-};
+
+  private async processCSVFile(file: File, entry: ZipFileEntry, options: SmartImportOptions) {
+    try {
+      // Basic CSV processing (can be enhanced)
+      const text = await file.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        const error = 'CSV file must contain at least a header row and one data row';
+        entry.processingErrors?.push(error);
+        return {
+          success: false,
+          errors: [error],
+          recordsProcessed: 0
+        };
+      }
+
+      return {
+        success: true,
+        recordsProcessed: lines.length - 1, // Excluding header
+        data: lines
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'CSV processing failed';
+      entry.processingErrors?.push(errorMessage);
+      
+      return {
+        success: false,
+        errors: [errorMessage],
+        recordsProcessed: 0
+      };
+    }
+  }
+
+  private async processWithMultiFormat(file: File, entry: ZipFileEntry, options: SmartImportOptions) {
+    try {
+      // Use multi-format processor for other file types
+      const result = await multiFormatProcessor.processWithEnhancedAnalysis([file], {
+        enableOCR: options.enableOCR || false,
+        enableDuplicateDetection: options.enableDuplicateDetection || false,
+        enableQualityAssessment: true,
+        enableAutoFix: true,
+        fallbackToOCR: true
+      });
+
+      if (result.processingStats.successfulFiles === 0) {
+        const error = 'Failed to process file with multi-format processor';
+        entry.processingErrors?.push(error);
+        return {
+          success: false,
+          errors: [error],
+          recordsProcessed: 0
+        };
+      }
+
+      const processedDoc = result.processedDocuments[0];
+      return {
+        success: true,
+        recordsProcessed: processedDoc?.data?.length || 0,
+        data: processedDoc?.data || []
+      };
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Multi-format processing failed';
+      entry.processingErrors?.push(errorMessage);
+      
+      return {
+        success: false,
+        errors: [errorMessage],
+        recordsProcessed: 0
+      };
+    }
+  }
+}
+
+export const smartImportService = new SmartImportService();
+export type { SmartImportOptions };
