@@ -538,5 +538,167 @@ export const smartImportService = {
 
     // Default fallback
     return 'properties';
+  },
+
+  async validateAndClassifyData(
+    documents: ProcessedDocument[],
+    options: SmartImportOptions
+  ): Promise<{ validationResults: DetailedValidationResult[]; classifications: any[] }> {
+    const validationResults: DetailedValidationResult[] = [];
+    const classifications: any[] = [];
+
+    for (const doc of documents) {
+      try {
+        // Enhanced validation with scoring
+        const validation = await this.performDetailedValidation(doc.data, doc.filename);
+        validationResults.push(validation);
+
+        // Document classification
+        if (doc.classification) {
+          classifications.push({
+            filename: doc.filename,
+            type: doc.classification.type,
+            confidence: doc.classification.confidence,
+            suggestedMapping: doc.classification.suggestedMapping
+          });
+        }
+
+      } catch (error) {
+        devLog.error('Validation failed for document:', doc.filename, error);
+        validationResults.push({
+          valid: false,
+          score: 0, // Add the missing score property
+          totalRows: doc.data.length,
+          validRows: 0,
+          invalidRows: doc.data.length,
+          warnings: 0,
+          issues: [{
+            row: 0,
+            field: 'general',
+            issue: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            severity: 'error' as const
+          }],
+          qualityMetrics: {
+            completeness: 0,
+            consistency: 0,
+            accuracy: 0
+          }
+        });
+      }
+    }
+
+    return { validationResults, classifications };
+  },
+
+  async performDetailedValidation(data: any[], filename: string): Promise<DetailedValidationResult> {
+    if (!data || data.length === 0) {
+      return {
+        valid: false,
+        score: 0,
+        totalRows: 0,
+        validRows: 0,
+        invalidRows: 0,
+        warnings: 0,
+        issues: [{
+          row: 0,
+          field: 'data',
+          issue: 'No data found',
+          severity: 'error' as const
+        }],
+        qualityMetrics: {
+          completeness: 0,
+          consistency: 0,
+          accuracy: 0
+        }
+      };
+    }
+
+    const issues: any[] = [];
+    let validRows = 0;
+    let warnings = 0;
+
+    // Quality metrics
+    let completenessScore = 0;
+    let consistencyScore = 0;
+    let accuracyScore = 100; // Start with perfect accuracy
+
+    const firstRowKeys = Object.keys(data[0] || {});
+    const totalFields = firstRowKeys.length;
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i];
+      let rowValid = true;
+      let filledFields = 0;
+
+      // Check completeness
+      for (const key of firstRowKeys) {
+        if (row[key] && String(row[key]).trim() !== '') {
+          filledFields++;
+        } else {
+          if (this.isRequiredField(key)) {
+            issues.push({
+              row: i + 1,
+              field: key,
+              issue: 'Required field is empty',
+              severity: 'error' as const
+            });
+            rowValid = false;
+            accuracyScore -= 0.5;
+          } else {
+            warnings++;
+          }
+        }
+      }
+
+      // Calculate row completeness
+      const rowCompleteness = filledFields / totalFields;
+      completenessScore += rowCompleteness;
+
+      // Check consistency (same structure as first row)
+      const rowKeys = Object.keys(row);
+      if (rowKeys.length !== firstRowKeys.length) {
+        issues.push({
+          row: i + 1,
+          field: 'structure',
+          issue: 'Inconsistent number of fields',
+          severity: 'warning' as const
+        });
+        warnings++;
+        consistencyScore -= 1;
+      }
+
+      if (rowValid) {
+        validRows++;
+      }
+    }
+
+    // Calculate final scores
+    completenessScore = (completenessScore / data.length) * 100;
+    consistencyScore = Math.max(0, 100 + consistencyScore);
+    accuracyScore = Math.max(0, accuracyScore);
+
+    const overallScore = (completenessScore + consistencyScore + accuracyScore) / 3;
+
+    return {
+      valid: issues.filter(issue => issue.severity === 'error').length === 0,
+      score: Math.round(overallScore),
+      totalRows: data.length,
+      validRows,
+      invalidRows: data.length - validRows,
+      warnings,
+      issues,
+      qualityMetrics: {
+        completeness: Math.round(completenessScore),
+        consistency: Math.round(consistencyScore),
+        accuracy: Math.round(accuracyScore)
+      }
+    };
+  },
+
+  isRequiredField(fieldName: string): boolean {
+    const requiredFields = ['name', 'email', 'address', 'id', 'property_id', 'association_id'];
+    return requiredFields.some(required => 
+      fieldName.toLowerCase().includes(required.toLowerCase())
+    );
   }
 };

@@ -1,522 +1,377 @@
 
 import Tesseract from 'tesseract.js';
 import { devLog } from '@/utils/dev-logger';
+import { OCROptions, ProcessedDocument } from './types';
 
-export interface OCRResult {
-  text: string;
-  confidence: number;
-  boundingBoxes: Array<{
-    text: string;
-    bbox: { x0: number; y0: number; x1: number; y1: number };
-    confidence: number;
-  }>;
+export interface QualityAssessmentResult {
+  score: number;
+  issues: string[];
+  recommendations: string[];
+  dpi?: number;
+  resolution?: { width: number; height: number };
 }
 
 export interface TableExtractionResult {
   tables: Array<{
-    rows: string[][];
+    data: string[][];
     confidence: number;
-    boundingBox: { x: number; y: number; width: number; height: number };
+    bounds: { x: number; y: number; width: number; height: number };
   }>;
-  totalTables: number;
+  confidence: number;
 }
 
-export interface FormFieldResult {
+export interface FormDetectionResult {
   fields: Array<{
-    label: string;
-    value: string;
     type: 'text' | 'checkbox' | 'radio' | 'select';
+    label?: string;
+    value?: string;
+    bounds: { x: number; y: number; width: number; height: number };
     confidence: number;
-    boundingBox: { x: number; y: number; width: number; height: number };
   }>;
-  totalFields: number;
-}
-
-export interface QualityAssessmentResult {
-  score: number;
-  issues: Array<{
-    type: 'blur' | 'skew' | 'noise' | 'contrast' | 'resolution';
-    severity: 'low' | 'medium' | 'high';
-    description: string;
-    suggestion: string;
-  }>;
-  recommendations: string[];
-}
-
-export interface AdvancedOCRResult {
-  ocr: OCRResult;
-  tables?: TableExtractionResult;
-  forms?: FormFieldResult;
-  quality: QualityAssessmentResult;
-  metadata: {
-    processingTime: number;
-    imageSize: { width: number; height: number };
-    format: string;
-    dpi?: number;
-  };
+  confidence: number;
 }
 
 export const advancedOCRService = {
-  async processDocument(
-    file: File | string,
-    options: {
-      enableTableExtraction?: boolean;
-      enableFormDetection?: boolean;
-      languages?: string[];
-      quality?: 'fast' | 'accurate';
-    } = {}
-  ): Promise<AdvancedOCRResult> {
+  async processDocumentWithOCR(
+    file: File,
+    options: OCROptions = {}
+  ): Promise<ProcessedDocument> {
     const startTime = Date.now();
-    devLog.info('Starting advanced OCR processing', { 
-      filename: typeof file === 'string' ? file : file.name,
-      options 
-    });
-
+    
     try {
-      // Initialize Tesseract worker
-      const worker = await Tesseract.createWorker(options.languages?.join('+') || 'eng');
+      devLog.info('Starting advanced OCR processing for:', file.name);
       
-      try {
-        // Configure OCR parameters for better accuracy
-        await worker.setParameters({
-          tessedit_pageseg_mode: options.quality === 'fast' 
-            ? Tesseract.PSM.SINGLE_BLOCK 
-            : Tesseract.PSM.AUTO,
-          tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
-          preserve_interword_spaces: '1',
-        });
-
-        // Perform OCR
-        const { data } = await worker.recognize(file);
-        
-        // Extract structured data
-        const words = this.extractWords(data);
-        const lines = this.extractLines(data);
-        
-        // Build OCR result
-        const ocrResult: OCRResult = {
-          text: data.text || '',
-          confidence: data.confidence || 0,
-          boundingBoxes: words.map(word => ({
-            text: word.text || '',
-            bbox: word.bbox || { x0: 0, y0: 0, x1: 0, y1: 0 },
-            confidence: word.confidence || 0
-          }))
-        };
-
-        // Build final result
-        const result: AdvancedOCRResult = {
-          ocr: ocrResult,
-          quality: this.assessQuality(data, words, lines),
-          metadata: {
-            processingTime: Date.now() - startTime,
-            imageSize: { 
-              width: data.imageSize?.width || 0, 
-              height: data.imageSize?.height || 0 
-            },
-            format: typeof file === 'string' ? 'unknown' : file.type,
-            dpi: data.dpi || undefined
-          }
-        };
-
-        // Add optional features
-        if (options.enableTableExtraction) {
-          result.tables = this.extractTables(lines, words);
-        }
-
-        if (options.enableFormDetection) {
-          result.forms = this.detectForms(lines, words);
-        }
-
-        devLog.info('Advanced OCR processing completed', {
-          confidence: ocrResult.confidence,
-          textLength: ocrResult.text.length,
-          processingTime: result.metadata.processingTime,
-          tablesFound: result.tables?.totalTables || 0,
-          formsFound: result.forms?.totalFields || 0
-        });
-
-        return result;
-        
-      } finally {
-        await worker.terminate();
+      // Quality assessment
+      const qualityResult = await this.assessImageQuality(file);
+      devLog.info('Image quality assessment:', qualityResult);
+      
+      // Main OCR processing
+      const ocrResult = await this.performOCR(file, options);
+      
+      // Enhanced processing based on options
+      let extractedTables: any[] = [];
+      let extractedForms: any[] = [];
+      let layoutAnalysis: any = null;
+      
+      if (options.enableTableExtraction) {
+        const tableResult = await this.extractTables(file, ocrResult.text);
+        extractedTables = tableResult.tables;
       }
+      
+      if (options.enableFormDetection) {
+        const formResult = await this.detectForms(file, ocrResult.text);
+        extractedForms = formResult.fields;
+      }
+      
+      if (options.enableLayoutAnalysis) {
+        layoutAnalysis = await this.analyzeLayout(file, ocrResult.text);
+      }
+      
+      // Convert extracted text to structured data
+      const structuredData = await this.convertToStructuredData(
+        ocrResult.text,
+        extractedTables,
+        extractedForms
+      );
+      
+      const processingTime = Date.now() - startTime;
+      
+      return {
+        filename: file.name,
+        data: structuredData,
+        format: 'ocr-extracted',
+        metadata: {
+          processingMethod: 'advanced-ocr',
+          extractionMethod: 'tesseract-enhanced',
+          confidence: ocrResult.confidence,
+          qualityScore: qualityResult.score,
+          tables: extractedTables.length,
+          forms: extractedForms.length,
+          processingTime
+        },
+        extractedStructures: [
+          ...extractedTables,
+          ...extractedForms,
+          ...(layoutAnalysis ? [layoutAnalysis] : [])
+        ]
+      };
+      
     } catch (error) {
-      devLog.error('Advanced OCR processing failed', error);
+      devLog.error('Advanced OCR processing failed:', error);
       throw new Error(`OCR processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
-  async processBatch(
-    files: File[],
-    options: Parameters<typeof this.processDocument>[1] = {},
-    onProgress?: (completed: number, total: number) => void
-  ): Promise<AdvancedOCRResult[]> {
-    devLog.info('Starting batch OCR processing', { count: files.length });
-
-    const results: AdvancedOCRResult[] = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      try {
-        const result = await this.processDocument(files[i], options);
-        results.push(result);
-        onProgress?.(i + 1, files.length);
-      } catch (error) {
-        devLog.error(`Failed to process ${files[i].name}`, error);
-        // Add failed result to maintain array consistency
-        results.push({
-          ocr: { text: '', confidence: 0, boundingBoxes: [] },
-          quality: { score: 0, issues: [], recommendations: ['Failed to process document'] },
-          metadata: {
-            processingTime: 0,
-            imageSize: { width: 0, height: 0 },
-            format: files[i].type
-          }
-        });
-      }
-    }
-
-    return results;
-  },
-
-  extractWords(data: any): any[] {
-    const words: any[] = [];
-    if (data.blocks) {
-      data.blocks.forEach((block: any) => {
-        if (block.paragraphs) {
-          block.paragraphs.forEach((paragraph: any) => {
-            if (paragraph.lines) {
-              paragraph.lines.forEach((line: any) => {
-                if (line.words) {
-                  words.push(...line.words);
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-    return words;
-  },
-
-  extractLines(data: any): any[] {
-    const lines: any[] = [];
-    if (data.blocks) {
-      data.blocks.forEach((block: any) => {
-        if (block.paragraphs) {
-          block.paragraphs.forEach((paragraph: any) => {
-            if (paragraph.lines) {
-              lines.push(...paragraph.lines);
-            }
-          });
-        }
-      });
-    }
-    return lines;
-  },
-
-  assessQuality(data: any, words: any[], lines: any[]): QualityAssessmentResult {
-    const issues: QualityAssessmentResult['issues'] = [];
-    const recommendations: string[] = [];
-    let score = 100;
-
-    // Analyze overall confidence
-    if (data.confidence < 70) {
-      issues.push({
-        type: 'contrast',
-        severity: 'high',
-        description: 'Very low OCR confidence detected',
-        suggestion: 'Improve image contrast and resolution before processing'
-      });
-      recommendations.push('Enhance image quality or use higher resolution scan');
-      score -= 30;
-    } else if (data.confidence < 85) {
-      issues.push({
-        type: 'contrast',
-        severity: 'medium',
-        description: 'Low OCR confidence detected',
-        suggestion: 'Consider improving image quality'
-      });
-      score -= 15;
-    }
-
-    // Check for potential blur
-    const lowConfidenceWords = words.filter(w => w.confidence < 60).length;
-    const blurRatio = lowConfidenceWords / Math.max(words.length, 1);
-    
-    if (blurRatio > 0.3) {
-      issues.push({
-        type: 'blur',
-        severity: 'high',
-        description: 'Image appears significantly blurred',
-        suggestion: 'Rescan document with better focus and stability'
-      });
-      score -= 25;
-    } else if (blurRatio > 0.15) {
-      issues.push({
-        type: 'blur',
-        severity: 'medium',
-        description: 'Some text appears blurred',
-        suggestion: 'Consider rescanning for better accuracy'
-      });
-      score -= 15;
-    }
-
-    // Check for skew issues
-    if (lines.length > 0) {
-      const avgSkew = this.calculateAverageSkew(lines);
-      if (Math.abs(avgSkew) > 5) {
-        issues.push({
-          type: 'skew',
-          severity: 'medium',
-          description: 'Document appears skewed',
-          suggestion: 'Straighten document before scanning'
-        });
-        score -= 10;
-      }
-    }
-
-    // Check resolution
-    if (data.imageSize && data.imageSize.width && data.imageSize.height) {
-      const totalPixels = data.imageSize.width * data.imageSize.height;
-      if (totalPixels < 500000) { // Less than ~750x670
-        issues.push({
-          type: 'resolution',
-          severity: 'medium',
-          description: 'Low resolution image detected',
-          suggestion: 'Use higher resolution (at least 300 DPI) for better results'
-        });
-        score -= 15;
-      }
-    }
-
-    return {
-      score: Math.max(0, score),
-      issues,
-      recommendations
-    };
-  },
-
-  calculateAverageSkew(lines: any[]): number {
-    // Simple skew calculation based on line angles
-    let totalSkew = 0;
-    let validLines = 0;
-
-    lines.forEach(line => {
-      if (line.bbox && line.words && line.words.length > 1) {
-        const firstWord = line.words[0];
-        const lastWord = line.words[line.words.length - 1];
-        
-        if (firstWord.bbox && lastWord.bbox) {
-          const deltaY = lastWord.bbox.y0 - firstWord.bbox.y0;
-          const deltaX = lastWord.bbox.x1 - firstWord.bbox.x0;
+  async assessImageQuality(file: File): Promise<QualityAssessmentResult> {
+    try {
+      // Create image element to assess quality
+      const imageUrl = URL.createObjectURL(file);
+      const img = new Image();
+      
+      return new Promise((resolve) => {
+        img.onload = () => {
+          const issues: string[] = [];
+          const recommendations: string[] = [];
+          let score = 100;
           
-          if (deltaX > 0) {
-            const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-            totalSkew += angle;
-            validLines++;
+          // Resolution assessment
+          if (img.width < 800 || img.height < 600) {
+            issues.push('Low resolution image');
+            recommendations.push('Use higher resolution scan (minimum 300 DPI)');
+            score -= 20;
+          }
+          
+          // File size assessment (rough quality indicator)
+          const fileSize = file.size;
+          const pixelCount = img.width * img.height;
+          const bytesPerPixel = fileSize / pixelCount;
+          
+          if (bytesPerPixel < 0.5) {
+            issues.push('Heavy compression detected');
+            recommendations.push('Use less compressed image format');
+            score -= 15;
+          }
+          
+          // Aspect ratio assessment
+          const aspectRatio = img.width / img.height;
+          if (aspectRatio < 0.5 || aspectRatio > 3) {
+            issues.push('Unusual aspect ratio');
+            recommendations.push('Check document orientation');
+            score -= 10;
+          }
+          
+          URL.revokeObjectURL(imageUrl);
+          
+          resolve({
+            score: Math.max(0, score),
+            issues,
+            recommendations,
+            resolution: { width: img.width, height: img.height }
+          });
+        };
+        
+        img.onerror = () => {
+          URL.revokeObjectURL(imageUrl);
+          resolve({
+            score: 0,
+            issues: ['Could not load image'],
+            recommendations: ['Check image format and integrity']
+          });
+        };
+        
+        img.src = imageUrl;
+      });
+      
+    } catch (error) {
+      devLog.error('Quality assessment failed:', error);
+      return {
+        score: 50,
+        issues: ['Quality assessment failed'],
+        recommendations: ['Manual review recommended']
+      };
+    }
+  },
+
+  async performOCR(file: File, options: OCROptions): Promise<{ text: string; confidence: number; words: any[] }> {
+    try {
+      const { data } = await Tesseract.recognize(file, options.languages?.join('+') || 'eng', {
+        logger: m => devLog.debug('OCR progress:', m)
+      });
+      
+      return {
+        text: data.text,
+        confidence: data.confidence,
+        words: data.words || []
+      };
+      
+    } catch (error) {
+      devLog.error('OCR processing failed:', error);
+      throw error;
+    }
+  },
+
+  async extractTables(file: File, text: string): Promise<TableExtractionResult> {
+    try {
+      // Basic table detection using text patterns
+      const lines = text.split('\n').filter(line => line.trim());
+      const tables: any[] = [];
+      
+      let currentTable: string[][] = [];
+      let inTable = false;
+      
+      for (const line of lines) {
+        // Simple heuristic: lines with multiple whitespace-separated values
+        const columns = line.trim().split(/\s{2,}/).filter(col => col.length > 0);
+        
+        if (columns.length >= 2) {
+          if (!inTable) {
+            inTable = true;
+            currentTable = [];
+          }
+          currentTable.push(columns);
+        } else {
+          if (inTable && currentTable.length > 1) {
+            tables.push({
+              data: currentTable,
+              confidence: 0.7,
+              bounds: { x: 0, y: 0, width: 100, height: 100 }
+            });
+          }
+          inTable = false;
+          currentTable = [];
+        }
+      }
+      
+      // Add final table if exists
+      if (inTable && currentTable.length > 1) {
+        tables.push({
+          data: currentTable,
+          confidence: 0.7,
+          bounds: { x: 0, y: 0, width: 100, height: 100 }
+        });
+      }
+      
+      return {
+        tables,
+        confidence: tables.length > 0 ? 0.8 : 0.2
+      };
+      
+    } catch (error) {
+      devLog.error('Table extraction failed:', error);
+      return { tables: [], confidence: 0 };
+    }
+  },
+
+  async detectForms(file: File, text: string): Promise<FormDetectionResult> {
+    try {
+      const lines = text.split('\n');
+      const fields: any[] = [];
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Detect potential form fields
+        if (line.includes(':') || line.includes('_____') || line.includes('□') || line.includes('☐')) {
+          const parts = line.split(/[:_]{1,}/);
+          if (parts.length >= 2) {
+            fields.push({
+              type: line.includes('□') || line.includes('☐') ? 'checkbox' : 'text',
+              label: parts[0].trim(),
+              value: parts[1]?.trim() || '',
+              bounds: { x: 0, y: i * 20, width: 200, height: 20 },
+              confidence: 0.6
+            });
           }
         }
       }
-    });
-
-    return validLines > 0 ? totalSkew / validLines : 0;
-  },
-
-  extractTables(lines: any[], words: any[]): TableExtractionResult {
-    // Advanced table detection algorithm
-    const potentialTables: any[] = [];
-    
-    // Group lines by vertical position
-    const lineGroups = this.groupLinesByPosition(lines);
-    
-    // Detect table-like structures
-    lineGroups.forEach(group => {
-      if (this.looksLikeTable(group)) {
-        const tableRows = this.extractTableRows(group);
-        if (tableRows.length > 1) {
-          potentialTables.push({
-            rows: tableRows,
-            confidence: this.calculateTableConfidence(group),
-            boundingBox: this.calculateBoundingBox(group)
-          });
-        }
-      }
-    });
-
-    return {
-      tables: potentialTables,
-      totalTables: potentialTables.length
-    };
-  },
-
-  detectForms(lines: any[], words: any[]): FormFieldResult {
-    const formFields: any[] = [];
-    
-    // Look for form-like patterns
-    words.forEach((word, index) => {
-      if (this.looksLikeFormLabel(word.text)) {
-        const nextWord = words[index + 1];
-        if (nextWord && this.isNearby(word, nextWord)) {
-          formFields.push({
-            label: word.text,
-            value: nextWord.text,
-            type: this.inferFieldType(word.text, nextWord.text),
-            confidence: (word.confidence + nextWord.confidence) / 2,
-            boundingBox: this.mergeBoundingBoxes(word.bbox, nextWord.bbox)
-          });
-        }
-      }
-    });
-
-    return {
-      fields: formFields,
-      totalFields: formFields.length
-    };
-  },
-
-  groupLinesByPosition(lines: any[]): any[][] {
-    // Group lines by similar Y positions to detect rows
-    const groups: any[][] = [];
-    const sortedLines = lines.sort((a, b) => (a.bbox?.y0 || 0) - (b.bbox?.y0 || 0));
-    
-    let currentGroup: any[] = [];
-    let lastY = -1;
-    const yTolerance = 10;
-    
-    sortedLines.forEach(line => {
-      const currentY = line.bbox?.y0 || 0;
       
-      if (lastY === -1 || Math.abs(currentY - lastY) <= yTolerance) {
-        currentGroup.push(line);
-      } else {
-        if (currentGroup.length > 0) {
-          groups.push(currentGroup);
+      return {
+        fields,
+        confidence: fields.length > 0 ? 0.7 : 0.3
+      };
+      
+    } catch (error) {
+      devLog.error('Form detection failed:', error);
+      return { fields: [], confidence: 0 };
+    }
+  },
+
+  async analyzeLayout(file: File, text: string): Promise<any> {
+    try {
+      const lines = text.split('\n');
+      const analysis = {
+        totalLines: lines.length,
+        nonEmptyLines: lines.filter(line => line.trim()).length,
+        averageLineLength: lines.reduce((sum, line) => sum + line.length, 0) / lines.length,
+        sections: this.detectSections(lines),
+        structure: 'document'
+      };
+      
+      return analysis;
+      
+    } catch (error) {
+      devLog.error('Layout analysis failed:', error);
+      return null;
+    }
+  },
+
+  detectSections(lines: string[]): any[] {
+    const sections = [];
+    let currentSection: any = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (line.length === 0) continue;
+      
+      // Detect headers (uppercase lines, short lines that might be titles)
+      if (line === line.toUpperCase() && line.length < 50 && line.length > 3) {
+        if (currentSection) {
+          sections.push(currentSection);
         }
-        currentGroup = [line];
+        currentSection = {
+          title: line,
+          startLine: i,
+          content: []
+        };
+      } else if (currentSection) {
+        currentSection.content.push(line);
+      }
+    }
+    
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+    
+    return sections;
+  },
+
+  async convertToStructuredData(text: string, tables: any[], forms: any[]): Promise<any[]> {
+    const data: any[] = [];
+    
+    // Convert tables to structured data
+    for (const table of tables) {
+      if (table.data.length > 1) {
+        const headers = table.data[0];
+        for (let i = 1; i < table.data.length; i++) {
+          const row: any = {};
+          headers.forEach((header: string, index: number) => {
+            row[header] = table.data[i][index] || '';
+          });
+          data.push(row);
+        }
+      }
+    }
+    
+    // Convert forms to structured data
+    if (forms.length > 0 && data.length === 0) {
+      const formData: any = {};
+      forms.forEach(field => {
+        formData[field.label || 'field'] = field.value;
+      });
+      data.push(formData);
+    }
+    
+    // Fallback: try to extract key-value pairs from text
+    if (data.length === 0) {
+      const lines = text.split('\n').filter(line => line.trim());
+      const extractedData: any = {};
+      
+      for (const line of lines) {
+        if (line.includes(':')) {
+          const [key, ...valueParts] = line.split(':');
+          const value = valueParts.join(':').trim();
+          if (key.trim() && value) {
+            extractedData[key.trim()] = value;
+          }
+        }
       }
       
-      lastY = currentY;
-    });
-    
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup);
-    }
-    
-    return groups;
-  },
-
-  looksLikeTable(lineGroup: any[]): boolean {
-    // Check if a group of lines looks like a table
-    if (lineGroup.length < 2) return false;
-    
-    // Check for consistent column structure
-    const columnCounts = lineGroup.map(line => line.words?.length || 0);
-    const avgColumns = columnCounts.reduce((a, b) => a + b, 0) / columnCounts.length;
-    const consistentColumns = columnCounts.filter(count => Math.abs(count - avgColumns) <= 1).length;
-    
-    return consistentColumns / lineGroup.length > 0.7; // 70% consistency
-  },
-
-  extractTableRows(lineGroup: any[]): string[][] {
-    return lineGroup.map(line => 
-      (line.words || []).map((word: any) => word.text || '').filter((text: string) => text.trim())
-    ).filter(row => row.length > 0);
-  },
-
-  calculateTableConfidence(lineGroup: any[]): number {
-    // Calculate confidence based on structure consistency
-    const avgConfidence = lineGroup.reduce((sum, line) => {
-      const lineConfidence = (line.words || []).reduce((wordSum: number, word: any) => 
-        wordSum + (word.confidence || 0), 0) / Math.max(line.words?.length || 1, 1);
-      return sum + lineConfidence;
-    }, 0) / lineGroup.length;
-    
-    return avgConfidence;
-  },
-
-  calculateBoundingBox(lineGroup: any[]): { x: number; y: number; width: number; height: number } {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    lineGroup.forEach(line => {
-      if (line.bbox) {
-        minX = Math.min(minX, line.bbox.x0);
-        minY = Math.min(minY, line.bbox.y0);
-        maxX = Math.max(maxX, line.bbox.x1);
-        maxY = Math.max(maxY, line.bbox.y1);
+      if (Object.keys(extractedData).length > 0) {
+        data.push(extractedData);
       }
-    });
-    
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  },
-
-  looksLikeFormLabel(text: string): boolean {
-    const formKeywords = /^(name|address|phone|email|date|amount|total|quantity|description)[:_\s]*$/i;
-    return formKeywords.test(text.trim());
-  },
-
-  isNearby(word1: any, word2: any): boolean {
-    if (!word1.bbox || !word2.bbox) return false;
-    
-    const distance = Math.sqrt(
-      Math.pow(word2.bbox.x0 - word1.bbox.x1, 2) + 
-      Math.pow(word2.bbox.y0 - word1.bbox.y0, 2)
-    );
-    
-    return distance < 50; // pixels
-  },
-
-  inferFieldType(label: string, value: string): 'text' | 'checkbox' | 'radio' | 'select' {
-    if (/checkbox|check|☐|☑|✓/i.test(label) || /^[☐☑✓x]$/i.test(value)) {
-      return 'checkbox';
-    }
-    if (/radio|option/i.test(label)) {
-      return 'radio';
-    }
-    if (/select|choose|dropdown/i.test(label)) {
-      return 'select';
-    }
-    return 'text';
-  },
-
-  mergeBoundingBoxes(bbox1: any, bbox2: any): { x: number; y: number; width: number; height: number } {
-    if (!bbox1 || !bbox2) {
-      return { x: 0, y: 0, width: 0, height: 0 };
     }
     
-    const minX = Math.min(bbox1.x0, bbox2.x0);
-    const minY = Math.min(bbox1.y0, bbox2.y0);
-    const maxX = Math.max(bbox1.x1, bbox2.x1);
-    const maxY = Math.max(bbox1.y1, bbox2.y1);
-    
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  },
-
-  async enhanceImageQuality(file: File): Promise<File> {
-    // Basic image enhancement (could be expanded with canvas operations)
-    return file;
-  },
-
-  async preprocessImage(
-    file: File,
-    options: {
-      deskew?: boolean;
-      denoise?: boolean;
-      enhanceContrast?: boolean;
-      binarize?: boolean;
-    } = {}
-  ): Promise<File> {
-    // Image preprocessing (could be expanded with canvas operations)
-    return file;
+    return data;
   }
 };
