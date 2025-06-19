@@ -29,6 +29,7 @@ export interface MultiFormatProcessorOptions {
   ocrLanguages?: string[];
   qualityThreshold?: number;
   enableStructureDetection?: boolean;
+  enableDataValidation?: boolean;
 }
 
 export interface EnhancedProcessingResult {
