@@ -1,3 +1,4 @@
+
 import { devLog } from '@/utils/dev-logger';
 import { SandboxResult, AuditTrailEntry } from './types';
 
@@ -60,6 +61,26 @@ export class ImportSandboxService {
       changesPreview,
       riskAssessment,
       estimatedTime
+    };
+  }
+
+  // Fixed method name - changed from createRollbackPlan to match what's being called
+  async createRollbackPlan(importType: string, associationId: string): Promise<{
+    steps: string[];
+    estimatedRestoreTime: number;
+    backupLocation: string;
+  }> {
+    devLog.info('Creating rollback plan for:', { importType, associationId });
+    
+    return {
+      steps: [
+        'Create backup snapshot',
+        'Identify affected records',
+        'Prepare rollback SQL statements',
+        'Execute rollback in transaction'
+      ],
+      estimatedRestoreTime: 300, // 5 minutes
+      backupLocation: `backup_${importType}_${Date.now()}`
     };
   }
 

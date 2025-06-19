@@ -222,6 +222,7 @@ export interface ProcessingOptions {
 
 // Enhanced processing options for address intelligence
 export interface EnhancedProcessingOptions extends ProcessingOptions {
+  associationId?: string;
   addressIntelligence?: {
     enableValidation?: boolean;
     enableGeocoding?: boolean;

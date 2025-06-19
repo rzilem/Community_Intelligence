@@ -1,13 +1,15 @@
+
 import { devLog } from '@/utils/dev-logger';
 import { advancedOCRService } from './advanced-ocr-service';
 import { parseService } from './parse-service';
-import { enhancedMultiFormatProcessor, EnhancedProcessingOptions } from './enhanced-multi-format-processor';
+import { enhancedMultiFormatProcessor } from './enhanced-multi-format-processor';
 import { 
   ProcessedDocument, 
   ProcessingOptions, 
   MultiFormatProcessingResult, 
   DocumentClassification,
-  ClassificationResult
+  ClassificationResult,
+  EnhancedProcessingOptions
 } from './types';
 
 // Export the ProcessedDocument type
