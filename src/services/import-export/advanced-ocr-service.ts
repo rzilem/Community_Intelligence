@@ -1,3 +1,4 @@
+
 import { devLog } from '@/utils/dev-logger';
 import Tesseract from 'tesseract.js';
 import pdfParse from 'pdf-parse';
@@ -25,6 +26,9 @@ export interface DocumentOCRResult {
   structuredData?: any;
   documentType?: string;
 }
+
+// Export the AdvancedOCRResult interface
+export type { AdvancedOCRResult };
 
 export const advancedOCRService = {
   async processDocumentWithOCR(file: File, options: OCROptions = {}): Promise<ProcessedDocument> {
@@ -78,7 +82,12 @@ export const advancedOCRService = {
           size: file.size
         },
         extractedStructures: [...tables, ...forms],
-        extractedData: structuredData
+        extractedData: structuredData,
+        ocr: {
+          text: ocrResult.text,
+          confidence: ocrResult.confidence,
+          pages: ocrResult.pages
+        }
       };
       
       devLog.info('Advanced OCR processing completed:', {
@@ -120,11 +129,11 @@ export const advancedOCRService = {
       
       // Process pages data with proper type handling
       const pages = [];
-      if (data.paragraphs) {
+      if (data.text) {
         pages.push({
           pageNumber: 1,
           text: data.text,
-          words: data.words?.map((word: any) => ({
+          words: (data.words || []).map((word: any) => ({
             text: word.text || '',
             confidence: word.confidence || 0,
             bounds: {
@@ -133,7 +142,7 @@ export const advancedOCRService = {
               width: (word.bbox?.x1 || 0) - (word.bbox?.x0 || 0),
               height: (word.bbox?.y1 || 0) - (word.bbox?.y0 || 0)
             }
-          })) || []
+          }))
         });
       }
       
@@ -160,22 +169,10 @@ export const advancedOCRService = {
       
       // Process each page with proper type handling
       for (let i = 0; i < pdf.numpages; i++) {
-        const pageWithWords = pdf as any; // Type assertion for PDF data
-        const words = pageWithWords.words || []; // Fix the words property error
-        
         pages.push({
           pageNumber: i + 1,
           text: pdf.text,
-          words: words.map((word: any) => ({
-            text: word.str || '',
-            confidence: 1.0,
-            bounds: {
-              x: word.transform?.[4] || 0,
-              y: word.transform?.[5] || 0,
-              width: word.width || 0,
-              height: word.height || 0
-            }
-          }))
+          words: [] // PDF parsing doesn't provide word-level data by default
         });
       }
       

@@ -68,7 +68,7 @@ export interface ProcessedDocument {
   filename: string;
   data: any[];
   format: string;
-  content: string; // Add missing content property
+  content: string;
   metadata: {
     pageCount?: number;
     processingMethod: string;
@@ -86,6 +86,11 @@ export interface ProcessedDocument {
   extractedStructures?: any[];
   extractedData?: Record<string, any>;
   validationResults?: any;
+  ocr?: {
+    text: string;
+    confidence: number;
+    pages: any[];
+  };
 }
 
 export interface DocumentClassification {
@@ -99,8 +104,8 @@ export interface DocumentClassification {
 export interface MultiFormatProcessingResult {
   success: boolean;
   processedDocuments: ProcessedDocument[];
-  duplicateResults?: any; // Add missing property
-  qualityResults?: any; // Add missing property
+  duplicateResults?: any;
+  qualityResults?: any;
   recommendations: string[];
   errors: string[];
   warnings: string[];
@@ -114,7 +119,7 @@ export interface MultiFormatProcessingResult {
 
 export interface DetailedValidationResult {
   valid: boolean;
-  score: number; // Add missing score property
+  score: number;
   totalRows: number;
   validRows: number;
   invalidRows: number;
@@ -136,7 +141,7 @@ export interface DetailedValidationResult {
 export interface OCROptions {
   enableTableExtraction?: boolean;
   enableFormDetection?: boolean;
-  enableLayoutAnalysis?: boolean; // Add missing property
+  enableLayoutAnalysis?: boolean;
   languages?: string[];
   quality?: 'fast' | 'accurate';
 }
@@ -151,9 +156,10 @@ export interface ProcessingOptions {
   validateData?: boolean;
   extractStructured?: boolean;
   classifyDocument?: boolean;
-  ocrLanguages?: string[]; // Add missing property
-  processingQuality?: 'draft' | 'standard' | 'high'; // Add missing property
+  ocrLanguages?: string[];
+  processingQuality?: 'draft' | 'standard' | 'high';
   includeMetadata?: boolean;
+  qualityThreshold?: number;
 }
 
 // Advanced OCR Result interface
@@ -182,9 +188,9 @@ export interface AdvancedOCRResult {
 
 // Classification Result interface
 export interface ClassificationResult {
-  type: string; // Add missing type property
+  type: string;
   confidence: number;
-  suggestedMapping?: Record<string, string>; // Add missing property
+  suggestedMapping?: Record<string, string>;
   category?: string;
   metadata?: any;
 }
