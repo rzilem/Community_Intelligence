@@ -5,7 +5,7 @@ import { advancedOCRService } from '../advanced-ocr-service';
 
 export class ImageProcessor extends BaseProcessor {
   canProcess(file: File): boolean {
-    return file.type.startsWith('image/') || file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|bmp|tiff)$/);
+    return file.type.startsWith('image/') || !!file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|bmp|tiff)$/);
   }
 
   async process(file: File, options: ProcessingOptions): Promise<ProcessedDocument> {

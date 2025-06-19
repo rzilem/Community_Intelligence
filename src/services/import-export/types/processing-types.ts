@@ -1,4 +1,6 @@
 
+import { ProcessedDocument } from './document-types';
+
 // Processing options and results
 export interface OCROptions {
   enableTableExtraction?: boolean;

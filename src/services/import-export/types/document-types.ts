@@ -1,4 +1,6 @@
 
+import { MLFeedback } from './ai-ml-types';
+
 // Document-related types
 export interface DocumentClassification {
   type: string;

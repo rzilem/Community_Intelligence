@@ -5,7 +5,7 @@ import { parseService } from '../parse-service';
 
 export class ExcelProcessor extends BaseProcessor {
   canProcess(file: File): boolean {
-    return file.type.includes('excel') || file.name.toLowerCase().match(/\.(xlsx|xls)$/);
+    return file.type.includes('excel') || !!file.name.toLowerCase().match(/\.(xlsx|xls)$/);
   }
 
   async process(file: File, options: ProcessingOptions): Promise<ProcessedDocument> {
