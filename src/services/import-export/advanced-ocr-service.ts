@@ -130,10 +130,12 @@ export const advancedOCRService = {
       // Process pages data with proper type handling
       const pages = [];
       if (data.text) {
+        // Fix the words property issue by using proper type handling
+        const wordsData = (data as any).words || [];
         pages.push({
           pageNumber: 1,
           text: data.text,
-          words: (data.words || []).map((word: any) => ({
+          words: wordsData.map((word: any) => ({
             text: word.text || '',
             confidence: word.confidence || 0,
             bounds: {

@@ -186,11 +186,11 @@ export const multiFormatProcessor = {
   async processCSV(file: File, options: ProcessingOptions): Promise<ProcessedDocument> {
     try {
       const text = await file.text();
-      const parsedData = await parseService.parseCSV(text);
+      const parsedData = parseService.parseCSV(text);
       
       return {
         filename: file.name,
-        data: Array.isArray(parsedData) ? parsedData : parsedData.data || [],
+        data: parsedData,
         format: 'csv',
         content: text,
         metadata: {
@@ -205,7 +205,7 @@ export const multiFormatProcessor = {
           mimeType: file.type,
           size: file.size
         },
-        extractedData: { headers: parsedData.headers || [] }
+        extractedData: { headers: parsedData.length > 0 ? Object.keys(parsedData[0]) : [] }
       };
     } catch (error) {
       throw new Error(`CSV processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -215,13 +215,13 @@ export const multiFormatProcessor = {
   async processExcel(file: File, options: ProcessingOptions): Promise<ProcessedDocument> {
     try {
       const arrayBuffer = await file.arrayBuffer();
-      const parsedData = await parseService.parseExcel(arrayBuffer);
+      const parsedResult = parseService.parseExcel(arrayBuffer);
       
       return {
         filename: file.name,
-        data: Array.isArray(parsedData) ? parsedData : parsedData.data || [],
+        data: parsedResult.data,
         format: 'excel',
-        content: JSON.stringify(parsedData),
+        content: JSON.stringify(parsedResult.data),
         metadata: {
           processingMethod: 'excel-parse',
           extractionMethod: 'direct-parse',
@@ -234,7 +234,7 @@ export const multiFormatProcessor = {
           mimeType: file.type,
           size: file.size
         },
-        extractedData: { headers: parsedData.headers || [] }
+        extractedData: { headers: parsedResult.headers }
       };
     } catch (error) {
       throw new Error(`Excel processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

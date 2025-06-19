@@ -1,4 +1,6 @@
 
+import * as XLSX from 'xlsx';
+
 export const parseService = {
   parseCSV: (csvString: string): any[] => {
     console.log('Parsing CSV content, length:', csvString.length);
@@ -61,6 +63,55 @@ export const parseService = {
     } catch (error) {
       console.error('Error parsing CSV:', error);
       throw new Error(`Failed to parse CSV: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  parseExcel: (arrayBuffer: ArrayBuffer): { data: any[]; headers: string[] } => {
+    try {
+      console.log('Parsing Excel file, buffer size:', arrayBuffer.byteLength);
+      
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      
+      if (!sheetName) {
+        throw new Error('No sheets found in Excel file');
+      }
+      
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      if (!Array.isArray(jsonData) || jsonData.length === 0) {
+        return { data: [], headers: [] };
+      }
+      
+      // First row contains headers
+      const headers = (jsonData[0] as any[]).map(h => String(h || '').trim()).filter(h => h);
+      
+      // Convert remaining rows to objects
+      const data = [];
+      for (let i = 1; i < jsonData.length; i++) {
+        const row = jsonData[i] as any[];
+        if (!row || row.length === 0) continue;
+        
+        const obj: Record<string, any> = {};
+        headers.forEach((header, index) => {
+          if (header) {
+            obj[header] = index < row.length ? (row[index] || '') : '';
+          }
+        });
+        
+        // Only add rows that have at least one non-empty value
+        if (Object.values(obj).some(val => val !== '')) {
+          data.push(obj);
+        }
+      }
+      
+      console.log('Successfully parsed Excel:', data.length, 'rows with headers:', headers);
+      
+      return { data, headers };
+    } catch (error) {
+      console.error('Error parsing Excel:', error);
+      throw new Error(`Failed to parse Excel: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   },
 
