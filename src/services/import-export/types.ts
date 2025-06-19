@@ -63,6 +63,33 @@ export interface SmartImportOptions {
   skipValidation?: boolean;
 }
 
+// Address enrichment result interface
+export interface AddressEnrichmentResult {
+  originalAddress: string;
+  enrichedData: {
+    validatedAddress?: any;
+    coordinates?: { latitude: number; longitude: number };
+    propertyInfo?: {
+      county: string;
+      estimatedValue?: number;
+      propertyType?: string;
+    };
+    confidence: number;
+  };
+  issues: string[];
+  suggestions: string[];
+}
+
+// ML learning feedback interface
+export interface MLFeedback {
+  documentId: string;
+  originalClassification: string;
+  correctedClassification: string;
+  userConfidence: number;
+  feedbackType: 'correction' | 'confirmation';
+  timestamp: string;
+}
+
 // Enhanced types for advanced processing
 export interface ProcessedDocument {
   filename: string;
@@ -81,6 +108,26 @@ export interface ProcessedDocument {
     originalName: string;
     mimeType: string;
     size: number;
+    // Phase A: Address Intelligence
+    addressEnrichment?: AddressEnrichmentResult[];
+    // Phase B: ML Enhancements
+    mlLearningData?: {
+      userFeedback?: MLFeedback[];
+      predictiveInsights?: string[];
+      suggestedImprovements?: string[];
+    };
+    // Phase C: Enterprise Features
+    sandboxResults?: {
+      simulationId: string;
+      impactAnalysis: any;
+      rollbackPoints: string[];
+    };
+    // Phase D: Business Intelligence
+    businessIntelligence?: {
+      qualityMetrics: any;
+      performanceStats: any;
+      predictiveAnalytics: any;
+    };
   };
   classification?: DocumentClassification;
   extractedStructures?: any[];
@@ -160,6 +207,42 @@ export interface ProcessingOptions {
   processingQuality?: 'draft' | 'standard' | 'high';
   includeMetadata?: boolean;
   qualityThreshold?: number;
+  // Phase A: Address Intelligence
+  enableAddressEnrichment?: boolean;
+  // Phase B: ML Learning
+  enableMLLearning?: boolean;
+  collectUserFeedback?: boolean;
+  // Phase C: Enterprise Features
+  enableSandboxMode?: boolean;
+  createRollbackPoints?: boolean;
+  // Phase D: Business Intelligence
+  enableBusinessIntelligence?: boolean;
+  generatePredictiveInsights?: boolean;
+}
+
+// Enhanced processing options for address intelligence
+export interface EnhancedProcessingOptions extends ProcessingOptions {
+  addressIntelligence?: {
+    enableValidation?: boolean;
+    enableGeocoding?: boolean;
+    enablePropertyLookup?: boolean;
+    confidenceThreshold?: number;
+  };
+  mlEnhancements?: {
+    enableTemplateLearning?: boolean;
+    enablePredictiveAnalytics?: boolean;
+    collectFeedback?: boolean;
+  };
+  enterpriseFeatures?: {
+    enableSandbox?: boolean;
+    enableAuditTrail?: boolean;
+    createBackups?: boolean;
+  };
+  businessIntelligence?: {
+    enableDashboards?: boolean;
+    enablePredictiveAnalytics?: boolean;
+    enablePerformanceOptimization?: boolean;
+  };
 }
 
 // Advanced OCR Result interface
@@ -193,4 +276,67 @@ export interface ClassificationResult {
   suggestedMapping?: Record<string, string>;
   category?: string;
   metadata?: any;
+}
+
+// Phase B: ML Learning Types
+export interface MLTemplatePattern {
+  id: string;
+  documentType: string;
+  pattern: any;
+  confidence: number;
+  learnedFrom: string[];
+  lastUpdated: string;
+}
+
+export interface PredictiveInsight {
+  type: 'error_prevention' | 'optimization' | 'quality_improvement';
+  description: string;
+  confidence: number;
+  suggestedAction: string;
+  impact: 'low' | 'medium' | 'high';
+}
+
+// Phase C: Enterprise Types
+export interface SandboxResult {
+  simulationId: string;
+  impactAnalysis: {
+    recordsAffected: number;
+    changesPreview: any[];
+    riskAssessment: string;
+    estimatedTime: number;
+  };
+  rollbackPlan: {
+    steps: string[];
+    estimatedRestoreTime: number;
+    backupLocation: string;
+  };
+}
+
+export interface AuditTrailEntry {
+  id: string;
+  timestamp: string;
+  operation: string;
+  user: string;
+  details: any;
+  rollbackData: any;
+}
+
+// Phase D: Business Intelligence Types
+export interface BusinessIntelligenceMetrics {
+  dataQuality: {
+    completeness: number;
+    accuracy: number;
+    consistency: number;
+    timeliness: number;
+  };
+  performance: {
+    processingSpeed: number;
+    errorRate: number;
+    userSatisfaction: number;
+  };
+  predictive: {
+    trends: any[];
+    forecasts: any[];
+    recommendations: string[];
+  };
 }
