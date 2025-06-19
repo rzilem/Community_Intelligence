@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { TestOpenAIConnection } from './TestOpenAIConnection';
 import { OpenAIDiagnostics } from './OpenAIDiagnostics';
 import { CloudMailinSetup } from './CloudMailinSetup';
+import { WebhookSecretSetup } from './WebhookSecretSetup';
 import { InvoiceProcessingTest } from './InvoiceProcessingTest';
 import { Sparkles } from 'lucide-react';
 
@@ -84,6 +85,9 @@ export function AIConfigFormFields({ values, onFieldChange }: AIConfigFormFields
 
       {/* OpenAI Diagnostics Section */}
       <OpenAIDiagnostics />
+
+      {/* Webhook Secret Configuration */}
+      <WebhookSecretSetup />
 
       {/* CloudMailin Integration Section */}
       <CloudMailinSetup />

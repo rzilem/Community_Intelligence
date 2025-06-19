@@ -4,15 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { TestTube, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { TestTube, Loader2, CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface TestResult {
   success: boolean;
   message: string;
   data?: any;
   error?: string;
+  details?: any;
 }
 
 export function InvoiceProcessingTest() {
@@ -32,7 +34,15 @@ export function InvoiceProcessingTest() {
     setTestResult(null);
 
     try {
-      const emailData = JSON.parse(testEmail);
+      // Validate JSON first
+      let emailData;
+      try {
+        emailData = JSON.parse(testEmail);
+      } catch (parseError) {
+        throw new Error('Invalid JSON format in test email data');
+      }
+      
+      console.log('Testing invoice processing with data:', emailData);
       
       const { data, error } = await supabase.functions.invoke('invoice-receiver', {
         body: emailData,
@@ -41,30 +51,77 @@ export function InvoiceProcessingTest() {
         }
       });
 
+      console.log('Function response:', { data, error });
+
       if (error) {
-        throw error;
+        // Check if it's an authentication error
+        if (error.message?.includes('401') || error.message?.includes('authentication')) {
+          setTestResult({
+            success: false,
+            message: 'Authentication Error - Check Webhook Configuration',
+            error: error.message,
+            details: {
+              hint: 'This suggests CloudMailin webhook secret is not configured properly',
+              nextSteps: [
+                'Configure webhook secret in the section above',
+                'Ensure CloudMailin is configured with the same secret',
+                'Check Supabase Edge Function logs for more details'
+              ]
+            }
+          });
+        } else {
+          setTestResult({
+            success: false,
+            message: 'Function invocation failed',
+            error: error.message,
+            details: error
+          });
+        }
+        return;
       }
 
-      setTestResult({
-        success: true,
-        message: 'Invoice processed successfully!',
-        data
-      });
-      
-      toast.success('Invoice processing test completed successfully');
+      // Check the response data
+      if (data && data.success) {
+        setTestResult({
+          success: true,
+          message: 'Invoice processed successfully with AI analysis!',
+          data,
+          details: {
+            trackingNumber: data.tracking_number,
+            invoiceId: data.invoice_id,
+            requestId: data.requestId
+          }
+        });
+        toast.success('Invoice processing test completed successfully');
+      } else {
+        setTestResult({
+          success: false,
+          message: data?.error || 'Unknown error occurred',
+          error: data?.error,
+          details: data
+        });
+      }
     } catch (error: any) {
       console.error('Test failed:', error);
       
       setTestResult({
         success: false,
-        message: 'Invoice processing failed',
-        error: error.message || 'Unknown error'
+        message: 'Test execution failed',
+        error: error.message || 'Unknown error',
+        details: {
+          type: 'client_error',
+          suggestion: 'Check console logs for more details'
+        }
       });
       
       toast.error(`Test failed: ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openEdgeFunctionLogs = () => {
+    window.open('https://supabase.com/dashboard/project/cahergndkwfqltxyikyr/functions/invoice-receiver/logs', '_blank');
   };
 
   return (
@@ -75,10 +132,17 @@ export function InvoiceProcessingTest() {
           Invoice Processing Test
         </CardTitle>
         <CardDescription>
-          Test the complete invoice processing pipeline including OpenAI analysis
+          Test the complete CloudMailin → AI → Database pipeline
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            This test simulates CloudMailin sending invoice data to your webhook. Ensure webhook secret is configured above before testing.
+          </AlertDescription>
+        </Alert>
+
         <div className="space-y-2">
           <Label htmlFor="test-email">Test Email Data (JSON)</Label>
           <Textarea
@@ -90,23 +154,34 @@ export function InvoiceProcessingTest() {
           />
         </div>
 
-        <Button 
-          onClick={testInvoiceProcessing}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Processing Test...
-            </>
-          ) : (
-            <>
-              <TestTube className="h-4 w-4 mr-2" />
-              Test Invoice Processing
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={testInvoiceProcessing}
+            disabled={isLoading}
+            className="flex-1"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing Test...
+              </>
+            ) : (
+              <>
+                <TestTube className="h-4 w-4 mr-2" />
+                Test Invoice Processing
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={openEdgeFunctionLogs}
+            className="flex items-center gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            View Logs
+          </Button>
+        </div>
 
         {testResult && (
           <div className={`p-4 rounded-lg border ${
@@ -137,17 +212,46 @@ export function InvoiceProcessingTest() {
             )}
             
             {testResult.error && (
-              <p className="text-sm text-red-800 mt-2">
-                Error: {testResult.error}
-              </p>
+              <div className="mt-2">
+                <p className="text-sm text-red-800 font-medium">Error:</p>
+                <p className="text-sm text-red-700">{testResult.error}</p>
+              </div>
+            )}
+            
+            {testResult.details && (
+              <div className="mt-3">
+                {testResult.details.hint && (
+                  <p className="text-sm font-medium mb-1">💡 {testResult.details.hint}</p>
+                )}
+                
+                {testResult.details.nextSteps && (
+                  <div>
+                    <p className="text-sm font-medium mb-1">Next Steps:</p>
+                    <ul className="text-sm list-disc list-inside space-y-1">
+                      {testResult.details.nextSteps.map((step: string, index: number) => (
+                        <li key={index}>{step}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {testResult.details.trackingNumber && (
+                  <div className="mt-2 text-xs bg-white bg-opacity-50 p-2 rounded">
+                    <p><strong>Tracking #:</strong> {testResult.details.trackingNumber}</p>
+                    {testResult.details.invoiceId && (
+                      <p><strong>Invoice ID:</strong> {testResult.details.invoiceId}</p>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> This test simulates the invoice processing pipeline. 
-            A successful test means your OpenAI integration and invoice processing logic are working correctly.
+            <strong>Complete Test Flow:</strong> This test validates email parsing → AI analysis → invoice extraction → database storage.
+            A successful test means your entire CloudMailin + OpenAI pipeline is working correctly.
           </p>
         </div>
       </CardContent>
