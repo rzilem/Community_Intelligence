@@ -11,6 +11,15 @@ export interface ProcessedDocument {
   metadata: DocumentMetadata;
   originalSize?: number;
   processingTime?: number;
+  ocr?: {
+    text: string;
+    confidence: number;
+    pages: Array<{
+      pageNumber: number;
+      text: string;
+      words?: any[];
+    }>;
+  };
 }
 
 export interface DocumentClassification {
@@ -35,6 +44,16 @@ export interface DocumentMetadata {
   mlLearningData?: MLLearningData;
   sandboxResults?: SandboxResults;
   businessIntelligence?: BusinessIntelligenceData;
+  
+  // Additional OCR and processing metadata
+  processingMethod?: string;
+  extractionMethod?: string;
+  pageCount?: number;
+  tables?: number;
+  forms?: number;
+  originalName?: string;
+  mimeType?: string;
+  size?: number;
 }
 
 export interface AddressEnrichmentResult {
@@ -120,4 +139,26 @@ export interface BusinessIntelligenceData {
     suggestedOptimizations: string[];
     projectedImprovements: any;
   };
+}
+
+// Add missing OCR and classification result types
+export interface AdvancedOCRResult {
+  text: string;
+  confidence: number;
+  language: string;
+  pages: Array<{
+    pageNumber: number;
+    text: string;
+    words?: any[];
+  }>;
+  tables: Array<{ rows: string[][]; confidence: number }>;
+  forms: Array<{ fields: Record<string, string>; confidence: number }>;
+}
+
+export interface ClassificationResult {
+  type: string;
+  confidence: number;
+  suggestedMapping?: Record<string, string>;
+  category?: string;
+  metadata?: any;
 }
