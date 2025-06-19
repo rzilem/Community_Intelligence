@@ -136,10 +136,7 @@ export const enhancedDataImportService = {
       // Copy unmapped fields that might be needed
       for (const [key, value] of Object.entries(row)) {
         if (!mappings[key] && !Object.values(mappings).includes(key) && !mappedRow[key]) {
-          mappedRow[key] = this.clean
-
-
-Value(value, key);
+          mappedRow[key] = this.cleanFieldValue(value, key);
         }
       }
       

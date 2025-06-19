@@ -12,5 +12,8 @@ export { enhancedProcessorService } from './processors/enhanced-processor-servic
 export { EnhancedErrorHandler } from './enhanced-error-handler';
 export { TransactionManager } from './transaction-manager';
 
+// Parse service export
+export { parseService } from './parse-service';
+
 // Type exports
 export type * from './types';
