@@ -1,466 +1,242 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, 
   CheckCircle, 
-  XCircle, 
-  Eye,
-  Users,
+  Clock, 
+  Users, 
+  FileText,
   TrendingUp,
-  Clock,
-  Target
+  BarChart3,
+  Settings
 } from 'lucide-react';
-import type { EnhancedDuplicateDetectionResult, EnhancedDuplicateMatch, DuplicateCluster } from '@/services/import-export/enhanced-duplicate-detection-service';
+import { 
+  enhancedDuplicateDetectionService,
+  EnhancedDuplicateDetectionResult,
+  EnhancedDuplicateMatch,
+  DuplicateCluster
+} from '@/services/import-export/enhanced-duplicate-detection-service';
+import { toast } from 'sonner';
+import { devLog } from '@/utils/dev-logger';
 
 interface DuplicateDetectionDashboardProps {
-  results: EnhancedDuplicateDetectionResult;
-  onResolveMatch: (matchId: string, action: 'merge' | 'skip' | 'keep_both') => void;
-  onResolveCluster: (clusterId: string, action: string) => void;
+  files: Array<{ filename: string; data: any[] }>;
+  onProcessComplete?: (results: EnhancedDuplicateDetectionResult) => void;
+  autoProcess?: boolean;
 }
 
-const DuplicateDetectionDashboard: React.FC<DuplicateDetectionDashboardProps> = ({
-  results,
-  onResolveMatch,
-  onResolveCluster
-}) => {
-  const [selectedTab, setSelectedTab] = useState('overview');
-  const [selectedMatch, setSelectedMatch] = useState<EnhancedDuplicateMatch | null>(null);
+const DuplicateDetectionDashboard: React.FC<DuplicateDetectionDashboardProps> = ({ files, onProcessComplete, autoProcess = true }) => {
+  const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<EnhancedDuplicateDetectionResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('summary');
 
-  const getSeverityColor = (confidence: number) => {
-    if (confidence > 0.9) return 'text-red-600 bg-red-50';
-    if (confidence > 0.7) return 'text-yellow-600 bg-yellow-50';
-    return 'text-blue-600 bg-blue-50';
-  };
+  useEffect(() => {
+    if (autoProcess && files && files.length > 0) {
+      detectDuplicates();
+    }
+  }, [files, autoProcess]);
 
-  const getRiskBadgeVariant = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'outline';
+  const detectDuplicates = async () => {
+    setProcessing(true);
+    setProgress(10);
+    setError(null);
+
+    try {
+      const detectionResults = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(
+        files,
+        {
+          strictMode: false,
+          fuzzyMatching: true,
+          confidenceThreshold: 0.7,
+          semanticAnalysis: true
+        }
+      );
+
+      setResults(detectionResults);
+      setProgress(100);
+      toast.success(`Found ${detectionResults.totalDuplicates} potential duplicates`);
+      onProcessComplete?.(detectionResults);
+    } catch (err: any) {
+      setError(err.message || 'Duplicate detection failed');
+      toast.error(`Duplicate detection failed: ${err.message}`);
+    } finally {
+      setProcessing(false);
     }
   };
 
+  const handleRetry = () => {
+    setResults(null);
+    setError(null);
+    detectDuplicates();
+  };
+
+  const getSeverityColor = (confidence: number): string => {
+    if (confidence > 0.9) return 'text-red-500';
+    if (confidence > 0.8) return 'text-orange-500';
+    return 'text-yellow-500';
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Duplicates</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{results.totalDuplicates}</div>
-            <p className="text-xs text-muted-foreground">
-              Found across {results.clusters.length} clusters
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Confidence</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{results.highConfidenceMatches}</div>
-            <p className="text-xs text-muted-foreground">
-              Require immediate attention
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Auto-Resolvable</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {results.duplicates.filter(d => d.suggestedAction === 'skip' || d.suggestedAction === 'merge').length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Can be resolved automatically
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{(results.performanceMetrics.processingTime / 1000).toFixed(1)}s</div>
-            <p className="text-xs text-muted-foreground">
-              {results.performanceMetrics.comparisons.toLocaleString()} comparisons
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Suggestions Alert */}
-      {results.suggestions.length > 0 && (
-        <Alert>
-          <TrendingUp className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Recommendations:</strong>
-            <ul className="mt-2 list-disc list-inside space-y-1">
-              {results.suggestions.map((suggestion, index) => (
-                <li key={index} className="text-sm">{suggestion}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Main Content Tabs */}
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="matches">Duplicate Matches</TabsTrigger>
-          <TabsTrigger value="clusters">Clusters</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Confidence Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Confidence Distribution</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>High Confidence (90%+)</span>
-                    <span>{results.highConfidenceMatches}</span>
-                  </div>
-                  <Progress 
-                    value={(results.highConfidenceMatches / results.totalDuplicates) * 100} 
-                    className="h-2"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Medium Confidence (70-90%)</span>
-                    <span>{results.mediumConfidenceMatches}</span>
-                  </div>
-                  <Progress 
-                    value={(results.mediumConfidenceMatches / results.totalDuplicates) * 100} 
-                    className="h-2"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Low Confidence (&lt;70%)</span>
-                    <span>{results.lowConfidenceMatches}</span>
-                  </div>
-                  <Progress 
-                    value={(results.lowConfidenceMatches / results.totalDuplicates) * 100} 
-                    className="h-2"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Action Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Suggested Actions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {['skip', 'merge', 'manual_review', 'keep_both'].map(action => {
-                    const count = results.duplicates.filter(d => d.suggestedAction === action).length;
-                    const percentage = results.totalDuplicates > 0 ? (count / results.totalDuplicates) * 100 : 0;
-                    
-                    return (
-                      <div key={action} className="flex items-center justify-between">
-                        <Badge variant="outline" className="capitalize">
-                          {action.replace('_', ' ')}
-                        </Badge>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">{count}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({percentage.toFixed(1)}%)
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5 text-gray-500" />
+          Duplicate Detection Dashboard
+        </CardTitle>
+        <CardDescription>
+          Analyze and manage potential duplicate records across your data.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {processing && (
+          <div className="space-y-2">
+            <p>Detecting duplicates...</p>
+            <Progress value={progress} />
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="matches" className="space-y-4">
-          <div className="grid gap-4">
-            {results.duplicates.map((match) => (
-              <Card key={match.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={getRiskBadgeVariant(match.riskLevel)}>
-                        {match.riskLevel} risk
-                      </Badge>
-                      <Badge variant="outline" className="capitalize">
-                        {match.matchType}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {(match.confidence * 100).toFixed(1)}% confidence
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedMatch(match)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                      {match.suggestedAction !== 'manual_review' && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => onResolveMatch(match.id, match.suggestedAction as any)}
-                        >
-                          Auto-Resolve
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Source: {match.sourceFile}</h4>
-                      <div className="text-sm space-y-1">
-                        {Object.entries(match.sourceRecord)
-                          .filter(([key]) => !key.startsWith('_'))
-                          .slice(0, 3)
-                          .map(([key, value]) => (
-                            <div key={key}>
-                              <span className="font-medium">{key}:</span> {String(value)}
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">Target: {match.targetFile}</h4>
-                      <div className="text-sm space-y-1">
-                        {Object.entries(match.targetRecord)
-                          .filter(([key]) => !key.startsWith('_'))
-                          .slice(0, 3)
-                          .map(([key, value]) => (
-                            <div key={key}>
-                              <span className="font-medium">{key}:</span> {String(value)}
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {match.matchingFields.length > 0 && (
-                    <div className="mt-4">
-                      <h5 className="font-medium mb-2">Matching Fields:</h5>
-                      <div className="flex flex-wrap gap-1">
-                        {match.matchingFields.map((field, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {field.field} ({(field.similarity * 100).toFixed(0)}%)
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+        {error && (
+          <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <p>Error: {error}</p>
+            <Button variant="secondary" size="sm" onClick={handleRetry}>
+              Retry
+            </Button>
           </div>
-        </TabsContent>
+        )}
 
-        <TabsContent value="clusters" className="space-y-4">
-          <div className="grid gap-4">
-            {results.clusters.map((cluster) => (
-              <Card key={cluster.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      Cluster {cluster.id} ({cluster.records.length} records)
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">
-                        {(cluster.confidence * 100).toFixed(1)}% confidence
-                      </Badge>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => onResolveCluster(cluster.id, cluster.suggestedAction)}
-                      >
-                        <Target className="h-4 w-4 mr-1" />
-                        Resolve Cluster
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Master Record (Highest Quality):</h4>
-                      <div className="p-3 bg-green-50 rounded-lg">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-                          {Object.entries(cluster.masterRecord)
-                            .filter(([key]) => !key.startsWith('_'))
-                            .slice(0, 6)
-                            .map(([key, value]) => (
-                              <div key={key}>
-                                <span className="font-medium">{key}:</span> {String(value)}
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Other Records in Cluster:</h4>
-                      <div className="space-y-2">
-                        {cluster.records.filter(r => r !== cluster.masterRecord).map((record, index) => (
-                          <div key={index} className="p-2 bg-gray-50 rounded text-sm">
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                              {Object.entries(record)
-                                .filter(([key]) => !key.startsWith('_'))
-                                .slice(0, 3)
-                                .map(([key, value]) => (
-                                  <div key={key}>
-                                    <span className="font-medium">{key}:</span> {String(value)}
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+        {results && (
+          <Tabs defaultValue="summary" className="space-y-4" onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="summary">
+                <FileText className="h-4 w-4 mr-2" />
+                Summary
+              </TabsTrigger>
+              <TabsTrigger value="matches">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Matches
+              </TabsTrigger>
+              <TabsTrigger value="clusters">
+                <Users className="h-4 w-4 mr-2" />
+                Clusters
+              </TabsTrigger>
+              <TabsTrigger value="quality">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Quality
+              </TabsTrigger>
+              <TabsTrigger value="stats">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Stats
+              </TabsTrigger>
+              <TabsTrigger value="settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="performance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance Metrics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{results.performanceMetrics.recordsProcessed}</div>
-                  <div className="text-sm text-muted-foreground">Records Processed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{results.performanceMetrics.comparisons.toLocaleString()}</div>
-                  <div className="text-sm text-muted-foreground">Comparisons Made</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">{(results.performanceMetrics.processingTime / 1000).toFixed(2)}s</div>
-                  <div className="text-sm text-muted-foreground">Processing Time</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold">
-                    {Math.round(results.performanceMetrics.comparisons / (results.performanceMetrics.processingTime / 1000))}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Comparisons/sec</div>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h4 className="font-medium mb-2">Algorithms Used:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {results.performanceMetrics.algorithmsUsed.map((algorithm) => (
-                    <Badge key={algorithm} variant="outline" className="capitalize">
-                      {algorithm}
-                    </Badge>
+            <TabsContent value="summary" className="space-y-2">
+              <h3 className="text-lg font-semibold">Detection Summary</h3>
+              <p>
+                Found <Badge variant="secondary">{results.totalDuplicates}</Badge> potential
+                duplicate records.
+              </p>
+              <p>
+                <Badge variant="outline">{results.recommendations.suggestions.length}</Badge>{' '}
+                recommendations available.
+              </p>
+            </TabsContent>
+
+            <TabsContent value="matches" className="space-y-2">
+              <h3 className="text-lg font-semibold">Duplicate Matches</h3>
+              {results.enhancedMatches.length === 0 ? (
+                <p>No duplicate matches found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {results.enhancedMatches.map((match, index) => (
+                    <Card key={index} className="border-2 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-medium">
+                          Match #{index + 1}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-sm space-y-1">
+                        <p>
+                          Source: {match.sourceFile} (Record #{match.sourceIndex})
+                        </p>
+                        <p>
+                          Target: {match.targetFile} (Record #{match.targetIndex})
+                        </p>
+                        <p className={`font-semibold ${getSeverityColor(match.confidence)}`}>
+                          Confidence: {(match.confidence * 100).toFixed(2)}%
+                        </p>
+                        <p>Matching Fields: {match.matchingFields.join(', ')}</p>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              )}
+            </TabsContent>
 
-      {/* Match Detail Modal would go here */}
-      {selectedMatch && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <Card className="max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Duplicate Match Details</CardTitle>
-                <Button variant="outline" onClick={() => setSelectedMatch(null)}>
-                  <XCircle className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* Detailed comparison view would go here */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="font-medium mb-3">Source Record</h3>
-                    <div className="space-y-2">
-                      {Object.entries(selectedMatch.sourceRecord)
-                        .filter(([key]) => !key.startsWith('_'))
-                        .map(([key, value]) => (
-                          <div key={key} className="flex justify-between py-1 border-b">
-                            <span className="font-medium">{key}:</span>
-                            <span>{String(value)}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-3">Target Record</h3>
-                    <div className="space-y-2">
-                      {Object.entries(selectedMatch.targetRecord)
-                        .filter(([key]) => !key.startsWith('_'))
-                        .map(([key, value]) => (
-                          <div key={key} className="flex justify-between py-1 border-b">
-                            <span className="font-medium">{key}:</span>
-                            <span>{String(value)}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+            <TabsContent value="clusters" className="space-y-2">
+              <h3 className="text-lg font-semibold">Duplicate Clusters</h3>
+              {results.clusters.length === 0 ? (
+                <p>No duplicate clusters found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {results.clusters.map((cluster, index) => (
+                    <Card key={index} className="border-2 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="text-sm font-medium">
+                          Cluster #{index + 1}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-sm space-y-1">
+                        <p>Records: {cluster.records.length}</p>
+                        <p>Confidence: {(cluster.confidence * 100).toFixed(2)}%</p>
+                        <p>Common Fields: {cluster.commonFields.join(', ')}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                
-                <div className="flex gap-2 pt-4">
-                  <Button onClick={() => onResolveMatch(selectedMatch.id, 'merge')}>
-                    Merge Records
-                  </Button>
-                  <Button variant="outline" onClick={() => onResolveMatch(selectedMatch.id, 'skip')}>
-                    Skip Duplicate
-                  </Button>
-                  <Button variant="outline" onClick={() => onResolveMatch(selectedMatch.id, 'keep_both')}>
-                    Keep Both
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="quality" className="space-y-2">
+              <h3 className="text-lg font-semibold">Data Quality Assessment</h3>
+              <p>Overall Quality Score: {results.qualityScore}%</p>
+              <p>
+                <TrendingUp className="h-4 w-4 inline-block mr-1" />
+                Based on match confidence, contextual similarity, and semantic analysis.
+              </p>
+            </TabsContent>
+
+            <TabsContent value="stats" className="space-y-2">
+              <h3 className="text-lg font-semibold">Processing Statistics</h3>
+              <p>Total Comparisons: {results.processingStats.totalComparisons}</p>
+              <p>Processing Time: {results.processingStats.processingTime}ms</p>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-2">
+              <h3 className="text-lg font-semibold">Detection Settings</h3>
+              <p>Adjust duplicate detection sensitivity and matching criteria.</p>
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {!processing && !results && !error && (
+          <div className="text-center">
+            <p>No duplicate detection has been run yet.</p>
+            <Button onClick={detectDuplicates}>Run Duplicate Detection</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

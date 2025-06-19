@@ -27,6 +27,20 @@ export interface MultiFormatProcessorOptions {
   maxFileSize?: number;
 }
 
+export interface EnhancedProcessingResult {
+  processedDocuments: ProcessedDocument[];
+  duplicateResults: any;
+  qualityResults: any;
+  recommendations: string[];
+  processingStats: {
+    totalFiles: number;
+    successfulFiles: number;
+    failedFiles: number;
+    processingTime: number;
+    totalRecords: number;
+  };
+}
+
 export const multiFormatProcessor = {
   async processFile(
     file: File,
@@ -277,134 +291,148 @@ export const multiFormatProcessor = {
 
   async processWithEnhancedAnalysis(
     files: File[],
-    options: MultiFormatProcessorOptions & {
+    options: {
+      enableOCR?: boolean;
       enableDuplicateDetection?: boolean;
       enableQualityAssessment?: boolean;
       enableAutoFix?: boolean;
+      fallbackToOCR?: boolean;
     } = {}
-  ): Promise<{
-    processedDocuments: ProcessedDocument[];
-    duplicateResults?: any;
-    qualityResults?: any;
-    recommendations: string[];
-  }> {
-    devLog.info('Starting enhanced multi-format processing...');
-    
-    // Process all files
-    const processedDocuments: ProcessedDocument[] = [];
-    for (const file of files) {
-      try {
-        const result = await this.processFile(file, options);
-        processedDocuments.push(result);
-      } catch (error) {
-        devLog.error(`Failed to process ${file.name}:`, error);
-        processedDocuments.push({
-          filename: file.name,
-          format: 'unknown',
-          content: [],
-          metadata: {
-            size: file.size,
-            extractionMethod: 'direct',
-            processingTime: 0
-          },
-          errors: [error instanceof Error ? error.message : 'Unknown error']
-        });
-      }
-    }
-
-    const recommendations: string[] = [];
-    let duplicateResults: any = null;
-    let qualityResults: any = null;
-
-    // Enhanced duplicate detection
-    if (options.enableDuplicateDetection && processedDocuments.length > 1) {
-      try {
-        const fileData = processedDocuments
-          .filter(doc => Array.isArray(doc.content) && doc.content.length > 0)
-          .map(doc => ({
-            filename: doc.filename,
-            data: doc.content
-          }));
-
-        if (fileData.length > 1) {
-          duplicateResults = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(fileData);
-          
-          if (duplicateResults.totalDuplicates > 0) {
-            recommendations.push(`Found ${duplicateResults.totalDuplicates} potential duplicates across files`);
-            recommendations.push(...duplicateResults.suggestions);
-          }
-        }
-      } catch (error) {
-        devLog.error('Enhanced duplicate detection failed:', error);
-        recommendations.push('Duplicate detection encountered issues - manual review recommended');
-      }
-    }
-
-    // Enhanced quality assessment
-    if (options.enableQualityAssessment) {
-      try {
-        const allData = processedDocuments
-          .filter(doc => Array.isArray(doc.content))
-          .flatMap(doc => doc.content);
-
-        if (allData.length > 0) {
-          qualityResults = await dataQualityService.assessDataQuality(allData);
-          
-          recommendations.push(`Overall data quality score: ${qualityResults.overallScore}%`);
-          recommendations.push(...qualityResults.recommendations);
-
-          // Auto-fix if enabled
-          if (options.enableAutoFix && qualityResults.fixableIssues > 0) {
-            try {
-              const { fixedData, fixedIssues } = await dataQualityService.autoFixIssues(
-                allData, 
-                qualityResults.issues
-              );
-              
-              if (fixedIssues.length > 0) {
-                recommendations.push(`Auto-fixed ${fixedIssues.length} data quality issues`);
-                // Update processed documents with fixed data
-                // This would require more complex logic to map back to original documents
-              }
-            } catch (error) {
-              devLog.error('Auto-fix failed:', error);
-              recommendations.push('Some issues could not be automatically fixed');
-            }
-          }
-        }
-      } catch (error) {
-        devLog.error('Quality assessment failed:', error);
-        recommendations.push('Quality assessment encountered issues - manual review recommended');
-      }
-    }
-
-    // General recommendations based on processing results
-    const successfulDocs = processedDocuments.filter(doc => !doc.errors || doc.errors.length === 0);
-    const ocrDocs = processedDocuments.filter(doc => doc.metadata.extractionMethod === 'ocr');
-    
-    if (successfulDocs.length < processedDocuments.length) {
-      recommendations.push(`${processedDocuments.length - successfulDocs.length} files had processing issues`);
-    }
-    
-    if (ocrDocs.length > 0) {
-      const avgConfidence = ocrDocs.reduce((sum, doc) => sum + (doc.metadata.confidence || 0), 0) / ocrDocs.length;
-      if (avgConfidence < 80) {
-        recommendations.push('Low OCR confidence detected - consider improving image quality');
-      }
-    }
-
-    devLog.info('Enhanced processing complete:', {
-      processedFiles: processedDocuments.length,
-      successfulFiles: successfulDocs.length,
-      duplicatesFound: duplicateResults?.totalDuplicates || 0,
-      qualityScore: qualityResults?.overallScore || 'N/A'
+  ): Promise<EnhancedProcessingResult> {
+    devLog.info('Starting enhanced analysis processing', { 
+      fileCount: files.length, 
+      options 
     });
 
-    return {
-      processedDocuments,
-      duplicateResults,
-      qualityResults,
-      recommendations
+    const results: EnhancedProcessingResult = {
+      processedDocuments: [],
+      duplicateResults: null,
+      qualityResults: null,
+      recommendations: [],
+      processingStats: {
+        totalFiles: files.length,
+        successfulFiles: 0,
+        failedFiles: 0,
+        processingTime: 0,
+        totalRecords: 0
+      }
     };
+
+    const startTime = Date.now();
+
+    try {
+      // Step 1: Process all files
+      for (const file of files) {
+        try {
+          const processed = await this.processDocument(file, {
+            enableOCR: options.enableOCR,
+            fallbackToOCR: options.fallbackToOCR
+          });
+          
+          results.processedDocuments.push(processed);
+          results.processingStats.successfulFiles++;
+          results.processingStats.totalRecords += processed.extractedData?.length || 0;
+        } catch (error) {
+          devLog.error(`Failed to process file: ${file.name}`, error);
+          results.processingStats.failedFiles++;
+        }
+      }
+
+      // Step 2: Enhanced duplicate detection
+      if (options.enableDuplicateDetection && results.processedDocuments.length > 1) {
+        try {
+          const fileData = results.processedDocuments
+            .filter(doc => doc.extractedData && doc.extractedData.length > 0)
+            .map(doc => ({
+              filename: doc.filename,
+              data: doc.extractedData
+            }));
+
+          if (fileData.length > 0) {
+            results.duplicateResults = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(
+              fileData,
+              {
+                strictMode: false,
+                fuzzyMatching: true,
+                confidenceThreshold: 0.7,
+                semanticAnalysis: true
+              }
+            );
+          }
+        } catch (error) {
+          devLog.error('Enhanced duplicate detection failed', error);
+          results.recommendations.push('Duplicate detection encountered errors - manual review recommended');
+        }
+      }
+
+      // Step 3: Enhanced quality assessment
+      if (options.enableQualityAssessment) {
+        try {
+          const allData = results.processedDocuments
+            .filter(doc => doc.extractedData && doc.extractedData.length > 0)
+            .flatMap(doc => doc.extractedData);
+
+          if (allData.length > 0) {
+            results.qualityResults = await dataQualityService.assessDataQuality(allData);
+            
+            results.recommendations.push(`Overall data quality score: ${results.qualityResults.overallScore}%`);
+            results.recommendations.push(...results.qualityResults.recommendations);
+
+            // Auto-fix if enabled
+            if (options.enableAutoFix && results.qualityResults.fixableIssues > 0) {
+              try {
+                const { fixedData, fixedIssues } = await dataQualityService.autoFixIssues(
+                  allData, 
+                  results.qualityResults.issues
+                );
+                
+                if (fixedIssues.length > 0) {
+                  results.recommendations.push(`Auto-fixed ${fixedIssues.length} data quality issues`);
+                  // Update processed documents with fixed data
+                  // This would require more complex logic to map back to original documents
+                }
+              } catch (error) {
+                devLog.error('Auto-fix failed:', error);
+                results.recommendations.push('Some issues could not be automatically fixed');
+              }
+            }
+          }
+        } catch (error) {
+          devLog.error('Quality assessment failed', error);
+          results.recommendations.push('Quality assessment encountered issues - manual review recommended');
+        }
+      }
+
+      // General recommendations based on processing results
+      const successfulDocs = results.processedDocuments.filter(doc => !doc.errors || doc.errors.length === 0);
+      const ocrDocs = results.processedDocuments.filter(doc => doc.metadata.extractionMethod === 'ocr');
+      
+      if (successfulDocs.length < results.processedDocuments.length) {
+        results.recommendations.push(`${results.processedDocuments.length - successfulDocs.length} files had processing issues`);
+      }
+      
+      if (ocrDocs.length > 0) {
+        const avgConfidence = ocrDocs.reduce((sum, doc) => sum + (doc.metadata.confidence || 0), 0) / ocrDocs.length;
+        if (avgConfidence < 80) {
+          results.recommendations.push('Low OCR confidence detected - consider improving image quality');
+        }
+      }
+
+      devLog.info('Enhanced processing complete:', {
+        processedFiles: results.processedDocuments.length,
+        successfulFiles: successfulDocs.length,
+        duplicatesFound: results.duplicateResults?.totalDuplicates || 0,
+        qualityScore: results.qualityResults?.overallScore || 'N/A'
+      });
+
+      results.processingStats.processingTime = Date.now() - startTime;
+
+      return results;
+    } catch (error) {
+      devLog.error('Enhanced analysis processing failed', error);
+      throw error;
+    } finally {
+      results.processingStats.processingTime = Date.now() - startTime;
+    }
   }
 };
