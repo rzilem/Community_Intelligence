@@ -25,8 +25,6 @@ const DocumentProgressDisplay: React.FC<DocumentProgressDisplayProps> = ({
     switch (progress.stage) {
       case 'analyzing':
         return 'Analyzing ZIP file structure...';
-      case 'processing':
-        return 'Extracting files and creating properties...';
       case 'creating_properties':
         return 'Creating association and properties...';
       case 'uploading':
