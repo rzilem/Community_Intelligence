@@ -71,6 +71,7 @@ export class PredictiveAnalyticsEngine {
       const propertyIds = properties.map(p => p.id);
 
       // Then get maintenance requests for those properties
+      // @ts-ignore - Avoiding deep type inference
       const { data: maintenanceHistory, error } = await supabase
         .from('homeowner_requests')
         .select('*')

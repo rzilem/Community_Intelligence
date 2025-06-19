@@ -124,6 +124,7 @@ export class IntelligentWorkflowEngine {
   }
 
   async getAIRecommendedTemplates(associationId: string): Promise<WorkflowTemplate[]> {
+    // @ts-ignore - Avoiding deep type inference
     const { data, error } = await supabase
       .from('workflows')
       .select('*')
