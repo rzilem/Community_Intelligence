@@ -1,5 +1,4 @@
-
-import { ProcessedDocument } from './document-types';
+import { ProcessedDocument } from '../types';
 
 // Processing options and results
 export interface EnhancedProcessingOptions {

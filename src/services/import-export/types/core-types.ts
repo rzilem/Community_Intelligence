@@ -1,5 +1,7 @@
 
-// Core import/export types
+// Core import/export types - now just basic legacy types
+// Main types are in ../types.ts
+
 export interface ZipFileEntry {
   filename: string;
   data: Uint8Array;
