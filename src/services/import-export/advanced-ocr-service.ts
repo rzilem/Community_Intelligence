@@ -30,7 +30,10 @@ export class AdvancedOCRService {
       const result = await pdfAdapter.processDocument(file);
       return {
         text: result.content,
-        pages: result.ocr?.pages || []
+        pages: result.ocr?.pages?.map(page => ({
+          pageNumber: page.pageNumber,
+          text: page.text
+        })) || []
       };
     } catch (error) {
       return { text: '', pages: [] };
@@ -76,7 +79,19 @@ export class AdvancedOCRService {
       text: processedDoc.content,
       confidence: processedDoc.ocr?.confidence || 0.9,
       language: options?.languages?.[0] || 'eng',
-      pages: processedDoc.ocr?.pages || [],
+      pages: processedDoc.ocr?.pages?.map(page => ({
+        pageNumber: page.pageNumber,
+        text: page.text,
+        lines: page.lines || [{
+          text: page.text,
+          boundingBox: [0, 0, 0, 0],
+          words: [{
+            text: page.text,
+            boundingBox: [0, 0, 0, 0],
+            confidence: 0.9
+          }]
+        }]
+      })) || [],
       tables: [],
       forms: []
     };

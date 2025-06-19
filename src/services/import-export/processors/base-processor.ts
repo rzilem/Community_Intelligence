@@ -23,6 +23,11 @@ export abstract class BaseProcessor {
         originalName: file.name,
         mimeType: file.type,
         size: file.size
+      },
+      classification: {
+        type: 'unknown',
+        confidence: 0,
+        categories: []
       }
     };
   }

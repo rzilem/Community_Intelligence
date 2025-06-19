@@ -1,3 +1,4 @@
+
 export interface DocumentStorageResult {
   success: boolean;
   associationId: string;
@@ -49,6 +50,16 @@ export interface ProcessedDocument {
   data: any;
   content: string;
   
+  // Additional extracted data storage
+  extractedData?: {
+    headers?: string[];
+    text?: string;
+    sheets?: any[];
+    rows?: any[];
+    pages?: any[];
+    [key: string]: any;
+  };
+  
   // Document metadata
   metadata: {
     documentType?: string;
@@ -56,6 +67,14 @@ export interface ProcessedDocument {
     dateExtracted?: Date;
     confidence?: number;
     processingTime?: number;
+    processingMethod?: string;
+    extractionMethod?: string;
+    qualityScore?: number;
+    tables?: number;
+    forms?: number;
+    originalName?: string;
+    mimeType?: string;
+    pageCount?: number;
     addressEnrichment?: any;
     mlLearningData?: any;
     sandboxResults?: any;
@@ -147,4 +166,13 @@ export interface ProcessingResult {
   document?: ProcessedDocument;
   error?: string;
   warnings?: string[];
+}
+
+export interface ClassificationResult {
+  type: string;
+  confidence: number;
+  categories?: string[];
+  suggestedMapping?: Record<string, any>;
+  category?: string;
+  metadata?: Record<string, any>;
 }

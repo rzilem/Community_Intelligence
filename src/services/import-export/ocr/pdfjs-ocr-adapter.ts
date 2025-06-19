@@ -1,4 +1,3 @@
-
 import { OCRAdapter } from './ocr-adapter';
 import { ProcessedDocument, OCROptions } from '../types';
 import { devLog } from '@/utils/dev-logger';
@@ -38,10 +37,26 @@ export class PDFJSOCRAdapter implements OCRAdapter {
           pageCount: pdfResult.pages.length
         },
         extractedData: { text: pdfResult.text },
+        classification: {
+          type: 'pdf',
+          confidence: 0.9,
+          categories: ['document']
+        },
         ocr: {
           text: pdfResult.text,
           confidence: 0.9,
-          pages: pdfResult.pages
+          pages: pdfResult.pages.map(page => ({
+            ...page,
+            lines: [{
+              text: page.text,
+              boundingBox: [0, 0, 0, 0],
+              words: [{
+                text: page.text,
+                boundingBox: [0, 0, 0, 0],
+                confidence: 0.9
+              }]
+            }]
+          }))
         }
       };
     } catch (error) {

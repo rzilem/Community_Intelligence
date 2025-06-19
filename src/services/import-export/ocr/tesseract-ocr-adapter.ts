@@ -40,13 +40,26 @@ export class TesseractOCRAdapter implements OCRAdapter {
           size: file.size
         },
         extractedData: this.extractStructuredData(result.data.text),
+        classification: {
+          type: 'image',
+          confidence: result.data.confidence / 100,
+          categories: ['scanned-document']
+        },
         ocr: {
           text: result.data.text,
           confidence: result.data.confidence / 100,
           pages: [{
             pageNumber: 1,
             text: result.data.text,
-            words: []
+            lines: [{
+              text: result.data.text,
+              boundingBox: [0, 0, 0, 0],
+              words: [{
+                text: result.data.text,
+                boundingBox: [0, 0, 0, 0],
+                confidence: result.data.confidence / 100
+              }]
+            }]
           }]
         }
       };

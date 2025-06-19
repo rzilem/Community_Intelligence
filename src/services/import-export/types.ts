@@ -8,5 +8,10 @@ export * from './types/document-types';
 export * from './types/ai-ml-types';
 export * from './types/enterprise-types';
 
-// Export specific types that are commonly used
-export type { ProcessedDocument, AdvancedOCRResult, OCROptions } from './types/document-types';
+// Export specific types that are commonly used with aliases to avoid conflicts
+export type { 
+  ProcessedDocument, 
+  AdvancedOCRResult, 
+  OCROptions as DocumentOCROptions,
+  ProcessingResult as DocumentProcessingResult
+} from './types/document-types';
