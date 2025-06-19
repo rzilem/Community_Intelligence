@@ -38,13 +38,13 @@ export function useAIConfiguration() {
         secret_name: 'ai_config'
       });
 
-      // Load OpenAI configuration - simplified approach
+      // Load OpenAI configuration using standardized secret name
       const { data: openaiKeyData, error: openaiKeyError } = await supabase.rpc('get_secret', {
-        secret_name: 'openai_api_key'
+        secret_name: 'OPENAI_API_KEY'
       });
 
       const { data: openaiModelData, error: openaiModelError } = await supabase.rpc('get_secret', {
-        secret_name: 'openai_model'
+        secret_name: 'OPENAI_MODEL'
       });
 
       let configValues = { ...defaultValues };
@@ -67,7 +67,7 @@ export function useAIConfiguration() {
         }
       }
 
-      // Parse OpenAI config - direct from secrets
+      // Parse OpenAI config using standardized secret name
       if (!openaiKeyError && openaiKeyData) {
         configValues.openaiApiKey = openaiKeyData;
       }
@@ -164,10 +164,10 @@ export function useAIConfiguration() {
         throw new Error(`Failed to save AI configuration: ${aiConfigError.message}`);
       }
 
-      // Save OpenAI configuration directly as secrets
+      // Save OpenAI configuration using standardized secret name
       if (values.openaiApiKey.trim()) {
         const { error: keyError } = await supabase.rpc('set_secret', {
-          secret_name: 'openai_api_key',
+          secret_name: 'OPENAI_API_KEY',
           secret_value: values.openaiApiKey
         });
 
@@ -176,7 +176,7 @@ export function useAIConfiguration() {
         }
 
         const { error: modelError } = await supabase.rpc('set_secret', {
-          secret_name: 'openai_model',
+          secret_name: 'OPENAI_MODEL',
           secret_value: values.openaiModel
         });
 

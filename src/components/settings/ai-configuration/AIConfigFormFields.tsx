@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { TestOpenAIConnection } from './TestOpenAIConnection';
+import { OpenAIDiagnostics } from './OpenAIDiagnostics';
 import { Sparkles } from 'lucide-react';
 
 interface AIConfigFormFieldsProps {
@@ -79,6 +79,9 @@ export function AIConfigFormFields({ values, onFieldChange }: AIConfigFormFields
           <TestOpenAIConnection apiKey={values.openaiApiKey} model={values.openaiModel} />
         </CardContent>
       </Card>
+
+      {/* OpenAI Diagnostics Section */}
+      <OpenAIDiagnostics />
 
       {/* AI Processing Configuration Section */}
       <Card>
