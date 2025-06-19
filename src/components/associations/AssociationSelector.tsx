@@ -50,7 +50,10 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
     'associations',
     {
       select: 'id, name',
-      filter: [],
+      filter: [
+        { column: 'is_archived', operator: 'eq', value: false },
+        { column: 'status', operator: 'eq', value: 'active' }
+      ],
       order: { column: 'name', ascending: true }
     }
   );
@@ -174,7 +177,7 @@ const AssociationSelector: React.FC<AssociationSelectorProps> = ({
             <div className="p-4 text-center text-sm text-muted-foreground">
               {isLoading 
                 ? "Loading associations..." 
-                : "No associations available."}
+                : "No active associations available."}
             </div>
           )}
         </PopoverContent>
