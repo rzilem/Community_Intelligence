@@ -22,6 +22,7 @@ export class TesseractOCRAdapter implements OCRAdapter {
       });
       
       return {
+        id: `tesseract_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         filename: file.name,
         data: [],
         format: 'image',

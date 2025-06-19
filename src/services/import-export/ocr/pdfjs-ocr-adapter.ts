@@ -19,6 +19,7 @@ export class PDFJSOCRAdapter implements OCRAdapter {
       const pdfResult = await this.extractFromPDF(file);
       
       return {
+        id: `pdf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         filename: file.name,
         data: [],
         format: 'pdf',

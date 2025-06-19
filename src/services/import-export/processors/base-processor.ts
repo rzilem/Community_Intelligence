@@ -7,6 +7,7 @@ export abstract class BaseProcessor {
   
   protected createBaseDocument(file: File, format: string, content: string, data: any[] = []): ProcessedDocument {
     return {
+      id: `${format}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       filename: file.name,
       data,
       format,
