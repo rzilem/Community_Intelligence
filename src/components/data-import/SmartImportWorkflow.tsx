@@ -1,470 +1,470 @@
+
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Upload, 
   FileText, 
-  CheckCircle, 
   AlertTriangle, 
-  Clock,
-  Zap,
-  Brain,
-  BarChart3,
-  Settings,
-  Download
+  CheckCircle, 
+  Settings, 
+  BarChart3, 
+  Users,
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { 
-  enhancedDuplicateDetectionService,
-  EnhancedDuplicateDetectionResult
-} from '@/services/import-export/enhanced-duplicate-detection-service';
-import { dataQualityService } from '@/services/import-export/data-quality-service';
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator
+} from '@/components/ui/context-menu';
 import { multiFormatProcessor } from '@/services/import-export/multi-format-processor';
-import DataOperationsContextMenu from './DataOperationsContextMenu';
+import { enhancedDuplicateDetectionService } from '@/services/import-export/enhanced-duplicate-detection-service';
+import { dataQualityService } from '@/services/import-export/data-quality-service';
 import { toast } from 'sonner';
 import { devLog } from '@/utils/dev-logger';
 
 interface SmartImportWorkflowProps {
-  associationId: string;
-  onComplete: (results: any) => void;
-  onError: (error: string) => void;
+  onComplete?: (results: any) => void;
 }
 
-interface UploadedFile {
-  name: string;
-  type: string;
+interface ProcessedFile {
+  filename: string;
   size: number;
+  type: string;
+  status: 'processing' | 'completed' | 'error';
   data?: any[];
+  error?: string;
+  duplicates?: number;
+  qualityScore?: number;
 }
 
-type ProcessingStage = 
-  | 'upload'
-  | 'validation'
-  | 'duplicate-detection'
-  | 'quality-assessment'
-  | 'transformation'
-  | 'import'
-  | null;
+const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ onComplete }) => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [currentStep, setCurrentStep] = useState<string>('');
+  const [progress, setProgress] = useState(0);
+  const [results, setResults] = useState<any>(null);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
 
-const SmartImportWorkflow: React.FC<SmartImportWorkflowProps> = ({ associationId, onComplete, onError }) => {
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [processingStage, setProcessingStage] = useState<ProcessingStage>(null);
-  const [validationResults, setValidationResults] = useState<any>(null);
-  const [duplicateResults, setDuplicateResults] = useState<EnhancedDuplicateDetectionResult | null>(null);
-  const [qualityResults, setQualityResults] = useState<any>(null);
-  const [transformationOptions, setTransformationOptions] = useState<any>(null);
-  const [importResults, setImportResults] = useState<any>(null);
-  const [selectedRecords, setSelectedRecords] = useState<any[]>([]);
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFiles = Array.from(event.target.files || []);
+    setFiles(prev => [...prev, ...uploadedFiles]);
+    
+    // Initialize processed files
+    const newProcessedFiles = uploadedFiles.map(file => ({
+      filename: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'processing' as const
+    }));
+    
+    setProcessedFiles(prev => [...prev, ...newProcessedFiles]);
+  }, []);
 
-  const handleFileUpload = async (files: File[]) => {
-    setProcessingStage('upload');
-    const fileObjects = [];
-    
-    for (const file of files) {
-      try {
-        const fileData = await multiFormatProcessor.processDocument(file);
-        fileObjects.push({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          data: fileData.extractedData
-        });
-        toast.success(`File ${file.name} uploaded and processed`);
-      } catch (error) {
-        devLog.error(`Error processing file ${file.name}`, error);
-        toast.error(`Error processing file ${file.name}`);
-      }
-    }
-    
-    setUploadedFiles(fileObjects);
-    setProcessingStage(null);
-  };
+  const processFiles = useCallback(async () => {
+    if (files.length === 0) return;
 
-  const handleDataValidation = async () => {
-    if (!uploadedFiles.length) return;
-    
-    setProcessingStage('validation');
+    setIsProcessing(true);
+    setProgress(0);
+    setCurrentStep('Initializing...');
+
     try {
-      // Placeholder for data validation logic
-      const validation = { isValid: true, issues: [] };
-      setValidationResults(validation);
-      toast.success('Data validation complete');
-    } catch (error) {
-      devLog.error('Data validation failed', error);
-      toast.error('Data validation failed');
-    }
-    setProcessingStage(null);
-  };
-
-  const handleDuplicateDetection = async () => {
-    if (!uploadedFiles.length) return;
-    
-    setProcessingStage('duplicate-detection');
-    try {
-      const results = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(
-        uploadedFiles.map(file => ({
-          filename: file.name,
-          data: file.data || []
-        })),
-        {
-          strictMode: false,
-          fuzzyMatching: true,
-          confidenceThreshold: 0.8,
-          semanticAnalysis: true
-        }
-      );
+      // Step 1: Process each file (20% of progress)
+      setCurrentStep('Processing files...');
+      const processedDocuments = [];
       
-      setDuplicateResults(results);
-      toast.success(`Found ${results.totalDuplicates} potential duplicates`);
-    } catch (error) {
-      devLog.error('Duplicate detection failed', error);
-      toast.error('Duplicate detection failed');
-    }
-    setProcessingStage(null);
-  };
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        setCurrentStep(`Processing ${file.name}...`);
+        
+        try {
+          const result = await multiFormatProcessor.processFile(file, {
+            enableOCR: true,
+            enableStructureDetection: true,
+            enableDataValidation: true
+          });
+          
+          processedDocuments.push({
+            filename: file.name,
+            ...result
+          });
 
-  const handleQualityAssessment = async () => {
-    if (!uploadedFiles.length) return;
-    
-    setProcessingStage('quality-assessment');
-    try {
-      // Placeholder for data quality assessment logic
-      const quality = { score: 95, issues: [] };
-      setQualityResults(quality);
-      toast.success('Data quality assessment complete');
-    } catch (error) {
-      devLog.error('Data quality assessment failed', error);
-      toast.error('Data quality assessment failed');
-    }
-    setProcessingStage(null);
-  };
+          // Update individual file status
+          setProcessedFiles(prev => prev.map(pf => 
+            pf.filename === file.name 
+              ? { ...pf, status: 'completed', data: result.data }
+              : pf
+          ));
 
-  const handleDataTransformation = async () => {
-    if (!uploadedFiles.length) return;
-    
-    setProcessingStage('transformation');
-    try {
-      // Placeholder for data transformation logic
-      const transformed = uploadedFiles.map(file => ({
-        ...file,
-        data: file.data?.map(record => ({ ...record, transformed: true }))
+        } catch (error) {
+          devLog.error(`Failed to process ${file.name}:`, error);
+          setProcessedFiles(prev => prev.map(pf => 
+            pf.filename === file.name 
+              ? { ...pf, status: 'error', error: error instanceof Error ? error.message : 'Unknown error' }
+              : pf
+          ));
+        }
+        
+        setProgress(20 + (i / files.length) * 30);
+      }
+
+      // Step 2: Duplicate Detection (30% more progress)
+      setCurrentStep('Detecting duplicates...');
+      const fileData = processedDocuments
+        .filter(doc => doc.data && doc.data.length > 0)
+        .map(doc => ({
+          filename: doc.filename,
+          data: doc.data
+        }));
+
+      let duplicateResults = null;
+      if (fileData.length > 1) {
+        duplicateResults = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(
+          fileData,
+          {
+            strictMode: false,
+            fuzzyMatching: true,
+            confidenceThreshold: 0.7,
+            semanticAnalysis: true
+          }
+        );
+      }
+      setProgress(70);
+
+      // Step 3: Quality Assessment (20% more progress)
+      setCurrentStep('Assessing data quality...');
+      const qualityResults = await dataQualityService.assessDataQuality(
+        processedDocuments.map(doc => doc.data || []).flat()
+      );
+      setProgress(90);
+
+      // Step 4: Generate final results
+      setCurrentStep('Finalizing results...');
+      const finalResults = {
+        processedDocuments,
+        duplicateResults,
+        qualityResults,
+        summary: {
+          totalFiles: files.length,
+          successfulFiles: processedDocuments.filter(doc => doc.data).length,
+          totalRecords: processedDocuments.reduce((sum, doc) => sum + (doc.data?.length || 0), 0),
+          duplicatesFound: duplicateResults?.totalDuplicates || 0,
+          qualityScore: qualityResults?.overallScore || 0
+        }
+      };
+
+      setResults(finalResults);
+      setProgress(100);
+      setCurrentStep('Complete!');
+
+      // Update file statuses with final metrics
+      setProcessedFiles(prev => prev.map(pf => {
+        const doc = processedDocuments.find(d => d.filename === pf.filename);
+        if (doc && duplicateResults && qualityResults) {
+          return {
+            ...pf,
+            duplicates: duplicateResults.enhancedMatches.filter(
+              m => m.sourceFile === pf.filename || m.targetFile === pf.filename
+            ).length,
+            qualityScore: qualityResults.overallScore
+          };
+        }
+        return pf;
       }));
-      setUploadedFiles(transformed);
-      toast.success('Data transformation complete');
+
+      onComplete?.(finalResults);
+      toast.success(`Successfully processed ${files.length} files`);
+
     } catch (error) {
-      devLog.error('Data transformation failed', error);
-      toast.error('Data transformation failed');
+      devLog.error('Smart import workflow failed:', error);
+      toast.error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setCurrentStep('Error occurred');
+    } finally {
+      setIsProcessing(false);
     }
-    setProcessingStage(null);
-  };
+  }, [files, onComplete]);
 
-  const handleDataImport = async () => {
-    if (!uploadedFiles.length) return;
+  const handleFileSelection = useCallback((filename: string, selected: boolean) => {
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      if (selected) {
+        newSet.add(filename);
+      } else {
+        newSet.delete(filename);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleBulkAction = useCallback((action: string) => {
+    const selectedFilesList = Array.from(selectedFiles);
     
-    setProcessingStage('import');
-    try {
-      // Placeholder for data import logic
-      const imported = uploadedFiles.map(file => ({
-        ...file,
-        imported: true
-      }));
-      setUploadedFiles(imported);
-      toast.success('Data import complete');
-      onComplete(imported);
-    } catch (error) {
-      devLog.error('Data import failed', error);
-      toast.error('Data import failed');
-      onError('Data import failed');
+    switch (action) {
+      case 'reprocess':
+        toast.info(`Reprocessing ${selectedFilesList.length} files...`);
+        break;
+      case 'remove':
+        setFiles(prev => prev.filter(f => !selectedFiles.has(f.name)));
+        setProcessedFiles(prev => prev.filter(pf => !selectedFiles.has(pf.filename)));
+        setSelectedFiles(new Set());
+        toast.success(`Removed ${selectedFilesList.length} files`);
+        break;
+      case 'export':
+        toast.info(`Exporting ${selectedFilesList.length} files...`);
+        break;
     }
-    setProcessingStage(null);
-  };
+  }, [selectedFiles]);
 
-  const handleRecordSelection = (records: any[]) => {
-    setSelectedRecords(records);
-  };
-
-  const handleMergeRecords = () => {
-    if (selectedRecords.length < 2) {
-      toast.error('Select at least two records to merge');
-      return;
+  const getStatusIcon = (status: ProcessedFile['status']) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'error': return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case 'processing': return <div className="h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />;
     }
-    
-    // Placeholder for merge logic
-    toast.info(`Merging ${selectedRecords.length} records`);
   };
 
-  const handleDeleteRecords = () => {
-    if (selectedRecords.length === 0) {
-      toast.error('Select records to delete');
-      return;
+  const getStatusColor = (status: ProcessedFile['status']) => {
+    switch (status) {
+      case 'completed': return 'text-green-600';
+      case 'error': return 'text-red-600';
+      case 'processing': return 'text-blue-600';
     }
-    
-    // Placeholder for delete logic
-    toast.info(`Deleting ${selectedRecords.length} records`);
-  };
-
-  const handleAutoFix = () => {
-    // Placeholder for auto-fix logic
-    toast.info('Attempting to auto-fix data quality issues');
-  };
-
-  const handleExportData = () => {
-    // Placeholder for export logic
-    toast.info('Exporting data');
-  };
-
-  const handleViewRecord = () => {
-    if (selectedRecords.length !== 1) {
-      toast.error('Select one record to view');
-      return;
-    }
-    
-    // Placeholder for view logic
-    toast.info(`Viewing record ${selectedRecords[0].id}`);
   };
 
   return (
-    <Card className="space-y-4">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-blue-500" />
-          Smart Import Workflow
-        </CardTitle>
-        <CardDescription>
-          Streamline your data import process with AI-powered validation, duplicate detection, and quality assessment.
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {processingStage && (
-          <div className="w-full">
-            <Progress value={
-              processingStage === 'upload' ? 10 :
-              processingStage === 'validation' ? 30 :
-              processingStage === 'duplicate-detection' ? 50 :
-              processingStage === 'quality-assessment' ? 70 :
-              processingStage === 'transformation' ? 90 : 100
-            } />
-            <p className="text-sm text-muted-foreground mt-2">
-              {processingStage === 'upload' ? 'Uploading and processing files...' :
-               processingStage === 'validation' ? 'Validating data...' :
-               processingStage === 'duplicate-detection' ? 'Detecting duplicates...' :
-               processingStage === 'quality-assessment' ? 'Assessing data quality...' :
-               processingStage === 'transformation' ? 'Transforming data...' : 'Importing data...'}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-blue-500" />
+            Smart Import Workflow
+          </CardTitle>
+          <CardDescription>
+            Advanced file processing with duplicate detection and quality assessment
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* File Upload Section */}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+            <p className="text-sm text-gray-600 mb-2">
+              Drop files here or click to upload
             </p>
+            <input
+              type="file"
+              multiple
+              accept=".csv,.xlsx,.xls,.pdf,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="file-upload"
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => document.getElementById('file-upload')?.click()}
+              disabled={isProcessing}
+            >
+              Select Files
+            </Button>
           </div>
-        )}
-        
-        <Tabs defaultValue="upload" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="upload" disabled={processingStage !== null}>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Files
-            </TabsTrigger>
-            <TabsTrigger value="validate" disabled={!uploadedFiles.length || processingStage !== null}>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Validate Data
-            </TabsTrigger>
-            <TabsTrigger value="duplicates" disabled={!uploadedFiles.length || processingStage !== null}>
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Detect Duplicates
-            </TabsTrigger>
-            <TabsTrigger value="quality" disabled={!uploadedFiles.length || processingStage !== null}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Assess Quality
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="upload" className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">Upload Data Files</h3>
-                <p className="text-sm text-muted-foreground">
-                  Upload CSV, Excel, or other supported data files for processing.
-                </p>
+
+          {/* Processing Progress */}
+          {isProcessing && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{currentStep}</span>
+                <span>{progress}%</span>
               </div>
-              
-              <Button variant="outline" asChild>
-                <label htmlFor="upload-files" className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Select Files
-                  <input
-                    type="file"
-                    id="upload-files"
-                    multiple
-                    className="hidden"
-                    onChange={e => {
-                      const files = Array.from(e.target.files || []);
-                      handleFileUpload(files);
-                    }}
-                  />
-                </label>
-              </Button>
-              
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Uploaded Files:</h4>
-                  <ul className="list-disc pl-5">
-                    {uploadedFiles.map((file, index) => (
-                      <li key={index} className="text-sm">
-                        {file.name} ({file.type}, {Math.round(file.size / 1024)} KB)
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <Progress value={progress} className="w-full" />
             </div>
-          </TabsContent>
-          
-          <TabsContent value="validate" className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">Validate Data</h3>
-                <p className="text-sm text-muted-foreground">
-                  Validate the uploaded data to ensure it meets the required format and standards.
-                </p>
-              </div>
-              
-              <Button onClick={handleDataValidation} disabled={processingStage !== null}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Validate Data
-              </Button>
-              
-              {validationResults && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Validation Results:</h4>
-                  {validationResults.isValid ? (
-                    <Alert variant="success">
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      <AlertDescription>Data is valid.</AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      <AlertDescription>Data is invalid. Issues found: {validationResults.issues.length}</AlertDescription>
-                    </Alert>
+          )}
+
+          {/* Files List */}
+          {processedFiles.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Files ({processedFiles.length})</CardTitle>
+                  {selectedFiles.size > 0 && (
+                    <div className="flex gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleBulkAction('reprocess')}
+                      >
+                        Reprocess ({selectedFiles.size})
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleBulkAction('remove')}
+                      >
+                        Remove ({selectedFiles.size})
+                      </Button>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="duplicates" className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">Detect Duplicates</h3>
-                <p className="text-sm text-muted-foreground">
-                  Identify and manage duplicate records within the uploaded data.
-                </p>
-              </div>
-              
-              <Button onClick={handleDuplicateDetection} disabled={processingStage !== null}>
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Detect Duplicates
-              </Button>
-              
-              {duplicateResults && (
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Duplicate Detection Results:</h4>
-                  <p className="text-sm">
-                    Found {duplicateResults.totalDuplicates} potential duplicates.
-                  </p>
-                  {duplicateResults.suggestions.map((suggestion, index) => (
-                    <Alert key={index} variant="info">
-                      <Info className="h-4 w-4 mr-2" />
-                      <AlertDescription>{suggestion}</AlertDescription>
-                    </Alert>
+                  {processedFiles.map((file, index) => (
+                    <ContextMenu key={index}>
+                      <ContextMenuTrigger>
+                        <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedFiles.has(file.filename)}
+                              onChange={(e) => handleFileSelection(file.filename, e.target.checked)}
+                              className="rounded"
+                            />
+                            {getStatusIcon(file.status)}
+                            <div>
+                              <p className="font-medium">{file.filename}</p>
+                              <p className="text-sm text-gray-500">
+                                {(file.size / 1024).toFixed(1)} KB • {file.type}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {file.duplicates !== undefined && (
+                              <Badge variant="outline">
+                                {file.duplicates} duplicates
+                              </Badge>
+                            )}
+                            {file.qualityScore !== undefined && (
+                              <Badge variant="outline">
+                                {file.qualityScore}% quality
+                              </Badge>
+                            )}
+                            <span className={`text-sm font-medium ${getStatusColor(file.status)}`}>
+                              {file.status}
+                            </span>
+                          </div>
+                        </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => console.log('View details', file.filename)}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Details
+                        </ContextMenuItem>
+                        <ContextMenuItem onClick={() => console.log('Reprocess', file.filename)}>
+                          <Settings className="h-4 w-4 mr-2" />
+                          Reprocess
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem 
+                          onClick={() => handleBulkAction('remove')}
+                          className="text-red-600"
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Remove
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   ))}
                 </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="quality" className="space-y-4">
-            <div className="grid gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">Assess Data Quality</h3>
-                <p className="text-sm text-muted-foreground">
-                  Assess the quality of the uploaded data and identify potential issues.
-                </p>
-              </div>
-              
-              <Button onClick={handleQualityAssessment} disabled={processingStage !== null}>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Assess Data Quality
-              </Button>
-              
-              {qualityResults && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Data Quality Assessment Results:</h4>
-                  <p className="text-sm">
-                    Quality Score: {qualityResults.score}
-                  </p>
-                  {qualityResults.issues.map((issue, index) => (
-                    <Alert key={index} variant="warning">
-                      <AlertTriangle className="h-4 w-4 mr-2" />
-                      <AlertDescription>{issue.description}</AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-        
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-semibold">Data Operations</h3>
-          <p className="text-sm text-muted-foreground">
-            Perform operations on the selected data records.
-          </p>
-          
-          <DataOperationsContextMenu
-            selectedRecords={selectedRecords}
-            onCopy={() => toast.info('Copying records')}
-            onDelete={handleDeleteRecords}
-            onEdit={() => toast.info('Editing record')}
-            onView={handleViewRecord}
-            onExport={handleExportData}
-            onImport={() => toast.info('Importing data')}
-            onRefresh={() => toast.info('Refreshing data')}
-            onMerge={handleMergeRecords}
-            onSplit={() => toast.info('Splitting record')}
-            onFilter={() => toast.info('Filtering data')}
-            onAutoFix={handleAutoFix}
-            onMarkAsReviewed={() => toast.info('Marking as reviewed')}
-            showDuplicateOptions={true}
-            showQualityOptions={true}
-          >
-            <Button variant="outline">
-              Data Operations
-            </Button>
-          </DataOperationsContextMenu>
-        </div>
-        
-        <div className="border-t pt-4">
-          <h3 className="text-lg font-semibold">Finalize Import</h3>
-          <p className="text-sm text-muted-foreground">
-            Transform and import the validated data into the system.
-          </p>
-          
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button onClick={handleDataTransformation} disabled={processingStage !== null}>
-              <Zap className="h-4 w-4 mr-2" />
-              Transform Data
+            <Button 
+              onClick={processFiles}
+              disabled={files.length === 0 || isProcessing}
+              className="flex-1"
+            >
+              {isProcessing ? 'Processing...' : 'Start Smart Import'}
             </Button>
-            <Button onClick={handleDataImport} disabled={processingStage !== null}>
-              <Download className="h-4 w-4 mr-2" />
-              Import Data
-            </Button>
+            {files.length > 0 && (
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setFiles([]);
+                  setProcessedFiles([]);
+                  setResults(null);
+                  setSelectedFiles(new Set());
+                }}
+                disabled={isProcessing}
+              >
+                Clear All
+              </Button>
+            )}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+
+          {/* Results Section */}
+          {results && (
+            <Tabs defaultValue="summary" className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="summary">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Summary
+                </TabsTrigger>
+                <TabsTrigger value="duplicates">
+                  <Users className="h-4 w-4 mr-2" />
+                  Duplicates
+                </TabsTrigger>
+                <TabsTrigger value="quality">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Quality
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="summary" className="space-y-4">
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Import completed successfully! Processed {results.summary.totalFiles} files 
+                    with {results.summary.totalRecords} total records.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(results.summary).map(([key, value]) => (
+                    <Card key={key}>
+                      <CardContent className="p-4">
+                        <p className="text-2xl font-bold">{String(value)}</p>
+                        <p className="text-sm text-gray-600 capitalize">
+                          {key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="duplicates" className="space-y-4">
+                <Alert variant="warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Found {results.duplicateResults?.totalDuplicates || 0} potential duplicate records.
+                    Review and resolve before importing.
+                  </AlertDescription>
+                </Alert>
+              </TabsContent>
+
+              <TabsContent value="quality" className="space-y-4">
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Overall data quality score: {results.qualityResults?.overallScore || 0}%
+                  </AlertDescription>
+                </Alert>
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
 export default SmartImportWorkflow;
-
