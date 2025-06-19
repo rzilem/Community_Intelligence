@@ -39,6 +39,16 @@ function convertToWorkflowExecution(row: any): WorkflowExecution {
   };
 }
 
+// Type-safe insert type
+type WorkflowExecutionInsert = {
+  workflow_template_id: string;
+  association_id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  execution_data: Record<string, any>;
+  performance_metrics: Record<string, any>;
+  ai_insights: Record<string, any>;
+};
+
 export class IntelligentWorkflowEngine {
   async createWorkflowTemplate(templateData: {
     name?: string;
@@ -48,19 +58,21 @@ export class IntelligentWorkflowEngine {
     is_ai_recommended?: boolean;
     created_by?: string;
   }): Promise<WorkflowTemplate> {
+    const insertData = {
+      name: templateData.name,
+      description: templateData.description,
+      type: templateData.workflow_type,
+      steps: templateData.template_data,
+      status: 'active',
+      is_template: true,
+      is_popular: templateData.is_ai_recommended || false,
+      created_by: templateData.created_by
+    };
+
     const { data, error } = await supabase
       .from('workflows')
-      .insert({
-        name: templateData.name,
-        description: templateData.description,
-        type: templateData.workflow_type,
-        steps: templateData.template_data,
-        status: 'active',
-        is_template: true,
-        is_popular: templateData.is_ai_recommended || false,
-        created_by: templateData.created_by
-      })
-      .select()
+      .insert(insertData)
+      .select('*')
       .single();
 
     if (error) {
@@ -71,17 +83,19 @@ export class IntelligentWorkflowEngine {
   }
 
   async executeWorkflow(templateId: string, associationId: string, executionData: Record<string, any>): Promise<WorkflowExecution> {
+    const insertData: WorkflowExecutionInsert = {
+      workflow_template_id: templateId,
+      association_id: associationId,
+      status: 'pending',
+      execution_data: executionData,
+      performance_metrics: {},
+      ai_insights: {}
+    };
+
     const { data, error } = await supabase
       .from('workflow_executions')
-      .insert({
-        workflow_template_id: templateId,
-        association_id: associationId,
-        status: 'pending',
-        execution_data: executionData,
-        performance_metrics: {},
-        ai_insights: {}
-      })
-      .select()
+      .insert(insertData)
+      .select('*')
       .single();
 
     if (error) {
@@ -124,26 +138,16 @@ export class IntelligentWorkflowEngine {
   }
 
   async optimizeWorkflowTemplate(templateId: string): Promise<WorkflowTemplate> {
-    // Get current template
-    const { data: currentTemplate, error: fetchError } = await supabase
-      .from('workflows')
-      .select('*')
-      .eq('id', templateId)
-      .single();
+    const updateData = {
+      is_popular: true,
+      updated_at: new Date().toISOString()
+    };
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch template: ${fetchError.message}`);
-    }
-
-    // Simple optimization - mark as popular (in real implementation, this would use ML)
     const { data, error } = await supabase
       .from('workflows')
-      .update({
-        is_popular: true,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', templateId)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -175,18 +179,16 @@ export class IntelligentWorkflowEngine {
     ai_insights?: Record<string, any>;
     completed_at?: string;
   }): Promise<WorkflowExecution> {
+    const updateData = {
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('workflow_executions')
-      .update({
-        status: updates.status,
-        execution_data: updates.execution_data,
-        performance_metrics: updates.performance_metrics,
-        ai_insights: updates.ai_insights,
-        completed_at: updates.completed_at,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', executionId)
-      .select()
+      .select('*')
       .single();
 
     if (error) {

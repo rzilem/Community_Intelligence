@@ -24,64 +24,111 @@ function convertToAIPrediction(row: any): AIPrediction {
   };
 }
 
+// Helper function to estimate cost from request data
+function estimateCostFromRequest(request: any): number {
+  // Base cost by priority
+  const baseCosts: Record<string, number> = {
+    high: 500,
+    urgent: 750,
+    medium: 250,
+    low: 100
+  };
+  
+  let cost = baseCosts[request.priority] || 150;
+  
+  // Adjust by category
+  const categoryMultipliers: Record<string, number> = {
+    plumbing: 1.5,
+    electrical: 1.3,
+    hvac: 2.0,
+    roofing: 2.5,
+    landscaping: 0.8,
+    maintenance: 1.0
+  };
+  
+  const multiplier = categoryMultipliers[request.category] || 1.0;
+  
+  return Math.round(cost * multiplier);
+}
+
 export class PredictiveAnalyticsEngine {
   async generateMaintenanceCostPrediction(associationId: string, options: {
     timeframe?: string;
     propertyTypes?: string[];
     includeInflation?: boolean;
   } = {}): Promise<AIPrediction> {
-    const { data: maintenanceHistory, error } = await supabase
-      .from('homeowner_requests')
-      .select(`
-        *,
-        properties!inner (
-          id,
-          association_id,
-          unit_number
-        )
-      `)
-      .eq('properties.association_id', associationId)
-      .eq('category', 'maintenance')
-      .order('created_at', { ascending: false })
-      .limit(100);
+    try {
+      // First, get properties for the association
+      const { data: properties, error: propError } = await supabase
+        .from('properties')
+        .select('id')
+        .eq('association_id', associationId);
 
-    if (error) {
-      devLog.error('Failed to fetch maintenance history', error);
-      throw new Error(`Failed to fetch maintenance history: ${error.message}`);
-    }
+      if (propError || !properties) {
+        throw new Error('Failed to fetch properties');
+      }
 
-    // Simple prediction logic - in production this would use ML models
-    const avgCost = maintenanceHistory?.reduce((sum, req) => sum + (req.estimated_cost || 0), 0) / (maintenanceHistory?.length || 1);
-    const projectedCost = avgCost * 1.15; // 15% inflation factor
+      const propertyIds = properties.map(p => p.id);
 
-    const predictionData = {
-      prediction_type: 'maintenance_cost',
-      association_id: associationId,
-      prediction_data: {
-        projected_annual_cost: projectedCost,
-        confidence_factors: {
-          historical_data_points: maintenanceHistory?.length || 0,
-          seasonal_adjustment: 1.1,
-          inflation_factor: options.includeInflation ? 1.15 : 1.0
+      // Then get maintenance requests for those properties
+      const { data: maintenanceHistory, error } = await supabase
+        .from('homeowner_requests')
+        .select('*')
+        .in('property_id', propertyIds)
+        .eq('category', 'maintenance')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        devLog.error('Failed to fetch maintenance history', error);
+        throw new Error(`Failed to fetch maintenance history: ${error.message}`);
+      }
+
+      // Calculate estimated costs from existing data
+      const maintenanceCosts = (maintenanceHistory || []).map((request: any) => ({
+        date: request.created_at,
+        cost: estimateCostFromRequest(request),
+        category: request.subcategory || request.category || 'general',
+        propertyId: request.property_id
+      }));
+
+      // Simple prediction logic - in production this would use ML models
+      const totalCost = maintenanceCosts.reduce((sum, item) => sum + item.cost, 0);
+      const avgCost = totalCost / Math.max(maintenanceCosts.length, 1);
+      const projectedCost = avgCost * (options.includeInflation ? 1.15 : 1.0);
+
+      const predictionData = {
+        prediction_type: 'maintenance_cost',
+        association_id: associationId,
+        prediction_data: {
+          projected_annual_cost: projectedCost,
+          confidence_factors: {
+            historical_data_points: maintenanceCosts.length,
+            seasonal_adjustment: 1.1,
+            inflation_factor: options.includeInflation ? 1.15 : 1.0
+          },
+          timeframe: options.timeframe || '12_months'
         },
-        timeframe: options.timeframe || '12_months'
-      },
-      confidence_level: 0.75,
-      model_version: 'maintenance_predictor_v1.0',
-      valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-    };
+        confidence_level: 0.75,
+        model_version: 'maintenance_predictor_v1.0',
+        valid_until: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
 
-    const { data, error: insertError } = await supabase
-      .from('ai_predictions')
-      .insert(predictionData)
-      .select()
-      .single();
+      const { data, error: insertError } = await supabase
+        .from('ai_predictions')
+        .insert(predictionData)
+        .select('*')
+        .single();
 
-    if (insertError) {
-      throw new Error(`Failed to save prediction: ${insertError.message}`);
+      if (insertError) {
+        throw new Error(`Failed to save prediction: ${insertError.message}`);
+      }
+
+      return convertToAIPrediction(data);
+    } catch (error) {
+      devLog.error('Maintenance cost prediction failed', error);
+      throw error;
     }
-
-    return convertToAIPrediction(data);
   }
 
   async getAllPredictions(associationId: string): Promise<AIPrediction[]> {
@@ -121,7 +168,7 @@ export class PredictiveAnalyticsEngine {
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionData)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -151,7 +198,7 @@ export class PredictiveAnalyticsEngine {
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionData)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -178,7 +225,7 @@ export class PredictiveAnalyticsEngine {
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert(predictionData)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -189,14 +236,16 @@ export class PredictiveAnalyticsEngine {
   }
 
   async updatePredictionAccuracy(predictionId: string, actualOutcome: Record<string, any>): Promise<AIPrediction> {
+    const updateData = {
+      actual_outcome: actualOutcome,
+      updated_at: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
       .from('ai_predictions')
-      .update({
-        actual_outcome: actualOutcome,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', predictionId)
-      .select()
+      .select('*')
       .single();
 
     if (error) {
