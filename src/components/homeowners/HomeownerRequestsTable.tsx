@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { HomeownerRequest, HomeownerRequestColumn } from '@/types/homeowner-request-types';
 import RequestTableHeader from './table/RequestTableHeader';
 import RequestTableRow from './table/RequestTableRow';
 import EmptyRequestsRow from './table/EmptyRequestsRow';
 import HomeownerRequestPagination from './HomeownerRequestPagination';
+import TableContainer from '@/components/common/TableContainer';
 import { Table, TableBody } from '@/components/ui/table';
+import { useTablePagination } from '@/hooks/useTablePagination';
 
 interface HomeownerRequestsTableProps {
   requests: HomeownerRequest[];
@@ -26,67 +28,55 @@ const HomeownerRequestsTable: React.FC<HomeownerRequestsTableProps> = ({
   onViewRequest,
   onEditRequest,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const {
+    currentPage,
+    pageSize,
+    totalPages,
+    startIndex,
+    endIndex,
+    handlePageChange,
+    handlePageSizeChange
+  } = useTablePagination(requests.length);
 
-  const totalPages = Math.ceil(requests.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedRequests = requests.slice(startIndex, startIndex + pageSize);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
-
-  if (isLoading) {
-    return <div className="text-center py-8">Loading requests...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center py-8 text-red-500">{error.message}</div>;
-  }
+  const paginatedRequests = requests.slice(startIndex, endIndex);
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto border rounded-md">
-        <Table>
-          <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
-          <TableBody>
-            {paginatedRequests.length === 0 ? (
-              <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
-            ) : (
-              paginatedRequests.map((request) => (
-                <RequestTableRow
-                  key={request.id}
-                  request={request}
-                  columns={columns}
-                  visibleColumnIds={visibleColumnIds}
-                  onViewRequest={onViewRequest}
-                  onEditRequest={onEditRequest}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
+    <TableContainer isLoading={isLoading} error={error} loadingMessage="Loading requests...">
+      <div className="space-y-4">
+        <div className="overflow-x-auto border rounded-md">
+          <Table>
+            <RequestTableHeader columns={columns} visibleColumnIds={visibleColumnIds} />
+            <TableBody>
+              {paginatedRequests.length === 0 ? (
+                <EmptyRequestsRow colSpan={visibleColumnIds.length + 1} />
+              ) : (
+                paginatedRequests.map((request) => (
+                  <RequestTableRow
+                    key={request.id}
+                    request={request}
+                    columns={columns}
+                    visibleColumnIds={visibleColumnIds}
+                    onViewRequest={onViewRequest}
+                    onEditRequest={onEditRequest}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+        
+        {requests.length > 0 && (
+          <HomeownerRequestPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            totalRequests={requests.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        )}
       </div>
-      
-      {requests.length > 0 && (
-        <HomeownerRequestPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          totalRequests={requests.length}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
-      )}
-    </div>
+    </TableContainer>
   );
 };
 
