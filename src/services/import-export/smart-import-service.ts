@@ -67,6 +67,10 @@ export const smartImportService = {
           devLog.error('Error processing ZIP entry:', { filename: entry.filename, error });
           result.skippedFiles++;
           result.errors.push(`${entry.filename}: ${error instanceof Error ? error.message : 'Processing failed'}`);
+          
+          // Add processing errors to the entry
+          entry.processingErrors = entry.processingErrors || [];
+          entry.processingErrors.push(error instanceof Error ? error.message : 'Processing failed');
         }
       }
 
@@ -129,11 +133,16 @@ export const smartImportService = {
       let parsedData: any[] = [];
       
       if (entry.filename.toLowerCase().endsWith('.csv')) {
-        const parseResult = await parseService.parseCSV(file);
-        if (!parseResult.success) {
-          throw new Error(`CSV parsing failed: ${parseResult.errors.join(', ')}`);
+        // Read file content as text first
+        const fileContent = await file.text();
+        try {
+          parsedData = parseService.parseCSV(fileContent);
+          if (parsedData.length === 0) {
+            throw new Error('No data found in CSV file');
+          }
+        } catch (parseError) {
+          throw new Error(`CSV parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown parsing error'}`);
         }
-        parsedData = parseResult.data || [];
       } else if (entry.filename.toLowerCase().endsWith('.xlsx') || entry.filename.toLowerCase().endsWith('.xls')) {
         const excelResult = await enhancedExcelProcessor.processExcelFile(file);
         if (!excelResult.success) {
