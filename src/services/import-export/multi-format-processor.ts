@@ -1,4 +1,3 @@
-
 import { parseService } from './parse-service';
 import Papa from 'papaparse';
 import { advancedOCRService } from './advanced-ocr-service';
@@ -28,6 +27,8 @@ export interface MultiFormatProcessorOptions {
   enableAutoFix?: boolean;
   fallbackToOCR?: boolean;
   ocrLanguages?: string[];
+  qualityThreshold?: number;
+  enableStructureDetection?: boolean;
 }
 
 export interface EnhancedProcessingResult {
@@ -96,7 +97,7 @@ export const multiFormatProcessor = {
           data: doc.data
         }));
         
-        duplicateResults = await enhancedDuplicateDetectionService.detectDuplicatesAcrossFiles(
+        duplicateResults = await enhancedDuplicateDetectionService.detectDuplicatesAdvanced(
           fileData,
           {
             strictMode: false,
